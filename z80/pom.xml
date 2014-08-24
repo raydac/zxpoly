@@ -9,14 +9,8 @@
     <artifactId>z80</artifactId>
     <packaging>jar</packaging>
 
-    <dependencies>
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.11</version>
-        <scope>test</scope>
-      </dependency>
-    </dependencies>
+    <name>Z80</name>
+    <description>A Java based emulation of Z80 CPU</description>
 
     <build>
       <plugins>
