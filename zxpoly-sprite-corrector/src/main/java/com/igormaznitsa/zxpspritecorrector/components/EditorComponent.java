@@ -70,26 +70,18 @@ public final class EditorComponent extends JComponent {
       if (processingData == null || x < 0 || y < 0) {
         result = -1;
       }
-      else if (mode512) {
-        final int theY = addressingModeZXScreen ? VideoMode.zxy2y(y >> 1) : y >> 1;
-        final int rowAddress = theY * columns + startAddress;
-
-        if (x >= (columns << 4) || rowAddress >= processingData.length()) {
-          result = -1;
-        }
-        else {
-          result = (x >>> 4) + rowAddress;
-        }
-      }
       else {
-        final int theY = addressingModeZXScreen ? VideoMode.zxy2y(y) : y;
+        final int dx = mode512 ? x >> 1 : x;
+        final int dy = mode512 ? y >> 1 : y;
+
+        final int theY = addressingModeZXScreen ? VideoMode.zxy2y(dy) : dy;
         final int rowAddress = theY * columns + startAddress;
 
-        if (x >= (columns << 3) || rowAddress >= processingData.length()) {
+        if (dx >= (columns << 3) || rowAddress >= processingData.length()) {
           result = -1;
         }
         else {
-          result = (x >>> 3) + rowAddress;
+          result = (dx >>> 3) + rowAddress;
         }
       }
 
@@ -97,23 +89,70 @@ public final class EditorComponent extends JComponent {
     }
 
     private int makeXMask(final int x) {
-      return 1 << (7 - ((mode512 ? (x >> 1) : x) & 0x7));
+      return 1 << (7 - (x & 0x7));
     }
 
     public ZXGraphics setPoint(final int x, final int y, final int cpu3012) {
       final int address = coordToAddress(x, y);
       if (address >= 0) {
-        final int bitmask = makeXMask(x);
         final int mask = processingData.getMask(address);
 
         final int packed3012 = processingData.getPackedZxPolyData3012(address);
-        final int invertedbitmask = ~bitmask;
-        processingData.setZXPolyData(address, mask | bitmask,
-                ((packed3012 >>> 16) & invertedbitmask) | (((cpu3012 & 4) == 0 ? 0 : 0xFF) & bitmask),
-                ((packed3012 >>> 8) & invertedbitmask) | (((cpu3012 & 2) == 0 ? 0 : 0xFF) & bitmask),
-                (packed3012 & invertedbitmask) | (((cpu3012 & 1) == 0 ? 0 : 0xFF) & bitmask),
-                ((packed3012 >>> 24) & invertedbitmask) | (((cpu3012 & 8) == 0 ? 0 : 0xFF) & bitmask)
-        );
+
+        if (mode512) {
+          final int bitmask = makeXMask(x >> 1);
+          final int invertedbitmask = ~bitmask;
+
+          final int value = (cpu3012 == 0 ? 0 : 0xFF) & bitmask;
+
+          if ((x & 1) == 0) {
+            if ((y & 1) == 0) {
+              // CPU 0
+              processingData.setZXPolyData(address, mask | bitmask,
+                      ((packed3012 >>> 16) & invertedbitmask) | value,
+                      packed3012 >>> 8,
+                      packed3012,
+                      packed3012 >>> 24);
+            }
+            else {
+              // CPU 2
+              processingData.setZXPolyData(address, mask | bitmask,
+                      packed3012 >>> 16,
+                      packed3012 >>> 8,
+                      (packed3012 & invertedbitmask) | value,
+                      packed3012 >>> 24);
+            }
+          }
+          else {
+            if ((y & 1) == 0) {
+              // CPU 1
+              processingData.setZXPolyData(address, mask | bitmask,
+                      packed3012 >>> 16,
+                      ((packed3012 >>> 8) & invertedbitmask) | value,
+                      packed3012,
+                      packed3012 >>> 24);
+            }
+            else {
+              // CPU 3
+              processingData.setZXPolyData(address, mask | bitmask,
+                      packed3012 >>> 16,
+                      packed3012 >>> 8,
+                      packed3012,
+                      ((packed3012 >>> 24) & invertedbitmask) | value);
+            }
+          }
+
+        }
+        else {
+          final int bitmask = makeXMask(x);
+          final int invertedbitmask = ~bitmask;
+          processingData.setZXPolyData(address, mask | bitmask,
+                  ((packed3012 >>> 16) & invertedbitmask) | (((cpu3012 & 4) == 0 ? 0 : 0xFF) & bitmask),
+                  ((packed3012 >>> 8) & invertedbitmask) | (((cpu3012 & 2) == 0 ? 0 : 0xFF) & bitmask),
+                  (packed3012 & invertedbitmask) | (((cpu3012 & 1) == 0 ? 0 : 0xFF) & bitmask),
+                  ((packed3012 >>> 24) & invertedbitmask) | (((cpu3012 & 8) == 0 ? 0 : 0xFF) & bitmask)
+          );
+        }
       }
 
       return this;
@@ -122,10 +161,11 @@ public final class EditorComponent extends JComponent {
     public ZXGraphics resetPoint(final int x, final int y) {
       final int address = coordToAddress(x, y);
       if (address >= 0) {
-        final int bitmask = makeXMask(x);
         final int mask = processingData.getMask(address);
 
         final int packed3012 = processingData.getPackedZxPolyData3012(address);
+
+        final int bitmask = makeXMask(x >> (mode512 ? 1 : 0));
         final int invertedbitmask = ~bitmask;
         processingData.setZXPolyData(address, mask & invertedbitmask,
                 (packed3012 >>> 16) & invertedbitmask,
@@ -425,18 +465,18 @@ public final class EditorComponent extends JComponent {
             // point of a zxpoly mode
             if (this.mode512) {
               // 512x384 mode
-              gfx.setColor((data0 & 0x80) == 0 ? this.colorZX512Off : this.colorPixelOn);
-              gfx.drawLine(x, y, x, y);
-              gfx.setColor((data1 & 0x80) == 0 ? this.colorZX512Off : this.colorPixelOn);
-              gfx.drawLine(x + 1, y, x + 1, y);
-              gfx.setColor((data2 & 0x80) == 0 ? this.colorZX512Off : this.colorPixelOn);
-              gfx.drawLine(x, y + 1, x, y + 1);
-              gfx.setColor((data3 & 0x80) == 0 ? this.colorZX512Off : this.colorPixelOn);
-              gfx.drawLine(x + 1, y + 1, x + 1, y + 1);
+              gfx.setColor((data0 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
+              gfx.drawLine(x, cury, x, cury);
+              gfx.setColor((data1 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
+              gfx.drawLine(x + 1, cury, x + 1, cury);
+              gfx.setColor((data2 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
+              gfx.drawLine(x, cury + 1, x, cury + 1);
+              gfx.setColor((data3 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
+              gfx.drawLine(x + 1, cury + 1, x + 1, cury + 1);
             }
             else {
               // zxpoly mode
-              final int colorIndex = ((data3 & 0x80) >>> 4) | ((data0 & 0x80) >>> 5) | ((data1 & 0x80) >>> 6) | ((data2 & 0x80)>>>7);
+              final int colorIndex = ((data3 & 0x80) >>> 4) | ((data0 & 0x80) >>> 5) | ((data1 & 0x80) >>> 6) | ((data2 & 0x80) >>> 7);
               gfx.setColor(ZXPalette.COLORS[colorIndex]);
               gfx.fillRect(x, cury, step, step);
             }
