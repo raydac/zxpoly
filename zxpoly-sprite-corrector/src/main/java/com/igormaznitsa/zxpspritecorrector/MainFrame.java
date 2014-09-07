@@ -1,59 +1,61 @@
 package com.igormaznitsa.zxpspritecorrector;
 
 import com.igormaznitsa.zxpspritecorrector.components.*;
-import com.igormaznitsa.zxpspritecorrector.exprt.ExportHobetaDialog;
-import com.igormaznitsa.zxpspritecorrector.imprt.ImportDialog;
+import com.igormaznitsa.zxpspritecorrector.files.*;
+import com.igormaznitsa.zxpspritecorrector.tools.*;
 import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
 import java.awt.*;
-import java.awt.event.*;
 import java.io.*;
-import java.util.*;
-import java.util.List;
+import java.util.Locale;
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.filechooser.FileFilter;
+import org.picocontainer.*;
+import org.picocontainer.injectors.*;
 
-public class MainFrame extends javax.swing.JFrame implements BoundedRangeModel, ActionListener, ChangeListener {
+public class MainFrame extends javax.swing.JFrame {
+
+  public final MutablePicoContainer container = new DefaultPicoContainer();
 
   private static final long serialVersionUID = -5031012548284731523L;
 
-  private final List<ChangeListener> changeListener = new ArrayList<ChangeListener>();
-  protected File p_LastOpenedFile;
+  private File openedFile;
 
   public MainFrame() {
     initComponents();
 
-    setIconImage(GfxUtils.loadImage("ico.gif"));
+    sliderColumns.setModel(new DefaultBoundedRangeModel(32, 0, 1, 32));
+    sliderColumns.setValue(this.mainEditor.getColumns());
 
-    p_Zoom_1.addActionListener(this);
-    p_Zoom_2.addActionListener(this);
-    p_Zoom_4.addActionListener(this);
-    p_Zoom_8.addActionListener(this);
-    p_Zoom_16.addActionListener(this);
+    container.addComponent(SZEPlugin.class);
+    container.addComponent(HOBETAPlugin.class);
+    container.addComponent(TAPPlugin.class);
+    container.addComponent(TRDPlugin.class);
+    container.addComponent(SCLPlugin.class);
+    container.addComponent(SCRPlugin.class);
 
-    p_Mode_ZXPoly.addActionListener(this);
-    p_Mode_ZX512x384.addActionListener(this);
+    container.addComponent(ToolPencil.class);
+    container.addComponent(ToolEraser.class);
 
-    buttonEraser.addActionListener(this);
-    buttonPencil.addActionListener(this);
-    buttonColorReplacer.addActionListener(this);
-    buttonSelector.addActionListener(this);
+    container.addAdapter(new ProviderAdapter(new ContextProvider(container)));
+    container.addComponent(this);
 
-    colorSelector.addActionListener(this);
+    container.start();
 
-    sliderColumns.setModel(this);
-    scrollBarPosition.setModel(EditorView);
+    for (final AbstractTool tool : container.getComponents(AbstractTool.class)) {
+      this.panelTools.add(tool);
+      this.toolsButtonGroup.add(tool);
+    }
 
-    sliderPenWidth.addChangeListener(EditorView);
-
-    EditorView.addChangeListener(this);
-
-    p_TextField_Position.setText("#" + Integer.toHexString(EditorView.getPosition()));
-
-    Dimension p_dim = Toolkit.getDefaultToolkit().getScreenSize();
-    setLocation((p_dim.width - getWidth()) / 2, (p_dim.height - getHeight()) / 2);
+    this.setLocationRelativeTo(null);
+    this.menuOptionsZXScreen.setSelected(this.mainEditor.isZXScreenMode());
+    this.menuOptionsColumns.setSelected(this.mainEditor.isShowColumnBorders());
+    this.menuOptionsGrid.setSelected(this.mainEditor.isShowGrid());
+    this.menuOptionsInvertBase.setSelected(this.mainEditor.isInvertShowBaseData());
+    this.menuOptionsMode512.setSelected(this.mainEditor.isMode512());
+    updateAddressScrollBar();
 
     setVisible(true);
+
+    repaint();
   }
 
   /**
@@ -64,57 +66,43 @@ public class MainFrame extends javax.swing.JFrame implements BoundedRangeModel, 
   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
 
-    buttonGroupZoom = new javax.swing.ButtonGroup();
-    buttonGroupTools = new javax.swing.ButtonGroup();
-    buttonGroupModes = new javax.swing.ButtonGroup();
-    scrollBarPosition = new javax.swing.JScrollBar();
+    toolsButtonGroup = new javax.swing.ButtonGroup();
+    scrollBarAddress = new javax.swing.JScrollBar();
     sliderColumns = new javax.swing.JSlider();
-    p_ScrollPane = new javax.swing.JScrollPane();
-    EditorView = new com.igormaznitsa.zxpspritecorrector.components.EditorComponent();
     buttonLock = new javax.swing.JToggleButton();
     panelTools = new javax.swing.JPanel();
-    buttonPencil = new javax.swing.JToggleButton();
-    buttonEraser = new javax.swing.JToggleButton();
-    buttonSelector = new javax.swing.JToggleButton();
-    buttonColorReplacer = new javax.swing.JToggleButton();
     colorSelector = new com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector();
-    p_TextField_Position = new javax.swing.JTextField();
+    textFieldAddress = new javax.swing.JTextField();
     sliderPenWidth = new com.igormaznitsa.zxpspritecorrector.components.PenWidth();
-    jMenuBar1 = new javax.swing.JMenuBar();
+    jScrollPane1 = new javax.swing.JScrollPane();
+    mainEditorPanel = new javax.swing.JPanel();
+    mainEditor = new com.igormaznitsa.zxpspritecorrector.components.EditorComponent();
+    jPanel2 = new javax.swing.JPanel();
+    menuBar = new javax.swing.JMenuBar();
     menuFile = new javax.swing.JMenu();
     menuFileOpen = new javax.swing.JMenuItem();
+    menuFileSave = new javax.swing.JMenuItem();
     menuFileSaveAs = new javax.swing.JMenuItem();
-    menuFileOpenFromTAP = new javax.swing.JMenuItem();
-    jSeparator4 = new javax.swing.JSeparator();
-    menuFileExportAsTap = new javax.swing.JMenuItem();
-    menuFileExportAsHobeta = new javax.swing.JMenuItem();
-    menuFileImportFromMultiHobeta = new javax.swing.JMenuItem();
+    jSeparator4 = new javax.swing.JPopupMenu.Separator();
+    menuFileExportAs = new javax.swing.JMenu();
     jSeparator1 = new javax.swing.JSeparator();
     menuFileExit = new javax.swing.JMenuItem();
     menuEdit = new javax.swing.JMenu();
-    menuEditUndo = new javax.swing.JMenuItem();
-    menuEditRemoveSelection = new javax.swing.JMenuItem();
-    menuEditClearAllColors = new javax.swing.JMenuItem();
-    menuEditInvertDataInSelectedArea = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
-    p_Mode_ZXPoly = new javax.swing.JCheckBoxMenuItem();
-    p_Mode_ZX512x384 = new javax.swing.JCheckBoxMenuItem();
     jSeparator3 = new javax.swing.JSeparator();
-    p_MenuItem_ZXScreenMode = new javax.swing.JCheckBoxMenuItem();
-    p_ShowGrid = new javax.swing.JCheckBoxMenuItem();
-    p_MenuOption_Inverted = new javax.swing.JCheckBoxMenuItem();
-    p_MenuItem_ShowColumnBorders = new javax.swing.JCheckBoxMenuItem();
     jSeparator2 = new javax.swing.JSeparator();
-    p_Zoom_1 = new javax.swing.JRadioButtonMenuItem();
-    p_Zoom_2 = new javax.swing.JRadioButtonMenuItem();
-    p_Zoom_4 = new javax.swing.JRadioButtonMenuItem();
-    p_Zoom_8 = new javax.swing.JRadioButtonMenuItem();
-    p_Zoom_16 = new javax.swing.JRadioButtonMenuItem();
+    menuOptionsGrid = new javax.swing.JCheckBoxMenuItem();
+    menuOptionsColumns = new javax.swing.JCheckBoxMenuItem();
+    menuOptionsInvertBase = new javax.swing.JCheckBoxMenuItem();
+    jSeparator5 = new javax.swing.JPopupMenu.Separator();
+    menuOptionsZXScreen = new javax.swing.JCheckBoxMenuItem();
+    menuOptionsMode512 = new javax.swing.JCheckBoxMenuItem();
     menuHelp = new javax.swing.JMenu();
     menuHelpAbout = new javax.swing.JMenuItem();
 
     setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     setTitle("ZX-Poly Sprite Corrector");
+    setIconImage(GfxUtils.loadImage("ico.gif"));
     setIconImages(null);
     addWindowListener(new java.awt.event.WindowAdapter() {
       public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -122,8 +110,13 @@ public class MainFrame extends javax.swing.JFrame implements BoundedRangeModel, 
       }
     });
 
-    scrollBarPosition.setToolTipText("Memory window position");
-    scrollBarPosition.setFocusable(false);
+    scrollBarAddress.setToolTipText("Memory window position");
+    scrollBarAddress.setFocusable(false);
+    scrollBarAddress.addAdjustmentListener(new java.awt.event.AdjustmentListener() {
+      public void adjustmentValueChanged(java.awt.event.AdjustmentEvent evt) {
+        scrollBarAddressAdjustmentValueChanged(evt);
+      }
+    });
 
     sliderColumns.setMajorTickSpacing(1);
     sliderColumns.setMinorTickSpacing(1);
@@ -134,19 +127,11 @@ public class MainFrame extends javax.swing.JFrame implements BoundedRangeModel, 
     sliderColumns.setExtent(1);
     sliderColumns.setFocusable(false);
     sliderColumns.setValueIsAdjusting(true);
-
-    javax.swing.GroupLayout EditorViewLayout = new javax.swing.GroupLayout(EditorView);
-    EditorView.setLayout(EditorViewLayout);
-    EditorViewLayout.setHorizontalGroup(
-      EditorViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGap(0, 598, Short.MAX_VALUE)
-    );
-    EditorViewLayout.setVerticalGroup(
-      EditorViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGap(0, 322, Short.MAX_VALUE)
-    );
-
-    p_ScrollPane.setViewportView(EditorView);
+    sliderColumns.addChangeListener(new javax.swing.event.ChangeListener() {
+      public void stateChanged(javax.swing.event.ChangeEvent evt) {
+        sliderColumnsStateChanged(evt);
+      }
+    });
 
     buttonLock.setText("LOCK");
     buttonLock.setToolTipText("To lock current memory position and cols number");
@@ -158,50 +143,6 @@ public class MainFrame extends javax.swing.JFrame implements BoundedRangeModel, 
     });
 
     panelTools.setBorder(javax.swing.BorderFactory.createTitledBorder("Tools"));
-
-    buttonGroupTools.add(buttonPencil);
-    buttonPencil.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/Pencil.GIF"))); // NOI18N
-    buttonPencil.setToolTipText("To set pixels on the field. Lft btn - INK, Rght btn - PAPER");
-    buttonPencil.setFocusable(false);
-    buttonPencil.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        buttonPencilActionPerformed(evt);
-      }
-    });
-    panelTools.add(buttonPencil);
-
-    buttonGroupTools.add(buttonEraser);
-    buttonEraser.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/Rubber.GIF"))); // NOI18N
-    buttonEraser.setToolTipText("To erase color information from the field");
-    buttonEraser.setFocusable(false);
-    buttonEraser.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        buttonEraserActionPerformed(evt);
-      }
-    });
-    panelTools.add(buttonEraser);
-
-    buttonGroupTools.add(buttonSelector);
-    buttonSelector.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/Lasso.GIF"))); // NOI18N
-    buttonSelector.setToolTipText("To select a work area for operations");
-    buttonSelector.setFocusable(false);
-    buttonSelector.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        buttonSelectorActionPerformed(evt);
-      }
-    });
-    panelTools.add(buttonSelector);
-
-    buttonGroupTools.add(buttonColorReplacer);
-    buttonColorReplacer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/Colors.GIF"))); // NOI18N
-    buttonColorReplacer.setToolTipText("To put color pixels depend on original memory bit state. Lft btn - INK, Rght btn - PAPER");
-    buttonColorReplacer.setFocusable(false);
-    buttonColorReplacer.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        buttonColorReplacerActionPerformed(evt);
-      }
-    });
-    panelTools.add(buttonColorReplacer);
 
     colorSelector.setToolTipText("Colors for paint (Lft btn - INK, Rght btn - PAPER)");
 
@@ -216,10 +157,11 @@ public class MainFrame extends javax.swing.JFrame implements BoundedRangeModel, 
       .addGap(0, 86, Short.MAX_VALUE)
     );
 
-    p_TextField_Position.setEditable(false);
-    p_TextField_Position.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    p_TextField_Position.setToolTipText("Current memory position as hex value");
-    p_TextField_Position.setFocusable(false);
+    textFieldAddress.setEditable(false);
+    textFieldAddress.setFont(new java.awt.Font("Courier New", 1, 14)); // NOI18N
+    textFieldAddress.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    textFieldAddress.setToolTipText("Current memory position as hex value");
+    textFieldAddress.setFocusable(false);
 
     sliderPenWidth.setToolTipText("Width of an operation tool");
     sliderPenWidth.setDoubleBuffered(false);
@@ -227,11 +169,67 @@ public class MainFrame extends javax.swing.JFrame implements BoundedRangeModel, 
     sliderPenWidth.setMinimumSize(new java.awt.Dimension(96, 84));
     sliderPenWidth.setPreferredSize(new java.awt.Dimension(96, 84));
 
+    mainEditorPanel.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+      public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
+        mainEditorPanelMouseWheelMoved(evt);
+      }
+    });
+    mainEditorPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+      public void mousePressed(java.awt.event.MouseEvent evt) {
+        mainEditorPanelMousePressed(evt);
+      }
+      public void mouseEntered(java.awt.event.MouseEvent evt) {
+        mainEditorPanelMouseEntered(evt);
+      }
+      public void mouseExited(java.awt.event.MouseEvent evt) {
+        mainEditorPanelMouseExited(evt);
+      }
+    });
+    mainEditorPanel.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+      public void mouseMoved(java.awt.event.MouseEvent evt) {
+        mainEditorPanelMouseMoved(evt);
+      }
+    });
+
+    javax.swing.GroupLayout mainEditorPanelLayout = new javax.swing.GroupLayout(mainEditorPanel);
+    mainEditorPanel.setLayout(mainEditorPanelLayout);
+    mainEditorPanelLayout.setHorizontalGroup(
+      mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+      .addGap(0, 598, Short.MAX_VALUE)
+      .addGroup(mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(mainEditorPanelLayout.createSequentialGroup()
+          .addGap(0, 0, Short.MAX_VALUE)
+          .addComponent(mainEditor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+          .addGap(0, 0, Short.MAX_VALUE)))
+    );
+    mainEditorPanelLayout.setVerticalGroup(
+      mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+      .addGap(0, 387, Short.MAX_VALUE)
+      .addGroup(mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(mainEditorPanelLayout.createSequentialGroup()
+          .addGap(0, 0, Short.MAX_VALUE)
+          .addComponent(mainEditor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+          .addGap(0, 0, Short.MAX_VALUE)))
+    );
+
+    jScrollPane1.setViewportView(mainEditorPanel);
+
+    jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+    javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+    jPanel2.setLayout(jPanel2Layout);
+    jPanel2Layout.setHorizontalGroup(
+      jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+      .addGap(0, 0, Short.MAX_VALUE)
+    );
+    jPanel2Layout.setVerticalGroup(
+      jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+      .addGap(0, 23, Short.MAX_VALUE)
+    );
+
     menuFile.setText("File");
 
-    menuFileOpen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_L, java.awt.event.InputEvent.CTRL_MASK));
     menuFileOpen.setText("Open");
-    menuFileOpen.setToolTipText("Open a hobeta file or a ZX-Poly project file");
     menuFileOpen.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         menuFileOpenActionPerformed(evt);
@@ -239,53 +237,15 @@ public class MainFrame extends javax.swing.JFrame implements BoundedRangeModel, 
     });
     menuFile.add(menuFileOpen);
 
-    menuFileSaveAs.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
-    menuFileSaveAs.setText("Save as..");
-    menuFileSaveAs.setToolTipText("Save current data as a ZX-Poly project");
-    menuFileSaveAs.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuFileSaveAsActionPerformed(evt);
-      }
-    });
-    menuFile.add(menuFileSaveAs);
+    menuFileSave.setText("Save");
+    menuFile.add(menuFileSave);
 
-    menuFileOpenFromTAP.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_T, java.awt.event.InputEvent.CTRL_MASK));
-    menuFileOpenFromTAP.setText("Open from TAP");
-    menuFileOpenFromTAP.setToolTipText("Open a file from a TAP file");
-    menuFileOpenFromTAP.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuFileOpenFromTAPActionPerformed(evt);
-      }
-    });
-    menuFile.add(menuFileOpenFromTAP);
+    menuFileSaveAs.setText("Save as..");
+    menuFile.add(menuFileSaveAs);
     menuFile.add(jSeparator4);
 
-    menuFileExportAsTap.setText("Export as TAP");
-    menuFileExportAsTap.setToolTipText("Export current data as a TAP file contains separated CPU data blocks");
-    menuFileExportAsTap.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuFileExportAsTapActionPerformed(evt);
-      }
-    });
-    menuFile.add(menuFileExportAsTap);
-
-    menuFileExportAsHobeta.setText("Export as Hobeta");
-    menuFileExportAsHobeta.setToolTipText("Export current data as a set of hobeta files");
-    menuFileExportAsHobeta.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuFileExportAsHobetaActionPerformed(evt);
-      }
-    });
-    menuFile.add(menuFileExportAsHobeta);
-
-    menuFileImportFromMultiHobeta.setText("Import from multiHobeta");
-    menuFileImportFromMultiHobeta.setToolTipText("Import data from a set of hobeta files");
-    menuFileImportFromMultiHobeta.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuFileImportFromMultiHobetaActionPerformed(evt);
-      }
-    });
-    menuFile.add(menuFileImportFromMultiHobeta);
+    menuFileExportAs.setText("Export as..");
+    menuFile.add(menuFileExportAs);
     menuFile.add(jSeparator1);
 
     menuFileExit.setText("Exit");
@@ -297,125 +257,62 @@ public class MainFrame extends javax.swing.JFrame implements BoundedRangeModel, 
     });
     menuFile.add(menuFileExit);
 
-    jMenuBar1.add(menuFile);
+    menuBar.add(menuFile);
 
     menuEdit.setText("Edit");
-
-    menuEditUndo.setText("Undo");
-    menuEditUndo.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditUndoActionPerformed(evt);
-      }
-    });
-    menuEdit.add(menuEditUndo);
-
-    menuEditRemoveSelection.setText("Remove selection");
-    menuEditRemoveSelection.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditRemoveSelectionActionPerformed(evt);
-      }
-    });
-    menuEdit.add(menuEditRemoveSelection);
-
-    menuEditClearAllColors.setText("Clear all colors");
-    menuEditClearAllColors.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditClearAllColorsActionPerformed(evt);
-      }
-    });
-    menuEdit.add(menuEditClearAllColors);
-
-    menuEditInvertDataInSelectedArea.setText("Invert data in selected area");
-    menuEditInvertDataInSelectedArea.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditInvertDataInSelectedAreaActionPerformed(evt);
-      }
-    });
-    menuEdit.add(menuEditInvertDataInSelectedArea);
-
-    jMenuBar1.add(menuEdit);
+    menuBar.add(menuEdit);
 
     menuOptions.setText("Options");
-
-    buttonGroupModes.add(p_Mode_ZXPoly);
-    p_Mode_ZXPoly.setSelected(true);
-    p_Mode_ZXPoly.setText("ZX-Poly (256x192)");
-    menuOptions.add(p_Mode_ZXPoly);
-
-    buttonGroupModes.add(p_Mode_ZX512x384);
-    p_Mode_ZX512x384.setText("ZX-512x384");
-    p_Mode_ZX512x384.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        p_Mode_ZX512x384ActionPerformed(evt);
-      }
-    });
-    menuOptions.add(p_Mode_ZX512x384);
     menuOptions.add(jSeparator3);
-
-    p_MenuItem_ZXScreenMode.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, 0));
-    p_MenuItem_ZXScreenMode.setText("ZX-Screen mode");
-    p_MenuItem_ZXScreenMode.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        ZXScreenOptionChange(evt);
-      }
-    });
-    menuOptions.add(p_MenuItem_ZXScreenMode);
-
-    p_ShowGrid.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_G, 0));
-    p_ShowGrid.setText("Grid");
-    p_ShowGrid.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        p_ShowGridActionPerformed(evt);
-      }
-    });
-    menuOptions.add(p_ShowGrid);
-
-    p_MenuOption_Inverted.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_I, 0));
-    p_MenuOption_Inverted.setText("Inverted");
-    p_MenuOption_Inverted.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        InvertedOptionChange(evt);
-      }
-    });
-    menuOptions.add(p_MenuOption_Inverted);
-
-    p_MenuItem_ShowColumnBorders.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_B, 0));
-    p_MenuItem_ShowColumnBorders.setText("Column borders");
-    p_MenuItem_ShowColumnBorders.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        p_MenuItem_ShowColumnBordersActionPerformed(evt);
-      }
-    });
-    menuOptions.add(p_MenuItem_ShowColumnBorders);
     menuOptions.add(jSeparator2);
 
-    p_Zoom_1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_1, java.awt.event.InputEvent.ALT_MASK));
-    buttonGroupZoom.add(p_Zoom_1);
-    p_Zoom_1.setSelected(true);
-    p_Zoom_1.setText("x1");
-    menuOptions.add(p_Zoom_1);
+    menuOptionsGrid.setSelected(true);
+    menuOptionsGrid.setText("Grid");
+    menuOptionsGrid.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsGridActionPerformed(evt);
+      }
+    });
+    menuOptions.add(menuOptionsGrid);
 
-    p_Zoom_2.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_2, java.awt.event.InputEvent.ALT_MASK));
-    buttonGroupZoom.add(p_Zoom_2);
-    p_Zoom_2.setText("x2");
-    menuOptions.add(p_Zoom_2);
+    menuOptionsColumns.setSelected(true);
+    menuOptionsColumns.setText("Columns");
+    menuOptionsColumns.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsColumnsActionPerformed(evt);
+      }
+    });
+    menuOptions.add(menuOptionsColumns);
 
-    p_Zoom_4.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_3, java.awt.event.InputEvent.ALT_MASK));
-    buttonGroupZoom.add(p_Zoom_4);
-    p_Zoom_4.setText("x4");
-    menuOptions.add(p_Zoom_4);
+    menuOptionsInvertBase.setSelected(true);
+    menuOptionsInvertBase.setText("Invert base");
+    menuOptionsInvertBase.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsInvertBaseActionPerformed(evt);
+      }
+    });
+    menuOptions.add(menuOptionsInvertBase);
+    menuOptions.add(jSeparator5);
 
-    p_Zoom_8.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_4, java.awt.event.InputEvent.ALT_MASK));
-    buttonGroupZoom.add(p_Zoom_8);
-    p_Zoom_8.setText("x8");
-    menuOptions.add(p_Zoom_8);
+    menuOptionsZXScreen.setSelected(true);
+    menuOptionsZXScreen.setText("ZX-Screen addressing");
+    menuOptionsZXScreen.addChangeListener(new javax.swing.event.ChangeListener() {
+      public void stateChanged(javax.swing.event.ChangeEvent evt) {
+        menuOptionsZXScreenStateChanged(evt);
+      }
+    });
+    menuOptions.add(menuOptionsZXScreen);
 
-    p_Zoom_16.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_5, java.awt.event.InputEvent.ALT_MASK));
-    buttonGroupZoom.add(p_Zoom_16);
-    p_Zoom_16.setText("x16");
-    menuOptions.add(p_Zoom_16);
+    menuOptionsMode512.setSelected(true);
+    menuOptionsMode512.setText("512 video mode");
+    menuOptionsMode512.addChangeListener(new javax.swing.event.ChangeListener() {
+      public void stateChanged(javax.swing.event.ChangeEvent evt) {
+        menuOptionsMode512StateChanged(evt);
+      }
+    });
+    menuOptions.add(menuOptionsMode512);
 
-    jMenuBar1.add(menuOptions);
+    menuBar.add(menuOptions);
 
     menuHelp.setText("Help");
 
@@ -427,53 +324,61 @@ public class MainFrame extends javax.swing.JFrame implements BoundedRangeModel, 
     });
     menuHelp.add(menuHelpAbout);
 
-    jMenuBar1.add(menuHelp);
+    menuBar.add(menuHelp);
 
-    setJMenuBar(jMenuBar1);
+    setJMenuBar(menuBar);
 
     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
     getContentPane().setLayout(layout);
     layout.setHorizontalGroup(
       layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+      .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
       .addGroup(layout.createSequentialGroup()
+        .addContainerGap()
         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
           .addGroup(layout.createSequentialGroup()
-            .addGap(20, 20, 20)
-            .addComponent(colorSelector, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-          .addGroup(layout.createSequentialGroup()
-            .addContainerGap()
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-              .addComponent(p_ScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 601, Short.MAX_VALUE)
-              .addComponent(sliderColumns, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(scrollBarPosition, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-          .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
-          .addComponent(p_TextField_Position, javax.swing.GroupLayout.Alignment.TRAILING)
-          .addComponent(buttonLock, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-          .addComponent(sliderPenWidth, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+              .addGroup(layout.createSequentialGroup()
+                .addComponent(jScrollPane1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrollBarAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+              .addComponent(colorSelector, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+              .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+              .addComponent(sliderPenWidth, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+          .addGroup(layout.createSequentialGroup()
+            .addComponent(sliderColumns, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGap(29, 29, 29)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+              .addComponent(textFieldAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+              .addComponent(buttonLock, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE))))
         .addContainerGap())
     );
+
+    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {buttonLock, textFieldAddress});
+
     layout.setVerticalGroup(
       layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
       .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
         .addContainerGap()
         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-          .addComponent(panelTools, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-          .addComponent(scrollBarPosition, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE)
-          .addComponent(p_ScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE))
+          .addComponent(scrollBarAddress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+          .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
+          .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-          .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-            .addComponent(sliderColumns, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addComponent(p_TextField_Position, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-          .addComponent(buttonLock))
+        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+          .addComponent(sliderColumns, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+          .addGroup(layout.createSequentialGroup()
+            .addComponent(buttonLock)
+            .addGap(0, 0, 0)
+            .addComponent(textFieldAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-          .addComponent(sliderPenWidth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-          .addComponent(colorSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        .addContainerGap())
+        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+          .addComponent(colorSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+          .addComponent(sliderPenWidth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
     );
 
     layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {colorSelector, sliderPenWidth});
@@ -490,534 +395,203 @@ public class MainFrame extends javax.swing.JFrame implements BoundedRangeModel, 
 
     }//GEN-LAST:event_applicationClosing
 
-        private void ZXScreenOptionChange(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ZXScreenOptionChange
-          EditorView.setZXVideoLineAddressing(p_MenuItem_ZXScreenMode.isSelected());
-        }//GEN-LAST:event_ZXScreenOptionChange
-
-        private void InvertedOptionChange(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_InvertedOptionChange
-          EditorView.setInverted(p_MenuOption_Inverted.isSelected());
-        }//GEN-LAST:event_InvertedOptionChange
-
-        private void p_ShowGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_p_ShowGridActionPerformed
-          EditorView.setGrid(p_ShowGrid.isSelected());
-        }//GEN-LAST:event_p_ShowGridActionPerformed
-
         private void buttonLockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLockActionPerformed
-          setLockedOffsets(buttonLock.isSelected());
-}//GEN-LAST:event_buttonLockActionPerformed
-
-  private void clearAllPaintedData() {
-    if (JOptionPane.showConfirmDialog(this, "To clear all?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-      EditorView.clearAllPainted();
-    }
-  }
-
-        private void buttonSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSelectorActionPerformed
-          EditorView.setTool(Tool.SELECTOR);
-        }//GEN-LAST:event_buttonSelectorActionPerformed
-
-        private void buttonPencilActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonPencilActionPerformed
-          EditorView.setTool(Tool.PENCIL);
-        }//GEN-LAST:event_buttonPencilActionPerformed
-
-        private void buttonEraserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonEraserActionPerformed
-          EditorView.setTool(Tool.ERASER);
-        }//GEN-LAST:event_buttonEraserActionPerformed
-
-        private void buttonColorReplacerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonColorReplacerActionPerformed
-          EditorView.setTool(Tool.COLORREPLACER);
-        }//GEN-LAST:event_buttonColorReplacerActionPerformed
-
-        private void menuEditUndoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditUndoActionPerformed
-          EditorView.undoEdit();
-        }//GEN-LAST:event_menuEditUndoActionPerformed
-
-        private void menuFileSaveAsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSaveAsActionPerformed
-          if (EditorView.hasInformation()) {
-            JFileChooser p_fchooser = new JFileChooser(p_LastOpenedFile);
-            p_fchooser.setFileFilter(new FileFilter() {
-
-              @Override
-              public boolean accept(File f) {
-                if (f == null) {
-                  return false;
-                }
-
-                if (f.isDirectory()) {
-                  return true;
-                }
-
-                String s_name = f.getName().toLowerCase();
-
-                if (s_name.endsWith(".zxp")) {
-                  return true;
-                }
-                return false;
-              }
-
-              @Override
-              public String getDescription() {
-                return "ZXP files (*.zxp)";
-              }
-            });
-            if (p_fchooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-              File p_file = p_fchooser.getSelectedFile();
-
-              if (!p_file.getName().toLowerCase().endsWith(".zxp")) {
-                p_file = new File(p_file.getAbsolutePath() + ".zxp");
-              }
-
-              p_LastOpenedFile = p_file;
-              FileOutputStream p_ous = null;
-              try {
-                p_ous = new FileOutputStream(p_file);
-                EditorView.saveToOutputStream(p_ous);
-                setTitle(p_file.getAbsolutePath());
-              }
-              catch (Throwable _thr) {
-              }
-              finally {
-                if (p_ous != null) {
-                  try {
-                    p_ous.close();
-                  }
-                  catch (Throwable _tt) {
-                  }
-                }
-              }
+          if (this.buttonLock.isSelected()) {
+            this.scrollBarAddress.setEnabled(false);
+            this.sliderColumns.setEnabled(false);
+          }
+          else {
+            if (this.mainEditor.getProcessingData() != null) {
+              this.scrollBarAddress.setEnabled(true);
             }
-
+            this.sliderColumns.setEnabled(true);
           }
-        }//GEN-LAST:event_menuFileSaveAsActionPerformed
-
-        private void menuFileExportAsHobetaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileExportAsHobetaActionPerformed
-          if (EditorView.getHobetaContainer() != null) {
-            new ExportHobetaDialog(this, EditorView);
-          }
-        }//GEN-LAST:event_menuFileExportAsHobetaActionPerformed
-
-        private void menuEditRemoveSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditRemoveSelectionActionPerformed
-          EditorView.removeSelection();
-        }//GEN-LAST:event_menuEditRemoveSelectionActionPerformed
-
-        private void menuEditInvertDataInSelectedAreaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditInvertDataInSelectedAreaActionPerformed
-          EditorView.invertZXDataInSelectedRectangle();
-        }//GEN-LAST:event_menuEditInvertDataInSelectedAreaActionPerformed
-
-        private void menuEditClearAllColorsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditClearAllColorsActionPerformed
-          if (JOptionPane.showConfirmDialog(this, "To remove all color data?", "Are you sure?", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            clearAllPaintedData();
-          }
-        }//GEN-LAST:event_menuEditClearAllColorsActionPerformed
-
-        private void menuFileOpenActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuFileOpenActionPerformed
-        {//GEN-HEADEREND:event_menuFileOpenActionPerformed
-          loadFile();
-}//GEN-LAST:event_menuFileOpenActionPerformed
-
-        private void menuFileImportFromMultiHobetaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileImportFromMultiHobetaActionPerformed
-          if (!EditorView.hasInformation()) {
-            return;
-          }
-          new ImportDialog(this, EditorView);
-          EditorView.redrawImageBuffer();
-          EditorView.repaint();
-        }//GEN-LAST:event_menuFileImportFromMultiHobetaActionPerformed
-
-        private void p_MenuItem_ShowColumnBordersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_p_MenuItem_ShowColumnBordersActionPerformed
-          EditorView.setShowColumnBorders(p_MenuItem_ShowColumnBorders.isSelected());
-        }//GEN-LAST:event_p_MenuItem_ShowColumnBordersActionPerformed
+}//GEN-LAST:event_buttonLockActionPerformed
 
         private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuHelpAboutActionPerformed
           new AboutDialog(this);
         }//GEN-LAST:event_menuHelpAboutActionPerformed
 
-        private void menuFileOpenFromTAPActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuFileOpenFromTAPActionPerformed
-        {//GEN-HEADEREND:event_menuFileOpenFromTAPActionPerformed
-          loadFileFromTap();
-        }//GEN-LAST:event_menuFileOpenFromTAPActionPerformed
+  private void mainEditorPanelMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseWheelMoved
+    if (evt.getWheelRotation() < 0) {
+      this.mainEditor.zoomIn();
+    }
+    else {
+      this.mainEditor.zoomOut();
+    }
+  }//GEN-LAST:event_mainEditorPanelMouseWheelMoved
 
-        private void menuFileExportAsTapActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuFileExportAsTapActionPerformed
-        {//GEN-HEADEREND:event_menuFileExportAsTapActionPerformed
-          if (EditorView.getHobetaContainer() != null) {
-            new ExportTAPDialog(this, EditorView);
+  private void sliderColumnsStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderColumnsStateChanged
+    this.mainEditor.setColumns(this.sliderColumns.getValue());
+    updateAddressScrollBar();
+  }//GEN-LAST:event_sliderColumnsStateChanged
+
+  private void menuFileOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileOpenActionPerformed
+    final JFileChooser chooser = new JFileChooser(openedFile);
+    chooser.setAcceptAllFileFilterUsed(false);
+
+    for (final AbstractFilePlugin plugin : container.getComponents(AbstractFilePlugin.class)) {
+      chooser.addChoosableFileFilter(plugin);
+    }
+
+    final InsideFileView insideFileView = new InsideFileView(chooser);
+    chooser.setAccessory(insideFileView);
+
+    if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+      final AbstractFilePlugin plugin = (AbstractFilePlugin) chooser.getFileFilter();
+      final File selectedFile = chooser.getSelectedFile();
+
+      try {
+        int selected = -1;
+        if (plugin.hasInsideFileList()) {
+          final SelectInsideDataDialog itemSelector = new SelectInsideDataDialog(this, selectedFile, plugin);
+          itemSelector.setVisible(true);
+          selected = itemSelector.getSelectedIndex();
+          if (selected < 0) {
+            return;
           }
-        }//GEN-LAST:event_menuFileExportAsTapActionPerformed
+        }
+        final ZXPolyData data = plugin.readFrom(selectedFile, selected);
+        this.setTitle(selectedFile.getAbsolutePath());
+        this.mainEditor.setProcessingData(data);
+      }
+      catch (IOException ex) {
+        JOptionPane.showMessageDialog(this, "Can't read file or its part", "Error", JOptionPane.ERROR_MESSAGE);
+      }
+      finally {
+        updateAddressScrollBar();
+      }
+    }
+  }//GEN-LAST:event_menuFileOpenActionPerformed
 
-  private void p_Mode_ZX512x384ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_p_Mode_ZX512x384ActionPerformed
-    // TODO add your handling code here:
-  }//GEN-LAST:event_p_Mode_ZX512x384ActionPerformed
+  private void scrollBarAddressAdjustmentValueChanged(java.awt.event.AdjustmentEvent evt) {//GEN-FIRST:event_scrollBarAddressAdjustmentValueChanged
+    final int address = evt.getValue();
+    this.mainEditor.setAddress(address);
+    final String addressAsString = Integer.toHexString(address).toUpperCase(Locale.ENGLISH);
+    this.textFieldAddress.setText("#" + (addressAsString.length() < 4 ? "0000".substring(0, 4 - addressAsString.length()) : "") + addressAsString);
+  }//GEN-LAST:event_scrollBarAddressAdjustmentValueChanged
+
+  private void menuOptionsZXScreenStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_menuOptionsZXScreenStateChanged
+    this.mainEditor.setZXScreenMode(this.menuOptionsZXScreen.isSelected());
+  }//GEN-LAST:event_menuOptionsZXScreenStateChanged
+
+  private void menuOptionsGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsGridActionPerformed
+    this.mainEditor.setShowGrid(this.menuOptionsGrid.isSelected());
+  }//GEN-LAST:event_menuOptionsGridActionPerformed
+
+  private void menuOptionsColumnsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsColumnsActionPerformed
+    this.mainEditor.setShowColumnBorders(this.menuOptionsColumns.isSelected());
+  }//GEN-LAST:event_menuOptionsColumnsActionPerformed
+
+  private void menuOptionsInvertBaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsInvertBaseActionPerformed
+    this.mainEditor.setInvertShowBaseData(this.menuOptionsInvertBase.isSelected());
+  }//GEN-LAST:event_menuOptionsInvertBaseActionPerformed
+
+  private Point point2editor(final Point point) {
+    if (point == null) {
+      return null;
+    }
+    return SwingUtilities.convertPoint(this.mainEditorPanel, point, this.mainEditor);
+  }
+
+  private void processCurrentToolForPoint(final int mouseButtons, final int modifiers){
+    final Rectangle toolRect = this.mainEditor.getToolArea();
+    
+    if (toolRect!=null){
+      final AbstractTool tool = (AbstractTool) this.toolsButtonGroup.getSelection();
+      if (tool != null) {
+        tool.process(this.mainEditor, toolRect, mouseButtons, modifiers);
+      }
+    }
+  }
+
+  private Rectangle updateToolRectangle(final Point point){
+     final Point editorPoint =  this.mainEditor.mousePoint2ScreenPoint(SwingUtilities.convertPoint(this.mainEditorPanel, point, this.mainEditor));
+     final int width = this.sliderPenWidth.getValue();
+     final Rectangle rect;
+     if (width <= 1){
+        rect = new Rectangle(editorPoint.x, editorPoint.y, 1, 1);
+     }else{
+        rect = new Rectangle(editorPoint.x-(width>>1), editorPoint.y-(width>>1), width, width);
+     }
+     
+     this.mainEditor.setToolArea(rect);
+     return rect;
+  }
+  
+  private void mainEditorPanelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMousePressed
+    updateToolRectangle(evt.getPoint());
+    processCurrentToolForPoint(evt.getButton(), evt.getModifiers());
+  }//GEN-LAST:event_mainEditorPanelMousePressed
+
+  private void mainEditorPanelMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseMoved
+    updateToolRectangle(evt.getPoint());
+  }//GEN-LAST:event_mainEditorPanelMouseMoved
+
+  private void mainEditorPanelMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseExited
+    this.mainEditor.setToolArea(null);
+  }//GEN-LAST:event_mainEditorPanelMouseExited
+
+  private void mainEditorPanelMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseEntered
+    updateToolRectangle(evt.getPoint());
+  }//GEN-LAST:event_mainEditorPanelMouseEntered
+
+  private void menuOptionsMode512StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_menuOptionsMode512StateChanged
+    this.mainEditor.setMode512(this.menuOptionsMode512.isSelected());
+  }//GEN-LAST:event_menuOptionsMode512StateChanged
+
+  
+  private void updateAddressScrollBar() {
+    this.sliderColumns.setEnabled(true);
+    this.scrollBarAddress.setMinimum(0);
+    if (this.mainEditor.getProcessingData() == null) {
+      this.scrollBarAddress.setEnabled(false);
+    }
+    else {
+      this.scrollBarAddress.setMaximum(Math.max(0, this.mainEditor.getProcessingData().length() - 32));
+      this.scrollBarAddress.setEnabled(true);
+      this.scrollBarAddress.setValue(this.mainEditor.getAddress());
+      this.scrollBarAddress.setUnitIncrement(this.mainEditor.getColumns());
+      this.scrollBarAddress.setBlockIncrement(this.mainEditor.getColumns() * 96);
+      this.scrollBarAddress.setVisibleAmount(this.mainEditor.getColumns() * 192);
+    }
+    this.scrollBarAddress.repaint();
+  }
 
   // Variables declaration - do not modify//GEN-BEGIN:variables
-  private com.igormaznitsa.zxpspritecorrector.components.EditorComponent EditorView;
-  private javax.swing.JToggleButton buttonColorReplacer;
-  private javax.swing.JToggleButton buttonEraser;
-  private javax.swing.ButtonGroup buttonGroupModes;
-  private javax.swing.ButtonGroup buttonGroupTools;
-  private javax.swing.ButtonGroup buttonGroupZoom;
   private javax.swing.JToggleButton buttonLock;
-  private javax.swing.JToggleButton buttonPencil;
-  private javax.swing.JToggleButton buttonSelector;
   private com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector colorSelector;
-  private javax.swing.JMenuBar jMenuBar1;
+  private javax.swing.JPanel jPanel2;
+  private javax.swing.JScrollPane jScrollPane1;
   private javax.swing.JSeparator jSeparator1;
   private javax.swing.JSeparator jSeparator2;
   private javax.swing.JSeparator jSeparator3;
-  private javax.swing.JSeparator jSeparator4;
+  private javax.swing.JPopupMenu.Separator jSeparator4;
+  private javax.swing.JPopupMenu.Separator jSeparator5;
+  private com.igormaznitsa.zxpspritecorrector.components.EditorComponent mainEditor;
+  private javax.swing.JPanel mainEditorPanel;
+  private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuEdit;
-  private javax.swing.JMenuItem menuEditClearAllColors;
-  private javax.swing.JMenuItem menuEditInvertDataInSelectedArea;
-  private javax.swing.JMenuItem menuEditRemoveSelection;
-  private javax.swing.JMenuItem menuEditUndo;
   private javax.swing.JMenu menuFile;
   private javax.swing.JMenuItem menuFileExit;
-  private javax.swing.JMenuItem menuFileExportAsHobeta;
-  private javax.swing.JMenuItem menuFileExportAsTap;
-  private javax.swing.JMenuItem menuFileImportFromMultiHobeta;
+  private javax.swing.JMenu menuFileExportAs;
   private javax.swing.JMenuItem menuFileOpen;
-  private javax.swing.JMenuItem menuFileOpenFromTAP;
+  private javax.swing.JMenuItem menuFileSave;
   private javax.swing.JMenuItem menuFileSaveAs;
   private javax.swing.JMenu menuHelp;
   private javax.swing.JMenuItem menuHelpAbout;
   private javax.swing.JMenu menuOptions;
-  private javax.swing.JCheckBoxMenuItem p_MenuItem_ShowColumnBorders;
-  private javax.swing.JCheckBoxMenuItem p_MenuItem_ZXScreenMode;
-  private javax.swing.JCheckBoxMenuItem p_MenuOption_Inverted;
-  private javax.swing.JCheckBoxMenuItem p_Mode_ZX512x384;
-  private javax.swing.JCheckBoxMenuItem p_Mode_ZXPoly;
-  private javax.swing.JScrollPane p_ScrollPane;
-  private javax.swing.JCheckBoxMenuItem p_ShowGrid;
-  private javax.swing.JTextField p_TextField_Position;
-  private javax.swing.JRadioButtonMenuItem p_Zoom_1;
-  private javax.swing.JRadioButtonMenuItem p_Zoom_16;
-  private javax.swing.JRadioButtonMenuItem p_Zoom_2;
-  private javax.swing.JRadioButtonMenuItem p_Zoom_4;
-  private javax.swing.JRadioButtonMenuItem p_Zoom_8;
+  private javax.swing.JCheckBoxMenuItem menuOptionsColumns;
+  private javax.swing.JCheckBoxMenuItem menuOptionsGrid;
+  private javax.swing.JCheckBoxMenuItem menuOptionsInvertBase;
+  private javax.swing.JCheckBoxMenuItem menuOptionsMode512;
+  private javax.swing.JCheckBoxMenuItem menuOptionsZXScreen;
   private javax.swing.JPanel panelTools;
-  private javax.swing.JScrollBar scrollBarPosition;
+  private javax.swing.JScrollBar scrollBarAddress;
   private javax.swing.JSlider sliderColumns;
   private com.igormaznitsa.zxpspritecorrector.components.PenWidth sliderPenWidth;
+  private javax.swing.JTextField textFieldAddress;
+  private javax.swing.ButtonGroup toolsButtonGroup;
   // End of variables declaration//GEN-END:variables
-  @Override
-    public int getMinimum() {
-    return 1;
-  }
 
-  @Override
-  public void setMinimum(final int newMinimum) {
-  }
-
-  @Override
-  public int getMaximum() {
-    return 32;
-  }
-
-  @Override
-  public void setMaximum(final int newMaximum) {
-  }
-
-  @Override
-  public int getValue() {
-    return EditorView.getColumnNumber();
-  }
-
-  @Override
-  public void setValue(final int newValue) {
-    EditorView.setColumnNumber(newValue);
-    scrollBarPosition.setBlockIncrement(newValue);
-    scrollBarPosition.setUnitIncrement(1);
-
-    for (ChangeListener p_listener : changeListener) {
-      p_listener.stateChanged(new ChangeEvent(this));
-    }
-  }
-
-  @Override
-  public void setValueIsAdjusting(boolean b) {
-  }
-
-  @Override
-  public boolean getValueIsAdjusting() {
-    return true;
-  }
-
-  @Override
-  public int getExtent() {
-    return 0;
-  }
-
-  @Override
-  public void setExtent(int newExtent) {
-
-  }
-
-  @Override
-  public void setRangeProperties(int value, int extent, int min, int max, boolean adjusting) {
-  }
-
-  @Override
-  public void addChangeListener(final ChangeListener l) {
-      changeListener.add(l);
-  }
-
-  @Override
-  public void removeChangeListener(final ChangeListener l) {
-    changeListener.remove(l);
-  }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    if (e == null) {
-      return;
-    }
-    Object p_src = e.getSource();
-
-    if (p_src.equals(p_Mode_ZXPoly)) {
-      EditorView.setGraphicMode(VideoMode.ZXPOLY);
-      EditorView.revalidate();
-    }
-    else if (p_src.equals(p_Mode_ZX512x384)) {
-      EditorView.setGraphicMode(VideoMode.ZX_512x384);
-      EditorView.revalidate();
-    }
-    else if (p_src.equals(p_Zoom_1)) {
-      EditorView.setZoom(1);
-      EditorView.revalidate();
-    }
-    else if (p_src.equals(p_Zoom_2)) {
-      EditorView.setZoom(2);
-      EditorView.revalidate();
-    }
-    else if (p_src.equals(p_Zoom_4)) {
-      EditorView.setZoom(4);
-      EditorView.revalidate();
-    }
-    else if (p_src.equals(p_Zoom_8)) {
-      EditorView.setZoom(8);
-      EditorView.revalidate();
-    }
-    else if (p_src.equals(p_Zoom_16)) {
-      EditorView.setZoom(16);
-      EditorView.revalidate();
-    }
-    else if (p_src.equals(colorSelector)) {
-      EditorView.setInkColorIndex(colorSelector.getSelectedInk());
-      EditorView.setPaintColorIndex(colorSelector.getSelectedPaint());
-    }
-  }
-
-  private void setLockedOffsets(boolean selected) {
-    EditorView.setLockFlag(selected);
-    scrollBarPosition.setEnabled(!selected);
-    sliderColumns.setEnabled(!selected);
-  }
-
-  protected void fillFromContainer() {
-    buttonLock.setSelected(EditorView.isLockFlag());
-    p_MenuOption_Inverted.setSelected(EditorView.isInverted());
-    p_MenuItem_ZXScreenMode.setSelected(EditorView.isZXScreen());
-    p_ShowGrid.setSelected(EditorView.isGrid());
-
-    p_MenuItem_ShowColumnBorders.setSelected(EditorView.isColumnBordersShown());
-
-    switch (EditorView.getZoom()) {
-      case 1:
-        p_Zoom_1.setSelected(true);
-        break;
-      case 2:
-        p_Zoom_2.setSelected(true);
-        break;
-      case 4:
-        p_Zoom_4.setSelected(true);
-        break;
-      case 8:
-        p_Zoom_8.setSelected(true);
-        break;
-      case 16:
-        p_Zoom_16.setSelected(true);
-        break;
-    }
-
-    buttonGroupTools.clearSelection();
-
-    switch (EditorView.getTool()) {
-      case COLORREPLACER:
-        buttonColorReplacer.setSelected(true);
-        break;
-      case ERASER:
-        buttonEraser.setSelected(true);
-        break;
-      case PENCIL:
-        buttonPencil.setSelected(true);
-        break;
-      case SELECTOR:
-        buttonSelector.setSelected(true);
-        break;
-      case NONE: {
-        buttonGroupTools.clearSelection();
-      }
-      break;
-    }
-
-    sliderColumns.updateUI();
-    scrollBarPosition.updateUI();
-
-    p_ScrollPane.revalidate();
-
-    sliderColumns.setEnabled(!EditorView.isLockFlag());
-    scrollBarPosition.setEnabled(!EditorView.isLockFlag());
-
-    colorSelector.setInkIndex(EditorView.getColorInkIndex());
-    colorSelector.setPaintIndex(EditorView.getColorPaintIndex());
-
-    p_TextField_Position.setText("#" + Integer.toHexString(EditorView.getPosition()));
-  }
-
-  @Override
-  public void stateChanged(final ChangeEvent e) {
-    if (e == null) {
-      return;
-    }
-    if (EditorView.equals(e.getSource())) {
-      p_TextField_Position.setText("#" + Integer.toHexString(EditorView.getPosition()));
-
-      if (EditorView.getTool() == Tool.NONE) {
-        buttonGroupTools.clearSelection();
-      }
-    }
-  }
-
-  protected void loadFileFromTap() {
-    JFileChooser p_fileChooser = new JFileChooser(p_LastOpenedFile);
-    p_fileChooser.setDialogType(JFileChooser.OPEN_DIALOG);
-    p_fileChooser.setFileFilter(new FileFilter() {
-
-      @Override
-      public boolean accept(File f) {
-        if (f == null) {
-          return false;
-        }
-
-        if (f.isDirectory()) {
-          return true;
-        }
-
-        String s_name = f.getName().toLowerCase();
-
-        if (s_name.endsWith(".tap")) {
-          return true;
-        }
-        return false;
-      }
-
-      @Override
-      public String getDescription() {
-        return "TAP files (*.tap)";
-      }
-    });
-    p_fileChooser.setDragEnabled(false);
-    p_fileChooser.setMultiSelectionEnabled(false);
-    p_fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-    if (p_fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-      File p_file = p_fileChooser.getSelectedFile();
-      p_LastOpenedFile = p_file;
-
-      try {
-        SelectFileFromTapDialog p_selectTapFileDialog = new SelectFileFromTapDialog(this);
-        HobetaContainer p_container = p_selectTapFileDialog.select(p_file);
-
-        if (p_container != null) {
-          EditorView.setData(p_container);
-          setValue(32);
-          setTitle(p_file.getAbsolutePath());
-        }
-
-      }
-      catch (IOException _thr) {
-        _thr.printStackTrace();
-        JOptionPane.showMessageDialog(this, "I can't open the data block from the TAP file [" + p_file.getAbsolutePath() + ']', "Error", JOptionPane.ERROR_MESSAGE);
-      }
-      catch (IllegalArgumentException _ex) {
-        _ex.printStackTrace();
-        JOptionPane.showMessageDialog(this, "I can't open the file as a TAP file [" + p_file.getAbsolutePath() + ']', "Error", JOptionPane.ERROR_MESSAGE);
-      }
-    }
-  }
-
-  protected void loadFile() {
-    JFileChooser p_fileChooser = new JFileChooser(p_LastOpenedFile);
-    p_fileChooser.setDialogType(JFileChooser.OPEN_DIALOG);
-    p_fileChooser.setFileFilter(new FileFilter() {
-
-      @Override
-      public boolean accept(File f) {
-        if (f == null) {
-          return false;
-        }
-
-        if (f.isDirectory()) {
-          return true;
-        }
-
-        String s_name = f.getName().toLowerCase();
-
-        if (s_name.indexOf(".$") > 0) {
-          return true;
-        }
-        if (s_name.endsWith(".zxp")) {
-          return true;
-        }
-        return false;
-      }
-
-      @Override
-      public String getDescription() {
-        return "Hobeta files and ZXP files (*.$*, *.zxp)";
-      }
-    });
-    p_fileChooser.setDragEnabled(false);
-    p_fileChooser.setMultiSelectionEnabled(false);
-    p_fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-    if (p_fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-      File p_file = p_fileChooser.getSelectedFile();
-      p_LastOpenedFile = p_file;
-
-      try {
-        HobetaContainer p_container = new HobetaContainer(p_file);
-        EditorView.setData(p_container);
-
-        setValue(32);
-
-        setTitle(p_file.getAbsolutePath());
-      }
-      catch (IOException _thr) {
-        _thr.printStackTrace();
-        JOptionPane.showMessageDialog(this, "I can't open file " + p_file.getAbsolutePath(), "Error", JOptionPane.ERROR_MESSAGE);
-      }
-      catch (IllegalArgumentException _th) {
-        // try to load as project
-        FileInputStream p_ins = null;
-        try {
-          p_ins = new FileInputStream(p_file);
-          EditorView.loadFromStream(p_ins);
-
-          fillFromContainer();
-
-          setTitle(p_file.getAbsolutePath());
-        }
-        catch (IOException _ex) {
-          JOptionPane.showMessageDialog(this, p_file.getAbsolutePath() + " is an unsupported file format", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-        finally {
-          if (p_ins != null) {
-            try {
-              p_ins.close();
-            }
-            catch (Throwable _ii) {
-            }
-          }
-        }
-      }
-    }
-  }
 }

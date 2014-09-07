@@ -27,20 +27,33 @@ public enum VideoMode {
   ZXPOLY(256, 192),
   ZX_512x384(512, 384);
 
-  private static final int [] ZX_Y_DECODE_TABLE = new int [192];
+  private static final byte [] LINEAR_TO_ZX_Y = new byte[192];
+  private static final byte [] ZX_Y_TO_LINEAR = new byte[192];
   
   static {
-    for (int y = 0; y < 192; y++) {
-      ZX_Y_DECODE_TABLE[y] = calcYofAddress(y<<5);
+    int a = 16384;
+    for(int y = 0;y<192;y++){
+      final int zxy = extractYFromAddress(a);
+      LINEAR_TO_ZX_Y[y] = (byte)zxy;
+      ZX_Y_TO_LINEAR[zxy] = (byte)y;
+      a+=32;
     }
   }
-
-  public static int calcYofAddress(final int address) {
-    return (((address & 0x00e0)) >> 2) + (((address & 0x0700)) >> 8) + (((address & 0x1800)) >> 5);
+  
+  public static int zxy2y(final int y){
+    return ZX_Y_TO_LINEAR[y] & 0xFF;
+  }
+  
+  public static int y2zxy(final int y){
+    return LINEAR_TO_ZX_Y[y] & 0xFF;
+  }
+  
+  public static int extractYFromAddress(final int address) {
+    return ((address & 0x1800)>>5) | ((address & 0x700)>>8) | ((address & 0xE0)>>2);
   }
 
-  public static int linearYtoZXY(final int y){
-    return ZX_Y_DECODE_TABLE[y];
+  public static int extractXFromAddress(final int address){
+    return address & 0x1F;
   }
   
   private final Dimension size; 

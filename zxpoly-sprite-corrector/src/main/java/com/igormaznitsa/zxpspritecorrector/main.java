@@ -1,7 +1,7 @@
 package com.igormaznitsa.zxpspritecorrector;
 
 import java.util.Locale;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 
 public class main {
@@ -19,6 +19,16 @@ public class main {
     }
     catch (Exception e) {
     }
-    new MainFrame();
+
+    SwingUtilities.invokeLater(new Runnable() {
+
+      @Override
+      public void run() {
+        final JFrame frame = new MainFrame();
+        frame.invalidate();
+        frame.repaint();
+      }
+    });
+
   }
 }

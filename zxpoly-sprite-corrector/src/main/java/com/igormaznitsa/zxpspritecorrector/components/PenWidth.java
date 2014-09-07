@@ -41,7 +41,7 @@ public final class PenWidth extends JPanel implements BoundedRangeModel {
 
     widthSlider.setFocusable(false);
 
-    setBorder(BorderFactory.createTitledBorder("Pen width"));
+    setBorder(BorderFactory.createTitledBorder("Tool size"));
 
     setValue(1);
 

@@ -5,9 +5,9 @@ import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
 public class Util {
 
   public static byte[] makeDataForCPU(EditorComponent _editor, int _cpuIndex) {
-    byte[] ab_source = _editor.getDataArray();
-    byte[] ab_mask = _editor.getMaskArray();
-    int[] ai_color = _editor.getColorArray();
+    byte[] ab_source = null;// _editor.getDataArray();
+    byte[] ab_mask = null; //_editor.getMaskArray();
+    int[] ai_color = null;//_editor.getColorArray();
 
     int i_length = ab_source.length;
 

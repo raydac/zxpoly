@@ -38,7 +38,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="177" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="213" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jToggleButton1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -73,7 +73,7 @@
             </Property>
             <Property name="lineWrap" type="boolean" value="true"/>
             <Property name="rows" type="int" value="5"/>
-            <Property name="text" type="java.lang.String" value="The ZX-Poly sprite corrector (A Part of ZX-Poly platform emulator)&#xa;v. 1.1&#xa;--------------------------------------&#xa;(C) 2008-2014 Igor Maznitsa (igor.maznitsa@igormaznitsa.com)&#xa;&#xa;  The utility allows to load a Hobeta file and find sprites inside of opened binary block. Found sprites can be colorized with the editor and the result can be saved as separated Hobeta files."/>
+            <Property name="text" type="java.lang.String" value="The ZX-Poly sprite corrector v. 1.1&#xa;--------------------------------------&#xa;(C) 2008-2014 Igor Maznitsa (igor.maznitsa@igormaznitsa.com)&#xa;&#xa;  The utility allows to load a Hobeta file and find sprites inside of opened binary block. Found sprites can be colorized with the editor and the result can be saved as separated Hobeta files.&#xa;--------------------------------------&#xa;The Icon set from http://www.fatcow.com/free-icons"/>
             <Property name="wrapStyleWord" type="boolean" value="true"/>
           </Properties>
         </Component>

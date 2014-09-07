@@ -40,7 +40,7 @@ public final class AboutDialog extends javax.swing.JDialog {
     jTextArea1.setFont(jTextArea1.getFont().deriveFont(jTextArea1.getFont().getSize()+3f));
     jTextArea1.setLineWrap(true);
     jTextArea1.setRows(5);
-    jTextArea1.setText("The ZX-Poly sprite corrector (A Part of ZX-Poly platform emulator)\nv. 1.1\n--------------------------------------\n(C) 2008-2014 Igor Maznitsa (igor.maznitsa@igormaznitsa.com)\n\n  The utility allows to load a Hobeta file and find sprites inside of opened binary block. Found sprites can be colorized with the editor and the result can be saved as separated Hobeta files.");
+    jTextArea1.setText("The ZX-Poly sprite corrector v. 1.1\n--------------------------------------\n(C) 2008-2014 Igor Maznitsa (igor.maznitsa@igormaznitsa.com)\n\n  The utility allows to load a Hobeta file and find sprites inside of opened binary block. Found sprites can be colorized with the editor and the result can be saved as separated Hobeta files.\n--------------------------------------\nThe Icon set from http://www.fatcow.com/free-icons");
     jTextArea1.setWrapStyleWord(true);
     jScrollPane1.setViewportView(jTextArea1);
 
@@ -59,7 +59,7 @@ public final class AboutDialog extends javax.swing.JDialog {
       layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
       .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
         .addContainerGap()
-        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 177, Short.MAX_VALUE)
+        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
         .addComponent(jToggleButton1)
         .addContainerGap())

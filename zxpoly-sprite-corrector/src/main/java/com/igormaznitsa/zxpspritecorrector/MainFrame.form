@@ -2,13 +2,9 @@
 
 <Form version="1.3" maxVersion="1.5" type="org.netbeans.modules.form.forminfo.JFrameFormInfo">
   <NonVisualComponents>
-    <Component class="javax.swing.ButtonGroup" name="buttonGroupZoom">
+    <Component class="javax.swing.ButtonGroup" name="toolsButtonGroup">
     </Component>
-    <Component class="javax.swing.ButtonGroup" name="buttonGroupTools">
-    </Component>
-    <Component class="javax.swing.ButtonGroup" name="buttonGroupModes">
-    </Component>
-    <Menu class="javax.swing.JMenuBar" name="jMenuBar1">
+    <Menu class="javax.swing.JMenuBar" name="menuBar">
       <SubComponents>
         <Menu class="javax.swing.JMenu" name="menuFile">
           <Properties>
@@ -17,69 +13,29 @@
           <SubComponents>
             <MenuItem class="javax.swing.JMenuItem" name="menuFileOpen">
               <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Ctrl+L"/>
-                </Property>
                 <Property name="text" type="java.lang.String" value="Open"/>
-                <Property name="toolTipText" type="java.lang.String" value="Open a hobeta file or a ZX-Poly project file"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuFileOpenActionPerformed"/>
               </Events>
             </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="menuFileSave">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Save"/>
+              </Properties>
+            </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuFileSaveAs">
               <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Ctrl+S"/>
-                </Property>
                 <Property name="text" type="java.lang.String" value="Save as.."/>
-                <Property name="toolTipText" type="java.lang.String" value="Save current data as a ZX-Poly project"/>
               </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuFileSaveAsActionPerformed"/>
-              </Events>
             </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="menuFileOpenFromTAP">
+            <MenuItem class="javax.swing.JPopupMenu$Separator" name="jSeparator4">
+            </MenuItem>
+            <Menu class="javax.swing.JMenu" name="menuFileExportAs">
               <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Ctrl+T"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="Open from TAP"/>
-                <Property name="toolTipText" type="java.lang.String" value="Open a file from a TAP file"/>
+                <Property name="text" type="java.lang.String" value="Export as.."/>
               </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuFileOpenFromTAPActionPerformed"/>
-              </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JSeparator" name="jSeparator4">
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="menuFileExportAsTap">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Export as TAP"/>
-                <Property name="toolTipText" type="java.lang.String" value="Export current data as a TAP file contains separated CPU data blocks"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuFileExportAsTapActionPerformed"/>
-              </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="menuFileExportAsHobeta">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Export as Hobeta"/>
-                <Property name="toolTipText" type="java.lang.String" value="Export current data as a set of hobeta files"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuFileExportAsHobetaActionPerformed"/>
-              </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="menuFileImportFromMultiHobeta">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Import from multiHobeta"/>
-                <Property name="toolTipText" type="java.lang.String" value="Import data from a set of hobeta files"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuFileImportFromMultiHobetaActionPerformed"/>
-              </Events>
-            </MenuItem>
+            </Menu>
             <MenuItem class="javax.swing.JSeparator" name="jSeparator1">
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuFileExit">
@@ -97,169 +53,62 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="Edit"/>
           </Properties>
-          <SubComponents>
-            <MenuItem class="javax.swing.JMenuItem" name="menuEditUndo">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Undo"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuEditUndoActionPerformed"/>
-              </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="menuEditRemoveSelection">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Remove selection"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuEditRemoveSelectionActionPerformed"/>
-              </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="menuEditClearAllColors">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Clear all colors"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuEditClearAllColorsActionPerformed"/>
-              </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="menuEditInvertDataInSelectedArea">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Invert data in selected area"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuEditInvertDataInSelectedAreaActionPerformed"/>
-              </Events>
-            </MenuItem>
-          </SubComponents>
         </Menu>
         <Menu class="javax.swing.JMenu" name="menuOptions">
           <Properties>
             <Property name="text" type="java.lang.String" value="Options"/>
           </Properties>
           <SubComponents>
-            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="p_Mode_ZXPoly">
-              <Properties>
-                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                  <ComponentRef name="buttonGroupModes"/>
-                </Property>
-                <Property name="selected" type="boolean" value="true"/>
-                <Property name="text" type="java.lang.String" value="ZX-Poly (256x192)"/>
-              </Properties>
-            </MenuItem>
-            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="p_Mode_ZX512x384">
-              <Properties>
-                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                  <ComponentRef name="buttonGroupModes"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="ZX-512x384"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="p_Mode_ZX512x384ActionPerformed"/>
-              </Events>
-            </MenuItem>
             <MenuItem class="javax.swing.JSeparator" name="jSeparator3">
-            </MenuItem>
-            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="p_MenuItem_ZXScreenMode">
-              <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Z"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="ZX-Screen mode"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="ZXScreenOptionChange"/>
-              </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="p_ShowGrid">
-              <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="G"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="Grid"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="p_ShowGridActionPerformed"/>
-              </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="p_MenuOption_Inverted">
-              <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="I"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="Inverted"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="InvertedOptionChange"/>
-              </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="p_MenuItem_ShowColumnBorders">
-              <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="B"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="Column borders"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="p_MenuItem_ShowColumnBordersActionPerformed"/>
-              </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JSeparator" name="jSeparator2">
             </MenuItem>
-            <MenuItem class="javax.swing.JRadioButtonMenuItem" name="p_Zoom_1">
+            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuOptionsGrid">
               <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Alt+1"/>
-                </Property>
-                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                  <ComponentRef name="buttonGroupZoom"/>
-                </Property>
                 <Property name="selected" type="boolean" value="true"/>
-                <Property name="text" type="java.lang.String" value="x1"/>
+                <Property name="text" type="java.lang.String" value="Grid"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuOptionsGridActionPerformed"/>
+              </Events>
             </MenuItem>
-            <MenuItem class="javax.swing.JRadioButtonMenuItem" name="p_Zoom_2">
+            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuOptionsColumns">
               <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Alt+2"/>
-                </Property>
-                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                  <ComponentRef name="buttonGroupZoom"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="x2"/>
+                <Property name="selected" type="boolean" value="true"/>
+                <Property name="text" type="java.lang.String" value="Columns"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuOptionsColumnsActionPerformed"/>
+              </Events>
             </MenuItem>
-            <MenuItem class="javax.swing.JRadioButtonMenuItem" name="p_Zoom_4">
+            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuOptionsInvertBase">
               <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Alt+3"/>
-                </Property>
-                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                  <ComponentRef name="buttonGroupZoom"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="x4"/>
+                <Property name="selected" type="boolean" value="true"/>
+                <Property name="text" type="java.lang.String" value="Invert base"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuOptionsInvertBaseActionPerformed"/>
+              </Events>
             </MenuItem>
-            <MenuItem class="javax.swing.JRadioButtonMenuItem" name="p_Zoom_8">
-              <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Alt+4"/>
-                </Property>
-                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                  <ComponentRef name="buttonGroupZoom"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="x8"/>
-              </Properties>
+            <MenuItem class="javax.swing.JPopupMenu$Separator" name="jSeparator5">
             </MenuItem>
-            <MenuItem class="javax.swing.JRadioButtonMenuItem" name="p_Zoom_16">
+            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuOptionsZXScreen">
               <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Alt+5"/>
-                </Property>
-                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                  <ComponentRef name="buttonGroupZoom"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="x16"/>
+                <Property name="selected" type="boolean" value="true"/>
+                <Property name="text" type="java.lang.String" value="ZX-Screen addressing"/>
               </Properties>
+              <Events>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="menuOptionsZXScreenStateChanged"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuOptionsMode512">
+              <Properties>
+                <Property name="selected" type="boolean" value="true"/>
+                <Property name="text" type="java.lang.String" value="512 video mode"/>
+              </Properties>
+              <Events>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="menuOptionsMode512StateChanged"/>
+              </Events>
             </MenuItem>
           </SubComponents>
         </Menu>
@@ -284,6 +133,9 @@
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="2"/>
     <Property name="title" type="java.lang.String" value="ZX-Poly Sprite Corrector"/>
+    <Property name="iconImage" type="java.awt.Image" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+      <Connection code="GfxUtils.loadImage(&quot;ico.gif&quot;)" type="code"/>
+    </Property>
     <Property name="iconImages" type="java.util.List" editor="org.netbeans.modules.form.ComponentChooserEditor">
       <ComponentRef name="null"/>
     </Property>
@@ -292,7 +144,7 @@
     <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="ZX-Poly Sprite corrector"/>
   </AccessibilityProperties>
   <SyntheticProperties>
-    <SyntheticProperty name="menuBar" type="java.lang.String" value="jMenuBar1"/>
+    <SyntheticProperty name="menuBar" type="java.lang.String" value="menuBar"/>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
     <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
@@ -314,28 +166,33 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
+          <Component id="jPanel2" alignment="1" max="32767" attributes="0"/>
           <Group type="102" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
-                      <Component id="colorSelector" max="32767" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="p_ScrollPane" alignment="1" pref="601" max="32767" attributes="0"/>
-                          <Component id="sliderColumns" max="32767" attributes="2"/>
+                          <Group type="102" attributes="0">
+                              <Component id="jScrollPane1" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="scrollBarAddress" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="colorSelector" alignment="0" max="32767" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="panelTools" alignment="1" min="-2" pref="107" max="-2" attributes="1"/>
+                          <Component id="sliderPenWidth" max="32767" attributes="0"/>
                       </Group>
                   </Group>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="scrollBarPosition" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="panelTools" alignment="1" min="-2" pref="107" max="-2" attributes="1"/>
-                  <Component id="p_TextField_Position" alignment="1" max="32767" attributes="1"/>
-                  <Component id="buttonLock" alignment="1" max="32767" attributes="1"/>
-                  <Component id="sliderPenWidth" max="32767" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Component id="sliderColumns" max="32767" attributes="2"/>
+                      <EmptySpace min="-2" pref="29" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="textFieldAddress" linkSize="6" min="-2" pref="107" max="-2" attributes="1"/>
+                          <Component id="buttonLock" linkSize="6" min="-2" pref="107" max="-2" attributes="1"/>
+                      </Group>
+                  </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -346,34 +203,39 @@
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="panelTools" max="32767" attributes="0"/>
-                  <Component id="scrollBarPosition" alignment="1" pref="325" max="32767" attributes="2"/>
-                  <Component id="p_ScrollPane" alignment="1" pref="325" max="32767" attributes="0"/>
+                  <Component id="scrollBarAddress" max="32767" attributes="2"/>
+                  <Component id="jScrollPane1" alignment="1" max="32767" attributes="0"/>
+                  <Component id="panelTools" alignment="1" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="sliderColumns" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="p_TextField_Position" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="1" attributes="0">
+                  <Component id="sliderColumns" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Component id="buttonLock" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+                      <Component id="textFieldAddress" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="buttonLock" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="sliderPenWidth" linkSize="5" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="1" attributes="0">
                   <Component id="colorSelector" linkSize="5" min="-2" max="-2" attributes="0"/>
+                  <Component id="sliderPenWidth" linkSize="5" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
+              <Component id="jPanel2" min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="javax.swing.JScrollBar" name="scrollBarPosition">
+    <Component class="javax.swing.JScrollBar" name="scrollBarAddress">
       <Properties>
         <Property name="toolTipText" type="java.lang.String" value="Memory window position"/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="adjustmentValueChanged" listener="java.awt.event.AdjustmentListener" parameters="java.awt.event.AdjustmentEvent" handler="scrollBarAddressAdjustmentValueChanged"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JSlider" name="sliderColumns">
       <Properties>
@@ -387,28 +249,10 @@
         <Property name="focusable" type="boolean" value="false"/>
         <Property name="valueIsAdjusting" type="boolean" value="true"/>
       </Properties>
+      <Events>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="sliderColumnsStateChanged"/>
+      </Events>
     </Component>
-    <Container class="javax.swing.JScrollPane" name="p_ScrollPane">
-
-      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
-      <SubComponents>
-        <Container class="com.igormaznitsa.zxpspritecorrector.components.EditorComponent" name="EditorView">
-
-          <Layout>
-            <DimensionLayout dim="0">
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="598" max="32767" attributes="0"/>
-              </Group>
-            </DimensionLayout>
-            <DimensionLayout dim="1">
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="322" max="32767" attributes="0"/>
-              </Group>
-            </DimensionLayout>
-          </Layout>
-        </Container>
-      </SubComponents>
-    </Container>
     <Component class="javax.swing.JToggleButton" name="buttonLock">
       <Properties>
         <Property name="text" type="java.lang.String" value="LOCK"/>
@@ -429,68 +273,6 @@
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignFlowLayout"/>
-      <SubComponents>
-        <Component class="javax.swing.JToggleButton" name="buttonPencil">
-          <Properties>
-            <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-              <ComponentRef name="buttonGroupTools"/>
-            </Property>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/com/igormaznitsa/zxpspritecorrector/icons/Pencil.GIF"/>
-            </Property>
-            <Property name="toolTipText" type="java.lang.String" value="To set pixels on the field. Lft btn - INK, Rght btn - PAPER"/>
-            <Property name="focusable" type="boolean" value="false"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonPencilActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JToggleButton" name="buttonEraser">
-          <Properties>
-            <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-              <ComponentRef name="buttonGroupTools"/>
-            </Property>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/com/igormaznitsa/zxpspritecorrector/icons/Rubber.GIF"/>
-            </Property>
-            <Property name="toolTipText" type="java.lang.String" value="To erase color information from the field"/>
-            <Property name="focusable" type="boolean" value="false"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonEraserActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JToggleButton" name="buttonSelector">
-          <Properties>
-            <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-              <ComponentRef name="buttonGroupTools"/>
-            </Property>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/com/igormaznitsa/zxpspritecorrector/icons/Lasso.GIF"/>
-            </Property>
-            <Property name="toolTipText" type="java.lang.String" value="To select a work area for operations"/>
-            <Property name="focusable" type="boolean" value="false"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonSelectorActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JToggleButton" name="buttonColorReplacer">
-          <Properties>
-            <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-              <ComponentRef name="buttonGroupTools"/>
-            </Property>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/com/igormaznitsa/zxpspritecorrector/icons/Colors.GIF"/>
-            </Property>
-            <Property name="toolTipText" type="java.lang.String" value="To put color pixels depend on original memory bit state. Lft btn - INK, Rght btn - PAPER"/>
-            <Property name="focusable" type="boolean" value="false"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonColorReplacerActionPerformed"/>
-          </Events>
-        </Component>
-      </SubComponents>
     </Container>
     <Container class="com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector" name="colorSelector">
       <Properties>
@@ -510,9 +292,12 @@
         </DimensionLayout>
       </Layout>
     </Container>
-    <Component class="javax.swing.JTextField" name="p_TextField_Position">
+    <Component class="javax.swing.JTextField" name="textFieldAddress">
       <Properties>
         <Property name="editable" type="boolean" value="false"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Courier New" size="14" style="1"/>
+        </Property>
         <Property name="horizontalAlignment" type="int" value="0"/>
         <Property name="toolTipText" type="java.lang.String" value="Current memory position as hex value"/>
         <Property name="focusable" type="boolean" value="false"/>
@@ -533,5 +318,77 @@
         </Property>
       </Properties>
     </Component>
+    <Container class="javax.swing.JScrollPane" name="jScrollPane1">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <SubComponents>
+        <Container class="javax.swing.JPanel" name="mainEditorPanel">
+          <Events>
+            <EventHandler event="mouseWheelMoved" listener="java.awt.event.MouseWheelListener" parameters="java.awt.event.MouseWheelEvent" handler="mainEditorPanelMouseWheelMoved"/>
+            <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="mainEditorPanelMousePressed"/>
+            <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="mainEditorPanelMouseEntered"/>
+            <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="mainEditorPanelMouseExited"/>
+            <EventHandler event="mouseMoved" listener="java.awt.event.MouseMotionListener" parameters="java.awt.event.MouseEvent" handler="mainEditorPanelMouseMoved"/>
+          </Events>
+
+          <Layout>
+            <DimensionLayout dim="0">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <EmptySpace min="0" pref="598" max="32767" attributes="0"/>
+                  <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
+                      <Group type="102" attributes="0">
+                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          <Component id="mainEditor" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      </Group>
+                  </Group>
+              </Group>
+            </DimensionLayout>
+            <DimensionLayout dim="1">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <EmptySpace min="0" pref="387" max="32767" attributes="0"/>
+                  <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
+                      <Group type="102" attributes="0">
+                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          <Component id="mainEditor" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      </Group>
+                  </Group>
+              </Group>
+            </DimensionLayout>
+          </Layout>
+          <SubComponents>
+            <Container class="com.igormaznitsa.zxpspritecorrector.components.EditorComponent" name="mainEditor">
+
+              <Layout class="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout">
+                <Property name="useNullLayout" type="boolean" value="true"/>
+              </Layout>
+            </Container>
+          </SubComponents>
+        </Container>
+      </SubComponents>
+    </Container>
+    <Container class="javax.swing.JPanel" name="jPanel2">
+      <Properties>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="org.netbeans.modules.form.compat2.border.EtchedBorderInfo">
+            <EtchetBorder/>
+          </Border>
+        </Property>
+      </Properties>
+
+      <Layout>
+        <DimensionLayout dim="0">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+          </Group>
+        </DimensionLayout>
+        <DimensionLayout dim="1">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <EmptySpace min="0" pref="23" max="32767" attributes="0"/>
+          </Group>
+        </DimensionLayout>
+      </Layout>
+    </Container>
   </SubComponents>
 </Form>
