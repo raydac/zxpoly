@@ -11,11 +11,11 @@ public final class EditorComponent extends JComponent {
 
   private static final Stroke GRID_STROKE = new BasicStroke(0.3f);
   private static final Stroke COLUMN_BORDER_STROKE = new BasicStroke(0.7f);
-  private static final Stroke TOOL_AREA_STROKE= new BasicStroke(2.3f);
+  private static final Stroke TOOL_AREA_STROKE = new BasicStroke(2.3f);
 
   private Color colorToolArea = Color.WHITE;
-  
-  private Color colorPixelOn = Color.LIGHT_GRAY;
+
+  private Color colorPixelOn = Color.GRAY;
   private Color colorPixelOff = Color.DARK_GRAY;
   private Color colorZX512On = Color.YELLOW;
   private Color colorZX512Off = Color.BLUE;
@@ -36,8 +36,10 @@ public final class EditorComponent extends JComponent {
   private int startAddress;
 
   private Rectangle toolArea;
-  
+
   private int gridStep = 1;
+
+  private final ZXGraphics zxGraphics = new ZXGraphics();
 
   private static final RenderingHints RENDERING_IMAGE_HINTS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
   private static final RenderingHints RENDERING_LINE_HINTS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -50,7 +52,9 @@ public final class EditorComponent extends JComponent {
   }
 
   public Point mousePoint2ScreenPoint(final Point pointAtComponent) {
-    if (pointAtComponent == null) return null;
+    if (pointAtComponent == null) {
+      return null;
+    }
     return new Point(pointAtComponent.x / this.zoom, pointAtComponent.y / this.zoom);
   }
 
@@ -68,24 +72,24 @@ public final class EditorComponent extends JComponent {
       }
       else if (mode512) {
         final int theY = addressingModeZXScreen ? VideoMode.zxy2y(y >> 1) : y >> 1;
-        final int yaddroffset = theY * columns + startAddress;
+        final int rowAddress = theY * columns + startAddress;
 
-        if (x >= (columns << 4) || yaddroffset >= processingData.length()) {
+        if (x >= (columns << 4) || rowAddress >= processingData.length()) {
           result = -1;
         }
         else {
-          result = (x >>> 4) + yaddroffset;
+          result = (x >>> 4) + rowAddress;
         }
       }
       else {
         final int theY = addressingModeZXScreen ? VideoMode.zxy2y(y) : y;
-        final int yaddroffset = theY * columns + startAddress;
+        final int rowAddress = theY * columns + startAddress;
 
-        if (x >= (columns << 3) || yaddroffset >= processingData.length()) {
+        if (x >= (columns << 3) || rowAddress >= processingData.length()) {
           result = -1;
         }
         else {
-          result = (x >>> 3) + yaddroffset;
+          result = (x >>> 3) + rowAddress;
         }
       }
 
@@ -96,22 +100,20 @@ public final class EditorComponent extends JComponent {
       return 1 << (7 - ((mode512 ? (x >> 1) : x) & 0x7));
     }
 
-    public ZXGraphics setPoint(final int x, final int y, final int cpu3210) {
+    public ZXGraphics setPoint(final int x, final int y, final int cpu3012) {
       final int address = coordToAddress(x, y);
       if (address >= 0) {
         final int bitmask = makeXMask(x);
         final int mask = processingData.getMask(address);
 
-        if ((mask & bitmask) != 0) {
-          final int packed3210 = processingData.getPackedZxPolyData3210(address);
-          final int invertedbitmask = ~bitmask;
-          processingData.setZXPolyData(address, mask | bitmask,
-                  (packed3210 & invertedbitmask) | (((packed3210 & 1) == 0 ? 0 : 0xFF) & bitmask),
-                  ((packed3210 >>> 8) & invertedbitmask) | (((packed3210 & 2) == 0 ? 0 : 0xFF) & bitmask),
-                  ((packed3210 >>> 16) & invertedbitmask) | (((packed3210 & 4) == 0 ? 0 : 0xFF) & bitmask),
-                  ((packed3210 >>> 24) & invertedbitmask) | (((packed3210 & 8) == 0 ? 0 : 0xFF) & bitmask)
-          );
-        }
+        final int packed3012 = processingData.getPackedZxPolyData3012(address);
+        final int invertedbitmask = ~bitmask;
+        processingData.setZXPolyData(address, mask | bitmask,
+                ((packed3012 >>> 16) & invertedbitmask) | (((cpu3012 & 4) == 0 ? 0 : 0xFF) & bitmask),
+                ((packed3012 >>> 8) & invertedbitmask) | (((cpu3012 & 2) == 0 ? 0 : 0xFF) & bitmask),
+                (packed3012 & invertedbitmask) | (((cpu3012 & 1) == 0 ? 0 : 0xFF) & bitmask),
+                ((packed3012 >>> 24) & invertedbitmask) | (((cpu3012 & 8) == 0 ? 0 : 0xFF) & bitmask)
+        );
       }
 
       return this;
@@ -123,22 +125,20 @@ public final class EditorComponent extends JComponent {
         final int bitmask = makeXMask(x);
         final int mask = processingData.getMask(address);
 
-        if ((mask & bitmask) != 0) {
-          final int packed3210 = processingData.getPackedZxPolyData3210(address);
-          final int invertedbitmask = ~bitmask;
-          processingData.setZXPolyData(address, mask & invertedbitmask,
-                  packed3210 & invertedbitmask,
-                  (packed3210 >>> 8) & invertedbitmask,
-                  (packed3210 >>> 16) & invertedbitmask,
-                  (packed3210 >>> 24) & invertedbitmask
-          );
-        }
+        final int packed3012 = processingData.getPackedZxPolyData3012(address);
+        final int invertedbitmask = ~bitmask;
+        processingData.setZXPolyData(address, mask & invertedbitmask,
+                (packed3012 >>> 16) & invertedbitmask,
+                (packed3012 >>> 8) & invertedbitmask,
+                packed3012 & invertedbitmask,
+                (packed3012 >>> 24) & invertedbitmask
+        );
       }
 
       return this;
     }
 
-    public int getPoint3210(final int x, final int y) {
+    public int getPoint3012(final int x, final int y) {
       final int address = coordToAddress(x, y);
 
       int result = 0;
@@ -150,11 +150,11 @@ public final class EditorComponent extends JComponent {
           result = 0;
         }
         else {
-          final int packed3210 = processingData.getPackedZxPolyData3210(address);
-          result = ((packed3210 & bitmask) == 0 ? 0 : 1)
-                  | ((packed3210 & (bitmask << 8)) == 0 ? 0 : 2)
-                  | ((packed3210 & (bitmask << 16)) == 0 ? 0 : 4)
-                  | ((packed3210 & (bitmask << 24)) == 0 ? 0 : 8);
+          final int packed3012 = processingData.getPackedZxPolyData3012(address);
+          result = ((packed3012 & bitmask) == 0 ? 0 : 1)
+                  | ((packed3012 & (bitmask << 8)) == 0 ? 0 : 2)
+                  | ((packed3012 & (bitmask << 16)) == 0 ? 0 : 4)
+                  | ((packed3012 & (bitmask << 24)) == 0 ? 0 : 8);
         }
       }
 
@@ -176,15 +176,19 @@ public final class EditorComponent extends JComponent {
     }
   }
 
-  public void setToolArea(final Rectangle rect){
+  public ZXGraphics getZXGraphics() {
+    return this.zxGraphics;
+  }
+
+  public void setToolArea(final Rectangle rect) {
     this.toolArea = rect;
     repaint();
   }
-  
-  public Rectangle getToolArea(){
+
+  public Rectangle getToolArea() {
     return this.toolArea;
   }
-  
+
   public ZXPolyData getProcessingData() {
     return this.processingData;
   }
@@ -272,15 +276,15 @@ public final class EditorComponent extends JComponent {
     return this.addressingModeZXScreen;
   }
 
-  public Color getToolAreaColor(){
+  public Color getToolAreaColor() {
     return this.colorToolArea;
   }
-  
-  public void setToolAreaColor(final Color color){
+
+  public void setToolAreaColor(final Color color) {
     this.colorToolArea = color;
     repaint();
   }
-  
+
   public Color getColorPixelOn() {
     return colorPixelOn;
   }
@@ -343,7 +347,7 @@ public final class EditorComponent extends JComponent {
 
   public void setMode512(final boolean flag) {
     this.mode512 = flag;
-    
+
     final int width = flag ? 512 : 256;
     final int height = flag ? 384 : 192;
 
@@ -356,7 +360,6 @@ public final class EditorComponent extends JComponent {
     repaint();
   }
 
-  
   public int getZoom() {
     return this.zoom;
   }
@@ -382,7 +385,7 @@ public final class EditorComponent extends JComponent {
     gfx.fillRect(0, 0, this.image.getWidth(), this.image.getHeight());
 
     if (this.processingData != null) {
-      int column = 1;
+      int column = 0;
 
       int x = 0;
       int y = 0;
@@ -400,12 +403,12 @@ public final class EditorComponent extends JComponent {
           cury = y;
         }
 
-        final int packedData3210 = this.processingData.getPackedZxPolyData3210(addr);
+        final int packedData3012 = this.processingData.getPackedZxPolyData3012(addr);
 
-        int data0 = packedData3210;
-        int data1 = packedData3210 >>> 8;
-        int data2 = packedData3210 >>> 16;
-        int data3 = packedData3210 >>> 24;
+        int data0 = packedData3012 >>> 16;
+        int data1 = packedData3012 >>> 8;
+        int data2 = packedData3012;
+        int data3 = packedData3012 >>> 24;
 
         for (int i = 0; i < 8; i++) {
           if ((mask & 0x80) == 0) {
@@ -433,7 +436,7 @@ public final class EditorComponent extends JComponent {
             }
             else {
               // zxpoly mode
-              final int colorIndex = ((data1 & 0x80) >>> 7) | ((data0 & 0x80) >>> 6) | ((data2 & 0x80) >>> 5) | ((data3 & 0x80) >>> 4);
+              final int colorIndex = ((data3 & 0x80) >>> 4) | ((data0 & 0x80) >>> 5) | ((data1 & 0x80) >>> 6) | ((data2 & 0x80)>>>7);
               gfx.setColor(ZXPalette.COLORS[colorIndex]);
               gfx.fillRect(x, cury, step, step);
             }
@@ -531,14 +534,14 @@ public final class EditorComponent extends JComponent {
         }
       }
     }
-    
-    if (this.toolArea!=null){
+
+    if (this.toolArea != null) {
       gfx.setRenderingHints(RENDERING_LINE_HINTS);
       gfx.setStroke(TOOL_AREA_STROKE);
       gfx.setColor(this.colorToolArea);
-      gfx.drawRect(this.toolArea.x*this.zoom, this.toolArea.y*this.zoom, this.toolArea.width*this.zoom, this.toolArea.height*this.zoom);
+      gfx.drawRect(this.toolArea.x * this.zoom, this.toolArea.y * this.zoom, this.toolArea.width * this.zoom, this.toolArea.height * this.zoom);
       gfx.setColor(this.colorToolArea.darker().darker().darker());
-      gfx.drawRect(this.toolArea.x*this.zoom-1, this.toolArea.y*this.zoom-1, this.toolArea.width*this.zoom+1, this.toolArea.height*this.zoom+1);
+      gfx.drawRect(this.toolArea.x * this.zoom - 1, this.toolArea.y * this.zoom - 1, this.toolArea.width * this.zoom + 1, this.toolArea.height * this.zoom + 1);
     }
   }
 }

@@ -22,12 +22,12 @@ import java.awt.Color;
 public final class ZXPalette {
   public static final Color[] COLORS = new Color[]{
     // normal bright
-    new Color(0, 0, 0), // Black
-    new Color(0, 0, 190), // Blue
+    new Color(0,   0, 0), // Black
+    new Color(0,   0, 190), // Blue
     new Color(190, 0, 0), // Red
     new Color(190, 0, 190),
-    new Color(0, 190, 0), // Green
-    new Color(0, 190, 190),
+    new Color(0,   190, 0), // Green
+    new Color(0,   190, 190),
     new Color(190, 190, 0),
     new Color(190, 190, 190),
     // high bright
@@ -40,7 +40,7 @@ public final class ZXPalette {
     new Color(255, 255, 0),
     new Color(255, 255, 255)
   };
-  
+ 
   private ZXPalette(){
     
   }

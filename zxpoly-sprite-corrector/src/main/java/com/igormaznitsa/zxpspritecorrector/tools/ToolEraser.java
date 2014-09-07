@@ -28,7 +28,16 @@ public class ToolEraser extends AbstractTool {
   }
 
   @Override
-  public void process(EditorComponent editComponent, Rectangle area, int mouseKeys, int controlKeys) {
+  public void process(EditorComponent editComponent, Rectangle area, int modifiers) {
+    final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
+
+    for (int x = 0; x < area.width; x++) {
+      for (int y = 0; y < area.height; y++) {
+        gfx.resetPoint(x + area.x, y + area.y);
+      }
+    }
+  
+    gfx.flush();
   }
   
 }

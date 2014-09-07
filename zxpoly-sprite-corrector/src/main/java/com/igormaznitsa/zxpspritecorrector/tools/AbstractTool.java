@@ -32,5 +32,5 @@ public abstract class AbstractTool extends JToggleButton {
     setToolTipText(toolTip);
   }
   
-  public abstract void process(final EditorComponent editComponent, final Rectangle area, final int mouseKeys, final int controlKeys);
+  public abstract void process(final EditorComponent editComponent, final Rectangle area, final int modifiers);
 }

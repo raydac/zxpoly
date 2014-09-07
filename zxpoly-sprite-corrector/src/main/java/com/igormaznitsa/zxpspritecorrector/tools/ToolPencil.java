@@ -14,20 +14,48 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.igormaznitsa.zxpspritecorrector.tools;
 
 import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
+import com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector;
+import com.igormaznitsa.zxpspritecorrector.utils.ZXPalette;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import org.picocontainer.annotations.Inject;
 
 public class ToolPencil extends AbstractTool {
+
   private static final long serialVersionUID = 1486692252806983383L;
 
-  public ToolPencil(){
+  @Inject
+  private ZXColorSelector colorSelector;
+
+  public ToolPencil() {
     super("Pencil.GIF", "Pencil allows to set pixels of defined color");
   }
 
   @Override
-  public void process(EditorComponent editComponent, Rectangle area, int mouseKeys, int controlKeys) {
+  public void process(final EditorComponent editComponent, final Rectangle area, final int modifiers) {
+    final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
+
+    final int index;
+
+    if ((modifiers & MouseEvent.BUTTON1_MASK) != 0) {
+      index = colorSelector.getSelectedInk();
+    }
+    else if ((modifiers & MouseEvent.BUTTON3_MASK) != 0) {
+      index = colorSelector.getSelectedPaint();
+    }
+    else {
+      return;
+    }
+
+    for (int x = 0; x < area.width; x++) {
+      for (int y = 0; y < area.height; y++) {
+        gfx.setPoint(x + area.x, y + area.y, index);
+      }
+    }
+
+    gfx.flush();
   }
 }

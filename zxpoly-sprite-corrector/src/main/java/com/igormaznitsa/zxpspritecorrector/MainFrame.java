@@ -37,7 +37,8 @@ public class MainFrame extends javax.swing.JFrame {
 
     container.addAdapter(new ProviderAdapter(new ContextProvider(container)));
     container.addComponent(this);
-
+    container.addComponent(this.colorSelector);
+    
     container.start();
 
     for (final AbstractTool tool : container.getComponents(AbstractTool.class)) {
@@ -188,6 +189,9 @@ public class MainFrame extends javax.swing.JFrame {
     mainEditorPanel.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
       public void mouseMoved(java.awt.event.MouseEvent evt) {
         mainEditorPanelMouseMoved(evt);
+      }
+      public void mouseDragged(java.awt.event.MouseEvent evt) {
+        mainEditorPanelMouseDragged(evt);
       }
     });
 
@@ -487,20 +491,13 @@ public class MainFrame extends javax.swing.JFrame {
     this.mainEditor.setInvertShowBaseData(this.menuOptionsInvertBase.isSelected());
   }//GEN-LAST:event_menuOptionsInvertBaseActionPerformed
 
-  private Point point2editor(final Point point) {
-    if (point == null) {
-      return null;
-    }
-    return SwingUtilities.convertPoint(this.mainEditorPanel, point, this.mainEditor);
-  }
-
-  private void processCurrentToolForPoint(final int mouseButtons, final int modifiers){
+  private void processCurrentToolForPoint(final int modifiers){
     final Rectangle toolRect = this.mainEditor.getToolArea();
     
     if (toolRect!=null){
-      final AbstractTool tool = (AbstractTool) this.toolsButtonGroup.getSelection();
+      final ToolButtonModel tool = (ToolButtonModel) this.toolsButtonGroup.getSelection();
       if (tool != null) {
-        tool.process(this.mainEditor, toolRect, mouseButtons, modifiers);
+        tool.getTool().process(this.mainEditor, toolRect, modifiers);
       }
     }
   }
@@ -521,7 +518,7 @@ public class MainFrame extends javax.swing.JFrame {
   
   private void mainEditorPanelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMousePressed
     updateToolRectangle(evt.getPoint());
-    processCurrentToolForPoint(evt.getButton(), evt.getModifiers());
+    processCurrentToolForPoint(evt.getModifiers());
   }//GEN-LAST:event_mainEditorPanelMousePressed
 
   private void mainEditorPanelMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseMoved
@@ -539,6 +536,11 @@ public class MainFrame extends javax.swing.JFrame {
   private void menuOptionsMode512StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_menuOptionsMode512StateChanged
     this.mainEditor.setMode512(this.menuOptionsMode512.isSelected());
   }//GEN-LAST:event_menuOptionsMode512StateChanged
+
+  private void mainEditorPanelMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseDragged
+    updateToolRectangle(evt.getPoint());
+    processCurrentToolForPoint(evt.getModifiers());
+  }//GEN-LAST:event_mainEditorPanelMouseDragged
 
   
   private void updateAddressScrollBar() {
