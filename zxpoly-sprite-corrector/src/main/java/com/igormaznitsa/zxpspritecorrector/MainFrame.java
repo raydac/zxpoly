@@ -4,9 +4,10 @@ import com.igormaznitsa.zxpspritecorrector.components.*;
 import com.igormaznitsa.zxpspritecorrector.files.*;
 import com.igormaznitsa.zxpspritecorrector.tools.*;
 import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.io.*;
-import java.util.Locale;
+import java.util.*;
 import javax.swing.*;
 import org.picocontainer.*;
 import org.picocontainer.injectors.*;
@@ -52,6 +53,7 @@ public class MainFrame extends javax.swing.JFrame {
     this.menuOptionsGrid.setSelected(this.mainEditor.isShowGrid());
     this.menuOptionsInvertBase.setSelected(this.mainEditor.isInvertShowBaseData());
     this.menuOptionsMode512.setSelected(this.mainEditor.isMode512());
+    this.attributesButtonGroup.setSelected(menuOptionDontShowAttributes.getModel(), true);
     updateAddressScrollBar();
 
     setVisible(true);
@@ -68,6 +70,7 @@ public class MainFrame extends javax.swing.JFrame {
   private void initComponents() {
 
     toolsButtonGroup = new javax.swing.ButtonGroup();
+    attributesButtonGroup = new javax.swing.ButtonGroup();
     scrollBarAddress = new javax.swing.JScrollBar();
     sliderColumns = new javax.swing.JSlider();
     buttonLock = new javax.swing.JToggleButton();
@@ -81,6 +84,7 @@ public class MainFrame extends javax.swing.JFrame {
     jPanel2 = new javax.swing.JPanel();
     menuBar = new javax.swing.JMenuBar();
     menuFile = new javax.swing.JMenu();
+    menuFileNew = new javax.swing.JMenuItem();
     menuFileOpen = new javax.swing.JMenuItem();
     menuFileSave = new javax.swing.JMenuItem();
     menuFileSaveAs = new javax.swing.JMenuItem();
@@ -89,15 +93,21 @@ public class MainFrame extends javax.swing.JFrame {
     jSeparator1 = new javax.swing.JSeparator();
     menuFileExit = new javax.swing.JMenuItem();
     menuEdit = new javax.swing.JMenu();
+    menuEditUndo = new javax.swing.JMenuItem();
+    menuEditRedo = new javax.swing.JMenuItem();
+    jSeparator2 = new javax.swing.JPopupMenu.Separator();
+    menuEditClear = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
-    jSeparator3 = new javax.swing.JSeparator();
-    jSeparator2 = new javax.swing.JSeparator();
     menuOptionsGrid = new javax.swing.JCheckBoxMenuItem();
     menuOptionsColumns = new javax.swing.JCheckBoxMenuItem();
     menuOptionsInvertBase = new javax.swing.JCheckBoxMenuItem();
     jSeparator5 = new javax.swing.JPopupMenu.Separator();
     menuOptionsZXScreen = new javax.swing.JCheckBoxMenuItem();
     menuOptionsMode512 = new javax.swing.JCheckBoxMenuItem();
+    jSeparator6 = new javax.swing.JPopupMenu.Separator();
+    menuOptionDontShowAttributes = new javax.swing.JRadioButtonMenuItem();
+    menuOptionsShowBaseAttributes = new javax.swing.JRadioButtonMenuItem();
+    menuOptionsShow512Attributes = new javax.swing.JRadioButtonMenuItem();
     menuHelp = new javax.swing.JMenu();
     menuHelpAbout = new javax.swing.JMenuItem();
 
@@ -233,6 +243,9 @@ public class MainFrame extends javax.swing.JFrame {
 
     menuFile.setText("File");
 
+    menuFileNew.setText("New");
+    menuFile.add(menuFileNew);
+
     menuFileOpen.setText("Open");
     menuFileOpen.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -264,11 +277,37 @@ public class MainFrame extends javax.swing.JFrame {
     menuBar.add(menuFile);
 
     menuEdit.setText("Edit");
+
+    menuEditUndo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, java.awt.event.InputEvent.CTRL_MASK));
+    menuEditUndo.setText("Undo");
+    menuEditUndo.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuEditUndoActionPerformed(evt);
+      }
+    });
+    menuEdit.add(menuEditUndo);
+
+    menuEditRedo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+    menuEditRedo.setText("Redo");
+    menuEditRedo.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuEditRedoActionPerformed(evt);
+      }
+    });
+    menuEdit.add(menuEditRedo);
+    menuEdit.add(jSeparator2);
+
+    menuEditClear.setText("Clear");
+    menuEditClear.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuEditClearActionPerformed(evt);
+      }
+    });
+    menuEdit.add(menuEditClear);
+
     menuBar.add(menuEdit);
 
     menuOptions.setText("Options");
-    menuOptions.add(jSeparator3);
-    menuOptions.add(jSeparator2);
 
     menuOptionsGrid.setSelected(true);
     menuOptionsGrid.setText("Grid");
@@ -315,6 +354,20 @@ public class MainFrame extends javax.swing.JFrame {
       }
     });
     menuOptions.add(menuOptionsMode512);
+    menuOptions.add(jSeparator6);
+
+    attributesButtonGroup.add(menuOptionDontShowAttributes);
+    menuOptionDontShowAttributes.setText("Don't show attributes");
+    menuOptions.add(menuOptionDontShowAttributes);
+
+    attributesButtonGroup.add(menuOptionsShowBaseAttributes);
+    menuOptionsShowBaseAttributes.setSelected(true);
+    menuOptionsShowBaseAttributes.setText("Show base attributes");
+    menuOptions.add(menuOptionsShowBaseAttributes);
+
+    attributesButtonGroup.add(menuOptionsShow512Attributes);
+    menuOptionsShow512Attributes.setText("Show 512x384 attributes");
+    menuOptions.add(menuOptionsShow512Attributes);
 
     menuBar.add(menuOptions);
 
@@ -464,6 +517,7 @@ public class MainFrame extends javax.swing.JFrame {
       }
       finally {
         updateAddressScrollBar();
+        updateRedoUndo();
       }
     }
   }//GEN-LAST:event_menuFileOpenActionPerformed
@@ -474,22 +528,6 @@ public class MainFrame extends javax.swing.JFrame {
     final String addressAsString = Integer.toHexString(address).toUpperCase(Locale.ENGLISH);
     this.textFieldAddress.setText("#" + (addressAsString.length() < 4 ? "0000".substring(0, 4 - addressAsString.length()) : "") + addressAsString);
   }//GEN-LAST:event_scrollBarAddressAdjustmentValueChanged
-
-  private void menuOptionsZXScreenStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_menuOptionsZXScreenStateChanged
-    this.mainEditor.setZXScreenMode(this.menuOptionsZXScreen.isSelected());
-  }//GEN-LAST:event_menuOptionsZXScreenStateChanged
-
-  private void menuOptionsGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsGridActionPerformed
-    this.mainEditor.setShowGrid(this.menuOptionsGrid.isSelected());
-  }//GEN-LAST:event_menuOptionsGridActionPerformed
-
-  private void menuOptionsColumnsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsColumnsActionPerformed
-    this.mainEditor.setShowColumnBorders(this.menuOptionsColumns.isSelected());
-  }//GEN-LAST:event_menuOptionsColumnsActionPerformed
-
-  private void menuOptionsInvertBaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsInvertBaseActionPerformed
-    this.mainEditor.setInvertShowBaseData(this.menuOptionsInvertBase.isSelected());
-  }//GEN-LAST:event_menuOptionsInvertBaseActionPerformed
 
   private void processCurrentToolForPoint(final int modifiers){
     final Rectangle toolRect = this.mainEditor.getToolArea();
@@ -516,7 +554,15 @@ public class MainFrame extends javax.swing.JFrame {
      return rect;
   }
   
+  private void updateRedoUndo(){
+    this.menuEditRedo.setEnabled(this.mainEditor.hasRedo());
+    this.menuEditUndo.setEnabled(this.mainEditor.hasUndo());
+  }
+  
   private void mainEditorPanelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMousePressed
+    this.mainEditor.addUndo();
+    updateRedoUndo();
+    
     updateToolRectangle(evt.getPoint());
     processCurrentToolForPoint(evt.getModifiers());
   }//GEN-LAST:event_mainEditorPanelMousePressed
@@ -533,16 +579,47 @@ public class MainFrame extends javax.swing.JFrame {
     updateToolRectangle(evt.getPoint());
   }//GEN-LAST:event_mainEditorPanelMouseEntered
 
-  private void menuOptionsMode512StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_menuOptionsMode512StateChanged
-    this.mainEditor.setMode512(this.menuOptionsMode512.isSelected());
-  }//GEN-LAST:event_menuOptionsMode512StateChanged
-
   private void mainEditorPanelMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseDragged
     updateToolRectangle(evt.getPoint());
     processCurrentToolForPoint(evt.getModifiers());
   }//GEN-LAST:event_mainEditorPanelMouseDragged
 
-  
+  private void menuOptionsMode512StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_menuOptionsMode512StateChanged
+    this.mainEditor.setMode512(this.menuOptionsMode512.isSelected());
+  }//GEN-LAST:event_menuOptionsMode512StateChanged
+
+  private void menuOptionsZXScreenStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_menuOptionsZXScreenStateChanged
+    this.mainEditor.setZXScreenMode(this.menuOptionsZXScreen.isSelected());
+  }//GEN-LAST:event_menuOptionsZXScreenStateChanged
+
+  private void menuOptionsInvertBaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsInvertBaseActionPerformed
+    this.mainEditor.setInvertShowBaseData(this.menuOptionsInvertBase.isSelected());
+  }//GEN-LAST:event_menuOptionsInvertBaseActionPerformed
+
+  private void menuOptionsColumnsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsColumnsActionPerformed
+    this.mainEditor.setShowColumnBorders(this.menuOptionsColumns.isSelected());
+  }//GEN-LAST:event_menuOptionsColumnsActionPerformed
+
+  private void menuOptionsGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsGridActionPerformed
+    this.mainEditor.setShowGrid(this.menuOptionsGrid.isSelected());
+  }//GEN-LAST:event_menuOptionsGridActionPerformed
+
+  private void menuEditUndoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditUndoActionPerformed
+    this.mainEditor.undo();
+    updateRedoUndo();
+  }//GEN-LAST:event_menuEditUndoActionPerformed
+
+  private void menuEditRedoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditRedoActionPerformed
+    this.mainEditor.redo();
+    updateRedoUndo();
+  }//GEN-LAST:event_menuEditRedoActionPerformed
+
+  private void menuEditClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditClearActionPerformed
+    if (JOptionPane.showConfirmDialog(this, "Clear ZX-Poly data?","Confirmation",JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION){
+      this.mainEditor.clear();
+    }
+  }//GEN-LAST:event_menuEditClearActionPerformed
+
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);
     this.scrollBarAddress.setMinimum(0);
@@ -561,32 +638,40 @@ public class MainFrame extends javax.swing.JFrame {
   }
 
   // Variables declaration - do not modify//GEN-BEGIN:variables
+  private javax.swing.ButtonGroup attributesButtonGroup;
   private javax.swing.JToggleButton buttonLock;
   private com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector colorSelector;
   private javax.swing.JPanel jPanel2;
   private javax.swing.JScrollPane jScrollPane1;
   private javax.swing.JSeparator jSeparator1;
-  private javax.swing.JSeparator jSeparator2;
-  private javax.swing.JSeparator jSeparator3;
+  private javax.swing.JPopupMenu.Separator jSeparator2;
   private javax.swing.JPopupMenu.Separator jSeparator4;
   private javax.swing.JPopupMenu.Separator jSeparator5;
+  private javax.swing.JPopupMenu.Separator jSeparator6;
   private com.igormaznitsa.zxpspritecorrector.components.EditorComponent mainEditor;
   private javax.swing.JPanel mainEditorPanel;
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuEdit;
+  private javax.swing.JMenuItem menuEditClear;
+  private javax.swing.JMenuItem menuEditRedo;
+  private javax.swing.JMenuItem menuEditUndo;
   private javax.swing.JMenu menuFile;
   private javax.swing.JMenuItem menuFileExit;
   private javax.swing.JMenu menuFileExportAs;
+  private javax.swing.JMenuItem menuFileNew;
   private javax.swing.JMenuItem menuFileOpen;
   private javax.swing.JMenuItem menuFileSave;
   private javax.swing.JMenuItem menuFileSaveAs;
   private javax.swing.JMenu menuHelp;
   private javax.swing.JMenuItem menuHelpAbout;
+  private javax.swing.JRadioButtonMenuItem menuOptionDontShowAttributes;
   private javax.swing.JMenu menuOptions;
   private javax.swing.JCheckBoxMenuItem menuOptionsColumns;
   private javax.swing.JCheckBoxMenuItem menuOptionsGrid;
   private javax.swing.JCheckBoxMenuItem menuOptionsInvertBase;
   private javax.swing.JCheckBoxMenuItem menuOptionsMode512;
+  private javax.swing.JRadioButtonMenuItem menuOptionsShow512Attributes;
+  private javax.swing.JRadioButtonMenuItem menuOptionsShowBaseAttributes;
   private javax.swing.JCheckBoxMenuItem menuOptionsZXScreen;
   private javax.swing.JPanel panelTools;
   private javax.swing.JScrollBar scrollBarAddress;

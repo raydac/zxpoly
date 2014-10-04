@@ -55,6 +55,30 @@ public class ZXPolyData {
 
   private final Info info;
 
+  public static class UndoBlock {
+    private final byte [] mask;
+    private final byte [][] zxpoly;
+    
+    private UndoBlock(final byte [] mask, final byte [][] zxpoly){
+      this.mask = mask.clone();
+      this.zxpoly = new byte[4][];
+      for(int i=0;i<4;i++){
+        this.zxpoly[i] = zxpoly[i].clone();
+      }
+    }
+  }
+  
+  public UndoBlock makeUndo(){
+    return new UndoBlock(this.mask, this.zxpoly);
+  }
+  
+  public void restoreFromUndo(final UndoBlock undo){
+    System.arraycopy(undo.mask,0,this.mask,0,undo.mask.length);
+    for(int i=0;i<4;i++){
+      System.arraycopy(undo.zxpoly[i], 0, this.zxpoly[i], 0, undo.zxpoly[i].length);
+    }
+  }
+  
   public ZXPolyData(final Info info, final AbstractFilePlugin basePlugin, final byte[] array) {
     this.array = array.clone();
     this.mask = new byte[this.array.length];

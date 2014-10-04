@@ -3,6 +3,7 @@ package com.igormaznitsa.zxpspritecorrector.components;
 import com.igormaznitsa.zxpspritecorrector.utils.ZXPalette;
 import java.awt.*;
 import java.awt.image.*;
+import java.util.ArrayList;
 import javax.swing.*;
 
 public final class EditorComponent extends JComponent {
@@ -26,8 +27,9 @@ public final class EditorComponent extends JComponent {
   private boolean mode512;
 
   private boolean invertShowBaseData;
-  private boolean showColumnBorders = true;
-  private boolean showGrid = true;
+  private boolean showColumnBorders;
+  private boolean showGrid;
+  private boolean showAttributesForBase;
   private boolean addressingModeZXScreen;
   private Dimension preferredSize;
   private int zoom = 1;
@@ -40,6 +42,9 @@ public final class EditorComponent extends JComponent {
   private int gridStep = 1;
 
   private final ZXGraphics zxGraphics = new ZXGraphics();
+
+  private final java.util.List<ZXPolyData.UndoBlock> listUndo = new ArrayList<ZXPolyData.UndoBlock>();
+  private final java.util.List<ZXPolyData.UndoBlock> listRedo = new ArrayList<ZXPolyData.UndoBlock>();
 
   private static final RenderingHints RENDERING_IMAGE_HINTS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
   private static final RenderingHints RENDERING_LINE_HINTS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -234,6 +239,9 @@ public final class EditorComponent extends JComponent {
   }
 
   public void setProcessingData(final ZXPolyData data) {
+    this.listRedo.clear();
+    this.listUndo.clear();
+    
     this.processingData = data;
     _updatePictureInBuffer();
     repaint();
@@ -264,6 +272,58 @@ public final class EditorComponent extends JComponent {
     repaint();
   }
 
+  public boolean hasUndo(){
+    return !this.listUndo.isEmpty();
+  }
+  
+  public boolean hasRedo(){
+    return !this.listRedo.isEmpty();
+  }
+  
+  public void addUndo() {
+    if (this.processingData != null) {
+      this.listRedo.clear();
+      this.listUndo.add(this.processingData.makeUndo());
+      while (this.listUndo.size() > 15) {
+        this.listUndo.remove(0);
+      }
+    }
+  }
+
+  public void undo(){
+    if (this.processingData!=null && !this.listUndo.isEmpty()){
+      final ZXPolyData.UndoBlock blockPrevious = this.listUndo.remove(this.listUndo.size() - 1);
+      if (this.listRedo.isEmpty()){
+        this.listRedo.add(this.processingData.makeUndo());
+      }
+      
+      this.listRedo.add(blockPrevious);
+      this.processingData.restoreFromUndo(blockPrevious);
+      _updatePictureInBuffer();
+      repaint();
+    }
+  }
+  
+  public void redo(){
+    if (this.processingData!=null && !this.listRedo.isEmpty()){
+      final ZXPolyData.UndoBlock block = this.listRedo.remove(this.listRedo.size()-1);
+      this.listUndo.add(block);
+      this.processingData.restoreFromUndo(block);
+      _updatePictureInBuffer();
+      repaint();
+    }
+  }
+  
+  public void clear(){
+    if (this.processingData!=null){
+      this.listRedo.clear();
+      this.listUndo.clear();
+      this.processingData.clear();
+      _updatePictureInBuffer();
+      repaint();
+    }
+  }
+  
   public boolean isShowColumnBorders() {
     return this.showColumnBorders;
   }
@@ -361,6 +421,16 @@ public final class EditorComponent extends JComponent {
     this.colorZX512Off = colorZX512Off;
     _updatePictureInBuffer();
     repaint();
+  }
+
+  public void setShowAttributesForBase(final boolean selected) {
+    this.showAttributesForBase = selected;
+    _updatePictureInBuffer();
+    repaint();
+  }
+
+  public boolean isShowAttributesForBase() {
+    return this.showAttributesForBase;
   }
 
   public Color getColorGrid() {
