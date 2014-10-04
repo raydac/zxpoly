@@ -18,10 +18,13 @@
 package com.igormaznitsa.zxpspritecorrector.files;
 
 import javax.swing.*;
+import org.apache.commons.io.FilenameUtils;
 
 public class FileNameDialog extends javax.swing.JDialog {
   private static final long serialVersionUID = -5397359066835236154L;
 
+  private boolean approved;
+  
   private void processFileName(final JTextField field, final String [] array, final int index){
     if (array == null || array[index]==null){
       field.setEnabled(false);
@@ -46,7 +49,7 @@ public class FileNameDialog extends javax.swing.JDialog {
     }
   }
   
-  public FileNameDialog(final JFrame parent, final String [] fileName, final String [] zxName, final char [] zxType) {
+  public FileNameDialog(final JFrame parent, final String title, final String [] fileName, final String [] zxName, final char [] zxType) {
     super(parent, true);
     initComponents();
 
@@ -69,26 +72,79 @@ public class FileNameDialog extends javax.swing.JDialog {
     processZxFileName(this.textZxFileName3, zxName, 3);
     processZxFileType(this.textZxFileType3, zxType, 3);
 
+    setTitle(title);
+    setLocationRelativeTo(parent);
   }
 
+  public static String [] makeFileNames(final String baseName){
+    final String [] result = new String[4];
+    for(int i=0;i<4;i++){
+      result[i] = FilenameUtils.getBaseName(baseName)+'_'+i+'.'+FilenameUtils.getExtension(baseName);
+    }
+    return result;
+  }
+  
   public boolean approved(){
-    return false;
+    return approved;
   }
   
-  public String getFileName0(){
-    return "";
+  public String [] getFileName(){
+    final String [] result = new String[4];
+    if (this.textFileName0.isEnabled()){
+      result[0] = this.textFileName0.getText().trim();
+    }
+    if (this.textFileName1.isEnabled()){
+      result[1] = this.textFileName1.getText().trim();
+    }
+    if (this.textFileName2.isEnabled()){
+      result[2]=this.textFileName2.getText().trim();
+    }
+    if (this.textFileName3.isEnabled()){
+      result[3]=this.textFileName3.getText().trim();
+    }
+    
+    return result;
   }
   
-  public String getFileName1(){
-    return "";
+  public String [] getZxName(){
+    final String[] result = new String[4];
+    if (this.textZxFileName0.isEnabled()){
+      result[0]=this.textZxFileName0.getText().trim();
+    }
+    if (this.textZxFileName1.isEnabled()){
+      result[1]=this.textZxFileName1.getText().trim();
+    }
+    if (this.textZxFileName2.isEnabled()){
+      result[2] = this.textZxFileName2.getText().trim();
+    }
+    if (this.textZxFileName3.isEnabled()){
+      result[3] = this.textZxFileName3.getText().trim();
+    }
+    
+    return result;
   }
   
-  public String getFileName2(){
-    return "";
+  private Character getCharacter(final JFormattedTextField field){
+    final String text = field.getText().trim();
+    return text.isEmpty() ? null : Character.valueOf(text.charAt(0));
   }
   
-  public String getFileName3(){
-    return "";
+  public Character [] getZxType(){
+    final Character [] result = new Character[4];
+    if (this.textZxFileType0.isEnabled()){
+      result[0] = getCharacter(this.textZxFileType0);
+    }
+    if (this.textZxFileType1.isEnabled()){
+      result[1] = getCharacter(this.textZxFileType1);
+    }
+    if (this.textZxFileType2.isEnabled()){
+      result[2] = getCharacter(this.textZxFileType2);
+    }
+    if (this.textZxFileType3.isEnabled()){
+      result[3] = getCharacter(this.textZxFileType3);
+    }
+    
+    return result;
   }
   
   /**
@@ -100,8 +156,8 @@ public class FileNameDialog extends javax.swing.JDialog {
   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
 
-    jButton1 = new javax.swing.JButton();
-    jButton2 = new javax.swing.JButton();
+    buttonCancel = new javax.swing.JButton();
+    buttonOk = new javax.swing.JButton();
     jPanel1 = new javax.swing.JPanel();
     textFileName0 = new javax.swing.JTextField();
     jLabel1 = new javax.swing.JLabel();
@@ -133,17 +189,27 @@ public class FileNameDialog extends javax.swing.JDialog {
 
     setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-    jButton1.setText("Cancel");
+    buttonCancel.setText("Cancel");
+    buttonCancel.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        buttonCancelActionPerformed(evt);
+      }
+    });
 
-    jButton2.setText("Ok");
+    buttonOk.setText("Ok");
+    buttonOk.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        buttonOkActionPerformed(evt);
+      }
+    });
 
     jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Block CPU0"));
 
-    jLabel1.setText("File name");
+    jLabel1.setText("File name:");
 
-    jLabel2.setText("ZX File name");
+    jLabel2.setText("ZX File name:");
 
-    jLabel3.setText("ZX File type");
+    jLabel3.setText("ZX File type:");
 
     javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
     jPanel1.setLayout(jPanel1Layout);
@@ -182,18 +248,18 @@ public class FileNameDialog extends javax.swing.JDialog {
         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
           .addComponent(jLabel3)
           .addComponent(textZxFileType0, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        .addContainerGap(19, Short.MAX_VALUE))
     );
 
     jPanel1Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {jLabel1, jLabel2, jLabel3, textFileName0, textZxFileName0, textZxFileType0});
 
     jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Block CPU1"));
 
-    jLabel4.setText("File name");
+    jLabel4.setText("File name:");
 
-    jLabel5.setText("ZX File name");
+    jLabel5.setText("ZX File name:");
 
-    jLabel6.setText("ZX File type");
+    jLabel6.setText("ZX File type:");
 
     javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
     jPanel2.setLayout(jPanel2Layout);
@@ -214,7 +280,7 @@ public class FileNameDialog extends javax.swing.JDialog {
               .addComponent(jLabel4))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-              .addComponent(textFileName1, javax.swing.GroupLayout.DEFAULT_SIZE, 514, Short.MAX_VALUE)
+              .addComponent(textFileName1, javax.swing.GroupLayout.DEFAULT_SIZE, 511, Short.MAX_VALUE)
               .addComponent(textZxFileName1))))
         .addContainerGap())
     );
@@ -232,18 +298,18 @@ public class FileNameDialog extends javax.swing.JDialog {
         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
           .addComponent(jLabel6)
           .addComponent(textZxFileType1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        .addContainerGap(17, Short.MAX_VALUE))
+        .addContainerGap(19, Short.MAX_VALUE))
     );
 
     jPanel2Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {jLabel4, jLabel5, jLabel6, textFileName1, textZxFileName1, textZxFileType1});
 
     jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Block CPU3"));
 
-    jLabel10.setText("File name");
+    jLabel10.setText("File name:");
 
-    jLabel11.setText("ZX File name");
+    jLabel11.setText("ZX File name:");
 
-    jLabel12.setText("ZX File type");
+    jLabel12.setText("ZX File type:");
 
     javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
     jPanel3.setLayout(jPanel3Layout);
@@ -264,7 +330,7 @@ public class FileNameDialog extends javax.swing.JDialog {
               .addComponent(jLabel10))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-              .addComponent(textFileName3, javax.swing.GroupLayout.DEFAULT_SIZE, 514, Short.MAX_VALUE)
+              .addComponent(textFileName3, javax.swing.GroupLayout.DEFAULT_SIZE, 511, Short.MAX_VALUE)
               .addComponent(textZxFileName3))))
         .addContainerGap())
     );
@@ -282,18 +348,18 @@ public class FileNameDialog extends javax.swing.JDialog {
         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
           .addComponent(jLabel12)
           .addComponent(textZxFileType3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        .addContainerGap(19, Short.MAX_VALUE))
+        .addContainerGap(20, Short.MAX_VALUE))
     );
 
     jPanel3Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {jLabel10, jLabel11, jLabel12, textFileName3, textZxFileName3, textZxFileType3});
 
     jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Block CPU2"));
 
-    jLabel7.setText("File name");
+    jLabel7.setText("File name:");
 
-    jLabel8.setText("ZX File name");
+    jLabel8.setText("ZX File name:");
 
-    jLabel9.setText("ZX File type");
+    jLabel9.setText("ZX File type:");
 
     javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
     jPanel4.setLayout(jPanel4Layout);
@@ -314,7 +380,7 @@ public class FileNameDialog extends javax.swing.JDialog {
               .addComponent(jLabel7))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-              .addComponent(textFileName2, javax.swing.GroupLayout.DEFAULT_SIZE, 514, Short.MAX_VALUE)
+              .addComponent(textFileName2, javax.swing.GroupLayout.DEFAULT_SIZE, 511, Short.MAX_VALUE)
               .addComponent(textZxFileName2))))
         .addContainerGap())
     );
@@ -350,38 +416,49 @@ public class FileNameDialog extends javax.swing.JDialog {
           .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
           .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
             .addGap(0, 0, Short.MAX_VALUE)
-            .addComponent(jButton2)
+            .addComponent(buttonOk)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jButton1)))
+            .addComponent(buttonCancel)))
         .addContainerGap())
     );
 
-    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jButton1, jButton2});
+    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {buttonCancel, buttonOk});
 
     layout.setVerticalGroup(
       layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+      .addGroup(layout.createSequentialGroup()
         .addContainerGap()
-        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
+        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
         .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-          .addComponent(jButton2)
-          .addComponent(jButton1))
-        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+          .addComponent(buttonOk)
+          .addComponent(buttonCancel))
+        .addContainerGap())
     );
+
+    layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {jPanel1, jPanel2, jPanel3, jPanel4});
 
     pack();
   }// </editor-fold>//GEN-END:initComponents
 
+  private void buttonOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOkActionPerformed
+    approved = true;
+    dispose();
+  }//GEN-LAST:event_buttonOkActionPerformed
+
+  private void buttonCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCancelActionPerformed
+    dispose();
+  }//GEN-LAST:event_buttonCancelActionPerformed
+
   // Variables declaration - do not modify//GEN-BEGIN:variables
-  private javax.swing.JButton jButton1;
-  private javax.swing.JButton jButton2;
+  private javax.swing.JButton buttonCancel;
+  private javax.swing.JButton buttonOk;
   private javax.swing.JLabel jLabel1;
   private javax.swing.JLabel jLabel10;
   private javax.swing.JLabel jLabel11;

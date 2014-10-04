@@ -119,6 +119,7 @@ public class HOBETAPlugin extends AbstractFilePlugin {
 
     final FileNameDialog nameDialog = new FileNameDialog(
             this.mainFrame,
+            "Base file is " + file.getName(),
             new String[]{addNumberToName(name, 0), addNumberToName(name, 1), addNumberToName(name, 2), addNumberToName(name, 3)},
             new String[]{addNumberToZXFileName(zxName, 0), addNumberToZXFileName(zxName, 1), addNumberToZXFileName(zxName, 2), addNumberToZXFileName(zxName, 3)},
             new char[]{zxType, zxType, zxType, zxType}

@@ -663,4 +663,9 @@ public final class EditorComponent extends JComponent {
       gfx.drawRect(this.toolArea.x * this.zoom - 1, this.toolArea.y * this.zoom - 1, this.toolArea.width * this.zoom + 1, this.toolArea.height * this.zoom + 1);
     }
   }
+
+  public boolean hasData() {
+    return this.processingData!=null;
+  }
+
 }

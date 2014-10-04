@@ -8,6 +8,8 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
 import org.picocontainer.*;
 import org.picocontainer.injectors.*;
@@ -86,7 +88,6 @@ public class MainFrame extends javax.swing.JFrame {
     menuFile = new javax.swing.JMenu();
     menuFileNew = new javax.swing.JMenuItem();
     menuFileOpen = new javax.swing.JMenuItem();
-    menuFileSave = new javax.swing.JMenuItem();
     menuFileSaveAs = new javax.swing.JMenuItem();
     jSeparator4 = new javax.swing.JPopupMenu.Separator();
     menuFileExportAs = new javax.swing.JMenu();
@@ -253,10 +254,12 @@ public class MainFrame extends javax.swing.JFrame {
     });
     menuFile.add(menuFileOpen);
 
-    menuFileSave.setText("Save");
-    menuFile.add(menuFileSave);
-
     menuFileSaveAs.setText("Save as..");
+    menuFileSaveAs.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuFileSaveAsActionPerformed(evt);
+      }
+    });
     menuFile.add(menuFileSaveAs);
     menuFile.add(jSeparator4);
 
@@ -633,6 +636,27 @@ public class MainFrame extends javax.swing.JFrame {
     this.mainEditor.setShowAttributesForBase(true);
   }//GEN-LAST:event_menuOptionsShowBaseAttributesActionPerformed
 
+  private void menuFileSaveAsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSaveAsActionPerformed
+    if (this.mainEditor.hasData()){
+      final ZXPolyData zxpolydata = this.mainEditor.getProcessingData();
+      
+      final JFileChooser fileChoolser = new JFileChooser(this.openedFile);
+      fileChoolser.setAcceptAllFileFilterUsed(false);
+      fileChoolser.addChoosableFileFilter(zxpolydata.getPlugin());
+      if (fileChoolser.showOpenDialog(this)==JFileChooser.APPROVE_OPTION){
+        try {
+          final File thefile = fileChoolser.getSelectedFile();
+          zxpolydata.getPlugin().writeTo(thefile, zxpolydata);
+        }
+        catch (Exception ex) {
+          ex.printStackTrace();
+          JOptionPane.showMessageDialog(this, "Error during operation ["+ex.getMessage()+']',"Error",JOptionPane.ERROR_MESSAGE);
+        }
+      }
+      
+    }
+  }//GEN-LAST:event_menuFileSaveAsActionPerformed
+
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);
     this.scrollBarAddress.setMinimum(0);
@@ -673,7 +697,6 @@ public class MainFrame extends javax.swing.JFrame {
   private javax.swing.JMenu menuFileExportAs;
   private javax.swing.JMenuItem menuFileNew;
   private javax.swing.JMenuItem menuFileOpen;
-  private javax.swing.JMenuItem menuFileSave;
   private javax.swing.JMenuItem menuFileSaveAs;
   private javax.swing.JMenu menuHelp;
   private javax.swing.JMenuItem menuHelpAbout;

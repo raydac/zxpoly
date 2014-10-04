@@ -65,6 +65,17 @@ public class SCRPlugin extends AbstractFilePlugin {
 
   @Override
   public void writeTo(final File file, final ZXPolyData data) throws IOException {
+    final FileNameDialog dialog = new FileNameDialog(this.mainFrame, "Base file is "+file.getName(), FileNameDialog.makeFileNames(file.getName()), null, null);
+    dialog.setVisible(true);
+    if (dialog.approved()){
+      final String [] fileNames = dialog.getFileName();
+      for(int i=0;i<fileNames.length;i++){
+        final String fileName = fileNames[i];
+        if (fileName == null) continue;
+        final File newfile = new File(file.getParentFile(),fileName);
+        if (!saveDataToFile(newfile, data.getDataForCPU(i))) break;
+      }
+    }
   }
 
   @Override

@@ -32,9 +32,9 @@
                   <Component id="jPanel4" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                      <Component id="jButton2" linkSize="6" min="-2" max="-2" attributes="0"/>
+                      <Component id="buttonOk" linkSize="6" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jButton1" linkSize="6" min="-2" max="-2" attributes="0"/>
+                      <Component id="buttonCancel" linkSize="6" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -43,35 +43,41 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="1" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jPanel1" min="-2" pref="99" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jPanel2" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jPanel4" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jPanel3" min="-2" max="-2" attributes="0"/>
+              <Component id="jPanel1" linkSize="7" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <Component id="jPanel2" linkSize="7" min="-2" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+              <Component id="jPanel4" linkSize="7" min="-2" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="jPanel3" linkSize="7" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jButton2" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jButton1" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="buttonOk" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="buttonCancel" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="javax.swing.JButton" name="jButton1">
+    <Component class="javax.swing.JButton" name="buttonCancel">
       <Properties>
         <Property name="text" type="java.lang.String" value="Cancel"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonCancelActionPerformed"/>
+      </Events>
     </Component>
-    <Component class="javax.swing.JButton" name="jButton2">
+    <Component class="javax.swing.JButton" name="buttonOk">
       <Properties>
         <Property name="text" type="java.lang.String" value="Ok"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="buttonOkActionPerformed"/>
+      </Events>
     </Component>
     <Container class="javax.swing.JPanel" name="jPanel1">
       <Properties>
@@ -128,7 +134,7 @@
                       <Component id="jLabel3" linkSize="1" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="textZxFileType0" linkSize="1" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace pref="19" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -138,17 +144,17 @@
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel1">
           <Properties>
-            <Property name="text" type="java.lang.String" value="File name"/>
+            <Property name="text" type="java.lang.String" value="File name:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel2">
           <Properties>
-            <Property name="text" type="java.lang.String" value="ZX File name"/>
+            <Property name="text" type="java.lang.String" value="ZX File name:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel3">
           <Properties>
-            <Property name="text" type="java.lang.String" value="ZX File type"/>
+            <Property name="text" type="java.lang.String" value="ZX File type:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JFormattedTextField" name="textZxFileName0">
@@ -186,7 +192,7 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="textFileName1" pref="514" max="32767" attributes="0"/>
+                              <Component id="textFileName1" pref="511" max="32767" attributes="0"/>
                               <Component id="textZxFileName1" max="32767" attributes="0"/>
                           </Group>
                       </Group>
@@ -212,7 +218,7 @@
                       <Component id="jLabel6" linkSize="3" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="textZxFileType1" linkSize="3" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="17" max="32767" attributes="0"/>
+                  <EmptySpace pref="19" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -220,19 +226,19 @@
       <SubComponents>
         <Component class="javax.swing.JLabel" name="jLabel4">
           <Properties>
-            <Property name="text" type="java.lang.String" value="File name"/>
+            <Property name="text" type="java.lang.String" value="File name:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JTextField" name="textFileName1">
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel5">
           <Properties>
-            <Property name="text" type="java.lang.String" value="ZX File name"/>
+            <Property name="text" type="java.lang.String" value="ZX File name:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel6">
           <Properties>
-            <Property name="text" type="java.lang.String" value="ZX File type"/>
+            <Property name="text" type="java.lang.String" value="ZX File type:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JFormattedTextField" name="textZxFileName1">
@@ -270,7 +276,7 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="textFileName3" pref="514" max="32767" attributes="0"/>
+                              <Component id="textFileName3" pref="511" max="32767" attributes="0"/>
                               <Component id="textZxFileName3" max="32767" attributes="0"/>
                           </Group>
                       </Group>
@@ -296,7 +302,7 @@
                       <Component id="jLabel12" linkSize="5" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="textZxFileType3" linkSize="5" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="19" max="32767" attributes="0"/>
+                  <EmptySpace pref="20" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -304,19 +310,19 @@
       <SubComponents>
         <Component class="javax.swing.JLabel" name="jLabel10">
           <Properties>
-            <Property name="text" type="java.lang.String" value="File name"/>
+            <Property name="text" type="java.lang.String" value="File name:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JTextField" name="textFileName3">
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel11">
           <Properties>
-            <Property name="text" type="java.lang.String" value="ZX File name"/>
+            <Property name="text" type="java.lang.String" value="ZX File name:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel12">
           <Properties>
-            <Property name="text" type="java.lang.String" value="ZX File type"/>
+            <Property name="text" type="java.lang.String" value="ZX File type:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JFormattedTextField" name="textZxFileName3">
@@ -354,7 +360,7 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="textFileName2" pref="514" max="32767" attributes="0"/>
+                              <Component id="textFileName2" pref="511" max="32767" attributes="0"/>
                               <Component id="textZxFileName2" max="32767" attributes="0"/>
                           </Group>
                       </Group>
@@ -388,19 +394,19 @@
       <SubComponents>
         <Component class="javax.swing.JLabel" name="jLabel7">
           <Properties>
-            <Property name="text" type="java.lang.String" value="File name"/>
+            <Property name="text" type="java.lang.String" value="File name:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JTextField" name="textFileName2">
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel8">
           <Properties>
-            <Property name="text" type="java.lang.String" value="ZX File name"/>
+            <Property name="text" type="java.lang.String" value="ZX File name:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel9">
           <Properties>
-            <Property name="text" type="java.lang.String" value="ZX File type"/>
+            <Property name="text" type="java.lang.String" value="ZX File type:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JFormattedTextField" name="textZxFileName2">

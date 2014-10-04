@@ -48,7 +48,7 @@ public class ZXPolyData {
   public static final int ZXPOLY_2 = 2;
   public static final int ZXPOLY_3 = 3;
 
-  private final byte[] array;
+  private final byte[] basedata;
   private final byte[] mask;
   private final byte[][] zxpoly;
   private final AbstractFilePlugin basePlugin;
@@ -80,9 +80,9 @@ public class ZXPolyData {
   }
   
   public ZXPolyData(final Info info, final AbstractFilePlugin basePlugin, final byte[] array) {
-    this.array = array.clone();
-    this.mask = new byte[this.array.length];
-    this.zxpoly = new byte[4][this.array.length];
+    this.basedata = array.clone();
+    this.mask = new byte[this.basedata.length];
+    this.zxpoly = new byte[4][this.basedata.length];
     this.info = info;
     this.basePlugin = basePlugin;
   }
@@ -109,7 +109,7 @@ public class ZXPolyData {
       final Parsed parsed = PARSER.parse(inStream).mapTo(Parsed.class);
 
       this.info = new Info(new ByteArrayInputStream(parsed.info));
-      this.array = parsed.array;
+      this.basedata = parsed.array;
       this.mask = parsed.mask;
       this.zxpoly = new byte[4][];
       this.zxpoly[0] = parsed.zxpoly0;
@@ -142,8 +142,8 @@ public class ZXPolyData {
             Int(this.basePlugin.getUID()).
             Short(packedInfo.length).
             Byte(packedInfo).
-            Int(this.array.length).
-            Byte(this.array).
+            Int(this.basedata.length).
+            Byte(this.basedata).
             Byte(this.mask).
             Byte(this.zxpoly[0]).
             Byte(this.zxpoly[1]).
@@ -172,9 +172,29 @@ public class ZXPolyData {
   }
 
   public int getBaseData(final int address) {
-    return this.array[address];
+    return this.basedata[address];
   }
 
+  public byte [] getDataForCPU(final int cpuIndex){
+    final byte [] result = this.zxpoly[cpuIndex].clone();
+    
+    for(int i=0;i<this.basedata.length;i++){
+      final byte maskdata = this.mask[i];
+      final byte basedata = this.basedata[i];
+      if (maskdata == 0){
+        result[i] = basedata;
+      }else{
+        result[i] = (byte)((basedata & (~maskdata))|(result[i] & maskdata));
+      }
+    }
+    
+    return result;
+  }
+  
+  public AbstractFilePlugin getPlugin(){
+    return this.basePlugin;
+  }
+  
   public void clear() {
     Arrays.fill(this.mask, (byte) 0);
     for (final byte[] b : this.zxpoly) {
@@ -183,7 +203,7 @@ public class ZXPolyData {
   }
 
   public int length() {
-    return this.array.length;
+    return this.basedata.length;
   }
 
 }
