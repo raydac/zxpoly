@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.igormaznitsa.zxpspritecorrector.utils;
 
 import java.awt.Color;
@@ -41,6 +40,13 @@ public final class ZXPalette {
     new Color(255, 255, 255)
   };
  
+  public static int calcAttributeAddressZXMode(final int startScreenAddress, final int screenOffset){
+    final int line = ((screenOffset >>> 5) & 0x07) | ((screenOffset >>> 8) & 0x18);
+    final int column = screenOffset & 0x1F;
+    final int off = ((line>>>3)<<8) | (((line & 0x07)<<5)|column);
+    return startScreenAddress+0x1800+off;
+  }
+  
   private ZXPalette(){
     
   }

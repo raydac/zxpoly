@@ -116,32 +116,32 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     final String name = file.getName();
     final char zxType = data.getInfo().getType();
     final String zxName = data.getInfo().getName();
-    
+
     final FileNameDialog nameDialog = new FileNameDialog(
-            this.mainFrame, 
-            new String[]{addNumberToName(name, 0),addNumberToName(name, 1),addNumberToName(name, 2), addNumberToName(name, 3)},
-            new String[]{addNumberToZXFileName(zxName, 0),addNumberToZXFileName(zxName, 1),addNumberToZXFileName(zxName, 2), addNumberToZXFileName(zxName, 3)},
-            new char [] {zxType, zxType, zxType, zxType}
+            this.mainFrame,
+            new String[]{addNumberToName(name, 0), addNumberToName(name, 1), addNumberToName(name, 2), addNumberToName(name, 3)},
+            new String[]{addNumberToZXFileName(zxName, 0), addNumberToZXFileName(zxName, 1), addNumberToZXFileName(zxName, 2), addNumberToZXFileName(zxName, 3)},
+            new char[]{zxType, zxType, zxType, zxType}
     );
     nameDialog.setVisible(true);
-    
-    if (nameDialog.approved()){
+
+    if (nameDialog.approved()) {
     }
-    
+
   }
 
-  private String addNumberToName(final String name, final int number){
+  private String addNumberToName(final String name, final int number) {
     String base = FilenameUtils.getBaseName(name);
     final String ext = FilenameUtils.getExtension(name);
-    return base + Integer.toString(number)+'.'+ext;
+    return base + Integer.toString(number) + '.' + ext;
   }
-  
-  private String addNumberToZXFileName(final String baseName,  final int number){
+
+  private String addNumberToZXFileName(final String baseName, final int number) {
     final String normalized = normalizeName(baseName);
     final String numberStr = Integer.toString(number);
-    return normalized.substring(0,Math.max(0,8-numberStr.length()))+numberStr;
+    return normalized.substring(0, Math.max(0, 8 - numberStr.length())) + numberStr;
   }
-  
+
   private int makeCRC(final byte[] array) {
     int crc = 0;
     for (int i = 0; i < array.length; crc = crc + (array[i] * 257) + i, i++);
@@ -153,7 +153,7 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   }
 
   private void writeDataBlockAsHobeta(final File file, final String name, final byte type, final int start, final byte[] data) throws IOException {
-    final byte[] header = JBBPOut.BeginBin().ByteOrder(JBBPByteOrder.LITTLE_ENDIAN).Byte(normalizeName(name)).Byte(name).Short(start, data.length).Byte((data.length>>>8)+1, 0).End().toByteArray();
+    final byte[] header = JBBPOut.BeginBin().ByteOrder(JBBPByteOrder.LITTLE_ENDIAN).Byte(normalizeName(name)).Byte(name).Short(start, data.length).Byte((data.length >>> 8) + 1, 0).End().toByteArray();
     final byte[] full = JBBPOut.BeginBin().ByteOrder(JBBPByteOrder.LITTLE_ENDIAN).Byte(header).Short(makeCRC(header)).Byte(data).End().toByteArray();
     FileUtils.writeByteArrayToFile(file, full);
   }

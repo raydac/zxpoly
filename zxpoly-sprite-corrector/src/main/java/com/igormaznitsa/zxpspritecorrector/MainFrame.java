@@ -107,7 +107,6 @@ public class MainFrame extends javax.swing.JFrame {
     jSeparator6 = new javax.swing.JPopupMenu.Separator();
     menuOptionDontShowAttributes = new javax.swing.JRadioButtonMenuItem();
     menuOptionsShowBaseAttributes = new javax.swing.JRadioButtonMenuItem();
-    menuOptionsShow512Attributes = new javax.swing.JRadioButtonMenuItem();
     menuHelp = new javax.swing.JMenu();
     menuHelpAbout = new javax.swing.JMenuItem();
 
@@ -357,17 +356,23 @@ public class MainFrame extends javax.swing.JFrame {
     menuOptions.add(jSeparator6);
 
     attributesButtonGroup.add(menuOptionDontShowAttributes);
-    menuOptionDontShowAttributes.setText("Don't show attributes");
+    menuOptionDontShowAttributes.setSelected(true);
+    menuOptionDontShowAttributes.setText("Don't show attribute colors");
+    menuOptionDontShowAttributes.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionDontShowAttributesActionPerformed(evt);
+      }
+    });
     menuOptions.add(menuOptionDontShowAttributes);
 
     attributesButtonGroup.add(menuOptionsShowBaseAttributes);
-    menuOptionsShowBaseAttributes.setSelected(true);
-    menuOptionsShowBaseAttributes.setText("Show base attributes");
+    menuOptionsShowBaseAttributes.setText("Show attribute colors");
+    menuOptionsShowBaseAttributes.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsShowBaseAttributesActionPerformed(evt);
+      }
+    });
     menuOptions.add(menuOptionsShowBaseAttributes);
-
-    attributesButtonGroup.add(menuOptionsShow512Attributes);
-    menuOptionsShow512Attributes.setText("Show 512x384 attributes");
-    menuOptions.add(menuOptionsShow512Attributes);
 
     menuBar.add(menuOptions);
 
@@ -620,6 +625,14 @@ public class MainFrame extends javax.swing.JFrame {
     }
   }//GEN-LAST:event_menuEditClearActionPerformed
 
+  private void menuOptionDontShowAttributesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionDontShowAttributesActionPerformed
+    this.mainEditor.setShowAttributesForBase(false);
+  }//GEN-LAST:event_menuOptionDontShowAttributesActionPerformed
+
+  private void menuOptionsShowBaseAttributesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsShowBaseAttributesActionPerformed
+    this.mainEditor.setShowAttributesForBase(true);
+  }//GEN-LAST:event_menuOptionsShowBaseAttributesActionPerformed
+
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);
     this.scrollBarAddress.setMinimum(0);
@@ -670,7 +683,6 @@ public class MainFrame extends javax.swing.JFrame {
   private javax.swing.JCheckBoxMenuItem menuOptionsGrid;
   private javax.swing.JCheckBoxMenuItem menuOptionsInvertBase;
   private javax.swing.JCheckBoxMenuItem menuOptionsMode512;
-  private javax.swing.JRadioButtonMenuItem menuOptionsShow512Attributes;
   private javax.swing.JRadioButtonMenuItem menuOptionsShowBaseAttributes;
   private javax.swing.JCheckBoxMenuItem menuOptionsZXScreen;
   private javax.swing.JPanel panelTools;

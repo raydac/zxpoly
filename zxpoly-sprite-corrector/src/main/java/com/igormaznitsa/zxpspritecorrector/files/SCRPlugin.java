@@ -19,6 +19,7 @@ package com.igormaznitsa.zxpspritecorrector.files;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import java.io.*;
 import java.util.*;
+import org.apache.commons.io.FileUtils;
 
 public class SCRPlugin extends AbstractFilePlugin {
 
@@ -57,8 +58,9 @@ public class SCRPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ZXPolyData readFrom(File file, int index) throws IOException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  public ZXPolyData readFrom(final File file, final int index) throws IOException {
+    final byte[] wholeFile = FileUtils.readFileToByteArray(file);
+    return new ZXPolyData(new Info(file.getName(), 'C', 16384, wholeFile.length), this, wholeFile);
   }
 
   @Override

@@ -520,9 +520,18 @@ public final class EditorComponent extends JComponent {
         int data2 = packedData3012;
         int data3 = packedData3012 >>> 24;
 
+        final int attributeAddress = ZXPalette.calcAttributeAddressZXMode(this.startAddress, addr-this.startAddress);
+        final int baseAttribute = attributeAddress >= this.processingData.length() ? 0 : this.processingData.getBaseData(attributeAddress);
+        
         for (int i = 0; i < 8; i++) {
           if ((mask & 0x80) == 0) {
             // point of base
+            if (this.showAttributesForBase){
+              final int bright = (baseAttribute & 0x40) == 0 ? 0x08 : 0x00;
+              final Color inkColor = ZXPalette.COLORS[bright | (baseAttribute & 0x7)];
+              final Color paperColor = ZXPalette.COLORS[bright | ((baseAttribute >>> 3) & 0x7)];
+              gfx.setColor((basedata & 0x80) == 0 ? paperColor : inkColor);
+            }else
             if (this.invertShowBaseData) {
               gfx.setColor((basedata & 0x80) == 0 ? this.colorPixelOn : this.colorPixelOff);
             }
