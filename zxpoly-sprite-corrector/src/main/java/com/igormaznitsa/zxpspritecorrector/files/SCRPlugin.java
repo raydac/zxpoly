@@ -28,8 +28,8 @@ public class SCRPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public int getUID() {
-    return ((int) 'S' << 24) | ((int) 'C' << 16) | ((int) 'R' << 8) | (int) ' ';
+  public String getUID() {
+    return "SCRP";
   }
   
   @Override
@@ -58,14 +58,14 @@ public class SCRPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ZXPolyData readFrom(final File file, final int index) throws IOException {
+  public ReadResult readFrom(final File file, final int index) throws IOException {
     final byte[] wholeFile = FileUtils.readFileToByteArray(file);
-    return new ZXPolyData(new Info(file.getName(), 'C', 16384, wholeFile.length), this, wholeFile);
+    return new ReadResult(new ZXPolyData(new Info(file.getName(), 'C', 16384, wholeFile.length), this, wholeFile),null);
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data) throws IOException {
-    final FileNameDialog dialog = new FileNameDialog(this.mainFrame, "Base file is "+file.getName(), FileNameDialog.makeFileNames(file.getName()), null, null);
+  public void writeTo(final File file, final ZXPolyData data,final SessionData sessionData) throws IOException {
+    final FileNameDialog dialog = new FileNameDialog(this.mainFrame, "Base file name is "+file.getName(), FileNameDialog.makeFileNames(file.getName()), null, null);
     dialog.setVisible(true);
     if (dialog.approved()){
       final String [] fileNames = dialog.getFileName();

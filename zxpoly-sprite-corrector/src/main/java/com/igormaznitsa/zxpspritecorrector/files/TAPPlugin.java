@@ -136,12 +136,12 @@ public class TAPPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ZXPolyData readFrom(final File file, final int index) throws IOException {
+  public ReadResult readFrom(final File file, final int index) throws IOException {
     return null;
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data) throws IOException {
+  public void writeTo(final File file, final ZXPolyData data, final SessionData session) throws IOException {
   }
 
   @Override
@@ -155,8 +155,8 @@ public class TAPPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public int getUID() {
-    return ((int) 'T' << 24) | ((int) 'A' << 16) | ((int) 'P' << 8) | (int) ' ';
+  public String getUID() {
+    return "TAPP";
   }
   
 }

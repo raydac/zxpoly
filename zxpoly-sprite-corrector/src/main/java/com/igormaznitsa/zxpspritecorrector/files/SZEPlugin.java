@@ -17,6 +17,7 @@
 
 package com.igormaznitsa.zxpspritecorrector.files;
 
+import com.igormaznitsa.jbbp.io.*;
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import java.io.*;
@@ -30,8 +31,8 @@ public class SZEPlugin extends AbstractFilePlugin {
   private PicoContainer context;
   
   @Override
-  public int getUID() {
-    return ((int) 'S' << 24) | ((int) 'Z' << 16) | ((int) 'E' << 8) | (int) ' ';
+  public String getUID() {
+    return "SZEP";
   }
   
   public SZEPlugin(){
@@ -67,7 +68,10 @@ public class SZEPlugin extends AbstractFilePlugin {
         final ZXPolyData zxpoly = new ZXPolyData(in,this.context.getComponents(AbstractFilePlugin.class));
         
         final StringBuilder result = new StringBuilder();
-        result.append("Name : "+result);
+        result.append("  Name : ").append(zxpoly.getInfo().getName()).append('\n');
+        result.append("  Type : ").append(zxpoly.getInfo().getType()).append('\n');
+        result.append("Length : ").append(zxpoly.getInfo().getLength()).append('\n');
+        result.append("Plugin : ").append(zxpoly.getPlugin().getName());
         
         return result.toString();
       }
@@ -81,19 +85,27 @@ public class SZEPlugin extends AbstractFilePlugin {
   }
   
   @Override
-  public ZXPolyData readFrom(final File file, final int index) throws IOException {
+  public ReadResult readFrom(final File file, final int index) throws IOException {
     FileInputStream inStream = null;
     try{
       inStream = new FileInputStream(file);
-      return new ZXPolyData(inStream, this.context.getComponents(AbstractFilePlugin.class));
+      final ZXPolyData zxpolyData = new ZXPolyData(inStream, this.context.getComponents(AbstractFilePlugin.class));
+      final JBBPBitInputStream in = new JBBPBitInputStream(inStream);
+      final int length = in.readInt(JBBPByteOrder.BIG_ENDIAN);
+      return new ReadResult(zxpolyData, new SessionData(in));
     }finally{
       IOUtils.closeQuietly(inStream);
     }
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data) throws IOException {
-    FileUtils.writeByteArrayToFile(file, data.getAsArray());
+  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
+    final byte [] dataarray = data.getAsArray();
+    final byte [] sessionarray = sessionData.makeArray();
+    
+    final byte [] result = JBBPOut.BeginBin().Byte(dataarray).Int(sessionarray.length).Byte(sessionarray).End().toByteArray();
+    
+    saveDataToFile(file, result);
   }
 
   @Override

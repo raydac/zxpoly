@@ -43,8 +43,8 @@ public class SCLPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public int getUID() {
-    return ((int) 'S' << 24) | ((int) 'C' << 16) | ((int) 'L' << 8) | (int) ' ';
+  public String getUID() {
+    return "SCLP";
   }
   
   @Override
@@ -93,13 +93,13 @@ public class SCLPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ZXPolyData readFrom(File file, int index) throws IOException {
+  public ReadResult readFrom(File file, int index) throws IOException {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
   
   @Override
-  public void writeTo(final File file, final ZXPolyData data) throws IOException {
+  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
   }
 
   @Override

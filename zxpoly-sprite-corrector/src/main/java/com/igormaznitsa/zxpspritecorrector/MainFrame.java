@@ -8,8 +8,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.*;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.*;
 import org.picocontainer.*;
 import org.picocontainer.injectors.*;
@@ -20,7 +18,8 @@ public class MainFrame extends javax.swing.JFrame {
 
   private static final long serialVersionUID = -5031012548284731523L;
 
-  private File openedFile;
+  private File lastOpenedFile;
+  private File szeFile;
 
   public MainFrame() {
     initComponents();
@@ -41,7 +40,7 @@ public class MainFrame extends javax.swing.JFrame {
     container.addAdapter(new ProviderAdapter(new ContextProvider(container)));
     container.addComponent(this);
     container.addComponent(this.colorSelector);
-    
+
     container.start();
 
     for (final AbstractTool tool : container.getComponents(AbstractTool.class)) {
@@ -50,17 +49,47 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     this.setLocationRelativeTo(null);
-    this.menuOptionsZXScreen.setSelected(this.mainEditor.isZXScreenMode());
-    this.menuOptionsColumns.setSelected(this.mainEditor.isShowColumnBorders());
-    this.menuOptionsGrid.setSelected(this.mainEditor.isShowGrid());
-    this.menuOptionsInvertBase.setSelected(this.mainEditor.isInvertShowBaseData());
-    this.menuOptionsMode512.setSelected(this.mainEditor.isMode512());
-    this.attributesButtonGroup.setSelected(menuOptionDontShowAttributes.getModel(), true);
     updateAddressScrollBar();
 
+    loadStateFromSession(new SessionData(this.mainEditor));
+    setCurrentSZEFile(null);
+    updateBottomBar();
+    
     setVisible(true);
 
     repaint();
+  }
+
+  private void updateBottomBar(){
+    this.labelZoom.setText("x"+this.mainEditor.getZoom());
+  }
+  
+  private void loadStateFromSession(final SessionData sessionData) {
+    final int address = sessionData.getBaseAddress();
+    
+    sessionData.fill(this.mainEditor);
+
+    this.menuOptionsZXScreen.setSelected(sessionData.isZXAddressing());
+    this.menuOptionsColumns.setSelected(sessionData.isShowColumns());
+    this.menuOptionsGrid.setSelected(sessionData.isShowGrid());
+    this.menuOptionsInvertBase.setSelected(sessionData.isInvertBaseShow());
+    this.menuOptionsMode512.setSelected(sessionData.is512Mode());
+    this.sliderColumns.setValue(sessionData.getColumnNumber());
+    switch (sessionData.getAttributeMode()) {
+      case DONT_SHOW:
+        this.menuOptionDontShowAttributes.setSelected(true);
+        break;
+      case SHOW_BASE:
+        this.menuOptionsShowBaseAttributes.setSelected(true);
+        break;
+      case SHOW_512x384_ZXPOLY_PLANES:
+        this.menuOptionsShow512x384Attributes.setSelected(true);
+        break;
+    }
+    
+    this.scrollBarAddress.setValue(address);
+    
+    updateBottomBar();
   }
 
   /**
@@ -84,10 +113,12 @@ public class MainFrame extends javax.swing.JFrame {
     mainEditorPanel = new javax.swing.JPanel();
     mainEditor = new com.igormaznitsa.zxpspritecorrector.components.EditorComponent();
     jPanel2 = new javax.swing.JPanel();
+    labelZoom = new javax.swing.JLabel();
     menuBar = new javax.swing.JMenuBar();
     menuFile = new javax.swing.JMenu();
     menuFileNew = new javax.swing.JMenuItem();
     menuFileOpen = new javax.swing.JMenuItem();
+    menuSave = new javax.swing.JMenuItem();
     menuFileSaveAs = new javax.swing.JMenuItem();
     jSeparator4 = new javax.swing.JPopupMenu.Separator();
     menuFileExportAs = new javax.swing.JMenu();
@@ -113,7 +144,7 @@ public class MainFrame extends javax.swing.JFrame {
     menuHelp = new javax.swing.JMenu();
     menuHelpAbout = new javax.swing.JMenuItem();
 
-    setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+    setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
     setTitle("ZX-Poly Sprite Corrector");
     setIconImage(GfxUtils.loadImage("ico.gif"));
     setIconImages(null);
@@ -220,7 +251,7 @@ public class MainFrame extends javax.swing.JFrame {
     );
     mainEditorPanelLayout.setVerticalGroup(
       mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGap(0, 387, Short.MAX_VALUE)
+      .addGap(0, 394, Short.MAX_VALUE)
       .addGroup(mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
         .addGroup(mainEditorPanelLayout.createSequentialGroup()
           .addGap(0, 0, Short.MAX_VALUE)
@@ -231,17 +262,10 @@ public class MainFrame extends javax.swing.JFrame {
     jScrollPane1.setViewportView(mainEditorPanel);
 
     jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+    jPanel2.setLayout(new java.awt.BorderLayout());
 
-    javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-    jPanel2.setLayout(jPanel2Layout);
-    jPanel2Layout.setHorizontalGroup(
-      jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGap(0, 0, Short.MAX_VALUE)
-    );
-    jPanel2Layout.setVerticalGroup(
-      jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGap(0, 23, Short.MAX_VALUE)
-    );
+    labelZoom.setText("Zoom");
+    jPanel2.add(labelZoom, java.awt.BorderLayout.EAST);
 
     menuFile.setText("File");
 
@@ -256,7 +280,16 @@ public class MainFrame extends javax.swing.JFrame {
     });
     menuFile.add(menuFileOpen);
 
-    menuFileSaveAs.setText("Save as..");
+    menuSave.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
+    menuSave.setText("Save");
+    menuSave.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuSaveActionPerformed(evt);
+      }
+    });
+    menuFile.add(menuSave);
+
+    menuFileSaveAs.setText("Save As");
     menuFileSaveAs.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         menuFileSaveAsActionPerformed(evt);
@@ -480,7 +513,10 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_menuFileExitActionPerformed
 
     private void applicationClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_applicationClosing
-
+      if (this.mainEditor.hasData()){
+        if (JOptionPane.showConfirmDialog(this, "Close application?","Confirmation",JOptionPane.YES_NO_OPTION)==JOptionPane.NO_OPTION) return;
+      }
+      dispose();
     }//GEN-LAST:event_applicationClosing
 
         private void buttonLockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLockActionPerformed
@@ -507,6 +543,7 @@ public class MainFrame extends javax.swing.JFrame {
     else {
       this.mainEditor.zoomOut();
     }
+    updateBottomBar();
   }//GEN-LAST:event_mainEditorPanelMouseWheelMoved
 
   private void sliderColumnsStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderColumnsStateChanged
@@ -514,8 +551,13 @@ public class MainFrame extends javax.swing.JFrame {
     updateAddressScrollBar();
   }//GEN-LAST:event_sliderColumnsStateChanged
 
+  private void setCurrentSZEFile(final File file){
+    this.szeFile = file;
+    this.menuSave.setEnabled(file!=null);
+  }
+  
   private void menuFileOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileOpenActionPerformed
-    final JFileChooser chooser = new JFileChooser(openedFile);
+    final JFileChooser chooser = new JFileChooser(this.lastOpenedFile);
     chooser.setAcceptAllFileFilterUsed(false);
 
     for (final AbstractFilePlugin plugin : container.getComponents(AbstractFilePlugin.class)) {
@@ -528,7 +570,8 @@ public class MainFrame extends javax.swing.JFrame {
     if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
       final AbstractFilePlugin plugin = (AbstractFilePlugin) chooser.getFileFilter();
       final File selectedFile = chooser.getSelectedFile();
-
+      this.lastOpenedFile = selectedFile;
+      
       try {
         int selected = -1;
         if (plugin.hasInsideFileList()) {
@@ -539,11 +582,17 @@ public class MainFrame extends javax.swing.JFrame {
             return;
           }
         }
-        final ZXPolyData data = plugin.readFrom(selectedFile, selected);
+        final AbstractFilePlugin.ReadResult result = plugin.readFrom(selectedFile, selected);
         this.setTitle(selectedFile.getAbsolutePath());
-        this.mainEditor.setProcessingData(data);
+        this.mainEditor.setProcessingData(result.getData());
+        if (result.getSessionData()!=null){
+          loadStateFromSession(result.getSessionData());
+        }
+      
+        setCurrentSZEFile(plugin instanceof SZEPlugin ? selectedFile : null);
       }
       catch (IOException ex) {
+        ex.printStackTrace();
         JOptionPane.showMessageDialog(this, "Can't read file or its part", "Error", JOptionPane.ERROR_MESSAGE);
       }
       finally {
@@ -560,10 +609,10 @@ public class MainFrame extends javax.swing.JFrame {
     this.textFieldAddress.setText("#" + (addressAsString.length() < 4 ? "0000".substring(0, 4 - addressAsString.length()) : "") + addressAsString);
   }//GEN-LAST:event_scrollBarAddressAdjustmentValueChanged
 
-  private void processCurrentToolForPoint(final int modifiers){
+  private void processCurrentToolForPoint(final int modifiers) {
     final Rectangle toolRect = this.mainEditor.getToolArea();
-    
-    if (toolRect!=null){
+
+    if (toolRect != null) {
       final ToolButtonModel tool = (ToolButtonModel) this.toolsButtonGroup.getSelection();
       if (tool != null) {
         tool.getTool().process(this.mainEditor, toolRect, modifiers);
@@ -571,29 +620,30 @@ public class MainFrame extends javax.swing.JFrame {
     }
   }
 
-  private Rectangle updateToolRectangle(final Point point){
-     final Point editorPoint =  this.mainEditor.mousePoint2ScreenPoint(SwingUtilities.convertPoint(this.mainEditorPanel, point, this.mainEditor));
-     final int width = this.sliderPenWidth.getValue();
-     final Rectangle rect;
-     if (width <= 1){
-        rect = new Rectangle(editorPoint.x, editorPoint.y, 1, 1);
-     }else{
-        rect = new Rectangle(editorPoint.x-(width>>1), editorPoint.y-(width>>1), width, width);
-     }
-     
-     this.mainEditor.setToolArea(rect);
-     return rect;
+  private Rectangle updateToolRectangle(final Point point) {
+    final Point editorPoint = this.mainEditor.mousePoint2ScreenPoint(SwingUtilities.convertPoint(this.mainEditorPanel, point, this.mainEditor));
+    final int width = this.sliderPenWidth.getValue();
+    final Rectangle rect;
+    if (width <= 1) {
+      rect = new Rectangle(editorPoint.x, editorPoint.y, 1, 1);
+    }
+    else {
+      rect = new Rectangle(editorPoint.x - (width >> 1), editorPoint.y - (width >> 1), width, width);
+    }
+
+    this.mainEditor.setToolArea(rect);
+    return rect;
   }
-  
-  private void updateRedoUndo(){
+
+  private void updateRedoUndo() {
     this.menuEditRedo.setEnabled(this.mainEditor.hasRedo());
     this.menuEditUndo.setEnabled(this.mainEditor.hasUndo());
   }
-  
+
   private void mainEditorPanelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMousePressed
     this.mainEditor.addUndo();
     updateRedoUndo();
-    
+
     updateToolRectangle(evt.getPoint());
     processCurrentToolForPoint(evt.getModifiers());
   }//GEN-LAST:event_mainEditorPanelMousePressed
@@ -646,7 +696,7 @@ public class MainFrame extends javax.swing.JFrame {
   }//GEN-LAST:event_menuEditRedoActionPerformed
 
   private void menuEditClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditClearActionPerformed
-    if (JOptionPane.showConfirmDialog(this, "Clear ZX-Poly data?","Confirmation",JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION){
+    if (JOptionPane.showConfirmDialog(this, "Clear ZX-Poly data?", "Confirmation", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
       this.mainEditor.clear();
     }
   }//GEN-LAST:event_menuEditClearActionPerformed
@@ -660,23 +710,26 @@ public class MainFrame extends javax.swing.JFrame {
   }//GEN-LAST:event_menuOptionsShowBaseAttributesActionPerformed
 
   private void menuFileSaveAsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSaveAsActionPerformed
-    if (this.mainEditor.hasData()){
+    if (this.mainEditor.hasData()) {
       final ZXPolyData zxpolydata = this.mainEditor.getProcessingData();
-      
-      final JFileChooser fileChoolser = new JFileChooser(this.openedFile);
+
+      final JFileChooser fileChoolser = new JFileChooser(this.lastOpenedFile);
       fileChoolser.setAcceptAllFileFilterUsed(false);
-      fileChoolser.addChoosableFileFilter(zxpolydata.getPlugin());
-      if (fileChoolser.showOpenDialog(this)==JFileChooser.APPROVE_OPTION){
+      fileChoolser.addChoosableFileFilter(container.getComponent(SZEPlugin.class));
+      if (fileChoolser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
         try {
           final File thefile = fileChoolser.getSelectedFile();
-          zxpolydata.getPlugin().writeTo(thefile, zxpolydata);
+          container.getComponent(SZEPlugin.class).writeTo(thefile, zxpolydata, new SessionData(this.mainEditor));
+          
+          this.setTitle(thefile.getAbsolutePath());
+          setCurrentSZEFile(thefile);
         }
         catch (Exception ex) {
           ex.printStackTrace();
-          JOptionPane.showMessageDialog(this, "Error during operation ["+ex.getMessage()+']',"Error",JOptionPane.ERROR_MESSAGE);
+          JOptionPane.showMessageDialog(this, "Error during operation [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
         }
       }
-      
+
     }
   }//GEN-LAST:event_menuFileSaveAsActionPerformed
 
@@ -685,10 +738,19 @@ public class MainFrame extends javax.swing.JFrame {
   }//GEN-LAST:event_menuOptionsShow512x384AttributesActionPerformed
 
   private void menuEditCopyBaseToPlansActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditCopyBaseToPlansActionPerformed
-    if (JOptionPane.showConfirmDialog(this, "Do you really want to copy base data to all ZX-Poly planes?","Confirmation",JOptionPane.YES_NO_OPTION)==JOptionPane.OK_OPTION){
+    if (JOptionPane.showConfirmDialog(this, "Do you really want to copy base data to all ZX-Poly planes?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
       this.mainEditor.copyPlansFromBase();
     }
   }//GEN-LAST:event_menuEditCopyBaseToPlansActionPerformed
+
+  private void menuSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuSaveActionPerformed
+    try{
+      container.getComponent(SZEPlugin.class).writeTo(this.szeFile, this.mainEditor.getProcessingData(), new SessionData(this.mainEditor));
+    }catch(Exception ex){
+      ex.printStackTrace();
+      JOptionPane.showMessageDialog(this, "Can't save file for exception ["+ex.getMessage()+']',"Error",JOptionPane.ERROR_MESSAGE);
+    }
+  }//GEN-LAST:event_menuSaveActionPerformed
 
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);
@@ -718,6 +780,7 @@ public class MainFrame extends javax.swing.JFrame {
   private javax.swing.JPopupMenu.Separator jSeparator4;
   private javax.swing.JPopupMenu.Separator jSeparator5;
   private javax.swing.JPopupMenu.Separator jSeparator6;
+  private javax.swing.JLabel labelZoom;
   private com.igormaznitsa.zxpspritecorrector.components.EditorComponent mainEditor;
   private javax.swing.JPanel mainEditorPanel;
   private javax.swing.JMenuBar menuBar;
@@ -743,6 +806,7 @@ public class MainFrame extends javax.swing.JFrame {
   private javax.swing.JRadioButtonMenuItem menuOptionsShow512x384Attributes;
   private javax.swing.JRadioButtonMenuItem menuOptionsShowBaseAttributes;
   private javax.swing.JCheckBoxMenuItem menuOptionsZXScreen;
+  private javax.swing.JMenuItem menuSave;
   private javax.swing.JPanel panelTools;
   private javax.swing.JScrollBar scrollBarAddress;
   private javax.swing.JSlider sliderColumns;

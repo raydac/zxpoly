@@ -54,8 +54,8 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public int getUID() {
-    return ((int) 'H' << 24) | ((int) 'B' << 16) | ((int) 'T' << 8) | (int) 'A';
+  public String getUID() {
+    return "HBTA";
   }
 
   @Override
@@ -104,14 +104,14 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ZXPolyData readFrom(final File file, final int index) throws IOException {
+  public ReadResult readFrom(final File file, final int index) throws IOException {
     final byte[] wholeFile = FileUtils.readFileToByteArray(file);
     final Hobeta parsed = HOBETA_FILE_PARSER.parse(wholeFile).mapTo(Hobeta.class);
-    return new ZXPolyData(new Info(parsed.name, (char) (parsed.type & 0xFF), parsed.start, parsed.length), this, parsed.data);
+    return new ReadResult(new ZXPolyData(new Info(parsed.name, (char) (parsed.type & 0xFF), parsed.start, parsed.length), this, parsed.data), null);
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data) throws IOException {
+  public void writeTo(final File file, final ZXPolyData data, final SessionData session) throws IOException {
     final File dir = file.getParentFile();
     final String name = file.getName();
     final char zxType = data.getInfo().getType();
@@ -119,7 +119,7 @@ public class HOBETAPlugin extends AbstractFilePlugin {
 
     final FileNameDialog nameDialog = new FileNameDialog(
             this.mainFrame,
-            "Base file is " + file.getName(),
+            "Base file name is " + file.getName(),
             new String[]{addNumberToName(name, 0), addNumberToName(name, 1), addNumberToName(name, 2), addNumberToName(name, 3)},
             new String[]{addNumberToZXFileName(zxName, 0), addNumberToZXFileName(zxName, 1), addNumberToZXFileName(zxName, 2), addNumberToZXFileName(zxName, 3)},
             new char[]{zxType, zxType, zxType, zxType}
@@ -127,6 +127,7 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     nameDialog.setVisible(true);
 
     if (nameDialog.approved()) {
+      
     }
 
   }

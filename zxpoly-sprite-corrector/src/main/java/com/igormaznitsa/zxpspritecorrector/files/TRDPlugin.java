@@ -86,12 +86,12 @@ public class TRDPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ZXPolyData readFrom(final File file, final int index) throws IOException {
+  public ReadResult readFrom(final File file, final int index) throws IOException {
     return null;
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data) throws IOException {
+  public void writeTo(final File file, final ZXPolyData data, final SessionData session) throws IOException {
   }
 
   @Override
@@ -105,8 +105,8 @@ public class TRDPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public int getUID() {
-    return ((int) 'T' << 24) | ((int) 'R' << 16) | ((int) 'D' << 8) | (int) ' ';
+  public String getUID() {
+    return "TRDP";
   }
   
 }

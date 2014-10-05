@@ -27,6 +27,25 @@ import org.apache.commons.io.FileUtils;
 import org.picocontainer.annotations.Inject;
 
 public abstract class AbstractFilePlugin extends FileFilter {
+  public final static class ReadResult {
+    private final ZXPolyData data;
+    private final SessionData session;
+
+    public ReadResult(final ZXPolyData data, final SessionData session) {
+      this.data = data;
+      this.session = session;
+    }
+  
+    public ZXPolyData getData(){
+      return this.data;
+    }
+    
+    public SessionData getSessionData(){
+      return this.session;
+    }
+    
+  }
+  
   @Inject
   protected MainFrame mainFrame;
   
@@ -42,12 +61,12 @@ public abstract class AbstractFilePlugin extends FileFilter {
     return "";
   }
   
-  public abstract int getUID();
+  public abstract String getUID();
   
   public abstract List<Info> getInsideFileList(File file);
 
-  public abstract ZXPolyData readFrom(File file, int index) throws IOException;
-  public abstract void writeTo(File file, ZXPolyData data) throws IOException;
+  public abstract ReadResult readFrom(File file, int index) throws IOException;
+  public abstract void writeTo(File file, ZXPolyData data, SessionData sessionData) throws IOException;
 
   public boolean saveDataToFile(final File file, final byte [] data) throws IOException {
     if (file.isFile()){
