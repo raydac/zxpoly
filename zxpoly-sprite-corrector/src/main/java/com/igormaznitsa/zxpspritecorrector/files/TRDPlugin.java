@@ -99,8 +99,8 @@ public class TRDPlugin extends AbstractFilePlugin {
 
       final TRDosCatalogItem info = list.get(index);
       
-      final int offsetToFile = info.firstSector << 8;
-      final long toskip = inStream.getCounter() - offsetToFile;
+      final int offsetToFile = ((info.track<<4)+info.firstSector)*256;
+      final long toskip = offsetToFile - inStream.getCounter();
       final long skept = inStream.skip(toskip);
       if (skept != toskip){
         throw new IllegalStateException("Can't skip needed byte number ["+toskip+']');
@@ -114,6 +114,42 @@ public class TRDPlugin extends AbstractFilePlugin {
 
   @Override
   public void writeTo(final File file, final ZXPolyData data, final SessionData session) throws IOException {
+
+    final String zxname = data.getInfo().getName();
+    final String[] zxFileName = new String[]{prepareNameForTRD(zxname, 0), prepareNameForTRD(zxname, 1), prepareNameForTRD(zxname, 2), prepareNameForTRD(zxname, 3)};
+
+    final char type = data.getInfo().getType();
+
+    final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "TRD file " + file.getName(), null, zxFileName, new char[]{type, type, type, type});
+    fileNameDialog.setVisible(true);
+    if (fileNameDialog.approved()) {
+      final JBBPOut out = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
+
+      final String[] fnames = fileNameDialog.getZxName();
+      final Character[] fchars = fileNameDialog.getZxType();
+
+      final int sectorslen = (data.length() >>> 8) + ((data.length() & 0xFF) == 0 ? 0 : 1);
+
+      int csector = 16;
+      
+      for (int i = 0; i < 4; i++) {
+        out.Byte(fnames[i]).Byte(fchars[i].charValue()).Short(data.getInfo().getStartAddress(), data.getInfo().getLength()).Byte(sectorslen).Byte(csector & 0xF).Byte(csector>>>4);
+        csector += sectorslen;
+      }
+
+      out.Align(2048).ResetCounter();
+      out.Byte(0).Skip(224).Byte(csector & 0xF,csector>>>4,22,4).Short(2560-csector).Byte(16,0,0).Byte("         ").Byte(0,0).Byte("ZXPOLY D").Byte(0,0,0);
+      out.Skip(1792);
+      
+      out.ResetCounter();
+      for (int i = 0; i < 4; i++) {
+        final byte[] arr = data.getDataForCPU(i);
+        out.Byte(arr).Align(256);
+      }
+      out.Align(2544*256);
+      
+      saveDataToFile(file, out.End().toByteArray());
+    }
   }
 
   @Override
