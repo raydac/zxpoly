@@ -206,4 +206,10 @@ public class ZXPolyData {
     return this.basedata.length;
   }
 
+  public void copyPlansFromBase() {
+    for (final byte[] plane : this.zxpoly) {
+      System.arraycopy(this.basedata, 0, plane, 0, this.basedata.length);
+    }
+    Arrays.fill(this.mask, (byte)0xFF);
+  }
 }

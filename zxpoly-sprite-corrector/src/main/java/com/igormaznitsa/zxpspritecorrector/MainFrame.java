@@ -97,6 +97,7 @@ public class MainFrame extends javax.swing.JFrame {
     menuEditUndo = new javax.swing.JMenuItem();
     menuEditRedo = new javax.swing.JMenuItem();
     jSeparator2 = new javax.swing.JPopupMenu.Separator();
+    menuEditCopyBaseToPlans = new javax.swing.JMenuItem();
     menuEditClear = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
     menuOptionsGrid = new javax.swing.JCheckBoxMenuItem();
@@ -108,6 +109,7 @@ public class MainFrame extends javax.swing.JFrame {
     jSeparator6 = new javax.swing.JPopupMenu.Separator();
     menuOptionDontShowAttributes = new javax.swing.JRadioButtonMenuItem();
     menuOptionsShowBaseAttributes = new javax.swing.JRadioButtonMenuItem();
+    menuOptionsShow512x384Attributes = new javax.swing.JRadioButtonMenuItem();
     menuHelp = new javax.swing.JMenu();
     menuHelpAbout = new javax.swing.JMenuItem();
 
@@ -299,6 +301,14 @@ public class MainFrame extends javax.swing.JFrame {
     menuEdit.add(menuEditRedo);
     menuEdit.add(jSeparator2);
 
+    menuEditCopyBaseToPlans.setText("Copy base to all plans");
+    menuEditCopyBaseToPlans.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuEditCopyBaseToPlansActionPerformed(evt);
+      }
+    });
+    menuEdit.add(menuEditCopyBaseToPlans);
+
     menuEditClear.setText("Clear");
     menuEditClear.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -339,6 +349,7 @@ public class MainFrame extends javax.swing.JFrame {
     menuOptions.add(menuOptionsInvertBase);
     menuOptions.add(jSeparator5);
 
+    menuOptionsZXScreen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, 0));
     menuOptionsZXScreen.setSelected(true);
     menuOptionsZXScreen.setText("ZX-Screen addressing");
     menuOptionsZXScreen.addChangeListener(new javax.swing.event.ChangeListener() {
@@ -358,6 +369,7 @@ public class MainFrame extends javax.swing.JFrame {
     menuOptions.add(menuOptionsMode512);
     menuOptions.add(jSeparator6);
 
+    menuOptionDontShowAttributes.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
     attributesButtonGroup.add(menuOptionDontShowAttributes);
     menuOptionDontShowAttributes.setSelected(true);
     menuOptionDontShowAttributes.setText("Don't show attribute colors");
@@ -368,6 +380,7 @@ public class MainFrame extends javax.swing.JFrame {
     });
     menuOptions.add(menuOptionDontShowAttributes);
 
+    menuOptionsShowBaseAttributes.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_MASK));
     attributesButtonGroup.add(menuOptionsShowBaseAttributes);
     menuOptionsShowBaseAttributes.setText("Show attribute colors");
     menuOptionsShowBaseAttributes.addActionListener(new java.awt.event.ActionListener() {
@@ -376,6 +389,16 @@ public class MainFrame extends javax.swing.JFrame {
       }
     });
     menuOptions.add(menuOptionsShowBaseAttributes);
+
+    menuOptionsShow512x384Attributes.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+    attributesButtonGroup.add(menuOptionsShow512x384Attributes);
+    menuOptionsShow512x384Attributes.setText("Show 512x384 plane attributes");
+    menuOptionsShow512x384Attributes.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsShow512x384AttributesActionPerformed(evt);
+      }
+    });
+    menuOptions.add(menuOptionsShow512x384Attributes);
 
     menuBar.add(menuOptions);
 
@@ -629,11 +652,11 @@ public class MainFrame extends javax.swing.JFrame {
   }//GEN-LAST:event_menuEditClearActionPerformed
 
   private void menuOptionDontShowAttributesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionDontShowAttributesActionPerformed
-    this.mainEditor.setShowAttributesForBase(false);
+    this.mainEditor.setShowAttributes(EditorComponent.ShowAttributes.DONT_SHOW);
   }//GEN-LAST:event_menuOptionDontShowAttributesActionPerformed
 
   private void menuOptionsShowBaseAttributesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsShowBaseAttributesActionPerformed
-    this.mainEditor.setShowAttributesForBase(true);
+    this.mainEditor.setShowAttributes(EditorComponent.ShowAttributes.SHOW_BASE);
   }//GEN-LAST:event_menuOptionsShowBaseAttributesActionPerformed
 
   private void menuFileSaveAsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSaveAsActionPerformed
@@ -656,6 +679,16 @@ public class MainFrame extends javax.swing.JFrame {
       
     }
   }//GEN-LAST:event_menuFileSaveAsActionPerformed
+
+  private void menuOptionsShow512x384AttributesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsShow512x384AttributesActionPerformed
+    this.mainEditor.setShowAttributes(EditorComponent.ShowAttributes.SHOW_512x384_ZXPOLY_PLANES);
+  }//GEN-LAST:event_menuOptionsShow512x384AttributesActionPerformed
+
+  private void menuEditCopyBaseToPlansActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditCopyBaseToPlansActionPerformed
+    if (JOptionPane.showConfirmDialog(this, "Do you really want to copy base data to all ZX-Poly planes?","Confirmation",JOptionPane.YES_NO_OPTION)==JOptionPane.OK_OPTION){
+      this.mainEditor.copyPlansFromBase();
+    }
+  }//GEN-LAST:event_menuEditCopyBaseToPlansActionPerformed
 
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);
@@ -690,6 +723,7 @@ public class MainFrame extends javax.swing.JFrame {
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuEdit;
   private javax.swing.JMenuItem menuEditClear;
+  private javax.swing.JMenuItem menuEditCopyBaseToPlans;
   private javax.swing.JMenuItem menuEditRedo;
   private javax.swing.JMenuItem menuEditUndo;
   private javax.swing.JMenu menuFile;
@@ -706,6 +740,7 @@ public class MainFrame extends javax.swing.JFrame {
   private javax.swing.JCheckBoxMenuItem menuOptionsGrid;
   private javax.swing.JCheckBoxMenuItem menuOptionsInvertBase;
   private javax.swing.JCheckBoxMenuItem menuOptionsMode512;
+  private javax.swing.JRadioButtonMenuItem menuOptionsShow512x384Attributes;
   private javax.swing.JRadioButtonMenuItem menuOptionsShowBaseAttributes;
   private javax.swing.JCheckBoxMenuItem menuOptionsZXScreen;
   private javax.swing.JPanel panelTools;

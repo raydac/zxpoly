@@ -40,6 +40,16 @@ public final class ZXPalette {
     new Color(255, 255, 255)
   };
  
+  public static Color extractInk(final int attribute){
+    final int bright = (attribute & 0x40) == 0 ? 0x08 : 0x00;
+    return COLORS[bright | (attribute & 0x7)];
+  }
+  
+  public static Color extractPaper(final int attribute){
+    final int bright = (attribute & 0x40) == 0 ? 0x08 : 0x00;
+    return COLORS[bright | ((attribute >>> 3) & 0x7)];
+ }
+  
   public static int calcAttributeAddressZXMode(final int startScreenAddress, final int screenOffset){
     final int line = ((screenOffset >>> 5) & 0x07) | ((screenOffset >>> 8) & 0x18);
     final int column = screenOffset & 0x1F;

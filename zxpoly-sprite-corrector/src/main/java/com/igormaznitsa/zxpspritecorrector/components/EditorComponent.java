@@ -8,6 +8,13 @@ import javax.swing.*;
 
 public final class EditorComponent extends JComponent {
 
+  public enum ShowAttributes {
+
+    DONT_SHOW,
+    SHOW_BASE,
+    SHOW_512x384_ZXPOLY_PLANES
+  }
+
   private static final long serialVersionUID = -6948149982924499351L;
 
   private static final Stroke GRID_STROKE = new BasicStroke(0.3f);
@@ -29,7 +36,7 @@ public final class EditorComponent extends JComponent {
   private boolean invertShowBaseData;
   private boolean showColumnBorders;
   private boolean showGrid;
-  private boolean showAttributesForBase;
+  private ShowAttributes showAttributes = ShowAttributes.DONT_SHOW;
   private boolean addressingModeZXScreen;
   private Dimension preferredSize;
   private int zoom = 1;
@@ -241,7 +248,7 @@ public final class EditorComponent extends JComponent {
   public void setProcessingData(final ZXPolyData data) {
     this.listRedo.clear();
     this.listUndo.clear();
-    
+
     this.processingData = data;
     _updatePictureInBuffer();
     repaint();
@@ -272,14 +279,14 @@ public final class EditorComponent extends JComponent {
     repaint();
   }
 
-  public boolean hasUndo(){
+  public boolean hasUndo() {
     return !this.listUndo.isEmpty();
   }
-  
-  public boolean hasRedo(){
+
+  public boolean hasRedo() {
     return !this.listRedo.isEmpty();
   }
-  
+
   public void addUndo() {
     if (this.processingData != null) {
       this.listRedo.clear();
@@ -290,32 +297,32 @@ public final class EditorComponent extends JComponent {
     }
   }
 
-  public void undo(){
-    if (this.processingData!=null && !this.listUndo.isEmpty()){
+  public void undo() {
+    if (this.processingData != null && !this.listUndo.isEmpty()) {
       final ZXPolyData.UndoBlock blockPrevious = this.listUndo.remove(this.listUndo.size() - 1);
-      if (this.listRedo.isEmpty()){
+      if (this.listRedo.isEmpty()) {
         this.listRedo.add(this.processingData.makeUndo());
       }
-      
+
       this.listRedo.add(blockPrevious);
       this.processingData.restoreFromUndo(blockPrevious);
       _updatePictureInBuffer();
       repaint();
     }
   }
-  
-  public void redo(){
-    if (this.processingData!=null && !this.listRedo.isEmpty()){
-      final ZXPolyData.UndoBlock block = this.listRedo.remove(this.listRedo.size()-1);
+
+  public void redo() {
+    if (this.processingData != null && !this.listRedo.isEmpty()) {
+      final ZXPolyData.UndoBlock block = this.listRedo.remove(this.listRedo.size() - 1);
       this.listUndo.add(block);
       this.processingData.restoreFromUndo(block);
       _updatePictureInBuffer();
       repaint();
     }
   }
-  
-  public void clear(){
-    if (this.processingData!=null){
+
+  public void clear() {
+    if (this.processingData != null) {
       this.listRedo.clear();
       this.listUndo.clear();
       this.processingData.clear();
@@ -323,7 +330,7 @@ public final class EditorComponent extends JComponent {
       repaint();
     }
   }
-  
+
   public boolean isShowColumnBorders() {
     return this.showColumnBorders;
   }
@@ -423,14 +430,14 @@ public final class EditorComponent extends JComponent {
     repaint();
   }
 
-  public void setShowAttributesForBase(final boolean selected) {
-    this.showAttributesForBase = selected;
+  public void setShowAttributes(final ShowAttributes selected) {
+    this.showAttributes = selected;
     _updatePictureInBuffer();
     repaint();
   }
 
-  public boolean isShowAttributesForBase() {
-    return this.showAttributesForBase;
+  public ShowAttributes getShowAttributes() {
+    return this.showAttributes;
   }
 
   public Color getColorGrid() {
@@ -520,19 +527,18 @@ public final class EditorComponent extends JComponent {
         int data2 = packedData3012;
         int data3 = packedData3012 >>> 24;
 
-        final int attributeAddress = ZXPalette.calcAttributeAddressZXMode(this.startAddress, addr-this.startAddress);
+        final int attributeAddress = ZXPalette.calcAttributeAddressZXMode(this.startAddress, addr - this.startAddress);
         final int baseAttribute = attributeAddress >= this.processingData.length() ? 0 : this.processingData.getBaseData(attributeAddress);
-        
+
         for (int i = 0; i < 8; i++) {
           if ((mask & 0x80) == 0) {
             // point of base
-            if (this.showAttributesForBase){
-              final int bright = (baseAttribute & 0x40) == 0 ? 0x08 : 0x00;
-              final Color inkColor = ZXPalette.COLORS[bright | (baseAttribute & 0x7)];
-              final Color paperColor = ZXPalette.COLORS[bright | ((baseAttribute >>> 3) & 0x7)];
+            if (this.showAttributes == ShowAttributes.SHOW_BASE) {
+              final Color inkColor = ZXPalette.extractInk(baseAttribute);
+              final Color paperColor = ZXPalette.extractPaper(baseAttribute);
               gfx.setColor((basedata & 0x80) == 0 ? paperColor : inkColor);
-            }else
-            if (this.invertShowBaseData) {
+            }
+            else if (this.invertShowBaseData) {
               gfx.setColor((basedata & 0x80) == 0 ? this.colorPixelOn : this.colorPixelOff);
             }
             else {
@@ -544,14 +550,34 @@ public final class EditorComponent extends JComponent {
             // point of a zxpoly mode
             if (this.mode512) {
               // 512x384 mode
-              gfx.setColor((data0 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
-              gfx.drawLine(x, cury, x, cury);
-              gfx.setColor((data1 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
-              gfx.drawLine(x + 1, cury, x + 1, cury);
-              gfx.setColor((data2 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
-              gfx.drawLine(x, cury + 1, x, cury + 1);
-              gfx.setColor((data3 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
-              gfx.drawLine(x + 1, cury + 1, x + 1, cury + 1);
+              if (this.showAttributes == ShowAttributes.SHOW_512x384_ZXPOLY_PLANES) {
+                final int packedAttributes3012 = attributeAddress >= this.processingData.length() ? 0 : this.processingData.getPackedZxPolyData3012(attributeAddress);
+                final int attr0 = (packedAttributes3012 >>> 16) & 0xFF;
+                gfx.setColor((data0 & 0x80) == 0 ? ZXPalette.extractPaper(attr0) : ZXPalette.extractInk(attr0));
+                gfx.drawLine(x, cury, x, cury);
+
+                final int attr1 = (packedAttributes3012 >>> 8) & 0xFF;
+                gfx.setColor((data1 & 0x80) == 0 ? ZXPalette.extractPaper(attr1) : ZXPalette.extractInk(attr1));
+                gfx.drawLine(x + 1, cury, x + 1, cury);
+
+                final int attr2 = packedAttributes3012 & 0xFF;
+                gfx.setColor((data2 & 0x80) == 0 ? ZXPalette.extractPaper(attr2) : ZXPalette.extractInk(attr2));
+                gfx.drawLine(x, cury + 1, x, cury + 1);
+
+                final int attr3 = (packedAttributes3012 >>> 24) & 0xFF;
+                gfx.setColor((data3 & 0x80) == 0 ? ZXPalette.extractPaper(attr3) : ZXPalette.extractInk(attr3));
+                gfx.drawLine(x + 1, cury + 1, x + 1, cury + 1);
+              }
+              else {
+                gfx.setColor((data0 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
+                gfx.drawLine(x, cury, x, cury);
+                gfx.setColor((data1 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
+                gfx.drawLine(x + 1, cury, x + 1, cury);
+                gfx.setColor((data2 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
+                gfx.drawLine(x, cury + 1, x, cury + 1);
+                gfx.setColor((data3 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
+                gfx.drawLine(x + 1, cury + 1, x + 1, cury + 1);
+              }
             }
             else {
               // zxpoly mode
@@ -665,7 +691,15 @@ public final class EditorComponent extends JComponent {
   }
 
   public boolean hasData() {
-    return this.processingData!=null;
+    return this.processingData != null;
+  }
+
+  public void copyPlansFromBase() {
+    if (this.processingData!=null){
+      this.processingData.copyPlansFromBase();
+      _updatePictureInBuffer();
+      repaint();
+    }
   }
 
 }
