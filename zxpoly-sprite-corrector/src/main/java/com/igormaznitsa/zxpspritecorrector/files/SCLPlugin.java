@@ -117,13 +117,13 @@ public class SCLPlugin extends AbstractFilePlugin {
         final SCLCatalogItem itemToRead = list.get(index);
 
         for (int i = 0; i < index; i++) {
-          final int len = list.get(i).sectors*256;
+          final int len = list.get(i).sectors * 256;
           if (len != in.skip(len)) {
             throw new IllegalStateException("Can't skip bytes [" + list.get(i).length + ']');
           }
         }
         final long offset = in.getCounter();
-        return new ReadResult(new ZXPolyData(new Info(itemToRead.name, itemToRead.type, itemToRead.start, itemToRead.length, (int) offset), this, in.readByteArray(itemToRead.sectors*256)), null);
+        return new ReadResult(new ZXPolyData(new Info(itemToRead.name, itemToRead.type, itemToRead.start, itemToRead.length, (int) offset), this, in.readByteArray(itemToRead.sectors * 256)), null);
 
       }
       else {
@@ -137,7 +137,34 @@ public class SCLPlugin extends AbstractFilePlugin {
 
   @Override
   public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+
+    final String zxname = data.getInfo().getName();
+    final String[] zxFileName = new String[]{prepareNameForTRD(zxname, 0), prepareNameForTRD(zxname, 1), prepareNameForTRD(zxname, 2), prepareNameForTRD(zxname, 3)};
+
+    final char type = data.getInfo().getType();
+
+    final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "SCL file " + file.getName(), null, zxFileName, new char[]{type, type, type, type});
+    fileNameDialog.setVisible(true);
+    if (fileNameDialog.approved()) {
+      final JBBPOut out = JBBPOut.BeginBin();
+      out.Long(0x53494E434C414952L).ByteOrder(JBBPByteOrder.LITTLE_ENDIAN).Byte(4);
+      
+      final String [] fnames = fileNameDialog.getZxName();
+      final Character [] fchars = fileNameDialog.getZxType();
+      
+      final int sectors = (data.length() >>> 8)+((data.length() & 0xFF)==0 ? 0 : 1);
+      
+      for(int i=0; i<4; i++){
+        out.Byte(fnames[i]).Byte(fchars[i].charValue()).Short(data.getInfo().getStartAddress(), data.getInfo().getLength()).Byte(sectors);
+      }
+      
+      out.ResetCounter();
+      for (int i = 0; i < 4; i++) {
+        final byte[] arr = data.getDataForCPU(i);
+        out.Byte(arr).Align(256);
+      }
+      saveDataToFile(file, out.End().toByteArray());
+    }
   }
 
   @Override

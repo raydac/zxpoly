@@ -68,6 +68,16 @@ public abstract class AbstractFilePlugin extends FileFilter {
   public abstract ReadResult readFrom(File file, int index) throws IOException;
   public abstract void writeTo(File file, ZXPolyData data, SessionData sessionData) throws IOException;
 
+  protected static String prepareNameForTRD(final String name, final int index){
+    String prepared;
+    if (name.length()>=8){
+      prepared = name.substring(0,7);
+    }else{
+      prepared = name+"_______".substring(0,7-name.length());
+    }
+    return prepared+index;
+  }
+  
   protected boolean saveDataToFile(final File file, final byte [] data) throws IOException {
     if (file.isFile()){
       switch(JOptionPane.showConfirmDialog(this.mainFrame, "Overwrite file '"+file.getAbsolutePath()+"'?","Overwrite file",JOptionPane.YES_NO_CANCEL_OPTION)){

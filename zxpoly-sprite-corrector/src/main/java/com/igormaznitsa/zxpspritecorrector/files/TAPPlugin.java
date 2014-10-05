@@ -137,7 +137,81 @@ public class TAPPlugin extends AbstractFilePlugin {
 
   @Override
   public ReadResult readFrom(final File file, final int index) throws IOException {
-    return null;
+    JBBPBitInputStream in = new JBBPBitInputStream(new FileInputStream(file));
+    try {
+      int curindex = 0;
+      
+      while (in.hasAvailableData()) {
+        final int length = in.readUnsignedShort(JBBPByteOrder.LITTLE_ENDIAN);
+        final int flag = in.readByte();
+
+        final int offset = (int)in.getCounter();
+        final Info info;
+        if (flag == 0) {
+          // standard rom
+          final int standardflag = in.readByte();
+          final byte[] data = in.readByteArray(length - 2);
+          final int datalen = extractDataLengthField(data);
+          final int address = extractStartAddressField(data);
+          
+          switch (standardflag) {
+            case 0: {
+              // program header
+              info = new Info(extractHeaderName(data), 'B', address, datalen, offset);
+            }
+            break;
+            case 1: {
+              // numeric data array header
+              info = new Info(extractHeaderName(data), 'N', address, datalen, offset);
+            }
+            break;
+            case 2: {
+              // alphanumeric data array header
+              info = new Info(extractHeaderName(data), 'S', address, datalen, offset);
+            }
+            break;
+            case 3: {
+              // code block
+              info = new Info(extractHeaderName(data), 'C', address, datalen, offset);
+            }
+            break;
+            default: {
+              // unknown
+              info = new Info("<Unknown>", 'U', address, length, offset);
+            }
+            break;
+          }
+          
+          if (curindex<index){
+            curindex++;
+          }else{
+            throw new IllegalArgumentException("Selected item is not a data block but a header");
+          }
+        }
+        else {
+          if (flag == 0xFF) {
+            // data block
+            info = new Info("<Code>", 'D', -1, length - 2, offset);
+          }
+          else {
+            // custom
+            info = new Info("<Unknown>", 'U', -1, length, offset);
+          }
+          
+          if (curindex<index){
+            curindex ++;
+            in.skip(length - 1);
+          }else{
+            return new ReadResult(new ZXPolyData(info, this, in.readByteArray(length-1)), null);
+          }
+        }
+      }
+      throw new IllegalArgumentException("Can't find file for index "+index);
+
+    }
+    finally {
+      JBBPUtils.closeQuietly(in);
+    }
   }
 
   @Override
