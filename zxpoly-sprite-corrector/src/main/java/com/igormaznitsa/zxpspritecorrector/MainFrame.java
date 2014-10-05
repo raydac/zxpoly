@@ -4,11 +4,13 @@ import com.igormaznitsa.zxpspritecorrector.components.*;
 import com.igormaznitsa.zxpspritecorrector.files.*;
 import com.igormaznitsa.zxpspritecorrector.tools.*;
 import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.*;
 import javax.swing.*;
+import org.apache.commons.io.FilenameUtils;
 import org.picocontainer.*;
 import org.picocontainer.injectors.*;
 
@@ -19,6 +21,7 @@ public class MainFrame extends javax.swing.JFrame {
   private static final long serialVersionUID = -5031012548284731523L;
 
   private File lastOpenedFile;
+  private File lastExportedFile;
   private File szeFile;
 
   public MainFrame() {
@@ -48,6 +51,19 @@ public class MainFrame extends javax.swing.JFrame {
       this.toolsButtonGroup.add(tool);
     }
 
+    for(final AbstractFilePlugin p : container.getComponents(AbstractFilePlugin.class)){
+      if (p instanceof SZEPlugin) continue;
+      final JMenuItem menuItem = new JMenuItem(p.getName());
+      this.menuFileExportAs.add(menuItem);
+      menuItem.setToolTipText(p.getToolTip());
+      menuItem.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          exportDataWithPlugin(p);
+        }
+      });
+    }
+    
     this.setLocationRelativeTo(null);
     updateAddressScrollBar();
 
@@ -60,6 +76,36 @@ public class MainFrame extends javax.swing.JFrame {
     repaint();
   }
 
+  private File ensureExtension(final File file, final AbstractFilePlugin plugin) {
+    final String extension = plugin.getExtension();
+    if (extension!=null){
+      if (FilenameUtils.getExtension(file.getName()).isEmpty()){
+        return new File(file.getParent(),file.getName()+'.'+extension);
+      }
+    }
+    return file;
+  }
+  
+  private void exportDataWithPlugin(final AbstractFilePlugin plugin){
+    if (!this.mainEditor.hasData()){
+      JOptionPane.showMessageDialog(this, "There is no data to export!","There is no data",JOptionPane.WARNING_MESSAGE);
+      return;
+    }
+    
+    final JFileChooser fileChooser = new JFileChooser(this.lastExportedFile);
+    fileChooser.setAcceptAllFileFilterUsed(false);
+    fileChooser.addChoosableFileFilter(plugin);
+    if (fileChooser.showSaveDialog(this)==JFileChooser.APPROVE_OPTION){
+      this.lastExportedFile = ensureExtension(fileChooser.getSelectedFile(),plugin);
+      try{
+        plugin.writeTo(this.lastExportedFile, this.mainEditor.getProcessingData(), new SessionData(this.mainEditor));
+      }catch(Exception ex){
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Can't export data for exception ["+ex.getMessage()+']',"Error",JOptionPane.ERROR_MESSAGE);
+      }
+    }
+  }
+  
   private void updateBottomBar(){
     this.labelZoom.setText("x"+this.mainEditor.getZoom());
   }
@@ -718,7 +764,7 @@ public class MainFrame extends javax.swing.JFrame {
       fileChoolser.addChoosableFileFilter(container.getComponent(SZEPlugin.class));
       if (fileChoolser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
         try {
-          final File thefile = fileChoolser.getSelectedFile();
+          final File thefile = ensureExtension(fileChoolser.getSelectedFile(),container.getComponent(SZEPlugin.class));
           container.getComponent(SZEPlugin.class).writeTo(thefile, zxpolydata, new SessionData(this.mainEditor));
           
           this.setTitle(thefile.getAbsolutePath());
@@ -729,7 +775,6 @@ public class MainFrame extends javax.swing.JFrame {
           JOptionPane.showMessageDialog(this, "Error during operation [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
         }
       }
-
     }
   }//GEN-LAST:event_menuFileSaveAsActionPerformed
 

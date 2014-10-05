@@ -64,11 +64,11 @@ public abstract class AbstractFilePlugin extends FileFilter {
   public abstract String getUID();
   
   public abstract List<Info> getInsideFileList(File file);
-
+  public abstract String getExtension();
   public abstract ReadResult readFrom(File file, int index) throws IOException;
   public abstract void writeTo(File file, ZXPolyData data, SessionData sessionData) throws IOException;
 
-  public boolean saveDataToFile(final File file, final byte [] data) throws IOException {
+  protected boolean saveDataToFile(final File file, final byte [] data) throws IOException {
     if (file.isFile()){
       switch(JOptionPane.showConfirmDialog(this.mainFrame, "Overwrite file '"+file.getAbsolutePath()+"'?","Overwrite file",JOptionPane.YES_NO_CANCEL_OPTION)){
         case JOptionPane.NO_OPTION : return true;

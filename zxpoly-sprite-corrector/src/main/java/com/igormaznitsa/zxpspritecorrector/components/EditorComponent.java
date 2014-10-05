@@ -478,7 +478,8 @@ public final class EditorComponent extends JComponent {
   }
 
   public void setZoom(final int zoom){
-    this.zoom = zoom;
+    this.zoom = Math.max(1,Math.min(10,zoom));
+    _updatePreferredSize();
     revalidate();
     repaint();
   }

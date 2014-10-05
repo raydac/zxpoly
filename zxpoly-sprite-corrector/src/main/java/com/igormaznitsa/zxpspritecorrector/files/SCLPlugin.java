@@ -108,6 +108,11 @@ public class SCLPlugin extends AbstractFilePlugin {
   }
 
   @Override
+  public String getExtension() {
+    return "scl";
+  }
+
+  @Override
   public String getDescription() {
     return getToolTip()+" (*.SCL)";
   }

@@ -105,6 +105,11 @@ public class TRDPlugin extends AbstractFilePlugin {
   }
 
   @Override
+  public String getExtension() {
+    return "trd";
+  }
+
+  @Override
   public String getUID() {
     return "TRDP";
   }

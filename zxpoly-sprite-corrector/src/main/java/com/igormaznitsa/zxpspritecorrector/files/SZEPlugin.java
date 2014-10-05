@@ -114,6 +114,11 @@ public class SZEPlugin extends AbstractFilePlugin {
   }
 
   @Override
+  public String getExtension() {
+    return "sze";
+  }
+
+  @Override
   public String getDescription() {
     return getToolTip()+" (*.SZE)";
   }

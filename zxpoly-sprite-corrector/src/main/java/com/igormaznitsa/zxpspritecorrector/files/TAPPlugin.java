@@ -155,6 +155,11 @@ public class TAPPlugin extends AbstractFilePlugin {
   }
 
   @Override
+  public String getExtension() {
+    return "tap";
+  }
+
+  @Override
   public String getUID() {
     return "TAPP";
   }

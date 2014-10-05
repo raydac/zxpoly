@@ -113,8 +113,12 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   @Override
   public void writeTo(final File file, final ZXPolyData data, final SessionData session) throws IOException {
     final File dir = file.getParentFile();
-    final String name = file.getName();
     final char zxType = data.getInfo().getType();
+    String name = file.getName();
+    if (FilenameUtils.getExtension(name).isEmpty()){
+      name = name+".$"+zxType;
+    }
+    
     final String zxName = data.getInfo().getName();
 
     final FileNameDialog nameDialog = new FileNameDialog(
@@ -127,9 +131,21 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     nameDialog.setVisible(true);
 
     if (nameDialog.approved()) {
+      final String [] fileNames = nameDialog.getFileName();
+      final String [] zxNames = nameDialog.getZxName();
+      final Character [] types = nameDialog.getZxType();
       
+      for(int i=0;i<4;i++){
+        final File savingfile = new File(dir,fileNames[i]);
+        if (!writeDataBlockAsHobeta(savingfile, zxNames[i], (byte)types[i].charValue(), data.getInfo().getStartAddress(), data.getDataForCPU(i))) break;
+      }
     }
 
+  }
+
+  @Override
+  public String getExtension() {
+    return null;
   }
 
   private String addNumberToName(final String name, final int number) {
@@ -154,10 +170,10 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     return name.length() < 8 ? name + "         ".substring(0, 8 - name.length()) : name.substring(0, 8);
   }
 
-  private void writeDataBlockAsHobeta(final File file, final String name, final byte type, final int start, final byte[] data) throws IOException {
+  private boolean writeDataBlockAsHobeta(final File file, final String name, final byte type, final int start, final byte[] data) throws IOException {
     final byte[] header = JBBPOut.BeginBin().ByteOrder(JBBPByteOrder.LITTLE_ENDIAN).Byte(normalizeName(name)).Byte(name).Short(start, data.length).Byte((data.length >>> 8) + 1, 0).End().toByteArray();
     final byte[] full = JBBPOut.BeginBin().ByteOrder(JBBPByteOrder.LITTLE_ENDIAN).Byte(header).Short(makeCRC(header)).Byte(data).End().toByteArray();
-    FileUtils.writeByteArrayToFile(file, full);
+    return saveDataToFile(file, full);
   }
 
   @Override

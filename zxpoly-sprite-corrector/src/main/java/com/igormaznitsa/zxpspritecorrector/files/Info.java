@@ -54,6 +54,10 @@ public class Info {
     return this.type;
   }
 
+  public int getStartAddress(){
+    return this.startAddress;
+  }
+  
   public int getLength() {
     return this.length;
   }

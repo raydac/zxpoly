@@ -84,6 +84,11 @@ public class SCRPlugin extends AbstractFilePlugin {
   }
 
   @Override
+  public String getExtension() {
+    return "scr";
+  }
+
+  @Override
   public String getDescription() {
     return getToolTip() + " (*.SCR)";
   }
