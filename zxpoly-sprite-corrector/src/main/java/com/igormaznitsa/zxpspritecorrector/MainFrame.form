@@ -290,9 +290,9 @@
                   <Group type="102" attributes="0">
                       <Component id="sliderColumns" max="32767" attributes="2"/>
                       <EmptySpace min="-2" pref="29" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="textFieldAddress" linkSize="6" min="-2" pref="107" max="-2" attributes="1"/>
-                          <Component id="buttonLock" linkSize="6" min="-2" pref="107" max="-2" attributes="1"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="buttonLock" pref="107" max="32767" attributes="1"/>
+                          <Component id="spinnerCurrentAddress" max="32767" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -306,16 +306,18 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="scrollBarAddress" max="32767" attributes="2"/>
-                  <Component id="jScrollPane1" alignment="1" max="32767" attributes="0"/>
+                  <Component id="jScrollPane1" alignment="1" pref="393" max="32767" attributes="0"/>
                   <Component id="panelTools" alignment="1" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="sliderColumns" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="sliderColumns" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="spinnerCurrentAddress" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
                   <Group type="102" attributes="0">
                       <Component id="buttonLock" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
-                      <Component id="textFieldAddress" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="27" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -394,17 +396,6 @@
         </DimensionLayout>
       </Layout>
     </Container>
-    <Component class="javax.swing.JTextField" name="textFieldAddress">
-      <Properties>
-        <Property name="editable" type="boolean" value="false"/>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Courier New" size="14" style="1"/>
-        </Property>
-        <Property name="horizontalAlignment" type="int" value="0"/>
-        <Property name="toolTipText" type="java.lang.String" value="Current memory position as hex value"/>
-        <Property name="focusable" type="boolean" value="false"/>
-      </Properties>
-    </Component>
     <Component class="com.igormaznitsa.zxpspritecorrector.components.PenWidth" name="sliderPenWidth">
       <Properties>
         <Property name="toolTipText" type="java.lang.String" value="Width of an operation tool"/>
@@ -494,5 +485,7 @@
         </Component>
       </SubComponents>
     </Container>
+    <Component class="javax.swing.JSpinner" name="spinnerCurrentAddress">
+    </Component>
   </SubComponents>
 </Form>

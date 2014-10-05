@@ -60,7 +60,7 @@ public class SCRPlugin extends AbstractFilePlugin {
   @Override
   public ReadResult readFrom(final File file, final int index) throws IOException {
     final byte[] wholeFile = FileUtils.readFileToByteArray(file);
-    return new ReadResult(new ZXPolyData(new Info(file.getName(), 'C', 16384, wholeFile.length), this, wholeFile),null);
+    return new ReadResult(new ZXPolyData(new Info(file.getName(), 'C', 16384, wholeFile.length,0), this, wholeFile),null);
   }
 
   @Override

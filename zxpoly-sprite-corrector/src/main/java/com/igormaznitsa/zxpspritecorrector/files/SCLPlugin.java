@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.igormaznitsa.zxpspritecorrector.files;
 
 import com.igormaznitsa.jbbp.JBBPParser;
@@ -29,16 +28,22 @@ import java.util.*;
 public class SCLPlugin extends AbstractFilePlugin {
 
   public static final JBBPParser CATALOG_PARSER = JBBPParser.prepare("byte [8] name; ubyte type; <ushort start; <ushort length; ubyte sectors;");
-  
+
   private static final class SCLCatalogItem {
-    @Bin(type = BinType.BYTE_ARRAY) String name;
-    @Bin(type = BinType.UBYTE) char type;
-    @Bin(type = BinType.USHORT) int start;
-    @Bin(type = BinType.USHORT) int length;
-    @Bin(type = BinType.UBYTE) int sectors;
+
+    @Bin(type = BinType.BYTE_ARRAY)
+    String name;
+    @Bin(type = BinType.UBYTE)
+    char type;
+    @Bin(type = BinType.USHORT)
+    int start;
+    @Bin(type = BinType.USHORT)
+    int length;
+    @Bin(type = BinType.UBYTE)
+    int sectors;
   }
-  
-  public SCLPlugin(){
+
+  public SCLPlugin() {
     super();
   }
 
@@ -46,7 +51,7 @@ public class SCLPlugin extends AbstractFilePlugin {
   public String getUID() {
     return "SCLP";
   }
-  
+
   @Override
   public String getName() {
     return "SCL files";
@@ -64,47 +69,80 @@ public class SCLPlugin extends AbstractFilePlugin {
 
   @Override
   public List<Info> getInsideFileList(final File file) {
-    try{
+    try {
       final List<Info> result = new ArrayList<Info>();
-      
+
       JBBPBitInputStream in = null;
-      try{
+      try {
         in = new JBBPBitInputStream(new FileInputStream(file));
         final long id = in.readLong(JBBPByteOrder.BIG_ENDIAN);
-        if (id == 0x53494E434C414952L){
+        if (id == 0x53494E434C414952L) {
           // it's scl
           final int fileNumber = in.readByte();
-          for(int i=0;i<fileNumber;i++){
+          for (int i = 0; i < fileNumber; i++) {
             final SCLCatalogItem item = CATALOG_PARSER.parse(in).mapTo(SCLCatalogItem.class);
-            result.add(new Info(item.name, item.type, item.start, item.length));
+            result.add(new Info(item.name, item.type, item.start, item.length, -1));
           }
-        }else{
+        }
+        else {
           // it's not scl
           return null;
         }
-      }finally{
+      }
+      finally {
         JBBPUtils.closeQuietly(in);
       }
-      
+
       return result;
-    }catch(Exception ex){
+    }
+    catch (Exception ex) {
       return null;
     }
   }
 
   @Override
-  public ReadResult readFrom(File file, int index) throws IOException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  public ReadResult readFrom(final File file, final int index) throws IOException {
+    final List<SCLCatalogItem> list = new ArrayList<SCLCatalogItem>();
+    final JBBPBitInputStream in = new JBBPBitInputStream(new FileInputStream(file));
+    try {
+      final long id = in.readLong(JBBPByteOrder.BIG_ENDIAN);
+      if (id == 0x53494E434C414952L) {
+        // it's scl
+        final int fileNumber = in.readByte();
+        for (int i = 0; i < fileNumber; i++) {
+          final SCLCatalogItem item = CATALOG_PARSER.parse(in).mapTo(SCLCatalogItem.class);
+          list.add(item);
+        }
+
+        final SCLCatalogItem itemToRead = list.get(index);
+
+        for (int i = 0; i < index; i++) {
+          final int len = list.get(i).sectors*256;
+          if (len != in.skip(len)) {
+            throw new IllegalStateException("Can't skip bytes [" + list.get(i).length + ']');
+          }
+        }
+        final long offset = in.getCounter();
+        return new ReadResult(new ZXPolyData(new Info(itemToRead.name, itemToRead.type, itemToRead.start, itemToRead.length, (int) offset), this, in.readByteArray(itemToRead.sectors*256)), null);
+
+      }
+      else {
+        throw new IllegalArgumentException("It's not a SCl file [" + file.getAbsolutePath() + ']');
+      }
+    }
+    finally {
+      JBBPUtils.closeQuietly(in);
+    }
   }
 
-  
   @Override
   public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
   @Override
   public boolean accept(final File pathname) {
-    return pathname!= null && pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".scl");
+    return pathname != null && pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".scl");
   }
 
   @Override
@@ -114,7 +152,7 @@ public class SCLPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return getToolTip()+" (*.SCL)";
+    return getToolTip() + " (*.SCL)";
   }
 
 }

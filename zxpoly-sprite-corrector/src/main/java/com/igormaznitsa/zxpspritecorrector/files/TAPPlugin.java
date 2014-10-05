@@ -94,32 +94,32 @@ public class TAPPlugin extends AbstractFilePlugin {
             switch(standardflag){
               case 0 : {
                 // program header
-                result.add(new Info(extractHeaderName(data), 'B', address, datalen));
+                result.add(new Info(extractHeaderName(data), 'B', address, datalen, -1));
               } break;
               case 1 : {
                 // numeric data array header
-                result.add(new Info(extractHeaderName(data), 'N', address,datalen));
+                result.add(new Info(extractHeaderName(data), 'N', address,datalen, -1));
               }break; 
               case 2 : {
                 // alphanumeric data array header
-                result.add(new Info(extractHeaderName(data), 'S', address, datalen));
+                result.add(new Info(extractHeaderName(data), 'S', address, datalen, -1));
               }break;
               case 3 : {
                 // code block
-                result.add(new Info(extractHeaderName(data), 'C', address, datalen));
+                result.add(new Info(extractHeaderName(data), 'C', address, datalen, -1));
               }break;
               default : {
                 // unknown
-                result.add(new Info("<Unknown>",'U', address, length));
+                result.add(new Info("<Unknown>",'U', address, length, -1));
               }break;
             }
           } else {
             if (flag == 0xFF){
               // data block
-              result.add(new Info("<Code>", 'D', -1, length-2));
+              result.add(new Info("<Code>", 'D', -1, length-2, -1));
             }else{
               // custom
-              result.add(new Info("<Unknown>", 'U', -1, length));
+              result.add(new Info("<Unknown>", 'U', -1, length, -1));
             }
             in.skip(length-1);
           }

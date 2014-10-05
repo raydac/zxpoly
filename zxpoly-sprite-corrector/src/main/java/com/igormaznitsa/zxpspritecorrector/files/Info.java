@@ -25,12 +25,14 @@ public class Info {
   private final char type;
   private final int startAddress;
   private final int length;
+  private final int offset;
   
-  public Info(final String name, final char type, final int startAddress, final int length) {
+  public Info(final String name, final char type, final int startAddress, final int length, final int offset) {
     this.name = name;
     this.type = type;
     this.startAddress = startAddress;
     this.length = length;
+    this.offset = offset;
   }
 
   public Info(final InputStream in) throws IOException {
@@ -39,11 +41,16 @@ public class Info {
     this.type = (char)bitin.readUnsignedShort(JBBPByteOrder.BIG_ENDIAN);
     this.startAddress = bitin.readInt(JBBPByteOrder.BIG_ENDIAN);
     this.length = bitin.readInt(JBBPByteOrder.BIG_ENDIAN);
+    this.offset = bitin.readInt(JBBPByteOrder.BIG_ENDIAN);
   }
   
   public JBBPOut save(final JBBPOut context) throws IOException {
-    context.Byte(name.length()).Byte(name).Short(this.type).Int(this.startAddress).Int(this.length);
+    context.Byte(name.length()).Byte(name).Short(this.type).Int(this.startAddress,this.length,this.offset);
     return context;
+  }
+  
+  public int getOffset(){
+    return this.offset;
   }
   
   public String getName() {

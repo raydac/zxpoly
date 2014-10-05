@@ -71,7 +71,7 @@ public class TRDPlugin extends AbstractFilePlugin {
         for(int i=0;i<128;i++){
           final TRDosCatalogItem item = CATALOG_PARSER.parse(in).mapTo(TRDosCatalogItem.class);
           if (item.name.charAt(0)>1){
-            result.add(new Info(item.name, item.type, item.start, item.length));
+            result.add(new Info(item.name, item.type, item.start, item.length, -1));
           }
         }
         
@@ -87,7 +87,29 @@ public class TRDPlugin extends AbstractFilePlugin {
 
   @Override
   public ReadResult readFrom(final File file, final int index) throws IOException {
-    return null;
+    final JBBPBitInputStream inStream = new JBBPBitInputStream(new FileInputStream(file),JBBPBitOrder.LSB0);
+    try{
+      final List<TRDosCatalogItem> list = new ArrayList<TRDosCatalogItem>();
+      for (int i = 0; i < 128; i++) {
+        final TRDosCatalogItem item = CATALOG_PARSER.parse(inStream).mapTo(TRDosCatalogItem.class);
+        if (item.name.charAt(0) > 1) {
+          list.add(item);
+        }
+      }
+
+      final TRDosCatalogItem info = list.get(index);
+      
+      final int offsetToFile = info.firstSector << 8;
+      final long toskip = inStream.getCounter() - offsetToFile;
+      final long skept = inStream.skip(toskip);
+      if (skept != toskip){
+        throw new IllegalStateException("Can't skip needed byte number ["+toskip+']');
+      }
+      return new ReadResult(new ZXPolyData(new Info(info.name, info.type, info.start, info.length, offsetToFile), this, inStream.readByteArray(info.sectors<<8)), null);
+        
+    }finally{
+      JBBPUtils.closeQuietly(inStream);
+    }
   }
 
   @Override

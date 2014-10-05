@@ -4,9 +4,12 @@ import com.igormaznitsa.zxpspritecorrector.utils.ZXPalette;
 import java.awt.*;
 import java.awt.image.*;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
-public final class EditorComponent extends JComponent {
+public final class EditorComponent extends JComponent implements SpinnerModel {
 
   public enum ShowAttributes {
 
@@ -50,6 +53,8 @@ public final class EditorComponent extends JComponent {
 
   private final ZXGraphics zxGraphics = new ZXGraphics();
 
+  private final List<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
+  
   private final java.util.List<ZXPolyData.UndoBlock> listUndo = new ArrayList<ZXPolyData.UndoBlock>();
   private final java.util.List<ZXPolyData.UndoBlock> listRedo = new ArrayList<ZXPolyData.UndoBlock>();
 
@@ -360,6 +365,11 @@ public final class EditorComponent extends JComponent {
     else {
       this.startAddress = Math.max(0, Math.min(this.processingData.length() - 1, address));
     }
+  
+    for(final ChangeListener l : this.changeListeners){
+      l.stateChanged(new ChangeEvent(this));
+    }
+    
     _updatePictureInBuffer();
     repaint();
   }
@@ -709,4 +719,43 @@ public final class EditorComponent extends JComponent {
     }
   }
 
+  @Override
+  public Object getValue() {
+    return this.getAddress();
+  }
+
+  @Override
+  public void setValue(final Object addr) {
+    final int address = (Integer)addr;
+    setAddress(address);
+  }
+
+  @Override
+  public Object getNextValue() {
+    if (hasData()){
+      return Math.min(this.getProcessingData().length()-1, this.startAddress+1);
+    }else{
+      return 0;
+    }
+  }
+
+  @Override
+  public Object getPreviousValue() {
+    if (hasData()) {
+      return Math.max(0, this.startAddress - 1);
+    }
+    else {
+      return 0;
+    }
+  }
+
+  @Override
+  public void addChangeListener(final ChangeListener l) {
+    this.changeListeners.add(l);
+  }
+
+  @Override
+  public void removeChangeListener(final ChangeListener l) {
+    this.changeListeners.remove(l);
+  }
 }

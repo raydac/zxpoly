@@ -8,7 +8,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.util.*;
 import javax.swing.*;
 import org.apache.commons.io.FilenameUtils;
 import org.picocontainer.*;
@@ -71,8 +70,11 @@ public class MainFrame extends javax.swing.JFrame {
     setCurrentSZEFile(null);
     updateBottomBar();
     
+    this.spinnerCurrentAddress.setModel(this.mainEditor);
+    
     setVisible(true);
 
+    
     repaint();
   }
 
@@ -153,13 +155,13 @@ public class MainFrame extends javax.swing.JFrame {
     buttonLock = new javax.swing.JToggleButton();
     panelTools = new javax.swing.JPanel();
     colorSelector = new com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector();
-    textFieldAddress = new javax.swing.JTextField();
     sliderPenWidth = new com.igormaznitsa.zxpspritecorrector.components.PenWidth();
     jScrollPane1 = new javax.swing.JScrollPane();
     mainEditorPanel = new javax.swing.JPanel();
     mainEditor = new com.igormaznitsa.zxpspritecorrector.components.EditorComponent();
     jPanel2 = new javax.swing.JPanel();
     labelZoom = new javax.swing.JLabel();
+    spinnerCurrentAddress = new javax.swing.JSpinner();
     menuBar = new javax.swing.JMenuBar();
     menuFile = new javax.swing.JMenu();
     menuFileNew = new javax.swing.JMenuItem();
@@ -246,12 +248,6 @@ public class MainFrame extends javax.swing.JFrame {
       colorSelectorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
       .addGap(0, 86, Short.MAX_VALUE)
     );
-
-    textFieldAddress.setEditable(false);
-    textFieldAddress.setFont(new java.awt.Font("Courier New", 1, 14)); // NOI18N
-    textFieldAddress.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    textFieldAddress.setToolTipText("Current memory position as hex value");
-    textFieldAddress.setFocusable(false);
 
     sliderPenWidth.setToolTipText("Width of an operation tool");
     sliderPenWidth.setDoubleBuffered(false);
@@ -517,29 +513,27 @@ public class MainFrame extends javax.swing.JFrame {
           .addGroup(layout.createSequentialGroup()
             .addComponent(sliderColumns, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGap(29, 29, 29)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-              .addComponent(textFieldAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
-              .addComponent(buttonLock, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE))))
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+              .addComponent(buttonLock, javax.swing.GroupLayout.DEFAULT_SIZE, 107, Short.MAX_VALUE)
+              .addComponent(spinnerCurrentAddress))))
         .addContainerGap())
     );
-
-    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {buttonLock, textFieldAddress});
-
     layout.setVerticalGroup(
       layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
       .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
         .addContainerGap()
         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
           .addComponent(scrollBarAddress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-          .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
+          .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 393, Short.MAX_VALUE)
           .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-          .addComponent(sliderColumns, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+          .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+            .addComponent(sliderColumns, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(spinnerCurrentAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
           .addGroup(layout.createSequentialGroup()
             .addComponent(buttonLock)
-            .addGap(0, 0, 0)
-            .addComponent(textFieldAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addGap(27, 27, 27)))
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
           .addComponent(colorSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -651,8 +645,6 @@ public class MainFrame extends javax.swing.JFrame {
   private void scrollBarAddressAdjustmentValueChanged(java.awt.event.AdjustmentEvent evt) {//GEN-FIRST:event_scrollBarAddressAdjustmentValueChanged
     final int address = evt.getValue();
     this.mainEditor.setAddress(address);
-    final String addressAsString = Integer.toHexString(address).toUpperCase(Locale.ENGLISH);
-    this.textFieldAddress.setText("#" + (addressAsString.length() < 4 ? "0000".substring(0, 4 - addressAsString.length()) : "") + addressAsString);
   }//GEN-LAST:event_scrollBarAddressAdjustmentValueChanged
 
   private void processCurrentToolForPoint(final int modifiers) {
@@ -856,7 +848,7 @@ public class MainFrame extends javax.swing.JFrame {
   private javax.swing.JScrollBar scrollBarAddress;
   private javax.swing.JSlider sliderColumns;
   private com.igormaznitsa.zxpspritecorrector.components.PenWidth sliderPenWidth;
-  private javax.swing.JTextField textFieldAddress;
+  private javax.swing.JSpinner spinnerCurrentAddress;
   private javax.swing.ButtonGroup toolsButtonGroup;
   // End of variables declaration//GEN-END:variables
 
