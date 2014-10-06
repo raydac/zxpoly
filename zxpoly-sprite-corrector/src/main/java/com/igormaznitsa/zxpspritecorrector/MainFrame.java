@@ -78,6 +78,21 @@ public class MainFrame extends javax.swing.JFrame {
     repaint();
   }
 
+  private void deactivateCheckbox(final JCheckBoxMenuItem item){
+    if (item.isSelected()) item.doClick();
+  }
+  
+  private void resetOptions(){
+    deactivateCheckbox(this.menuOptionsMode512);
+    deactivateCheckbox(this.menuOptionsZXScreen);
+    this.spinnerCurrentAddress.setValue(0);
+    deactivateCheckbox(this.menuOptionsGrid);
+    deactivateCheckbox(this.menuOptionsColumns);
+    deactivateCheckbox(this.menuOptionsInvertBase);
+    this.menuOptionDontShowAttributes.doClick();
+    this.sliderColumns.setValue(32);
+  }
+  
   private File ensureExtension(final File file, final AbstractFilePlugin plugin) {
     final String extension = plugin.getExtension();
     if (extension!=null){
@@ -627,6 +642,8 @@ public class MainFrame extends javax.swing.JFrame {
         this.mainEditor.setProcessingData(result.getData());
         if (result.getSessionData()!=null){
           loadStateFromSession(result.getSessionData());
+        }else{
+          resetOptions();
         }
       
         setCurrentSZEFile(plugin instanceof SZEPlugin ? selectedFile : null);
