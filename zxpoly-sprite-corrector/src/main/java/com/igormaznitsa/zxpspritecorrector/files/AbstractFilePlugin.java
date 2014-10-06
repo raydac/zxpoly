@@ -24,6 +24,7 @@ import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.picocontainer.annotations.Inject;
 
 public abstract class AbstractFilePlugin extends FileFilter {
@@ -74,6 +75,22 @@ public abstract class AbstractFilePlugin extends FileFilter {
       prepared = name.substring(0,7);
     }else{
       prepared = name+"_______".substring(0,7-name.length());
+    }
+    return prepared+index;
+  }
+
+  protected static String addNumberToFileName(final String name, final int number) {
+    String base = FilenameUtils.getBaseName(name);
+    final String ext = FilenameUtils.getExtension(name);
+    return base + Integer.toString(number) + '.' + ext;
+  }
+  
+  protected static String prepareNameForTAP(final String name, final int index){
+    String prepared;
+    if (name.length()>=10){
+      prepared = name.substring(0,9);
+    }else{
+      prepared = name+"_________".substring(0,9-name.length());
     }
     return prepared+index;
   }

@@ -26,8 +26,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
   private Color colorToolArea = Color.WHITE;
 
-  private Color colorPixelOn = Color.GRAY;
-  private Color colorPixelOff = Color.DARK_GRAY;
+  private Color colorPixelOn = Color.GRAY.darker();
+  private Color colorPixelOff = Color.DARK_GRAY.darker();
   private Color colorZX512On = Color.YELLOW;
   private Color colorZX512Off = Color.BLUE;
   private Color colorGrid = Color.ORANGE;

@@ -630,10 +630,18 @@ public class MainFrame extends javax.swing.JFrame {
         }
       
         setCurrentSZEFile(plugin instanceof SZEPlugin ? selectedFile : null);
+        
+        if ((plugin instanceof SCRPlugin) && !this.menuOptionsZXScreen.isSelected()){
+          this.menuOptionsZXScreen.setSelected(true);
+        }
+      }
+      catch (IllegalArgumentException ex){
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, ex.getMessage(), "Can't read", JOptionPane.WARNING_MESSAGE);
       }
       catch (IOException ex) {
         ex.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Can't read file or its part", "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Can't read file or its part ["+ex.getMessage()+']', "Error", JOptionPane.ERROR_MESSAGE);
       }
       finally {
         updateAddressScrollBar();

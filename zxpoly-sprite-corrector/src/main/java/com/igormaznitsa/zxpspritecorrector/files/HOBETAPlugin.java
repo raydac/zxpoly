@@ -124,8 +124,8 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     final FileNameDialog nameDialog = new FileNameDialog(
             this.mainFrame,
             "Base file name is " + file.getName(),
-            new String[]{addNumberToName(name, 0), addNumberToName(name, 1), addNumberToName(name, 2), addNumberToName(name, 3)},
-            new String[]{addNumberToZXFileName(zxName, 0), addNumberToZXFileName(zxName, 1), addNumberToZXFileName(zxName, 2), addNumberToZXFileName(zxName, 3)},
+            new String[]{addNumberToFileName(name, 0), addNumberToFileName(name, 1), addNumberToFileName(name, 2), addNumberToFileName(name, 3)},
+            new String[]{prepareNameForTRD(zxName, 0), prepareNameForTRD(zxName, 1), prepareNameForTRD(zxName, 2), prepareNameForTRD(zxName, 3)},
             new char[]{zxType, zxType, zxType, zxType}
     );
     nameDialog.setVisible(true);
@@ -148,30 +148,14 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     return null;
   }
 
-  private String addNumberToName(final String name, final int number) {
-    String base = FilenameUtils.getBaseName(name);
-    final String ext = FilenameUtils.getExtension(name);
-    return base + Integer.toString(number) + '.' + ext;
-  }
-
-  private String addNumberToZXFileName(final String baseName, final int number) {
-    final String normalized = normalizeName(baseName);
-    final String numberStr = Integer.toString(number);
-    return normalized.substring(0, Math.max(0, 8 - numberStr.length())) + numberStr;
-  }
-
   private int makeCRC(final byte[] array) {
     int crc = 0;
     for (int i = 0; i < array.length; crc = crc + (array[i] * 257) + i, i++);
     return crc;
   }
 
-  private static String normalizeName(final String name) {
-    return name.length() < 8 ? name + "         ".substring(0, 8 - name.length()) : name.substring(0, 8);
-  }
-
   private boolean writeDataBlockAsHobeta(final File file, final String name, final byte type, final int start, final byte[] data) throws IOException {
-    final byte[] header = JBBPOut.BeginBin().ByteOrder(JBBPByteOrder.LITTLE_ENDIAN).Byte(normalizeName(name)).Byte(name).Short(start, data.length).Byte((data.length >>> 8) + 1, 0).End().toByteArray();
+    final byte[] header = JBBPOut.BeginBin().ByteOrder(JBBPByteOrder.LITTLE_ENDIAN).Byte(name).Byte(type).Short(start, data.length).Byte((data.length >>> 8) + 1, 0).End().toByteArray();
     final byte[] full = JBBPOut.BeginBin().ByteOrder(JBBPByteOrder.LITTLE_ENDIAN).Byte(header).Short(makeCRC(header)).Byte(data).End().toByteArray();
     return saveDataToFile(file, full);
   }

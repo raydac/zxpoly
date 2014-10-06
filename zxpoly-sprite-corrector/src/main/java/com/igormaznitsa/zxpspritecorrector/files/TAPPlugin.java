@@ -18,12 +18,13 @@
 package com.igormaznitsa.zxpspritecorrector.files;
 
 import com.igormaznitsa.jbbp.JBBPParser;
-import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
-import com.igormaznitsa.jbbp.io.JBBPByteOrder;
+import com.igormaznitsa.jbbp.io.*;
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import java.io.*;
 import java.util.*;
+import javax.swing.JOptionPane;
+import org.apache.commons.io.FilenameUtils;
 
 public class TAPPlugin extends AbstractFilePlugin {
 
@@ -216,8 +217,73 @@ public class TAPPlugin extends AbstractFilePlugin {
 
   @Override
   public void writeTo(final File file, final ZXPolyData data, final SessionData session) throws IOException {
+    final int saveAsSeparateFiles = JOptionPane.showConfirmDialog(this.mainFrame, "Save each block as a separated file?","Separate files",JOptionPane.YES_NO_CANCEL_OPTION);
+    if (saveAsSeparateFiles == JOptionPane.CANCEL_OPTION) return;
+    
+    
+      final String baseName = file.getName();
+      final String baseZXName =  FilenameUtils.getBaseName(baseName);
+    if (saveAsSeparateFiles == JOptionPane.YES_OPTION){
+      
+      final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "Saving as separated files", new String[]{addNumberToFileName(baseName, 0),
+        addNumberToFileName(baseName, 1),addNumberToFileName(baseName, 2),addNumberToFileName(baseName, 3)},
+              new String[]{prepareNameForTAP(baseZXName, 0),prepareNameForTAP(baseZXName, 1),prepareNameForTAP(baseZXName, 2),prepareNameForTAP(baseZXName, 3)},
+        null);
+      fileNameDialog.setVisible(true);
+      if (fileNameDialog.approved()) {
+        final String [] fileNames = fileNameDialog.getFileName();
+        final String [] zxNames = fileNameDialog.getZxName();
+        for(int i=0;i<4;i++){
+          final byte [] headerblock = makeHeaderBlock(zxNames[i], data.getInfo().getStartAddress(), data.length());
+          final byte [] datablock = makeDataBlock(data.getDataForCPU(i));
+          final byte [] dataToSave = JBBPOut.BeginBin().Byte(wellTapBlock(headerblock)).Byte(wellTapBlock(datablock)).End().toByteArray();
+          
+          final File fileToSave = new File(file.getParent(),fileNames[i]);
+          if (!saveDataToFile(fileToSave, dataToSave)) return;
+        }
+      }
+    }else{
+      final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "Save as "+baseName, null,
+              new String[]{prepareNameForTAP(baseZXName, 0), prepareNameForTAP(baseZXName, 1), prepareNameForTAP(baseZXName, 2), prepareNameForTAP(baseZXName, 3)},
+              null);
+      fileNameDialog.setVisible(true);
+      if (fileNameDialog.approved()){
+        final String[] zxNames = fileNameDialog.getZxName();
+        final JBBPOut out = JBBPOut.BeginBin();
+        for (int i = 0; i < 4; i++) {
+          final byte[] headerblock = makeHeaderBlock(zxNames[i], data.getInfo().getStartAddress(), data.length());
+          final byte[] datablock = makeDataBlock(data.getDataForCPU(i));
+          out.Byte(wellTapBlock(headerblock)).Byte(wellTapBlock(datablock));
+        }
+        saveDataToFile(file, out.End().toByteArray());
+      }
+    }
+    
   }
 
+  private byte [] wellTapBlock(final byte [] data) throws IOException {
+    return JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN).Short(data.length+1).Byte(data).Byte(doTapCRC(data)).End().toByteArray();
+  }
+  
+  private byte doTapCRC(byte [] array){
+    byte result = 0;
+    for(byte b : array){
+      result ^= b;
+    }
+    return result;
+  }
+  
+  private byte [] makeHeaderBlock(final String name, final int startAddress, final int dataLength) throws IOException {
+    final JBBPOut out = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
+    if (name.length()!=10) throw new IllegalArgumentException("Name must have 10 length");
+    return out.Byte(0,3).Byte(name).Short(dataLength,startAddress,32768).End().toByteArray();
+  }
+  
+  private byte [] makeDataBlock(final byte [] data) throws IOException {
+    final JBBPOut out = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
+    return out.Byte(0xFF).Byte(data).End().toByteArray();
+  }
+  
   @Override
   public boolean accept(final File pathname) {
     return pathname!= null && pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".tap");
