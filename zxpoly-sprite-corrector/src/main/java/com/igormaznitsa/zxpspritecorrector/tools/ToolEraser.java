@@ -14,17 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.igormaznitsa.zxpspritecorrector.tools;
 
 import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
 import java.awt.Rectangle;
 
 public class ToolEraser extends AbstractTool {
+
   private static final long serialVersionUID = -7746198807169766129L;
 
-  public ToolEraser(){
-    super("Rubber.GIF", "Eraser allows to remove drawn pixels");
+  public ToolEraser() {
+    super("draw_eraser.png", "Eraser erases pixels");
   }
 
   @Override
@@ -33,11 +33,17 @@ public class ToolEraser extends AbstractTool {
 
     for (int x = 0; x < area.width; x++) {
       for (int y = 0; y < area.height; y++) {
-        gfx.resetPoint(x + area.x, y + area.y);
+        final int dx = x + area.x;
+        final int dy = y + area.y;
+
+        if (!isCoordValid(dx, dy)) {
+          continue;
+        }
+        gfx.resetPoint(dx, dy);
       }
     }
-  
+
     gfx.flush();
   }
-  
+
 }

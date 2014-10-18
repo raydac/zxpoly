@@ -22,42 +22,57 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import org.picocontainer.annotations.Inject;
 
-public class ToolPencil extends AbstractTool {
+public class ToolColorizer extends AbstractTool {
 
   private static final long serialVersionUID = 1486692252806983383L;
 
   @Inject
   private ZXColorSelector colorSelector;
 
-  public ToolPencil() {
-    super("pencil.png", "Pencil allows to set pixels of defined color");
+  public ToolColorizer() {
+    super("paint_tube.png", "Colorize pixels by current ink and paper colors");
   }
 
   @Override
   public void process(final EditorComponent editComponent, final Rectangle area, final int modifiers) {
     final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
 
-    final int index;
-
     if ((modifiers & MouseEvent.BUTTON1_MASK) != 0) {
-      index = editComponent.isMode512() ? 1 : colorSelector.getSelectedInk();
+      final int index = colorSelector.getSelectedInk();
+      for (int x = 0; x < area.width; x++) {
+        for (int y = 0; y < area.height; y++) {
+          final int dx = x + area.x;
+          final int dy = y + area.y;
+
+          if (!isCoordValid(dx, dy)) {
+            continue;
+          }
+
+          if (gfx.isBaseBitSet(dx, dy)) {
+            gfx.setPoint(dx, dy, index);
+          }
+        }
+      }
     }
     else if ((modifiers & MouseEvent.BUTTON3_MASK) != 0) {
-      index = editComponent.isMode512() ? 0 : colorSelector.getSelectedPaint();
+      final int index = colorSelector.getSelectedPaint();
+      for (int x = 0; x < area.width; x++) {
+        for (int y = 0; y < area.height; y++) {
+          final int dx = x + area.x;
+          final int dy = y + area.y;
+
+          if (!isCoordValid(dx, dy)) {
+            continue;
+          }
+
+          if (!gfx.isBaseBitSet(dx, dy)) {
+            gfx.setPoint(dx, dy, index);
+          }
+        }
+      }
     }
     else {
       return;
-    }
-
-    for (int x = 0; x < area.width; x++) {
-      for (int y = 0; y < area.height; y++) {
-        final int dx = x + area.x;
-        final int dy = y + area.y;
-        if (!isCoordValid(dx, dy)) {
-          continue;
-        }
-        gfx.setPoint(dx, dy, index);
-      }
     }
 
     gfx.flush();

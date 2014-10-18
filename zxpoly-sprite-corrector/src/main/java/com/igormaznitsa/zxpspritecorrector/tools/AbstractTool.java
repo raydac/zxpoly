@@ -33,4 +33,8 @@ public abstract class AbstractTool extends JToggleButton {
   }
   
   public abstract void process(final EditorComponent editComponent, final Rectangle area, final int modifiers);
+
+  public static boolean isCoordValid(final int x, final int y){
+    return x>=0 && y>=0 && x<256 && y<192;
+  }
 }

@@ -38,6 +38,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     container.addComponent(ToolPencil.class);
     container.addComponent(ToolEraser.class);
+    container.addComponent(ToolColorizer.class);
 
     container.addAdapter(new ProviderAdapter(new ContextProvider(container)));
     container.addComponent(this);
@@ -72,10 +73,16 @@ public class MainFrame extends javax.swing.JFrame {
     
     this.spinnerCurrentAddress.setModel(this.mainEditor);
     
+    this.setIconImage(GfxUtils.loadImage("ico.png"));
+    
     setVisible(true);
 
     
     repaint();
+  }
+  
+  public PicoContainer getPico(){
+    return this.container;
   }
 
   private void deactivateCheckbox(final JCheckBoxMenuItem item){
@@ -209,8 +216,6 @@ public class MainFrame extends javax.swing.JFrame {
 
     setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
     setTitle("ZX-Poly Sprite Corrector");
-    setIconImage(GfxUtils.loadImage("ico.gif"));
-    setIconImages(null);
     addWindowListener(new java.awt.event.WindowAdapter() {
       public void windowClosing(java.awt.event.WindowEvent evt) {
         applicationClosing(evt);
@@ -327,6 +332,11 @@ public class MainFrame extends javax.swing.JFrame {
     menuFile.setText("File");
 
     menuFileNew.setText("New");
+    menuFileNew.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuFileNewActionPerformed(evt);
+      }
+    });
     menuFile.add(menuFileNew);
 
     menuFileOpen.setText("Open");
@@ -539,7 +549,7 @@ public class MainFrame extends javax.swing.JFrame {
         .addContainerGap()
         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
           .addComponent(scrollBarAddress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-          .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 393, Short.MAX_VALUE)
+          .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 399, Short.MAX_VALUE)
           .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
@@ -549,7 +559,6 @@ public class MainFrame extends javax.swing.JFrame {
           .addGroup(layout.createSequentialGroup()
             .addComponent(buttonLock)
             .addGap(27, 27, 27)))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
           .addComponent(colorSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
           .addComponent(sliderPenWidth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -813,6 +822,21 @@ public class MainFrame extends javax.swing.JFrame {
       JOptionPane.showMessageDialog(this, "Can't save file for exception ["+ex.getMessage()+']',"Error",JOptionPane.ERROR_MESSAGE);
     }
   }//GEN-LAST:event_menuSaveActionPerformed
+
+  private void menuFileNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileNewActionPerformed
+    if (this.mainEditor.hasData()){
+      if (JOptionPane.showConfirmDialog(this, "Do you really want to create new data?","Confirmation",JOptionPane.YES_NO_OPTION)!=JOptionPane.YES_OPTION) return;
+    }
+
+    final NewDataDialog dialog = new NewDataDialog(this);
+    dialog.setVisible(true);
+    final AbstractFilePlugin.ReadResult result = dialog.getResult();
+    if (result!=null){
+      this.mainEditor.setProcessingData(result.getData());
+      setCurrentSZEFile(null);
+    }
+    repaint();
+  }//GEN-LAST:event_menuFileNewActionPerformed
 
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);

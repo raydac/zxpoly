@@ -17,6 +17,9 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="New"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuFileNewActionPerformed"/>
+              </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuFileOpen">
               <Properties>
@@ -235,12 +238,6 @@
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="0"/>
     <Property name="title" type="java.lang.String" value="ZX-Poly Sprite Corrector"/>
-    <Property name="iconImage" type="java.awt.Image" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-      <Connection code="GfxUtils.loadImage(&quot;ico.gif&quot;)" type="code"/>
-    </Property>
-    <Property name="iconImages" type="java.util.List" editor="org.netbeans.modules.form.ComponentChooserEditor">
-      <ComponentRef name="null"/>
-    </Property>
   </Properties>
   <AccessibilityProperties>
     <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="ZX-Poly Sprite corrector"/>
@@ -306,7 +303,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="scrollBarAddress" max="32767" attributes="2"/>
-                  <Component id="jScrollPane1" alignment="1" pref="393" max="32767" attributes="0"/>
+                  <Component id="jScrollPane1" alignment="1" pref="399" max="32767" attributes="0"/>
                   <Component id="panelTools" alignment="1" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -320,7 +317,6 @@
                       <EmptySpace min="-2" pref="27" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
                   <Component id="colorSelector" linkSize="5" min="-2" max="-2" attributes="0"/>
                   <Component id="sliderPenWidth" linkSize="5" min="-2" max="-2" attributes="0"/>
