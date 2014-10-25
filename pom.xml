@@ -66,6 +66,7 @@
       <module>z80</module>
       <module>vg93</module>
       <module>zxpoly-sprite-corrector</module>
+      <module>zxpoly-emul</module>
     </modules>
 
     <dependencies>

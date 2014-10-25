@@ -43,7 +43,7 @@ public class TestBus implements Z80CPUBus {
   }
   
   @Override
-  public byte readMemory(final Z80 cpu, final int address) {
+  public byte readMemory(final Z80 cpu, final int address, boolean m1) {
     return memory[address];
   }
 

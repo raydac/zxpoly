@@ -375,7 +375,7 @@ public final class Z80 {
 
   private int _readmem8(final int address) {
     this.tactCounter += 3;
-    return this.bus.readMemory(this, address & 0xFFFF) & 0xFF;
+    return this.bus.readMemory(this, address & 0xFFFF, false) & 0xFF;
   }
 
   private int _readmem16(final int address) {
@@ -396,7 +396,7 @@ public final class Z80 {
     final int pc = this.regPC++;
     this.regPC &= 0xFFFF;
     this.outSignals = m1 ? this.outSignals & (~SIGNAL_OUT_nM1) : this.outSignals | SIGNAL_OUT_nM1;
-    final int result = this.bus.readMemory(this, pc) & 0xFF;
+    final int result = this.bus.readMemory(this, pc, m1) & 0xFF;
     this.outSignals = this.outSignals | SIGNAL_OUT_nM1;
 
     this.tactCounter += m1 ? 4 : 3;

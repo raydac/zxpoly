@@ -1,5 +1,5 @@
-/* 
- * Copyright (C) 2014 Igor Maznitsa (http://www.igormaznitsa.com)
+/*
+ * Copyright (C) 2014 Raydac Research Group Ltd.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,13 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.igormaznitsa.z80;
+package com.igormaznitsa.zxpoly;
 
-public interface Z80CPUBus {
-  byte readMemory(Z80 cpu, int address, boolean m1);
-  void writeMemory(Z80 cpu, int address, byte data);
-  byte readPort(Z80 cpu, int port);
-  void writePort(Z80 cpu, int port, byte data);
-  byte onCPURequestDataLines(Z80 cpu);
-  void onRETI(Z80 cpu);
+import java.io.InputStream;
+
+public enum Utils {
+
+  ;
+  public static InputStream findResourceOrError(final String resource) {
+    final InputStream result = Utils.class.getClassLoader().getResourceAsStream(resource);
+    if (result == null) {
+      throw new Error("Can't find resource for path [" + resource + ']');
+    }
+    return result;
+  }
 }
