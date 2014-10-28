@@ -101,8 +101,8 @@ public class Motherboard implements ZXPoly {
   public boolean set3D00(final int value) {
     if (is3D00NotLocked()) {
       this.port3D00 = value;
+      LOG.info("#3D00 has changed to #"+Integer.toHexString(value).toUpperCase(Locale.ENGLISH));
       this.video.setVideoMode((this.port3D00 >> 2) & 0x7);
-      LOG.info("#3D00 has changed to "+value);
       return true;
     }else{
       LOG.info("Rejected new value for #3D00 because it is locked");
