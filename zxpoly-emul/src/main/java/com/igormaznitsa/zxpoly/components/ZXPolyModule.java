@@ -39,16 +39,17 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   private int port7FFD;
   private int lastM1Address;
 
-  private int registerReadingCounter = 3;
+  private boolean activeRegisterReading;
+  private int registerReadingCounter = 0;
   private static final int Z80_PASSIVESIGNALS = Z80.SIGNAL_IN_nINT | Z80.SIGNAL_IN_nNMI | Z80.SIGNAL_IN_nRESET | Z80.SIGNAL_IN_nWAIT;
 
-  private boolean localReset;
   private boolean localInt;
   private boolean localNmi;
   private boolean waitSignal;
 
   private boolean stopAddressWait;
-
+  private int localResetCounter;
+  
   private static int calcRegAddress(final int moduleIndex, final int reg) {
     return (moduleIndex << 12) | (reg << 8) | 0xFF;
   }
@@ -144,8 +145,9 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   }
 
   public void prepareLocalReset() {
-    this.localReset = true;
+    this.localResetCounter = 3;
     this.registerReadingCounter = 3;
+    this.activeRegisterReading = false;
   }
 
   public void prepareLocalNMI() {
@@ -157,8 +159,10 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   }
 
   public boolean step(final boolean signalReset, final boolean commonInt) {
-    final int s_reset = signalReset || this.localReset ? Z80.SIGNAL_IN_nRESET : 0;
-    this.localReset = false;
+    final int s_reset = signalReset || (this.localResetCounter>0) ? Z80.SIGNAL_IN_nRESET : 0;
+    if (this.localResetCounter>0) {
+      this.localResetCounter --;
+    }
 
     final int s_int;
     if (this.moduleIndex == 0) {
@@ -210,15 +214,21 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     }
 
     final byte result;
-    if (this.registerReadingCounter > 0) {
-      // read local registers R1-R3 instead of memory
-      result = (byte) this.zxPolyRegsWritten[4 - this.registerReadingCounter];
-      this.registerReadingCounter--;
-      if (this.registerReadingCounter == 0){
-        this.zxPolyRegsWritten[1] = 0;
-        this.zxPolyRegsWritten[2] = 0;
-        this.zxPolyRegsWritten[3] = 0;
-      }
+
+    if (this.registerReadingCounter>0 && !this.activeRegisterReading && m1 && address == 0){
+      this.activeRegisterReading = true;
+    }
+    
+    if (this.activeRegisterReading){
+        // read local registers R1-R3 instead of memory
+        result = (byte) this.zxPolyRegsWritten[4 - this.registerReadingCounter];
+        this.registerReadingCounter--;
+        if (this.registerReadingCounter == 0) {
+          this.zxPolyRegsWritten[1] = 0;
+          this.zxPolyRegsWritten[2] = 0;
+          this.zxPolyRegsWritten[3] = 0;
+          this.activeRegisterReading = false;
+        }
     }
     else {
       switch (address >>> 14) {
@@ -378,7 +388,8 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     LOGGER.info("Reset");
     this.port7FFD = 0;
     this.registerReadingCounter = 0;
-    this.localReset = false;
+    this.activeRegisterReading = false;
+    this.localResetCounter = 3;
     this.lastM1Address = 0;
     this.localInt = false;
     this.localNmi = false;

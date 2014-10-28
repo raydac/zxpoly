@@ -139,8 +139,6 @@ public class Motherboard implements ZXPoly {
     this.rom.set(newRom);
   }
 
-  private boolean ttt;
-
   public void step(final boolean signalInt) {
     if (signalInt) {
       this.intCounter++;
