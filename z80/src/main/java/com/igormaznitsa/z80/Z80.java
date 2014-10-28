@@ -84,6 +84,8 @@ public final class Z80 {
 
   public static final int SIGNAL_OUT_nM1 = 1;
   public static final int SIGNAL_OUT_nHALT = 2;
+  public static final int SIGNAL_OUT_nIORQ = 4;
+  public static final int SIGNAL_OUT_ALL_INACTIVE = SIGNAL_OUT_nHALT | SIGNAL_OUT_nM1 | SIGNAL_OUT_nIORQ;
 
   private boolean iff1, iff2;
   private int im;
@@ -114,6 +116,8 @@ public final class Z80 {
   private boolean tempIgnoreInterruption;
   private boolean pendingNMI;
   private boolean pendingINT;
+
+  private long resetTact = -1L;
 
   private static int checkParity(final int value) {
     return (FLAGARRAY_PARITY[value >>> 5] & (1 << (value & 0x1F))) == 0 ? 0 : FLAG_PV;
@@ -148,14 +152,14 @@ public final class Z80 {
     return this.iff2;
   }
 
-  public int getPrefixInProcessing(){
+  public int getPrefixInProcessing() {
     return this.prefix;
   }
-  
-  public int getPrevINSignals(){
+
+  public int getPrevINSignals() {
     return this.prevINSignals;
   }
-  
+
   public void setIFF(final boolean iff1, final boolean iff2) {
     this.iff1 = iff1;
     this.iff2 = iff2;
@@ -268,8 +272,6 @@ public final class Z80 {
   private void _reset() {
     this.iff1 = false;
     this.iff2 = false;
-    this.regSet[REG_A] = (byte) 0xFF;
-    this.regSet[REG_F] = (byte) 0xFF;
     this.regR = 0;
     this.regI = 0;
     this.regPC = 0;
@@ -281,26 +283,28 @@ public final class Z80 {
     this.pendingINT = false;
     this.pendingNMI = false;
 
-    for (int i = 0; i < 8; i++) {
-      this.regSet[i] = (byte) System.nanoTime();
-      this.altRegSet[i] = (byte) System.nanoTime();
-    }
+    // set AF and AF' by 0xFFFF
+    this.regSet[REG_A] = (byte) 0xFF;
+    this.regSet[REG_F] = (byte) 0xFF;
+    this.altRegSet[REG_A] = (byte) 0xFF;
+    this.altRegSet[REG_F] = (byte) 0xFF;
 
     this.prefix = 0;
+    this.outSignals = SIGNAL_OUT_ALL_INACTIVE;
 
     this.tactCounter += 3;
   }
 
-  private void _resetHalt(){
+  private void _resetHalt() {
     if ((this.outSignals & SIGNAL_OUT_nHALT) == 0) {
       this.outSignals |= SIGNAL_OUT_nHALT;
-      this.regPC = (this.regPC+1) & 0xFFFF;
+      this.regPC = (this.regPC + 1) & 0xFFFF;
     }
   }
-  
+
   private void _int() {
     _resetHalt();
-    
+
     this.iff1 = false;
     this.iff2 = false;
 
@@ -323,7 +327,7 @@ public final class Z80 {
       default:
         throw new Error("Unexpected IM mode [" + this.im + ']');
     }
-    
+
     this.tactCounter += 6;
   }
 
@@ -698,6 +702,7 @@ public final class Z80 {
 
   /**
    * Process whole instruction or send signals.
+   *
    * @param signalRESET true sends the RESET signal to the CPU
    * @param signalNMI true sends the NMI signal to the CPU
    * @param signalNT true sends the INT signal to the CPU
@@ -711,14 +716,25 @@ public final class Z80 {
 
   /**
    * Process one step.
+   *
    * @param inSignals external signal states to be processes during the step.
-   * @return false if there is not any instruction under processing, true otherwise
+   * @return false if there is not any instruction under processing, true
+   * otherwise
    */
   public boolean step(final int inSignals) {
     try {
-      if (isHiLoFront(SIGNAL_IN_nRESET, inSignals)) {
-        _reset();
-        return false;
+      if ((inSignals & SIGNAL_IN_nRESET) == 0) {
+        if (this.resetTact<0){
+          this.resetTact = 0;
+          this.tactCounter = 0;
+        }
+        // make simulation of reset signal for as minimum 3 clock
+        if (this.tactCounter - this.resetTact >= 8) {
+          _reset();
+          return false;
+        }
+      }else{
+        this.resetTact = -1L;
       }
 
       if ((inSignals & SIGNAL_IN_nWAIT) == 0) {
@@ -752,15 +768,16 @@ public final class Z80 {
         }
       }
 
-      
       final boolean notcompleted;
       if (interruptionProcessed) {
         notcompleted = false;
-      }else{
+      }
+      else {
         if (_step(readInstructionByte(true))) {
           this.prefix = 0;
           notcompleted = false;
-        }else{
+        }
+        else {
           this.prefix &= 0xFFFF;
           notcompleted = true;
         }
@@ -782,7 +799,7 @@ public final class Z80 {
       case 0xFD:
       case 0x00: {
         _rfsh();
-        
+
         switch (extractX(commandByte)) {
           case 0: {
             final int z = extractZ(commandByte);

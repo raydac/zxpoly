@@ -22,6 +22,63 @@ import static org.junit.Assert.*;
 public class Z80Test extends AbstractZ80Test {
 
   @Test
+  public void testReset_Nop(){
+    final Z80 cpu = new Z80(new Z80CPUBus() {
+      @Override
+      public byte readMemory(final Z80 cpu, final int address, final boolean m1) {
+        return 0;
+      }
+
+      @Override
+      public void writeMemory(final Z80 cpu, final int address, final byte data) {
+      }
+
+      @Override
+      public byte readPort(final Z80 cpu, final int port) {
+        return 0;
+      }
+
+      @Override
+      public void writePort(final Z80 cpu, final int port, final byte data) {
+      }
+
+      @Override
+      public byte onCPURequestDataLines(final Z80 cpu) {
+        return (byte)0xFF;
+      }
+
+      @Override
+      public void onRETI(Z80 cpu) {
+      }
+    });
+    
+    for(int m=0;m<0x0020;m++){
+      cpu.nextInstruction(false, false, false);
+    }
+    assertEquals(0x0020, cpu.getRegister(Z80.REG_PC));
+    
+    cpu.step(~Z80.SIGNAL_IN_nRESET);
+    assertEquals(0x0021, cpu.getRegister(Z80.REG_PC));
+    cpu.step(~Z80.SIGNAL_IN_nRESET);
+    assertEquals(0x0022, cpu.getRegister(Z80.REG_PC));
+    cpu.step(~Z80.SIGNAL_IN_nRESET);
+    assertEquals(0x0000, cpu.getRegister(Z80.REG_PC));
+
+    cpu.step(~Z80.SIGNAL_IN_nRESET);
+    assertEquals(0x0000, cpu.getRegister(Z80.REG_PC));
+    
+    cpu.step(Z80.SIGNAL_IN_nINT | Z80.SIGNAL_IN_nNMI | Z80.SIGNAL_IN_nRESET | Z80.SIGNAL_IN_nWAIT);
+    assertEquals(0x0001, cpu.getRegister(Z80.REG_PC));
+  
+    cpu.step(~Z80.SIGNAL_IN_nRESET);
+    assertEquals(0x0002, cpu.getRegister(Z80.REG_PC));
+    cpu.step(~Z80.SIGNAL_IN_nRESET);
+    assertEquals(0x0003, cpu.getRegister(Z80.REG_PC));
+    cpu.step(~Z80.SIGNAL_IN_nRESET);
+    assertEquals(0x0000, cpu.getRegister(Z80.REG_PC));
+  }
+  
+  @Test
   public void testCommand_LD_A_C() {
     final Z80State state = new Z80State();
     state.A = 12;
@@ -719,6 +776,7 @@ public class Z80Test extends AbstractZ80Test {
   public void testCommand_EXX() {
     final Z80State state = new Z80State();
     state.A = 1;
+    state.F = 3;
     state.altA = 2;
     state.B = 0x10;
     state.C = 0x20;
@@ -726,6 +784,8 @@ public class Z80Test extends AbstractZ80Test {
     state.E = 0x40;
     state.H = 0x50;
     state.L = 0x60;
+    
+    state.altF = 5;
     state.altB = 0x70;
     state.altC = 0x80;
     state.altD = 0x90;
@@ -740,6 +800,7 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(0xB0, cpu.getRegister(Z80.REG_H));
     assertEquals(0xC0, cpu.getRegister(Z80.REG_L));
     assertEquals(1, cpu.getRegister(Z80.REG_A));
+    assertEquals(3, cpu.getRegister(Z80.REG_F));
     assertEquals(0x10, cpu.getRegister(Z80.REG_B, true));
     assertEquals(0x20, cpu.getRegister(Z80.REG_C, true));
     assertEquals(0x30, cpu.getRegister(Z80.REG_D, true));
@@ -747,6 +808,7 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(0x50, cpu.getRegister(Z80.REG_H, true));
     assertEquals(0x60, cpu.getRegister(Z80.REG_L, true));
     assertEquals(2, cpu.getRegister(Z80.REG_A, true));
+    assertEquals(5, cpu.getRegister(Z80.REG_F, true));
     assertTacts(cpu, 4);
   }
 
@@ -3115,11 +3177,11 @@ public class Z80Test extends AbstractZ80Test {
   public void testCommand_HALT() {
     final Z80 cpu = new Z80(new TestBus(0, 0, 0x76));
 
-    assertEquals(0xFFFFFFFF, cpu.getState());
+    assertEquals(Z80.SIGNAL_OUT_ALL_INACTIVE, cpu.getState());
 
     cpu.nextInstruction(false, false, false);
 
-    assertEquals(~Z80.SIGNAL_OUT_nHALT, cpu.getState());
+    assertTrue((cpu.getState() & Z80.SIGNAL_OUT_nHALT)==0);
     assertEquals(0, cpu.getRegister(Z80.REG_PC));
 
     assertTacts(cpu, 4);

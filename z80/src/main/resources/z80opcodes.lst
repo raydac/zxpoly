@@ -259,15 +259,15 @@ CB7A       BIT 7,D
 CB7B       BIT 7,E
 CB7C       BIT 7,H
 CB7D       BIT 7,L
-CD nn      CALL (nn)
-DC nn      CALL C,(nn)
-FC nn      CALL M,(nn)
-D4 nn      CALL NC,(nn)
-C4 nn      CALL NZ,(nn)
-F4 nn      CALL P,(nn)
-EC nn      CALL PE,(nn)
-E4 nn      CALL PO,(nn)
-CC nn      CALL Z,(nn)
+CD nn      CALL nn
+DC nn      CALL C,nn
+FC nn      CALL M,nn
+D4 nn      CALL NC,nn
+C4 nn      CALL NZ,nn
+F4 nn      CALL P,nn
+EC nn      CALL PE,nn
+E4 nn      CALL PO,nn
+CC nn      CALL Z,nn
 3F         CCF
 BE         CP (HL)
 DDBE d     CP (IX+d)
@@ -311,7 +311,7 @@ FD2D       DEC IYl
 2D         DEC L
 3B         DEC SP
 F3         DI
-10 e       DJNZ (PC+e)
+10 e       DJNZ e
 FB         EI
 E3         EX (SP),HL
 DDE3       EX (SP),IX
@@ -364,20 +364,20 @@ EDB2       INIR
 E9         JP (HL)
 DDE9       JP (IX)
 FDE9       JP (IY)
-C3 nn      JP (nn)
-DA nn      JP C,(nn)
-FA nn      JP M,(nn)
-D2 nn      JP NC,(nn)
-C2 nn      JP NZ,(nn)
-F2 nn      JP P,(nn)
-EA nn      JP PE,(nn)
-E2 nn      JP PO,(nn)
-CA nn      JP Z,(nn)
-18 e       JR (PC+e)
-38 e       JR C,(PC+e)
-30 e       JR NC,(PC+e)
-20 e       JR NZ,(PC+e)
-28 e       JR Z,(PC+e)
+C3 nn      JP nn
+DA nn      JP C,nn
+FA nn      JP M,nn
+D2 nn      JP NC,nn
+C2 nn      JP NZ,nn
+F2 nn      JP P,nn
+EA nn      JP PE,nn
+E2 nn      JP PO,nn
+CA nn      JP Z,nn
+18 e       JR e
+38 e       JR C,e
+30 e       JR NC,e
+20 e       JR NZ,e
+28 e       JR Z,e
 02         LD (BC),A
 12         LD (DE),A
 77         LD (HL),A
@@ -1096,14 +1096,14 @@ CB0C       RRC H
 CB0D       RRC L
 0F         RRCA
 ED67       RRD
-C7         RST 0H
-D7         RST 10H
-DF         RST 18H
-E7         RST 20H
-EF         RST 28H
-F7         RST 30H
-FF         RST 38H
-CF         RST 8H
+C7         RST #00
+D7         RST #10
+DF         RST #18
+E7         RST #20
+EF         RST #28
+F7         RST #30
+FF         RST #38
+CF         RST #08
 9E         SBC A,(HL)
 DD9E d     SBC A,(IX+d)
 FD9E d     SBC A,(IY+d)
