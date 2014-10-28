@@ -16,6 +16,10 @@
  */
 package com.igormaznitsa.zxpoly.components;
 
+import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.z80.disasm.Z80Disasm;
+import com.igormaznitsa.z80.disasm.Z80Instruction;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
@@ -28,12 +32,44 @@ public class Motherboard implements ZXPoly {
   private final IODevice[] ioDevices;
   private final byte[] ram = new byte[512 * 1024];
   private final VideoController video;
+  private final KeyboardAndTape keyboard;
   private final AtomicReference<ZXRom> rom = new AtomicReference<ZXRom>();
 
-  private int port3D00 = (int)System.nanoTime() & 0xFF;
-  private int port00FE = (int) System.nanoTime() & 0xFF;
+  private int port3D00 = (int) System.nanoTime() & 0xFF;
   private boolean totalReset = true;
 
+  private int intCounter;
+  private volatile boolean videoFlashState;
+
+  private static FileWriter logFile;
+  
+  private String toHex(final int val){
+    final String hex = Integer.toHexString(val).toUpperCase(Locale.ENGLISH);
+    return '#'+(hex.length()<4 ? "0000".substring(0,4-hex.length()) + hex: hex);
+  }
+  
+  private void logCPU(final ZXPolyModule module){
+    try{
+    if (logFile == null){
+      logFile = new FileWriter("cpulog.log",false);
+    }
+    
+    final String sp = toHex(module.getCPU().getRegister(Z80.REG_SP));
+    final String pc = toHex(module.getCPU().getRegister(Z80.REG_PC));
+    final String f = toHex(module.getCPU().getRegister(Z80.REG_F));
+    
+    final int pcreg = module.getCPU().getRegister(Z80.REG_PC);
+    
+    final Z80Instruction in = Z80Disasm.decodeInstruction(rom.get().getArray(), pcreg);
+    
+      logFile.write(pc+"\t"+in.decode(rom.get().getArray(), pcreg, pcreg)+"\t\t SP:"+sp+"\tF:"+f+'\n');
+      logFile.flush();
+    }catch(Exception ex){
+      ex.printStackTrace();
+    }
+  }
+  
+  
   public Motherboard(final ZXRom rom) {
     this.rom.set(rom);
     this.modules = new ZXPolyModule[4];
@@ -43,10 +79,12 @@ public class Motherboard implements ZXPoly {
       iodevices.add(this.modules[i]);
     }
     iodevices.add(new BetaDiscInterface(this));
-    iodevices.add(new Keyboard(this));
-
-    this.ioDevices = iodevices.toArray(new IODevice[iodevices.size()]);
+    
+    this.keyboard = new KeyboardAndTape(this);
+    iodevices.add(keyboard);
     this.video = new VideoController(this);
+    iodevices.add(video);
+    this.ioDevices = iodevices.toArray(new IODevice[iodevices.size()]);
 
     // simulation of garbage in memory after power on
     final Random rnd = new Random();
@@ -60,12 +98,18 @@ public class Motherboard implements ZXPoly {
     set3D00(0);
   }
 
-  public void set3D00(final int value){
-    if (is3D00NotLocked()){
+  public boolean set3D00(final int value) {
+    if (is3D00NotLocked()) {
+      this.port3D00 = value;
       this.video.setVideoMode((this.port3D00 >> 2) & 0x7);
+      LOG.info("#3D00 has changed to "+value);
+      return true;
+    }else{
+      LOG.info("Rejected new value for #3D00 because it is locked");
+      return false;
     }
   }
-  
+
   public int get3D00() {
     return this.port3D00;
   }
@@ -83,7 +127,7 @@ public class Motherboard implements ZXPoly {
   }
 
   public boolean isFlashActive() {
-    return false;
+    return this.videoFlashState;
   }
 
   public int readROM(final int address) {
@@ -95,11 +139,17 @@ public class Motherboard implements ZXPoly {
     this.rom.set(newRom);
   }
 
-  public int get00FE(){
-    return this.port00FE;
-  }
-  
+  private boolean ttt;
+
   public void step(final boolean signalInt) {
+    if (signalInt) {
+      this.intCounter++;
+      if (this.intCounter >= 50) {
+        this.intCounter = 0;
+        this.videoFlashState = !this.videoFlashState;
+      }
+    }
+
     final boolean signalReset = this.totalReset;
     this.totalReset = false;
 
@@ -166,34 +216,34 @@ public class Motherboard implements ZXPoly {
   private void processHaltNotificationForModule(final int index) {
     final ZXPolyModule module = this.modules[index];
     final int reg1 = module.getReg1WrittenData();
-    final boolean sendInt = (reg1 & ZXPOLY_wREG1_HALT_NOTIFY_INT)!=0;
-    final boolean sendNmi = (reg1 & ZXPOLY_wREG1_HALT_NOTIFY_NMI)!=0;
-    if (sendInt){
-      if ((reg1 & ZXPOLY_wREG1_CPU0)!=0){
+    final boolean sendInt = (reg1 & ZXPOLY_wREG1_HALT_NOTIFY_INT) != 0;
+    final boolean sendNmi = (reg1 & ZXPOLY_wREG1_HALT_NOTIFY_NMI) != 0;
+    if (sendInt) {
+      if ((reg1 & ZXPOLY_wREG1_CPU0) != 0) {
         this.modules[0].prepareLocalInt();
       }
-      if ((reg1 & ZXPOLY_wREG1_CPU1)!=0){
+      if ((reg1 & ZXPOLY_wREG1_CPU1) != 0) {
         this.modules[1].prepareLocalInt();
       }
-      if ((reg1 & ZXPOLY_wREG1_CPU2)!=0){
+      if ((reg1 & ZXPOLY_wREG1_CPU2) != 0) {
         this.modules[2].prepareLocalInt();
       }
-      if ((reg1 & ZXPOLY_wREG1_CPU3)!=0){
+      if ((reg1 & ZXPOLY_wREG1_CPU3) != 0) {
         this.modules[3].prepareLocalInt();
       }
     }
 
-    if (sendNmi){
-      if ((reg1 & ZXPOLY_wREG1_CPU0)!=0){
+    if (sendNmi) {
+      if ((reg1 & ZXPOLY_wREG1_CPU0) != 0) {
         this.modules[0].prepareLocalNMI();
       }
-      if ((reg1 & ZXPOLY_wREG1_CPU1)!=0){
+      if ((reg1 & ZXPOLY_wREG1_CPU1) != 0) {
         this.modules[1].prepareLocalNMI();
       }
-      if ((reg1 & ZXPOLY_wREG1_CPU2)!=0){
+      if ((reg1 & ZXPOLY_wREG1_CPU2) != 0) {
         this.modules[2].prepareLocalNMI();
       }
-      if ((reg1 & ZXPOLY_wREG1_CPU3)!=0){
+      if ((reg1 & ZXPOLY_wREG1_CPU3) != 0) {
         this.modules[3].prepareLocalNMI();
       }
     }
@@ -216,20 +266,28 @@ public class Motherboard implements ZXPoly {
   }
 
   public int readBusIO(final ZXPolyModule module, final int port) {
+    final int mappedCPU = getMappedCPUIndex();
     int result = 0;
 
-    IODevice firstDetected = null;
+    if (module.getModuleIndex() == 0 && mappedCPU > 0) {
+      final ZXPolyModule destmodule = modules[mappedCPU];
+      result = this.ram[destmodule.getHeapOffset() + port];
+      destmodule.prepareLocalInt();
+    }
+    else {
+      IODevice firstDetected = null;
 
-    for (final IODevice d : this.ioDevices) {
-      final int prevResult = result;
-      result |= d.readIO(module, port);
-      if (prevResult != result) {
-        // changed
-        if (prevResult == 0) {
-          firstDetected = d;
-        }
-        else {
-          LOG.warning("Detected collision during IO reading: " + firstDetected.getName() + ", " + d.getName());
+      for (final IODevice d : this.ioDevices) {
+        final int prevResult = result;
+        result |= d.readIO(module, port);
+        if (prevResult != result) {
+          // changed
+          if (prevResult == 0) {
+            firstDetected = d;
+          }
+          else {
+            LOG.warning("Detected collision during IO reading: " + firstDetected.getName() + ", " + d.getName() + " port #" + Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
+          }
         }
       }
     }
@@ -237,8 +295,34 @@ public class Motherboard implements ZXPoly {
   }
 
   public void writeBusIO(final ZXPolyModule module, final int port, final int value) {
-    for (final IODevice d : this.ioDevices) {
-      d.writeIO(module, port, value);
+    final int mappedCPU = getMappedCPUIndex();
+    final int moduleIndex = module.getModuleIndex();
+
+    if (moduleIndex == 0) {
+      if (port == PORTrw_ZXPOLY) {
+          set3D00(value);
+      }
+      else {
+        if (mappedCPU > 0) {
+          final ZXPolyModule destmodule = modules[mappedCPU];
+          this.ram[destmodule.getHeapOffset() + port] = (byte) value;
+          destmodule.prepareLocalNMI();
+        }
+        else {
+          for (final IODevice d : this.ioDevices) {
+            d.writeIO(module, port, value);
+          }
+        }
+      }
     }
+    else {
+      for (final IODevice d : this.ioDevices) {
+        d.writeIO(module, port, value);
+      }
+    }
+  }
+
+  public KeyboardAndTape getKeyboard() {
+    return this.keyboard;
   }
 }

@@ -28,10 +28,14 @@ public final class ZXRom {
     if (array.length > 0x8000) {
       throw new IllegalArgumentException("Too big data to be a ZX ROM (max 32768 bytes)");
     }
-    this.data = new byte[0x4000];
+    this.data = new byte[0x8000];
     System.arraycopy(array, 0, this.data, 0, array.length);
   }
 
+  public byte [] getArray(){
+    return this.data;
+  }
+  
   public int readAddress(final int address) {
     return this.data[address & 0x7FFF] & 0xFF;
   }

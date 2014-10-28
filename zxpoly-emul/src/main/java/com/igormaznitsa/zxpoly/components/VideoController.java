@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
 
-public final class VideoController extends JComponent implements ZXPoly, MouseWheelListener {
+public final class VideoController extends JComponent implements ZXPoly, MouseWheelListener, IODevice {
 
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
@@ -40,6 +40,8 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private Dimension size = new Dimension(512, 384);
 
   private int zoom = 1;
+  
+  private volatile int portFEw = 0;
 
   private static final int[] ZXPALETTE = new int[]{
     0xFF000000,
@@ -141,7 +143,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     final int width = getWidth();
     final int height = getHeight();
 
-    g2.setColor(ZXPALETTE_AS_COLORS[this.board.get00FE() & 7]);
+    g2.setColor(ZXPALETTE_AS_COLORS[this.portFEw & 7]);
     g2.fillRect(0, 0, width, height);
 
     final int xoff = (width - this.size.width) / 2;
@@ -160,24 +162,25 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       case VIDEOMODE_ZX48_CPU1:
       case VIDEOMODE_ZX48_CPU2:
       case VIDEOMODE_ZX48_CPU3: {
-        final ZXPolyModule sourceModul = this.modules[this.currentVideoMode & 0x3];
+        final ZXPolyModule sourceModule = this.modules[this.currentVideoMode & 0x3];
 
-        int bufferPos = 0;
         int offset = 0;
-
+        int attributeoffset=0;
+        
         for (int i = 0; i < 0x1800; i++) {
           if ((i & 0x1F) == 0) {
             offset = extractYFromAddress(i) << 10;
+            attributeoffset = calcAttributeAddressZXMode(i);
           }
 
-          final int attribute = sourceModul.readVideoMemory(calcAttributeAddressZXMode(bufferPos));
+          final int attribute = sourceModule.readVideoMemory(attributeoffset++);
           final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
 
           final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
           final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
           final boolean flash = (attribute & 0x80) != 0;
 
-          int videoValue = sourceModul.readVideoMemory(bufferPos++);
+          int videoValue = sourceModule.readVideoMemory(i);
           int x = 8;
           while (x-- > 0) {
             final boolean pixelReset = (videoValue & 0x80) == 0;
@@ -212,7 +215,38 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       }
       break;
       case VIDEOMODE_ZXPOLY_256x192: {
+        int offset = 0;
 
+        for (int i = 0; i < 0x1800; i++) {
+          if ((i & 0x1F) == 0) {
+            offset = extractYFromAddress(i) << 10;
+          }
+
+          int videoValue0 = this.modules[0].readVideoMemory(i);
+          int videoValue1 = this.modules[1].readVideoMemory(i);
+          int videoValue2 = this.modules[2].readVideoMemory(i);
+          int videoValue3 = this.modules[3].readVideoMemory(i);
+
+          int x = 8;
+          while (x-- > 0) {
+            final int value = ((videoValue0 & 0x80) == 0 ? 0 : 0x08)
+                    | ((videoValue1 & 0x80) == 0 ? 0 : 0x04)
+                    | ((videoValue2 & 0x80) == 0 ? 0 : 0x02)
+                    | ((videoValue3 & 0x80) == 0 ? 0 : 0x01);
+
+            videoValue0 <<= 1;
+            videoValue1 <<= 1;
+            videoValue2 <<= 1;
+            videoValue3 <<= 1;
+
+            final int color = ZXPALETTE[value];
+
+            this.dataBuffer[offset] = color;
+            this.dataBuffer[offset + 512] = color;
+            this.dataBuffer[++offset] = color;
+            this.dataBuffer[offset++ + 512] = color;
+          }
+        }
       }
       break;
       case VIDEOMODE_ZXPOLY_512x384: {
@@ -266,5 +300,39 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   public void unlockBuffer() {
     bufferLocker.unlock();
+  }
+
+  public void refreshComponent() {
+    lockBuffer();
+    try{
+      this.refreshBufferData();
+    }finally{
+      unlockBuffer();
+    }
+    repaint();
+  }
+
+  @Override
+  public Motherboard getMotherboard() {
+    return this.board;
+  }
+
+  @Override
+  public int readIO(final ZXPolyModule module, final int port) {
+    return 0;
+  }
+
+  @Override
+  public void writeIO(final ZXPolyModule module, final int port, final int value) {
+    if ((value & 0xFF) == 0xFE){
+      this.portFEw = value & 0xFF;
+    }
+  }
+
+  @Override
+  public void preStep(final boolean signalReset, final boolean signalInt) {
+    if (signalReset){
+      this.portFEw = 0x00;
+    }
   }
 }

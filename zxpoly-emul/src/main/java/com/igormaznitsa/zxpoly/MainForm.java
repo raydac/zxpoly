@@ -16,9 +16,10 @@
  */
 package com.igormaznitsa.zxpoly;
 
-import com.igormaznitsa.zxpoly.components.Motherboard;
-import com.igormaznitsa.zxpoly.components.ZXRom;
-import java.awt.BorderLayout;
+import com.igormaznitsa.zxpoly.components.*;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.logging.Logger;
 import javax.swing.*;
@@ -30,16 +31,34 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   
   private final Motherboard board;
  
-  private final long SCREEN_REFRESH_DELAY = 70L;
+  private final long SCREEN_REFRESH_DELAY = 100L;
+  
+  private class KeyboardDispatcher implements KeyEventDispatcher {
+    private final KeyboardAndTape keyboard;
+    
+    public KeyboardDispatcher(final KeyboardAndTape kbd){
+      this.keyboard = kbd;
+    }
+    
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent e) {
+      this.keyboard.onKeyEvent(e);
+      return false;
+    }
+  }  
   
   public MainForm() throws IOException {
     initComponents();
     log.info("Loading test rom");
-    this.board = new Motherboard(ZXRom.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/opense.rom")));
+    this.board = new Motherboard(ZXRom.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/zxpolytest.rom")));
+//    this.board = new Motherboard(ZXRom.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/opense.rom")));
     log.info("Main form completed");
     this.board.reset();
 
     this.scrollPanel.getViewport().add(this.board.getVideoController());
+
+    final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    manager.addKeyEventDispatcher(new KeyboardDispatcher(this.board.getKeyboard()));
     
     final Thread daemon = new Thread(this,"ZXPolyThread");
     daemon.setDaemon(true);
@@ -72,7 +91,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        board.getVideoController().repaint();
+        board.getVideoController().refreshComponent();
       }
     });
   }
