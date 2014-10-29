@@ -41,7 +41,6 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
 
   private boolean activeRegisterReading;
   private int registerReadingCounter = 0;
-  private static final int Z80_PASSIVESIGNALS = Z80.SIGNAL_IN_nINT | Z80.SIGNAL_IN_nNMI | Z80.SIGNAL_IN_nRESET | Z80.SIGNAL_IN_nWAIT;
 
   private boolean localInt;
   private boolean localNmi;
@@ -179,7 +178,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     final int s_wait = this.waitSignal ? Z80.SIGNAL_IN_nWAIT : 0;
 
     final int oldCpuState = this.cpu.getState();
-    this.cpu.step(Z80_PASSIVESIGNALS ^ s_reset ^ s_int ^ s_wait ^ s_nmi);
+    this.cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE ^ s_reset ^ s_int ^ s_wait ^ s_nmi);
     final int newCpuState = this.cpu.getState();
 
     final boolean metHalt = (newCpuState & Z80.SIGNAL_OUT_nHALT) == 0 && (oldCpuState & Z80.SIGNAL_OUT_nHALT) != 0;
