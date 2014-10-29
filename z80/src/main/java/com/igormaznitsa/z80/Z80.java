@@ -81,11 +81,12 @@ public final class Z80 {
   public static final int SIGNAL_IN_nNMI = 2;
   public static final int SIGNAL_IN_nRESET = 4;
   public static final int SIGNAL_IN_nWAIT = 8;
-
+  public static final int SIGNAL_IN_ALL_INACTIVE = SIGNAL_IN_nINT | SIGNAL_IN_nNMI | SIGNAL_IN_nRESET | SIGNAL_IN_nWAIT;
+  
+  
   public static final int SIGNAL_OUT_nM1 = 1;
   public static final int SIGNAL_OUT_nHALT = 2;
-  public static final int SIGNAL_OUT_nIORQ = 4;
-  public static final int SIGNAL_OUT_ALL_INACTIVE = SIGNAL_OUT_nHALT | SIGNAL_OUT_nM1 | SIGNAL_OUT_nIORQ;
+  public static final int SIGNAL_OUT_ALL_INACTIVE = SIGNAL_OUT_nHALT | SIGNAL_OUT_nM1 ;
 
   private boolean iff1, iff2;
   private int im;
@@ -710,7 +711,7 @@ public final class Z80 {
   public void nextInstruction(final boolean signalRESET, final boolean signalNMI, final boolean signalNT) {
     int flag = (signalNT ? 0 : SIGNAL_IN_nINT) | (signalNMI ? 0 : SIGNAL_IN_nNMI) | (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
     while (step(flag)) {
-      flag = SIGNAL_IN_nINT | SIGNAL_IN_nNMI | SIGNAL_IN_nRESET | SIGNAL_IN_nWAIT;
+      flag = SIGNAL_IN_ALL_INACTIVE;
     }
   }
 

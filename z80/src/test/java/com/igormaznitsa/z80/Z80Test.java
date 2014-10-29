@@ -67,7 +67,7 @@ public class Z80Test extends AbstractZ80Test {
     cpu.step(~Z80.SIGNAL_IN_nRESET);
     assertEquals(0x0000, cpu.getRegister(Z80.REG_PC));
     
-    cpu.step(Z80.SIGNAL_IN_nINT | Z80.SIGNAL_IN_nNMI | Z80.SIGNAL_IN_nRESET | Z80.SIGNAL_IN_nWAIT);
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
     assertEquals(0x0001, cpu.getRegister(Z80.REG_PC));
   
     cpu.step(~Z80.SIGNAL_IN_nRESET);
