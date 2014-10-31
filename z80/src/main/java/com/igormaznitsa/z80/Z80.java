@@ -118,7 +118,7 @@ public final class Z80 {
   private boolean pendingNMI;
   private boolean pendingINT;
 
-  private long resetTact = -1L;
+  private int resetCycle = 0;
 
   private static int checkParity(final int value) {
     return (FLAGARRAY_PARITY[value >>> 5] & (1 << (value & 0x1F))) == 0 ? 0 : FLAG_PV;
@@ -134,7 +134,10 @@ public final class Z80 {
       throw new NullPointerException("The CPU BUS must not be null");
     }
     this.bus = bus;
-    _reset();
+    _reset(0);
+    _reset(1);
+    _reset(2);
+    this.tactCounter = 3L;
   }
 
   public int getIM() {
@@ -270,25 +273,33 @@ public final class Z80 {
     return this.tactCounter;
   }
 
-  private void _reset() {
-    this.iff1 = false;
-    this.iff2 = false;
-    this.regR = 0;
-    this.regI = 0;
-    this.regPC = 0;
-    this.regSP = 0xFFFF;
+  private void _reset(final int cycle) {
+    switch(cycle % 3){
+      case 0 : {
+        this.iff1 = false;
+        this.iff2 = false;
+        this.regI = 0;
+        this.regR = 0;
+      }break;
+      case 1 : {
+        this.regPC = 0;
+        this.regSP = 0xFFFF;
+      }break;
+      case 2 : {
+        // set AF and AF' by 0xFFFF
+        this.regSet[REG_A] = (byte) 0xFF;
+        this.regSet[REG_F] = (byte) 0xFF;
+        this.altRegSet[REG_A] = (byte) 0xFF;
+        this.altRegSet[REG_F] = (byte) 0xFF;
+      }break;
+    }
+    
     this.im = 0;
     this.cbDisplacementByte = -1;
 
     this.tempIgnoreInterruption = false;
     this.pendingINT = false;
     this.pendingNMI = false;
-
-    // set AF and AF' by 0xFFFF
-    this.regSet[REG_A] = (byte) 0xFF;
-    this.regSet[REG_F] = (byte) 0xFF;
-    this.altRegSet[REG_A] = (byte) 0xFF;
-    this.altRegSet[REG_F] = (byte) 0xFF;
 
     this.prefix = 0;
     this.outSignals = SIGNAL_OUT_ALL_INACTIVE;
@@ -725,17 +736,9 @@ public final class Z80 {
   public boolean step(final int inSignals) {
     try {
       if ((inSignals & SIGNAL_IN_nRESET) == 0) {
-        if (this.resetTact<0){
-          this.resetTact = 0;
-          this.tactCounter = 0;
-        }
-        // make simulation of reset signal for as minimum 3 clock
-        if (this.tactCounter - this.resetTact >= 8) {
-          _reset();
-          return false;
-        }
-      }else{
-        this.resetTact = -1L;
+        // make simulation of reset signal for as minimum 3 cycles
+        _reset(this.resetCycle++);
+        return false;
       }
 
       if ((inSignals & SIGNAL_IN_nWAIT) == 0) {

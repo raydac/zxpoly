@@ -57,25 +57,23 @@ public class Z80Test extends AbstractZ80Test {
     }
     assertEquals(0x0020, cpu.getRegister(Z80.REG_PC));
     
-    cpu.step(~Z80.SIGNAL_IN_nRESET);
-    assertEquals(0x0021, cpu.getRegister(Z80.REG_PC));
-    cpu.step(~Z80.SIGNAL_IN_nRESET);
-    assertEquals(0x0022, cpu.getRegister(Z80.REG_PC));
-    cpu.step(~Z80.SIGNAL_IN_nRESET);
-    assertEquals(0x0000, cpu.getRegister(Z80.REG_PC));
-
-    cpu.step(~Z80.SIGNAL_IN_nRESET);
-    assertEquals(0x0000, cpu.getRegister(Z80.REG_PC));
+    cpu.setRegister(Z80.REG_SP, 0x1234);
     
+    assertEquals(0x0020, cpu.getRegister(Z80.REG_PC));
+    cpu.step(~Z80.SIGNAL_IN_nRESET);
+    cpu.step(~Z80.SIGNAL_IN_nRESET);
+    cpu.step(~Z80.SIGNAL_IN_nRESET);
+    assertEquals(0x0000, cpu.getRegister(Z80.REG_PC));
+    assertEquals(0xFFFF, cpu.getRegister(Z80.REG_SP));
+
     cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
     assertEquals(0x0001, cpu.getRegister(Z80.REG_PC));
   
     cpu.step(~Z80.SIGNAL_IN_nRESET);
-    assertEquals(0x0002, cpu.getRegister(Z80.REG_PC));
     cpu.step(~Z80.SIGNAL_IN_nRESET);
-    assertEquals(0x0003, cpu.getRegister(Z80.REG_PC));
     cpu.step(~Z80.SIGNAL_IN_nRESET);
     assertEquals(0x0000, cpu.getRegister(Z80.REG_PC));
+    assertEquals(0xFFFF, cpu.getRegister(Z80.REG_SP));
   }
   
   @Test
