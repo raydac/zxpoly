@@ -152,6 +152,50 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     this.drawBuffer(g2, xoff, yoff, this.zoom);
   }
 
+  private int extractInkColor(final int attribute, final boolean flashActive){
+    final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
+    final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
+    final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
+    final boolean flash = (attribute & 0x80) != 0;
+
+    final int result;
+    
+    if (flash) {
+      if (flashActive) {
+        result = paperColor;
+      }
+      else {
+        result = inkColor;
+      }
+    }
+    else {
+      result = inkColor;
+    }
+    return result;
+  }
+  
+  private int extractPaperColor(final int attribute, final boolean flashActive){
+    final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
+    final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
+    final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
+    final boolean flash = (attribute & 0x80) != 0;
+
+    final int result;
+    
+    if (flash) {
+      if (flashActive) {
+        result = inkColor;
+      }
+      else {
+        result = paperColor;
+      }
+    }
+    else {
+      result = paperColor;
+    }
+    return result;
+  }
+  
   private void refreshBufferData() {
     final boolean isflash = this.board.isFlashActive();
 
@@ -174,11 +218,8 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
           }
 
           final int attribute = sourceModule.readVideoMemory(attributeoffset++);
-          final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
-
-          final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
-          final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
-          final boolean flash = (attribute & 0x80) != 0;
+          final int inkColor = extractInkColor(attribute, isflash);
+          final int paperColor = extractPaperColor(attribute, isflash);
 
           int videoValue = sourceModule.readVideoMemory(i);
           int x = 8;
@@ -186,25 +227,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
             final boolean pixelReset = (videoValue & 0x80) == 0;
             videoValue <<= 1;
 
-            final int pink;
-            final int ppaper;
-
-            if (flash) {
-              if (isflash) {
-                pink = paperColor;
-                ppaper = inkColor;
-              }
-              else {
-                pink = inkColor;
-                ppaper = paperColor;
-              }
-            }
-            else {
-              pink = inkColor;
-              ppaper = paperColor;
-            }
-
-            final int color = pixelReset ? ppaper : pink;
+            final int color = pixelReset ? paperColor : inkColor;
 
             this.dataBuffer[offset] = color;
             this.dataBuffer[offset + 512] = color;
@@ -221,7 +244,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
           if ((i & 0x1F) == 0) {
             offset = extractYFromAddress(i) << 10;
           }
-
+          
           int videoValue0 = this.modules[0].readVideoMemory(i);
           int videoValue1 = this.modules[1].readVideoMemory(i);
           int videoValue2 = this.modules[2].readVideoMemory(i);
@@ -250,7 +273,40 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       }
       break;
       case VIDEOMODE_ZXPOLY_512x384: {
+        int offset = 0;
+        int attributeoffset = 0;
 
+        for (int i = 0; i < 0x1800; i++) {
+          if ((i & 0x1F) == 0) {
+            offset = extractYFromAddress(i) << 10;
+            attributeoffset = calcAttributeAddressZXMode(i);
+          }
+
+          int videoValue0 = this.modules[0].readVideoMemory(i);
+          int videoValue1 = this.modules[1].readVideoMemory(i);
+          int videoValue2 = this.modules[2].readVideoMemory(i);
+          int videoValue3 = this.modules[3].readVideoMemory(i);
+          
+          final int attribute0 = this.modules[0].readVideoMemory(attributeoffset);
+          final int attribute1 = this.modules[1].readVideoMemory(attributeoffset);
+          final int attribute2 = this.modules[2].readVideoMemory(attributeoffset);
+          final int attribute3 = this.modules[3].readVideoMemory(attributeoffset++);
+
+          int x = 8;
+          while (x-- > 0) {
+            videoValue0 <<= 1;
+            videoValue1 <<= 1;
+            videoValue2 <<= 1;
+            videoValue3 <<= 1;
+
+            final int color = ZXPALETTE[5];
+
+            this.dataBuffer[offset] = (videoValue0 & 0x80) == 0 ? extractPaperColor(attribute0, isflash) : extractInkColor(attribute0, isflash);
+            this.dataBuffer[offset + 512] = (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, isflash) : extractInkColor(attribute2, isflash);
+            this.dataBuffer[++offset] = (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, isflash) : extractInkColor(attribute1, isflash);
+            this.dataBuffer[offset++ + 512] = (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, isflash) : extractInkColor(attribute3, isflash);
+          }
+        }
       }
       break;
       default:

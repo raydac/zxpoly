@@ -36,11 +36,13 @@ public class Motherboard implements ZXPoly {
   private final AtomicReference<ZXRom> rom = new AtomicReference<ZXRom>();
 
   private int port3D00 = (int) System.nanoTime() & 0xFF;
-  private boolean totalReset = true;
+  
+  private volatile boolean totalReset;
+  private volatile int resetCounter;
 
   private int intCounter;
   private volatile boolean videoFlashState;
-
+  
   private static FileWriter logFile;
   
   private String toHex(final int val){
@@ -93,15 +95,14 @@ public class Motherboard implements ZXPoly {
 
   public void reset() {
     LOG.info("Full system reset");
-    this.port3D00 = 0;
     this.totalReset = true;
-    set3D00(0);
+    this.resetCounter = 3;
   }
 
   public boolean set3D00(final int value) {
     if (is3D00NotLocked()) {
       this.port3D00 = value;
-      LOG.info("#3D00 has changed to #"+Integer.toHexString(value).toUpperCase(Locale.ENGLISH));
+      LOG.info("#3D00 <- #"+Integer.toHexString(value).toUpperCase(Locale.ENGLISH));
       this.video.setVideoMode((this.port3D00 >> 2) & 0x7);
       return true;
     }else{
@@ -151,6 +152,14 @@ public class Motherboard implements ZXPoly {
     final boolean signalReset = this.totalReset;
     this.totalReset = false;
 
+    if (this.resetCounter>0){
+      this.resetCounter--;
+      if (this.resetCounter == 0){
+        this.port3D00 = 0;
+        this.set3D00(0);
+      }
+    }
+    
     for (final IODevice d : this.ioDevices) {
       d.preStep(signalReset, signalInt);
     }

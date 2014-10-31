@@ -108,12 +108,22 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     scrollPanel = new javax.swing.JScrollPane();
     menuBar = new javax.swing.JMenuBar();
     menuFile = new javax.swing.JMenu();
+    menuFileReset = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
 
     setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
     getContentPane().add(scrollPanel, java.awt.BorderLayout.CENTER);
 
     menuFile.setText("File");
+
+    menuFileReset.setText("Reset");
+    menuFileReset.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuFileResetActionPerformed(evt);
+      }
+    });
+    menuFile.add(menuFileReset);
+
     menuBar.add(menuFile);
 
     menuOptions.setText("Options");
@@ -124,9 +134,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     pack();
   }// </editor-fold>//GEN-END:initComponents
 
+  private void menuFileResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileResetActionPerformed
+    this.board.reset();
+  }//GEN-LAST:event_menuFileResetActionPerformed
+
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuFile;
+  private javax.swing.JMenuItem menuFileReset;
   private javax.swing.JMenu menuOptions;
   private javax.swing.JScrollPane scrollPanel;
   // End of variables declaration//GEN-END:variables
