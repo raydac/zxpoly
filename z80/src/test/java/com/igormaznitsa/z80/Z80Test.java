@@ -4932,4 +4932,88 @@ public class Z80Test extends AbstractZ80Test {
         assertTacts(cpu, 23);
     }
   }
+
+  @Test
+  public void testCommand_LD_IYh_D() {
+    final Z80State state = new Z80State();
+    state.D = 0xDD;
+    final Z80 cpu = executeCommand(state, 0xFD, 0x62);
+    assertEquals(0xDD00, cpu.getRegister(Z80.REG_IY));
+    assertFlagsNotChanged(state, cpu);
+    assertTacts(cpu, 8);
+  }
+
+  @Test
+  public void testCommand_LD_IYl_D() {
+    final Z80State state = new Z80State();
+    state.D = 0xDD;
+    final Z80 cpu = executeCommand(state, 0xFD, 0x6A);
+    assertEquals(0x00DD, cpu.getRegister(Z80.REG_IY));
+    assertFlagsNotChanged(state, cpu);
+    assertTacts(cpu, 8);
+  }
+
+  @Test
+  public void testCommand_LD_D_IYh() {
+    final Z80State state = new Z80State();
+    state.D = 0xEE;
+    state.IY = 0x1234;
+    final Z80 cpu = executeCommand(state, 0xFD, 0x54);
+    assertEquals(0x12, cpu.getRegister(Z80.REG_D));
+    assertFlagsNotChanged(state, cpu);
+    assertTacts(cpu, 8);
+  }
+
+  @Test
+  public void testCommand_LD_D_IYl() {
+    final Z80State state = new Z80State();
+    state.D = 0xEE;
+    state.IY = 0x1234;
+    final Z80 cpu = executeCommand(state, 0xFD, 0x55);
+    assertEquals(0x34, cpu.getRegister(Z80.REG_D));
+    assertFlagsNotChanged(state, cpu);
+    assertTacts(cpu, 8);
+  }
+
+  @Test
+  public void testCommand_LD_IXh_D() {
+    final Z80State state = new Z80State();
+    state.D = 0xDD;
+    final Z80 cpu = executeCommand(state, 0xDD, 0x62);
+    assertEquals(0xDD00, cpu.getRegister(Z80.REG_IX));
+    assertFlagsNotChanged(state, cpu);
+    assertTacts(cpu, 8);
+  }
+
+  @Test
+  public void testCommand_LD_IXl_D() {
+    final Z80State state = new Z80State();
+    state.D = 0xDD;
+    final Z80 cpu = executeCommand(state, 0xDD, 0x6A);
+    assertEquals(0x00DD, cpu.getRegister(Z80.REG_IX));
+    assertFlagsNotChanged(state, cpu);
+    assertTacts(cpu, 8);
+  }
+
+  @Test
+  public void testCommand_LD_D_IXh() {
+    final Z80State state = new Z80State();
+    state.D = 0xEE;
+    state.IX = 0x1234;
+    final Z80 cpu = executeCommand(state, 0xDD, 0x54);
+    assertEquals(0x12, cpu.getRegister(Z80.REG_D));
+    assertFlagsNotChanged(state, cpu);
+    assertTacts(cpu, 8);
+  }
+
+  @Test
+  public void testCommand_LD_D_IXl() {
+    final Z80State state = new Z80State();
+    state.D = 0xEE;
+    state.IX = 0x1234;
+    final Z80 cpu = executeCommand(state, 0xDD, 0x55);
+    assertEquals(0x34, cpu.getRegister(Z80.REG_D));
+    assertFlagsNotChanged(state, cpu);
+    assertTacts(cpu, 8);
+  }
 }

@@ -82,11 +82,10 @@ public final class Z80 {
   public static final int SIGNAL_IN_nRESET = 4;
   public static final int SIGNAL_IN_nWAIT = 8;
   public static final int SIGNAL_IN_ALL_INACTIVE = SIGNAL_IN_nINT | SIGNAL_IN_nNMI | SIGNAL_IN_nRESET | SIGNAL_IN_nWAIT;
-  
-  
+
   public static final int SIGNAL_OUT_nM1 = 1;
   public static final int SIGNAL_OUT_nHALT = 2;
-  public static final int SIGNAL_OUT_ALL_INACTIVE = SIGNAL_OUT_nHALT | SIGNAL_OUT_nM1 ;
+  public static final int SIGNAL_OUT_ALL_INACTIVE = SIGNAL_OUT_nHALT | SIGNAL_OUT_nM1;
 
   private boolean iff1, iff2;
   private int im;
@@ -274,26 +273,29 @@ public final class Z80 {
   }
 
   private void _reset(final int cycle) {
-    switch(cycle % 3){
-      case 0 : {
+    switch (cycle % 3) {
+      case 0: {
         this.iff1 = false;
         this.iff2 = false;
         this.regI = 0;
         this.regR = 0;
-      }break;
-      case 1 : {
+      }
+      break;
+      case 1: {
         this.regPC = 0;
         this.regSP = 0xFFFF;
-      }break;
-      case 2 : {
+      }
+      break;
+      case 2: {
         // set AF and AF' by 0xFFFF
         this.regSet[REG_A] = (byte) 0xFF;
         this.regSet[REG_F] = (byte) 0xFF;
         this.altRegSet[REG_A] = (byte) 0xFF;
         this.altRegSet[REG_F] = (byte) 0xFF;
-      }break;
+      }
+      break;
     }
-    
+
     this.im = 0;
     this.cbDisplacementByte = -1;
 
@@ -643,6 +645,68 @@ public final class Z80 {
       case 5:
         setRegister(REG_L, value);
         return;
+      case 6: { // (HL)
+        switch (normalizedPrefix()) {
+          case 0x00:
+            _writemem8(getRegisterPair(REGPAIR_HL), (byte) value);
+            return;
+          case 0xDD:
+            _writemem8(this.regIX + (byte) readInstructionByte(false), (byte) value);
+            this.tactCounter += 5;
+            return;
+          case 0xFD:
+            _writemem8(this.regIY + (byte) readInstructionByte(false), (byte) value);
+            this.tactCounter += 5;
+            return;
+        }
+      }
+      break;
+      case 7:
+        setRegister(REG_A, value);
+        return;
+    }
+    throw new Error("unexpected P index or prefix [" + this.prefix + ':' + r + ']');
+  }
+
+  private void writeReg8_forLdReg8Instruction(final int r, final int value) {
+    switch (r) {
+      case 0:
+        setRegister(REG_B, value);
+        return;
+      case 1:
+        setRegister(REG_C, value);
+        return;
+      case 2:
+        setRegister(REG_D, value);
+        return;
+      case 3:
+        setRegister(REG_E, value);
+        return;
+      case 4:
+        switch (normalizedPrefix()) {
+          case 0x00:
+            setRegister(REG_H, value);
+            return;
+          case 0xDD:
+            setRegister(REG_IX, (value<<8)|(getRegister(REG_IX) & 0x00FF));
+            return;
+          case 0xFD:
+            setRegister(REG_IY, (value << 8) | (getRegister(REG_IY) & 0x00FF));
+            return;
+        }break;
+      case 5:
+        switch (normalizedPrefix()) {
+          case 0x00:
+            setRegister(REG_L, value);
+            return;
+          case 0xDD:
+            setRegister(REG_IX, (getRegister(REG_IX) & 0xFF00) | (value & 0xFF));
+            return;
+          case 0xFD:
+            setRegister(REG_IY, (getRegister(REG_IY) & 0xFF00) | (value & 0xFF));
+            return;
+        }
+        break;
       case 6: { // (HL)
         switch (normalizedPrefix()) {
           case 0x00:
@@ -1549,7 +1613,7 @@ public final class Z80 {
   }
 
   private void doLDRegByReg(final int y, final int z) {
-    writeReg8(y, readReg8(z));
+    writeReg8_forLdReg8Instruction(y, readReg8(z));
   }
 
   private void doRETByFlag(final int y) {
