@@ -116,7 +116,9 @@ public final class Z80 {
   private boolean tempIgnoreInterruption;
   private boolean pendingNMI;
   private boolean pendingINT;
-
+  private boolean insideBlockInstructionPrev;
+  private boolean insideBlockInstruction;
+  
   private int resetCycle = 0;
 
   private static int checkParity(final int value) {
@@ -272,6 +274,10 @@ public final class Z80 {
     return this.tactCounter;
   }
 
+  public boolean isInsideBlockLoop(){
+    return this.insideBlockInstruction;
+  }
+  
   private void _reset(final int cycle) {
     switch (cycle % 3) {
       case 0: {
@@ -299,6 +305,9 @@ public final class Z80 {
     this.im = 0;
     this.cbDisplacementByte = -1;
 
+    this.insideBlockInstruction = false;
+    this.insideBlockInstructionPrev = false;
+    
     this.tempIgnoreInterruption = false;
     this.pendingINT = false;
     this.pendingNMI = false;
@@ -322,6 +331,8 @@ public final class Z80 {
     this.iff1 = false;
     this.iff2 = false;
 
+    this.insideBlockInstructionPrev = this.insideBlockInstruction;
+    
     this.pendingINT = false;
 
     switch (this.im) {
@@ -360,6 +371,7 @@ public final class Z80 {
 
   private void _nmi() {
     _resetHalt();
+    this.insideBlockInstructionPrev = this.insideBlockInstruction;
     this.iff1 = false;
     this.pendingNMI = false;
     this.pendingINT = false;
@@ -652,11 +664,11 @@ public final class Z80 {
             return;
           case 0xDD:
             _writemem8(this.regIX + (byte) readInstructionByte(false), (byte) value);
-            this.tactCounter += 5;
+            this.tactCounter += 2;
             return;
           case 0xFD:
             _writemem8(this.regIY + (byte) readInstructionByte(false), (byte) value);
-            this.tactCounter += 5;
+            this.tactCounter += 2;
             return;
         }
       }
@@ -777,7 +789,7 @@ public final class Z80 {
   }
 
   /**
-   * Process whole instruction or send signals.
+   * Process whole instruction or send signals but blcok operations will be processed as only step.
    *
    * @param signalRESET true sends the RESET signal to the CPU
    * @param signalNMI true sends the NMI signal to the CPU
@@ -786,6 +798,20 @@ public final class Z80 {
   public void nextInstruction(final boolean signalRESET, final boolean signalNMI, final boolean signalNT) {
     int flag = (signalNT ? 0 : SIGNAL_IN_nINT) | (signalNMI ? 0 : SIGNAL_IN_nNMI) | (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
     while (step(flag)) {
+      flag = SIGNAL_IN_ALL_INACTIVE;
+    }
+  }
+
+  /**
+   * Process whole instruction or send signals and  block operations will be processed entirely.
+   *
+   * @param signalRESET true sends the RESET signal to the CPU
+   * @param signalNMI true sends the NMI signal to the CPU
+   * @param signalNT true sends the INT signal to the CPU
+   */
+  public void nextInstructionWithBlockProcessing(final boolean signalRESET, final boolean signalNMI, final boolean signalNT) {
+    int flag = (signalNT ? 0 : SIGNAL_IN_nINT) | (signalNMI ? 0 : SIGNAL_IN_nNMI) | (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
+    while (step(flag) || this.insideBlockInstruction) {
       flag = SIGNAL_IN_ALL_INACTIVE;
     }
   }
@@ -861,7 +887,8 @@ public final class Z80 {
     boolean commandCompleted = true;
 
     this.tempIgnoreInterruption = false;
-
+    this.insideBlockInstruction = false;
+    
     switch (this.prefix) {
       case 0xDD:
       case 0xFD:
@@ -1283,7 +1310,7 @@ public final class Z80 {
               final int z = extractZ(commandByte);
               final int y = extractY(commandByte);
               if (z <= 3 && y >= 4) {
-                doBLI(y, z);
+                this.insideBlockInstruction = doBLI(y, z);
               }
               else {
                 doNONI();
@@ -1981,11 +2008,13 @@ public final class Z80 {
   private void doRETI() {
     doRET();
     this.bus.onRETI(this);
+    this.insideBlockInstruction = this.insideBlockInstructionPrev;
   }
 
   private void doRETN() {
     doRET();
     this.iff1 = this.iff2;
+    this.insideBlockInstruction = this.insideBlockInstructionPrev;
   }
 
   private void doIM(final int y) {
@@ -2073,78 +2102,47 @@ public final class Z80 {
     this.tactCounter += 4;
   }
 
-  private void doBLI(final int y, final int z) {
+  private boolean doBLI(final int y, final int z) {
+    boolean insideLoop = false;
     switch (y) {
       case 4: {
         switch (z) {
-          case 0:
-            doLDI();
-            return;
-          case 1:
-            doCPI();
-            return;
-          case 2:
-            doINI();
-            return;
-          case 3:
-            doOUTI();
-            return;
+          case 0: doLDI(); break;
+          case 1: doCPI(); break;
+          case 2: doINI(); break;
+          case 3: doOUTI(); break;
         }
       }
       break;
       case 5: {
         switch (z) {
-          case 0:
-            doLDD();
-            return;
-          case 1:
-            doCPD();
-            return;
-          case 2:
-            doIND();
-            return;
-          case 3:
-            doOUTD();
-            return;
+          case 0: doLDD();break;
+          case 1: doCPD();break;
+          case 2: doIND();break;
+          case 3: doOUTD();break;
         }
       }
       break;
       case 6: {
         switch (z) {
-          case 0:
-            doLDIR();
-            return;
-          case 1:
-            doCPIR();
-            return;
-          case 2:
-            doINIR();
-            return;
-          case 3:
-            doOTIR();
-            return;
+          case 0: insideLoop = doLDIR();break;
+          case 1: insideLoop = doCPIR();break;
+          case 2: insideLoop = doINIR();break;
+          case 3: insideLoop = doOTIR();break;
         }
       }
       break;
       case 7: {
         switch (z) {
-          case 0:
-            doLDDR();
-            return;
-          case 1:
-            doCPDR();
-            return;
-          case 2:
-            doINDR();
-            return;
-          case 3:
-            doOTDR();
-            return;
+          case 0: insideLoop = doLDDR();break;
+          case 1: insideLoop = doCPDR();break;
+          case 2: insideLoop = doINDR();break;
+          case 3: insideLoop = doOTDR();break;
         }
       }
       break;
     }
-    throw new Error("Unexpected block instruction [" + y + ',' + z + ']');
+    return insideLoop;
   }
 
   private void doLDI() {
@@ -2162,12 +2160,16 @@ public final class Z80 {
     this.tactCounter += 2;
   }
 
-  private void doLDIR() {
+  private boolean doLDIR() {
     doLDI();
+    boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_PV) != 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tactCounter += 5;
+    } else {
+      loopNonCompleted = false;
     }
+    return loopNonCompleted;
   }
 
   private void doCPI() {
@@ -2183,13 +2185,17 @@ public final class Z80 {
     this.tactCounter += 5;
   }
 
-  private void doCPIR() {
+  private boolean doCPIR() {
     doCPI();
+    boolean loopNonCompleted = true;
     final int flags = this.regSet[REG_F];
     if ((flags & (FLAG_Z | FLAG_PV)) == FLAG_PV) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tactCounter += 5;
+    }else{
+      loopNonCompleted = false;
     }
+    return loopNonCompleted;
   }
 
   private void doINI() {
@@ -2205,12 +2211,16 @@ public final class Z80 {
     this.tactCounter++;
   }
 
-  private void doINIR() {
+  private boolean doINIR() {
     doINI();
+    boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tactCounter += 5;
+    }else{
+      loopNonCompleted = false;
     }
+    return loopNonCompleted;
   }
 
   private void doIND() {
@@ -2226,12 +2236,16 @@ public final class Z80 {
     this.tactCounter++;
   }
 
-  private void doINDR() {
+  private boolean doINDR() {
     doIND();
+    boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tactCounter += 5;
+    }else{
+      loopNonCompleted = false;
     }
+    return loopNonCompleted;
   }
 
   private void doOUTI() {
@@ -2246,12 +2260,16 @@ public final class Z80 {
     this.tactCounter++;
   }
 
-  private void doOTIR() {
+  private boolean doOTIR() {
     doOUTI();
+    boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tactCounter += 5;
+    }else{
+      loopNonCompleted = false;
     }
+    return loopNonCompleted;
   }
 
   private void doOUTD() {
@@ -2266,12 +2284,16 @@ public final class Z80 {
     this.tactCounter++;
   }
 
-  private void doOTDR() {
+  private boolean doOTDR() {
     doOUTD();
+    boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tactCounter += 5;
+    }else{
+      loopNonCompleted = false;
     }
+    return loopNonCompleted;
   }
 
   private void doLDD() {
@@ -2289,12 +2311,16 @@ public final class Z80 {
     this.tactCounter += 2;
   }
 
-  private void doLDDR() {
+  private boolean doLDDR() {
     doLDD();
+    boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_PV) != 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tactCounter += 5;
+    }else{
+      loopNonCompleted = false;
     }
+    return loopNonCompleted;
   }
 
   private void doCPD() {
@@ -2310,13 +2336,17 @@ public final class Z80 {
     this.tactCounter += 5;
   }
 
-  private void doCPDR() {
+  private boolean doCPDR() {
     doCPD();
+    boolean loopNonCompleted = true;
     final int flags = this.regSet[REG_F];
     if ((flags & (FLAG_Z | FLAG_PV)) == FLAG_PV) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tactCounter += 5;
+    }else{
+      loopNonCompleted = false;
     }
+    return loopNonCompleted;
   }
 
 }

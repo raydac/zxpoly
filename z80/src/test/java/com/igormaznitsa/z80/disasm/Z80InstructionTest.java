@@ -28,7 +28,8 @@ public class Z80InstructionTest {
     assertEquals(2, ins.getFixedPartLength());
     assertArrayEquals(new int []{0xFD,0x36,Z80Instruction.SPEC_INDEX,Z80Instruction.SPEC_UNSIGNED_BYTE}, ins.getInstructionCodes());
   
-    assertEquals("LD (IY-#0F),#08",ins.decode(new byte []{(byte)0xFD,(byte)0x36,(byte)-15,8}, 0, -1));
+    assertEquals("LD (IY+#46),#12",ins.decode(new byte []{(byte)0xFD,(byte)0x36,(byte)0x46,0x12}, 0, -1));
+    assertEquals("LD (IY-#01),#12", ins.decode(new byte[]{(byte) 0xFD, (byte) 0x36, (byte) 0xFF, 0x12}, 0, -1));
     assertNull(ins.decode(new byte[]{(byte) 0xFD, (byte) 0x37, (byte) -15, 8}, 0, -1));
   }
   
