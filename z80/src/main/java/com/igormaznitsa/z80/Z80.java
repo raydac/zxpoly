@@ -789,7 +789,7 @@ public final class Z80 {
   }
 
   /**
-   * Process whole instruction or send signals but blcok operations will be processed as only step.
+   * Process whole instruction or send signals but only step of a block instruction will be processed.
    *
    * @param signalRESET true sends the RESET signal to the CPU
    * @param signalNMI true sends the NMI signal to the CPU
@@ -809,7 +809,7 @@ public final class Z80 {
    * @param signalNMI true sends the NMI signal to the CPU
    * @param signalNT true sends the INT signal to the CPU
    */
-  public void nextInstructionWithBlockProcessing(final boolean signalRESET, final boolean signalNMI, final boolean signalNT) {
+  public void nextInstruction_SkipBlockInstructions(final boolean signalRESET, final boolean signalNMI, final boolean signalNT) {
     int flag = (signalNT ? 0 : SIGNAL_IN_nINT) | (signalNMI ? 0 : SIGNAL_IN_nNMI) | (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
     while (step(flag) || this.insideBlockInstruction) {
       flag = SIGNAL_IN_ALL_INACTIVE;
