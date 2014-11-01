@@ -18,8 +18,10 @@ package com.igormaznitsa.z80;
 
 import java.util.Random;
 import static org.junit.Assert.assertEquals;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class Z80RandomCodeBlockTest {
 
   @Test

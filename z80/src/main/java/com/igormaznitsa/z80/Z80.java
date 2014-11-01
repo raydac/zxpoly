@@ -16,6 +16,8 @@
  */
 package com.igormaznitsa.z80;
 
+import static com.igormaznitsa.z80.Z80.FLAG_C;
+import static com.igormaznitsa.z80.Z80.REG_F;
 import java.util.Locale;
 
 public final class Z80 {
@@ -50,9 +52,9 @@ public final class Z80 {
 
   public static final int FLAG_S = 0x80;
   public static final int FLAG_Z = 0x40;
-  public static final int FLAG_X2 = 0x20;
+  public static final int FLAG_RESERVED_5 = 0x20;
   public static final int FLAG_H = 0x10;
-  public static final int FLAG_X1 = 0x08;
+  public static final int FLAG_RESERVED_3 = 0x08;
   public static final int FLAG_PV = 0x04;
   public static final int FLAG_N = 0x02;
   public static final int FLAG_C = 0x01;
@@ -523,6 +525,59 @@ public final class Z80 {
             return _readmem8(this.regIX + (byte) _read_ixiy_d());
           case 0xFD:
             this.tactCounter += 5;
+            return _readmem8(this.regIY + (byte) _read_ixiy_d());
+        }
+      }
+      break;
+      case 7:
+        return getRegister(REG_A);
+    }
+    throw new Error("Unexpected prefix or R index [" + this.prefix + ':' + r + ']');
+  }
+
+  private int readReg8WithResetPrefixForIndex(final int r) {
+    switch (r) {
+      case 0:
+        return getRegister(REG_B);
+      case 1:
+        return getRegister(REG_C);
+      case 2:
+        return getRegister(REG_D);
+      case 3:
+        return getRegister(REG_E);
+      case 4: { // H
+        switch (normalizedPrefix()) {
+          case 0x00:
+            return getRegister(REG_H);
+          case 0xDD:
+            return (this.regIX >> 8) & 0xFF;
+          case 0xFD:
+            return (this.regIY >> 8) & 0xFF;
+        }
+      }
+      break;
+      case 5: { // L
+        switch (normalizedPrefix()) {
+          case 0x00:
+            return getRegister(REG_L);
+          case 0xDD:
+            return this.regIX & 0xFF;
+          case 0xFD:
+            return this.regIY & 0xFF;
+        }
+      }
+      break;
+      case 6: { // (HL)
+        switch (normalizedPrefix()) {
+          case 0x00:
+            return _readmem8(getRegisterPair(REGPAIR_HL));
+          case 0xDD:
+            this.tactCounter += 5;
+            this.prefix = 0;
+            return _readmem8(this.regIX + (byte) _read_ixiy_d());
+          case 0xFD:
+            this.tactCounter += 5;
+            this.prefix = 0;
             return _readmem8(this.regIY + (byte) _read_ixiy_d());
         }
       }
@@ -1393,7 +1448,7 @@ public final class Z80 {
 
     writeReg16(2, result);
 
-    updateFlags(FLAG_X1 | FLAG_X2 | FLAG_S | FLAG_Z | FLAG_PV, flagC | flagH, 0);
+    updateFlags(FLAG_RESERVED_3 | FLAG_RESERVED_5 | FLAG_S | FLAG_Z | FLAG_PV, flagC | flagH, 0);
 
     this.tactCounter += 7;
   }
@@ -1412,7 +1467,7 @@ public final class Z80 {
 
     writeReg16(2, result);
 
-    updateFlags(FLAG_X1 | FLAG_X2, flagC | flagH | flagZ | flagS | flagPV, 0);
+    updateFlags(FLAG_RESERVED_3 | FLAG_RESERVED_5, flagC | flagH | flagZ | flagS | flagPV, 0);
 
     this.tactCounter += 7;
   }
@@ -1421,17 +1476,22 @@ public final class Z80 {
     final int reg = readReg16(2);
     final int value = readReg16(p);
 
-    final int result = reg - value - (this.regSet[REG_F] & FLAG_C);
+    final int valuec = this.regSet[REG_F] & FLAG_C;
+    
+    final int result = reg - value - valuec;
 
-    final int flagH = (((reg & 0xF00) + (value & 0xF00)) & 0x100) == 0 ? 0 : FLAG_H;
+    final int flagH = (((reg & 0x0FFF) - (value & 0x0FFF) - valuec) & 0x1000) == 0 ? 0 : FLAG_H;
     final int flagC = (result & 0x10000) == 0 ? 0 : FLAG_C;
     final int flagZ = (result & 0xFFFF) == 0 ? FLAG_Z : 0;
     final int flagS = (result & 0x8000) == 0 ? 0 : FLAG_S;
     final int flagPV = (~(reg ^ value) & (reg ^ result) & 0x8000) == 0 ? 0 : FLAG_PV;
-
+    
+    final int flag5 = (result & (FLAG_RESERVED_5 << 8)) == 0 ? 0 : FLAG_RESERVED_5;
+    final int flag3 = (result & (FLAG_RESERVED_3 << 8)) == 0 ? 0 : FLAG_RESERVED_3;
+    
     writeReg16(2, result);
 
-    updateFlags(FLAG_X1 | FLAG_X2, flagC | flagH | flagZ | flagS | flagPV, FLAG_N);
+    updateFlags(0, flagC | flagH | flagZ | flagS | flagPV | flag5 | flag3, FLAG_N);
 
     this.tactCounter += 7;
   }
@@ -1492,7 +1552,10 @@ public final class Z80 {
     final int flagZ = (result & 0xFF) == 0 ? FLAG_Z : 0;
     final int flagH = (result & 0xF) == 0 ? FLAG_H : 0;
 
-    updateFlags(FLAG_X1 | FLAG_X2 | FLAG_C, flagH | flagPV | flagS | flagZ, 0);
+    final int flag5 = (result & FLAG_RESERVED_5) ==0 ? 0 : FLAG_RESERVED_5;
+    final int flag3 = (result & FLAG_RESERVED_3) ==0 ? 0 : FLAG_RESERVED_3;
+    
+    updateFlags(FLAG_C, flag5|flag3|flagH | flagPV | flagS | flagZ, 0);
   }
 
   private void doDECReg(final int y) {
@@ -1505,7 +1568,10 @@ public final class Z80 {
     final int flagZ = (result & 0xFF) == 0 ? FLAG_Z : 0;
     final int flagH = (result & 0xF) == 0xF ? FLAG_H : 0;
 
-    updateFlags(FLAG_X1 | FLAG_X2 | FLAG_C, flagH | flagPV | flagS | flagZ, FLAG_N);
+    final int flag5 = (result & FLAG_RESERVED_5) == 0 ? 0 : FLAG_RESERVED_5;
+    final int flag3 = (result & FLAG_RESERVED_3) == 0 ? 0 : FLAG_RESERVED_3;
+
+    updateFlags(FLAG_C, flag5 | flag3 | flagH | flagPV | flagS | flagZ, FLAG_N);
   }
 
   private void doLD_Reg_ByValue(final int y) {
@@ -1516,28 +1582,28 @@ public final class Z80 {
     final int value = this.regSet[REG_A] << 1;
     final int flagc = (value & 0x100) == 0 ? 0 : FLAG_C;
     this.regSet[REG_A] = (byte) (value | ((value >>> 8) & 1));
-    updateFlags(FLAG_Z | FLAG_X1 | FLAG_PV | FLAG_S | FLAG_X2, flagc, 0);
+    updateFlags(FLAG_Z | FLAG_RESERVED_3 | FLAG_PV | FLAG_S | FLAG_RESERVED_5, flagc, 0);
   }
 
   private void doRRCA() {
     final int value = this.regSet[REG_A] & 0xFF;
     final int flagc = value & FLAG_C;
     this.regSet[REG_A] = (byte) ((value >>> 1) | (flagc << 7));
-    updateFlags(FLAG_Z | FLAG_X1 | FLAG_PV | FLAG_S | FLAG_X2, flagc, 0);
+    updateFlags(FLAG_Z | FLAG_RESERVED_3 | FLAG_PV | FLAG_S | FLAG_RESERVED_5, flagc, 0);
   }
 
   private void doRLA() {
     final int value = this.regSet[REG_A] << 1;
     this.regSet[REG_A] = (byte) (value | (this.regSet[REG_F] & FLAG_C));
     final int flagc = (value & 0x100) == 0 ? 0 : FLAG_C;
-    updateFlags(FLAG_Z | FLAG_X1 | FLAG_PV | FLAG_S | FLAG_X2, flagc, 0);
+    updateFlags(FLAG_Z | FLAG_RESERVED_3 | FLAG_PV | FLAG_S | FLAG_RESERVED_5, flagc, 0);
   }
 
   private void doRRA() {
     final int value = this.regSet[REG_A] & 0xFF;
     this.regSet[REG_A] = (byte) ((value >>> 1) | (this.regSet[REG_F] & FLAG_C) << 7);
     final int flagc = value & FLAG_C;
-    updateFlags(FLAG_Z | FLAG_X1 | FLAG_PV | FLAG_S | FLAG_X2, flagc, 0);
+    updateFlags(FLAG_Z | FLAG_RESERVED_3 | FLAG_PV | FLAG_S | FLAG_RESERVED_5, flagc, 0);
   }
 
   private void doDAA() {
@@ -1621,26 +1687,26 @@ public final class Z80 {
     final int fPV = checkParity(result);
     final int fH = (((a & 0xF) + (addVal & 0xF)) & 0x10) == 0 ? 0 : FLAG_H;
 
-    updateFlags(FLAG_X1 | FLAG_X2 | FLAG_N, fS | fZ | fPV | fH, 0);
+    updateFlags(FLAG_RESERVED_3 | FLAG_RESERVED_5 | FLAG_N, fS | fZ | fPV | fH, 0);
   }
 
   private void doCPL() {
     this.regSet[REG_A] ^= 0xFF;
-    updateFlags(FLAG_C | FLAG_PV | FLAG_S | FLAG_X1 | FLAG_X2 | FLAG_Z, 0, FLAG_N | FLAG_H);
+    updateFlags(FLAG_C | FLAG_PV | FLAG_S | FLAG_RESERVED_3 | FLAG_RESERVED_5 | FLAG_Z, 0, FLAG_N | FLAG_H);
   }
 
   private void doSCF() {
-    updateFlags(FLAG_PV | FLAG_S | FLAG_X1 | FLAG_X2 | FLAG_Z, 0, FLAG_C);
+    updateFlags(FLAG_PV | FLAG_S | FLAG_RESERVED_3 | FLAG_RESERVED_5 | FLAG_Z, 0, FLAG_C);
   }
 
   private void doCCF() {
     final int flags = this.regSet[REG_F];
     final boolean flagc = (flags & FLAG_C) != 0;
-    updateFlags(FLAG_PV | FLAG_S | FLAG_X1 | FLAG_X2 | FLAG_Z, flagc ? FLAG_H : FLAG_C, 0);
+    updateFlags(FLAG_PV | FLAG_S | FLAG_RESERVED_3 | FLAG_RESERVED_5 | FLAG_Z, flagc ? FLAG_H : FLAG_C, 0);
   }
 
   private void doLDRegByReg(final int y, final int z) {
-    writeReg8_forLdReg8Instruction(y, readReg8(z));
+    writeReg8_forLdReg8Instruction(y, readReg8WithResetPrefixForIndex(z));
   }
 
   private void doRETByFlag(final int y) {
@@ -1795,7 +1861,7 @@ public final class Z80 {
         result = a - value;
         flagN = FLAG_N;
         flagC = (result & 0x100) == 0 ? 0 : FLAG_C;
-        flagPV = ((a ^ value) & (a ^ result) & 80) == 0 ? 0 : FLAG_PV;
+        flagPV = ((a ^ value) & (a ^ result) & 0x80) == 0 ? 0 : FLAG_PV;
         flagH = ((a ^ value ^ result) & 0x10) == 0 ? 0 : FLAG_H;
       }
       break;
@@ -1803,7 +1869,7 @@ public final class Z80 {
         result = a - value - (this.regSet[REG_F] & 1);
         flagN = FLAG_N;
         flagC = (result & 0x100) == 0 ? 0 : FLAG_C;
-        flagPV = ((a ^ value) & (a ^ result) & 80) == 0 ? 0 : FLAG_PV;
+        flagPV = ((a ^ value) & (a ^ result) & 0x80) == 0 ? 0 : FLAG_PV;
         flagH = ((a ^ value ^ result) & 0x10) == 0 ? 0 : FLAG_H;
       }
       break;
@@ -1836,7 +1902,7 @@ public final class Z80 {
         result = a - value;
         flagN = FLAG_N;
         flagC = (result & 0x80) == 0 ? 0 : FLAG_C;
-        flagPV = ((a ^ value) & (a ^ result) & 80) == 0 ? 0 : FLAG_PV;
+        flagPV = ((a ^ value) & (a ^ result) & 0x80) == 0 ? 0 : FLAG_PV;
         flagH = ((a ^ value ^ result) & 0x10) == 0 ? 0 : FLAG_H;
       }
       break;
@@ -1850,7 +1916,7 @@ public final class Z80 {
     final int flagZ = (result & 0xFF) == 0 ? FLAG_Z : 0;
     final int flagS = (result & 0x80) == 0 ? 0 : FLAG_S;
 
-    updateFlags(FLAG_X1 | FLAG_X2, flagZ | flagS | flagC | flagPV | flagH | flagN, 0);
+    updateFlags(FLAG_RESERVED_3 | FLAG_RESERVED_5, flagZ | flagS | flagC | flagPV | flagH | flagN, 0);
   }
 
   private void doRST(final int address) {
@@ -1913,7 +1979,7 @@ public final class Z80 {
 
     writeReg8_UseCachedInstructionByte(reg, result);
 
-    updateFlags(FLAG_X1 | FLAG_X2, flagC | flagPV | flagS | flagZ, 0);
+    updateFlags(FLAG_RESERVED_3 | FLAG_RESERVED_5, flagC | flagPV | flagS | flagZ, 0);
 
     return result;
   }
@@ -1924,7 +1990,7 @@ public final class Z80 {
 
   private void doBIT(final int bit, final int reg) {
     final int flagZ = (readReg8(reg) & (1 << bit)) == 0 ? FLAG_Z : 0;
-    updateFlags(FLAG_C | FLAG_PV | FLAG_S, flagZ, FLAG_H);
+    updateFlags(FLAG_C | FLAG_S, flagZ | (flagZ >>> 4), FLAG_H);
     if (reg == 6) {
       this.tactCounter++;
     }
@@ -1958,7 +2024,7 @@ public final class Z80 {
     final int flagS = (value & 0x80) == 0 ? 0 : FLAG_S;
     final int flagPV = checkParity(value);
 
-    updateFlags(FLAG_C | FLAG_X1 | FLAG_X2, flagZ | flagS | flagPV, 0);
+    updateFlags(FLAG_C | FLAG_RESERVED_3 | FLAG_RESERVED_5, flagZ | flagS | flagPV, 0);
   }
 
   private void doIN_C(final int y) {
@@ -1970,7 +2036,7 @@ public final class Z80 {
     final int flagS = (value & 0x80) == 0 ? 0 : FLAG_S;
     final int flagPV = checkParity(value);
 
-    updateFlags(FLAG_C | FLAG_X1 | FLAG_X2, flagZ | flagS | flagPV, 0);
+    updateFlags(FLAG_C | FLAG_RESERVED_3 | FLAG_RESERVED_5, flagZ | flagS | flagPV, 0);
   }
 
   private void doOUT_C() {
@@ -2002,7 +2068,7 @@ public final class Z80 {
     final int flagS = (result & 0x80) == 0 ? 0 : FLAG_S;
     final int flagH = ((a ^ result) & 0x10) == 0 ? 0 : FLAG_H;
 
-    updateFlags(FLAG_X1 | FLAG_X2, flagPV | flagC | flagH | flagZ | flagS | flagH, FLAG_N);
+    updateFlags(FLAG_RESERVED_3 | FLAG_RESERVED_5, flagPV | flagC | flagH | flagZ | flagS | flagH, FLAG_N);
   }
 
   private void doRETI() {
@@ -2079,7 +2145,7 @@ public final class Z80 {
     final int flagS = (a & 0x80) == 0 ? 0 : FLAG_S;
     final int flagPV = checkParity(a);
 
-    updateFlags(FLAG_C | FLAG_X1 | FLAG_X2, flagZ | flagS | flagPV, 0);
+    updateFlags(FLAG_C | FLAG_RESERVED_3 | FLAG_RESERVED_5, flagZ | flagS | flagPV, 0);
 
     this.tactCounter += 4;
   }
@@ -2097,7 +2163,7 @@ public final class Z80 {
     final int flagS = (a & 0x80) == 0 ? 0 : FLAG_S;
     final int flagPV = checkParity(a);
 
-    updateFlags(FLAG_C | FLAG_X1 | FLAG_X2, flagZ | flagS | flagPV, 0);
+    updateFlags(FLAG_C | FLAG_RESERVED_3 | FLAG_RESERVED_5, flagZ | flagS | flagPV, 0);
 
     this.tactCounter += 4;
   }
@@ -2164,6 +2230,7 @@ public final class Z80 {
     doLDI();
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_PV) != 0) {
+      this.regSet[REG_F] &= (~FLAG_PV & 0xFF);
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tactCounter += 5;
     } else {
@@ -2207,7 +2274,7 @@ public final class Z80 {
     this.regSet[REG_B] = (byte) b;
     setRegisterPair(REGPAIR_HL, hl);
 
-    updateFlags(FLAG_C | FLAG_H | FLAG_PV | FLAG_S | FLAG_X1 | FLAG_X2, (b == 0 ? FLAG_Z : 0), FLAG_N);
+    updateFlags(FLAG_C | FLAG_H | FLAG_PV | FLAG_S | FLAG_RESERVED_3 | FLAG_RESERVED_5, (b == 0 ? FLAG_Z : 0), FLAG_N);
     this.tactCounter++;
   }
 
@@ -2232,7 +2299,7 @@ public final class Z80 {
     this.regSet[REG_B] = (byte) b;
     setRegisterPair(REGPAIR_HL, hl);
 
-    updateFlags(FLAG_C | FLAG_H | FLAG_PV | FLAG_S | FLAG_X1 | FLAG_X2, (b == 0 ? FLAG_Z : 0), FLAG_N);
+    updateFlags(FLAG_C | FLAG_H | FLAG_PV | FLAG_S | FLAG_RESERVED_3 | FLAG_RESERVED_5, (b == 0 ? FLAG_Z : 0), FLAG_N);
     this.tactCounter++;
   }
 
@@ -2256,7 +2323,7 @@ public final class Z80 {
     final int b = ((bc >>> 8) - 1) & 0xFF;
     this.regSet[REG_B] = (byte) b;
     setRegisterPair(REGPAIR_HL, hl);
-    updateFlags(FLAG_C | FLAG_H | FLAG_PV | FLAG_S | FLAG_X1 | FLAG_X2, (b == 0 ? FLAG_Z : 0), FLAG_N);
+    updateFlags(FLAG_C | FLAG_H | FLAG_PV | FLAG_S | FLAG_RESERVED_3 | FLAG_RESERVED_5, (b == 0 ? FLAG_Z : 0), FLAG_N);
     this.tactCounter++;
   }
 
@@ -2280,7 +2347,7 @@ public final class Z80 {
     final int b = ((bc >>> 8) - 1) & 0xFF;
     this.regSet[REG_B] = (byte) b;
     setRegisterPair(REGPAIR_HL, hl);
-    updateFlags(FLAG_C | FLAG_H | FLAG_PV | FLAG_S | FLAG_X1 | FLAG_X2, (b == 0 ? FLAG_Z : 0), FLAG_N);
+    updateFlags(FLAG_C | FLAG_H | FLAG_PV | FLAG_S | FLAG_RESERVED_3 | FLAG_RESERVED_5, (b == 0 ? FLAG_Z : 0), FLAG_N);
     this.tactCounter++;
   }
 
