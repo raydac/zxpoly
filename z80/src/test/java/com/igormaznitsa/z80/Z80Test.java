@@ -191,9 +191,9 @@ public class Z80Test extends AbstractZ80Test {
   public void testCommand_LD_mIYd_n() {
     final Z80State state = new Z80State();
     state.IY = 0x5C3A;
-    this.memory[0x5C39] = 0x00;
+    this.memory[0x5C80] = 0x00;
     final Z80 cpu = executeCommand(state, 0xFD, 0x36, 0x46, 0xFF);
-    assertEquals(0x46, this.memory[0x5C39]);
+    assertEquals(-1, this.memory[0x5C80]);
     assertFlagsNotChanged(state, cpu);
     assertTacts(cpu, 19);
   }
@@ -202,9 +202,9 @@ public class Z80Test extends AbstractZ80Test {
   public void testCommand_LD_mIXd_n() {
     final Z80State state = new Z80State();
     state.IX = 0x5C3A;
-    this.memory[0x5C39] = 0x00;
+    this.memory[0x5C80] = 0x00;
     final Z80 cpu = executeCommand(state, 0xDD, 0x36, 0x46, 0xFF);
-    assertEquals(0x46, this.memory[0x5C39]);
+    assertEquals(-1, this.memory[0x5C80]);
     assertFlagsNotChanged(state, cpu);
     assertTacts(cpu, 19);
   }

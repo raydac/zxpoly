@@ -663,11 +663,11 @@ public final class Z80 {
             _writemem8(getRegisterPair(REGPAIR_HL), (byte) value);
             return;
           case 0xDD:
-            _writemem8(this.regIX + (byte) readInstructionByte(false), (byte) value);
+            _writemem8(this.regIX + (byte)value, (byte) readInstructionByte(false));
             this.tactCounter += 2;
             return;
           case 0xFD:
-            _writemem8(this.regIY + (byte) readInstructionByte(false), (byte) value);
+            _writemem8(this.regIY + (byte)value, (byte) readInstructionByte(false));
             this.tactCounter += 2;
             return;
         }
