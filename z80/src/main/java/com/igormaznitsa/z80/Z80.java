@@ -1442,8 +1442,8 @@ public final class Z80 {
     final int value = readReg16(p);
 
     final int result = reg + value;
-
-    final int flagH = (((reg & 0xF00) + (value & 0xF00)) & 0x100) == 0 ? 0 : FLAG_H;
+    
+    final int flagH = (((reg & 0x0FFF) + (value & 0x0FFF)) & 0x1000) == 0 ? 0 : FLAG_H;
     final int flagC = (result & 0x10000) == 0 ? 0 : FLAG_C;
 
     writeReg16(2, result);
@@ -1901,7 +1901,7 @@ public final class Z80 {
         changing = false;
         result = a - value;
         flagN = FLAG_N;
-        flagC = (result & 0x80) == 0 ? 0 : FLAG_C;
+        flagC = (result & 0x100) == 0 ? 0 : FLAG_C;
         flagPV = ((a ^ value) & (a ^ result) & 0x80) == 0 ? 0 : FLAG_PV;
         flagH = ((a ^ value ^ result) & 0x10) == 0 ? 0 : FLAG_H;
       }
@@ -1990,7 +1990,9 @@ public final class Z80 {
 
   private void doBIT(final int bit, final int reg) {
     final int flagZ = (readReg8(reg) & (1 << bit)) == 0 ? FLAG_Z : 0;
-    updateFlags(FLAG_C | FLAG_S, flagZ | (flagZ >>> 4), FLAG_H);
+    //        lg_flagS = (bit == 0x7) ? !lg_flagZ : false;
+    final int flagS = (bit == 0x7) ? (flagZ ^ FLAG_Z)<<1 : 0;
+    updateFlags(FLAG_C, flagS | flagZ | (flagZ >>> 4), FLAG_H);
     if (reg == 6) {
       this.tactCounter++;
     }

@@ -2017,7 +2017,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0x19);
 
     assertEquals(0x5353, cpu.getRegisterPair(Z80.REGPAIR_HL));
-    assertEquals(Z80.FLAG_RESERVED_3 | Z80.FLAG_RESERVED_5 | Z80.FLAG_Z | Z80.FLAG_S | Z80.FLAG_PV | Z80.FLAG_H, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(Z80.FLAG_Z | Z80.FLAG_S | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 11);
   }
