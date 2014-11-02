@@ -1485,7 +1485,7 @@ public final class Z80 {
 
     final int valuec = this.regSet[REG_F] & FLAG_C;
 
-    final int result = reg - value - valuec;
+    final int result = (reg - value) - valuec;
 
     final int flagH = (((reg & 0x0FFF) - (value & 0x0FFF) - valuec) & 0x1000) == 0 ? 0 : FLAG_H;
     final int flagC = (result & 0x10000) == 0 ? 0 : FLAG_C;
@@ -1494,12 +1494,11 @@ public final class Z80 {
 
     final int flagPV = ((reg ^ value) & (reg ^ result) & 0x8000) == 0 ? 0 : FLAG_PV;
 
-    final int flag5 = (result & (FLAG_RESERVED_5 << 8)) == 0 ? 0 : FLAG_RESERVED_5;
-    final int flag3 = (result & (FLAG_RESERVED_3 << 8)) == 0 ? 0 : FLAG_RESERVED_3;
+    final int flag35 = (result>>8) & (FLAG_RESERVED_5 | FLAG_RESERVED_3);
 
     writeReg16(2, result);
 
-    updateFlags(0, flagC | flagH | flagZ | flagS | flagPV | flag5 | flag3, FLAG_N);
+    updateFlags(0, flagC | flagH | flagZ | flagS | flagPV | flag35, FLAG_N);
 
     this.tactCounter += 7;
   }
@@ -1589,29 +1588,33 @@ public final class Z80 {
   private void doRLCA() {
     final int value = this.regSet[REG_A] << 1;
     final int flagc = (value & 0x100) == 0 ? 0 : FLAG_C;
-    this.regSet[REG_A] = (byte) (value | ((value >>> 8) & 1));
-    updateFlags(FLAG_Z | FLAG_PV | FLAG_S, flagc | (value & (FLAG_RESERVED_3 | FLAG_RESERVED_5)), 0);
+    final int newval = (value | ((value >>> 8) & 1));
+    this.regSet[REG_A] = (byte) newval;
+    updateFlags(FLAG_Z | FLAG_PV | FLAG_S, flagc | (newval & (FLAG_RESERVED_3 | FLAG_RESERVED_5)), 0);
   }
 
   private void doRRCA() {
     final int value = this.regSet[REG_A] & 0xFF;
     final int flagc = value & FLAG_C;
-    this.regSet[REG_A] = (byte) ((value >>> 1) | (flagc << 7));
-    updateFlags(FLAG_Z | FLAG_PV | FLAG_S, flagc | (value & (FLAG_RESERVED_3 | FLAG_RESERVED_5)), 0);
+    final int newval = ((value >>> 1) | (flagc << 7));
+    this.regSet[REG_A] = (byte) newval;
+    updateFlags(FLAG_Z | FLAG_PV | FLAG_S, flagc | (newval & (FLAG_RESERVED_3 | FLAG_RESERVED_5)), 0);
   }
 
   private void doRLA() {
-    final int value = this.regSet[REG_A] << 1;
-    this.regSet[REG_A] = (byte) (value | (this.regSet[REG_F] & FLAG_C));
-    final int flagc = (value & 0x100) == 0 ? 0 : FLAG_C;
-    updateFlags(FLAG_Z | FLAG_PV | FLAG_S, flagc | (value & (FLAG_RESERVED_3 | FLAG_RESERVED_5)), 0);
+    final int oldval = this.regSet[REG_A] << 1;
+    final int newval = (oldval | (this.regSet[REG_F] & FLAG_C));
+    this.regSet[REG_A] = (byte) newval;
+    final int flagc = (oldval & 0x100) == 0 ? 0 : FLAG_C;
+    updateFlags(FLAG_Z | FLAG_PV | FLAG_S, flagc | (newval & (FLAG_RESERVED_3 | FLAG_RESERVED_5)), 0);
   }
 
   private void doRRA() {
-    final int value = this.regSet[REG_A] & 0xFF;
-    this.regSet[REG_A] = (byte) ((value >>> 1) | (this.regSet[REG_F] & FLAG_C) << 7);
-    final int flagc = value & FLAG_C;
-    updateFlags(FLAG_Z | FLAG_PV | FLAG_S, flagc | (value & (FLAG_RESERVED_3 | FLAG_RESERVED_5)), 0);
+    final int oldval = this.regSet[REG_A] & 0xFF;
+    final int newval =((oldval >>> 1) | (this.regSet[REG_F] & FLAG_C) << 7);
+    this.regSet[REG_A] = (byte) newval;
+    final int flagc = oldval & FLAG_C;
+    updateFlags(FLAG_Z | FLAG_PV | FLAG_S, flagc | (newval & (FLAG_RESERVED_3 | FLAG_RESERVED_5)), 0);
   }
 
   private void doDAA() {
@@ -1657,8 +1660,10 @@ public final class Z80 {
   }
 
   private void doCPL() {
-    this.regSet[REG_A] ^= 0xFF;
-    updateFlags(FLAG_C | FLAG_PV | FLAG_S | FLAG_RESERVED_3 | FLAG_RESERVED_5 | FLAG_Z, 0, FLAG_N | FLAG_H);
+    final byte newa = (byte)(this.regSet[REG_A] ^ 0xFF);
+    this.regSet[REG_A] = newa;
+    final int flag35 = newa & (FLAG_RESERVED_3 | FLAG_RESERVED_5);
+    updateFlags(FLAG_C | FLAG_PV | FLAG_S | FLAG_Z, flag35, FLAG_N | FLAG_H);
   }
 
   private void doSCF() {
@@ -1668,8 +1673,10 @@ public final class Z80 {
 
   private void doCCF() {
     final int flags = this.regSet[REG_F];
-    final boolean flagc = (flags & FLAG_C) != 0;
-    updateFlags(FLAG_PV | FLAG_S | FLAG_RESERVED_3 | FLAG_RESERVED_5 | FLAG_Z, flagc ? FLAG_H : FLAG_C, 0);
+    final int flagH = (flags & FLAG_C) == 0 ? 0 : FLAG_H;
+    final int flagc = flagH == 0 ? FLAG_C : 0;
+    final int flag35 = this.regSet[REG_A] & (FLAG_RESERVED_3 | FLAG_RESERVED_5);
+    updateFlags(FLAG_PV | FLAG_S | FLAG_Z, flag35 | flagH | flagc, 0);
   }
 
   private void doLDRegByReg(final int y, final int z) {
@@ -1899,10 +1906,9 @@ public final class Z80 {
 
     final int flagZ = (result & 0xFF) == 0 ? FLAG_Z : 0;
     final int flagS = (result & 0x80) == 0 ? 0 : FLAG_S;
-    final int flag3 = result & FLAG_RESERVED_3;
-    final int flag5 = result & FLAG_RESERVED_5;
+    final int flag35 = (this.regSet[REG_A] & (FLAG_RESERVED_3 | FLAG_RESERVED_5));
 
-    updateFlags(0, flag3 | flag5 | flagZ | flagS | flagC | flagPV | flagH | flagN, 0);
+    updateFlags(0, flag35 | flagZ | flagS | flagC | flagPV | flagH | flagN, 0);
   }
 
   private void doRST(final int address) {
@@ -2454,4 +2460,23 @@ public final class Z80 {
     return loopNonCompleted;
   }
 
+  public String getStateAsString(){
+    final StringBuilder result = new StringBuilder(512);
+    result.append("PC=").append(Utils.toHex(this.getRegister(Z80.REG_PC))).append(',');
+    result.append("SP=").append(Utils.toHex(this.getRegister(Z80.REG_SP))).append(',');
+    result.append("IX=").append(Utils.toHex(this.getRegister(Z80.REG_IX))).append(',');
+    result.append("IY=").append(Utils.toHex(this.getRegister(Z80.REG_IY))).append(',');
+    result.append("AF=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_AF))).append(',');
+    result.append("BC=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_BC))).append(',');
+    result.append("DE=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_DE))).append(',');
+    result.append("HL=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_HL))).append(',');
+    result.append("AF'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_AF,true))).append(',');
+    result.append("BC'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_BC,true))).append(',');
+    result.append("DE'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_DE,true))).append(',');
+    result.append("HL'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_HL,true))).append(',');
+    result.append("R=").append(Utils.toHex(this.getRegister(Z80.REG_R))).append(',');
+    result.append("I=").append(Utils.toHex(this.getRegister(Z80.REG_I))).append(',');
+    return result.toString();
+  }
+  
 }
