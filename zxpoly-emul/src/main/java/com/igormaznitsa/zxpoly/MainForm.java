@@ -25,33 +25,35 @@ import java.util.logging.Logger;
 import javax.swing.*;
 
 public class MainForm extends javax.swing.JFrame implements Runnable {
+
   private static final long serialVersionUID = 7309959798344327441L;
 
   public static final Logger log = Logger.getLogger("UI");
-  
+
   private final Motherboard board;
- 
+
   private final long SCREEN_REFRESH_DELAY = 100L;
-  
+
   private class KeyboardDispatcher implements KeyEventDispatcher {
+
     private final KeyboardAndTape keyboard;
-    
-    public KeyboardDispatcher(final KeyboardAndTape kbd){
+
+    public KeyboardDispatcher(final KeyboardAndTape kbd) {
       this.keyboard = kbd;
     }
-    
+
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
       this.keyboard.onKeyEvent(e);
       return false;
     }
-  }  
-  
-  public MainForm() throws IOException {
+  }
+
+  public MainForm(final String romResource) throws IOException {
     initComponents();
-    log.info("Loading test rom");
-    this.board = new Motherboard(ZXRom.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/zxpolytest.rom")));
-//    this.board = new Motherboard(ZXRom.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/opense.rom")));
+    log.info("Loading test rom ["+romResource+']');
+    final ZXRom rom = ZXRom.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/"+romResource));
+    this.board = new Motherboard(rom);
     log.info("Main form completed");
     this.board.reset();
 
@@ -59,11 +61,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     manager.addKeyEventDispatcher(new KeyboardDispatcher(this.board.getKeyboard()));
-    
-    final Thread daemon = new Thread(this,"ZXPolyThread");
+
+    final Thread daemon = new Thread(this, "ZXPolyThread");
     daemon.setDaemon(true);
     daemon.start();
-    
+
     pack();
   }
 
@@ -71,23 +73,31 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   public void run() {
     long nextSystemInt = System.currentTimeMillis() + 20;
     long nextScreenRefresh = System.currentTimeMillis() + SCREEN_REFRESH_DELAY;
-    while(!Thread.currentThread().isInterrupted()){
+
+    final long TACTS_BETWEEN_INT = 160000L;
+
+    while (!Thread.currentThread().isInterrupted()) {
       final boolean intsignal;
-      if (nextSystemInt<=System.currentTimeMillis()){
+
+      if (nextSystemInt <= System.currentTimeMillis()) {
         intsignal = true;
-        nextSystemInt = System.currentTimeMillis()+20;
-      }else{
+        nextSystemInt = System.currentTimeMillis() + 20;
+        this.board.getCPU0().resetTactCounter();
+      }
+      else {
         intsignal = false;
       }
-      this.board.step(intsignal);
-      if (nextScreenRefresh<=System.currentTimeMillis()){
+
+      this.board.step(intsignal, this.board.getCPU0().getTacts() <= TACTS_BETWEEN_INT);
+
+      if (nextScreenRefresh <= System.currentTimeMillis()) {
         updateScreen();
         nextScreenRefresh = System.currentTimeMillis() + SCREEN_REFRESH_DELAY;
       }
     }
   }
 
-  private void updateScreen(){
+  private void updateScreen() {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -95,7 +105,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
       }
     });
   }
-  
+
   /**
    * This method is called from within the constructor to initialize the form.
    * WARNING: Do NOT modify this code. The content of this method is always

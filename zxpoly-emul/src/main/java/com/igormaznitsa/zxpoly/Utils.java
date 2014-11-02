@@ -24,7 +24,7 @@ public enum Utils {
   public static InputStream findResourceOrError(final String resource) {
     final InputStream result = Utils.class.getClassLoader().getResourceAsStream(resource);
     if (result == null) {
-      throw new Error("Can't find resource for path [" + resource + ']');
+      throw new IllegalArgumentException("Can't find resource for path [" + resource + ']');
     }
     return result;
   }

@@ -38,9 +38,9 @@ public class main {
       public void run() {
         MainForm form = null;
         try {
-          form = new MainForm();
+          form = new MainForm("opense.rom");
         }
-        catch (IOException ex) {
+        catch (Exception ex) {
           ex.printStackTrace();
           System.exit(1);
         }

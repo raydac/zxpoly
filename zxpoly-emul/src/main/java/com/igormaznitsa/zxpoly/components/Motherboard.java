@@ -16,15 +16,14 @@
  */
 package com.igormaznitsa.zxpoly.components;
 
+import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
-import com.igormaznitsa.z80.disasm.Z80Disasm;
-import com.igormaznitsa.z80.disasm.Z80Instruction;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
-public class Motherboard implements ZXPoly {
+public final class Motherboard implements ZXPoly {
 
   private static final Logger LOG = Logger.getLogger("MB");
 
@@ -36,42 +35,15 @@ public class Motherboard implements ZXPoly {
   private final AtomicReference<ZXRom> rom = new AtomicReference<ZXRom>();
 
   private int port3D00 = (int) System.nanoTime() & 0xFF;
-  
+
   private volatile boolean totalReset;
   private volatile int resetCounter;
 
   private int intCounter;
   private volatile boolean videoFlashState;
-  
+
   private static FileWriter logFile;
-  
-  private String toHex(final int val){
-    final String hex = Integer.toHexString(val).toUpperCase(Locale.ENGLISH);
-    return '#'+(hex.length()<4 ? "0000".substring(0,4-hex.length()) + hex: hex);
-  }
-  
-  private void logCPU(final ZXPolyModule module){
-    try{
-    if (logFile == null){
-      logFile = new FileWriter("cpulog.log",false);
-    }
-    
-    final String sp = toHex(module.getCPU().getRegister(Z80.REG_SP));
-    final String pc = toHex(module.getCPU().getRegister(Z80.REG_PC));
-    final String f = toHex(module.getCPU().getRegister(Z80.REG_F));
-    
-    final int pcreg = module.getCPU().getRegister(Z80.REG_PC);
-    
-    final Z80Instruction in = Z80Disasm.decodeInstruction(rom.get().getArray(), pcreg);
-    
-      logFile.write(pc+"\t"+in.decode(rom.get().getArray(), pcreg, pcreg)+"\t\t SP:"+sp+"\tF:"+f+'\n');
-      logFile.flush();
-    }catch(Exception ex){
-      ex.printStackTrace();
-    }
-  }
-  
-  
+
   public Motherboard(final ZXRom rom) {
     this.rom.set(rom);
     this.modules = new ZXPolyModule[4];
@@ -81,7 +53,7 @@ public class Motherboard implements ZXPoly {
       iodevices.add(this.modules[i]);
     }
     iodevices.add(new BetaDiscInterface(this));
-    
+
     this.keyboard = new KeyboardAndTape(this);
     iodevices.add(keyboard);
     this.video = new VideoController(this);
@@ -102,10 +74,11 @@ public class Motherboard implements ZXPoly {
   public boolean set3D00(final int value) {
     if (is3D00NotLocked()) {
       this.port3D00 = value;
-      LOG.info("#3D00 <- #"+Integer.toHexString(value).toUpperCase(Locale.ENGLISH));
+      LOG.info("set #3D00 to " + Utils.toHex(value));
       this.video.setVideoMode((this.port3D00 >> 2) & 0x7);
       return true;
-    }else{
+    }
+    else {
       LOG.info("Rejected new value for #3D00 because it is locked");
       return false;
     }
@@ -140,82 +113,88 @@ public class Motherboard implements ZXPoly {
     this.rom.set(newRom);
   }
 
-  public void step(final boolean signalInt) {
+  public Z80 getCPU0() {
+    return this.modules[0].getCPU();
+  }
+
+  public void step(final boolean signalInt, final boolean processStep) {
     if (signalInt) {
       this.intCounter++;
-      if (this.intCounter >= 50) {
+      if (this.intCounter >= 25) {
         this.intCounter = 0;
         this.videoFlashState = !this.videoFlashState;
       }
     }
 
-    final boolean signalReset = this.totalReset;
-    this.totalReset = false;
+    if (processStep) {
+      final boolean signalReset = this.totalReset;
+      this.totalReset = false;
 
-    if (this.resetCounter>0){
-      this.resetCounter--;
-      if (this.resetCounter == 0){
-        this.port3D00 = 0;
-        this.set3D00(0);
+      if (this.resetCounter > 0) {
+        this.resetCounter--;
+        if (this.resetCounter == 0) {
+          this.port3D00 = 0;
+          this.set3D00(0);
+        }
       }
-    }
-    
-    for (final IODevice d : this.ioDevices) {
-      d.preStep(signalReset, signalInt);
-    }
 
-    // simpulation of possible racing
-    final boolean zx0halt;
-    final boolean zx1halt;
-    final boolean zx2halt;
-    final boolean zx3halt;
+      for (final IODevice d : this.ioDevices) {
+        d.preStep(signalReset, signalInt);
+      }
 
-    switch ((int) System.nanoTime() & 0x3) {
-      case 0: {
-        zx0halt = this.modules[0].step(signalReset, signalInt);
-        zx3halt = this.modules[3].step(signalReset, signalInt);
-        zx2halt = this.modules[2].step(signalReset, signalInt);
-        zx1halt = this.modules[1].step(signalReset, signalInt);
-      }
-      break;
-      case 1: {
-        zx1halt = this.modules[1].step(signalReset, signalInt);
-        zx2halt = this.modules[2].step(signalReset, signalInt);
-        zx0halt = this.modules[0].step(signalReset, signalInt);
-        zx3halt = this.modules[3].step(signalReset, signalInt);
-      }
-      break;
-      case 2: {
-        zx3halt = this.modules[3].step(signalReset, signalInt);
-        zx0halt = this.modules[0].step(signalReset, signalInt);
-        zx1halt = this.modules[1].step(signalReset, signalInt);
-        zx2halt = this.modules[2].step(signalReset, signalInt);
-      }
-      break;
-      case 3: {
-        zx2halt = this.modules[2].step(signalReset, signalInt);
-        zx3halt = this.modules[3].step(signalReset, signalInt);
-        zx1halt = this.modules[1].step(signalReset, signalInt);
-        zx0halt = this.modules[0].step(signalReset, signalInt);
-      }
-      break;
-      default:
-        throw new Error("Unexpected combination number");
-    }
+      // simpulation of possible racing
+      final boolean zx0halt;
+      final boolean zx1halt;
+      final boolean zx2halt;
+      final boolean zx3halt;
 
-    if (is3D00NotLocked() && (zx0halt || zx1halt || zx2halt || zx3halt)) {
-      // a cpu has met halt and we need process notification
-      if (zx0halt) {
-        processHaltNotificationForModule(0);
+      switch ((int) System.nanoTime() & 0x3) {
+        case 0: {
+          zx0halt = this.modules[0].step(signalReset, signalInt);
+          zx3halt = this.modules[3].step(signalReset, signalInt);
+          zx2halt = this.modules[2].step(signalReset, signalInt);
+          zx1halt = this.modules[1].step(signalReset, signalInt);
+        }
+        break;
+        case 1: {
+          zx1halt = this.modules[1].step(signalReset, signalInt);
+          zx2halt = this.modules[2].step(signalReset, signalInt);
+          zx0halt = this.modules[0].step(signalReset, signalInt);
+          zx3halt = this.modules[3].step(signalReset, signalInt);
+        }
+        break;
+        case 2: {
+          zx3halt = this.modules[3].step(signalReset, signalInt);
+          zx0halt = this.modules[0].step(signalReset, signalInt);
+          zx1halt = this.modules[1].step(signalReset, signalInt);
+          zx2halt = this.modules[2].step(signalReset, signalInt);
+        }
+        break;
+        case 3: {
+          zx2halt = this.modules[2].step(signalReset, signalInt);
+          zx3halt = this.modules[3].step(signalReset, signalInt);
+          zx1halt = this.modules[1].step(signalReset, signalInt);
+          zx0halt = this.modules[0].step(signalReset, signalInt);
+        }
+        break;
+        default:
+          throw new Error("Unexpected combination number");
       }
-      if (zx1halt) {
-        processHaltNotificationForModule(1);
-      }
-      if (zx2halt) {
-        processHaltNotificationForModule(2);
-      }
-      if (zx3halt) {
-        processHaltNotificationForModule(3);
+
+      if (is3D00NotLocked() && (zx0halt || zx1halt || zx2halt || zx3halt)) {
+        // a cpu has met halt and we need process notification
+        if (zx0halt) {
+          processHaltNotificationForModule(0);
+        }
+        if (zx1halt) {
+          processHaltNotificationForModule(1);
+        }
+        if (zx2halt) {
+          processHaltNotificationForModule(2);
+        }
+        if (zx3halt) {
+          processHaltNotificationForModule(3);
+        }
       }
     }
   }
@@ -265,7 +244,7 @@ public class Motherboard implements ZXPoly {
   }
 
   public int readRAM(final ZXPolyModule module, final int address) {
-    return this.ram[address];
+    return this.ram[address] & 0xFF;
   }
 
   public void writeRAM(final ZXPolyModule module, final int heapAddress, final int value) {
@@ -278,7 +257,7 @@ public class Motherboard implements ZXPoly {
 
     if (module.getModuleIndex() == 0 && mappedCPU > 0) {
       final ZXPolyModule destmodule = modules[mappedCPU];
-      result = this.ram[destmodule.getHeapOffset() + port];
+      result = this.ram[destmodule.ramOffset2HeapAddress(port)];
       destmodule.prepareLocalInt();
     }
     else {
@@ -307,12 +286,12 @@ public class Motherboard implements ZXPoly {
 
     if (moduleIndex == 0) {
       if (port == PORTrw_ZXPOLY) {
-          set3D00(value);
+        set3D00(value);
       }
       else {
         if (mappedCPU > 0) {
           final ZXPolyModule destmodule = modules[mappedCPU];
-          this.ram[destmodule.getHeapOffset() + port] = (byte) value;
+          this.ram[destmodule.ramOffset2HeapAddress(port)] = (byte) value;
           destmodule.prepareLocalNMI();
         }
         else {
