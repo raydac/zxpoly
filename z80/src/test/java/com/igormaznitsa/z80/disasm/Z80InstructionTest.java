@@ -40,10 +40,12 @@ public class Z80InstructionTest {
     assertEquals(1, ins.getFixedPartLength());
     assertArrayEquals(new int []{0x10,Z80Instruction.SPEC_OFFSET}, ins.getInstructionCodes());
   
-    assertEquals("DJNZ PC-#08",ins.decode(new byte []{(byte)0x10,(byte)-8}, 0, -1));
-    assertEquals("DJNZ PC+#7F",ins.decode(new byte []{(byte)0x10,(byte)0x7F}, 0, -1));
-    assertEquals("DJNZ #407F",ins.decode(new byte []{(byte)0x10,(byte)0x7F}, 0, 0x4000));
-    assertEquals("DJNZ #0001",ins.decode(new byte []{(byte)0x10,(byte)0x01}, 0, 0x0000));
+    assertEquals("DJNZ PC-#08",ins.decode(new byte []{(byte)0x10,(byte)0xF6}, 0, -1));
+    assertEquals("DJNZ #0002",ins.decode(new byte []{(byte)0x10,(byte)0x00}, 0, 0));
+    assertEquals("DJNZ #4000",ins.decode(new byte []{(byte)0x10,(byte)0xFE}, 0, 0x4000));
+    assertEquals("DJNZ PC+#81",ins.decode(new byte []{(byte)0x10,(byte)0x7F}, 0, -1));
+    assertEquals("DJNZ #4081",ins.decode(new byte []{(byte)0x10,(byte)0x7F}, 0, 0x4000));
+    assertEquals("DJNZ #0000",ins.decode(new byte []{(byte)0x10,(byte)0xFE}, 0, 0x0000));
   }
   
   @Test

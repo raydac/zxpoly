@@ -74,6 +74,8 @@ public final class Z80Instruction {
           hasWord = true;
           len++;
           break;
+        default:
+          break;
       }
 
       if (c < SPEC_INDEX && calcFixLength) {
@@ -210,12 +212,13 @@ public final class Z80Instruction {
 
   private static String offsetToHex(final byte offset, final int fixPartLenghtOfCommand, final int programCounter) {
     if (programCounter < 0) {
-      String num = Integer.toHexString(Math.abs(offset)).toUpperCase(Locale.ENGLISH);
+      final int theoffset = fixPartLenghtOfCommand + 1 + offset;
+      String num = Integer.toHexString(Math.abs(theoffset)).toUpperCase(Locale.ENGLISH);
       if (num.length() < 2) {
         num = '0' + num;
       }
 
-      if (offset < 0) {
+      if (theoffset < 0) {
         return "PC-#" + num;
       }
       else {
@@ -223,7 +226,7 @@ public final class Z80Instruction {
       }
     }
     else {
-      final int address = programCounter + offset + (offset<0 ? fixPartLenghtOfCommand : 0);
+      final int address = programCounter + offset + fixPartLenghtOfCommand + 1;
       String addressAsHex = Integer.toHexString(Math.abs(address)).toUpperCase(Locale.ENGLISH);
       return '#' + (addressAsHex.length() < 4 ? "0000".substring(0, 4 - addressAsHex.length()) + addressAsHex : addressAsHex);
     }
@@ -284,7 +287,8 @@ public final class Z80Instruction {
           if ((array[offset++] & 0xFF) != this.codes[i]) {
             return null;
           }
-        }break;
+        }
+        break;
       }
     }
 

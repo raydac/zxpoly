@@ -167,6 +167,14 @@ public final class Z80 {
     return this.prevINSignals;
   }
 
+  public int getPC() {
+    return this.getRegister(REG_PC);
+  }
+
+  public int getSP() {
+    return this.getRegister(REG_SP);
+  }
+
   public void setIFF(final boolean iff1, final boolean iff2) {
     this.iff1 = iff1;
     this.iff2 = iff2;
@@ -276,6 +284,10 @@ public final class Z80 {
     return this.tactCounter;
   }
 
+  public void resetTactCounter() {
+    this.tactCounter = 0L;
+  }
+
   public boolean isInsideBlockLoop() {
     return this.insideBlockInstruction;
   }
@@ -302,6 +314,9 @@ public final class Z80 {
         this.altRegSet[REG_F] = (byte) 0xFF;
       }
       break;
+      default: {
+        throw new Error("Unexpected call");
+      }
     }
 
     this.im = 0;
@@ -525,59 +540,6 @@ public final class Z80 {
             return _readmem8(this.regIX + (byte) _read_ixiy_d());
           case 0xFD:
             this.tactCounter += 5;
-            return _readmem8(this.regIY + (byte) _read_ixiy_d());
-        }
-      }
-      break;
-      case 7:
-        return getRegister(REG_A);
-    }
-    throw new Error("Unexpected prefix or R index [" + this.prefix + ':' + r + ']');
-  }
-
-  private int readReg8WithResetPrefixForIndex(final int r) {
-    switch (r) {
-      case 0:
-        return getRegister(REG_B);
-      case 1:
-        return getRegister(REG_C);
-      case 2:
-        return getRegister(REG_D);
-      case 3:
-        return getRegister(REG_E);
-      case 4: { // H
-        switch (normalizedPrefix()) {
-          case 0x00:
-            return getRegister(REG_H);
-          case 0xDD:
-            return (this.regIX >> 8) & 0xFF;
-          case 0xFD:
-            return (this.regIY >> 8) & 0xFF;
-        }
-      }
-      break;
-      case 5: { // L
-        switch (normalizedPrefix()) {
-          case 0x00:
-            return getRegister(REG_L);
-          case 0xDD:
-            return this.regIX & 0xFF;
-          case 0xFD:
-            return this.regIY & 0xFF;
-        }
-      }
-      break;
-      case 6: { // (HL)
-        switch (normalizedPrefix()) {
-          case 0x00:
-            return _readmem8(getRegisterPair(REGPAIR_HL));
-          case 0xDD:
-            this.tactCounter += 5;
-            this.prefix = 0;
-            return _readmem8(this.regIX + (byte) _read_ixiy_d());
-          case 0xFD:
-            this.tactCounter += 5;
-            this.prefix = 0;
             return _readmem8(this.regIY + (byte) _read_ixiy_d());
         }
       }
@@ -1494,7 +1456,7 @@ public final class Z80 {
 
     final int flagPV = ((reg ^ value) & (reg ^ result) & 0x8000) == 0 ? 0 : FLAG_PV;
 
-    final int flag35 = (result>>8) & (FLAG_RESERVED_5 | FLAG_RESERVED_3);
+    final int flag35 = (result >> 8) & (FLAG_RESERVED_5 | FLAG_RESERVED_3);
 
     writeReg16(2, result);
 
@@ -1611,7 +1573,7 @@ public final class Z80 {
 
   private void doRRA() {
     final int oldval = this.regSet[REG_A] & 0xFF;
-    final int newval =((oldval >>> 1) | (this.regSet[REG_F] & FLAG_C) << 7);
+    final int newval = ((oldval >>> 1) | (this.regSet[REG_F] & FLAG_C) << 7);
     this.regSet[REG_A] = (byte) newval;
     final int flagc = oldval & FLAG_C;
     updateFlags(FLAG_Z | FLAG_PV | FLAG_S, flagc | (newval & (FLAG_RESERVED_3 | FLAG_RESERVED_5)), 0);
@@ -1660,7 +1622,7 @@ public final class Z80 {
   }
 
   private void doCPL() {
-    final byte newa = (byte)(this.regSet[REG_A] ^ 0xFF);
+    final byte newa = (byte) (this.regSet[REG_A] ^ 0xFF);
     this.regSet[REG_A] = newa;
     final int flag35 = newa & (FLAG_RESERVED_3 | FLAG_RESERVED_5);
     updateFlags(FLAG_C | FLAG_PV | FLAG_S | FLAG_Z, flag35, FLAG_N | FLAG_H);
@@ -1680,7 +1642,24 @@ public final class Z80 {
   }
 
   private void doLDRegByReg(final int y, final int z) {
-    writeReg8_forLdReg8Instruction(y, readReg8WithResetPrefixForIndex(z));
+    if (z == 6 || y == 6) {
+      // process (HL),(IXd),(IYd)
+      if (y == 6) {
+        final int oldprefix = this.prefix;
+        this.prefix = 0;
+        final int value = readReg8(z);
+        this.prefix = oldprefix;
+        writeReg8_forLdReg8Instruction(y, value);
+      }
+      else {
+        final int value = readReg8(z);
+        this.prefix = 0;
+        writeReg8_forLdReg8Instruction(y, value);
+      }
+    }
+    else {
+      writeReg8_forLdReg8Instruction(y, readReg8(z));
+    }
   }
 
   private void doRETByFlag(final int y) {
@@ -2184,6 +2163,8 @@ public final class Z80 {
           case 3:
             doOUTI();
             break;
+          default:
+            throw new Error("Unexpected Z index [" + z + ']');
         }
       }
       break;
@@ -2201,6 +2182,8 @@ public final class Z80 {
           case 3:
             doOUTD();
             break;
+          default:
+            throw new Error("Unexpected Z index [" + z + ']');
         }
       }
       break;
@@ -2218,6 +2201,8 @@ public final class Z80 {
           case 3:
             insideLoop = doOTIR();
             break;
+          default:
+            throw new Error("Unexpected Z index [" + z + ']');
         }
       }
       break;
@@ -2235,6 +2220,8 @@ public final class Z80 {
           case 3:
             insideLoop = doOTDR();
             break;
+          default:
+            throw new Error("Unexpected Z index [" + z + ']');
         }
       }
       break;
@@ -2460,7 +2447,7 @@ public final class Z80 {
     return loopNonCompleted;
   }
 
-  public String getStateAsString(){
+  public String getStateAsString() {
     final StringBuilder result = new StringBuilder(512);
     result.append("PC=").append(Utils.toHex(this.getRegister(Z80.REG_PC))).append(',');
     result.append("SP=").append(Utils.toHex(this.getRegister(Z80.REG_SP))).append(',');
@@ -2470,13 +2457,13 @@ public final class Z80 {
     result.append("BC=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_BC))).append(',');
     result.append("DE=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_DE))).append(',');
     result.append("HL=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_HL))).append(',');
-    result.append("AF'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_AF,true))).append(',');
-    result.append("BC'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_BC,true))).append(',');
-    result.append("DE'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_DE,true))).append(',');
-    result.append("HL'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_HL,true))).append(',');
+    result.append("AF'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_AF, true))).append(',');
+    result.append("BC'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_BC, true))).append(',');
+    result.append("DE'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_DE, true))).append(',');
+    result.append("HL'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_HL, true))).append(',');
     result.append("R=").append(Utils.toHex(this.getRegister(Z80.REG_R))).append(',');
     result.append("I=").append(Utils.toHex(this.getRegister(Z80.REG_I))).append(',');
     return result.toString();
   }
-  
+
 }

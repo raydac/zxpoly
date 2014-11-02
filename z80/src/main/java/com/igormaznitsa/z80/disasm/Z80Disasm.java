@@ -32,10 +32,11 @@ public enum Z80Disasm {
   private static final Z80Instruction[] FDCB_PREFIXED;
 
   static {
-    final InputStream in = Z80Disasm.class.getClassLoader().getResourceAsStream("z80opcodes.lst");
     final List<Z80Instruction> list = new ArrayList<Z80Instruction>(1500);
+    final InputStream in = Z80Disasm.class.getClassLoader().getResourceAsStream("z80opcodes.lst");
+    BufferedReader reader = null;
     try {
-      final BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+      reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
       while (true) {
         final String line = reader.readLine();
         if (line == null) {
@@ -49,8 +50,18 @@ public enum Z80Disasm {
       }
       in.close();
     }
-    catch (Exception ex) {
+    catch (IOException ex) {
       throw new Error("Can't load Z80 opcode list", ex);
+    }
+    finally {
+      try {
+        if (reader != null) {
+          reader.close();
+        }
+      }
+      catch (IOException ex) {
+        ex.printStackTrace();
+      }
     }
 
     final List<Z80Instruction> noPrefixed = new ArrayList<Z80Instruction>();

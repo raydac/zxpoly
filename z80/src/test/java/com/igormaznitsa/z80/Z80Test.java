@@ -5052,6 +5052,18 @@ public class Z80Test extends AbstractZ80Test {
   }
 
   @Test
+  public void testCommand_LD_m_HL_2() {
+    final Z80State state = new Z80State();
+    state.H = 0xCA;
+    state.L = 0xFE;
+    final Z80 cpu = executeCommand(state, 0x22, 0x34, 0x12);
+    assertFlagsNotChanged(state, cpu);
+    assertMemory(0x1234, 0xFE);
+    assertMemory(0x1235, 0xCA);
+    assertTacts(cpu, 16);
+  }
+
+  @Test
   public void testCommand_LD_L_mIYd() {
     final Z80State state = new Z80State();
     state.IY = 0x25AF;
@@ -5136,4 +5148,15 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(0x25AF, cpu.getRegister(Z80.REG_SP));
     assertTacts(cpu, 10);
   }
-}
+
+  @Test
+  public void testCommand_LD_mIYd_H() {
+    final Z80State state = new Z80State();
+    state.IY = 0x1000;
+    state.H = 0x34;
+    final Z80 cpu = executeCommand(state, 0xFD, 0x74, 0x57);
+    assertFlagsNotChanged(state, cpu);
+    assertMemory(0x1057, 0x34);
+    assertTacts(cpu, 19);
+  }
+ }
