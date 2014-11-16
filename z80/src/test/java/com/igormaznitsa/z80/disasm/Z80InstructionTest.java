@@ -62,4 +62,17 @@ public class Z80InstructionTest {
     assertNull(ins.decode(new byte []{(byte)0xE4}, 0, -1));
   }
   
+  @Test
+  public void testParse_JR() {
+    final Z80Instruction ins = new Z80Instruction("18 e       JR e");
+    assertEquals(2, ins.getLength());
+    assertEquals(1, ins.getFixedPartLength());
+    assertArrayEquals(new int []{0x18,Z80Instruction.SPEC_OFFSET}, ins.getInstructionCodes());
+  
+    assertEquals("JR PC-#01",ins.decode(new byte []{(byte)0x18,(byte)0xFD}, 0, -1));
+    assertEquals("JR #3FFF",ins.decode(new byte []{(byte)0x18,(byte)0xFD}, 0, 0x4000));
+    assertEquals("JR #4004",ins.decode(new byte []{(byte)0x18,(byte)0x02}, 0, 0x4000));
+    assertNull(ins.decode(new byte []{(byte)0x18}, 0, -1));
+  }
+  
 }

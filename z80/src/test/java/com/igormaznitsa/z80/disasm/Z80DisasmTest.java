@@ -61,7 +61,7 @@ public class Z80DisasmTest {
             + "LD L,H\n"
             + "LD L,H\n"
             + "LD L,A\n"
-            + "JR NZ,#4091\n"
+            + "JR NZ,#4093\n"
             + "LD L,A\n"
             + "LD (HL),D\n"
             + "LD L,H\n"
