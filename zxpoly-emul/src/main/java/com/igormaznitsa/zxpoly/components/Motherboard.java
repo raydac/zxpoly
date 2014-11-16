@@ -18,9 +18,7 @@ package com.igormaznitsa.zxpoly.components;
 
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
-import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 public final class Motherboard implements ZXPoly {
@@ -32,7 +30,7 @@ public final class Motherboard implements ZXPoly {
   private final byte[] ram = new byte[512 * 1024];
   private final VideoController video;
   private final KeyboardAndTape keyboard;
-  private final AtomicReference<ZXRom> rom = new AtomicReference<ZXRom>();
+  private final RomData rom;
 
   private int port3D00 = (int) System.nanoTime() & 0xFF;
 
@@ -42,10 +40,11 @@ public final class Motherboard implements ZXPoly {
   private int intCounter;
   private volatile boolean videoFlashState;
 
-  private static FileWriter logFile;
-
-  public Motherboard(final ZXRom rom) {
-    this.rom.set(rom);
+  public Motherboard(final RomData rom) {
+    if (rom == null) {
+      throw new NullPointerException("ROM must not be null");
+    }
+    this.rom = rom;
     this.modules = new ZXPolyModule[4];
     final List<IODevice> iodevices = new ArrayList<IODevice>();
     for (int i = 0; i < this.modules.length; i++) {
@@ -105,12 +104,7 @@ public final class Motherboard implements ZXPoly {
   }
 
   public int readROM(final int address) {
-    final ZXRom therom = this.rom.get();
-    return therom.readAddress(address);
-  }
-
-  public void setROM(final ZXRom newRom) {
-    this.rom.set(newRom);
+    return rom.readAdress(address);
   }
 
   public Z80 getCPU0() {

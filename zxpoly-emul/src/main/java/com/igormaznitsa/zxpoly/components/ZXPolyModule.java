@@ -50,6 +50,8 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   private boolean stopAddressWait;
   private int localResetCounter;
 
+  private boolean trdosROM;
+
   private static int calcRegAddress(final int moduleIndex, final int reg) {
     return (moduleIndex << 12) | (reg << 8) | 0xFF;
   }
@@ -205,7 +207,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     final StringBuilder result = new StringBuilder(128);
 
     result.append(Utils.toHex(address)).append(": ");
-    
+
     int theaddress = address;
     for (int i = 0; i < number; i++) {
       if (i > 0) {
@@ -218,7 +220,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
           value = this.board.readROM(theaddress);
         }
         else {
-          value = this.board.readRAM(this,ramOffset2HeapAddress(theaddress));
+          value = this.board.readRAM(this, ramOffset2HeapAddress(theaddress));
         }
       }
       else {
@@ -226,7 +228,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
       }
 
       theaddress++;
-      
+
       final String hex = Integer.toHexString(value).toUpperCase(Locale.ENGLISH);
 
       if (hex.length() < 2) {
@@ -240,8 +242,22 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
 
   @Override
   public byte readMemory(final Z80 cpu, final int address, final boolean m1) {
+
+    final boolean activeRom128 = (this.port7FFD & PORTw_ZX128_ROM) == 0;
+    
     if (m1) {
       this.lastM1Address = address;
+
+      final int address_h = address>>>8;
+      
+      if (address_h == 0x3D && !activeRom128) {
+        // turn on the TR-DOS ROM Section
+        this.trdosROM = true;
+      }
+      else if (this.trdosROM && address_h >= 0x40) {
+        // turn off the TR-DOS ROM Section
+        this.trdosROM = false;
+      }
     }
 
     if (m1 && this.board.is3D00NotLocked() && this.registerReadingCounter == 0) {
@@ -273,7 +289,11 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
           result = (byte) this.board.readRAM(this, ramAddress);
         }
         else {
-          result = (byte) this.board.readROM(address);
+          if (this.trdosROM){
+            result = (byte)this.board.readROM(address + 0x8000);
+          }else{
+            result = (byte) this.board.readROM(address + (activeRom128 ? 0x4000 : 0));
+          }
         }
       }
       else {
@@ -418,6 +438,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   private void setStateForSystemReset() {
     LOGGER.info("Reset");
     this.port7FFD = 0;
+    this.trdosROM = false;
     this.registerReadingCounter = 0;
     this.activeRegisterReading = false;
     this.localResetCounter = 3;

@@ -52,7 +52,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   public MainForm(final String romResource) throws IOException {
     initComponents();
     log.info("Loading test rom ["+romResource+']');
-    final ZXRom rom = ZXRom.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/"+romResource));
+    final RomData rom = RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/"+romResource));
     this.board = new Motherboard(rom);
     log.info("Main form completed");
     this.board.reset();

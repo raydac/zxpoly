@@ -20,37 +20,43 @@ import java.io.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
-public final class ZXRom {
+public final class RomData {
 
   private final byte[] data;
+  private final int addressMask;
 
-  public ZXRom(final byte[] array) {
-    if (array.length > 0x8000) {
-      throw new IllegalArgumentException("Too big data to be a ZX ROM (max 32768 bytes)");
+  public RomData(final byte[] array) {
+    if (array.length > 0x10000) {
+      throw new IllegalArgumentException("Rom data must not be greater than 64k");
     }
-    this.data = new byte[0x8000];
+    int size = 2;
+    while (size < array.length) {
+      size <<= 1;
+    }
+    this.data = new byte[size];
+    this.addressMask = size-1;
     System.arraycopy(array, 0, this.data, 0, array.length);
   }
 
-  public byte [] getArray(){
+  public byte[] getAsArray() {
     return this.data;
   }
-  
-  public int readAddress(final int address) {
-    return this.data[address & 0x7FFF] & 0xFF;
+
+  public static RomData read(final File file) throws IOException {
+    return new RomData(FileUtils.readFileToByteArray(file));
   }
 
-  public static ZXRom read(final File file) throws IOException {
-    return new ZXRom(FileUtils.readFileToByteArray(file));
-  }
-
-  public static ZXRom read(final InputStream in) throws IOException {
+  public static RomData read(final InputStream in) throws IOException {
     try {
-      return new ZXRom(IOUtils.toByteArray(in));
+      return new RomData(IOUtils.toByteArray(in));
     }
     finally {
       IOUtils.closeQuietly(in);
     }
+  }
+
+  public int readAdress(final int address) {
+    return this.data[address & this.addressMask] & 0xFF;
   }
 
 }

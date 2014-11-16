@@ -16,7 +16,6 @@
  */
 package com.igormaznitsa.zxpoly;
 
-import java.io.IOException;
 import java.util.logging.*;
 import javax.swing.SwingUtilities;
 
@@ -36,13 +35,16 @@ public class main {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        MainForm form = null;
+        final MainForm form;
         try {
-          form = new MainForm("opense.rom");
+          form = new MainForm("zx128dos.rom");
+//          form = new MainForm("opense.rom");
+//          form = new MainForm("zxpolytest.rom");
         }
         catch (Exception ex) {
           ex.printStackTrace();
           System.exit(1);
+          return;
         }
         form.setVisible(true);
       }
