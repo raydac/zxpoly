@@ -42,12 +42,15 @@ public class KeyboardAndTape implements IODevice {
 
   @Override
   public int readIO(final ZXPolyModule module, final int port) {
-    if ((port & 0xFF) == 0xFE) {
-      return getKbdValueForLines((port >> 8) & 0xFF);
+    if (!module.isTRDOSActive()) {
+      if ((port & 0xFF) == 0xFE) {
+        return getKbdValueForLines((port >> 8) & 0xFF);
+      }
+      else {
+        return 0;
+      }
     }
-    else {
-      return 0;
-    }
+    return 0;
   }
 
   @Override
@@ -59,12 +62,16 @@ public class KeyboardAndTape implements IODevice {
     return this.board;
   }
 
+  public void reset(){
+    for (int i = 0; i < this.keyboardLines.length(); i++) {
+      this.keyboardLines.set(i, 0x1F);
+    }
+  }
+  
   @Override
   public void preStep(final boolean signalReset, final boolean signalInt) {
     if (signalReset) {
-      for (int i = 0; i < this.keyboardLines.length(); i++) {
-        this.keyboardLines.set(i, 0x1F);
-      }
+      reset();
     }
   }
 

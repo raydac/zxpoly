@@ -17,17 +17,37 @@
 package com.igormaznitsa.zxpoly;
 
 import com.igormaznitsa.zxpoly.components.*;
+import com.igormaznitsa.zxpoly.components.betadisk.Floppy;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
+import org.apache.commons.io.FileUtils;
+
 
 public class MainForm extends javax.swing.JFrame implements Runnable {
 
-  private static final long serialVersionUID = 7309959798344327441L;
+  private static class TRDFileFilter extends FileFilter {
 
+    @Override
+    public boolean accept(File f) {
+      return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".trd");
+    }
+
+    @Override
+    public String getDescription() {
+      return "TR-DOS image (*.trd)";
+    }
+    
+  }
+  
+  private static final long serialVersionUID = 7309959798344327441L;
   public static final Logger log = Logger.getLogger("UI");
 
   private final Motherboard board;
@@ -116,13 +136,28 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   private void initComponents() {
 
     scrollPanel = new javax.swing.JScrollPane();
+    panelIndicators = new javax.swing.JPanel();
     menuBar = new javax.swing.JMenuBar();
     menuFile = new javax.swing.JMenu();
     menuFileReset = new javax.swing.JMenuItem();
+    menuFileSelectDiskA = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
+    menuOptionsShowIndicators = new javax.swing.JCheckBoxMenuItem();
 
     setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+    addWindowFocusListener(new java.awt.event.WindowFocusListener() {
+      public void windowGainedFocus(java.awt.event.WindowEvent evt) {
+        formWindowGainedFocus(evt);
+      }
+      public void windowLostFocus(java.awt.event.WindowEvent evt) {
+        formWindowLostFocus(evt);
+      }
+    });
     getContentPane().add(scrollPanel, java.awt.BorderLayout.CENTER);
+
+    panelIndicators.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+    panelIndicators.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
+    getContentPane().add(panelIndicators, java.awt.BorderLayout.SOUTH);
 
     menuFile.setText("File");
 
@@ -134,9 +169,27 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuFile.add(menuFileReset);
 
+    menuFileSelectDiskA.setText("Select TRD for A");
+    menuFileSelectDiskA.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuFileSelectDiskAActionPerformed(evt);
+      }
+    });
+    menuFile.add(menuFileSelectDiskA);
+
     menuBar.add(menuFile);
 
     menuOptions.setText("Options");
+
+    menuOptionsShowIndicators.setSelected(true);
+    menuOptionsShowIndicators.setText("Show indicator panel");
+    menuOptionsShowIndicators.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsShowIndicatorsActionPerformed(evt);
+      }
+    });
+    menuOptions.add(menuOptionsShowIndicators);
+
     menuBar.add(menuOptions);
 
     setJMenuBar(menuBar);
@@ -148,11 +201,60 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     this.board.reset();
   }//GEN-LAST:event_menuFileResetActionPerformed
 
+  private void menuOptionsShowIndicatorsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsShowIndicatorsActionPerformed
+    this.panelIndicators.setVisible(this.menuOptionsShowIndicators.isSelected());
+  }//GEN-LAST:event_menuOptionsShowIndicatorsActionPerformed
+
+  private void menuFileSelectDiskAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskAActionPerformed
+    final File selected = chooseFile("Select Disk A", null, new TRDFileFilter());
+    if (selected!=null){
+      try{
+        final Floppy floppy = new Floppy(FileUtils.readFileToByteArray(selected), false);
+
+        log.info("Loaded TRD disk "+floppy+" from file "+selected);
+        
+        this.board.getBetaDiskInterface().setDisk(floppy);
+      }catch(IOException ex){
+        log.log(Level.WARNING, "Can't read TRD file ["+selected+']',ex);
+        JOptionPane.showMessageDialog(this, "Can't read TRD file","Error", JOptionPane.ERROR_MESSAGE);
+      }
+    }
+  }//GEN-LAST:event_menuFileSelectDiskAActionPerformed
+
+  private void formWindowLostFocus(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowLostFocus
+    this.board.getKeyboard().reset();
+  }//GEN-LAST:event_formWindowLostFocus
+
+  private void formWindowGainedFocus(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowGainedFocus
+    this.board.getKeyboard().reset();
+  }//GEN-LAST:event_formWindowGainedFocus
+
+  
+  
+  private File chooseFile(final String title, final File initial, final FileFilter filter){
+    final JFileChooser chooser = new JFileChooser(initial);
+    chooser.addChoosableFileFilter(filter);
+    chooser.setMultiSelectionEnabled(false);
+    chooser.setDialogTitle(title);
+    chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    
+    final File result;
+    if (chooser.showOpenDialog(this)==JFileChooser.APPROVE_OPTION){
+      result = chooser.getSelectedFile();
+    }else{
+      result = null;
+    }
+    return result;
+  }
+  
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuFile;
   private javax.swing.JMenuItem menuFileReset;
+  private javax.swing.JMenuItem menuFileSelectDiskA;
   private javax.swing.JMenu menuOptions;
+  private javax.swing.JCheckBoxMenuItem menuOptionsShowIndicators;
+  private javax.swing.JPanel panelIndicators;
   private javax.swing.JScrollPane scrollPanel;
   // End of variables declaration//GEN-END:variables
 }

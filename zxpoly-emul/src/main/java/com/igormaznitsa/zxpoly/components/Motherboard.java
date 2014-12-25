@@ -16,6 +16,7 @@
  */
 package com.igormaznitsa.zxpoly.components;
 
+import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import java.util.*;
@@ -30,6 +31,7 @@ public final class Motherboard implements ZXPoly {
   private final byte[] ram = new byte[512 * 1024];
   private final VideoController video;
   private final KeyboardAndTape keyboard;
+  private final BetaDiscInterface betaDisk;
   private final RomData rom;
 
   private int port3D00 = (int) System.nanoTime() & 0xFF;
@@ -51,7 +53,10 @@ public final class Motherboard implements ZXPoly {
       this.modules[i] = new ZXPolyModule(this, i);
       iodevices.add(this.modules[i]);
     }
-    iodevices.add(new BetaDiscInterface(this));
+    
+    this.betaDisk = new BetaDiscInterface(this);
+    
+    iodevices.add(this.betaDisk);
 
     this.keyboard = new KeyboardAndTape(this);
     iodevices.add(keyboard);
@@ -83,6 +88,10 @@ public final class Motherboard implements ZXPoly {
     }
   }
 
+  public BetaDiscInterface getBetaDiskInterface(){
+    return this.betaDisk;
+  }
+  
   public int get3D00() {
     return this.port3D00;
   }

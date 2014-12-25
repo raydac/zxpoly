@@ -95,7 +95,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
       prepareLocalInt();
     }
     else {
-      if (port == PORT_REG0) {
+      if (!isTRDOSActive() && port == PORT_REG0) {
         final int cpuState = this.cpu.getState();
         final int addr = ((this.lastM1Address >> 1) & 0x1)
                 | ((this.lastM1Address >> 1) & 0x2)
@@ -114,6 +114,10 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     return result;
   }
 
+  public boolean isTRDOSActive() {
+    return this.trdosROM;
+  }
+
   @Override
   public void writeIO(final ZXPolyModule module, final int port, final int value) {
     if (this.board.is3D00NotLocked() && module.moduleIndex <= this.moduleIndex) {
@@ -129,14 +133,16 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
           prepareLocalInt();
         }
       }
-      else if (port == PORT_REG1) {
-        this.zxPolyRegsWritten[1] = value;
-      }
-      else if (port == PORT_REG2) {
-        this.zxPolyRegsWritten[2] = value;
-      }
-      else if (port == PORT_REG3) {
-        this.zxPolyRegsWritten[3] = value;
+      else if (!module.isTRDOSActive()) {
+        if (port == PORT_REG1) {
+          this.zxPolyRegsWritten[1] = value;
+        }
+        else if (port == PORT_REG2) {
+          this.zxPolyRegsWritten[2] = value;
+        }
+        else if (port == PORT_REG3) {
+          this.zxPolyRegsWritten[3] = value;
+        }
       }
     }
   }
@@ -244,12 +250,12 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   public byte readMemory(final Z80 cpu, final int address, final boolean m1) {
 
     final boolean activeRom128 = (this.port7FFD & PORTw_ZX128_ROM) == 0;
-    
+
     if (m1) {
       this.lastM1Address = address;
 
-      final int address_h = address>>>8;
-      
+      final int address_h = address >>> 8;
+
       if (address_h == 0x3D && !activeRom128) {
         // turn on the TR-DOS ROM Section
         this.trdosROM = true;
@@ -289,9 +295,10 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
           result = (byte) this.board.readRAM(this, ramAddress);
         }
         else {
-          if (this.trdosROM){
-            result = (byte)this.board.readROM(address + 0x8000);
-          }else{
+          if (this.trdosROM) {
+            result = (byte) this.board.readROM(address + 0x8000);
+          }
+          else {
             result = (byte) this.board.readROM(address + (activeRom128 ? 0x4000 : 0));
           }
         }
