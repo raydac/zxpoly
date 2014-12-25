@@ -16,10 +16,11 @@
  */
 package com.igormaznitsa.vg93;
 
+import com.igormaznitsa.vg93.FloppyDisk.Sector;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
-public abstract class FloppyDrive_GOST28273_89 {
+public class FloppyDrive_GOST28273_89 {
 
   /**
    * The IN Signal to select the DRIVE 0.
@@ -86,20 +87,24 @@ public abstract class FloppyDrive_GOST28273_89 {
 
   //------------------------------------------------------------
   private int currentTrack;
+  private int currentSector;
   private final int driveIndexMask;
   private int prevSignals;
-
-  private AbstractFloppyDisk disk;
+  private boolean indexHole;
+  
+  private FloppyDisk disk;
 
   private long timeOfMotorReady;
   private long timeOfHeadChangeTrackReady;
   private long lastIndexSectorTime;
-  
+
+  private final ReentrantLock diskLocker = new ReentrantLock();
+
   public final void reset() {
     final Random rnd = new Random();
-    
-    this.currentTrack = rnd.nextInt(getMaxTracks());
-    
+
+    this.currentTrack = rnd.nextInt(getMaxTrackNumber());
+
     this.timeOfMotorReady = Long.MAX_VALUE;
     this.timeOfHeadChangeTrackReady = Long.MAX_VALUE;
     this.lastIndexSectorTime = Long.MIN_VALUE;
@@ -116,12 +121,26 @@ public abstract class FloppyDrive_GOST28273_89 {
     reset();
   }
 
-  public void insertDisk(final AbstractFloppyDisk disk) {
-    this.disk = disk;
+  public void insertDisk(final FloppyDisk disk) {
+    diskLocker.lock();
+    try {
+      this.disk = disk;
+      this.currentSector = 0;
+      this.indexHole = true;
+    }
+    finally {
+      diskLocker.unlock();
+    }
   }
 
-  public AbstractFloppyDisk getDisk() {
-    return this.disk;
+  public FloppyDisk getDisk() {
+    diskLocker.lock();
+    try {
+      return this.disk;
+    }
+    finally {
+      diskLocker.unlock();
+    }
   }
 
   private static boolean is(final int signals, final int mask) {
@@ -156,21 +175,42 @@ public abstract class FloppyDrive_GOST28273_89 {
     return ((this.prevSignals ^ signals) & mask) == 0;
   }
 
-  public int process(final int signals, final AtomicInteger data) {
+  public int process(final int signals) {
     final int thesignals = onSignals(signals);
+
+    diskLocker.lock();
     try {
+      if (this.disk==null){
+        this.indexHole = true;
+      }else{
+        if (this.indexHole){
+          this.indexHole = false;
+        }else{
+          this.currentSector ++;
+          if (this.currentSector>=this.disk.getSectorsPerTrack()){
+            this.currentSector = 0;
+            this.indexHole = true;
+          }
+        }
+      }
       // invert signals because active level in GOST is the low one
       final int invertedSignals = (thesignals ^ 0xFFFF) & 0xFFFF;
 
       final boolean driveSelected = (invertedSignals & this.driveIndexMask) == this.driveIndexMask;
 
-      int status = 0;
+      int status;
 
       if (driveSelected) {
         if (notChanged(invertedSignals, SIGNAL_IN_MOTOR)) {
           processMotorSignal(is(invertedSignals, SIGNAL_IN_MOTOR));
         }
-        status = (isDriveReady() ? SIGNAL_OUT_READY : 0) | (isDiskWriteProtect() ? SIGNAL_OUT_WRITE_PROTECT : 0) | (isHeadOverTrack00() ? SIGNAL_OUT_TR00 : 0) | (isIndexSector() ? SIGNAL_OUT_INDEX_SECTOR : 0);
+
+        if (isFront(invertedSignals, SIGNAL_IN_STEP)) {
+          stepHeadToNextTrack(is(invertedSignals, SIGNAL_IN_STEP_DIRECTION_OUTWARD));
+        }
+
+        final boolean driveReady = isDriveReady();
+        status = (driveReady ? SIGNAL_OUT_READY : 0) | (isDiskWriteProtect() ? SIGNAL_OUT_WRITE_PROTECT : 0) | (isHeadOverTrack00() ? SIGNAL_OUT_TR00 : 0) | (this.indexHole ? SIGNAL_OUT_INDEX_SECTOR : 0);
       }
       else {
         processMotorSignal(false);
@@ -181,33 +221,46 @@ public abstract class FloppyDrive_GOST28273_89 {
     }
     finally {
       this.prevSignals = thesignals;
+      diskLocker.unlock();
     }
   }
 
-  protected void stepHeadToNextTrack(final boolean toCenter){
-    if (isHeadInPosition()){
-      if (toCenter){
-        if (this.currentTrack>0){
-          this.currentTrack--;
+  public Sector getCurrentSector(){
+    Sector result = null;
+    if (this.disk!=null){
+      final FloppyDisk.Track track = this.disk.getTrack(this.currentTrack);
+      if (track!=null){
+        result = track.sectorAt(this.currentSector);
+      }
+    }
+    return result;
+  }
+  
+  protected void stepHeadToNextTrack(final boolean outward) {
+    if (isHeadInPosition()) {
+      if (outward) {
+        if (this.currentTrack < this.getMaxTrackNumber() - 1) {
+          this.currentTrack++;
           this.timeOfHeadChangeTrackReady = System.currentTimeMillis() + getTrackChangeDelay();
         }
-      }else{
-        if (this.currentTrack<this.getMaxTracks()-1){
-          this.currentTrack++;
+      }
+      else {
+        if (this.currentTrack > 0) {
+          this.currentTrack--;
           this.timeOfHeadChangeTrackReady = System.currentTimeMillis() + getTrackChangeDelay();
         }
       }
     }
   }
-  
+
   public boolean isIndexSector() {
-    final boolean indexSector = (System.currentTimeMillis() - this.lastIndexSectorTime)>=getIndexSectorIntervalInMilliseconds();
-    if (indexSector){
+    final boolean indexSector = (System.currentTimeMillis() - this.lastIndexSectorTime) >= getIndexSectorIntervalInMilliseconds();
+    if (indexSector) {
       this.lastIndexSectorTime = System.currentTimeMillis();
     }
     return indexSector;
   }
-  
+
   public boolean isDriveReady() {
     return isDiskPresented() && isMotorReady() && isHeadInPosition();
   }
@@ -216,16 +269,20 @@ public abstract class FloppyDrive_GOST28273_89 {
     return this.disk != null;
   }
 
-  public boolean isHeadInPosition(){
-    return System.currentTimeMillis()>=this.timeOfHeadChangeTrackReady;
+  public boolean isHeadInPosition() {
+    return System.currentTimeMillis() >= this.timeOfHeadChangeTrackReady;
   }
-  
-  public boolean isHeadOverTrack00(){
+
+  public boolean isHeadOverTrack00() {
     return this.currentTrack == 0;
+  }
+
+  public int getTrack(){
+    return this.currentTrack;
   }
   
   public boolean isDiskWriteProtect() {
-    final AbstractFloppyDisk thedisk = this.disk;
+    final FloppyDisk thedisk = this.disk;
     return thedisk == null ? false : thedisk.isWriteProtect();
   }
 
@@ -237,10 +294,6 @@ public abstract class FloppyDrive_GOST28273_89 {
 
   }
 
-  protected int getMaxTracks(){
-    return 80;
-  }
-  
   public boolean isMotorReady() {
     return this.timeOfMotorReady <= System.currentTimeMillis();
   }
@@ -257,15 +310,23 @@ public abstract class FloppyDrive_GOST28273_89 {
   }
 
   protected long getMotorStartDelayInMilliseconds() {
-    return 100L;
+    return 800L;
   }
 
   protected long getIndexSectorIntervalInMilliseconds() {
     return 200L;
   }
-  
+
   protected long getTrackChangeDelay() {
-    return 30L;
+    return 16L;
+  }
+
+  protected int getMaxTrackNumber() {
+    return 80;
+  }
+
+  protected long getSectorReadTime() {
+    return 12L;
   }
   
   public int getDriveIndex() {
