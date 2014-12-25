@@ -16,8 +16,7 @@
  */
 package com.igormaznitsa.zxpoly.components.betadisk;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  *
@@ -129,6 +128,10 @@ public class Floppy {
       return this.length;
     }
   }
+  private static final int SIDES = 2;
+  private static final int TRACKS_PER_SIDE = 80;
+  private static final int SECTORS_PER_TRACK = 16;
+  private static final int SECTOR_SIZE = 256;
   
   private byte[] data;
   private boolean writeProtect;
@@ -138,7 +141,7 @@ public class Floppy {
   private final Track [] tracks;
   
   public Floppy() {
-    this(new byte[2*80*16*256],false);
+    this(new byte[SIDES*TRACKS_PER_SIDE*SECTORS_PER_TRACK*SECTOR_SIZE],false);
   }
 
   public int getCurrentTrackIndex(){
@@ -150,9 +153,10 @@ public class Floppy {
   }
   
   public Floppy(final byte[] data, final boolean writeProtect) {
-    this.data = data;
+    final byte [] normaldata = data.length>=(SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE) ? data : Arrays.copyOf(data, SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
+    this.data = normaldata;
     this.writeProtect = writeProtect;
-   
+    
     final List<Track> tracklist = new ArrayList<>();
     
     int side = 0;
@@ -160,12 +164,12 @@ public class Floppy {
     int offset = 0;
     
     while(offset<data.length){
-      final Track newtrack = new Track(this, side, trackIndex, 16, 256, data, offset);
+      final Track newtrack = new Track(this, side, trackIndex, SECTORS_PER_TRACK, SECTOR_SIZE, normaldata, offset);
       tracklist.add(newtrack);
       offset += newtrack.size();
       if (offset < data.length){
         trackIndex++;
-        if (trackIndex>=80){
+        if (trackIndex>=TRACKS_PER_SIDE){
           trackIndex = 0;
           side++;
         }
@@ -176,6 +180,11 @@ public class Floppy {
     this.sides = side+1;
   }
 
+  public Sector getSector(final int side, final int track, final int sector){
+    if (side<0 || side>1 || track<0 || track>=TRACKS_PER_SIDE || sector<0 || sector>=SECTORS_PER_TRACK) return null;
+    return this.tracks[side*TRACKS_PER_SIDE + track].getSector(sector);
+  }
+  
   public void write(final int address, final int value){
     if (!this.writeProtect){
       this.data[address] = (byte)value;

@@ -16,6 +16,7 @@
  */
 package com.igormaznitsa.zxpoly.components.betadisk;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class VG93 {
@@ -48,37 +49,14 @@ public class VG93 {
    */
   public boolean lg_HeadStepIncrease;
 
-  /**
-   * Регистр статуса
-   */
-  public int i_Reg_Status;
-
-  /**
-   * Регистр команды
-   */
-  public int i_Reg_Command;
-
-  /**
-   * Регистр трека
-   */
-  public int i_Reg_Track;
-
-  /**
-   * Регистр сектора (1-16)
-   */
-  public int i_Reg_Sector;
-
-  /**
-   * Регистр данных
-   */
-  public int i_Reg_Data;
-
-  /**
-   * Системный регистр, введен для поддержки TR-DOS (сторона задается через
-   * него)
-   */
-  public int i_Reg_System;
-
+  public static final int REG_COMMAND = 0x00;
+  public static final int REG_STATUS = 0x01;
+  public static final int REG_TRACK = 0x02;
+  public static final int REG_SECTOR = 0x03;
+  public static final int REG_DATA = 0x04;
+  
+  private final int [] Registers = new int [5]; 
+  
   /**
    * Указатель позиции текущей операции чтения/записи в массиве данных диска
    */
@@ -94,12 +72,6 @@ public class VG93 {
    * номера сектора
    */
   public int i_SectorBytesCounter;
-
-  /**
-   * Время последнего обращения к данным, зафиксированное контроллером..
-   * используется для выявления "потери данных"
-   */
-  private long l_LastOperationTime;
 
   /**
    * Присвоить сигнал RESET, сброс происходит при переходе из true в false
@@ -126,14 +98,8 @@ public class VG93 {
    * Инициализация контроллера
    */
   public final void reset() {
-    i_Reg_Command = 0;
-    i_Reg_Data = 0;
-    i_Reg_Sector = 0;
-    i_Reg_Track = 0;
-
+    Arrays.fill(Registers, 0);
     i_BytesToOperate = 0;
-    l_LastOperationTime = 0;
-
     setStatusForAux(false);
   }
 
@@ -142,11 +108,11 @@ public class VG93 {
   }
 
   private void setStatusRegBit(int _bit) {
-    i_Reg_Status |= (1 << _bit);
+    Registers[REG_STATUS] |= (1 << _bit);
   }
 
   private void resetStatusRegBit(int _bit) {
-    i_Reg_Status &= ~(1 << _bit);
+    Registers[REG_STATUS] &= ~(1 << _bit);
   }
 
   private final void setStatusForAux(boolean _headLoaded) {
@@ -176,7 +142,7 @@ public class VG93 {
     resetStatusRegBit(4);
     resetStatusRegBit(3);
 
-    if (i_Reg_Track == 0) {
+    if (Registers[REG_TRACK] == 0) {
       setStatusRegBit(2);
     }
     else {
@@ -194,7 +160,7 @@ public class VG93 {
     
     if (currentDisk == null) {
       i_BytesToOperate = 0;
-      i_Reg_Status = 0x80;
+      Registers[REG_STATUS] = 0x80;
       return;
     }
     resetStatusRegBit(7);
@@ -202,7 +168,7 @@ public class VG93 {
     resetStatusRegBit(6);
     resetStatusRegBit(5);
 
-    if ((i_BytesToOperate > 0 && i_OperationPointer >= currentDisk.size()) || i_Reg_Sector == 0 || i_Reg_Sector > 16) {
+    if ((i_BytesToOperate > 0 && i_OperationPointer >= currentDisk.size()) || Registers[REG_SECTOR] == 0 || Registers[REG_SECTOR] > 16) {
       i_BytesToOperate = 0;
       setStatusRegBit(4);
     }
@@ -230,7 +196,7 @@ public class VG93 {
     
     if (currentDisk == null) {
       i_BytesToOperate = 0;
-      i_Reg_Status = 0x80;
+      Registers[REG_STATUS] = 0x80;
       return;
     }
 
@@ -245,7 +211,7 @@ public class VG93 {
       resetStatusRegBit(5);
     }
 
-    if ((i_BytesToOperate > 0 && i_OperationPointer >= currentDisk.size()) || i_Reg_Sector == 0 || i_Reg_Sector > 16) {
+    if ((i_BytesToOperate > 0 && i_OperationPointer >= currentDisk.size()) || Registers[REG_SECTOR] == 0 || Registers[REG_SECTOR] > 16) {
       setStatusRegBit(4);
       i_BytesToOperate = 0;
     }
@@ -287,14 +253,14 @@ public class VG93 {
   public final void setDataReg(int _data) {
     final Floppy currentDisk = this.currentDisk.get();
     
-    i_Reg_Data = _data;
+    Registers[REG_DATA] = _data;
 
     if (i_BytesToOperate == 0) {
       return;
     }
 
     if (currentDisk != null && !currentDisk.isWriteProtect()) {
-      switch ((i_Reg_Command >>> 4) & 0xF) {
+      switch ((Registers[REG_COMMAND] >>> 4) & 0xF) {
         case 0xF: // запись дорожки
         {
           if (currentDisk != null && i_OperationPointer < currentDisk.size() && !currentDisk.isWriteProtect()) {
@@ -307,14 +273,13 @@ public class VG93 {
 
           if (i_SectorBytesCounter == 256) {
             i_SectorBytesCounter = 0;
-            i_Reg_Sector++;
-            if (i_Reg_Sector > 16) {
+            Registers[REG_SECTOR]++;
+            if (Registers[REG_SECTOR] > 16) {
               i_BytesToOperate = 0;
-              i_Reg_Sector = 16;
+              Registers[REG_SECTOR] = 16;
             }
           }
 
-          l_LastOperationTime = System.currentTimeMillis();
           setStatusForWriteOperations();
         }
         break;
@@ -331,13 +296,12 @@ public class VG93 {
 
             i_SectorBytesCounter = 0;
 
-            i_Reg_Sector++;
-            if (i_Reg_Sector > 16) {
-              i_Reg_Sector = 1;
+            Registers[REG_SECTOR]++;
+            if (Registers[REG_SECTOR] > 16) {
+              Registers[REG_SECTOR] = 1;
             }
           }
 
-          l_LastOperationTime = System.currentTimeMillis();
           setStatusForWriteOperations();
         }
         break;
@@ -353,14 +317,13 @@ public class VG93 {
 
           if (i_SectorBytesCounter == 256) {
             i_SectorBytesCounter = 0;
-            i_Reg_Sector++;
-            if (i_Reg_Sector > 16) {
+            Registers[REG_SECTOR]++;
+            if (Registers[REG_SECTOR] > 16) {
               i_BytesToOperate = 0;
-              i_Reg_Sector = 16;
+              Registers[REG_SECTOR] = 16;
             }
           }
 
-          l_LastOperationTime = System.currentTimeMillis();
           setStatusForWriteOperations();
         }
         break;
@@ -381,7 +344,7 @@ public class VG93 {
             && ((i_CurrentCommandStatus == VG93.COMMAND_STATUS_TYPE2
             || i_CurrentCommandStatus == VG93.COMMAND_STATUS_TYPE3)
             && i_BytesToOperate > 0)
-            && (System.currentTimeMillis() - l_LastOperationTime) < TIMEOUT);
+            );
   }
 
   /**
@@ -393,11 +356,11 @@ public class VG93 {
     final Floppy currentDisk = this.currentDisk.get();
     
     if (i_BytesToOperate == 0) {
-      return i_Reg_Data;
+      return Registers[REG_DATA];
     }
-    int i_result = i_Reg_Data;
+    int i_result = Registers[REG_DATA];
 
-    switch ((i_Reg_Command >>> 4) & 0xF) {
+    switch ((Registers[REG_COMMAND] >>> 4) & 0xF) {
       case 0xC: {
                 //address reading
         //System.out.println("Read address" + i_Reg_Track + " sector " + i_Reg_Sector);
@@ -408,10 +371,10 @@ public class VG93 {
             i_result = currentDisk.getCurrentTrackIndex();
             break;
           case 4:
-            i_result = (i_Reg_System & 16) == 0 ? 0 : 1;
+            i_result = 0;
             break;
           case 3:
-            i_result = i_Reg_Sector;
+            i_result = Registers[REG_SECTOR];
             break;
           case 2:
             i_result = 1;
@@ -427,7 +390,6 @@ public class VG93 {
           }
         }
 
-        l_LastOperationTime = System.currentTimeMillis();
         setStatusForReadOperations();
       }
       break;
@@ -442,16 +404,14 @@ public class VG93 {
         i_BytesToOperate--;
 
         if (i_SectorBytesCounter == 256) {
-          i_Reg_Sector++;
+          Registers[REG_SECTOR]++;
           i_SectorBytesCounter = 0;
 
-          if (i_Reg_Sector > 16) {
-            i_Reg_Sector = 1;
+          if (Registers[REG_SECTOR] > 16) {
+            Registers[REG_SECTOR] = 1;
             i_BytesToOperate = 0;
           }
         }
-
-        l_LastOperationTime = System.currentTimeMillis();
         setStatusForReadOperations();
       }
       break;
@@ -469,14 +429,13 @@ public class VG93 {
         i_SectorBytesCounter++;
         if (i_SectorBytesCounter == 256) {
           i_BytesToOperate = 0;
-          i_Reg_Sector++;
+          Registers[REG_SECTOR]++;
 
-          if (i_Reg_Sector > 16) {
-            i_Reg_Sector = 1;
+          if (Registers[REG_SECTOR] > 16) {
+            Registers[REG_SECTOR] = 1;
           }
         }
 
-        l_LastOperationTime = System.currentTimeMillis();
         setStatusForReadOperations();
       }
       break;
@@ -494,15 +453,14 @@ public class VG93 {
 
         if (i_SectorBytesCounter == 256) {
           i_SectorBytesCounter = 0;
-          i_Reg_Sector++;
+          Registers[REG_SECTOR]++;
 
-          if (i_Reg_Sector > 16) {
+          if (Registers[REG_SECTOR] > 16) {
             i_BytesToOperate = 0;
-            i_Reg_Sector = 1;
+            Registers[REG_SECTOR] = 1;
           }
         }
 
-        l_LastOperationTime = System.currentTimeMillis();
         setStatusForReadOperations();
       }
       break;
@@ -519,7 +477,7 @@ public class VG93 {
   public final void setCommandReg(int _command) {
     final Floppy currentDisk = this.currentDisk.get();
     
-    i_Reg_Command = _command;
+    Registers[REG_COMMAND] = _command;
 
     int i_side = _command & 0b1000;
 
@@ -528,7 +486,7 @@ public class VG93 {
       {
         //System.out.println("VG Восстановление");
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
-        i_Reg_Track = 0;
+        Registers[REG_TRACK] = 0;
         setStatusForAux((_command & 8) == 0);
       }
       break;
@@ -537,19 +495,19 @@ public class VG93 {
         //System.out.println("VG Поиск "+i_Reg_Data);
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
 
-        if (i_Reg_Track > i_Reg_Data) {
+        if (Registers[REG_TRACK] > Registers[REG_DATA]) {
           lg_HeadStepIncrease = true;
         }
         else {
-          if (i_Reg_Track <= i_Reg_Data) {
+          if (Registers[REG_TRACK] <= Registers[REG_DATA]) {
             lg_HeadStepIncrease = false;
           }
         }
 
-        i_Reg_Track = i_Reg_Data;
+        Registers[REG_TRACK] = Registers[REG_DATA];
 
         if (currentDisk != null) {
-          currentDisk.setCurrentTrackIndex(i_Reg_Track);
+          currentDisk.setCurrentTrackIndex(Registers[REG_TRACK]);
         }
 
         setStatusForAux((_command & 8) == 0);
@@ -562,18 +520,18 @@ public class VG93 {
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
 
         if (lg_HeadStepIncrease) {
-          if (i_Reg_Track < 255) {
-            i_Reg_Track++;
+          if (Registers[REG_TRACK] < 255) {
+            Registers[REG_TRACK]++;
           }
           else {
-            if (i_Reg_Track > 0) {
-              i_Reg_Track--;
+            if (Registers[REG_TRACK] > 0) {
+              Registers[REG_TRACK]--;
             }
           }
         }
 
         if (currentDisk != null) {
-          currentDisk.setCurrentTrackIndex(i_Reg_Track);
+          currentDisk.setCurrentTrackIndex(Registers[REG_TRACK]);
         }
 
         setStatusForAux((_command & 8) == 0);
@@ -586,12 +544,12 @@ public class VG93 {
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
 
         lg_HeadStepIncrease = true;
-        if (i_Reg_Track < 255) {
-          i_Reg_Track++;
+        if (Registers[REG_TRACK] < 255) {
+          Registers[REG_TRACK]++;
         }
 
         if (currentDisk != null) {
-          currentDisk.setCurrentTrackIndex(i_Reg_Track);
+          currentDisk.setCurrentTrackIndex(Registers[REG_TRACK]);
         }
 
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
@@ -606,12 +564,12 @@ public class VG93 {
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
 
         lg_HeadStepIncrease = false;
-        if (i_Reg_Track > 0) {
-          i_Reg_Track--;
+        if (Registers[REG_TRACK] > 0) {
+          Registers[REG_TRACK]--;
         }
 
         if (currentDisk != null) {
-          currentDisk.setCurrentTrackIndex(i_Reg_Track);
+          currentDisk.setCurrentTrackIndex(Registers[REG_TRACK]);
         }
 
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
@@ -625,11 +583,10 @@ public class VG93 {
 
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE2;
 
-        i_OperationPointer = _calculatePointer(i_side, i_Reg_Track, i_Reg_Sector);
+        i_OperationPointer = _calculatePointer(i_side, Registers[REG_TRACK], Registers[REG_SECTOR]);
         i_BytesToOperate = 256;
         i_SectorBytesCounter = 0;
 
-        l_LastOperationTime = System.currentTimeMillis();
         setStatusForReadOperations();
       }
       break;
@@ -639,11 +596,10 @@ public class VG93 {
 
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE2;
 
-        i_OperationPointer = _calculatePointer(i_side, i_Reg_Track, i_Reg_Sector);
+        i_OperationPointer = _calculatePointer(i_side, Registers[REG_TRACK], Registers[REG_SECTOR]);
         i_BytesToOperate = 16 * 256;
         i_SectorBytesCounter = 0;
 
-        l_LastOperationTime = System.currentTimeMillis();
         setStatusForReadOperations();
       }
       break;
@@ -651,11 +607,10 @@ public class VG93 {
       {
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE2;
 
-        i_OperationPointer = _calculatePointer(i_side, i_Reg_Track, i_Reg_Sector);
+        i_OperationPointer = _calculatePointer(i_side, Registers[REG_TRACK], Registers[REG_SECTOR]);
         i_BytesToOperate = 256;
         i_SectorBytesCounter = 0;
 
-        l_LastOperationTime = System.currentTimeMillis();
         setStatusForWriteOperations();
       }
       break;
@@ -663,27 +618,25 @@ public class VG93 {
       {
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE2;
 
-        i_OperationPointer = _calculatePointer(i_side, i_Reg_Track, i_Reg_Sector);
+        i_OperationPointer = _calculatePointer(i_side, Registers[REG_TRACK], Registers[REG_SECTOR]);
         i_BytesToOperate = 16 * 256;
         i_SectorBytesCounter = 0;
 
-        l_LastOperationTime = System.currentTimeMillis();
         setStatusForWriteOperations();
       }
       break;
       case 0xC: // чтение адреса
       {
         //System.out.println("VG Чтение адреса");
-        i_Reg_Sector++;
-        if (i_Reg_Sector > 16) {
-          i_Reg_Sector = 1;
+        Registers[REG_SECTOR]++;
+        if (Registers[REG_SECTOR] > 16) {
+          Registers[REG_SECTOR] = 1;
         }
         
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE3;
 
         i_BytesToOperate = 6;
 
-        l_LastOperationTime = System.currentTimeMillis();
         setStatusForReadOperations();
       }
       break;
@@ -692,12 +645,11 @@ public class VG93 {
         //System.out.println("VG Чтение дорожки "+i_Reg_Track);
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE3;
 
-        i_Reg_Sector = 1;
+        Registers[REG_SECTOR] = 1;
 
-        i_OperationPointer = _calculatePointer(i_side, i_Reg_Track, 1);
+        i_OperationPointer = _calculatePointer(i_side, Registers[REG_TRACK], 1);
         i_BytesToOperate = 256 * 16;
 
-        l_LastOperationTime = System.currentTimeMillis();
         setStatusForReadOperations();
       }
       break;
@@ -705,30 +657,26 @@ public class VG93 {
       {
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE3;
 
-        i_Reg_Sector = 1;
+        Registers[REG_SECTOR] = 1;
 
-        i_OperationPointer = _calculatePointer(i_side, i_Reg_Track, 1);
+        i_OperationPointer = _calculatePointer(i_side, Registers[REG_TRACK], 1);
         i_BytesToOperate = 256 * 16;
 
-        l_LastOperationTime = System.currentTimeMillis();
         setStatusForWriteOperations();
       }
       break;
       case 0xD: // принудительное прерывание
       {
-        //System.out.println("VG прерывание");
-
         i_CurrentCommandStatus = COMMAND_STATUS_TYPE4;
         i_BytesToOperate = 0;
-        l_LastOperationTime = 0;
 
-        if ((i_Reg_Status & 1) == 0) {
+        if ((Registers[REG_STATUS] & 1) == 0) {
           // выставляем состояние как у вспомогательных команд
           setStatusForAux(true);
         }
         else {
           // так как прервана команда, то сбрасываем бит работы
-          i_Reg_Status &= ~1;
+          Registers[REG_STATUS] &= ~1;
         }
       }
       break;
@@ -741,7 +689,7 @@ public class VG93 {
    * @param _track новое значение
    */
   public final void setTrackReg(int _track) {
-    i_Reg_Track = _track & 0xFF;
+    Registers[REG_TRACK] = _track & 0xFF;
   }
 
   /**
@@ -750,7 +698,7 @@ public class VG93 {
    * @return значение регистра
    */
   public final int getTrackReg() {
-    return i_Reg_Track;
+    return Registers[REG_TRACK];
   }
 
   /**
@@ -759,7 +707,7 @@ public class VG93 {
    * @param _sect новое значение регистра
    */
   public final void setSectorReg(int _sect) {
-    i_Reg_Sector = _sect & 0xFF;
+    Registers[REG_SECTOR] = _sect & 0xFF;
   }
 
   /**
@@ -768,16 +716,7 @@ public class VG93 {
    * @return значение регистра сектора
    */
   public final int getSectorReg() {
-    return i_Reg_Sector;
-  }
-
-  /**
-   * Записать значение системного регистра (TR-DOS)
-   *
-   * @param _value значение регистра
-   */
-  public final void setSystemReg(int _value) {
-    i_Reg_System = _value;
+    return Registers[REG_SECTOR];
   }
 
   /**
@@ -790,14 +729,12 @@ public class VG93 {
     
     lg_Ready = !lg_Ready;
     
-    boolean lg_OutOfTime = false;//(System.currentTimeMillis() - l_LastOperationTime) > TIMEOUT;
-
     if (lg_Reset) {
-      i_Reg_Status = 0;
+      Registers[REG_STATUS] = 0;
       if (currentDisk != null) {
         setStatusRegBit(7);
       }
-      return i_Reg_Status;
+      return Registers[REG_STATUS];
     }
 
     switch (i_CurrentCommandStatus) {
@@ -825,13 +762,6 @@ public class VG93 {
       break;
       case COMMAND_STATUS_TYPE3:
       case COMMAND_STATUS_TYPE2: {
-        if (lg_OutOfTime) {
-          // если операция просрочена то ставим флаги потери данных и окончания операции
-          i_BytesToOperate = 0;
-          resetStatusRegBit(0);
-          setStatusRegBit(2);
-        }
-        else {
           // иммитируем смену флага "готовность данных"
           if (lg_Ready) {
             setStatusRegBit(1);
@@ -839,10 +769,9 @@ public class VG93 {
           else {
             resetStatusRegBit(1);
           }
-        }
       }
       break;
     }
-    return i_Reg_Status;
+    return Registers[REG_STATUS];
   }
 }
