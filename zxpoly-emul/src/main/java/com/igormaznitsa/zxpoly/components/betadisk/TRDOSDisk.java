@@ -47,6 +47,10 @@ public class TRDOSDisk {
       this.owner = disk; 
     }
 
+    public boolean isWriteProtect(){
+      return this.owner.isWriteProtect();
+    }
+    
     public boolean isLastOnTrack() {
       return this.sector == SECTORS_PER_TRACK;
     }

@@ -300,11 +300,11 @@ public class VG93 {
     this.dataRequest = true;
   }
 
-  private void resetDataRegisters(){
+  private void resetDataRegisters() {
     this.registers[REG_DATA_RD] = 0;
     this.registers[REG_DATA_WR] = 0;
   }
-  
+
   private void cmdForceInterrupt(final int command, final boolean start) {
     offStatus(ST_BUSY);
   }
@@ -337,12 +337,15 @@ public class VG93 {
 
     final TRDOSDisk thedisk = this.currentDisk.get();
 
-    this.sector = thedisk == null ? null : thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+    this.sector = thedisk == null ? null : thedisk.findFirstSector(this.side, this.registers[REG_DATA_WR]);
     if (this.sector == null) {
       onStatus(ST_SEEKERR);
+      resetDataRegisters();
     }
-
-    resetDataRegisters();
+    else {
+      this.registers[REG_TRACK] = this.sector.getTrack() & 0xFF;
+      this.registers[REG_DATA_RD] = this.registers[REG_TRACK];
+    }
     offStatus(ST_BUSY);
   }
 
@@ -438,7 +441,7 @@ public class VG93 {
 
   private void cmdReadSector(final int command, final boolean start) {
     final boolean multiply = (command & 0b00010000) != 0;
-  
+
     if (start) {
       this.counter = 0;
     }
@@ -448,27 +451,39 @@ public class VG93 {
 
     if (this.sector != null) {
       if (!this.dataRequest) {
-        final int data = this.sector.readByte(this.counter++);
-        if (data < 0) {
-          onStatus(ST_LOST | ST_NOTFOUND);
-          offStatus(ST_DRQ | ST_BUSY);
-          resetDataRegisters();
-        }
-        else {
-          provideReadData(data);
-          onStatus(ST_DRQ);
-          if (this.counter >= this.sector.size()) {
-            if (multiply) {
-              if (this.sector.isLastOnTrack()) {
-                offStatus(ST_BUSY);
-              }
-              else {
-                this.registers[REG_SECTOR]++;
-              }
-            }
-            else {
+        boolean process = true;
+        if (this.counter >= this.sector.size()) {
+          if (multiply){
+            if (this.sector.isLastOnTrack()){
               offStatus(ST_BUSY);
+              process = false;
+            }else{
+              this.registers[REG_SECTOR]++;
+              loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
+              if (this.sector == null){
+                resetDataRegisters();
+                offStatus(ST_BUSY);
+                onStatus(ST_SEEKERR);
+                process = false;
+              }
             }
+          }else{
+            process = false;
+            offStatus(ST_BUSY);
+          }
+        }
+       
+        
+        if (process){
+          final int data = this.sector.readByte(this.counter++);
+          if (data < 0) {
+            onStatus(ST_LOST | ST_NOTFOUND);
+            offStatus(ST_DRQ | ST_BUSY);
+            resetDataRegisters();
+          }
+          else {
+            provideReadData(data);
+            onStatus(ST_DRQ);
           }
         }
       }
@@ -488,46 +503,55 @@ public class VG93 {
     }
 
     loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
-
-    final TRDOSDisk thedisk = this.currentDisk.get();
-    if (thedisk == null) {
-      offStatus(ST_WRITEP);
-    }
-    else {
-      if (thedisk.isWriteProtect()) {
-        onStatus(ST_WRITEP);
-      }
-      else {
-        offStatus(ST_WRITEP);
-      }
-    }
+    offStatus(ST_WRITEP | ST_WRFAULT | ST_CRCERR | ST_SEEKERR | ST_LOST);
 
     if (this.sector != null) {
-      if (this.dataRequest) {
-        this.dataRequest = false;
-        if (!this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
-          // Error
-          onStatus(ST_WRFAULT | ST_LOST);
-          offStatus(ST_BUSY);
-          provideReadData(0);
-        }
-        else if (this.counter >= this.sector.size()) {
+      if (this.sector.isWriteProtect()){
+        onStatus(ST_WRITEP | ST_WRFAULT);
+        offStatus(ST_BUSY);
+      }else
+      if (!this.dataRequest) {
+        boolean process = true;
+        if (this.counter >= this.sector.size()) {
           if (multiply) {
             if (this.sector.isLastOnTrack()) {
               offStatus(ST_BUSY);
+              process = false;
             }
             else {
               this.registers[REG_SECTOR]++;
+              loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
+              if (this.sector == null) {
+                resetDataRegisters();
+                offStatus(ST_BUSY);
+                onStatus(ST_SEEKERR);
+                process = false;
+              }
             }
           }
           else {
+            process = false;
             offStatus(ST_BUSY);
+          }
+        }
+
+        if (process) {
+          final boolean saved = this.sector.writeByte(this.counter++, registers[REG_DATA_WR]);
+          if (!saved) {
+            onStatus(ST_LOST | ST_NOTFOUND);
+            offStatus(ST_DRQ | ST_BUSY);
+            resetDataRegisters();
+          }
+          else {
+            onStatus(ST_DRQ);
           }
         }
       }
     }
     else {
+      resetDataRegisters();
       offStatus(ST_BUSY);
+      onStatus(ST_SEEKERR);
     }
   }
 
