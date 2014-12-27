@@ -101,7 +101,7 @@ public final class Z80 {
   private int regI;
   private int regR;
 
-  private long tactCounter;
+  private long machineCycles;
 
   private final byte[] regSet = new byte[8];
   private final byte[] altRegSet = new byte[8];
@@ -140,7 +140,7 @@ public final class Z80 {
     _reset(0);
     _reset(1);
     _reset(2);
-    this.tactCounter = 3L;
+    this.machineCycles = 3L;
   }
 
   public int getIM() {
@@ -280,12 +280,12 @@ public final class Z80 {
     return this.bus;
   }
 
-  public long getTacts() {
-    return this.tactCounter;
+  public long getMachineCycles() {
+    return this.machineCycles;
   }
 
   public void resetTactCounter() {
-    this.tactCounter = 0L;
+    this.machineCycles = 0L;
   }
 
   public boolean isInsideBlockLoop() {
@@ -332,7 +332,7 @@ public final class Z80 {
     this.prefix = 0;
     this.outSignals = SIGNAL_OUT_ALL_INACTIVE;
 
-    this.tactCounter += 3;
+    this.machineCycles += 3;
   }
 
   private void _resetHalt() {
@@ -363,14 +363,14 @@ public final class Z80 {
       break;
       case 2: {
         _call(((this.regI & 0xFF) << 8) | (this.bus.onCPURequestDataLines(this) & 0xFF));
-        this.tactCounter += 7;
+        this.machineCycles += 7;
       }
       break;
       default:
         throw new Error("Unexpected IM mode [" + this.im + ']');
     }
 
-    this.tactCounter += 6;
+    this.machineCycles += 6;
   }
 
   private void _rfsh() {
@@ -393,12 +393,12 @@ public final class Z80 {
     this.pendingNMI = false;
     this.pendingINT = false;
     _call(0x66);
-    this.tactCounter += 5;
+    this.machineCycles += 5;
   }
 
   private void _writemem8(final int address, final byte value) {
     this.bus.writeMemory(this, address & 0xFFFF, value);
-    this.tactCounter += 3;
+    this.machineCycles += 3;
   }
 
   private int _read16_for_pc() {
@@ -411,17 +411,17 @@ public final class Z80 {
   }
 
   private int _readport(final int port) {
-    this.tactCounter += 4;
+    this.machineCycles += 4;
     return this.bus.readPort(this, port & 0xFFFF) & 0xFF;
   }
 
   private void _writeport(final int port, final int value) {
     this.bus.writePort(this, port & 0xFFFF, (byte) value);
-    this.tactCounter += 4;
+    this.machineCycles += 4;
   }
 
   private int _readmem8(final int address) {
-    this.tactCounter += 3;
+    this.machineCycles += 3;
     return this.bus.readMemory(this, address & 0xFFFF, false) & 0xFF;
   }
 
@@ -434,7 +434,7 @@ public final class Z80 {
       return readInstructionByte(false);
     }
     else {
-      this.tactCounter -= 5;
+      this.machineCycles -= 5;
       return this.cbDisplacementByte;
     }
   }
@@ -446,7 +446,7 @@ public final class Z80 {
     final int result = this.bus.readMemory(this, pc, m1) & 0xFF;
     this.outSignals = this.outSignals | SIGNAL_OUT_nM1;
 
-    this.tactCounter += m1 ? 4 : 3;
+    this.machineCycles += m1 ? 4 : 3;
 
     this.lastReadInstructionByte = result;
     return result;
@@ -536,10 +536,10 @@ public final class Z80 {
           case 0x00:
             return _readmem8(getRegisterPair(REGPAIR_HL));
           case 0xDD:
-            this.tactCounter += 5;
+            this.machineCycles += 5;
             return _readmem8(this.regIX + (byte) _read_ixiy_d());
           case 0xFD:
-            this.tactCounter += 5;
+            this.machineCycles += 5;
             return _readmem8(this.regIY + (byte) _read_ixiy_d());
         }
       }
@@ -681,11 +681,11 @@ public final class Z80 {
             return;
           case 0xDD:
             _writemem8(this.regIX + (byte) value, (byte) readInstructionByte(false));
-            this.tactCounter += 2;
+            this.machineCycles += 2;
             return;
           case 0xFD:
             _writemem8(this.regIY + (byte) value, (byte) readInstructionByte(false));
-            this.tactCounter += 2;
+            this.machineCycles += 2;
             return;
         }
       }
@@ -744,11 +744,11 @@ public final class Z80 {
             return;
           case 0xDD:
             _writemem8(this.regIX + (byte) readInstructionByte(false), (byte) value);
-            this.tactCounter += 5;
+            this.machineCycles += 5;
             return;
           case 0xFD:
             _writemem8(this.regIY + (byte) readInstructionByte(false), (byte) value);
-            this.tactCounter += 5;
+            this.machineCycles += 5;
             return;
         }
       }
@@ -781,7 +781,7 @@ public final class Z80 {
         setRegister(REG_L, value);
         return;
       case 6: { // (HL)
-        this.tactCounter += 1;
+        this.machineCycles += 1;
         switch (normalizedPrefix()) {
           case 0x00:
             _writemem8(getRegisterPair(REGPAIR_HL), (byte) value);
@@ -852,7 +852,7 @@ public final class Z80 {
       }
 
       if ((inSignals & SIGNAL_IN_nWAIT) == 0) {
-        this.tactCounter++;
+        this.machineCycles++;
         return this.prefix != 0;
       }
 
@@ -1374,11 +1374,11 @@ public final class Z80 {
 
   private void doDJNZ() {
     final int offset = (byte) readInstructionByte(false);
-    this.tactCounter++;
+    this.machineCycles++;
     int b = this.regSet[REG_B] & 0xFF;
     if (--b != 0) {
       this.regPC = (this.regPC + offset) & 0xFFFF;
-      this.tactCounter += 5;
+      this.machineCycles += 5;
     }
     this.regSet[REG_B] = (byte) b;
   }
@@ -1387,14 +1387,14 @@ public final class Z80 {
     final int offset = (byte) readInstructionByte(false);
     if (checkCondition(cc)) {
       this.regPC = (this.regPC + offset) & 0xFFFF;
-      this.tactCounter += 5;
+      this.machineCycles += 5;
     }
   }
 
   private void doJR() {
     final int offset = (byte) readInstructionByte(false);
     this.regPC = (this.regPC + offset) & 0xFFFF;
-    this.tactCounter += 5;
+    this.machineCycles += 5;
   }
 
   private void doLDRegPairByNextWord(final int p) {
@@ -1419,7 +1419,7 @@ public final class Z80 {
 
     updateFlags(FLAG_S | FLAG_Z | FLAG_PV, flag53 | flagC | flagH, 0);
 
-    this.tactCounter += 7;
+    this.machineCycles += 7;
   }
 
   private void doADC_HL_RegPair(final int p) {
@@ -1428,17 +1428,17 @@ public final class Z80 {
 
     final int c = this.regSet[REG_F] & FLAG_C;
     final int result = reg + value + c;
-    final int flagH = (((reg & 0x0FFF) + (value & 0x0FFF) + c) & 0x1000) == 0 ? 0 : FLAG_H;
+    final int flagH = ((reg ^ result ^ value) >> 8) & FLAG_H;
     final int flagC = (result & 0x10000) == 0 ? 0 : FLAG_C;
     final int flagZ = (result & 0xFFFF) == 0 ? FLAG_Z : 0;
-    final int flagS = (result & 0x8000) == 0 ? 0 : FLAG_S;
-    final int flagPV = ((reg ^ ~value) & (reg ^ result) & 0x8000) == 0 ? 0 : FLAG_PV;
+    final int flagS = (result >> 8) & FLAG_S;
+    final int flagPV = (((value ^ reg ^ 0x8000) & (value ^ result) & 0x8000) >> 13) & FLAG_PV;
 
     writeReg16(2, result);
 
     updateFlags(FLAG_RESERVED_3 | FLAG_RESERVED_5, flagC | flagH | flagZ | flagS | flagPV, 0);
 
-    this.tactCounter += 7;
+    this.machineCycles += 7;
   }
 
   private void doSBC_HL_RegPair(final int p) {
@@ -1449,12 +1449,12 @@ public final class Z80 {
 
     final int result = (reg - value) - valuec;
 
-    final int flagH = (((reg & 0x0FFF) - (value & 0x0FFF) - valuec) & 0x1000) == 0 ? 0 : FLAG_H;
+    final int flagH = ((reg ^ result ^ value) >> 8) & FLAG_H;
     final int flagC = (result & 0x10000) == 0 ? 0 : FLAG_C;
     final int flagZ = (result & 0xFFFF) == 0 ? FLAG_Z : 0;
-    final int flagS = (result & 0x8000) == 0 ? 0 : FLAG_S;
+    final int flagS = (result >> 8) & FLAG_S;
 
-    final int flagPV = ((reg ^ value) & (reg ^ result) & 0x8000) == 0 ? 0 : FLAG_PV;
+    final int flagPV = (((value ^ reg) & (reg ^ result) & 0x8000) >> 13) & FLAG_PV;
 
     final int flag35 = (result >> 8) & (FLAG_RESERVED_5 | FLAG_RESERVED_3);
 
@@ -1462,7 +1462,7 @@ public final class Z80 {
 
     updateFlags(0, flagC | flagH | flagZ | flagS | flagPV | flag35, FLAG_N);
 
-    this.tactCounter += 7;
+    this.machineCycles += 7;
   }
 
   private void doLD_mBC_A() {
@@ -1503,12 +1503,12 @@ public final class Z80 {
 
   private void doINCRegPair(final int p) {
     writeReg16(p, readReg16(p) + 1);
-    this.tactCounter += 2;
+    this.machineCycles += 2;
   }
 
   private void doDECRegPair(final int p) {
     writeReg16(p, readReg16(p) - 1);
-    this.tactCounter += 2;
+    this.machineCycles += 2;
   }
 
   private void doINCReg(final int y) {
@@ -1669,7 +1669,7 @@ public final class Z80 {
       this.regPC = _readmem8(sp) | (_readmem8(sp1++) << 8);
       this.regSP = sp1 & 0xFFFF;
     }
-    this.tactCounter++;
+    this.machineCycles++;
   }
 
   private void doRET() {
@@ -1712,7 +1712,7 @@ public final class Z80 {
       default:
         throw new Error("Unexpected prefix for LD SP,HL [" + normalizedPrefix() + ']');
     }
-    this.tactCounter += 2;
+    this.machineCycles += 2;
     setRegister(REG_SP, value);
 
   }
@@ -1745,7 +1745,7 @@ public final class Z80 {
     _writemem8(stacktop, (byte) hl);
     _writemem8(stacktop + 1, (byte) (hl >> 8));
 
-    this.tactCounter += 3;
+    this.machineCycles += 3;
   }
 
   private void doEX_DE_HL() {
@@ -1773,7 +1773,7 @@ public final class Z80 {
     final int address = _read16_for_pc();
     if (checkCondition(y)) {
       _call(address);
-      this.tactCounter++;
+      this.machineCycles++;
     }
   }
 
@@ -1781,13 +1781,13 @@ public final class Z80 {
     final int address = getRegister(REG_SP) - 2;
     _writemem16(address, readReg16_2(p));
     setRegister(REG_SP, address);
-    this.tactCounter++;
+    this.machineCycles++;
   }
 
   private void doCALL() {
     final int address = _read16_for_pc();
     _call(address);
-    this.tactCounter++;
+    this.machineCycles++;
   }
 
   private void doALU_A_Reg(final int op, final int reg) {
@@ -1892,7 +1892,7 @@ public final class Z80 {
 
   private void doRST(final int address) {
     _call(address);
-    this.tactCounter++;
+    this.machineCycles++;
   }
 
   private int doRollShift(final int op, final int reg) {
@@ -1968,7 +1968,7 @@ public final class Z80 {
     final int flagS = (bit == 0x7) ? (flagZ ^ FLAG_Z) << 1 : 0;
     updateFlags(FLAG_C, flagS | flagZ | (flagZ >>> 4), FLAG_H);
     if (reg == 6) {
-      this.tactCounter++;
+      this.machineCycles++;
     }
   }
 
@@ -2085,26 +2085,26 @@ public final class Z80 {
 
   private void doLD_I_A() {
     setRegister(REG_I, getRegister(REG_A));
-    this.tactCounter++;
+    this.machineCycles++;
   }
 
   private void doLD_R_A() {
     setRegister(REG_R, getRegister(REG_A));
-    this.tactCounter++;
+    this.machineCycles++;
   }
 
   private void doLD_A_I() {
     final int value = getRegister(REG_I);
     setRegister(REG_A, value);
     updateFlags(FLAG_C, (value == 0 ? FLAG_Z : 0) | (this.iff2 ? FLAG_PV : 0) | (value & FLAG_S), 0);
-    this.tactCounter++;
+    this.machineCycles++;
   }
 
   private void doLD_A_R() {
     final int value = getRegister(REG_R);
     setRegister(REG_A, value);
     updateFlags(FLAG_C, (value == 0 ? FLAG_Z : 0) | (this.iff2 ? FLAG_PV : 0) | (value & FLAG_S), 0);
-    this.tactCounter++;
+    this.machineCycles++;
   }
 
   private void doRRD() {
@@ -2125,7 +2125,7 @@ public final class Z80 {
 
     updateFlags(FLAG_C | FLAG_RESERVED_3 | FLAG_RESERVED_5, flagZ | flagS | flagPV, 0);
 
-    this.tactCounter += 4;
+    this.machineCycles += 4;
   }
 
   private void doRLD() {
@@ -2143,7 +2143,7 @@ public final class Z80 {
 
     updateFlags(FLAG_C | FLAG_RESERVED_3 | FLAG_RESERVED_5, flagZ | flagS | flagPV, 0);
 
-    this.tactCounter += 4;
+    this.machineCycles += 4;
   }
 
   private boolean doBLI(final int y, final int z) {
@@ -2241,7 +2241,7 @@ public final class Z80 {
 
     updateFlags(FLAG_RESERVED_3 | FLAG_RESERVED_5 | FLAG_C | FLAG_Z | FLAG_S, bc == 0 ? 0 : FLAG_PV, 0);
 
-    this.tactCounter += 2;
+    this.machineCycles += 2;
   }
 
   private boolean doLDIR() {
@@ -2249,7 +2249,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_PV) != 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tactCounter += 5;
+      this.machineCycles += 5;
     }
     else {
       loopNonCompleted = false;
@@ -2268,7 +2268,7 @@ public final class Z80 {
     setRegisterPair(REGPAIR_BC, bc);
     updateFlags(FLAG_C, ((r & 0x80) == 0 ? 0 : FLAG_S) | (r == 0 ? FLAG_Z : 0) | (((a ^ m ^ r) & 0x10) == 0 ? 0 : FLAG_H) | (bc == 0 ? 0 : FLAG_PV), FLAG_N);
 
-    this.tactCounter += 5;
+    this.machineCycles += 5;
   }
 
   private boolean doCPIR() {
@@ -2277,7 +2277,7 @@ public final class Z80 {
     final int flags = this.regSet[REG_F];
     if ((flags & (FLAG_Z | FLAG_PV)) == FLAG_PV) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tactCounter += 5;
+      this.machineCycles += 5;
     }
     else {
       loopNonCompleted = false;
@@ -2295,7 +2295,7 @@ public final class Z80 {
     setRegisterPair(REGPAIR_HL, hl);
 
     updateFlags(FLAG_C | FLAG_H | FLAG_PV | FLAG_S | FLAG_RESERVED_3 | FLAG_RESERVED_5, (b == 0 ? FLAG_Z : 0), FLAG_N);
-    this.tactCounter++;
+    this.machineCycles++;
   }
 
   private boolean doINIR() {
@@ -2303,7 +2303,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tactCounter += 5;
+      this.machineCycles += 5;
     }
     else {
       loopNonCompleted = false;
@@ -2326,7 +2326,7 @@ public final class Z80 {
     final int flagS = (value & 0x80) == 0 ? 0 : FLAG_S;
 
     updateFlags(FLAG_C, flagS | flag35 | (b == 0 ? FLAG_Z : 0) | flagPV | flagH, FLAG_N);
-    this.tactCounter++;
+    this.machineCycles++;
   }
 
   private boolean doINDR() {
@@ -2334,7 +2334,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tactCounter += 5;
+      this.machineCycles += 5;
     }
     else {
       loopNonCompleted = false;
@@ -2351,7 +2351,7 @@ public final class Z80 {
     this.regSet[REG_B] = (byte) b;
     setRegisterPair(REGPAIR_HL, hl);
     updateFlags(FLAG_C | FLAG_H | FLAG_PV | FLAG_S | FLAG_RESERVED_3 | FLAG_RESERVED_5, (b == 0 ? FLAG_Z : 0), FLAG_N);
-    this.tactCounter++;
+    this.machineCycles++;
   }
 
   private boolean doOTIR() {
@@ -2359,7 +2359,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tactCounter += 5;
+      this.machineCycles += 5;
     }
     else {
       loopNonCompleted = false;
@@ -2376,7 +2376,7 @@ public final class Z80 {
     this.regSet[REG_B] = (byte) b;
     setRegisterPair(REGPAIR_HL, hl);
     updateFlags(FLAG_C | FLAG_H | FLAG_PV | FLAG_S | FLAG_RESERVED_3 | FLAG_RESERVED_5, (b == 0 ? FLAG_Z : 0), FLAG_N);
-    this.tactCounter++;
+    this.machineCycles++;
   }
 
   private boolean doOTDR() {
@@ -2384,7 +2384,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tactCounter += 5;
+      this.machineCycles += 5;
     }
     else {
       loopNonCompleted = false;
@@ -2404,7 +2404,7 @@ public final class Z80 {
 
     updateFlags(FLAG_C | FLAG_Z | FLAG_S, bc == 0 ? 0 : FLAG_PV, 0);
 
-    this.tactCounter += 2;
+    this.machineCycles += 2;
   }
 
   private boolean doLDDR() {
@@ -2412,7 +2412,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_PV) != 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tactCounter += 5;
+      this.machineCycles += 5;
     }
     else {
       loopNonCompleted = false;
@@ -2430,7 +2430,7 @@ public final class Z80 {
     setRegisterPair(REGPAIR_BC, bc);
     updateFlags(FLAG_C, ((r & 0x80) == 0 ? 0 : FLAG_S) | (r == 0 ? FLAG_Z : 0) | (((a ^ m ^ r) & 0x10) == 0 ? 0 : FLAG_H) | (bc == 0 ? 0 : FLAG_PV), FLAG_N);
 
-    this.tactCounter += 5;
+    this.machineCycles += 5;
   }
 
   private boolean doCPDR() {
@@ -2439,7 +2439,7 @@ public final class Z80 {
     final int flags = this.regSet[REG_F];
     if ((flags & (FLAG_Z | FLAG_PV)) == FLAG_PV) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tactCounter += 5;
+      this.machineCycles += 5;
     }
     else {
       loopNonCompleted = false;

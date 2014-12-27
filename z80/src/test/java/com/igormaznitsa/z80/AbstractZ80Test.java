@@ -153,7 +153,7 @@ public abstract class AbstractZ80Test {
   }
 
   public void assertTacts(final Z80 cpu, final long tacts) {
-    assertEquals("Tacts must be " + tacts, tacts, cpu.getTacts()-3);
+    assertEquals("Tacts must be " + tacts, tacts, cpu.getMachineCycles()-3);
   }
 
   public void assertMemoryEmpty(final int since) {
