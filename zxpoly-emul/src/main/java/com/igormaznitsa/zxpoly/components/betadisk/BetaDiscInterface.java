@@ -34,7 +34,7 @@ public class BetaDiscInterface implements IODevice {
     this.vg93 = new VG93();
   }
 
-  public void setDisk(final Floppy drive) {
+  public void setDisk(final TRDOSDisk drive) {
     this.vg93.setDisk(drive);
   }
 
@@ -43,20 +43,20 @@ public class BetaDiscInterface implements IODevice {
     if (module.isTRDOSActive()) {
       switch (port & 0xFF) {
         case 0x1F: {
-          return vg93.getStatusReg();
+          return vg93.read(VG93.ADDR_COMMAND_STATE);
         }
         case 0x3F: {
-          return vg93.getTrackReg();
+          return vg93.read(VG93.ADDR_TRACK);
         }
         case 0x5F: {
-          return vg93.getSectorReg();
+          return vg93.read(VG93.ADDR_SECTOR);
         }
         case 0x7F: {
-          return vg93.getDataReg();
+          return vg93.read(VG93.ADDR_DATA);
         }
         case 0xFF: {
-          final int stat = this.vg93.getStatusReg();
-          return (((stat & 1) == 0 ? 0x80 : 0) | ((stat & 2) == 0 ? 0x40 : 0));
+          final int stat = vg93.read(VG93.ADDR_COMMAND_STATE);
+          return (((stat & VG93.ST_BUSY) == 0 ? 0b10000000 : 0) | ((stat & VG93.ST_DRQ) == 0 ? 0b01000000 : 0));
         }
       }
     }
@@ -68,19 +68,19 @@ public class BetaDiscInterface implements IODevice {
     if (module.isTRDOSActive()) {
       switch (port & 0xFF) {
         case 0x1F: {
-          vg93.setCommandReg(value);
+          vg93.write(VG93.ADDR_COMMAND_STATE, value);
         }
         break;
         case 0x3F: {
-          vg93.setTrackReg(value);
+          vg93.write(VG93.ADDR_TRACK, value);
         }
         break;
         case 0x5F: {
-          vg93.setSectorReg(value);
+          vg93.write(VG93.ADDR_SECTOR, value);
         }
         break;
         case 0x7F: {
-          vg93.setDataReg(value);
+          vg93.write(VG93.ADDR_DATA, value);
         }
         break;
         case 0xFF: {
@@ -93,12 +93,8 @@ public class BetaDiscInterface implements IODevice {
 
   private void setSystemReg(final int value) {
     this.ffPort = value;
-    if ((this.ffPort & 4) == 0) {
-      this.vg93.setResetSignal(true);
-    }
-    else {
-      this.vg93.setResetSignal(false);
-    }
+    this.vg93.setResetIn((this.ffPort & 0b00000100) != 0);
+    this.vg93.setSide((this.ffPort & 0b00010000)==0? 1 : 0);
   }
 
   @Override
@@ -110,6 +106,10 @@ public class BetaDiscInterface implements IODevice {
   public void preStep(final boolean signalReset, final boolean signalInt) {
     if (signalReset) {
       this.vg93.reset();
+    }
+
+    if ((this.ffPort & 0b00001000)!=0){
+      this.vg93.step();
     }
   }
 

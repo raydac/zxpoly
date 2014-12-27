@@ -17,7 +17,7 @@
 package com.igormaznitsa.zxpoly;
 
 import com.igormaznitsa.zxpoly.components.*;
-import com.igormaznitsa.zxpoly.components.betadisk.Floppy;
+import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
@@ -209,7 +209,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     final File selected = chooseFile("Select Disk A", null, new TRDFileFilter());
     if (selected!=null){
       try{
-        final Floppy floppy = new Floppy(FileUtils.readFileToByteArray(selected), false);
+        final TRDOSDisk floppy = new TRDOSDisk(FileUtils.readFileToByteArray(selected), false);
 
         log.info("Loaded TRD disk "+floppy+" from file "+selected);
         

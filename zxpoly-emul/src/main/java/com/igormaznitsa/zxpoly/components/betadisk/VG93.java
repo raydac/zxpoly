@@ -16,762 +16,527 @@
  */
 package com.igormaznitsa.zxpoly.components.betadisk;
 
+import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk.Sector;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class VG93 {
 
-  // Данный флаг меняется с каждым чтением регистра статуса. Он был введен для иммитации изменений состояния регистра.
-  private boolean lg_Ready;
+  public static final int ADDR_COMMAND_STATE = 0;
+  public static final int ADDR_TRACK = 1;
+  public static final int ADDR_SECTOR = 2;
+  public static final int ADDR_DATA = 3;
 
-  // Время в миллисекундах, в течение которого операция чтение-записи валидна, если оно превышено, то будет выдан флаг "потеря данных"
-  private final static long TIMEOUT = 2500;
+  private static final int REG_COMMAND = 0x00;
+  private static final int REG_STATUS = 0x01;
+  private static final int REG_TRACK = 0x02;
+  private static final int REG_SECTOR = 0x03;
+  private static final int REG_DATA_WR = 0x04;
+  private static final int REG_DATA_RD = 0x05;
 
-  /**
-   * Флаг показывающий что сигнал RESET активен и контроллер не может работать
-   */
-  public boolean lg_Reset;
+  public static final int ST_BUSY = 0x01;
+  public static final int ST_INDEX = 0x02;
+  public static final int ST_DRQ = 0x02;
+  public static final int ST_TRK00 = 0x04;
+  public static final int ST_LOST = 0x04;
+  public static final int ST_CRCERR = 0x08;
+  public static final int ST_NOTFOUND = 0x10;
+  public static final int ST_SEEKERR = 0x10;
+  public static final int ST_RECORDT = 0x20;
+  public static final int ST_HEADL = 0x20;
+  public static final int ST_WRFAULT = 0x20;
+  public static final int ST_WRITEP = 0x40;
+  public static final int ST_NOTRDY = 0x80;
 
-  public static final int COMMAND_STATUS_NONE = 0;
-  public static final int COMMAND_STATUS_TYPE1 = 1;
-  public static final int COMMAND_STATUS_TYPE2 = 2;
-  public static final int COMMAND_STATUS_TYPE3 = 3;
-  public static final int COMMAND_STATUS_TYPE4 = 4;
+  private TRDOSDisk.Sector sector;
+  private final int[] registers = new int[6];
+  private int counter;
+  private boolean dataRequest;
+  private boolean resetIn;
+  private boolean firstCommandStep;
+  private int side;
+  private boolean outwardStepDirection;
 
-  /**
-   * Статус последней команды
-   */
-  public int i_CurrentCommandStatus;
-
-  /**
-   * Флаг, показывающий в какую сторону двигать головку.. true - в сторону
-   * величения номера, false - к нулевой
-   */
-  public boolean lg_HeadStepIncrease;
-
-  public static final int REG_COMMAND = 0x00;
-  public static final int REG_STATUS = 0x01;
-  public static final int REG_TRACK = 0x02;
-  public static final int REG_SECTOR = 0x03;
-  public static final int REG_DATA = 0x04;
-  
-  private final int [] Registers = new int [5]; 
-  
-  /**
-   * Указатель позиции текущей операции чтения/записи в массиве данных диска
-   */
-  public int i_OperationPointer;
-
-  /**
-   * Количство байт для чтения/записи текущей командой
-   */
-  public int i_BytesToOperate;
-
-  /**
-   * Счетчик обработанных байт в текущем секторе, используется для увеличения
-   * номера сектора
-   */
-  public int i_SectorBytesCounter;
-
-  /**
-   * Присвоить сигнал RESET, сброс происходит при переходе из true в false
-   *
-   * @param _flag состояние сигнала reset (true активен false неактивен)
-   */
-  public final void setResetSignal(boolean _flag) {
-    if (lg_Reset && !_flag) {
-      reset();
-    }
-    lg_Reset = _flag;
-  }
-
-  /**
-   * The Current disk.
-   */
-  private final AtomicReference<Floppy> currentDisk = new AtomicReference<>();
+  private final AtomicReference<TRDOSDisk> currentDisk = new AtomicReference<>();
 
   public VG93() {
     reset();
   }
 
-  /**
-   * Инициализация контроллера
-   */
   public final void reset() {
-    Arrays.fill(Registers, 0);
-    i_BytesToOperate = 0;
-    setStatusForAux(false);
+    Arrays.fill(registers, 0);
+    this.dataRequest = false;
+    this.resetIn = false;
+    this.firstCommandStep = false;
+    this.counter = 0;
   }
 
-  public final void setDisk(final Floppy disk) {
+  public final void setDisk(final TRDOSDisk disk) {
     this.currentDisk.set(disk);
-  }
-
-  private void setStatusRegBit(int _bit) {
-    Registers[REG_STATUS] |= (1 << _bit);
-  }
-
-  private void resetStatusRegBit(int _bit) {
-    Registers[REG_STATUS] &= ~(1 << _bit);
-  }
-
-  private final void setStatusForAux(boolean _headLoaded) {
-    final Floppy currentDisk = this.currentDisk.get();
-    
-    if (currentDisk == null) {
-      setStatusRegBit(7);
+    if (disk == null) {
+      this.sector = null;
     }
     else {
-      resetStatusRegBit(7);
-    }
-
-    if (currentDisk != null && currentDisk.isWriteProtect()) {
-      setStatusRegBit(6);
-    }
-    else {
-      resetStatusRegBit(6);
-    }
-
-    if (_headLoaded) {
-      setStatusRegBit(5);
-    }
-    else {
-      resetStatusRegBit(5);
-    }
-
-    resetStatusRegBit(4);
-    resetStatusRegBit(3);
-
-    if (Registers[REG_TRACK] == 0) {
-      setStatusRegBit(2);
-    }
-    else {
-      resetStatusRegBit(2);
-    }
-
-    resetStatusRegBit(0);
-  }
-
-  /**
-   * Установить регистр статуса для команд чтения
-   */
-  private final void setStatusForReadOperations() {
-    final Floppy currentDisk = this.currentDisk.get();
-    
-    if (currentDisk == null) {
-      i_BytesToOperate = 0;
-      Registers[REG_STATUS] = 0x80;
-      return;
-    }
-    resetStatusRegBit(7);
-
-    resetStatusRegBit(6);
-    resetStatusRegBit(5);
-
-    if ((i_BytesToOperate > 0 && i_OperationPointer >= currentDisk.size()) || Registers[REG_SECTOR] == 0 || Registers[REG_SECTOR] > 16) {
-      i_BytesToOperate = 0;
-      setStatusRegBit(4);
-    }
-    else {
-      resetStatusRegBit(4);
-    }
-
-    resetStatusRegBit(3);
-    resetStatusRegBit(2);
-    setStatusRegBit(1);
-
-    if (i_BytesToOperate > 0) {
-      setStatusRegBit(0);
-    }
-    else {
-      resetStatusRegBit(0);
+      loadSector(this.side, registers[REG_TRACK], registers[REG_SECTOR]);
     }
   }
 
-  /**
-   * Установить регистр статуса для команд записи
-   */
-  private final void setStatusForWriteOperations() {
-    final Floppy currentDisk = this.currentDisk.get();
-    
-    if (currentDisk == null) {
-      i_BytesToOperate = 0;
-      Registers[REG_STATUS] = 0x80;
-      return;
-    }
-
-    resetStatusRegBit(7);
-
-    if (currentDisk.isWriteProtect()) {
-      setStatusRegBit(6);
-      setStatusRegBit(5);
-    }
-    else {
-      resetStatusRegBit(6);
-      resetStatusRegBit(5);
-    }
-
-    if ((i_BytesToOperate > 0 && i_OperationPointer >= currentDisk.size()) || Registers[REG_SECTOR] == 0 || Registers[REG_SECTOR] > 16) {
-      setStatusRegBit(4);
-      i_BytesToOperate = 0;
-    }
-    else {
-      resetStatusRegBit(4);
-    }
-
-    resetStatusRegBit(3);
-
-    resetStatusRegBit(2);
-    setStatusRegBit(1);
-    if (i_BytesToOperate > 0) {
-      setStatusRegBit(0);
-    }
-    else {
-      resetStatusRegBit(0);
-    }
+  private void onStatus(final int flags) {
+    registers[REG_STATUS] |= flags;
   }
 
-  /**
-   * Расчитать смещение данных в массиве
-   *
-   * @param _side сторона диска 0,1
-   * @param _track дорожка диска
-   * @param _sector сектор (1-16)
-   * @return смещение в массиве байт
-   */
-  private static int _calculatePointer(int _side, int _track, int _sector) {
-    int i_result = (_track * 2 + _side) * 256 * 16 + (_sector - 1) * 256;
-    return i_result;
+  private void offStatus(final int flags) {
+    registers[REG_STATUS] = (registers[REG_STATUS] & ~flags) & 0xFF;
   }
 
-  /**
-   * Запись данных в регистр данных и в массив данных при соответствующей
-   * операции
-   *
-   * @param _data данные к записи
-   */
-  public final void setDataReg(int _data) {
-    final Floppy currentDisk = this.currentDisk.get();
-    
-    Registers[REG_DATA] = _data;
+  private boolean isStatus(final int flags) {
+    return (registers[REG_STATUS] & flags) != 0;
+  }
 
-    if (i_BytesToOperate == 0) {
-      return;
+  public void setResetIn(final boolean signal) {
+    if (!this.resetIn && signal) {
+      reset();
     }
+    this.resetIn = signal;
+  }
 
-    if (currentDisk != null && !currentDisk.isWriteProtect()) {
-      switch ((Registers[REG_COMMAND] >>> 4) & 0xF) {
-        case 0xF: // запись дорожки
-        {
-          if (currentDisk != null && i_OperationPointer < currentDisk.size() && !currentDisk.isWriteProtect()) {
-            currentDisk.write(i_OperationPointer,_data);
-          }
+  public void setSide(final int side) {
+    this.side = side;
+  }
 
-          i_BytesToOperate--;
-          i_OperationPointer++;
-          i_SectorBytesCounter++;
-
-          if (i_SectorBytesCounter == 256) {
-            i_SectorBytesCounter = 0;
-            Registers[REG_SECTOR]++;
-            if (Registers[REG_SECTOR] > 16) {
-              i_BytesToOperate = 0;
-              Registers[REG_SECTOR] = 16;
+  public int read(final int addr) {
+    switch (addr & 0x03) {
+      case ADDR_COMMAND_STATE: {
+        switch (registers[REG_COMMAND] >>> 4) {
+          case 0b0000:
+          case 0b0001:
+          case 0b0010:
+          case 0b0011:
+          case 0b0100:
+          case 0b0101:
+          case 0b1000:
+          case 0b1001: {
+            // change index 
+            if (this.currentDisk.get() != null) {
+              if (isStatus(ST_INDEX)) {
+                offStatus(ST_INDEX);
+              }
+              else {
+                onStatus(ST_INDEX);
+              }
+            }
+            else {
+              onStatus(ST_INDEX);
             }
           }
-
-          setStatusForWriteOperations();
+          break;
         }
-        break;
-        case 0xA: // запись сектора
-        {
-          if (currentDisk != null && i_OperationPointer < currentDisk.size() && !currentDisk.isWriteProtect()) {
-            currentDisk.write(i_OperationPointer,_data);
-          }
-          i_OperationPointer++;
-          i_SectorBytesCounter++;
-          i_BytesToOperate--;
-
-          if (i_SectorBytesCounter == 256) {
-
-            i_SectorBytesCounter = 0;
-
-            Registers[REG_SECTOR]++;
-            if (Registers[REG_SECTOR] > 16) {
-              Registers[REG_SECTOR] = 1;
-            }
-          }
-
-          setStatusForWriteOperations();
+        return registers[REG_STATUS] & 0xFF;
+      }
+      case ADDR_TRACK:
+        return registers[REG_TRACK] & 0xFF;
+      case ADDR_SECTOR:
+        return registers[REG_SECTOR] & 0xFF;
+      case ADDR_DATA:
+        if (this.dataRequest) {
+          this.dataRequest = false;
+          offStatus(ST_DRQ);
         }
-        break;
-        case 0xB: // запись секторов
-        {
-          if (currentDisk != null && i_OperationPointer < currentDisk.size() && !currentDisk.isWriteProtect()) {
-            currentDisk.write(i_OperationPointer, _data);
+        return registers[REG_DATA_RD] & 0xFF;
+      default:
+        throw new Error("Unexpected value");
+    }
+  }
+
+  public void write(final int addr, final int value) {
+    final int normValue = value & 0xFF;
+    switch (addr & 0x03) {
+      case ADDR_COMMAND_STATE: { // command
+        System.out.println("COMMAND VG :" + Integer.toBinaryString(value) + " Side=" + this.side + " Track=" + registers[REG_TRACK] + " sector=" + registers[REG_SECTOR]);
+        if (isStatus(ST_BUSY)) {
+          if ((normValue >>> 4) == 0b1101) {
+            this.dataRequest = false;
+            this.registers[REG_COMMAND] = normValue;
+            this.firstCommandStep = true;
+            onStatus(ST_BUSY);
           }
-
-          i_BytesToOperate--;
-          i_OperationPointer++;
-          i_SectorBytesCounter++;
-
-          if (i_SectorBytesCounter == 256) {
-            i_SectorBytesCounter = 0;
-            Registers[REG_SECTOR]++;
-            if (Registers[REG_SECTOR] > 16) {
-              i_BytesToOperate = 0;
-              Registers[REG_SECTOR] = 16;
-            }
-          }
-
-          setStatusForWriteOperations();
         }
-        break;
+        else {
+          this.dataRequest = false;
+          this.registers[REG_COMMAND] = normValue;
+          this.firstCommandStep = true;
+          onStatus(ST_BUSY);
+        }
+      }
+      break;
+      case ADDR_TRACK: { // track
+        if (!isStatus(ST_BUSY)) {
+          registers[REG_TRACK] = normValue;
+        }
+      }
+      break;
+      case ADDR_SECTOR: { // sector
+        if (!isStatus(ST_BUSY)) {
+          registers[REG_SECTOR] = normValue;
+        }
+      }
+      break;
+      case ADDR_DATA: { // data
+        this.dataRequest = true;
+        registers[REG_DATA_WR] = normValue;
+      }
+      break;
+      default:
+        throw new IllegalArgumentException("Unexpected value");
+    }
+  }
+
+  public void step() {
+    final TRDOSDisk thefloppy = this.currentDisk.get();
+    if (thefloppy == null) {
+      onStatus(ST_NOTRDY);
+    }
+    else {
+      offStatus(ST_NOTRDY);
+    }
+
+    final int command = this.registers[REG_COMMAND];
+    if (isStatus(ST_BUSY)) {
+      final boolean first = this.firstCommandStep;
+      this.firstCommandStep = false;
+      switch (command >>> 4) {
+        case 0b0000:
+          cmdRestore(command, first);
+          break;
+        case 0b0001:
+          cmdSeek(command, first);
+          break;
+        case 0b0010:
+        case 0b0011:
+          cmdStep(command, first);
+          break;
+        case 0b0100:
+        case 0b0101:
+          cmdStepIn(command, first);
+          break;
+        case 0b0110:
+        case 0b0111:
+          cmdStepOut(command, first);
+          break;
+        case 0b1000:
+        case 0b1001:
+          cmdReadSector(command, first);
+          break;
+        case 0b1010:
+        case 0b1011:
+          cmdWriteSector(command, first);
+          break;
+        case 0b1100:
+          cmdReadAddress(command, first);
+          break;
+        case 0b1101:
+          cmdForceInterrupt(command, first);
+          break;
+        case 0b1110:
+          cmdWriteTrack(command, first);
+          break;
+        case 0b1111:
+          cmdReadTrack(command, first);
+          break;
         default:
-          throw new RuntimeException("Unsupported write command");
+          throw new Error("Unexpected value");
       }
     }
-    setStatusForWriteOperations();
-  }
 
-  /**
-   * Проверка на активность выполнения текущей операции и контроллера в целом
-   *
-   * @return true если активен и false если не активен
-   */
-  public final boolean isActiveOperation() {
-    return (!lg_Reset
-            && ((i_CurrentCommandStatus == VG93.COMMAND_STATUS_TYPE2
-            || i_CurrentCommandStatus == VG93.COMMAND_STATUS_TYPE3)
-            && i_BytesToOperate > 0)
-            );
-  }
-
-  /**
-   * Чтение регистра данных или массива данных (в зависимости от команды)
-   *
-   * @return регистр данных
-   */
-  public final int getDataReg() {
-    final Floppy currentDisk = this.currentDisk.get();
-    
-    if (i_BytesToOperate == 0) {
-      return Registers[REG_DATA];
+    if (this.dataRequest) {
+      onStatus(ST_DRQ);
     }
-    int i_result = Registers[REG_DATA];
+  }
 
-    switch ((Registers[REG_COMMAND] >>> 4) & 0xF) {
-      case 0xC: {
-                //address reading
-        //System.out.println("Read address" + i_Reg_Track + " sector " + i_Reg_Sector);
+  private void updateWriteProtectStatus() {
+    final TRDOSDisk thefloppy = this.currentDisk.get();
+    if (thefloppy == null || !thefloppy.isWriteProtect()) {
+      offStatus(ST_WRITEP);
+    }
+    else {
+      onStatus(ST_WRITEP);
+    }
+  }
 
-        i_BytesToOperate--;
-        switch (i_BytesToOperate) {
-          case 5:
-            i_result = currentDisk.getCurrentTrackIndex();
-            break;
-          case 4:
-            i_result = 0;
-            break;
-          case 3:
-            i_result = Registers[REG_SECTOR];
-            break;
-          case 2:
-            i_result = 1;
-            break;
-          case 1:
-            i_result = 0;
-            break;
-          case 0:
-            i_result = 0;
-            break;
+  private void prepareStatusTypeI(final boolean headLoaded) {
+    updateWriteProtectStatus();
+
+    if (headLoaded) {
+      onStatus(ST_HEADL);
+    }
+    else {
+      offStatus(ST_HEADL);
+    }
+
+    offStatus(ST_SEEKERR | ST_CRCERR);
+
+    if (this.registers[REG_TRACK] == 0) {
+      onStatus(ST_TRK00);
+    }
+    else {
+      offStatus(ST_TRK00);
+    }
+  }
+
+  private void loadSector(final int side, final int track, final int sector) {
+    final TRDOSDisk floppy = this.currentDisk.get();
+    final Sector thesector;
+    if (floppy == null) {
+      thesector = null;
+    }
+    else {
+      thesector = floppy.findSector(side, track, sector);
+    }
+    this.sector = thesector;
+  }
+
+  private void provideReadData(final int data) {
+    this.registers[REG_DATA_RD] = data & 0xFF;
+    this.dataRequest = true;
+  }
+
+  private void resetDataRegisters(){
+    this.registers[REG_DATA_RD] = 0;
+    this.registers[REG_DATA_WR] = 0;
+  }
+  
+  private void cmdForceInterrupt(final int command, final boolean start) {
+    offStatus(ST_BUSY);
+  }
+
+  private void cmdRestore(final int command, final boolean start) {
+    if (start) {
+      this.counter = 0xFF;
+      resetDataRegisters();
+    }
+    else {
+      this.counter--;
+      if (this.registers[REG_TRACK] > 0) {
+        this.registers[REG_TRACK]--;
+      }
+      else {
+        this.registers[REG_TRACK] = 0;
+      }
+    }
+
+    loadSector(this.side, 0, 0);
+    prepareStatusTypeI((command & 0b00001000) != 0);
+
+    if (this.counter <= 0 || this.registers[REG_TRACK] == 0 || this.sector == null) {
+      offStatus(ST_BUSY);
+    }
+  }
+
+  private void cmdSeek(final int command, final boolean start) {
+    prepareStatusTypeI((command & 0b00001000) != 0);
+
+    final TRDOSDisk thedisk = this.currentDisk.get();
+
+    this.sector = thedisk == null ? null : thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+    if (this.sector == null) {
+      onStatus(ST_SEEKERR);
+    }
+
+    resetDataRegisters();
+    offStatus(ST_BUSY);
+  }
+
+  private void cmdReadAddress(final int command, final boolean start) {
+    if (start) {
+      this.counter = 6;
+      this.dataRequest = false;
+    }
+
+    offStatus(ST_WRITEP | ST_CRCERR | ST_LOST | ST_RECORDT);
+
+    if (this.counter <= 0 || this.sector == null) {
+      onStatus(ST_SEEKERR);
+      offStatus(ST_BUSY);
+      resetDataRegisters();
+    }
+    else {
+      if (!this.dataRequest) {
+        this.counter--;
+      }
+      if (this.sector == null) {
+        offStatus(ST_BUSY);
+      }
+      else {
+        switch (this.counter--) {
+          case 5: {// track
+            provideReadData(this.sector.getTrack());
+          }
+          break;
+          case 4: {// side
+            provideReadData(this.sector.getSide());
+          }
+          break;
+          case 3: {// sector
+            provideReadData(this.sector.getSector() + 1);
+          }
+          break;
+          case 2: {// length
+            final int sectorLen = this.sector.size();
+            if (sectorLen <= 128) {
+              provideReadData(0);
+            }
+            else if (sectorLen <= 256) {
+              provideReadData(1);
+            }
+            else if (sectorLen <= 512) {
+              provideReadData(2);
+            }
+            else {
+              provideReadData(3);
+            }
+          }
+          break;
+          case 1: {// crc1
+            provideReadData(this.sector.getCrc() >> 8);
+          }
+          break;
+          case 0: {// crc2
+            provideReadData(this.sector.getCrc() & 0xFF);
+            offStatus(ST_BUSY);
+          }
+          break;
           default: {
-            throw new RuntimeException("Wrong index");
+            resetDataRegisters();
+            offStatus(ST_BUSY);
           }
+          break;
         }
-
-        setStatusForReadOperations();
       }
-      break;
-
-      case 0xE:// track reading
-      {
-        if (currentDisk != null && i_OperationPointer < currentDisk.size()) {
-          i_result = currentDisk.read(i_OperationPointer);
-        }
-
-        i_SectorBytesCounter++;
-        i_BytesToOperate--;
-
-        if (i_SectorBytesCounter == 256) {
-          Registers[REG_SECTOR]++;
-          i_SectorBytesCounter = 0;
-
-          if (Registers[REG_SECTOR] > 16) {
-            Registers[REG_SECTOR] = 1;
-            i_BytesToOperate = 0;
-          }
-        }
-        setStatusForReadOperations();
-      }
-      break;
-
-      case 0x8: // one sector reading
-      {
-        //System.out.println("Read track " + i_Reg_Track + " sector " + i_Reg_Sector + " pntr " + i_OperationPointer);
-
-        if (currentDisk != null && i_OperationPointer < currentDisk.size()) {
-          i_result = currentDisk.read(i_OperationPointer);
-        }
-
-        i_BytesToOperate--;
-        i_OperationPointer++;
-        i_SectorBytesCounter++;
-        if (i_SectorBytesCounter == 256) {
-          i_BytesToOperate = 0;
-          Registers[REG_SECTOR]++;
-
-          if (Registers[REG_SECTOR] > 16) {
-            Registers[REG_SECTOR] = 1;
-          }
-        }
-
-        setStatusForReadOperations();
-      }
-      break;
-      case 0x9: // multiple sectors reading
-      {
-        //System.out.println("Read trackS " + i_Reg_Track + " sector " + i_Reg_Sector + " pntr " + i_OperationPointer);
-
-        if (currentDisk != null && i_OperationPointer < currentDisk.size()) {
-          i_result = currentDisk.read(i_OperationPointer);
-        }
-
-        i_BytesToOperate--;
-        i_OperationPointer++;
-        i_SectorBytesCounter++;
-
-        if (i_SectorBytesCounter == 256) {
-          i_SectorBytesCounter = 0;
-          Registers[REG_SECTOR]++;
-
-          if (Registers[REG_SECTOR] > 16) {
-            i_BytesToOperate = 0;
-            Registers[REG_SECTOR] = 1;
-          }
-        }
-
-        setStatusForReadOperations();
-      }
-      break;
     }
-
-    return i_result;
   }
 
-  /**
-   * Задать команду к выполнению контроллером
-   *
-   * @param _command код команды
-   */
-  public final void setCommandReg(int _command) {
-    final Floppy currentDisk = this.currentDisk.get();
-    
-    Registers[REG_COMMAND] = _command;
+  private void cmdStep(final int command, final boolean start) {
+    if (this.outwardStepDirection) {
+      this.registers[REG_TRACK] = (this.registers[REG_TRACK] + 1) & 0xFF;
+    }
+    else {
+      this.registers[REG_TRACK] = (this.registers[REG_TRACK] - 1) & 0xFF;
+    }
+    prepareStatusTypeI((command & 0b00001000) != 0);
+    provideReadData(0);
+  }
 
-    int i_side = _command & 0b1000;
+  private void cmdStepIn(final int command, final boolean start) {
+    this.outwardStepDirection = false;
+    cmdStep(command, start);
+  }
 
-    switch ((_command >>> 4) & 0xF) {
-      case 0x0: // восстановление
-      {
-        //System.out.println("VG Восстановление");
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
-        Registers[REG_TRACK] = 0;
-        setStatusForAux((_command & 8) == 0);
-      }
-      break;
-      case 0x1: // поиск
-      {
-        //System.out.println("VG Поиск "+i_Reg_Data);
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
+  private void cmdStepOut(final int command, final boolean start) {
+    this.outwardStepDirection = true;
+    cmdStep(command, start);
+  }
 
-        if (Registers[REG_TRACK] > Registers[REG_DATA]) {
-          lg_HeadStepIncrease = true;
+  private void cmdReadSector(final int command, final boolean start) {
+    final boolean multiply = (command & 0b00010000) != 0;
+  
+    if (start) {
+      this.counter = 0;
+    }
+
+    loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
+    offStatus(ST_WRITEP | ST_WRFAULT | ST_CRCERR | ST_SEEKERR | ST_LOST);
+
+    if (this.sector != null) {
+      if (!this.dataRequest) {
+        final int data = this.sector.readByte(this.counter++);
+        if (data < 0) {
+          onStatus(ST_LOST | ST_NOTFOUND);
+          offStatus(ST_DRQ | ST_BUSY);
+          resetDataRegisters();
         }
         else {
-          if (Registers[REG_TRACK] <= Registers[REG_DATA]) {
-            lg_HeadStepIncrease = false;
-          }
-        }
-
-        Registers[REG_TRACK] = Registers[REG_DATA];
-
-        if (currentDisk != null) {
-          currentDisk.setCurrentTrackIndex(Registers[REG_TRACK]);
-        }
-
-        setStatusForAux((_command & 8) == 0);
-      }
-      break;
-      case 0x2: // шаг
-      case 0x3: {
-        //System.out.println("VG Шаг ");
-
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
-
-        if (lg_HeadStepIncrease) {
-          if (Registers[REG_TRACK] < 255) {
-            Registers[REG_TRACK]++;
-          }
-          else {
-            if (Registers[REG_TRACK] > 0) {
-              Registers[REG_TRACK]--;
+          provideReadData(data);
+          onStatus(ST_DRQ);
+          if (this.counter >= this.sector.size()) {
+            if (multiply) {
+              if (this.sector.isLastOnTrack()) {
+                offStatus(ST_BUSY);
+              }
+              else {
+                this.registers[REG_SECTOR]++;
+              }
+            }
+            else {
+              offStatus(ST_BUSY);
             }
           }
         }
-
-        if (currentDisk != null) {
-          currentDisk.setCurrentTrackIndex(Registers[REG_TRACK]);
-        }
-
-        setStatusForAux((_command & 8) == 0);
       }
-      break;
-      case 0x4: // шаг вперед
-      case 0x5: {
-        //System.out.println("VG Шаг вперед");
-
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
-
-        lg_HeadStepIncrease = true;
-        if (Registers[REG_TRACK] < 255) {
-          Registers[REG_TRACK]++;
-        }
-
-        if (currentDisk != null) {
-          currentDisk.setCurrentTrackIndex(Registers[REG_TRACK]);
-        }
-
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
-
-        setStatusForAux((_command & 8) == 0);
-      }
-      break;
-      case 0x6: // шаг назад
-      case 0x7: {
-        //System.out.println("VG Шаг назад");
-
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
-
-        lg_HeadStepIncrease = false;
-        if (Registers[REG_TRACK] > 0) {
-          Registers[REG_TRACK]--;
-        }
-
-        if (currentDisk != null) {
-          currentDisk.setCurrentTrackIndex(Registers[REG_TRACK]);
-        }
-
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE1;
-
-        setStatusForAux((_command & 8) == 0);
-      }
-      break;
-      case 0x8: // чтение сектора
-      {
-        //System.out.println("VG Чтение сектора "+i_Reg_Track+':'+i_Reg_Sector);
-
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE2;
-
-        i_OperationPointer = _calculatePointer(i_side, Registers[REG_TRACK], Registers[REG_SECTOR]);
-        i_BytesToOperate = 256;
-        i_SectorBytesCounter = 0;
-
-        setStatusForReadOperations();
-      }
-      break;
-      case 0x9: // чтение секторов
-      {
-        //System.out.println("VG Чтение секторов "+i_Reg_Track+':'+i_Reg_Sector);
-
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE2;
-
-        i_OperationPointer = _calculatePointer(i_side, Registers[REG_TRACK], Registers[REG_SECTOR]);
-        i_BytesToOperate = 16 * 256;
-        i_SectorBytesCounter = 0;
-
-        setStatusForReadOperations();
-      }
-      break;
-      case 0xA:// запись сектора
-      {
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE2;
-
-        i_OperationPointer = _calculatePointer(i_side, Registers[REG_TRACK], Registers[REG_SECTOR]);
-        i_BytesToOperate = 256;
-        i_SectorBytesCounter = 0;
-
-        setStatusForWriteOperations();
-      }
-      break;
-      case 0xB:// запись секторов
-      {
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE2;
-
-        i_OperationPointer = _calculatePointer(i_side, Registers[REG_TRACK], Registers[REG_SECTOR]);
-        i_BytesToOperate = 16 * 256;
-        i_SectorBytesCounter = 0;
-
-        setStatusForWriteOperations();
-      }
-      break;
-      case 0xC: // чтение адреса
-      {
-        //System.out.println("VG Чтение адреса");
-        Registers[REG_SECTOR]++;
-        if (Registers[REG_SECTOR] > 16) {
-          Registers[REG_SECTOR] = 1;
-        }
-        
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE3;
-
-        i_BytesToOperate = 6;
-
-        setStatusForReadOperations();
-      }
-      break;
-      case 0xE: // чтение дорожки
-      {
-        //System.out.println("VG Чтение дорожки "+i_Reg_Track);
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE3;
-
-        Registers[REG_SECTOR] = 1;
-
-        i_OperationPointer = _calculatePointer(i_side, Registers[REG_TRACK], 1);
-        i_BytesToOperate = 256 * 16;
-
-        setStatusForReadOperations();
-      }
-      break;
-      case 0xF: // запись дорожки
-      {
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE3;
-
-        Registers[REG_SECTOR] = 1;
-
-        i_OperationPointer = _calculatePointer(i_side, Registers[REG_TRACK], 1);
-        i_BytesToOperate = 256 * 16;
-
-        setStatusForWriteOperations();
-      }
-      break;
-      case 0xD: // принудительное прерывание
-      {
-        i_CurrentCommandStatus = COMMAND_STATUS_TYPE4;
-        i_BytesToOperate = 0;
-
-        if ((Registers[REG_STATUS] & 1) == 0) {
-          // выставляем состояние как у вспомогательных команд
-          setStatusForAux(true);
-        }
-        else {
-          // так как прервана команда, то сбрасываем бит работы
-          Registers[REG_STATUS] &= ~1;
-        }
-      }
-      break;
+    }
+    else {
+      resetDataRegisters();
+      offStatus(ST_BUSY);
+      onStatus(ST_SEEKERR);
     }
   }
 
-  /**
-   * Записать значение в регистр дорожки
-   *
-   * @param _track новое значение
-   */
-  public final void setTrackReg(int _track) {
-    Registers[REG_TRACK] = _track & 0xFF;
-  }
+  private void cmdWriteSector(final int command, final boolean start) {
+    final boolean multiply = (command & 0b00010000) != 0;
 
-  /**
-   * Получить значение регистра дорожки
-   *
-   * @return значение регистра
-   */
-  public final int getTrackReg() {
-    return Registers[REG_TRACK];
-  }
-
-  /**
-   * Записать значение в регистр сектора
-   *
-   * @param _sect новое значение регистра
-   */
-  public final void setSectorReg(int _sect) {
-    Registers[REG_SECTOR] = _sect & 0xFF;
-  }
-
-  /**
-   * Получить значение регистра сектора
-   *
-   * @return значение регистра сектора
-   */
-  public final int getSectorReg() {
-    return Registers[REG_SECTOR];
-  }
-
-  /**
-   * Получить значение регистра статуса
-   *
-   * @return значение регистра статуса
-   */
-  public final int getStatusReg() {
-    final Floppy currentDisk = this.currentDisk.get();
-    
-    lg_Ready = !lg_Ready;
-    
-    if (lg_Reset) {
-      Registers[REG_STATUS] = 0;
-      if (currentDisk != null) {
-        setStatusRegBit(7);
-      }
-      return Registers[REG_STATUS];
+    if (start) {
+      this.counter = 0;
     }
 
-    switch (i_CurrentCommandStatus) {
-      case COMMAND_STATUS_NONE: {
-        if (currentDisk != null) {
-          // возвращаем просто готовность привода
-          return 0x80;
-        }
+    loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
+
+    final TRDOSDisk thedisk = this.currentDisk.get();
+    if (thedisk == null) {
+      offStatus(ST_WRITEP);
+    }
+    else {
+      if (thedisk.isWriteProtect()) {
+        onStatus(ST_WRITEP);
       }
-      break;
-      case COMMAND_STATUS_TYPE1: {
-        if (currentDisk != null) {
-          // иммитируем индексный импульс
-          if (lg_Ready) {
-            setStatusRegBit(1);
+      else {
+        offStatus(ST_WRITEP);
+      }
+    }
+
+    if (this.sector != null) {
+      if (this.dataRequest) {
+        this.dataRequest = false;
+        if (!this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
+          // Error
+          onStatus(ST_WRFAULT | ST_LOST);
+          offStatus(ST_BUSY);
+          provideReadData(0);
+        }
+        else if (this.counter >= this.sector.size()) {
+          if (multiply) {
+            if (this.sector.isLastOnTrack()) {
+              offStatus(ST_BUSY);
+            }
+            else {
+              this.registers[REG_SECTOR]++;
+            }
           }
           else {
-            resetStatusRegBit(1);
+            offStatus(ST_BUSY);
           }
         }
-        else {
-          resetStatusRegBit(1);
-        }
       }
-      break;
-      case COMMAND_STATUS_TYPE3:
-      case COMMAND_STATUS_TYPE2: {
-          // иммитируем смену флага "готовность данных"
-          if (lg_Ready) {
-            setStatusRegBit(1);
-          }
-          else {
-            resetStatusRegBit(1);
-          }
-      }
-      break;
     }
-    return Registers[REG_STATUS];
+    else {
+      offStatus(ST_BUSY);
+    }
   }
+
+  private void cmdReadTrack(final int command, final boolean start) {
+    throw new Error("Unsupported yet");
+  }
+
+  private void cmdWriteTrack(final int command, final boolean start) {
+    throw new Error("Unsupported yet");
+  }
+
 }
