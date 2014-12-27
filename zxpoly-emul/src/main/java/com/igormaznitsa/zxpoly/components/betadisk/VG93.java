@@ -152,7 +152,6 @@ public class VG93 {
     final int normValue = value & 0xFF;
     switch (addr & 0x03) {
       case ADDR_COMMAND_STATE: { // command
-        System.out.println("COMMAND VG :" + Integer.toBinaryString(value) + " Side=" + this.side + " Track=" + registers[REG_TRACK] + " sector=" + registers[REG_SECTOR]);
         if (isStatus(ST_BUSY)) {
           if ((normValue >>> 4) == 0b1101) {
             this.dataRequest = false;

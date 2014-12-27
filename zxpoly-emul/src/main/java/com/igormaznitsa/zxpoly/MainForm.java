@@ -18,18 +18,19 @@ package com.igormaznitsa.zxpoly;
 
 import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
+import com.igormaznitsa.zxpoly.formats.FormatSNA;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
-
 
 public class MainForm extends javax.swing.JFrame implements Runnable {
 
@@ -44,15 +45,30 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     public String getDescription() {
       return "TR-DOS image (*.trd)";
     }
-    
+
   }
-  
+
+  private static class SNAFileFilter extends FileFilter {
+
+    @Override
+    public boolean accept(File f) {
+      return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".sna");
+    }
+
+    @Override
+    public String getDescription() {
+      return "Z80 Snapshot (*.sna)";
+    }
+
+  }
+
   private static final long serialVersionUID = 7309959798344327441L;
   public static final Logger log = Logger.getLogger("UI");
 
   private final Motherboard board;
-
   private final long SCREEN_REFRESH_DELAY = 100L;
+
+  private final ReentrantLock stepSemaphor = new ReentrantLock();
 
   private class KeyboardDispatcher implements KeyEventDispatcher {
 
@@ -71,8 +87,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   public MainForm(final String romResource) throws IOException {
     initComponents();
-    log.info("Loading test rom ["+romResource+']');
-    final RomData rom = RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/"+romResource));
+    log.info("Loading test rom [" + romResource + ']');
+    final RomData rom = RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romResource));
     this.board = new Motherboard(rom);
     log.info("Main form completed");
     this.board.reset();
@@ -94,25 +110,31 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     long nextSystemInt = System.currentTimeMillis() + 20;
     long nextScreenRefresh = System.currentTimeMillis() + SCREEN_REFRESH_DELAY;
 
-    final long TACTS_BETWEEN_INT = 160000L;
+    final long CYCLES_BETWEEN_INT = 80000L;
 
     while (!Thread.currentThread().isInterrupted()) {
-      final boolean intsignal;
+      stepSemaphor.lock();
+      try {
+        final boolean intsignal;
 
-      if (nextSystemInt <= System.currentTimeMillis()) {
-        intsignal = true;
-        nextSystemInt = System.currentTimeMillis() + 20;
-        this.board.getCPU0().resetTactCounter();
+        if (nextSystemInt <= System.currentTimeMillis()) {
+          intsignal = true;
+          nextSystemInt = System.currentTimeMillis() + 20;
+          this.board.getCPU0().resetTactCounter();
+        }
+        else {
+          intsignal = false;
+        }
+
+        this.board.step(intsignal, this.board.getCPU0().getMachineCycles() <= CYCLES_BETWEEN_INT);
+
+        if (nextScreenRefresh <= System.currentTimeMillis()) {
+          updateScreen();
+          nextScreenRefresh = System.currentTimeMillis() + SCREEN_REFRESH_DELAY;
+        }
       }
-      else {
-        intsignal = false;
-      }
-
-      this.board.step(intsignal, this.board.getCPU0().getTacts() <= TACTS_BETWEEN_INT);
-
-      if (nextScreenRefresh <= System.currentTimeMillis()) {
-        updateScreen();
-        nextScreenRefresh = System.currentTimeMillis() + SCREEN_REFRESH_DELAY;
+      finally {
+        stepSemaphor.unlock();
       }
     }
   }
@@ -141,6 +163,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     menuFile = new javax.swing.JMenu();
     menuFileReset = new javax.swing.JMenuItem();
     menuFileSelectDiskA = new javax.swing.JMenuItem();
+    menuFileLoadSNA = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
     menuOptionsShowIndicators = new javax.swing.JCheckBoxMenuItem();
 
@@ -177,6 +200,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuFile.add(menuFileSelectDiskA);
 
+    menuFileLoadSNA.setText("Load SNA");
+    menuFileLoadSNA.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuFileLoadSNAActionPerformed(evt);
+      }
+    });
+    menuFile.add(menuFileLoadSNA);
+
     menuBar.add(menuFile);
 
     menuOptions.setText("Options");
@@ -207,16 +238,17 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   private void menuFileSelectDiskAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskAActionPerformed
     final File selected = chooseFile("Select Disk A", null, new TRDFileFilter());
-    if (selected!=null){
-      try{
+    if (selected != null) {
+      try {
         final TRDOSDisk floppy = new TRDOSDisk(FileUtils.readFileToByteArray(selected), false);
 
-        log.info("Loaded TRD disk "+floppy+" from file "+selected);
-        
+        log.info("Loaded TRD disk " + floppy + " from file " + selected);
+
         this.board.getBetaDiskInterface().setDisk(floppy);
-      }catch(IOException ex){
-        log.log(Level.WARNING, "Can't read TRD file ["+selected+']',ex);
-        JOptionPane.showMessageDialog(this, "Can't read TRD file","Error", JOptionPane.ERROR_MESSAGE);
+      }
+      catch (IOException ex) {
+        log.log(Level.WARNING, "Can't read TRD file [" + selected + ']', ex);
+        JOptionPane.showMessageDialog(this, "Can't read TRD file", "Error", JOptionPane.ERROR_MESSAGE);
       }
     }
   }//GEN-LAST:event_menuFileSelectDiskAActionPerformed
@@ -229,27 +261,48 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     this.board.getKeyboard().reset();
   }//GEN-LAST:event_formWindowGainedFocus
 
-  
-  
-  private File chooseFile(final String title, final File initial, final FileFilter filter){
+  private void menuFileLoadSNAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadSNAActionPerformed
+    final File selected = chooseFile("Select SNA image", null, new SNAFileFilter());
+    if (selected != null) {
+      try {
+        final FormatSNA sna = new FormatSNA(FileUtils.readFileToByteArray(selected));
+        log.info("Loaded SNA image from file " + selected);
+        stepSemaphor.lock();
+        try {
+          this.board.loadSnapshot(sna, false);
+        }
+        finally {
+          stepSemaphor.unlock();
+        }
+      }
+      catch (IOException ex) {
+        log.log(Level.WARNING, "Can't read SNA image [" + selected + ']', ex);
+        JOptionPane.showMessageDialog(this, "Can't read SNA image", "Error", JOptionPane.ERROR_MESSAGE);
+      }
+    }
+  }//GEN-LAST:event_menuFileLoadSNAActionPerformed
+
+  private File chooseFile(final String title, final File initial, final FileFilter filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     chooser.addChoosableFileFilter(filter);
     chooser.setMultiSelectionEnabled(false);
     chooser.setDialogTitle(title);
     chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-    
+
     final File result;
-    if (chooser.showOpenDialog(this)==JFileChooser.APPROVE_OPTION){
+    if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
       result = chooser.getSelectedFile();
-    }else{
+    }
+    else {
       result = null;
     }
     return result;
   }
-  
+
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuFile;
+  private javax.swing.JMenuItem menuFileLoadSNA;
   private javax.swing.JMenuItem menuFileReset;
   private javax.swing.JMenuItem menuFileSelectDiskA;
   private javax.swing.JMenu menuOptions;

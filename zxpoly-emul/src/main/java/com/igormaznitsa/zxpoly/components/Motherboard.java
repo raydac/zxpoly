@@ -19,6 +19,7 @@ package com.igormaznitsa.zxpoly.components;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.zxpoly.formats.Snapshot;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -53,9 +54,9 @@ public final class Motherboard implements ZXPoly {
       this.modules[i] = new ZXPolyModule(this, i);
       iodevices.add(this.modules[i]);
     }
-    
+
     this.betaDisk = new BetaDiscInterface(this);
-    
+
     iodevices.add(this.betaDisk);
 
     this.keyboard = new KeyboardAndTape(this);
@@ -67,6 +68,19 @@ public final class Motherboard implements ZXPoly {
     // simulation of garbage in memory after power on
     final Random rnd = new Random();
     rnd.nextBytes(this.ram);
+  }
+
+  public void loadSnapshot(final Snapshot snapshot, final boolean mode128) {
+    if (mode128) {
+      throw new Error("Unsupported");
+    }
+    else {
+      this.port3D00 |= PORTw_ZXPOLY_BLOCK | PORTw_ZXPOLY_nWAIT;
+      for (final ZXPolyModule m : this.modules) {
+        m.setSpectrum48Mode();
+      }
+      snapshot.fillModule(this.modules[0], this.video);
+    }
   }
 
   public void reset() {
@@ -88,10 +102,10 @@ public final class Motherboard implements ZXPoly {
     }
   }
 
-  public BetaDiscInterface getBetaDiskInterface(){
+  public BetaDiscInterface getBetaDiskInterface() {
     return this.betaDisk;
   }
-  
+
   public int get3D00() {
     return this.port3D00;
   }
