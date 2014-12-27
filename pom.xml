@@ -64,7 +64,6 @@
 
     <modules>
       <module>z80</module>
-      <module>vg93</module>
       <module>zxpoly-sprite-corrector</module>
       <module>zxpoly-emul</module>
     </modules>
@@ -77,5 +76,19 @@
         <scope>test</scope>
       </dependency>
     </dependencies>
+    
+    <build>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.2</version>
+          <configuration>
+            <source>1.7</source>
+            <target>1.7</target>
+          </configuration>
+        </plugin>
+      </plugins>
+    </build>
 
 </project>
