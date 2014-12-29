@@ -17,6 +17,7 @@
 package com.igormaznitsa.zxpoly.components.betadisk;
 
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk.Sector;
+import static com.igormaznitsa.zxpoly.components.betadisk.VG93.ST_DRQ;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -51,11 +52,13 @@ public class VG93 {
   private TRDOSDisk.Sector sector;
   private final int[] registers = new int[6];
   private int counter;
-  private boolean dataRequest;
+  private boolean flagWaitDataRd;
+  private boolean flagWaitDataWr;
   private boolean resetIn;
   private boolean firstCommandStep;
   private int side;
   private boolean outwardStepDirection;
+  private boolean indexHoleMarker;
 
   private final AtomicReference<TRDOSDisk> currentDisk = new AtomicReference<>();
 
@@ -65,7 +68,8 @@ public class VG93 {
 
   public final void reset() {
     Arrays.fill(registers, 0);
-    this.dataRequest = false;
+    this.flagWaitDataRd = false;
+    this.flagWaitDataWr = false;
     this.resetIn = false;
     this.firstCommandStep = false;
     this.counter = 0;
@@ -79,6 +83,10 @@ public class VG93 {
     else {
       loadSector(this.side, registers[REG_TRACK], registers[REG_SECTOR]);
     }
+  }
+
+  private void resetStatus() {
+    registers[REG_STATUS] = 0;
   }
 
   private void onStatus(final int flags) {
@@ -107,30 +115,33 @@ public class VG93 {
   public int read(final int addr) {
     switch (addr & 0x03) {
       case ADDR_COMMAND_STATE: {
+        this.indexHoleMarker = !this.indexHoleMarker;
         switch (registers[REG_COMMAND] >>> 4) {
-          case 0b0000:
-          case 0b0001:
-          case 0b0010:
-          case 0b0011:
+          case 0b0000:// Auxuliary commands which shows Index marker
+          case 0b1101:
           case 0b0100:
           case 0b0101:
-          case 0b1000:
-          case 0b1001: {
-            // change index 
-            if (this.currentDisk.get() != null) {
-              if (isStatus(ST_INDEX)) {
-                offStatus(ST_INDEX);
-              }
-              else {
-                onStatus(ST_INDEX);
-              }
+          case 0b0110:
+          case 0b0111:
+          case 0b0010:
+          case 0b0011:
+          case 0b0001: {
+            // change index bit in status
+            if (this.currentDisk.get() == null) {
+              onStatus(ST_INDEX);
             }
             else {
-              onStatus(ST_INDEX);
+              if (this.indexHoleMarker) {
+                onStatus(ST_INDEX);
+              }
+              else {
+                offStatus(ST_INDEX);
+              }
             }
           }
           break;
         }
+
         return registers[REG_STATUS] & 0xFF;
       }
       case ADDR_TRACK:
@@ -138,8 +149,8 @@ public class VG93 {
       case ADDR_SECTOR:
         return registers[REG_SECTOR] & 0xFF;
       case ADDR_DATA:
-        if (this.dataRequest) {
-          this.dataRequest = false;
+        if (this.flagWaitDataRd) {
+          this.flagWaitDataRd = false;
           offStatus(ST_DRQ);
         }
         return registers[REG_DATA_RD] & 0xFF;
@@ -154,14 +165,12 @@ public class VG93 {
       case ADDR_COMMAND_STATE: { // command
         if (isStatus(ST_BUSY)) {
           if ((normValue >>> 4) == 0b1101) {
-            this.dataRequest = false;
             this.registers[REG_COMMAND] = normValue;
             this.firstCommandStep = true;
             onStatus(ST_BUSY);
           }
         }
         else {
-          this.dataRequest = false;
           this.registers[REG_COMMAND] = normValue;
           this.firstCommandStep = true;
           onStatus(ST_BUSY);
@@ -181,7 +190,10 @@ public class VG93 {
       }
       break;
       case ADDR_DATA: { // data
-        this.dataRequest = true;
+        if (this.flagWaitDataWr) {
+          this.flagWaitDataWr = false;
+          offStatus(ST_DRQ);
+        }
         registers[REG_DATA_WR] = normValue;
       }
       break;
@@ -246,40 +258,6 @@ public class VG93 {
           throw new Error("Unexpected value");
       }
     }
-
-    if (this.dataRequest) {
-      onStatus(ST_DRQ);
-    }
-  }
-
-  private void updateWriteProtectStatus() {
-    final TRDOSDisk thefloppy = this.currentDisk.get();
-    if (thefloppy == null || !thefloppy.isWriteProtect()) {
-      offStatus(ST_WRITEP);
-    }
-    else {
-      onStatus(ST_WRITEP);
-    }
-  }
-
-  private void prepareStatusTypeI(final boolean headLoaded) {
-    updateWriteProtectStatus();
-
-    if (headLoaded) {
-      onStatus(ST_HEADL);
-    }
-    else {
-      offStatus(ST_HEADL);
-    }
-
-    offStatus(ST_SEEKERR | ST_CRCERR);
-
-    if (this.registers[REG_TRACK] == 0) {
-      onStatus(ST_TRK00);
-    }
-    else {
-      offStatus(ST_TRK00);
-    }
   }
 
   private void loadSector(final int side, final int track, final int sector) {
@@ -296,80 +274,166 @@ public class VG93 {
 
   private void provideReadData(final int data) {
     this.registers[REG_DATA_RD] = data & 0xFF;
-    this.dataRequest = true;
+    this.flagWaitDataRd = true;
   }
 
   private void resetDataRegisters() {
     this.registers[REG_DATA_RD] = 0;
     this.registers[REG_DATA_WR] = 0;
+    this.flagWaitDataRd = false;
+    this.flagWaitDataWr = false;
   }
 
   private void cmdForceInterrupt(final int command, final boolean start) {
-    offStatus(ST_BUSY);
+    final TRDOSDisk thedisk = this.currentDisk.get();
+    resetStatus();
+
+    if (thedisk == null) {
+      onStatus(ST_NOTRDY);
+    }
+    else {
+      this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+      if (this.sector == null) {
+        onStatus(ST_SEEKERR);
+      }
+      else {
+        if (!this.sector.isCrcOk()) {
+          onStatus(ST_CRCERR);
+        }
+      }
+    }
+
+    if (this.registers[REG_TRACK] == 0) {
+      onStatus(ST_TRK00);
+    }
   }
 
   private void cmdRestore(final int command, final boolean start) {
+    final TRDOSDisk thedisk = this.currentDisk.get();
+
+    resetStatus();
+
     if (start) {
-      this.counter = 0xFF;
-      resetDataRegisters();
+      this.counter = 0;
+    }
+
+    if (thedisk == null) {
+      onStatus(ST_NOTRDY);
     }
     else {
-      this.counter--;
-      if (this.registers[REG_TRACK] > 0) {
+      if ((command & 0b00001000) != 0) {
+        onStatus(ST_HEADL);
+      }
+      if (thedisk.isWriteProtect()) {
+        onStatus(ST_WRITEP);
+      }
+
+      if (counter < 0xFF && this.registers[REG_TRACK] > 0) {
         this.registers[REG_TRACK]--;
+        this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+        if (this.sector == null) {
+          onStatus(ST_SEEKERR);
+        }
+        else {
+          if (!this.sector.isCrcOk()) {
+            onStatus(ST_CRCERR);
+          }
+          onStatus(ST_BUSY);
+        }
       }
       else {
-        this.registers[REG_TRACK] = 0;
+        if (this.registers[REG_TRACK] != 0) {
+          this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+          onStatus(ST_SEEKERR);
+        }
+      }
+
+      if (this.sector != null && !this.sector.isCrcOk()) {
+        onStatus(ST_CRCERR);
       }
     }
 
-    loadSector(this.side, 0, 0);
-    prepareStatusTypeI((command & 0b00001000) != 0);
-
-    if (this.counter <= 0 || this.registers[REG_TRACK] == 0 || this.sector == null) {
-      offStatus(ST_BUSY);
+    if (this.registers[REG_TRACK] == 0) {
+      onStatus(ST_TRK00);
     }
   }
 
   private void cmdSeek(final int command, final boolean start) {
-    prepareStatusTypeI((command & 0b00001000) != 0);
+    resetStatus();
 
     final TRDOSDisk thedisk = this.currentDisk.get();
 
-    this.sector = thedisk == null ? null : thedisk.findFirstSector(this.side, this.registers[REG_DATA_WR]);
-    if (this.sector == null) {
-      onStatus(ST_SEEKERR);
-      resetDataRegisters();
+    if ((command & 0b00001000) != 0) {
+      onStatus(ST_HEADL);
+    }
+
+    if (thedisk == null) {
+      onStatus(ST_NOTRDY);
     }
     else {
-      this.registers[REG_TRACK] = this.sector.getTrack() & 0xFF;
-      this.registers[REG_DATA_RD] = this.registers[REG_TRACK];
+      if (thedisk.isWriteProtect()) {
+        onStatus(ST_WRITEP);
+      }
+
+      if (this.registers[REG_TRACK] < this.registers[REG_DATA_WR]) {
+        this.registers[REG_TRACK]++;
+      }
+      else if (this.registers[REG_TRACK] > this.registers[REG_DATA_WR]) {
+        this.registers[REG_TRACK]--;
+      }
+
+      boolean end = this.registers[REG_TRACK] == this.registers[REG_DATA_WR];
+
+      this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+      if (this.sector == null) {
+        onStatus(ST_SEEKERR);
+        end = true;
+      }
+      else {
+        if (!this.sector.isCrcOk()) {
+          onStatus(ST_CRCERR);
+        }
+      }
+
+      if (!end) {
+        onStatus(ST_BUSY);
+      }
     }
-    offStatus(ST_BUSY);
+
+    if (this.registers[REG_TRACK] == 0) {
+      onStatus(ST_TRK00);
+    }
   }
 
   private void cmdReadAddress(final int command, final boolean start) {
+    resetStatus();
+
+    final TRDOSDisk thedisk = this.currentDisk.get();
+
     if (start) {
       this.counter = 6;
-      this.dataRequest = false;
     }
 
-    offStatus(ST_WRITEP | ST_CRCERR | ST_LOST | ST_RECORDT);
-
-    if (this.counter <= 0 || this.sector == null) {
-      onStatus(ST_SEEKERR);
-      offStatus(ST_BUSY);
-      resetDataRegisters();
+    if (thedisk == null) {
+      onStatus(ST_NOTRDY);
     }
     else {
-      if (!this.dataRequest) {
-        this.counter--;
-      }
+      this.sector = thedisk.findSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
+
       if (this.sector == null) {
-        offStatus(ST_BUSY);
+        onStatus(ST_SEEKERR);
+        resetDataRegisters();
       }
       else {
-        switch (this.counter--) {
+        if (!this.sector.isCrcOk()) {
+          onStatus(ST_CRCERR);
+        }
+
+        if (!this.flagWaitDataRd) {
+          this.counter--;
+        }
+
+        switch (this.counter) {
           case 5: {// track
             provideReadData(this.sector.getTrack());
           }
@@ -408,24 +472,73 @@ public class VG93 {
           }
           break;
           default: {
-            resetDataRegisters();
-            offStatus(ST_BUSY);
+            throw new Error("Unexpected state");
           }
-          break;
         }
       }
     }
   }
 
   private void cmdStep(final int command, final boolean start) {
-    if (this.outwardStepDirection) {
-      this.registers[REG_TRACK] = (this.registers[REG_TRACK] + 1) & 0xFF;
+    final TRDOSDisk thedisk = this.currentDisk.get();
+
+    resetStatus();
+
+    if (thedisk == null) {
+      resetDataRegisters();
+      onStatus(ST_NOTRDY);
     }
     else {
-      this.registers[REG_TRACK] = (this.registers[REG_TRACK] - 1) & 0xFF;
+      if ((command & 0b00001000) != 0) {
+        onStatus(ST_HEADL);
+      }
+      if (thedisk.isWriteProtect()) {
+        onStatus(ST_WRITEP);
+      }
+      if (!this.sector.isCrcOk()) {
+        onStatus(ST_CRCERR);
+      }
+
+      boolean end = false;
+      if (this.outwardStepDirection) {
+        if (this.registers[REG_TRACK] > 0) {
+          this.registers[REG_TRACK]--;
+        }
+        end = this.registers[REG_TRACK] == 0;
+      }
+      else {
+        if (this.registers[REG_TRACK] < 0xFF) {
+          this.registers[REG_TRACK]++;
+        }
+        end = this.registers[REG_TRACK] == 0xFF;
+      }
+
+      this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+
+      if (this.registers[REG_TRACK] > 0) {
+        this.registers[REG_TRACK]--;
+        this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+        if (this.sector == null) {
+          onStatus(ST_SEEKERR);
+        }
+        else {
+          if (!this.sector.isCrcOk()) {
+            onStatus(ST_CRCERR);
+          }
+          onStatus(ST_BUSY);
+        }
+      }
+      else {
+        if (this.registers[REG_TRACK] != 0) {
+          this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+          onStatus(ST_SEEKERR);
+        }
+      }
+
+      if (!end) {
+        onStatus(ST_BUSY);
+      }
     }
-    prepareStatusTypeI((command & 0b00001000) != 0);
-    provideReadData(0);
   }
 
   private void cmdStepIn(final int command, final boolean start) {
@@ -439,118 +552,119 @@ public class VG93 {
   }
 
   private void cmdReadSector(final int command, final boolean start) {
-    final boolean multiply = (command & 0b00010000) != 0;
+    final boolean multiOp = (command & 0b00010000) != 0;
 
-    if (start) {
-      this.counter = 0;
+    resetStatus();
+
+    final TRDOSDisk thedisk = this.currentDisk.get();
+    if (thedisk == null) {
+      onStatus(ST_NOTRDY);
     }
 
     loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
-    offStatus(ST_WRITEP | ST_WRFAULT | ST_CRCERR | ST_SEEKERR | ST_LOST);
 
-    if (this.sector != null) {
-      if (!this.dataRequest) {
-        boolean process = true;
+    if (this.sector == null) {
+      onStatus(ST_SEEKERR);
+    }
+    else {
+      if (start) {
+        this.counter = 0;
+      }
+
+      if (!this.flagWaitDataRd) {
         if (this.counter >= this.sector.size()) {
-          if (multiply){
-            if (this.sector.isLastOnTrack()){
-              offStatus(ST_BUSY);
-              process = false;
-            }else{
+          if (multiOp) {
+            if (!this.sector.isLastOnTrack()) {
+              this.counter = 0;
               this.registers[REG_SECTOR]++;
-              loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
-              if (this.sector == null){
-                resetDataRegisters();
-                offStatus(ST_BUSY);
-                onStatus(ST_SEEKERR);
-                process = false;
-              }
+              onStatus(ST_BUSY);
             }
-          }else{
-            process = false;
-            offStatus(ST_BUSY);
           }
         }
-       
-        
-        if (process){
+        else {
           final int data = this.sector.readByte(this.counter++);
           if (data < 0) {
-            onStatus(ST_LOST | ST_NOTFOUND);
-            offStatus(ST_DRQ | ST_BUSY);
-            resetDataRegisters();
+            onStatus(ST_LOST);
           }
           else {
             provideReadData(data);
             onStatus(ST_DRQ);
+            onStatus(ST_BUSY);
           }
         }
       }
-    }
-    else {
-      resetDataRegisters();
-      offStatus(ST_BUSY);
-      onStatus(ST_SEEKERR);
+      else {
+        if (this.sector == null) {
+          resetDataRegisters();
+          onStatus(ST_SEEKERR);
+        }
+        else {
+          onStatus(ST_DRQ);
+          onStatus(ST_BUSY);
+        }
+      }
     }
   }
 
   private void cmdWriteSector(final int command, final boolean start) {
-    final boolean multiply = (command & 0b00010000) != 0;
+    final boolean multiOp = (command & 0b00010000) != 0;
 
-    if (start) {
-      this.counter = 0;
+    resetStatus();
+
+    final TRDOSDisk thedisk = this.currentDisk.get();
+    if (thedisk == null) {
+      onStatus(ST_NOTRDY);
+    }
+    else {
+      if (thedisk.isWriteProtect()) {
+        onStatus(ST_WRITEP);
+      }
     }
 
     loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
-    offStatus(ST_WRITEP | ST_WRFAULT | ST_CRCERR | ST_SEEKERR | ST_LOST);
 
-    if (this.sector != null) {
-      if (this.sector.isWriteProtect()){
-        onStatus(ST_WRITEP | ST_WRFAULT);
-        offStatus(ST_BUSY);
-      }else
-      if (!this.dataRequest) {
-        boolean process = true;
+    if (this.sector == null) {
+      onStatus(ST_SEEKERR);
+    }
+    else {
+      if (start) {
+        this.counter = 0;
+        this.flagWaitDataWr = true;
+      }
+
+      if (!this.flagWaitDataWr) {
+        this.flagWaitDataWr = true;
         if (this.counter >= this.sector.size()) {
-          if (multiply) {
-            if (this.sector.isLastOnTrack()) {
-              offStatus(ST_BUSY);
-              process = false;
-            }
-            else {
+          if (multiOp) {
+            if (!this.sector.isLastOnTrack()) {
+              this.counter = 0;
               this.registers[REG_SECTOR]++;
-              loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
-              if (this.sector == null) {
-                resetDataRegisters();
-                offStatus(ST_BUSY);
-                onStatus(ST_SEEKERR);
-                process = false;
-              }
+              onStatus(ST_BUSY);
             }
-          }
-          else {
-            process = false;
-            offStatus(ST_BUSY);
           }
         }
-
-        if (process) {
-          final boolean saved = this.sector.writeByte(this.counter++, registers[REG_DATA_WR]);
-          if (!saved) {
-            onStatus(ST_LOST | ST_NOTFOUND);
-            offStatus(ST_DRQ | ST_BUSY);
-            resetDataRegisters();
+        else {
+          if (!this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
+            onStatus(ST_WRFAULT);
           }
           else {
-            onStatus(ST_DRQ);
+            if (this.counter<this.sector.size()){
+              onStatus(ST_DRQ);
+              onStatus(ST_BUSY);
+            }
           }
         }
       }
-    }
-    else {
-      resetDataRegisters();
-      offStatus(ST_BUSY);
-      onStatus(ST_SEEKERR);
+      else {
+        if (this.sector == null) {
+          resetDataRegisters();
+          onStatus(ST_SEEKERR);
+        }
+        else {
+          onStatus(ST_DRQ);
+          onStatus(ST_BUSY);
+        }
+      }
     }
   }
 

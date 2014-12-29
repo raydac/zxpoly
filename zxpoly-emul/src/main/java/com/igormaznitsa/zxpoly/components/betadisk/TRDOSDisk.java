@@ -100,6 +100,10 @@ public class TRDOSDisk {
     private int getOffset() {
       return  (this.track * SIDES + this.side) * SECTOR_SIZE * SECTORS_PER_TRACK + (this.sector - 1) * SECTOR_SIZE;
     }
+
+    public boolean isCrcOk() {
+      return true;
+    }
   }
 
   private byte[] data;
@@ -111,8 +115,8 @@ public class TRDOSDisk {
   }
 
   public TRDOSDisk(final byte[] data, final boolean writeProtect) {
-    final byte[] normaldata = data.length >= (SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE) ? data : Arrays.copyOf(data, SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
-    this.data = normaldata;
+    final byte[] workData = data.length >= (SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE) ? data : Arrays.copyOf(data, SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
+    this.data = workData;
     this.writeProtect = writeProtect;
 
     this.sectors = new Sector[SECTORS_PER_TRACK*TRACKS_PER_SIDE*SIDES];
@@ -121,7 +125,7 @@ public class TRDOSDisk {
     for(int side = 0; side<SIDES;side++){
       for(int track=0;track<TRACKS_PER_SIDE;track++){
         for(int sector=0;sector<SECTORS_PER_TRACK;sector++){
-          this.sectors[p++] = new Sector(this, side, track, sector+1, track, data);
+          this.sectors[p++] = new Sector(this, side, track, sector+1, track, workData);
         }
       }
     }

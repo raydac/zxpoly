@@ -56,7 +56,7 @@ public class BetaDiscInterface implements IODevice {
         }
         case 0xFF: {
           final int stat = vg93.read(VG93.ADDR_COMMAND_STATE);
-          return (((stat & VG93.ST_BUSY) == 0 ? 0b10000000 : 0) | ((stat & VG93.ST_DRQ) == 0 ? 0b01000000 : 0));
+          return (((stat & VG93.ST_BUSY) == 0 ? 0x80 : 0) | ((stat & VG93.ST_DRQ) == 0 ? 0: 0x40)) | 0b00111111;
         }
       }
     }

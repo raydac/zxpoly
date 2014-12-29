@@ -89,26 +89,30 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     final int result;
     final int mappedModule = this.board.getMappedCPUIndex();
 
-    if (module != this && this.moduleIndex > 0 && this.moduleIndex == mappedModule) {
-      // reading memory for IO offset and make notification through INT
-      result = this.board.readRAM(module, getRAMOffsetInHeap() + port);
-      prepareLocalInt();
-    }
-    else {
-      if (!isTRDOSActive() && port == PORT_REG0) {
-        final int cpuState = this.cpu.getState();
-        final int addr = ((this.lastM1Address >> 1) & 0x1)
-                | ((this.lastM1Address >> 1) & 0x2)
-                | ((this.lastM1Address >> 5) & 0x4)
-                | ((this.lastM1Address >> 8) & 0x8)
-                | ((this.lastM1Address >> 10) & 0x10)
-                | ((this.lastM1Address >> 9) & 0x20);
-
-        result = ((cpuState & Z80.SIGNAL_OUT_nHALT) == 0 ? ZXPOLY_rREG0_HALTMODE : 0)
-                | (this.waitSignal ? ZXPOLY_rREG0_WAITMODE : 0) | (addr << 2);
+    if (module.isTRDOSActive()) {
+      result = 0;
+    }else{
+      if (module != this && this.moduleIndex > 0 && this.moduleIndex == mappedModule) {
+        // reading memory for IO offset and make notification through INT
+        result = this.board.readRAM(module, getRAMOffsetInHeap() + port);
+        prepareLocalInt();
       }
       else {
-        result = 0;
+        if (!isTRDOSActive() && port == PORT_REG0) {
+          final int cpuState = this.cpu.getState();
+          final int addr = ((this.lastM1Address >> 1) & 0x1)
+                  | ((this.lastM1Address >> 1) & 0x2)
+                  | ((this.lastM1Address >> 5) & 0x4)
+                  | ((this.lastM1Address >> 8) & 0x8)
+                  | ((this.lastM1Address >> 10) & 0x10)
+                  | ((this.lastM1Address >> 9) & 0x20);
+
+          result = ((cpuState & Z80.SIGNAL_OUT_nHALT) == 0 ? ZXPOLY_rREG0_HALTMODE : 0)
+                  | (this.waitSignal ? ZXPOLY_rREG0_WAITMODE : 0) | (addr << 2);
+        }
+        else {
+          result = 0;
+        }
       }
     }
     return result;
@@ -120,7 +124,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
 
   @Override
   public void writeIO(final ZXPolyModule module, final int port, final int value) {
-    if (this.board.is3D00NotLocked() && module.moduleIndex <= this.moduleIndex) {
+    if (this.board.is3D00NotLocked() && module.moduleIndex <= this.moduleIndex && !module.isTRDOSActive()) {
       if (port == PORT_REG0) {
         this.zxPolyRegsWritten[0] = value;
         if ((value & ZXPOLY_wREG0_RESET) != 0) {
@@ -471,9 +475,9 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     return "ZXM#" + this.moduleIndex;
   }
 
-  public void setSpectrum48Mode(){
+  public void setSpectrum48Mode() {
     this.port7FFD = 0b00110000;
     this.trdosROM = false;
   }
-  
+
 }
