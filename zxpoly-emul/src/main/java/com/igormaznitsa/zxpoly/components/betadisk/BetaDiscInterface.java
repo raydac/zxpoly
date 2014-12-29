@@ -26,12 +26,12 @@ public class BetaDiscInterface implements IODevice {
   private static final Logger log = Logger.getLogger("BD");
 
   private final Motherboard board;
-  private final VG93 vg93;
+  private final K1818VG93 vg93;
   private int ffPort;
 
   public BetaDiscInterface(final Motherboard board) {
     this.board = board;
-    this.vg93 = new VG93();
+    this.vg93 = new K1818VG93(log);
   }
 
   public void setDisk(final TRDOSDisk drive) {
@@ -43,20 +43,20 @@ public class BetaDiscInterface implements IODevice {
     if (module.isTRDOSActive()) {
       switch (port & 0xFF) {
         case 0x1F: {
-          return vg93.read(VG93.ADDR_COMMAND_STATE);
+          return vg93.read(K1818VG93.ADDR_COMMAND_STATE);
         }
         case 0x3F: {
-          return vg93.read(VG93.ADDR_TRACK);
+          return vg93.read(K1818VG93.ADDR_TRACK);
         }
         case 0x5F: {
-          return vg93.read(VG93.ADDR_SECTOR);
+          return vg93.read(K1818VG93.ADDR_SECTOR);
         }
         case 0x7F: {
-          return vg93.read(VG93.ADDR_DATA);
+          return vg93.read(K1818VG93.ADDR_DATA);
         }
         case 0xFF: {
-          final int stat = vg93.read(VG93.ADDR_COMMAND_STATE);
-          return (((stat & VG93.ST_BUSY) == 0 ? 0x80 : 0) | ((stat & VG93.ST_DRQ) == 0 ? 0: 0x40)) | 0b00111111;
+          final int stat = vg93.read(K1818VG93.ADDR_COMMAND_STATE);
+          return (((stat & K1818VG93.STAT_BUSY) == 0 ? 0x80 : 0) | ((stat & K1818VG93.STAT_DRQ) == 0 ? 0: 0x40)) | 0b00111111;
         }
       }
     }
@@ -68,19 +68,19 @@ public class BetaDiscInterface implements IODevice {
     if (module.isTRDOSActive()) {
       switch (port & 0xFF) {
         case 0x1F: {
-          vg93.write(VG93.ADDR_COMMAND_STATE, value);
+          vg93.write(K1818VG93.ADDR_COMMAND_STATE, value);
         }
         break;
         case 0x3F: {
-          vg93.write(VG93.ADDR_TRACK, value);
+          vg93.write(K1818VG93.ADDR_TRACK, value);
         }
         break;
         case 0x5F: {
-          vg93.write(VG93.ADDR_SECTOR, value);
+          vg93.write(K1818VG93.ADDR_SECTOR, value);
         }
         break;
         case 0x7F: {
-          vg93.write(VG93.ADDR_DATA, value);
+          vg93.write(K1818VG93.ADDR_DATA, value);
         }
         break;
         case 0xFF: {

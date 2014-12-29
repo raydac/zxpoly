@@ -17,11 +17,14 @@
 package com.igormaznitsa.zxpoly.components.betadisk;
 
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk.Sector;
-import static com.igormaznitsa.zxpoly.components.betadisk.VG93.ST_DRQ;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class VG93 {
+public final class K1818VG93 {
+
+  private final long TIMEOUT = 3000L;
 
   public static final int ADDR_COMMAND_STATE = 0;
   public static final int ADDR_TRACK = 1;
@@ -35,23 +38,22 @@ public class VG93 {
   private static final int REG_DATA_WR = 0x04;
   private static final int REG_DATA_RD = 0x05;
 
-  public static final int ST_BUSY = 0x01;
-  public static final int ST_INDEX = 0x02;
-  public static final int ST_DRQ = 0x02;
-  public static final int ST_TRK00 = 0x04;
-  public static final int ST_LOST = 0x04;
-  public static final int ST_CRCERR = 0x08;
-  public static final int ST_NOTFOUND = 0x10;
-  public static final int ST_SEEKERR = 0x10;
-  public static final int ST_RECORDT = 0x20;
-  public static final int ST_HEADL = 0x20;
-  public static final int ST_WRFAULT = 0x20;
-  public static final int ST_WRITEP = 0x40;
-  public static final int ST_NOTRDY = 0x80;
+  public static final int STAT_BUSY = 0x01;
+  public static final int STAT_INDEX = 0x02;
+  public static final int STAT_DRQ = 0x02;
+  public static final int STAT_TRK00_OR_LOST = 0x04;
+  public static final int STAT_CRCERR = 0x08;
+  public static final int STAT_NOTFOUND = 0x10;
+  public static final int STAT_RECORDT = 0x20;
+  public static final int STAT_HEADL = 0x20;
+  public static final int STAT_WRFAULT = 0x20;
+  public static final int STAT_WRITEPROTECT = 0x40;
+  public static final int ST_NOTREADY = 0x80;
 
   private TRDOSDisk.Sector sector;
   private final int[] registers = new int[6];
   private int counter;
+  private int extraCounter;
   private boolean flagWaitDataRd;
   private boolean flagWaitDataWr;
   private boolean resetIn;
@@ -59,14 +61,20 @@ public class VG93 {
   private int side;
   private boolean outwardStepDirection;
   private boolean indexHoleMarker;
+  private boolean mfmModulation;
 
-  private final AtomicReference<TRDOSDisk> currentDisk = new AtomicReference<>();
+  private long operationTimeOut;
 
-  public VG93() {
+  private final AtomicReference<TRDOSDisk> trdosDisk = new AtomicReference<>();
+
+  private final Logger logger;
+
+  public K1818VG93(final Logger logger) {
+    this.logger = logger;
     reset();
   }
 
-  public final void reset() {
+  public void reset() {
     Arrays.fill(registers, 0);
     this.flagWaitDataRd = false;
     this.flagWaitDataWr = false;
@@ -75,14 +83,18 @@ public class VG93 {
     this.counter = 0;
   }
 
-  public final void setDisk(final TRDOSDisk disk) {
-    this.currentDisk.set(disk);
+  public void setDisk(final TRDOSDisk disk) {
+    this.trdosDisk.set(disk);
     if (disk == null) {
       this.sector = null;
     }
     else {
       this.sector = disk.findFirstSector(this.side, this.registers[REG_TRACK]);
     }
+  }
+
+  public TRDOSDisk getDisk() {
+    return this.trdosDisk.get();
   }
 
   private void resetStatus() {
@@ -112,6 +124,18 @@ public class VG93 {
     this.side = side;
   }
 
+  public int getSide() {
+    return this.side;
+  }
+
+  public void setMFMModulation(final boolean flag) {
+    this.mfmModulation = flag;
+  }
+
+  public boolean isMFMModulation() {
+    return this.mfmModulation;
+  }
+
   public int read(final int addr) {
     switch (addr & 0x03) {
       case ADDR_COMMAND_STATE: {
@@ -126,16 +150,23 @@ public class VG93 {
           case 0b0010:
           case 0b0011:
           case 0b0001: {
+            // set TR00 status
+            if (this.registers[REG_TRACK] == 0) {
+              onStatus(STAT_TRK00_OR_LOST);
+            }
+            else {
+              offStatus(STAT_TRK00_OR_LOST);
+            }
             // change index bit in status
-            if (this.currentDisk.get() == null) {
-              onStatus(ST_INDEX);
+            if (this.trdosDisk.get() == null) {
+              onStatus(STAT_INDEX);
             }
             else {
               if (this.indexHoleMarker) {
-                onStatus(ST_INDEX);
+                onStatus(STAT_INDEX);
               }
               else {
-                offStatus(ST_INDEX);
+                offStatus(STAT_INDEX);
               }
             }
           }
@@ -151,7 +182,7 @@ public class VG93 {
       case ADDR_DATA:
         if (this.flagWaitDataRd) {
           this.flagWaitDataRd = false;
-          offStatus(ST_DRQ);
+          offStatus(STAT_DRQ);
         }
         return registers[REG_DATA_RD] & 0xFF;
       default:
@@ -163,13 +194,13 @@ public class VG93 {
     final int normValue = value & 0xFF;
     switch (addr & 0x03) {
       case ADDR_COMMAND_STATE: { // command
-        if (isStatus(ST_BUSY)) {
+        if (isStatus(STAT_BUSY)) {
           if ((normValue >>> 4) == 0b1101) {
             this.registers[REG_COMMAND] = normValue;
             this.firstCommandStep = true;
             this.flagWaitDataRd = false;
             this.flagWaitDataWr = false;
-            onStatus(ST_BUSY);
+            onStatus(STAT_BUSY);
           }
         }
         else {
@@ -177,18 +208,18 @@ public class VG93 {
           this.firstCommandStep = true;
           this.flagWaitDataRd = false;
           this.flagWaitDataWr = false;
-          onStatus(ST_BUSY);
+          onStatus(STAT_BUSY);
         }
       }
       break;
       case ADDR_TRACK: { // track
-        if (!isStatus(ST_BUSY)) {
+        if (!isStatus(STAT_BUSY)) {
           registers[REG_TRACK] = normValue;
         }
       }
       break;
       case ADDR_SECTOR: { // sector
-        if (!isStatus(ST_BUSY)) {
+        if (!isStatus(STAT_BUSY)) {
           registers[REG_SECTOR] = normValue;
         }
       }
@@ -196,7 +227,7 @@ public class VG93 {
       case ADDR_DATA: { // data
         if (this.flagWaitDataWr) {
           this.flagWaitDataWr = false;
-          offStatus(ST_DRQ);
+          offStatus(STAT_DRQ);
         }
         registers[REG_DATA_WR] = normValue;
       }
@@ -207,16 +238,16 @@ public class VG93 {
   }
 
   public void step() {
-    final TRDOSDisk thefloppy = this.currentDisk.get();
+    final TRDOSDisk thefloppy = this.trdosDisk.get();
     if (thefloppy == null) {
-      onStatus(ST_NOTRDY);
+      onStatus(ST_NOTREADY);
     }
     else {
-      offStatus(ST_NOTRDY);
+      offStatus(ST_NOTREADY);
     }
 
     final int command = this.registers[REG_COMMAND];
-    if (isStatus(ST_BUSY)) {
+    if (isStatus(STAT_BUSY)) {
       final boolean first = this.firstCommandStep;
       this.firstCommandStep = false;
       switch (command >>> 4) {
@@ -253,10 +284,10 @@ public class VG93 {
           cmdForceInterrupt(command, first);
           break;
         case 0b1110:
-          cmdWriteTrack(command, first);
+          cmdReadTrack(command, first);
           break;
         case 0b1111:
-          cmdReadTrack(command, first);
+          cmdWriteTrack(command, first);
           break;
         default:
           throw new Error("Unexpected value");
@@ -265,7 +296,7 @@ public class VG93 {
   }
 
   private void loadSector(final int side, final int track, final int sector) {
-    final TRDOSDisk floppy = this.currentDisk.get();
+    final TRDOSDisk floppy = this.trdosDisk.get();
     final Sector thesector;
     if (floppy == null) {
       thesector = null;
@@ -289,31 +320,27 @@ public class VG93 {
   }
 
   private void cmdForceInterrupt(final int command, final boolean start) {
-    final TRDOSDisk thedisk = this.currentDisk.get();
+    final TRDOSDisk thedisk = this.trdosDisk.get();
     resetStatus();
 
     if (thedisk == null) {
-      onStatus(ST_NOTRDY);
+      onStatus(ST_NOTREADY);
     }
     else {
       this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
       if (this.sector == null) {
-        onStatus(ST_SEEKERR);
+        onStatus(STAT_NOTFOUND);
       }
       else {
         if (!this.sector.isCrcOk()) {
-          onStatus(ST_CRCERR);
+          onStatus(STAT_CRCERR);
         }
       }
-    }
-
-    if (this.registers[REG_TRACK] == 0) {
-      onStatus(ST_TRK00);
     }
   }
 
   private void cmdRestore(final int command, final boolean start) {
-    final TRDOSDisk thedisk = this.currentDisk.get();
+    final TRDOSDisk thedisk = this.trdosDisk.get();
 
     resetStatus();
 
@@ -322,61 +349,57 @@ public class VG93 {
     }
 
     if (thedisk == null) {
-      onStatus(ST_NOTRDY);
+      onStatus(ST_NOTREADY);
     }
     else {
       if ((command & 0b00001000) != 0) {
-        onStatus(ST_HEADL);
+        onStatus(STAT_HEADL);
       }
       if (thedisk.isWriteProtect()) {
-        onStatus(ST_WRITEP);
+        onStatus(STAT_WRITEPROTECT);
       }
 
       if (counter < 0xFF && this.registers[REG_TRACK] > 0) {
         this.registers[REG_TRACK]--;
         this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
         if (this.sector == null) {
-          onStatus(ST_SEEKERR);
+          onStatus(STAT_NOTFOUND);
         }
         else {
           if (!this.sector.isCrcOk()) {
-            onStatus(ST_CRCERR);
+            onStatus(STAT_CRCERR);
           }
-          onStatus(ST_BUSY);
+          onStatus(STAT_BUSY);
         }
       }
       else {
         if (this.registers[REG_TRACK] != 0) {
           this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
-          onStatus(ST_SEEKERR);
+          onStatus(STAT_NOTFOUND);
         }
       }
 
       if (this.sector != null && !this.sector.isCrcOk()) {
-        onStatus(ST_CRCERR);
+        onStatus(STAT_CRCERR);
       }
-    }
-
-    if (this.registers[REG_TRACK] == 0) {
-      onStatus(ST_TRK00);
     }
   }
 
   private void cmdSeek(final int command, final boolean start) {
     resetStatus();
 
-    final TRDOSDisk thedisk = this.currentDisk.get();
+    final TRDOSDisk thedisk = this.trdosDisk.get();
 
     if ((command & 0b00001000) != 0) {
-      onStatus(ST_HEADL);
+      onStatus(STAT_HEADL);
     }
 
     if (thedisk == null) {
-      onStatus(ST_NOTRDY);
+      onStatus(ST_NOTREADY);
     }
     else {
       if (thedisk.isWriteProtect()) {
-        onStatus(ST_WRITEP);
+        onStatus(STAT_WRITEPROTECT);
       }
 
       if (this.registers[REG_TRACK] < this.registers[REG_DATA_WR]) {
@@ -390,36 +413,33 @@ public class VG93 {
 
       this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
       if (this.sector == null) {
-        onStatus(ST_SEEKERR);
+        onStatus(STAT_NOTFOUND);
         end = true;
       }
       else {
         if (!this.sector.isCrcOk()) {
-          onStatus(ST_CRCERR);
+          onStatus(STAT_CRCERR);
         }
       }
 
       if (!end) {
-        onStatus(ST_BUSY);
+        onStatus(STAT_BUSY);
       }
-    }
-
-    if (this.registers[REG_TRACK] == 0) {
-      onStatus(ST_TRK00);
     }
   }
 
   private void cmdReadAddress(final int command, final boolean start) {
     resetStatus();
 
-    final TRDOSDisk thedisk = this.currentDisk.get();
+    final TRDOSDisk thedisk = this.trdosDisk.get();
 
     if (start) {
       this.counter = 6;
+      this.operationTimeOut = System.currentTimeMillis() + TIMEOUT;
     }
 
     if (thedisk == null) {
-      onStatus(ST_NOTRDY);
+      onStatus(ST_NOTREADY);
     }
     else {
       if (this.sector == null) {
@@ -427,29 +447,29 @@ public class VG93 {
       }
 
       if (this.sector == null) {
-        onStatus(ST_SEEKERR);
+        onStatus(STAT_NOTFOUND);
         resetDataRegisters();
       }
       else {
         if (!this.sector.isCrcOk()) {
-          onStatus(ST_CRCERR);
+          onStatus(STAT_CRCERR);
         }
 
         if (!this.flagWaitDataRd) {
           switch (this.counter--) {
             case 6: {// track
               provideReadData(this.sector.getTrack());
-              onStatus(ST_BUSY);
+              onStatus(STAT_BUSY);
             }
             break;
             case 5: {// side
               provideReadData(this.sector.getSide());
-              onStatus(ST_BUSY);
+              onStatus(STAT_BUSY);
             }
             break;
             case 4: {// sector
               provideReadData(this.sector.getSector());
-              onStatus(ST_BUSY);
+              onStatus(STAT_BUSY);
             }
             break;
             case 3: {// length
@@ -466,17 +486,17 @@ public class VG93 {
               else {
                 provideReadData(3);
               }
-              onStatus(ST_BUSY);
+              onStatus(STAT_BUSY);
             }
             break;
             case 2: {// crc1
               provideReadData(this.sector.getCrc() >> 8);
-              onStatus(ST_BUSY);
+              onStatus(STAT_BUSY);
             }
             break;
             case 1: {// crc2
               provideReadData(this.sector.getCrc() & 0xFF);
-              onStatus(ST_BUSY);
+              onStatus(STAT_BUSY);
             }
             break;
             default: {
@@ -484,71 +504,54 @@ public class VG93 {
           }
         }
         else {
-          onStatus(ST_DRQ);
-          onStatus(ST_BUSY);
+          if (System.currentTimeMillis() > this.operationTimeOut) {
+            onStatus(STAT_TRK00_OR_LOST);
+          }
+          else {
+            onStatus(STAT_DRQ);
+            onStatus(STAT_BUSY);
+          }
         }
       }
     }
   }
 
   private void cmdStep(final int command, final boolean start) {
-    final TRDOSDisk thedisk = this.currentDisk.get();
+    final TRDOSDisk thedisk = this.trdosDisk.get();
 
     resetStatus();
 
     if (thedisk == null) {
       resetDataRegisters();
-      onStatus(ST_NOTRDY);
+      onStatus(ST_NOTREADY);
     }
     else {
       if ((command & 0b00001000) != 0) {
-        onStatus(ST_HEADL);
+        onStatus(STAT_HEADL);
       }
       if (thedisk.isWriteProtect()) {
-        onStatus(ST_WRITEP);
+        onStatus(STAT_WRITEPROTECT);
       }
       if (!this.sector.isCrcOk()) {
-        onStatus(ST_CRCERR);
+        onStatus(STAT_CRCERR);
       }
 
-      boolean end = false;
       if (this.outwardStepDirection) {
-        if (this.registers[REG_TRACK] > 0) {
-          this.registers[REG_TRACK]--;
-        }
-        end = this.registers[REG_TRACK] == 0;
+        this.registers[REG_TRACK] = (this.registers[REG_TRACK] + 1) & 0xFF;
       }
       else {
-        if (this.registers[REG_TRACK] < 0xFF) {
-          this.registers[REG_TRACK]++;
-        }
-        end = this.registers[REG_TRACK] == 0xFF;
+        this.registers[REG_TRACK] = (this.registers[REG_TRACK] - 1) & 0xFF;
       }
 
       this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
 
-      if (this.registers[REG_TRACK] > 0) {
-        this.registers[REG_TRACK]--;
-        this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
-        if (this.sector == null) {
-          onStatus(ST_SEEKERR);
-        }
-        else {
-          if (!this.sector.isCrcOk()) {
-            onStatus(ST_CRCERR);
-          }
-          onStatus(ST_BUSY);
-        }
+      if (this.sector == null) {
+        onStatus(STAT_NOTFOUND);
       }
       else {
-        if (this.registers[REG_TRACK] != 0) {
-          this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
-          onStatus(ST_SEEKERR);
+        if (!this.sector.isCrcOk()) {
+          onStatus(STAT_CRCERR);
         }
-      }
-
-      if (!end) {
-        onStatus(ST_BUSY);
       }
     }
   }
@@ -568,19 +571,20 @@ public class VG93 {
 
     resetStatus();
 
-    final TRDOSDisk thedisk = this.currentDisk.get();
+    final TRDOSDisk thedisk = this.trdosDisk.get();
     if (thedisk == null) {
-      onStatus(ST_NOTRDY);
+      onStatus(ST_NOTREADY);
     }
 
     loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
 
     if (this.sector == null) {
-      onStatus(ST_SEEKERR);
+      onStatus(STAT_NOTFOUND);
     }
     else {
       if (start) {
         this.counter = 0;
+        this.operationTimeOut = System.currentTimeMillis() + TIMEOUT;
       }
 
       if (!this.flagWaitDataRd) {
@@ -589,30 +593,35 @@ public class VG93 {
             if (!this.sector.isLastOnTrack()) {
               this.counter = 0;
               this.registers[REG_SECTOR]++;
-              onStatus(ST_BUSY);
+              onStatus(STAT_BUSY);
             }
           }
         }
         else {
           final int data = this.sector.readByte(this.counter++);
           if (data < 0) {
-            onStatus(ST_LOST);
+            onStatus(STAT_TRK00_OR_LOST);
           }
           else {
             provideReadData(data);
-            onStatus(ST_DRQ);
-            onStatus(ST_BUSY);
+            onStatus(STAT_DRQ);
+            onStatus(STAT_BUSY);
           }
         }
       }
       else {
         if (this.sector == null) {
           resetDataRegisters();
-          onStatus(ST_SEEKERR);
+          onStatus(STAT_NOTFOUND);
         }
         else {
-          onStatus(ST_DRQ);
-          onStatus(ST_BUSY);
+          if (System.currentTimeMillis() > this.operationTimeOut) {
+            onStatus(STAT_TRK00_OR_LOST);
+          }
+          else {
+            onStatus(STAT_DRQ);
+            onStatus(STAT_BUSY);
+          }
         }
       }
     }
@@ -623,25 +632,26 @@ public class VG93 {
 
     resetStatus();
 
-    final TRDOSDisk thedisk = this.currentDisk.get();
+    final TRDOSDisk thedisk = this.trdosDisk.get();
     if (thedisk == null) {
-      onStatus(ST_NOTRDY);
+      onStatus(ST_NOTREADY);
     }
     else {
       if (thedisk.isWriteProtect()) {
-        onStatus(ST_WRITEP);
+        onStatus(STAT_WRITEPROTECT);
       }
     }
 
     loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
 
     if (this.sector == null) {
-      onStatus(ST_SEEKERR);
+      onStatus(STAT_NOTFOUND);
     }
     else {
       if (start) {
         this.counter = 0;
         this.flagWaitDataWr = true;
+        this.operationTimeOut = System.currentTimeMillis() + TIMEOUT;
       }
 
       if (!this.flagWaitDataWr) {
@@ -651,18 +661,18 @@ public class VG93 {
             if (!this.sector.isLastOnTrack()) {
               this.counter = 0;
               this.registers[REG_SECTOR]++;
-              onStatus(ST_BUSY);
+              onStatus(STAT_BUSY);
             }
           }
         }
         else {
           if (!this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
-            onStatus(ST_WRFAULT);
+            onStatus(STAT_WRFAULT);
           }
           else {
             if (this.counter < this.sector.size()) {
-              onStatus(ST_DRQ);
-              onStatus(ST_BUSY);
+              onStatus(STAT_DRQ);
+              onStatus(STAT_BUSY);
             }
           }
         }
@@ -670,22 +680,138 @@ public class VG93 {
       else {
         if (this.sector == null) {
           resetDataRegisters();
-          onStatus(ST_SEEKERR);
+          onStatus(STAT_NOTFOUND);
         }
         else {
-          onStatus(ST_DRQ);
-          onStatus(ST_BUSY);
+          if (System.currentTimeMillis() > this.operationTimeOut) {
+            onStatus(STAT_TRK00_OR_LOST);
+          }
+          else {
+            onStatus(STAT_DRQ);
+            onStatus(STAT_BUSY);
+          }
         }
       }
     }
   }
 
   private void cmdReadTrack(final int command, final boolean start) {
-    throw new Error("Unsupported yet");
+    resetStatus();
+
+    final TRDOSDisk thedisk = this.trdosDisk.get();
+    if (thedisk == null) {
+      onStatus(ST_NOTREADY);
+    }
+    else {
+      if (start) {
+        logger.warning("Reading whole track (fake implementration) [" + this.side + ':' + this.registers[REG_TRACK] + ']');
+        this.counter = 0;
+        this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+        this.extraCounter = 6250;
+        this.operationTimeOut = System.currentTimeMillis() + TIMEOUT;
+      }
+    }
+
+    if (this.sector == null) {
+      onStatus(STAT_TRK00_OR_LOST);
+    }
+    else {
+      if (!this.flagWaitDataRd) {
+        if (this.extraCounter > 0) {
+          if (this.counter >= this.sector.size()) {
+            this.counter = 0;
+            if (!this.sector.isLastOnTrack()) {
+              this.sector = thedisk.findSectorAfter(this.sector);
+              if (this.sector == null) {
+                onStatus(STAT_TRK00_OR_LOST);
+              }
+              else {
+                onStatus(STAT_BUSY);
+              }
+            }
+          }
+          else {
+            final int data = this.sector.readByte(this.counter++);
+            this.extraCounter--;
+            if (data < 0) {
+              onStatus(STAT_TRK00_OR_LOST);
+            }
+            else {
+              provideReadData(data);
+              onStatus(STAT_BUSY);
+            }
+          }
+        }
+      }
+      else {
+        if (System.currentTimeMillis() > this.operationTimeOut) {
+          onStatus(STAT_TRK00_OR_LOST);
+        }
+        else {
+          onStatus(STAT_DRQ);
+          onStatus(STAT_BUSY);
+        }
+      }
+    }
   }
 
   private void cmdWriteTrack(final int command, final boolean start) {
-    throw new Error("Unsupported yet");
+    resetStatus();
+
+    final TRDOSDisk thedisk = this.trdosDisk.get();
+    if (thedisk == null) {
+      onStatus(ST_NOTREADY);
+    }
+    else {
+      if (start) {
+        logger.warning("Writing whole track (fake implementration) [" + this.side + ':' + this.registers[REG_TRACK] + ']');
+        this.counter = 0;
+        this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+        this.extraCounter = 6250;
+        this.operationTimeOut = System.currentTimeMillis() + TIMEOUT;
+        this.flagWaitDataWr = true;
+      }
+    }
+
+    if (this.sector == null) {
+      onStatus(STAT_TRK00_OR_LOST);
+    }
+    else {
+      if (!this.flagWaitDataWr) {
+        this.flagWaitDataWr = true;
+        if (this.extraCounter > 0) {
+          if (this.counter >= this.sector.size()) {
+            this.counter = 0;
+            if (!this.sector.isLastOnTrack()) {
+              this.sector = thedisk.findSectorAfter(this.sector);
+              if (this.sector == null) {
+                onStatus(STAT_TRK00_OR_LOST);
+              }
+              else {
+                onStatus(STAT_BUSY);
+              }
+            }
+          }
+          else {
+            if (!this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
+              onStatus(STAT_WRFAULT);
+            }
+            else {
+              this.extraCounter--;
+            }
+          }
+        }
+      }
+      else {
+        if (System.currentTimeMillis() > this.operationTimeOut) {
+          onStatus(STAT_TRK00_OR_LOST);
+        }
+        else {
+          onStatus(STAT_DRQ);
+          onStatus(STAT_BUSY);
+        }
+      }
+    }
   }
 
 }

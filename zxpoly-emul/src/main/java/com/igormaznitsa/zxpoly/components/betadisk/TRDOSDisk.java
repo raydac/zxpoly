@@ -144,6 +144,19 @@ public class TRDOSDisk {
     return result;
   }
   
+  public Sector findSectorAfter(final Sector sector) {
+    boolean next = false;
+    for(final Sector s : this.sectors){
+      if (next){
+        return s;
+      }
+      if (s == sector){
+        next = true;
+      }
+    }
+    return null;
+  }
+  
   public Sector findSector(final int side, final int track, final int sector) {
     Sector result = null;
 
