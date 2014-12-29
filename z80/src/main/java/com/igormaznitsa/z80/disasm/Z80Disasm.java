@@ -32,7 +32,7 @@ public enum Z80Disasm {
   private static final Z80Instruction[] FDCB_PREFIXED;
 
   static {
-    final List<Z80Instruction> list = new ArrayList<Z80Instruction>(1500);
+    final List<Z80Instruction> list = new ArrayList<>(1500);
     final InputStream in = Z80Disasm.class.getClassLoader().getResourceAsStream("z80opcodes.lst");
     BufferedReader reader = null;
     try {
