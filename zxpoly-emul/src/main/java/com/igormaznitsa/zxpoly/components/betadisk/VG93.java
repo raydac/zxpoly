@@ -81,7 +81,7 @@ public class VG93 {
       this.sector = null;
     }
     else {
-      loadSector(this.side, registers[REG_TRACK], registers[REG_SECTOR]);
+      this.sector = disk.findFirstSector(this.side, this.registers[REG_TRACK]);
     }
   }
 
@@ -167,12 +167,16 @@ public class VG93 {
           if ((normValue >>> 4) == 0b1101) {
             this.registers[REG_COMMAND] = normValue;
             this.firstCommandStep = true;
+            this.flagWaitDataRd = false;
+            this.flagWaitDataWr = false;
             onStatus(ST_BUSY);
           }
         }
         else {
           this.registers[REG_COMMAND] = normValue;
           this.firstCommandStep = true;
+          this.flagWaitDataRd = false;
+          this.flagWaitDataWr = false;
           onStatus(ST_BUSY);
         }
       }
@@ -418,7 +422,9 @@ public class VG93 {
       onStatus(ST_NOTRDY);
     }
     else {
-      this.sector = thedisk.findSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
+      if (this.sector == null) {
+        this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+      }
 
       if (this.sector == null) {
         onStatus(ST_SEEKERR);
@@ -430,50 +436,56 @@ public class VG93 {
         }
 
         if (!this.flagWaitDataRd) {
-          this.counter--;
+          switch (this.counter--) {
+            case 6: {// track
+              provideReadData(this.sector.getTrack());
+              onStatus(ST_BUSY);
+            }
+            break;
+            case 5: {// side
+              provideReadData(this.sector.getSide());
+              onStatus(ST_BUSY);
+            }
+            break;
+            case 4: {// sector
+              provideReadData(this.sector.getSector());
+              onStatus(ST_BUSY);
+            }
+            break;
+            case 3: {// length
+              final int sectorLen = this.sector.size();
+              if (sectorLen <= 128) {
+                provideReadData(0);
+              }
+              else if (sectorLen <= 256) {
+                provideReadData(1);
+              }
+              else if (sectorLen <= 512) {
+                provideReadData(2);
+              }
+              else {
+                provideReadData(3);
+              }
+              onStatus(ST_BUSY);
+            }
+            break;
+            case 2: {// crc1
+              provideReadData(this.sector.getCrc() >> 8);
+              onStatus(ST_BUSY);
+            }
+            break;
+            case 1: {// crc2
+              provideReadData(this.sector.getCrc() & 0xFF);
+              onStatus(ST_BUSY);
+            }
+            break;
+            default: {
+            }
+          }
         }
-
-        switch (this.counter) {
-          case 5: {// track
-            provideReadData(this.sector.getTrack());
-          }
-          break;
-          case 4: {// side
-            provideReadData(this.sector.getSide());
-          }
-          break;
-          case 3: {// sector
-            provideReadData(this.sector.getSector() + 1);
-          }
-          break;
-          case 2: {// length
-            final int sectorLen = this.sector.size();
-            if (sectorLen <= 128) {
-              provideReadData(0);
-            }
-            else if (sectorLen <= 256) {
-              provideReadData(1);
-            }
-            else if (sectorLen <= 512) {
-              provideReadData(2);
-            }
-            else {
-              provideReadData(3);
-            }
-          }
-          break;
-          case 1: {// crc1
-            provideReadData(this.sector.getCrc() >> 8);
-          }
-          break;
-          case 0: {// crc2
-            provideReadData(this.sector.getCrc() & 0xFF);
-            offStatus(ST_BUSY);
-          }
-          break;
-          default: {
-            throw new Error("Unexpected state");
-          }
+        else {
+          onStatus(ST_DRQ);
+          onStatus(ST_BUSY);
         }
       }
     }
@@ -648,7 +660,7 @@ public class VG93 {
             onStatus(ST_WRFAULT);
           }
           else {
-            if (this.counter<this.sector.size()){
+            if (this.counter < this.sector.size()) {
               onStatus(ST_DRQ);
               onStatus(ST_BUSY);
             }
