@@ -329,7 +329,7 @@ public class Z80Test extends AbstractZ80Test {
     state.iff2 = true;
     final Z80 cpu = executeCommand(state, 0xED, 0x57);
     assertEquals(-4 & 0xFF, cpu.getRegister(Z80.REG_A));
-    assertEquals(Z80.FLAG_C | Z80.FLAG_S | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F));
+    assertFlagsExcludeReserved(Z80.FLAG_C | Z80.FLAG_S | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F));
     assertTacts(cpu, 9);
   }
 
@@ -371,7 +371,7 @@ public class Z80Test extends AbstractZ80Test {
     state.iff2 = true;
     final Z80 cpu = executeCommand(state, 0xED, 0x5F);
     assertEquals(-3 & 0xFF, cpu.getRegister(Z80.REG_A));
-    assertEquals(Z80.FLAG_C | Z80.FLAG_S | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F));
+    assertFlagsExcludeReserved(Z80.FLAG_C | Z80.FLAG_S | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F));
     assertTacts(cpu, 9);
   }
 
@@ -2036,7 +2036,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0xDD, 0x19);
 
     assertEquals(0x8888, cpu.getRegister(Z80.REG_IX));
-    assertFlagsExcludeReserved(Z80.FLAG_RESERVED_3 | Z80.FLAG_RESERVED_5 | Z80.FLAG_Z | Z80.FLAG_S | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(Z80.FLAG_X | Z80.FLAG_Y | Z80.FLAG_Z | Z80.FLAG_S | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 15);
   }
@@ -2055,7 +2055,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0xFD, 0x19);
 
     assertEquals(0x8888, cpu.getRegister(Z80.REG_IY));
-    assertFlagsExcludeReserved(Z80.FLAG_RESERVED_3 | Z80.FLAG_RESERVED_5 | Z80.FLAG_Z | Z80.FLAG_S | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(Z80.FLAG_X | Z80.FLAG_Y | Z80.FLAG_Z | Z80.FLAG_S | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 15);
   }
@@ -2134,7 +2134,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0x3F);
 
     assertEquals(0x98, cpu.getRegister(Z80.REG_A));
-    assertFlagsExcludeReserved(Z80.FLAG_RESERVED_3 | Z80.FLAG_RESERVED_5 | Z80.FLAG_H | Z80.FLAG_PV | Z80.FLAG_Z | Z80.FLAG_S, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(Z80.FLAG_X | Z80.FLAG_Y | Z80.FLAG_H | Z80.FLAG_PV | Z80.FLAG_Z | Z80.FLAG_S, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 4);
   }
@@ -4527,7 +4527,7 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(0x7B, tb.readMemory(cpu, 0x1000, false) & 0xFF);
     assertEquals(0x1001, cpu.getRegisterPair(Z80.REGPAIR_HL));
     assertEquals(0x0F, cpu.getRegister(Z80.REG_B));
-    assertEquals(Z80.FLAG_N, cpu.getRegister(Z80.REG_F));
+    assertFlagsExcludeReserved(Z80.FLAG_PV, cpu.getRegister(Z80.REG_F));
 
     assertTacts(cpu, 16);
   }
@@ -4555,7 +4555,7 @@ public class Z80Test extends AbstractZ80Test {
     
     assertEquals(0x1003, cpu.getRegisterPair(Z80.REGPAIR_HL));
     assertEquals(0x0007, cpu.getRegisterPair(Z80.REGPAIR_BC));
-    assertEquals(Z80.FLAG_Z | Z80.FLAG_N, cpu.getRegister(Z80.REG_F));
+    assertFlagsExcludeReserved(Z80.FLAG_Z | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F));
     
     assertTacts(cpu, 58);
   }
@@ -4578,7 +4578,7 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(0x7B, tb.readMemory(cpu, 0x1000, false) & 0xFF);
     assertEquals(0x0FFF, cpu.getRegisterPair(Z80.REGPAIR_HL));
     assertEquals(0x0F, cpu.getRegister(Z80.REG_B));
-    assertFlagsExcludeReserved(Z80.FLAG_N | Z80.FLAG_H | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F));
+    assertFlagsExcludeReserved(0, cpu.getRegister(Z80.REG_F));
     assertEquals(2, cpu.getRegister(Z80.REG_PC));
 
     assertTacts(cpu, 16);
@@ -4607,7 +4607,7 @@ public class Z80Test extends AbstractZ80Test {
 
     assertEquals(0x0FFD, cpu.getRegisterPair(Z80.REGPAIR_HL));
     assertEquals(0x0007, cpu.getRegisterPair(Z80.REGPAIR_BC));
-    assertFlagsExcludeReserved(Z80.FLAG_Z | Z80.FLAG_N | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F));
+    assertFlagsExcludeReserved(Z80.FLAG_Z, cpu.getRegister(Z80.REG_F));
 
     assertTacts(cpu, 58);
   }
@@ -4695,7 +4695,7 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(0x0F, cpu.getRegister(Z80.REG_B));
     assertEquals(0x07, cpu.getRegister(Z80.REG_C));
     assertEquals(0x1001, cpu.getRegisterPair(Z80.REGPAIR_HL));
-    assertEquals(Z80.FLAG_N, cpu.getRegister(Z80.REG_F));
+    assertFlagsExcludeReserved(0, cpu.getRegister(Z80.REG_F));
 
     assertTacts(cpu, 16);
   }
@@ -4723,7 +4723,7 @@ public class Z80Test extends AbstractZ80Test {
 
     assertEquals(0x1003, cpu.getRegisterPair(Z80.REGPAIR_HL));
     assertEquals(0x0007, cpu.getRegisterPair(Z80.REGPAIR_BC));
-    assertEquals(Z80.FLAG_Z | Z80.FLAG_N, cpu.getRegister(Z80.REG_F));
+    assertFlagsExcludeReserved(Z80.FLAG_Z , cpu.getRegister(Z80.REG_F));
 
     assertTacts(cpu, 58);
   }
@@ -4747,7 +4747,7 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(0x0F, cpu.getRegister(Z80.REG_B));
     assertEquals(0x07, cpu.getRegister(Z80.REG_C));
     assertEquals(0x0FFF, cpu.getRegisterPair(Z80.REGPAIR_HL));
-    assertEquals(Z80.FLAG_N, cpu.getRegister(Z80.REG_F));
+    assertFlagsExcludeReserved(Z80.FLAG_H | Z80.FLAG_PV | Z80.FLAG_C , cpu.getRegister(Z80.REG_F));
 
     assertTacts(cpu, 16);
   }
@@ -4775,7 +4775,7 @@ public class Z80Test extends AbstractZ80Test {
 
     assertEquals(0x0FFD, cpu.getRegisterPair(Z80.REGPAIR_HL));
     assertEquals(0x0007, cpu.getRegisterPair(Z80.REGPAIR_BC));
-    assertEquals(Z80.FLAG_Z | Z80.FLAG_N, cpu.getRegister(Z80.REG_F));
+    assertFlagsExcludeReserved(Z80.FLAG_Z | Z80.FLAG_PV | Z80.FLAG_H | Z80.FLAG_C, cpu.getRegister(Z80.REG_F));
 
     assertTacts(cpu, 58);
   }

@@ -329,7 +329,7 @@ public abstract class AbstractZ80Test {
   }
 
   public void assertFlagsExcludeReserved(final int etalon, final int valueToCheck){
-    final int mask = ~(Z80.FLAG_RESERVED_3 | Z80.FLAG_RESERVED_5) & 0xFF;
+    final int mask = ~(Z80.FLAG_X | Z80.FLAG_Y) & 0xFF;
      assertEquals("Flags must be equals", etalon & mask, valueToCheck & mask);
   }
   
