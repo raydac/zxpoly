@@ -24,6 +24,80 @@ public final class Z80 {
 
   private static final int[] FLAGARRAY_PARITY;
 
+  private final byte[] FTABLE_OVERFLOW = new byte[]{
+    0, FLAG_PV, FLAG_PV, 0
+  };
+
+  private static final byte[] FTABLE_SZYX = new byte[]{
+    (byte) 0x40, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+    (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08,
+    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+    (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08,
+    (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20,
+    (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28,
+    (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20,
+    (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28,
+    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+    (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08,
+    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+    (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08,
+    (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20,
+    (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28,
+    (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20, (byte) 0x20,
+    (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28, (byte) 0x28,
+    (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80,
+    (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88,
+    (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80,
+    (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88,
+    (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0,
+    (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8,
+    (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0,
+    (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8,
+    (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80,
+    (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88,
+    (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80,
+    (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88, (byte) 0x88,
+    (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0,
+    (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8,
+    (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0, (byte) 0xa0,
+    (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8, (byte) 0xa8
+  };
+
+  private static final byte[] FTABLE_SZYXP = new byte[]{
+    (byte) 0x44, (byte) 0x00, (byte) 0x00, (byte) 0x04, (byte) 0x00, (byte) 0x04, (byte) 0x04, (byte) 0x00,
+    (byte) 0x08, (byte) 0x0c, (byte) 0x0c, (byte) 0x08, (byte) 0x0c, (byte) 0x08, (byte) 0x08, (byte) 0x0c,
+    (byte) 0x00, (byte) 0x04, (byte) 0x04, (byte) 0x00, (byte) 0x04, (byte) 0x00, (byte) 0x00, (byte) 0x04,
+    (byte) 0x0c, (byte) 0x08, (byte) 0x08, (byte) 0x0c, (byte) 0x08, (byte) 0x0c, (byte) 0x0c, (byte) 0x08,
+    (byte) 0x20, (byte) 0x24, (byte) 0x24, (byte) 0x20, (byte) 0x24, (byte) 0x20, (byte) 0x20, (byte) 0x24,
+    (byte) 0x2c, (byte) 0x28, (byte) 0x28, (byte) 0x2c, (byte) 0x28, (byte) 0x2c, (byte) 0x2c, (byte) 0x28,
+    (byte) 0x24, (byte) 0x20, (byte) 0x20, (byte) 0x24, (byte) 0x20, (byte) 0x24, (byte) 0x24, (byte) 0x20,
+    (byte) 0x28, (byte) 0x2c, (byte) 0x2c, (byte) 0x28, (byte) 0x2c, (byte) 0x28, (byte) 0x28, (byte) 0x2c,
+    (byte) 0x00, (byte) 0x04, (byte) 0x04, (byte) 0x00, (byte) 0x04, (byte) 0x00, (byte) 0x00, (byte) 0x04,
+    (byte) 0x0c, (byte) 0x08, (byte) 0x08, (byte) 0x0c, (byte) 0x08, (byte) 0x0c, (byte) 0x0c, (byte) 0x08,
+    (byte) 0x04, (byte) 0x00, (byte) 0x00, (byte) 0x04, (byte) 0x00, (byte) 0x04, (byte) 0x04, (byte) 0x00,
+    (byte) 0x08, (byte) 0x0c, (byte) 0x0c, (byte) 0x08, (byte) 0x0c, (byte) 0x08, (byte) 0x08, (byte) 0x0c,
+    (byte) 0x24, (byte) 0x20, (byte) 0x20, (byte) 0x24, (byte) 0x20, (byte) 0x24, (byte) 0x24, (byte) 0x20,
+    (byte) 0x28, (byte) 0x2c, (byte) 0x2c, (byte) 0x28, (byte) 0x2c, (byte) 0x28, (byte) 0x28, (byte) 0x2c,
+    (byte) 0x20, (byte) 0x24, (byte) 0x24, (byte) 0x20, (byte) 0x24, (byte) 0x20, (byte) 0x20, (byte) 0x24,
+    (byte) 0x2c, (byte) 0x28, (byte) 0x28, (byte) 0x2c, (byte) 0x28, (byte) 0x2c, (byte) 0x2c, (byte) 0x28,
+    (byte) 0x80, (byte) 0x84, (byte) 0x84, (byte) 0x80, (byte) 0x84, (byte) 0x80, (byte) 0x80, (byte) 0x84,
+    (byte) 0x8c, (byte) 0x88, (byte) 0x88, (byte) 0x8c, (byte) 0x88, (byte) 0x8c, (byte) 0x8c, (byte) 0x88,
+    (byte) 0x84, (byte) 0x80, (byte) 0x80, (byte) 0x84, (byte) 0x80, (byte) 0x84, (byte) 0x84, (byte) 0x80,
+    (byte) 0x88, (byte) 0x8c, (byte) 0x8c, (byte) 0x88, (byte) 0x8c, (byte) 0x88, (byte) 0x88, (byte) 0x8c,
+    (byte) 0xa4, (byte) 0xa0, (byte) 0xa0, (byte) 0xa4, (byte) 0xa0, (byte) 0xa4, (byte) 0xa4, (byte) 0xa0,
+    (byte) 0xa8, (byte) 0xac, (byte) 0xac, (byte) 0xa8, (byte) 0xac, (byte) 0xa8, (byte) 0xa8, (byte) 0xac,
+    (byte) 0xa0, (byte) 0xa4, (byte) 0xa4, (byte) 0xa0, (byte) 0xa4, (byte) 0xa0, (byte) 0xa0, (byte) 0xa4,
+    (byte) 0xac, (byte) 0xa8, (byte) 0xa8, (byte) 0xac, (byte) 0xa8, (byte) 0xac, (byte) 0xac, (byte) 0xa8,
+    (byte) 0x84, (byte) 0x80, (byte) 0x80, (byte) 0x84, (byte) 0x80, (byte) 0x84, (byte) 0x84, (byte) 0x80,
+    (byte) 0x88, (byte) 0x8c, (byte) 0x8c, (byte) 0x88, (byte) 0x8c, (byte) 0x88, (byte) 0x88, (byte) 0x8c,
+    (byte) 0x80, (byte) 0x84, (byte) 0x84, (byte) 0x80, (byte) 0x84, (byte) 0x80, (byte) 0x80, (byte) 0x84,
+    (byte) 0x8c, (byte) 0x88, (byte) 0x88, (byte) 0x8c, (byte) 0x88, (byte) 0x8c, (byte) 0x8c, (byte) 0x88,
+    (byte) 0xa0, (byte) 0xa4, (byte) 0xa4, (byte) 0xa0, (byte) 0xa4, (byte) 0xa0, (byte) 0xa0, (byte) 0xa4,
+    (byte) 0xac, (byte) 0xa8, (byte) 0xa8, (byte) 0xac, (byte) 0xa8, (byte) 0xac, (byte) 0xac, (byte) 0xa8,
+    (byte) 0xa4, (byte) 0xa0, (byte) 0xa0, (byte) 0xa4, (byte) 0xa0, (byte) 0xa4, (byte) 0xa4, (byte) 0xa0,
+    (byte) 0xa8, (byte) 0xac, (byte) 0xac, (byte) 0xa8, (byte) 0xac, (byte) 0xa8, (byte) 0xa8, (byte) 0xac
+  };
+
   static {
     // Make initialization of the inside packed array contains parity bits for values 0..255
     FLAGARRAY_PARITY = new int[8];
@@ -1406,18 +1480,15 @@ public final class Z80 {
     final int reg = readReg16(2);
     final int value = readReg16(p);
 
+    int x, y, z, f, c;
     final int result = reg + value;
-
-    final int flagH = (((reg & 0x0FFF) + (value & 0x0FFF)) & 0x1000) == 0 ? 0 : FLAG_H;
-    final int flagC = (result & 0x10000) == 0 ? 0 : FLAG_C;
-
-    final int resultHiByte = result >> 8;
-
-    final int flag53 = (resultHiByte & (FLAG_RESERVED_5 | FLAG_RESERVED_3));
-
+    final int xor = reg ^ value ^ result;
+    final int flags = this.regSet[REG_F] & (FLAG_S | FLAG_Z | FLAG_PV)
+            | ((result >> 8) & (FLAG_RESERVED_3 | FLAG_RESERVED_5))
+            | ((xor >> 8) & FLAG_H)
+            | ((xor >> 16) & FLAG_C);
     writeReg16(2, result);
-
-    updateFlags(FLAG_S | FLAG_Z | FLAG_PV, flag53 | flagC | flagH, 0);
+    this.regSet[REG_F] = (byte) flags;
 
     this.machineCycles += 7;
   }
@@ -1426,17 +1497,14 @@ public final class Z80 {
     final int reg = readReg16(2);
     final int value = readReg16(p);
 
-    final int c = this.regSet[REG_F] & FLAG_C;
-    final int result = reg + value + c;
-    final int flagH = ((reg ^ result ^ value) >> 8) & FLAG_H;
-    final int flagC = (result & 0x10000) == 0 ? 0 : FLAG_C;
-    final int flagZ = (result & 0xFFFF) == 0 ? FLAG_Z : 0;
-    final int flagS = (result >> 8) & FLAG_S;
-    final int flagPV = (((value ^ reg ^ 0x8000) & (value ^ result) & 0x8000) >> 13) & FLAG_PV;
-
+    final int result = reg + value + (this.regSet[REG_F] & FLAG_C);
+    final int xor = reg ^ value ^ result;
+    final int flags = ((result & 0xffff) == 0 ? FLAG_Z : (result >> 8) & (FLAG_RESERVED_3 | FLAG_RESERVED_5 | FLAG_S))
+            | ((xor >> 8) & FLAG_H)
+            | FTABLE_OVERFLOW[xor >> 15]
+            | ((result >> 16) & FLAG_C);
+    this.regSet[REG_F] = (byte) flags;
     writeReg16(2, result);
-
-    updateFlags(FLAG_RESERVED_3 | FLAG_RESERVED_5, flagC | flagH | flagZ | flagS | flagPV, 0);
 
     this.machineCycles += 7;
   }
@@ -1445,22 +1513,14 @@ public final class Z80 {
     final int reg = readReg16(2);
     final int value = readReg16(p);
 
-    final int valuec = this.regSet[REG_F] & FLAG_C;
-
-    final int result = (reg - value) - valuec;
-
-    final int flagH = ((reg ^ result ^ value) >> 8) & FLAG_H;
-    final int flagC = (result & 0x10000) == 0 ? 0 : FLAG_C;
-    final int flagZ = (result & 0xFFFF) == 0 ? FLAG_Z : 0;
-    final int flagS = (result >> 8) & FLAG_S;
-
-    final int flagPV = (((value ^ reg) & (reg ^ result) & 0x8000) >> 13) & FLAG_PV;
-
-    final int flag35 = (result >> 8) & (FLAG_RESERVED_5 | FLAG_RESERVED_3);
+    final int result = reg - value - (this.regSet[REG_F] & FLAG_C);
+    int xor = result ^ reg ^ value;
+    int flags = FLAG_N | ((result & 0xffff)==0 ? FLAG_Z : (result >> 8) & (FLAG_RESERVED_3 | FLAG_RESERVED_5 | FLAG_S)) | ((xor >> 8) & FLAG_H);
+    xor &= 0x018000;
+    flags |= FTABLE_OVERFLOW[xor >> 15] | ((xor >> 16) & FLAG_C);
 
     writeReg16(2, result);
-
-    updateFlags(0, flagC | flagH | flagZ | flagS | flagPV | flag35, FLAG_N);
+    this.regSet[REG_F] = (byte)flags;
 
     this.machineCycles += 7;
   }
@@ -1512,35 +1572,23 @@ public final class Z80 {
   }
 
   private void doINCReg(final int y) {
-    final int a = readReg8(y);
-    final int flagPV = a == 0x7F ? FLAG_PV : 0;
-    final int result = a + 1;
+    final int reg = readReg8(y);
+
+    final int result = reg + 1;
+    final int xor = reg ^ result;
+    this.regSet[REG_F] =(byte)((this.regSet[REG_F] & FLAG_C) | (xor & FLAG_H) | FTABLE_SZYX[result & 0xff]| FTABLE_OVERFLOW[(xor >> 7) & 0x03]);
+
     writeReg8_UseCachedInstructionByte(y, result);
-
-    final int flagS = (result & 0x80) == 0 ? 0 : FLAG_S;
-    final int flagZ = (result & 0xFF) == 0 ? FLAG_Z : 0;
-    final int flagH = (result & 0xF) == 0 ? FLAG_H : 0;
-
-    final int flag5 = (result & FLAG_RESERVED_5) == 0 ? 0 : FLAG_RESERVED_5;
-    final int flag3 = (result & FLAG_RESERVED_3) == 0 ? 0 : FLAG_RESERVED_3;
-
-    updateFlags(FLAG_C, flag5 | flag3 | flagH | flagPV | flagS | flagZ, 0);
   }
 
   private void doDECReg(final int y) {
-    final int a = readReg8(y);
-    final int flagPV = a == 0x7F ? FLAG_PV : 0;
-    final int result = a - 1;
+    final int reg = readReg8(y);
+
+    final int result = reg - 1;
+    final int xor = result ^ reg;
+    this.regSet[REG_F] =(byte)(FLAG_N | (this.regSet[REG_F] & FLAG_C) | (xor & FLAG_H) | FTABLE_SZYX[result & 0xff] | FTABLE_OVERFLOW[(xor >> 7) & 0x03]);
+    
     writeReg8_UseCachedInstructionByte(y, result);
-
-    final int flagS = (result & 0x80) == 0 ? 0 : FLAG_S;
-    final int flagZ = (result & 0xFF) == 0 ? FLAG_Z : 0;
-    final int flagH = (result & 0xF) == 0xF ? FLAG_H : 0;
-
-    final int flag5 = (result & FLAG_RESERVED_5) == 0 ? 0 : FLAG_RESERVED_5;
-    final int flag3 = (result & FLAG_RESERVED_3) == 0 ? 0 : FLAG_RESERVED_3;
-
-    updateFlags(FLAG_C, flag5 | flag3 | flagH | flagPV | flagS | flagZ, FLAG_N);
   }
 
   private void doLD_Reg_ByValue(final int y) {
@@ -1549,10 +1597,9 @@ public final class Z80 {
 
   private void doRLCA() {
     final int value = this.regSet[REG_A] << 1;
-    final int flagc = (value & 0x100) == 0 ? 0 : FLAG_C;
     final int newval = (value | ((value >>> 8) & 1));
     this.regSet[REG_A] = (byte) newval;
-    updateFlags(FLAG_Z | FLAG_PV | FLAG_S, flagc | (newval & (FLAG_RESERVED_3 | FLAG_RESERVED_5)), 0);
+    this.regSet[REG_F] = (byte)((this.regSet[REG_F] & (FLAG_S | FLAG_Z | FLAG_PV)) | (newval & (FLAG_RESERVED_3 | FLAG_RESERVED_5 | FLAG_C)));
   }
 
   private void doRRCA() {
@@ -1560,7 +1607,8 @@ public final class Z80 {
     final int flagc = value & FLAG_C;
     final int newval = ((value >>> 1) | (flagc << 7));
     this.regSet[REG_A] = (byte) newval;
-    updateFlags(FLAG_Z | FLAG_PV | FLAG_S, flagc | (newval & (FLAG_RESERVED_3 | FLAG_RESERVED_5)), 0);
+   
+    this.regSet[REG_F] = (byte)((this.regSet[REG_F] & (FLAG_S|FLAG_Z|FLAG_PV)) | (newval & (FLAG_RESERVED_3 | FLAG_RESERVED_5)) | flagc);
   }
 
   private void doRLA() {
@@ -1800,94 +1848,78 @@ public final class Z80 {
 
   private void _aluAccumulatorOp(final int op, final int value) {
     final int a = this.regSet[REG_A] & 0xFF;
+    final int flagc = this.regSet[REG_F] & FLAG_C;
 
     final int result;
 
+    final int flag35;
+    final int flagZ;
     final int flagN;
+    final int flagS;
     final int flagH;
     final int flagC;
     final int flagPV;
 
-    boolean changing = true;
+    final int flags;
+
     switch (op) {
       case 0: { // ADD
         result = a + value;
-        flagN = 0;
-        flagH = (((a & 0xF) + (value & 0xF)) & 0x10) == 0 ? 0 : FLAG_H;
-        flagC = (result & 0x100) == 0 ? 0 : FLAG_C;
-        flagPV = (~(a ^ value) & (a ^ result) & 0x80) == 0 ? 0 : FLAG_PV;
+        final int xor = a ^ value ^ result;
+        flags = (xor & FLAG_H) | FTABLE_SZYX[result & 0xff] | FTABLE_OVERFLOW[xor >> 7] | ((result >> 8) & FLAG_C);
       }
       break;
       case 1: { // ADC
-        final int c = this.regSet[REG_F] & 1;
-        result = a + value + c;
-        flagN = 0;
-        flagH = (((a & 0xF) + (value & 0xF) + c) & 0x10) == 0 ? 0 : FLAG_H;
-        flagC = (result & 0x100) == 0 ? 0 : FLAG_C;
-        flagPV = (~(a ^ value) & (a ^ result) & 0x80) == 0 ? 0 : FLAG_PV;
+        result = a + value + flagc;
+        final int xor = a ^ value ^ result;
+        flags = (xor & FLAG_H) | FTABLE_SZYX[result & 0xff] | FTABLE_OVERFLOW[xor >> 7] | ((result >> 8) & FLAG_C);
       }
       break;
       case 2: { // SUB
         result = a - value;
-        flagN = FLAG_N;
-        flagC = (result & 0x100) == 0 ? 0 : FLAG_C;
-        flagPV = ((a ^ value) & (a ^ result) & 0x80) == 0 ? 0 : FLAG_PV;
-        flagH = ((a ^ value ^ result) & 0x10) == 0 ? 0 : FLAG_H;
+        int xor = a ^ value ^ result;
+        final int lflags = FLAG_N | (xor & FLAG_H) | FTABLE_SZYX[result & 0xff];
+        xor &= 0x0180;
+        flags = lflags | FTABLE_OVERFLOW[xor >> 7] | ((xor >> 8) & FLAG_C);
       }
       break;
       case 3: { // SBC
-        result = a - value - (this.regSet[REG_F] & 1);
-        flagN = FLAG_N;
-        flagC = (result & 0x100) == 0 ? 0 : FLAG_C;
-        flagPV = ((a ^ value) & (a ^ result) & 0x80) == 0 ? 0 : FLAG_PV;
-        flagH = ((a ^ value ^ result) & 0x10) == 0 ? 0 : FLAG_H;
+        result = a - value - flagc;
+        int xor = a ^ value ^ result;
+        final int lflags = FLAG_N | (xor & FLAG_H) | FTABLE_SZYX[result & 0xff];
+        xor &= 0x0180;
+        flags = lflags | FTABLE_OVERFLOW[xor >> 7] | ((xor >> 8) & FLAG_C);
       }
       break;
       case 4: { // AND
         result = a & value;
-        flagN = 0;
-        flagC = 0;
-        flagH = FLAG_H;
-        flagPV = checkParity(result);
+        flags = FTABLE_SZYXP[result] | FLAG_H;
       }
       break;
       case 5: { // XOR
         result = a ^ value;
-        flagN = 0;
-        flagC = 0;
-        flagH = 0;
-        flagPV = checkParity(result);
+        flags = FTABLE_SZYXP[result] | FLAG_H;
       }
       break;
       case 6: { // OR
         result = a | value;
-        flagN = 0;
-        flagC = 0;
-        flagH = 0;
-        flagPV = checkParity(result);
+        flags = FTABLE_SZYXP[result] | FLAG_H;
       }
       break;
       case 7: { // CP
-        changing = false;
-        result = a - value;
-        flagN = FLAG_N;
-        flagC = (result & 0x100) == 0 ? 0 : FLAG_C;
-        flagPV = ((a ^ value) & (a ^ result) & 0x80) == 0 ? 0 : FLAG_PV;
-        flagH = ((a ^ value ^ result) & 0x10) == 0 ? 0 : FLAG_H;
+        result = a;
+        final int diff = a - value;
+        int xor = a ^ value ^ diff;
+        final int lflags = FLAG_N | (xor & FLAG_H) | (FTABLE_SZYX[diff & 0xff] & (FLAG_S | FLAG_Z)) | (value & (FLAG_RESERVED_3 | FLAG_RESERVED_5));
+        xor &= 0x0180;
+        flags = lflags | FTABLE_OVERFLOW[xor >> 7] | ((xor >> 8) & FLAG_C);
       }
       break;
       default:
         throw new Error("Detected unexpected ALU operation [" + op + ']');
     }
-    if (changing) {
-      this.regSet[REG_A] = (byte) result;
-    }
-
-    final int flagZ = (result & 0xFF) == 0 ? FLAG_Z : 0;
-    final int flagS = (result & 0x80) == 0 ? 0 : FLAG_S;
-    final int flag35 = (this.regSet[REG_A] & (FLAG_RESERVED_3 | FLAG_RESERVED_5));
-
-    updateFlags(0, flag35 | flagZ | flagS | flagC | flagPV | flagH | flagN, 0);
+    this.regSet[REG_A] = (byte) result;
+    this.regSet[REG_F] = (byte) flags;
   }
 
   private void doRST(final int address) {
@@ -1963,10 +1995,12 @@ public final class Z80 {
   }
 
   private void doBIT(final int bit, final int reg) {
-    final int flagZ = (readReg8(reg) & (1 << bit)) == 0 ? FLAG_Z : 0;
-    //        lg_flagS = (bit == 0x7) ? !lg_flagZ : false;
-    final int flagS = (bit == 0x7) ? (flagZ ^ FLAG_Z) << 1 : 0;
-    updateFlags(FLAG_C, flagS | flagZ | (flagZ >>> 4), FLAG_H);
+    final int regvalue = readReg8(reg);
+    final int mask = 1 << bit;
+    final int x = regvalue & mask;
+
+    this.regSet[REG_F] = (byte)((x!=0 ? 0 : FLAG_Z | FLAG_PV) | (x & FLAG_S) | (regvalue & (FLAG_RESERVED_3|FLAG_RESERVED_5)) | FLAG_H | (this.regSet[REG_F] & FLAG_C));
+
     if (reg == 6) {
       this.machineCycles++;
     }
@@ -2036,17 +2070,24 @@ public final class Z80 {
   }
 
   private void doNEG() {
-    final int a = this.regSet[REG_A] & 0xFF;
-    final int result = 0 - a;
+    final int value = this.regSet[REG_A] & 0xFF;
+    final int a = 0;
+
+    final int resultRaw = a - value;
+    final int result = resultRaw & 0xFF;
     this.regSet[REG_A] = (byte) result;
 
-    final int flagPV = a == 0x80 ? FLAG_PV : 0;
-    final int flagC = a != 0 ? FLAG_C : 0;
-    final int flagZ = result == 0 ? FLAG_Z : 0;
-    final int flagS = (result & 0x80) == 0 ? 0 : FLAG_S;
-    final int flagH = ((0 - (a ^ 0xF)) & 0x10) == 0 ? 0 : FLAG_H;
+    final int flag3 = result & FLAG_RESERVED_3;
+    final int flag5 = result & FLAG_RESERVED_5;
+    final int flagS = result & FLAG_S;
 
-    updateFlags(FLAG_RESERVED_3 | FLAG_RESERVED_5, flagPV | flagC | flagH | flagZ | flagS | flagH, FLAG_N);
+    final int flagZ = result == 0 ? FLAG_Z : 0;
+    final int flagC = (resultRaw & 0x100) == 0 ? 0 : FLAG_C;
+    final int flagPV = ((a ^ value) & (a ^ result) & 0x80) == 0 ? 0 : FLAG_PV;
+    final int flagH = ((a & 0x0f) - (value & 0x0f)) & FLAG_H;
+    final int flagN = FLAG_N;
+
+    this.regSet[REG_F] = (byte) (flagN | flag3 | flag5 | flagPV | flagC | flagH | flagZ | flagS | flagH);
   }
 
   private void doRETI() {
@@ -2119,12 +2160,8 @@ public final class Z80 {
     this.regSet[REG_A] = (byte) a;
     _writemem8(addr, (byte) val);
 
-    final int flagZ = a == 0 ? FLAG_Z : 0;
-    final int flagS = (a & 0x80) == 0 ? 0 : FLAG_S;
-    final int flagPV = checkParity(a);
-
-    updateFlags(FLAG_C | FLAG_RESERVED_3 | FLAG_RESERVED_5, flagZ | flagS | flagPV, 0);
-
+    this.regSet[REG_F] = (byte)(FTABLE_SZYXP[a] | (this.regSet[REG_F] & FLAG_C));
+    
     this.machineCycles += 4;
   }
 
@@ -2137,11 +2174,7 @@ public final class Z80 {
     this.regSet[REG_A] = (byte) a;
     _writemem8(addr, (byte) val);
 
-    final int flagZ = a == 0 ? FLAG_Z : 0;
-    final int flagS = (a & 0x80) == 0 ? 0 : FLAG_S;
-    final int flagPV = checkParity(a);
-
-    updateFlags(FLAG_C | FLAG_RESERVED_3 | FLAG_RESERVED_5, flagZ | flagS | flagPV, 0);
+    this.regSet[REG_F] = (byte) (FTABLE_SZYXP[a] | (this.regSet[REG_F] & FLAG_C));
 
     this.machineCycles += 4;
   }
@@ -2232,15 +2265,21 @@ public final class Z80 {
   private void doLDI() {
     int hl = getRegisterPair(REGPAIR_HL);
     int de = getRegisterPair(REGPAIR_DE);
-    _writemem8(de++, (byte) _readmem8(hl++));
+    
+    final int value = _readmem8(hl++);
+    
+    _writemem8(de++, (byte) value);
     setRegisterPair(REGPAIR_HL, hl);
     setRegisterPair(REGPAIR_DE, de);
 
     final int bc = (getRegisterPair(REGPAIR_BC) - 1) & 0xFFFF;
     setRegisterPair(REGPAIR_BC, bc);
 
-    updateFlags(FLAG_RESERVED_3 | FLAG_RESERVED_5 | FLAG_C | FLAG_Z | FLAG_S, bc == 0 ? 0 : FLAG_PV, 0);
-
+    int flags = this.regSet[REG_F] & (FLAG_S | FLAG_Z | FLAG_C) | (bc == 0 ? 0 : FLAG_PV);
+    final int tmp = value + (this.regSet[REG_A] & 0XFF);
+    flags |= (tmp & FLAG_RESERVED_3) | ((tmp<<4) & FLAG_RESERVED_5);
+    this.regSet[REG_F] = (byte)flags;
+    
     this.machineCycles += 2;
   }
 
@@ -2260,14 +2299,18 @@ public final class Z80 {
 
   private void doCPI() {
     int hl = getRegisterPair(REGPAIR_HL);
-    final int m = _readmem8(hl++);
+    final int mem = _readmem8(hl++);
     final int a = getRegister(REG_A);
-    final int r = a - m;
+    final int rslt = a - mem;
     setRegisterPair(REGPAIR_HL, hl);
     final int bc = getRegisterPair(REGPAIR_BC) - 1;
     setRegisterPair(REGPAIR_BC, bc);
-    updateFlags(FLAG_C, ((r & 0x80) == 0 ? 0 : FLAG_S) | (r == 0 ? FLAG_Z : 0) | (((a ^ m ^ r) & 0x10) == 0 ? 0 : FLAG_H) | (bc == 0 ? 0 : FLAG_PV), FLAG_N);
-
+    
+    int flags = ((a ^ mem ^ rslt) & FLAG_H);
+    final int tmpflag = rslt - (flags >> 4);  
+    flags |= ((tmpflag << 4) & FLAG_RESERVED_5) | (tmpflag & FLAG_RESERVED_3) | (FTABLE_SZYX[rslt & 0xff] & (FLAG_S | FLAG_Z)) | (bc == 0 ? 0 : FLAG_PV) | FLAG_N | (this.regSet[REG_F] & FLAG_C);
+    
+    this.regSet[REG_F] = (byte)flags;
     this.machineCycles += 5;
   }
 
@@ -2395,14 +2438,21 @@ public final class Z80 {
   private void doLDD() {
     int hl = getRegisterPair(REGPAIR_HL);
     int de = getRegisterPair(REGPAIR_DE);
-    _writemem8(de--, (byte) _readmem8(hl--));
+    
+    final int value = _readmem8(hl--);
+    
+    _writemem8(de--, (byte) value);
     setRegisterPair(REGPAIR_HL, hl);
     setRegisterPair(REGPAIR_DE, de);
 
     final int bc = (getRegisterPair(REGPAIR_BC) - 1) & 0xFFFF;
     setRegisterPair(REGPAIR_BC, bc);
 
-    updateFlags(FLAG_C | FLAG_Z | FLAG_S, bc == 0 ? 0 : FLAG_PV, 0);
+    int flags = (this.regSet[REG_F] & (FLAG_S | FLAG_Z | FLAG_C)) | (bc == 0 ? 0 : FLAG_PV);
+    final int tmpf = value + this.regSet[REG_A];
+    flags |= tmpf & FLAG_RESERVED_3 | ((tmpf << 4) & FLAG_RESERVED_5);
+
+    this.regSet[REG_F] = (byte)flags;
 
     this.machineCycles += 2;
   }
