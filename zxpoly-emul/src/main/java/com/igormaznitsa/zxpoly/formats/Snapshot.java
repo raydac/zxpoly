@@ -18,7 +18,11 @@ package com.igormaznitsa.zxpoly.formats;
 
 import com.igormaznitsa.zxpoly.components.VideoController;
 import com.igormaznitsa.zxpoly.components.ZXPolyModule;
+import java.io.IOException;
+import javax.swing.filechooser.FileFilter;
 
-public interface Snapshot {
-  public void fillModule(final ZXPolyModule module, final VideoController vc);
+public abstract class Snapshot extends FileFilter {
+  public abstract void fillModule(final ZXPolyModule module, final VideoController vc);
+  public abstract void load(final byte [] array) throws IOException; 
+  public abstract String getName();
 }

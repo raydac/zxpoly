@@ -370,6 +370,11 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
+  public void setBorderColor(final int colorIndex){
+    this.portFEw |= (this.portFEw & 7) | (colorIndex & 0x07);
+    repaint();
+  }
+  
   public void lockBuffer() {
     bufferLocker.lock();
   }
@@ -401,7 +406,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   @Override
   public void writeIO(final ZXPolyModule module, final int port, final int value) {
-    if ((port & 0xFF) == 0xFE) {
+    if (!module.isTRDOSActive() && (port & 0xFF) == 0xFE) {
       final int old = this.portFEw;
       this.portFEw = value & 0xFF;
       if (((this.portFEw ^ old) & 7) != 0) {

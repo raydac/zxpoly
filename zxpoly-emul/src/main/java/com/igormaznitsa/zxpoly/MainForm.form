@@ -27,7 +27,7 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuFileLoadSNA">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Load SNA"/>
+                <Property name="text" type="java.lang.String" value="Load Snapshot"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuFileLoadSNAActionPerformed"/>

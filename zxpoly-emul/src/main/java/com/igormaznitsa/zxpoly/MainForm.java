@@ -18,13 +18,14 @@ package com.igormaznitsa.zxpoly;
 
 import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
-import com.igormaznitsa.zxpoly.formats.FormatSNA;
+import com.igormaznitsa.zxpoly.formats.*;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,7 +34,10 @@ import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
 
 public class MainForm extends javax.swing.JFrame implements Runnable {
+//  private static final long CYCLES_BETWEEN_INT = 8000000000000L;
+  private static final long CYCLES_BETWEEN_INT = 64000L;
 
+  
   private static class TRDFileFilter extends FileFilter {
 
     @Override
@@ -110,8 +114,6 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     long nextSystemInt = System.currentTimeMillis() + 20;
     long nextScreenRefresh = System.currentTimeMillis() + SCREEN_REFRESH_DELAY;
 
-    final long CYCLES_BETWEEN_INT = 80000L;
-
     while (!Thread.currentThread().isInterrupted()) {
       stepSemaphor.lock();
       try {
@@ -127,6 +129,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
         }
 
         this.board.step(intsignal, this.board.getCPU0().getMachineCycles() <= CYCLES_BETWEEN_INT);
+//        this.board.step(false, this.board.getCPU0().getMachineCycles() <= CYCLES_BETWEEN_INT);
 
         if (nextScreenRefresh <= System.currentTimeMillis()) {
           updateScreen();
@@ -200,7 +203,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuFile.add(menuFileSelectDiskA);
 
-    menuFileLoadSNA.setText("Load SNA");
+    menuFileLoadSNA.setText("Load Snapshot");
     menuFileLoadSNA.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         menuFileLoadSNAActionPerformed(evt);
@@ -237,7 +240,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_menuOptionsShowIndicatorsActionPerformed
 
   private void menuFileSelectDiskAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskAActionPerformed
-    final File selected = chooseFile("Select Disk A", null, new TRDFileFilter());
+    final File selected = chooseFile("Select Disk A", null, null, new TRDFileFilter());
     if (selected != null) {
       try {
         final TRDOSDisk floppy = new TRDOSDisk(FileUtils.readFileToByteArray(selected), false);
@@ -262,14 +265,18 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_formWindowGainedFocus
 
   private void menuFileLoadSNAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadSNAActionPerformed
-    final File selected = chooseFile("Select SNA image", null, new SNAFileFilter());
+    stepSemaphor.lock();
+    try{
+    final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
+    final File selected = chooseFile("Select snapshot", null, theFilter, new FormatZ80(), new FormatSNA());
     if (selected != null) {
       try {
-        final FormatSNA sna = new FormatSNA(FileUtils.readFileToByteArray(selected));
-        log.info("Loaded SNA image from file " + selected);
+        final Snapshot selectedFilter = (Snapshot)theFilter.get();
+        selectedFilter.load(FileUtils.readFileToByteArray(selected));
+        log.info("Loaded image from file " + selectedFilter.getName());
         stepSemaphor.lock();
         try {
-          this.board.loadSnapshot(sna, false);
+          this.board.loadSnapshot(selectedFilter, false);
         }
         finally {
           stepSemaphor.unlock();
@@ -280,11 +287,17 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
         JOptionPane.showMessageDialog(this, "Can't read SNA image", "Error", JOptionPane.ERROR_MESSAGE);
       }
     }
+    }finally{
+      stepSemaphor.unlock();
+    }
   }//GEN-LAST:event_menuFileLoadSNAActionPerformed
 
-  private File chooseFile(final String title, final File initial, final FileFilter filter) {
+  private File chooseFile(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter ... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
-    chooser.addChoosableFileFilter(filter);
+    for(final FileFilter f : filter){
+      chooser.addChoosableFileFilter(f);
+    }
+    chooser.setAcceptAllFileFilterUsed(false);
     chooser.setMultiSelectionEnabled(false);
     chooser.setDialogTitle(title);
     chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -292,6 +305,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     final File result;
     if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
       result = chooser.getSelectedFile();
+      if (selectedFilter!=null) {
+        selectedFilter.set(chooser.getFileFilter());
+      }
     }
     else {
       result = null;

@@ -22,9 +22,11 @@ import com.igormaznitsa.jbbp.mapper.BinType;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.VideoController;
 import com.igormaznitsa.zxpoly.components.ZXPolyModule;
+import java.io.File;
 import java.io.IOException;
+import javax.swing.filechooser.FileFilter;
 
-public class FormatSNA implements Snapshot {
+public class FormatSNA extends Snapshot {
 
   private static final JBBPParser PARSER_SNA_48 = JBBPParser.prepare(
           "ubyte regI;"
@@ -43,13 +45,20 @@ public class FormatSNA implements Snapshot {
   @Bin
   private byte[] ramDump;
 
-  public FormatSNA(final byte[] data) throws IOException {
-    PARSER_SNA_48.parse(data).mapTo(this);
+  public FormatSNA() {
   }
+
+  @Override
+  public void load(byte[] array) throws IOException {
+    PARSER_SNA_48.parse(array).mapTo(this);
+  }
+
 
   @Override
   public void fillModule(final ZXPolyModule module, final VideoController vc) {
     final Z80 cpu = module.getCPU();
+    cpu.doReset();
+    
     cpu.setRegisterPair(Z80.REGPAIR_AF, regAF);
     cpu.setRegisterPair(Z80.REGPAIR_BC, regBC);
     cpu.setRegisterPair(Z80.REGPAIR_DE, regDE);
@@ -80,6 +89,22 @@ public class FormatSNA implements Snapshot {
     cpu.setRegister(Z80.REG_PC, calculatedPC);
     
     cpu.setIFF((interrupt & 2)!=0, (interrupt & 2) != 0);
+    
+    vc.setBorderColor(this.borderColor);
   }
 
+  @Override
+  public boolean accept(final File f) {
+    return f!=null && (f.isDirectory() || f.getName().toString().endsWith(".sna"));
+  }
+
+  @Override
+  public String getDescription() {
+    return "SNA Snapshot (*.SNA)";
+  }
+
+  @Override
+  public String getName() {
+    return "SNA Snapshot";
+  }
 }

@@ -19,6 +19,8 @@ package com.igormaznitsa.zxpoly.components;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.z80.disasm.Z80Disasm;
+import com.igormaznitsa.z80.disasm.Z80Instruction;
 import com.igormaznitsa.zxpoly.formats.Snapshot;
 import java.util.*;
 import java.util.logging.Logger;
@@ -75,7 +77,7 @@ public final class Motherboard implements ZXPoly {
       throw new Error("Unsupported");
     }
     else {
-      this.port3D00 |= PORTw_ZXPOLY_BLOCK | PORTw_ZXPOLY_nWAIT;
+      this.port3D00 = PORTw_ZXPOLY_BLOCK;
       for (final ZXPolyModule m : this.modules) {
         m.setSpectrum48Mode();
       }
