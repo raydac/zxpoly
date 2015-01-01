@@ -25,10 +25,6 @@ import java.util.Locale;
  */
 public final class Z80 {
 
-  private final byte[] FTABLE_OVERFLOW = new byte[]{
-    0, FLAG_PV, FLAG_PV, 0
-  };
-
   private static final byte[] FTABLE_SZYX = new byte[]{
     (byte) 0x40, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
     (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08, (byte) 0x08,
@@ -119,6 +115,36 @@ public final class Z80 {
   private static final int FLAG_XY = FLAG_X | FLAG_Y;
   private static final int FLAG_SZPV = FLAG_S | FLAG_Z | FLAG_PV;
   private static final int FLAG_SYX = FLAG_S | FLAG_X | FLAG_Y;
+  private static final int FLAG_SZ = FLAG_S | FLAG_Z;
+  private static final int FLAG_SZC = FLAG_SZ | FLAG_C;
+  private static final int FLAG_HC = FLAG_H | FLAG_C;
+
+  
+  private static final byte[] XOR_CONDITION_TABLE = new byte[]{
+    (byte) FLAG_Z,
+    0,
+    (byte) FLAG_C,
+    0,
+    (byte) FLAG_PV,
+    0,
+    (byte) FLAG_S,
+    0,};
+
+  private static final byte[] AND_CONDITION_TABLE = new byte[]{
+    (byte) FLAG_Z,
+    (byte) FLAG_Z,
+    (byte) FLAG_C,
+    (byte) FLAG_C,
+    (byte) FLAG_PV,
+    (byte) FLAG_PV,
+    (byte) FLAG_S,
+    (byte) FLAG_S
+  };
+
+  private static final byte[] FTABLE_OVERFLOW = new byte[]{
+    0, (byte) FLAG_PV, (byte) FLAG_PV, 0
+  };
+  
   
   public static final int REG_A = 0;
   public static final int REG_F = 1;
@@ -492,8 +518,8 @@ public final class Z80 {
   }
 
   private int readInstructionByte(final boolean m1) {
-    final int pc = this.regPC++;
-    this.regPC &= 0xFFFF;
+    final int pc = this.regPC;
+    this.regPC = (this.regPC+1) & 0xFFFF;
     this.outSignals = m1 ? this.outSignals & (~SIGNAL_OUT_nM1) : this.outSignals | SIGNAL_OUT_nM1;
     final int result = this.bus.readMemory(this, pc, m1) & 0xFF;
     this.outSignals = this.outSignals | SIGNAL_OUT_nM1;
@@ -529,26 +555,7 @@ public final class Z80 {
   }
 
   private boolean checkCondition(final int cc) {
-    final int flags = this.regSet[REG_F];
-    switch (cc) {
-      case 0:
-        return (flags & FLAG_Z) == 0;
-      case 1:
-        return (flags & FLAG_Z) != 0;
-      case 2:
-        return (flags & FLAG_C) == 0;
-      case 3:
-        return (flags & FLAG_C) != 0;
-      case 4:
-        return (flags & FLAG_PV) == 0;
-      case 5:
-        return (flags & FLAG_PV) != 0;
-      case 6:
-        return (flags & FLAG_S) == 0;
-      case 7:
-        return (flags & FLAG_S) != 0;
-    }
-    throw new Error("Unexpected condition index [" + cc + ']');
+    return ((this.regSet[REG_F] ^ XOR_CONDITION_TABLE[cc]) & AND_CONDITION_TABLE[cc])!=0;
   }
 
   private int readReg8(final int r) {
@@ -931,6 +938,8 @@ public final class Z80 {
             _int();
             interruptionProcessed = true;
           }
+        }else{
+          this.pendingINT = false;
         }
       }
 
@@ -1551,23 +1560,34 @@ public final class Z80 {
   }
 
   private void doINCReg(final int y) {
-    final int reg = readReg8(y);
+    final int x = readReg8(y);
 
-    final int result = reg + 1;
-    final int xor = reg ^ result;
-    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (xor & FLAG_H) | FTABLE_SZYX[result & 0xff] | FTABLE_OVERFLOW[(xor >> 7) & 0x03]);
+    int z = x + 1;
+    int c = x ^ z;
 
-    writeReg8_UseCachedInstructionByte(y, result);
+    int f = this.regSet[REG_F] & FLAG_C;
+    f |= c & FLAG_H;
+    f |= FTABLE_SZYX[z & 0xff];
+    f |= FTABLE_OVERFLOW[(c >>> 7) & 0x03];
+    
+    writeReg8_UseCachedInstructionByte(y, z);
+    this.regSet[REG_F] = (byte)f;
   }
 
   private void doDECReg(final int y) {
-    final int reg = readReg8(y);
+    final int x = readReg8(y);
 
-    final int result = reg - 1;
-    final int xor = result ^ reg;
-    this.regSet[REG_F] = (byte) (FLAG_N | (this.regSet[REG_F] & FLAG_C) | (xor & FLAG_H) | FTABLE_SZYX[result & 0xff] | FTABLE_OVERFLOW[(xor >> 7) & 0x03]);
+    final int z = x - 1;
+    final int c = x ^ z;
+    
+    writeReg8_UseCachedInstructionByte(y, z);
+    
+    int f = FLAG_N | (this.regSet[REG_F] & FLAG_C);
+    f |= c & FLAG_H;
+    f |= FTABLE_SZYX[z & 0xff];
+    f |= FTABLE_OVERFLOW[(c >>> 7) & 0x03];
 
-    writeReg8_UseCachedInstructionByte(y, result);
+    this.regSet[REG_F] = (byte) f;
   }
 
   private void doLD_Reg_ByValue(final int y) {
@@ -1575,38 +1595,35 @@ public final class Z80 {
   }
 
   private void doRLCA() {
-    final int value = this.regSet[REG_A] << 1;
-    final int newval = (value | ((value >>> 8) & 1));
-    this.regSet[REG_A] = (byte) newval;
-
-    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & (FLAG_S | FLAG_Z | FLAG_PV)) | (newval & (FLAG_X | FLAG_Y | FLAG_C)));
+    int a = this.regSet[REG_A] & 0xFF;
+    a = (a << 1) | (a >>> 7);
+    this.regSet[REG_F] = (byte)((this.regSet[REG_F] & FLAG_SZPV) | (a & (FLAG_XY | FLAG_C)));
+    this.regSet[REG_A] = (byte)a;
   }
 
   private void doRRCA() {
-    final int value = this.regSet[REG_A] & 0xFF;
-    final int flagc = value & FLAG_C;
-    final int newval = ((value >>> 1) | (flagc << 7));
-    this.regSet[REG_A] = (byte) newval;
-
-    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & (FLAG_S | FLAG_Z | FLAG_PV)) | (newval & (FLAG_X | FLAG_Y)) | flagc);
+    int a = this.regSet[REG_A] & 0xFF;
+    int c = a & FLAG_C;
+    a = (a >>> 1) | (a << 7);
+    this.regSet[REG_F] = (byte)((this.regSet[REG_F] & FLAG_SZPV) | (a & FLAG_XY)  | c);    
+    this.regSet[REG_A] = (byte) a;
   }
 
   private void doRLA() {
-    final int olda = this.regSet[REG_A] & 0xFF;
-    final int newa = olda << 1;
-    final int flags = (this.regSet[REG_F] & (FLAG_S | FLAG_Z | FLAG_PV)) | (newa & (FLAG_X | FLAG_Y)) | (olda >> 7);
-    this.regSet[REG_A] = (byte) (newa | this.regSet[REG_F] & FLAG_C);
-
-    this.regSet[REG_F] = (byte) flags;
+    final int A = this.regSet[REG_A] & 0xFF;
+    final int a = A << 1;
+    int f = (this.regSet[REG_F] & FLAG_SZPV) | (a & FLAG_XY) | (A >>> 7);
+    this.regSet[REG_A] = (byte)(a | (this.regSet[REG_F] & FLAG_C));
+    this.regSet[REG_F]= (byte)f;    
   }
 
   private void doRRA() {
-    final int oldA = this.regSet[REG_A] & 0xFF;
-    final int c = oldA & FLAG_C;
-    final int oldF = this.regSet[REG_F];
-    final int newA = (oldA >> 1) | ((oldF & FLAG_C) << 7);
-    this.regSet[REG_A] = (byte) newA;
-    this.regSet[REG_F] = (byte) ((oldF & (FLAG_S | FLAG_Z | FLAG_PV)) | (newA & (FLAG_X | FLAG_Y)) | c);
+    int A = this.regSet[REG_A] & 0xFF;
+    int c;
+    c = A & 0x01;
+    A = (A >> 1) | ((regSet[REG_F] & FLAG_C) << 7);
+    this.regSet[REG_F] = (byte)((this.regSet[REG_F] & FLAG_SZPV) | (A & FLAG_XY) | c);
+    this.regSet[REG_A] = (byte) A;
   }
 
   private void doDAA() {
@@ -1630,20 +1647,21 @@ public final class Z80 {
    }
 
   private void doCPL() {
-    final byte newa = (byte) (this.regSet[REG_A] ^ 0xFF);
-    this.regSet[REG_A] = newa;
-    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & (FLAG_S | FLAG_Z | FLAG_PV | FLAG_C)) | (newa & (FLAG_X | FLAG_Y)) | FLAG_H | FLAG_N);
+    int A = this.regSet[REG_A] & 0xFF;
+    A = ~A;
+    this.regSet[REG_A] = (byte)A;
+    this.regSet[REG_F] =(byte) ((this.regSet[REG_F] & (FLAG_SZPV | FLAG_C)) | (A & FLAG_XY) | FLAG_H | FLAG_N);
   }
 
   private void doSCF() {
-    final int a = this.regSet[REG_A];
-    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & (FLAG_S | FLAG_Z | FLAG_PV)) | (a & (FLAG_X | FLAG_Y)) | FLAG_C);
+    int A = this.regSet[REG_A] & 0xFF;
+    this.regSet[REG_F] = (byte)((this.regSet[REG_F] & FLAG_SZPV) | (A & FLAG_XY) | FLAG_C);
   }
 
   private void doCCF() {
-    final int a = this.regSet[REG_A];
-    final int flagc = this.regSet[REG_F] & FLAG_C;
-    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & (FLAG_S | FLAG_Z | FLAG_PV)) | (flagc << 4) | (a & (FLAG_X | FLAG_Y)) | (flagc ^ FLAG_C));
+    int A = this.regSet[REG_A] & 0xFF;
+    int c = this.regSet[REG_F] & FLAG_C;
+    this.regSet[REG_F] = (byte)((this.regSet[REG_F] & FLAG_SZPV) | (c << FLAG_H_SHIFT) | (A & FLAG_XY) | (c ^ FLAG_C));
   }
 
   private void doLDRegByReg(final int y, final int z) {
@@ -1766,6 +1784,9 @@ public final class Z80 {
     this.iff1 = false;
     this.iff2 = false;
     this.tempIgnoreInterruption = true;
+    this.insideBlockInstruction = false;
+    this.insideBlockInstructionPrev = false;
+    this.pendingINT = false;
   }
 
   private void doEI() {
@@ -1809,66 +1830,85 @@ public final class Z80 {
 
     final int result;
 
-    final int flags;
+    int f;
 
     switch (op) {
       case 0: { // ADD
-        result = a + value;
-        final int xor = a ^ value ^ result;
-        flags = (xor & FLAG_H) | FTABLE_SZYX[result & 0xff] | FTABLE_OVERFLOW[xor >> 7] | ((result >> 8) & FLAG_C);
+        int z = a + value;
+        int c = a ^ value ^ z;
+        f = c & FLAG_H;
+        f |= FTABLE_SZYX[z & 0xff];
+        f |= FTABLE_OVERFLOW[c >>> 7];
+        f |= z >>> (8 - FLAG_C_SHIFT);
+        result = z; 
       }
       break;
       case 1: { // ADC
-        result = a + value + flagc;
-        final int xor = a ^ value ^ result;
-        flags = (xor & FLAG_H) | FTABLE_SZYX[result & 0xff] | FTABLE_OVERFLOW[xor >> 7] | ((result >> 8) & FLAG_C);
+        int z = a + value + flagc;
+        int c = a ^ value ^ z;
+        f = c & FLAG_H;
+        f |= FTABLE_SZYX[z & 0xff];
+        f |= FTABLE_OVERFLOW[c >>> 7];
+        f |= z >>> (8 - FLAG_C_SHIFT);
+        result = z;
       }
       break;
       case 2: { // SUB
-        result = a - value;
-        int xor = a ^ value ^ result;
-        final int lflags = FLAG_N | (xor & FLAG_H) | FTABLE_SZYX[result & 0xff];
-        xor &= 0x0180;
-        flags = lflags | FTABLE_OVERFLOW[xor >> 7] | ((xor >> 8) & FLAG_C);
+        int z = a - value;
+        int c = a ^ value ^ z;
+        f = FLAG_N | (c & FLAG_H);
+        f |= FTABLE_SZYX[z & 0xff];
+        c &= 0x0180;
+        f |= FTABLE_OVERFLOW[c >>> 7];
+        f |= c >>> (8 - FLAG_C_SHIFT);
+        result = z;
       }
       break;
       case 3: { // SBC
-        result = a - value - flagc;
-        int xor = a ^ value ^ result;
-        final int lflags = FLAG_N | (xor & FLAG_H) | FTABLE_SZYX[result & 0xff];
-        xor &= 0x0180;
-        flags = lflags | FTABLE_OVERFLOW[xor >> 7] | ((xor >> 8) & FLAG_C);
+        int z = a - value - flagc;
+        int c = a ^ value ^ z;
+        f = FLAG_N | (c & FLAG_H);
+        f |= FTABLE_SZYX[z & 0xff];
+        c &= 0x0180;
+        f |= FTABLE_OVERFLOW[c >>> 7];
+        f |= c >>> (8 - FLAG_C_SHIFT);
+        result = z;
       }
       break;
       case 4: { // AND
         result = a & value;
-        flags = FTABLE_SZYXP[result] | FLAG_H;
+        f = FTABLE_SZYXP[result] | FLAG_H;
       }
       break;
       case 5: { // XOR
         result = a ^ value;
-        flags = FTABLE_SZYXP[result] | FLAG_H;
+        f = FTABLE_SZYXP[result] | FLAG_H;
       }
       break;
       case 6: { // OR
         result = a | value;
-        flags = FTABLE_SZYXP[result] | FLAG_H;
+        f = FTABLE_SZYXP[result] | FLAG_H;
       }
       break;
       case 7: { // CP
+        int z = a - value;
+
+        int c = a ^ value ^ z;
+        f = FLAG_N | (c & FLAG_H);
+        f |= FTABLE_SZYX[z & 0xff] & FLAG_SZ;
+        f |= value & FLAG_XY;
+        c &= 0x0180;
+        f |= FTABLE_OVERFLOW[c >>> 7];
+        f |= c >>> (8 - FLAG_C_SHIFT);
+      
         result = a;
-        final int diff = a - value;
-        int xor = a ^ value ^ diff;
-        final int lflags = FLAG_N | (xor & FLAG_H) | (FTABLE_SZYX[diff & 0xff] & (FLAG_S | FLAG_Z)) | (value & (FLAG_X | FLAG_Y));
-        xor &= 0x0180;
-        flags = lflags | FTABLE_OVERFLOW[xor >> 7] | ((xor >> 8) & FLAG_C);
       }
       break;
       default:
         throw new Error("Detected unexpected ALU operation [" + op + ']');
     }
     this.regSet[REG_A] = (byte) result;
-    this.regSet[REG_F] = (byte) flags;
+    this.regSet[REG_F] = (byte) f;
   }
 
   private void doRST(final int address) {
@@ -1877,56 +1917,56 @@ public final class Z80 {
   }
 
   private int doRollShift(final int op, final int reg) {
-    final int value = readReg8(reg);
-    final int result;
-    int flagC = this.regSet[REG_F] & FLAG_C;
+    int x = readReg8(reg);
+    final int origc = this.regSet[REG_F] & FLAG_C;
+    int c = origc;
     switch (op) {
       case 0: { // RLC
-        result = (value << 1) | (value >>> 7);
-        flagC = (value >>> 7) & FLAG_C;
+        c = (x >>> 7) & FLAG_C;
+        x = (x << 1) | c;
       }
       break;
       case 1: { // RRC
-        flagC = value & FLAG_C;
-        result = (value >>> 1) | (flagC << 7);
+        c = x & 0x01;
+        x = (x >>> 1) | (c << 7);
       }
       break;
       case 2: { // RL
-        result = (value << 1) | flagC;
-        flagC = (value >>> 7) & FLAG_C;
+        c = x >>> 7;
+        x = (x << 1) | origc;
       }
       break;
       case 3: { // RR
-        result = (value >>> 1) | (flagC << 7);
-        flagC = value & FLAG_C;
+         c = x & 0x01;
+        x = (x >>> 1) | (origc << 7); 
       }
       break;
       case 4: { // SLA
-        result = value << 1;
-        flagC = (value >>> 7) & FLAG_C;
+        c = x >>> 7;
+        x <<= 1; 
       }
       break;
       case 5: { // SRA
-        flagC = value & FLAG_C;
-        result = (value >>> 1) | (value & 0x80);
+        c = x & 0x01;
+        x = (x & 0x80) | (x >>> 1);
       }
       break;
       case 6: { // SLL
-        result = (value << 1) | 1;
-        flagC = (value >>> 7) & FLAG_C;
+         c = x >>> 7;
+         x = (x << 1) | 0x01;  
       }
       break;
       case 7: { // SRL
-        result = value >>> 1;
-        flagC = value & FLAG_C;
+        c = x & 0x01;
+        x >>>= 1;
       }
       break;
       default:
         throw new Error("Unexpected operation index [" + op + ']');
     }
-    writeReg8_UseCachedInstructionByte(reg, result);
-    this.regSet[REG_F] = (byte) (FTABLE_SZYXP[result & 0xFF] | flagC);
-    return result;
+    writeReg8_UseCachedInstructionByte(reg, x);
+    this.regSet[REG_F] = (byte) (FTABLE_SZYXP[x & 0xFF] | c);
+    return x;
   }
 
   private void doROTmem_LDreg(final int reg, final int op) {
@@ -1935,10 +1975,9 @@ public final class Z80 {
 
   private void doBIT(final int bit, final int reg) {
     final int regvalue = readReg8(reg);
-    final int mask = 1 << bit;
-    final int x = regvalue & mask;
+    final int x = regvalue & (1<<bit);
 
-    this.regSet[REG_F] = (byte) ((x == 0 ? FLAG_Z | FLAG_PV : 0) | (x & FLAG_S) | (regvalue & (FLAG_X | FLAG_Y)) | FLAG_H | (this.regSet[REG_F] & FLAG_C));
+    this.regSet[REG_F] = (byte)((x != 0 ? 0 : FLAG_Z | FLAG_PV) | (x & FLAG_S) | (regvalue & FLAG_XY) | FLAG_H | (this.regSet[REG_F] & FLAG_C));
 
     if (reg == 6) {
       this.machineCycles++;
@@ -1999,24 +2038,19 @@ public final class Z80 {
   }
 
   private void doNEG() {
-    final int value = this.regSet[REG_A] & 0xFF;
-    final int a = 0;
+    final int A = this.regSet[REG_A] & 0xFF;
 
-    final int resultRaw = a - value;
-    final int result = resultRaw & 0xFF;
-    this.regSet[REG_A] = (byte) result;
-
-    final int flag3 = result & FLAG_X;
-    final int flag5 = result & FLAG_Y;
-    final int flagS = result & FLAG_S;
-
-    final int flagZ = result == 0 ? FLAG_Z : 0;
-    final int flagC = (resultRaw & 0x100) == 0 ? 0 : FLAG_C;
-    final int flagPV = ((a ^ value) & (a ^ result) & 0x80) == 0 ? 0 : FLAG_PV;
-    final int flagH = ((a & 0x0f) - (value & 0x0f)) & FLAG_H;
-    final int flagN = FLAG_N;
-
-    this.regSet[REG_F] = (byte) (flagN | flag3 | flag5 | flagPV | flagC | flagH | flagZ | flagS | flagH);
+    int a = A;
+    int z = -a;
+    int c = a ^ z;
+    int f = FLAG_N | (c & FLAG_H);
+    z &= 0xFF;
+    f |= FTABLE_SZYX[z];
+    c &= 0x0180;
+    f |= FTABLE_OVERFLOW[c >>> 7];
+    f |= c >>> (8 - FLAG_C_SHIFT);
+    this.regSet[REG_A] = (byte)z;
+    this.regSet[REG_F] = (byte)f;
   }
 
   private void doRETI() {
@@ -2082,32 +2116,29 @@ public final class Z80 {
   }
 
   private void doRRD() {
-    int a = this.regSet[REG_A] & 0xFF;
-    int addr = getRegisterPair(REGPAIR_HL);
-    int val = _readmem8(addr);
-
-    final int lowa = a & 0x0F;
-    a = (a & 0xF0) | (val & 0x0F);
-    val = (val >>> 4) | (lowa << 4);
-
-    this.regSet[REG_A] = (byte) a;
-    _writemem8(addr, (byte) val);
-
-    this.regSet[REG_F] = (byte) (FTABLE_SZYXP[a] | (this.regSet[REG_F] & FLAG_C));
+    final int HL = getRegisterPair(REGPAIR_HL);
+    final int A = this.regSet[REG_A] & 0xFF;
+    int x = _readmem8(HL);
+    int y = (A & 0xf0) << 8;
+    y |= ((x & 0x0f) << 8) | ((A & 0x0f) << 4) | (x >> 4);
+    _writemem8(HL, (byte)y);
+    y >>>= 8;
+    this.regSet[REG_A] = (byte) y;
+    this.regSet[REG_F] = (byte)(FTABLE_SZYXP[y] | (this.regSet[REG_F] & FLAG_C));
 
     this.machineCycles += 4;
   }
 
   private void doRLD() {
-    int a = this.regSet[REG_A] & 0xFF;
-    final int addr = getRegisterPair(REGPAIR_HL);
-    final int val = (_readmem8(addr) << 4) | (a & 0xF);
-    a = (a & 0xF0) | (val >>> 8);
-
-    this.regSet[REG_A] = (byte) a;
-    _writemem8(addr, (byte) val);
-
-    this.regSet[REG_F] = (byte) (FTABLE_SZYXP[a] | (this.regSet[REG_F] & FLAG_C));
+    final int HL = getRegisterPair(REGPAIR_HL);
+    final int A = this.regSet[REG_A] & 0xFF;
+    int x = _readmem8(HL);
+    int y = (A & 0xf0) << 8;
+    y |= (x << 4) | (A & 0x0f);
+    _writemem8(HL, (byte)y);
+    y >>>= 8;
+    this.regSet[REG_A] = (byte)y;
+    this.regSet[REG_F] = (byte) (FTABLE_SZYXP[y] | (this.regSet[REG_F] & FLAG_C));
 
     this.machineCycles += 4;
   }
@@ -2194,12 +2225,12 @@ public final class Z80 {
     }
     return insideLoop;
   }
-
+//---sdfdsfdsfds
   private void doLDI() {
     int hl = getRegisterPair(REGPAIR_HL);
     int de = getRegisterPair(REGPAIR_DE);
 
-    final int value = _readmem8(hl++);
+    int value = _readmem8(hl++);
 
     _writemem8(de++, (byte) value);
     setRegisterPair(REGPAIR_HL, hl);
@@ -2208,10 +2239,14 @@ public final class Z80 {
     final int bc = (getRegisterPair(REGPAIR_BC) - 1) & 0xFFFF;
     setRegisterPair(REGPAIR_BC, bc);
 
-    int flags = this.regSet[REG_F] & (FLAG_S | FLAG_Z | FLAG_C) | (bc == 0 ? 0 : FLAG_PV);
-    final int tmp = value + (this.regSet[REG_A] & 0XFF);
-    flags |= (tmp & FLAG_X) | ((tmp << 4) & FLAG_Y);
-    this.regSet[REG_F] = (byte) flags;
+    int f = this.regSet[REG_F] & FLAG_SZC;
+    f |= bc!=0 ? FLAG_PV : 0;
+    value += this.regSet[REG_A] & 0xFF;
+    f |= value & FLAG_X;
+    f |= (value << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
+
+    
+    this.regSet[REG_F] = (byte) f;
 
     this.machineCycles += 2;
   }
@@ -2226,24 +2261,26 @@ public final class Z80 {
     else {
       loopNonCompleted = false;
     }
-    this.regSet[REG_F] &= (~(FLAG_H | FLAG_PV | FLAG_N) & 0xFF);
     return loopNonCompleted;
   }
 
   private void doCPI() {
     int hl = getRegisterPair(REGPAIR_HL);
-    final int mem = _readmem8(hl++);
+    int n = _readmem8(hl++);
     final int a = getRegister(REG_A);
-    final int rslt = a - mem;
+    final int z = a - n;
     setRegisterPair(REGPAIR_HL, hl);
     final int bc = getRegisterPair(REGPAIR_BC) - 1;
     setRegisterPair(REGPAIR_BC, bc);
 
-    int flags = ((a ^ mem ^ rslt) & FLAG_H);
-    final int tmpflag = rslt - (flags >> 4);
-    flags |= ((tmpflag << 4) & FLAG_Y) | (tmpflag & FLAG_X) | (FTABLE_SZYX[rslt & 0xff] & (FLAG_S | FLAG_Z)) | (bc == 0 ? 0 : FLAG_PV) | FLAG_N | (this.regSet[REG_F] & FLAG_C);
+    int f = (a ^ n ^ z) & FLAG_H;
+    n = z - (f >>> FLAG_H_SHIFT);
+    f |= (n << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
+    f |= n & FLAG_X;
+    f |= FTABLE_SZYX[z & 0xff] & FLAG_SZ;
+    f |= bc!=0 ? FLAG_PV : 0;
+    this.regSet[REG_F] = (byte)(f | FLAG_N | (this.regSet[REG_F] & FLAG_C));
 
-    this.regSet[REG_F] = (byte) flags;
     this.machineCycles += 5;
   }
 
@@ -2264,18 +2301,18 @@ public final class Z80 {
   private void doINI() {
     final int bc = getRegisterPair(REGPAIR_BC);
     int hl = getRegisterPair(REGPAIR_HL);
-    int value = _readport(bc);
-    _writemem8(hl++, (byte) value);
+    int x = _readport(bc);
+    _writemem8(hl++, (byte) x);
     final int b = ((bc >>> 8) - 1) & 0xFF;
     this.regSet[REG_B] = (byte) b;
     setRegisterPair(REGPAIR_HL, hl);
 
-    int flags = FTABLE_SZYX[b] | ((value >> 6) & FLAG_N);
-    value += ((bc & 0xFF) + 1) & 0xFF;
-    flags |= ((value & 0x0100) == 0 ? 0 : (FLAG_C | FLAG_H)) | ((FTABLE_SZYXP[(value & 0x07) ^ b]) & FLAG_PV);
-
-    this.regSet[REG_F] = (byte) flags;
-
+    int f = FTABLE_SZYX[b & 0xff] | (x >> (7 - FLAG_N_SHIFT));
+    x += (readReg8(REG_C) + 1) & 0xff;
+    f |= (x & 0x0100)!=0 ? FLAG_HC : 0;
+    f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
+    this.regSet[REG_F] = (byte)f;
+        
     this.machineCycles++;
   }
 
@@ -2295,17 +2332,17 @@ public final class Z80 {
   private void doIND() {
     final int bc = getRegisterPair(REGPAIR_BC);
     int hl = getRegisterPair(REGPAIR_HL);
-    int value = _readport(bc);
-    _writemem8(hl--, (byte) value);
+    int x = _readport(bc);
+    _writemem8(hl--, (byte) x);
     final int b = ((bc >>> 8) - 1) & 0xFF;
     this.regSet[REG_B] = (byte) b;
     setRegisterPair(REGPAIR_HL, hl);
 
-    int flags = FTABLE_SZYX[b] | ((value >> 6) & FLAG_N);
-    value += ((bc & 0xFF) - 1) & 0xFF;
-    flags |= ((value & 0x0100) == 0 ? 0 : (FLAG_C | FLAG_H)) | ((FTABLE_SZYXP[(value & 0x07) ^ b]) & FLAG_PV);
-
-    this.regSet[REG_F] = (byte) flags;
+    int f = FTABLE_SZYX[b & 0xff] | (x >> (7 - FLAG_N_SHIFT));
+    x += (readReg8(REG_C) - 1) & 0xff;
+    f |= (x & 0x0100) != 0 ? FLAG_HC : 0;
+    f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
+    this.regSet[REG_F] = (byte) f;
 
     this.machineCycles++;
   }
@@ -2326,16 +2363,17 @@ public final class Z80 {
   private void doOUTI() {
     final int bc = getRegisterPair(REGPAIR_BC);
     int hl = getRegisterPair(REGPAIR_HL);
-    int value = _readmem8(hl++);
-    _writeport(bc, value);
+    int x = _readmem8(hl++);
+    _writeport(bc, x);
     final int b = ((bc >>> 8) - 1) & 0xFF;
     this.regSet[REG_B] = (byte) b;
     setRegisterPair(REGPAIR_HL, hl);
 
-    int flags = FTABLE_SZYX[b] | ((value >> 6) & FLAG_N);
-    value += ((bc & 0xFF) - 1) & 0xFF;
-    flags |= ((value & 0x0100) == 0 ? 0 : (FLAG_C | FLAG_H)) | ((FTABLE_SZYXP[(value & 0x07) ^ b]) & FLAG_PV);
-    this.regSet[REG_F] = (byte) flags;
+    int f = FTABLE_SZYX[b & 0xff] | (x >> (7 - FLAG_N_SHIFT));
+    x += hl & 0xff;
+    f |= (x & 0x0100)!=0 ? FLAG_HC : 0;
+    f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
+    this.regSet[REG_F] = (byte) f;
 
     this.machineCycles++;
   }
@@ -2356,18 +2394,17 @@ public final class Z80 {
   private void doOUTD() {
     final int bc = getRegisterPair(REGPAIR_BC);
     int hl = getRegisterPair(REGPAIR_HL);
-    int value = _readmem8(hl--);
-    _writeport(bc, value);
+    int x = _readmem8(hl--);
+    _writeport(bc, x);
     final int b = ((bc >>> 8) - 1) & 0xFF;
     this.regSet[REG_B] = (byte) b;
     setRegisterPair(REGPAIR_HL, hl);
 
-    int flags = FTABLE_SZYX[b] | ((value >> 6) & FLAG_N);
-    value += hl & 0xFF;
-    flags |= (value & 0x0100) == 0 ? 0 : (FLAG_H | FLAG_C);
-    flags |= FTABLE_SZYXP[(value & 0x07) ^ b] & FLAG_PV;
-
-    this.regSet[REG_F] = (byte) flags;
+    int f = FTABLE_SZYX[b & 0xff] | (x >> (7 - FLAG_N_SHIFT));
+    x += hl & 0xff;
+    f |= (x & 0x0100) != 0 ? FLAG_HC : 0;
+    f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
+    this.regSet[REG_F] = (byte) f;
 
     this.machineCycles++;
   }
@@ -2389,20 +2426,22 @@ public final class Z80 {
     int hl = getRegisterPair(REGPAIR_HL);
     int de = getRegisterPair(REGPAIR_DE);
 
-    final int value = _readmem8(hl--);
+    int x = _readmem8(hl--);
 
-    _writemem8(de--, (byte) value);
+    _writemem8(de--, (byte) x);
     setRegisterPair(REGPAIR_HL, hl);
     setRegisterPair(REGPAIR_DE, de);
 
     final int bc = (getRegisterPair(REGPAIR_BC) - 1) & 0xFFFF;
     setRegisterPair(REGPAIR_BC, bc);
 
-    int flags = (this.regSet[REG_F] & (FLAG_S | FLAG_Z | FLAG_C)) | (bc == 0 ? 0 : FLAG_PV);
-    final int tmpf = value + this.regSet[REG_A];
-    flags |= tmpf & FLAG_X | ((tmpf << 4) & FLAG_Y);
+    int f = this.regSet[REG_F] & FLAG_SZC;
+    f |= bc != 0 ? FLAG_PV : 0;
+    x += this.regSet[REG_A] & 0xFF;
+    f |= x & FLAG_X;
+    f |= (x << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
 
-    this.regSet[REG_F] = (byte) flags;
+    this.regSet[REG_F] = (byte) f;
 
     this.machineCycles += 2;
   }
@@ -2422,18 +2461,20 @@ public final class Z80 {
 
   private void doCPD() {
     int hl = getRegisterPair(REGPAIR_HL);
-    final int mem = _readmem8(hl--);
+    int n = _readmem8(hl--);
     final int a = getRegister(REG_A);
-    final int rslt = a - mem;
+    final int z = a - n;
     setRegisterPair(REGPAIR_HL, hl);
     final int bc = getRegisterPair(REGPAIR_BC) - 1;
     setRegisterPair(REGPAIR_BC, bc);
 
-    int flags = ((a ^ mem ^ rslt) & FLAG_H);
-    final int tmpflag = rslt - (flags >> 4);
-    flags |= ((tmpflag << 4) & FLAG_Y) | (tmpflag & FLAG_X) | (FTABLE_SZYX[rslt & 0xff] & (FLAG_S | FLAG_Z)) | (bc == 0 ? 0 : FLAG_PV) | FLAG_N | (this.regSet[REG_F] & FLAG_C);
-
-    this.regSet[REG_F] = (byte) flags;
+    int f = (a ^ n ^ z) & FLAG_H;
+    n = z - (f >>> FLAG_H_SHIFT);
+    f |= (n << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
+    f |= n & FLAG_X;
+    f |= FTABLE_SZYX[z & 0xff] & FLAG_SZ;
+    f |= bc!=0 ? FLAG_PV : 0;
+    this.regSet[REG_F] = (byte) (f | FLAG_N | (this.regSet[REG_F] & FLAG_C));
 
     this.machineCycles += 5;
   }
@@ -2469,6 +2510,12 @@ public final class Z80 {
     result.append("R=").append(Utils.toHex(this.getRegister(Z80.REG_R))).append(',');
     result.append("I=").append(Utils.toHex(this.getRegister(Z80.REG_I))).append(',');
     return result.toString();
+  }
+
+  public void doReset() {
+    this._reset(0);
+    this._reset(1);
+    this._reset(2);
   }
 
 }
