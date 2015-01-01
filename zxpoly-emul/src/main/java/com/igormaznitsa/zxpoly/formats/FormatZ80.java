@@ -198,13 +198,14 @@ public class FormatZ80 extends Snapshot {
     }
         
     vc.setBorderColor(current.flags.bordercolor);
-    
-    System.out.println("PC = "+current.reg_pc);
   }
 
   @Override
   public void load(byte[] array) throws IOException {
     current = z80Parser.parse(array).mapTo(Z80Snapshot.class, new DataProcessor());
+    if (current.reg_pc == 0){
+      throw new IOException("Detected snapshot Z80 of 2 or 3 version, only 1st version allowed!");
+    }
   }
 
   @Override
@@ -219,7 +220,7 @@ public class FormatZ80 extends Snapshot {
 
   @Override
   public String getDescription() {
-    return "Z80 Snapshot (*,Z80)";
+    return "Z80 Snapshot (*.z80)";
   }
 
 }

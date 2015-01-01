@@ -129,7 +129,6 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
         }
 
         this.board.step(intsignal, this.board.getCPU0().getMachineCycles() <= CYCLES_BETWEEN_INT);
-//        this.board.step(false, this.board.getCPU0().getMachineCycles() <= CYCLES_BETWEEN_INT);
 
         if (nextScreenRefresh <= System.currentTimeMillis()) {
           updateScreen();
@@ -166,7 +165,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     menuFile = new javax.swing.JMenu();
     menuFileReset = new javax.swing.JMenuItem();
     menuFileSelectDiskA = new javax.swing.JMenuItem();
-    menuFileLoadSNA = new javax.swing.JMenuItem();
+    menuFileLoadSnapshot = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
     menuOptionsShowIndicators = new javax.swing.JCheckBoxMenuItem();
 
@@ -203,13 +202,13 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuFile.add(menuFileSelectDiskA);
 
-    menuFileLoadSNA.setText("Load Snapshot");
-    menuFileLoadSNA.addActionListener(new java.awt.event.ActionListener() {
+    menuFileLoadSnapshot.setText("Load Snapshot");
+    menuFileLoadSnapshot.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuFileLoadSNAActionPerformed(evt);
+        menuFileLoadSnapshotActionPerformed(evt);
       }
     });
-    menuFile.add(menuFileLoadSNA);
+    menuFile.add(menuFileLoadSnapshot);
 
     menuBar.add(menuFile);
 
@@ -264,7 +263,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     this.board.getKeyboard().reset();
   }//GEN-LAST:event_formWindowGainedFocus
 
-  private void menuFileLoadSNAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadSNAActionPerformed
+  private void menuFileLoadSnapshotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadSnapshotActionPerformed
     stepSemaphor.lock();
     try{
     final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
@@ -283,14 +282,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
         }
       }
       catch (IOException ex) {
-        log.log(Level.WARNING, "Can't read SNA image [" + selected + ']', ex);
-        JOptionPane.showMessageDialog(this, "Can't read SNA image", "Error", JOptionPane.ERROR_MESSAGE);
+        log.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
+        JOptionPane.showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
       }
     }
     }finally{
       stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuFileLoadSNAActionPerformed
+  }//GEN-LAST:event_menuFileLoadSnapshotActionPerformed
 
   private File chooseFile(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter ... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
@@ -318,7 +317,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuFile;
-  private javax.swing.JMenuItem menuFileLoadSNA;
+  private javax.swing.JMenuItem menuFileLoadSnapshot;
   private javax.swing.JMenuItem menuFileReset;
   private javax.swing.JMenuItem menuFileSelectDiskA;
   private javax.swing.JMenu menuOptions;

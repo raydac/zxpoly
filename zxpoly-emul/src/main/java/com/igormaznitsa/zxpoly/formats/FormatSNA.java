@@ -100,7 +100,7 @@ public class FormatSNA extends Snapshot {
 
   @Override
   public String getDescription() {
-    return "SNA Snapshot (*.SNA)";
+    return "SNA Snapshot (*.sna)";
   }
 
   @Override

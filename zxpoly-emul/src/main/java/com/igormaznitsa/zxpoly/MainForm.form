@@ -25,12 +25,12 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuFileSelectDiskAActionPerformed"/>
               </Events>
             </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="menuFileLoadSNA">
+            <MenuItem class="javax.swing.JMenuItem" name="menuFileLoadSnapshot">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Load Snapshot"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuFileLoadSNAActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuFileLoadSnapshotActionPerformed"/>
               </Events>
             </MenuItem>
           </SubComponents>
