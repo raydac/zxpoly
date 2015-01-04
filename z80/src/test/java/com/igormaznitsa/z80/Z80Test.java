@@ -1726,7 +1726,7 @@ public class Z80Test extends AbstractZ80Test {
 
     assertEquals(0x09, cpu.getRegister(Z80.REG_C));
     assertEquals(0x0F, cpu.getRegister(Z80.REG_A));
-    assertFlagsExcludeReserved(Z80.FLAG_PV | Z80.FLAG_H, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 4);
   }
@@ -1741,7 +1741,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0xF6, 0x11);
 
     assertEquals(0x39, cpu.getRegister(Z80.REG_A));
-    assertFlagsExcludeReserved(Z80.FLAG_H | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 7);
   }
@@ -1759,7 +1759,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0xB6);
 
     assertEquals(0x39, cpu.getRegister(Z80.REG_A));
-    assertFlagsExcludeReserved(Z80.FLAG_H | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 7);
   }
@@ -1776,7 +1776,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0xDD, 0xB6, 0x05);
 
     assertEquals(0x39, cpu.getRegister(Z80.REG_A));
-    assertFlagsExcludeReserved(Z80.FLAG_H | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 19);
   }
@@ -1793,7 +1793,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0xFD, 0xB6, 0x05);
 
     assertEquals(0x39, cpu.getRegister(Z80.REG_A));
-    assertFlagsExcludeReserved(Z80.FLAG_H | Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(Z80.FLAG_PV, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 19);
   }
@@ -1810,7 +1810,7 @@ public class Z80Test extends AbstractZ80Test {
 
     assertEquals(0x09, cpu.getRegister(Z80.REG_C));
     assertEquals(0x0E, cpu.getRegister(Z80.REG_A));
-    assertFlagsExcludeReserved(Z80.FLAG_H, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(0, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 4);
   }
@@ -1825,7 +1825,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0xEE, 0x11);
 
     assertEquals(0x38, cpu.getRegister(Z80.REG_A));
-    assertFlagsExcludeReserved(Z80.FLAG_H, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(0, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 7);
   }
@@ -1843,7 +1843,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0xAE);
 
     assertEquals(0x38, cpu.getRegister(Z80.REG_A));
-    assertFlagsExcludeReserved(Z80.FLAG_H, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(0, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 7);
   }
@@ -1860,7 +1860,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0xDD, 0xAE, 0x05);
 
     assertEquals(0x38, cpu.getRegister(Z80.REG_A));
-    assertFlagsExcludeReserved(Z80.FLAG_H, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(0, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 19);
   }
@@ -1877,7 +1877,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0xFD, 0xAE, 0x05);
 
     assertEquals(0x38, cpu.getRegister(Z80.REG_A));
-    assertFlagsExcludeReserved(Z80.FLAG_H, cpu.getRegister(Z80.REG_F) & 0xFF);
+    assertFlagsExcludeReserved(0, cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 19);
   }
@@ -1943,6 +1943,48 @@ public class Z80Test extends AbstractZ80Test {
 
     assertEquals(0x29, cpu.getRegister(Z80.REG_A));
     assertFlagsExcludeReserved(Z80.FLAG_N, cpu.getRegister(Z80.REG_F) & 0xFF);
+
+    assertTacts(cpu, 7);
+  }
+
+  @Test
+  public void testCommand_CP_n_A_less_Value() {
+    final Z80State state = new Z80State();
+    state.A = 69;
+    state.F = 0xFF;
+
+    final Z80 cpu = executeCommand(state, 0xFE, 254);
+
+    assertEquals(69, cpu.getRegister(Z80.REG_A));
+    assertFlagsExcludeReserved(Z80.FLAG_C | Z80.FLAG_N | Z80.FLAG_H, cpu.getRegister(Z80.REG_F) & 0xFF);
+
+    assertTacts(cpu, 7);
+  }
+
+  @Test
+  public void testCommand_CP_n_A_greater_Value() {
+    final Z80State state = new Z80State();
+    state.A = 0xFE;
+    state.F = 0xFF;
+
+    final Z80 cpu = executeCommand(state, 0xFE, 69);
+
+    assertEquals(0xFE, cpu.getRegister(Z80.REG_A));
+    assertFlagsExcludeReserved(Z80.FLAG_S | Z80.FLAG_N , cpu.getRegister(Z80.REG_F) & 0xFF);
+
+    assertTacts(cpu, 7);
+  }
+
+  @Test
+  public void testCommand_CP_n_A_equ_Value() {
+    final Z80State state = new Z80State();
+    state.A = 0xFE;
+    state.F = 0xFF;
+
+    final Z80 cpu = executeCommand(state, 0xFE, 0xFE);
+
+    assertEquals(0xFE, cpu.getRegister(Z80.REG_A));
+    assertFlagsExcludeReserved(Z80.FLAG_Z | Z80.FLAG_N , cpu.getRegister(Z80.REG_F) & 0xFF);
 
     assertTacts(cpu, 7);
   }
@@ -3195,16 +3237,42 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_HALT() {
-    final Z80 cpu = new Z80(new TestBus(0, 0, 0x76));
-
+    final TestBus tb = new TestBus(0, 0, 0x76, 0xFB);
+    tb.block(0x38, 0xED, 0x45); //RETN
+    
+    final Z80 cpu = new Z80(tb);
+    cpu.setIM(1);
+    cpu.setIFF(true,true);
+    
     assertEquals(Z80.SIGNAL_OUT_ALL_INACTIVE, cpu.getState());
 
     cpu.nextInstruction(false, false, false);
 
     assertTrue((cpu.getState() & Z80.SIGNAL_OUT_nHALT)==0);
     assertEquals(0, cpu.getRegister(Z80.REG_PC));
-
     assertTacts(cpu, 4);
+
+    cpu.step(~Z80.SIGNAL_IN_nINT);
+    assertEquals(0x38, cpu.getPC());
+    assertEquals(0xFFFD, cpu.getSP());
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+    
+    // RETN
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0x39, cpu.getPC());
+    
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0x01, cpu.getPC());
+    assertEquals(0xFFFF, cpu.getSP());
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+    
+    // EI
+    cpu.nextInstruction(false, false, false);
+    assertEquals(0x02, cpu.getPC());
+    assertTrue(cpu.isIFF1());
+    assertTrue(cpu.isIFF2());
   }
 
   @Test
@@ -4630,6 +4698,24 @@ public class Z80Test extends AbstractZ80Test {
   }
 
   @Test
+  public void testCommand_UndocumentedOUT_mC_0(){
+    final TestBus tb = new TestBus(0, 0, 0xED, 0x71);
+    
+    final Z80 cpu = new Z80(tb);
+    cpu.setRegister(Z80.REG_C, 0x23);
+    tb.writePort(cpu, 0x23, (byte)0xFF);
+
+    assertEquals(0xFF, tb.readPort(cpu, 0x23)&0xFF);
+
+    cpu.nextInstruction(false, false, false);
+
+    assertEquals(0x02, cpu.getRegister(Z80.REG_PC));
+    assertEquals(0x00, tb.readPort(cpu, 0x23));
+
+    assertTacts(cpu, 12);
+  }
+
+  @Test
   public void testCommand_OUT_mC_r(){
     final int[] codes = new int[]{0x79, 0x51, 0x59, 0x61, 0x69};
     final int[] regs = new int[]{Z80.REG_A, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L};
@@ -5159,4 +5245,243 @@ public class Z80Test extends AbstractZ80Test {
     assertMemory(0x1057, 0x34);
     assertTacts(cpu, 19);
   }
- }
+
+  @Test
+  public void testIntProcessing_IM0_DefaultAfterReset(){
+    final Z80 cpu = new Z80(new Z80CPUBus() {
+
+      @Override
+      public byte readMemory(Z80 cpu, int address, boolean m1) {
+        return memory[address];
+      }
+
+      @Override
+      public void writeMemory(Z80 cpu, int address, byte data) {
+        memory[address] = data;
+      }
+
+      @Override
+      public byte readPort(Z80 cpu, int port) {
+        return 0;
+      }
+
+      @Override
+      public void writePort(Z80 cpu, int port, byte data) {
+        
+      }
+
+      @Override
+      public byte onCPURequestDataLines(Z80 cpu) {
+        return (byte)0x08;
+      }
+
+      @Override
+      public void onRETI(Z80 cpu) {
+      }
+    });
+
+    cpu.doReset();
+    
+    fillMemory(0, 0xFB,0,0,0,0,0,0,0,0,0,0,0,0,0);
+    
+    cpu.setRegister(Z80.REG_A, 0xAA);
+    cpu.setRegister(Z80.REG_A, 0xBB, true);
+    
+    assertEquals(0, cpu.getIM());
+    assertEquals(0, cpu.getRegister(Z80.REG_R));
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(1,cpu.getPC());
+    assertEquals(0xFFFF,cpu.getSP());
+    assertTrue(cpu.isIFF1());
+    assertTrue(cpu.isIFF2());
+    
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE & ~Z80.SIGNAL_IN_nINT);
+    assertEquals(2,cpu.getPC());
+    assertEquals(0xFFFF, cpu.getSP());
+    assertTrue(cpu.isIFF1());
+    assertTrue(cpu.isIFF2());
+    assertEquals(0xAA,cpu.getRegister(Z80.REG_A));
+
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(2,cpu.getPC());
+    assertEquals(0xFFFF, cpu.getSP());
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+    assertEquals(0xBB, cpu.getRegister(Z80.REG_A));
+  }
+
+  @Test
+  public void testIntProcessing_IM1(){
+    final Z80 cpu = new Z80(new Z80CPUBus() {
+
+      @Override
+      public byte readMemory(Z80 cpu, int address, boolean m1) {
+        return memory[address];
+      }
+
+      @Override
+      public void writeMemory(Z80 cpu, int address, byte data) {
+        memory[address] = data;
+      }
+
+      @Override
+      public byte readPort(Z80 cpu, int port) {
+        return 0;
+      }
+
+      @Override
+      public void writePort(Z80 cpu, int port, byte data) {
+        
+      }
+
+      @Override
+      public byte onCPURequestDataLines(Z80 cpu) {
+        return (byte)0x08;
+      }
+
+      @Override
+      public void onRETI(Z80 cpu) {
+      }
+    });
+
+    cpu.doReset();
+    
+    fillMemory(0x00, 0xFB); // EI at 0x00
+    fillMemory(0x38, 0xED,0x4D);//RETI at 0x38
+    
+    cpu.setRegister(Z80.REG_A, 0xAA);
+    cpu.setRegister(Z80.REG_A, 0xBB, true);
+    cpu.setIM(1);
+    
+    assertEquals(1, cpu.getIM());
+    assertEquals(0, cpu.getRegister(Z80.REG_R));
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(1,cpu.getPC());
+    assertEquals(0xFFFF,cpu.getSP());
+    assertTrue(cpu.isIFF1());
+    assertTrue(cpu.isIFF2());
+
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE & ~Z80.SIGNAL_IN_nINT);
+    assertEquals(2, cpu.getPC());
+    assertEquals(0xFFFF, cpu.getSP());
+    assertTrue(cpu.isIFF1());
+    assertTrue(cpu.isIFF2());
+    assertEquals(0xAA, cpu.getRegister(Z80.REG_A));
+
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0x38, cpu.getPC());
+    assertEquals(0xFFFD, cpu.getSP());
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+
+    //RETI
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0x39, cpu.getPC());
+ 
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0x02, cpu.getPC());
+    assertEquals(0xFFFF, cpu.getSP());
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+  }
+
+  @Test
+  public void testIntProcessing_IM2(){
+    final Z80 cpu = new Z80(new Z80CPUBus() {
+
+      @Override
+      public byte readMemory(Z80 cpu, int address, boolean m1) {
+        return memory[address];
+      }
+
+      @Override
+      public void writeMemory(Z80 cpu, int address, byte data) {
+        memory[address] = data;
+      }
+
+      @Override
+      public byte readPort(Z80 cpu, int port) {
+        return 0;
+      }
+
+      @Override
+      public void writePort(Z80 cpu, int port, byte data) {
+        
+      }
+
+      @Override
+      public byte onCPURequestDataLines(Z80 cpu) {
+        return (byte)0x08;
+      }
+
+      @Override
+      public void onRETI(Z80 cpu) {
+      }
+    });
+
+    cpu.doReset();
+    cpu.setRegister(Z80.REG_I, 0x10);
+    
+    fillMemory(0x00, 0xFB); // EI at 0x00
+    fillMemory(0x1008, 0xFF, 0x3F);//address for interruption at 0x1008
+    fillMemory(0x3FFF, 0x00, 0x00, 0xED, 0x4D);//RETI at 0x3FFF
+    
+    cpu.setRegister(Z80.REG_A, 0xAA);
+    cpu.setRegister(Z80.REG_A, 0xBB, true);
+    cpu.setIM(2);
+    
+    assertEquals(2, cpu.getIM());
+    assertEquals(0, cpu.getRegister(Z80.REG_R));
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(1,cpu.getPC());
+    assertEquals(0xFFFF,cpu.getSP());
+    assertTrue(cpu.isIFF1());
+    assertTrue(cpu.isIFF2());
+
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE & ~Z80.SIGNAL_IN_nINT);
+    assertEquals(2, cpu.getPC());
+    assertEquals(0xFFFF, cpu.getSP());
+    assertTrue(cpu.isIFF1());
+    assertTrue(cpu.isIFF2());
+    assertEquals(0xAA, cpu.getRegister(Z80.REG_A));
+
+    // interrupt subroutine
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0x3FFF, cpu.getPC());
+    assertEquals(0xFFFD, cpu.getSP());
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE & ~Z80.SIGNAL_IN_nINT);
+    assertEquals(0x4000, cpu.getPC());
+    assertEquals(0xFFFD, cpu.getSP());
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE & ~Z80.SIGNAL_IN_nINT);
+    assertEquals(0x4001, cpu.getPC());
+    assertEquals(0xFFFD, cpu.getSP());
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+
+    //RETI
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE & ~Z80.SIGNAL_IN_nINT);
+    assertEquals(0x4002, cpu.getPC());
+
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0x02, cpu.getPC());
+    assertEquals(0xFFFF, cpu.getSP());
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+  }
+
+}

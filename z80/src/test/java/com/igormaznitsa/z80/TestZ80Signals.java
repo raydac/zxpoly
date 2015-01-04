@@ -70,6 +70,7 @@ public class TestZ80Signals extends AbstractZ80Test {
   @Test
   public void testInt_Enabled_IM2(){
     final TestBus tb = new TestBus(0xCF, 0, 0x03);
+    tb.block(0x86CF, 0x34, 0x12);
     
     final Z80 cpu = new Z80(tb);
     cpu.setIM(2);
@@ -79,7 +80,7 @@ public class TestZ80Signals extends AbstractZ80Test {
     cpu.step(~Z80.SIGNAL_IN_nINT);
     
     assertFalse(cpu.isIFF1());
-    assertEquals(0x86CF, cpu.getRegister(Z80.REG_PC));
+    assertEquals(0x1234, cpu.getRegister(Z80.REG_PC));
     assertEquals(0xFFFD, cpu.getRegister(Z80.REG_SP));
     assertEquals(0x00, tb.readMemory(cpu, cpu.getRegister(Z80.REG_SP), false));
     assertEquals(0x00, tb.readMemory(cpu, cpu.getRegister(Z80.REG_SP)+1, false));

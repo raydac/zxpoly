@@ -18,7 +18,7 @@ package com.igormaznitsa.z80;
 
 import static org.junit.Assert.assertFalse;
 
-public class TestBus implements Z80CPUBus {
+public final class TestBus implements Z80CPUBus {
 
   private final byte [] memory  = new byte[0x10000];
   private final byte [] ports  = new byte[0x10000];
@@ -26,12 +26,16 @@ public class TestBus implements Z80CPUBus {
   private boolean reti;
   
   public TestBus(final int busState, final int address, final int... codes){
+    block(address, codes);
+    this.dataBuSState = (byte) busState;
+  }
+  
+  public void block(final int address, final int ... codes){
     int pc = address;
-    for(final int c : codes){
-      this.memory[pc & 0xFFFF] = (byte)c;
+    for (final int c : codes) {
+      this.memory[pc & 0xFFFF] = (byte) c;
       pc++;
     }
-    this.dataBuSState = (byte) busState;
   }
   
   public void resetRETIFlag(){

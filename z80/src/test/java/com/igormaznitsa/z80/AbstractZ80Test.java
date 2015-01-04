@@ -152,6 +152,12 @@ public abstract class AbstractZ80Test {
     }
   }
 
+  public void fillMemory(int startAddress, final int ... bytes) {
+    for(int i : bytes){
+      this.memory[startAddress++] = (byte)i;
+    }
+  }
+  
   public void assertTacts(final Z80 cpu, final long tacts) {
     assertEquals("Tacts must be " + tacts, tacts, cpu.getMachineCycles()-3);
   }
@@ -329,7 +335,7 @@ public abstract class AbstractZ80Test {
   }
 
   public void assertFlagsExcludeReserved(final int etalon, final int valueToCheck){
-    final int mask = ~(Z80.FLAG_X | Z80.FLAG_Y) & 0xFF;
+    final int mask = (~(Z80.FLAG_X | Z80.FLAG_Y)) & 0xFF;
      assertEquals("Flags must be equals", etalon & mask, valueToCheck & mask);
   }
   
