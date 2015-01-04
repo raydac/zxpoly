@@ -16,11 +16,11 @@
  */
 package com.igormaznitsa.zxpoly;
 
+import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
 import com.igormaznitsa.zxpoly.formats.*;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +34,7 @@ import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
 
 public class MainForm extends javax.swing.JFrame implements Runnable {
-//  private static final long CYCLES_BETWEEN_INT = 8000000000000L;
+//  private static final long CYCLES_BETWEEN_INT = Long.MAX_VALUE;
   private static final long CYCLES_BETWEEN_INT = 64000L;
 
   
@@ -48,20 +48,6 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     @Override
     public String getDescription() {
       return "TR-DOS image (*.trd)";
-    }
-
-  }
-
-  private static class SNAFileFilter extends FileFilter {
-
-    @Override
-    public boolean accept(File f) {
-      return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".sna");
-    }
-
-    @Override
-    public String getDescription() {
-      return "Z80 Snapshot (*.sna)";
     }
 
   }
@@ -91,6 +77,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   public MainForm(final String romResource) throws IOException {
     initComponents();
+    this.getInputContext().selectInputMethod(Locale.ENGLISH);
+
     log.info("Loading test rom [" + romResource + ']');
     final RomData rom = RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romResource));
     this.board = new Motherboard(rom);
@@ -129,7 +117,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
         }
 
         this.board.step(intsignal, this.board.getCPU0().getMachineCycles() <= CYCLES_BETWEEN_INT);
-
+          
         if (nextScreenRefresh <= System.currentTimeMillis()) {
           updateScreen();
           nextScreenRefresh = System.currentTimeMillis() + SCREEN_REFRESH_DELAY;
@@ -260,6 +248,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_formWindowLostFocus
 
   private void formWindowGainedFocus(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowGainedFocus
+    this.getInputContext().selectInputMethod(Locale.ENGLISH);
     this.board.getKeyboard().reset();
   }//GEN-LAST:event_formWindowGainedFocus
 

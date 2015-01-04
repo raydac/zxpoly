@@ -24,7 +24,6 @@ import com.igormaznitsa.zxpoly.components.VideoController;
 import com.igormaznitsa.zxpoly.components.ZXPolyModule;
 import java.io.File;
 import java.io.IOException;
-import javax.swing.filechooser.FileFilter;
 
 public class FormatSNA extends Snapshot {
 
