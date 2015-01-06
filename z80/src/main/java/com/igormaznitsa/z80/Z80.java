@@ -201,9 +201,9 @@ public final class Z80 {
   private int outSignals = 0xFFFFFFFF;
   private int prevINSignals = 0xFFFFFFFF;
 
-  private boolean tempIgnoreInterruption;
-  private boolean pendingNMI;
-  private boolean pendingINT;
+  private boolean interruptAllowedForStep;
+  private boolean detectedNMI;
+  private boolean detectedINT;
   private boolean insideBlockInstructionPrev;
   private boolean insideBlockInstruction;
 
@@ -402,9 +402,7 @@ public final class Z80 {
     this.insideBlockInstruction = false;
     this.insideBlockInstructionPrev = false;
 
-    this.tempIgnoreInterruption = false;
-    this.pendingINT = false;
-    this.pendingNMI = false;
+    this.interruptAllowedForStep = false;
 
     this.prefix = 0;
     this.outSignals = SIGNAL_OUT_ALL_INACTIVE;
@@ -427,7 +425,7 @@ public final class Z80 {
 
     this.insideBlockInstructionPrev = this.insideBlockInstruction;
 
-    this.pendingINT = false;
+    this.detectedINT = false;
 
     switch (this.im) {
       case 0: {
@@ -441,7 +439,7 @@ public final class Z80 {
       case 2: {
         final int address = _readmem16(((this.regI & 0xFF) << 8) | (this.bus.onCPURequestDataLines(this) & 0xFF));
         _call(address);
-        this.machineCycles ++;
+        this.machineCycles++;
       }
       break;
       default:
@@ -468,8 +466,8 @@ public final class Z80 {
     _resetHalt();
     this.insideBlockInstructionPrev = this.insideBlockInstruction;
     this.iff1 = false;
-    this.pendingNMI = false;
-    this.pendingINT = false;
+    this.detectedNMI = false;
+    this.detectedINT = false;
     _call(0x66);
     this.machineCycles += 5;
   }
@@ -520,7 +518,7 @@ public final class Z80 {
   private int readInstructionByte(final boolean m1) {
     final int pc = this.regPC;
     this.regPC = (this.regPC + 1) & 0xFFFF;
-    this.outSignals = m1 ? this.outSignals & (~SIGNAL_OUT_nM1) : this.outSignals | SIGNAL_OUT_nM1;
+    this.outSignals = (m1 ? this.outSignals & (~SIGNAL_OUT_nM1) : this.outSignals | SIGNAL_OUT_nM1) & 0xFF;
     final int result = this.bus.readMemory(this, pc, m1) & 0xFF;
     this.outSignals = this.outSignals | SIGNAL_OUT_nM1;
 
@@ -728,10 +726,44 @@ public final class Z80 {
         setRegister(REG_E, value);
         return;
       case 4:
-        setRegister(REG_H, value);
+        if (this.cbDisplacementByte < 0) {
+          switch (normalizedPrefix()) {
+            case 0x00:
+              setRegister(REG_H, value);
+              break;
+            case 0xDD: {
+              this.regIX = (this.regIX & 0xFF) | ((value & 0xFF) << 8);
+            }
+            break;
+            case 0xFD: {
+              this.regIY = (this.regIY & 0xFF) | ((value & 0xFF) << 8);
+            }
+            break;
+          }
+        }
+        else {
+          setRegister(REG_H, value);
+        }
         return;
       case 5:
-        setRegister(REG_L, value);
+        if (this.cbDisplacementByte < 0) {
+          switch (normalizedPrefix()) {
+            case 0x00:
+              setRegister(REG_L, value);
+              break;
+            case 0xDD: {
+              this.regIX = (this.regIX & 0xFF00) | (value & 0xFF);
+            }
+            break;
+            case 0xFD: {
+              this.regIY = (this.regIY & 0xFF00) | (value & 0xFF);
+            }
+            break;
+          }
+        }
+        else {
+          setRegister(REG_L, value);
+        }
         return;
       case 6: { // (HL)
         switch (normalizedPrefix()) {
@@ -834,10 +866,44 @@ public final class Z80 {
         setRegister(REG_E, value);
         return;
       case 4:
-        setRegister(REG_H, value);
+        if (this.cbDisplacementByte < 0) {
+          switch (normalizedPrefix()) {
+            case 0x00:
+              setRegister(REG_H, value);
+              break;
+            case 0xDD: {
+              this.regIX = (this.regIX & 0xFF) | ((value & 0xFF) << 8);
+            }
+            break;
+            case 0xFD: {
+              this.regIY = (this.regIY & 0xFF) | ((value & 0xFF) << 8);
+            }
+            break;
+          }
+        }
+        else {
+          setRegister(REG_H, value);
+        }
         return;
       case 5:
-        setRegister(REG_L, value);
+        if (this.cbDisplacementByte < 0) {
+          switch (normalizedPrefix()) {
+            case 0x00:
+              setRegister(REG_L, value);
+              break;
+            case 0xDD: {
+              this.regIX = (this.regIX & 0xFF00) | (value & 0xFF);
+            }
+            break;
+            case 0xFD: {
+              this.regIY = (this.regIY & 0xFF00) | (value & 0xFF);
+            }
+            break;
+          }
+        }
+        else {
+          setRegister(REG_L, value);
+        }
         return;
       case 6: { // (HL)
         this.machineCycles += 1;
@@ -904,61 +970,42 @@ public final class Z80 {
    */
   public boolean step(final int inSignals) {
     try {
-      if ((inSignals & SIGNAL_IN_nRESET) == 0) {
-        // make simulation of reset signal for as minimum 3 cycles
-        _reset(this.resetCycle++);
-        return false;
-      }
-
+      final boolean result;
+      this.interruptAllowedForStep = true;
+      
       if ((inSignals & SIGNAL_IN_nWAIT) == 0) {
+        // PROCESS nWAIT
         this.machineCycles++;
-        return this.prefix != 0;
+        result = this.prefix != 0;
       }
-
-      boolean interruptionProcessed = false;
-
-      if (this.pendingNMI || isHiLoFront(SIGNAL_IN_nNMI, inSignals)) {
-        if (this.tempIgnoreInterruption || this.prefix != 0) {
-          this.pendingNMI = true;
-        }
-        else {
-          _nmi();
-          interruptionProcessed = true;
-        }
-      }
-      else if (this.pendingINT || isHiLoFront(SIGNAL_IN_nINT, inSignals)) {
-        if (this.tempIgnoreInterruption || this.prefix != 0) {
-          this.pendingINT = this.iff1;
-        }
-        else if (this.iff1) {
-          if (this.prefix != 0) {
-            this.pendingINT = true;
-          }
-          else {
-            _int();
-            interruptionProcessed = true;
-          }
-        }
-        else {
-          this.pendingINT = false;
-        }
-      }
-
-      final boolean notcompleted;
-      if (interruptionProcessed) {
-        notcompleted = false;
+      else if ((inSignals & SIGNAL_IN_nRESET) == 0) {
+        // START RESET
+        _reset(this.resetCycle++);
+        result = false;
       }
       else {
+        // Process command
         if (_step(readInstructionByte(true))) {
+          // Command completed
           this.prefix = 0;
-          notcompleted = false;
-        }
-        else {
-          this.prefix &= 0xFFFF;
-          notcompleted = true;
+          result = false;
+
+          if (this.interruptAllowedForStep) {
+            // Check interruptions
+            if ((inSignals & SIGNAL_IN_nNMI) == 0) {
+              // NMI
+              _nmi();
+            }else if (this.iff1 && (inSignals & SIGNAL_IN_nINT) == 0){
+              // INT
+              _int();
+            }
+          }
+        }else{
+          result = true;
         }
       }
-      return notcompleted;
+
+      return result;
     }
     finally {
       this.prevINSignals = inSignals;
@@ -967,8 +1014,6 @@ public final class Z80 {
 
   private boolean _step(final int commandByte) {
     boolean commandCompleted = true;
-
-    this.tempIgnoreInterruption = false;
     this.insideBlockInstruction = false;
 
     switch (this.prefix) {
@@ -1414,11 +1459,11 @@ public final class Z80 {
 
   private void doNONI() {
     this.prefix = 0;
-    this.tempIgnoreInterruption = true;
+    this.interruptAllowedForStep = false;
   }
 
   private void doHalt() {
-    this.outSignals &= ~SIGNAL_OUT_nHALT;
+    this.outSignals &= (~SIGNAL_OUT_nHALT & 0xFF);
     this.regPC--;
   }
 
@@ -1567,7 +1612,7 @@ public final class Z80 {
     int c = x ^ z;
 
     int f = this.regSet[REG_F] & FLAG_C;
-    f |= c & FLAG_H;
+    f |= (c & FLAG_H);
     f |= FTABLE_SZYX[z & 0xff];
     f |= FTABLE_OVERFLOW[(c >>> 7) & 0x03];
 
@@ -1584,7 +1629,7 @@ public final class Z80 {
     writeReg8_UseCachedInstructionByte(y, z);
 
     int f = FLAG_N | (this.regSet[REG_F] & FLAG_C);
-    f |= c & FLAG_H;
+    f |= (c & FLAG_H);
     f |= FTABLE_SZYX[z & 0xff];
     f |= FTABLE_OVERFLOW[(c >>> 7) & 0x03];
 
@@ -1784,16 +1829,19 @@ public final class Z80 {
   private void doDI() {
     this.iff1 = false;
     this.iff2 = false;
-    this.tempIgnoreInterruption = true;
+    this.interruptAllowedForStep = false;
     this.insideBlockInstruction = false;
     this.insideBlockInstructionPrev = false;
-    this.pendingINT = false;
+    this.detectedINT = false;
   }
 
   private void doEI() {
     this.iff1 = true;
     this.iff2 = true;
-    this.tempIgnoreInterruption = true;
+    this.interruptAllowedForStep = false;
+    this.insideBlockInstruction = false;
+    this.insideBlockInstructionPrev = false;
+    this.detectedINT = false;
   }
 
   private void doCALL(final int y) {
@@ -1978,7 +2026,7 @@ public final class Z80 {
     final int regvalue = readReg8(reg);
     final int x = regvalue & (1 << bit);
 
-    this.regSet[REG_F] = (byte) ((x != 0 ? 0 : FLAG_Z | FLAG_PV) | (x & FLAG_S) | (regvalue & FLAG_XY) | FLAG_H | (this.regSet[REG_F] & FLAG_C));
+    this.regSet[REG_F] = (byte) ((x != 0 ? 0 : (FLAG_Z | FLAG_PV)) | (x & FLAG_S) | (regvalue & FLAG_XY) | FLAG_H | (this.regSet[REG_F] & FLAG_C));
 
     if (reg == 6) {
       this.machineCycles++;
@@ -2056,8 +2104,9 @@ public final class Z80 {
 
   private void doRETI() {
     doRET();
+    this.iff1 = this.iff2;
     this.insideBlockInstruction = this.insideBlockInstructionPrev;
-    this.pendingINT = false;
+    this.detectedINT = false;
     this.bus.onRETI(this);
   }
 
@@ -2065,8 +2114,8 @@ public final class Z80 {
     doRET();
     this.iff1 = this.iff2;
     this.insideBlockInstruction = this.insideBlockInstructionPrev;
-    this.pendingINT = false;
-    this.pendingNMI = false;
+    this.detectedINT = false;
+    this.detectedNMI = false;
   }
 
   private void doIM(final int y) {
@@ -2105,7 +2154,7 @@ public final class Z80 {
     final int value = getRegister(REG_I);
     setRegister(REG_A, value);
 
-    this.regSet[REG_F] = (byte) (FTABLE_SZYX[value] | (this.iff2 && !(this.pendingINT || this.pendingNMI) ? FLAG_PV : 0) | (this.regSet[REG_F] & FLAG_C));
+    this.regSet[REG_F] = (byte) (FTABLE_SZYX[value] | (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0) | (this.regSet[REG_F] & FLAG_C));
 
     this.machineCycles++;
   }
@@ -2114,7 +2163,7 @@ public final class Z80 {
     final int value = getRegister(REG_R);
     setRegister(REG_A, value);
 
-    this.regSet[REG_F] = (byte) (FTABLE_SZYX[value] | (this.iff2 && !(this.pendingINT || this.pendingNMI) ? FLAG_PV : 0) | (this.regSet[REG_F] & FLAG_C));
+    this.regSet[REG_F] = (byte) (FTABLE_SZYX[value] | (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0) | (this.regSet[REG_F] & FLAG_C));
 
     this.machineCycles++;
   }
@@ -2259,8 +2308,8 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_PV) != 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-        this.machineCycles += 5;
-      }
+      this.machineCycles += 5;
+    }
     else {
       loopNonCompleted = false;
     }
