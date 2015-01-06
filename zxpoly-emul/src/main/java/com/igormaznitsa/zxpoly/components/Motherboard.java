@@ -43,6 +43,8 @@ public final class Motherboard implements ZXPoly {
   private int intCounter;
   private volatile boolean videoFlashState;
 
+  private int intCycles;
+  
   public Motherboard(final RomData rom) {
     if (rom == null) {
       throw new NullPointerException("ROM must not be null");
@@ -197,7 +199,7 @@ public final class Motherboard implements ZXPoly {
         default:
           throw new Error("Unexpected combination number");
       }
-
+      
       if (is3D00NotLocked() && (zx0halt || zx1halt || zx2halt || zx3halt)) {
         // a cpu has met halt and we need process notification
         if (zx0halt) {

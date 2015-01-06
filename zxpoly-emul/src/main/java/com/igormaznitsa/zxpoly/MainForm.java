@@ -16,7 +16,6 @@
  */
 package com.igormaznitsa.zxpoly;
 
-import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
 import com.igormaznitsa.zxpoly.formats.*;

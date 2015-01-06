@@ -193,6 +193,8 @@ public class FormatZ80 extends Snapshot {
     cpu.setRegister(Z80.REG_I, current.reg_ir >>> 8);
     cpu.setIM(current.emulFlags.interruptmode);
     
+    System.out.println("IM = "+current.emulFlags.interruptmode+" iff1="+(current.iff!=0)+" iff2="+(current.iff != 0));
+    
     for(int i=0; i<current.data.length; i++){
       module.writeMemory(cpu, i+16384, current.data[i]);
     }
