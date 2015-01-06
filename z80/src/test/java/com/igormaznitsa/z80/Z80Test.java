@@ -982,11 +982,13 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(0x2225, cpu.getRegisterPair(Z80.REGPAIR_DE));
     assertEquals(0x0000, cpu.getRegisterPair(Z80.REGPAIR_BC));
 
+    assertMemory(0x1110, 0x00);
     assertMemory(0x1111, 0x88);
     assertMemory(0x1112, 0x36);
     assertMemory(0x1113, 0xA5);
     assertMemory(0x1114, 0x00);
 
+    assertMemory(0x2221, 0x00);
     assertMemory(0x2222, 0x88);
     assertMemory(0x2223, 0x36);
     assertMemory(0x2224, 0xA5);
@@ -3366,11 +3368,20 @@ public class Z80Test extends AbstractZ80Test {
 
     assertEquals(Z80.SIGNAL_OUT_ALL_INACTIVE, cpu.getState());
 
-    cpu.nextInstruction(false, false, false);
-
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
     assertTrue((cpu.getState() & Z80.SIGNAL_OUT_nHALT) == 0);
     assertEquals(0, cpu.getRegister(Z80.REG_PC));
     assertTacts(cpu, 4);
+
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertTrue((cpu.getState() & Z80.SIGNAL_OUT_nHALT) == 0);
+    assertEquals(0, cpu.getRegister(Z80.REG_PC));
+    assertTacts(cpu, 8);
+
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertTrue((cpu.getState() & Z80.SIGNAL_OUT_nHALT) == 0);
+    assertEquals(0, cpu.getRegister(Z80.REG_PC));
+    assertTacts(cpu, 12);
 
     cpu.step(~Z80.SIGNAL_IN_nINT);
     assertEquals(0x38, cpu.getPC());
@@ -3389,7 +3400,7 @@ public class Z80Test extends AbstractZ80Test {
     assertFalse(cpu.isIFF2());
 
     // EI
-    cpu.nextInstruction(false, false, false);
+    cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE);
     assertEquals(0x02, cpu.getPC());
     assertTrue(cpu.isIFF1());
     assertTrue(cpu.isIFF2());
