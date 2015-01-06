@@ -23,8 +23,13 @@ import java.util.logging.Logger;
 
 public final class ZXPolyModule implements IODevice, Z80CPUBus {
 
+  private static final int INTERRUPTION_LENGTH_CYCLES = 5;
+  
   private final Logger LOGGER;
 
+  private int intCounter;
+  private int nmiCounter;
+  
   private final Motherboard board;
   private final int moduleIndex;
 
@@ -171,27 +176,49 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   }
 
   public boolean step(final boolean signalReset, final boolean commonInt) {
+    final boolean doInt;
+    final boolean doNmi;
+    
+    if (this.moduleIndex == 0) {
+      doInt = commonInt || this.localInt;
+    }
+    else {
+      doInt = (this.board.is3D00NotLocked() && commonInt) || this.localInt;
+    }
+    this.localInt = false;
+    
+    doNmi = (this.zxPolyRegsWritten[1] & ZXPOLY_wREG1_DISABLE_NMI) == 0 ? this.localNmi : false;
+    this.localNmi = false;
+    
+    if (doInt){
+      if (this.intCounter==0){
+        this.intCounter = INTERRUPTION_LENGTH_CYCLES;
+      }
+    }else{
+      if (this.intCounter>0){
+        this.intCounter --;
+      }
+    }
+    
+    if (doNmi){
+      if (this.nmiCounter==0){
+        this.nmiCounter = INTERRUPTION_LENGTH_CYCLES;
+      }
+    }else{
+      if (this.nmiCounter>0){
+        this.nmiCounter --;
+      }
+    }
+    
     final int sigReset = signalReset || (this.localResetCounter > 0) ? Z80.SIGNAL_IN_nRESET : 0;
     if (this.localResetCounter > 0) {
       this.localResetCounter--;
     }
 
-    final int sigInt;
-    if (this.moduleIndex == 0) {
-      sigInt = commonInt || this.localInt ? Z80.SIGNAL_IN_nINT : 0;
-    }
-    else {
-      sigInt = (this.board.is3D00NotLocked() ? false : commonInt) || this.localInt ? Z80.SIGNAL_IN_nINT : 0;
-    }
-    this.localInt = false;
-
-    final int sigNmi = (this.zxPolyRegsWritten[1] & ZXPOLY_wREG1_DISABLE_NMI) == 0 ? (this.localNmi ? Z80.SIGNAL_IN_nNMI : 0) : 0;
-    this.localNmi = false;
-
     final int sigWait = this.waitSignal ? Z80.SIGNAL_IN_nWAIT : 0;
 
     final int oldCpuState = this.cpu.getState();
-    this.cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ sigInt ^ sigWait ^ sigNmi);
+    this.cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.intCounter>0 ? Z80.SIGNAL_IN_nINT : 0) ^ sigWait ^ (this.nmiCounter>0 ? Z80.SIGNAL_IN_nNMI : 0));
     final int newCpuState = this.cpu.getState();
 
     final boolean metHalt = (newCpuState & Z80.SIGNAL_OUT_nHALT) == 0 && (oldCpuState & Z80.SIGNAL_OUT_nHALT) != 0;
@@ -448,6 +475,8 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
 
   private void setStateForSystemReset() {
     LOGGER.info("Reset");
+    this.intCounter = 0;
+    this.nmiCounter = 0;
     this.port7FFD = 0;
     this.trdosROM = false;
     this.registerReadingCounter = 0;

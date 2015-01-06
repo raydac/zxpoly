@@ -190,7 +190,7 @@ public class FormatZ80 extends Snapshot {
     
     cpu.setIFF(current.iff!=0, current.iff2 != 0);
     
-    cpu.setRegister(Z80.REG_I, current.reg_ir >>> 8);
+    cpu.setRegister(Z80.REG_I, current.reg_ir);
     cpu.setIM(current.emulFlags.interruptmode);
     
     System.out.println("IM = "+current.emulFlags.interruptmode+" iff1="+(current.iff!=0)+" iff2="+(current.iff != 0));
