@@ -34,7 +34,7 @@ import org.apache.commons.io.FileUtils;
 
 public class MainForm extends javax.swing.JFrame implements Runnable {
 //  private static final long CYCLES_BETWEEN_INT = Long.MAX_VALUE;
-  private static final long CYCLES_BETWEEN_INT = 64000L;
+  private static final long CYCLES_BETWEEN_INT = 68000L;
 
   
   private static class TRDFileFilter extends FileFilter {

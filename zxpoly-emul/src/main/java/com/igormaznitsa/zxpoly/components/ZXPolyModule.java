@@ -183,7 +183,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
       doInt = commonInt || this.localInt;
     }
     else {
-      doInt = (this.board.is3D00NotLocked() && commonInt) || this.localInt;
+      doInt = (!this.activeRegisterReading && this.registerReadingCounter<=0) && ((!this.board.is3D00NotLocked() && commonInt) || this.localInt);
     }
     this.localInt = false;
     
@@ -423,7 +423,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     final int val = data & 0xFF;
     final int reg0 = this.zxPolyRegsWritten[0];
 
-    if ((reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0) {
+    if ((reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 || port == PORTw_ZX128) {
       if (port == PORTw_ZX128) {
         if (this.moduleIndex == 0) {
           if (this.board.getMappedCPUIndex() > 0 && (this.zxPolyRegsWritten[1] & ZXPOLY_wREG1_WRITE_MAPPED_IO_7FFD) != 0) {

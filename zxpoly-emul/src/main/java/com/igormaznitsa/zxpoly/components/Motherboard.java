@@ -43,8 +43,8 @@ public final class Motherboard implements ZXPoly {
   private int intCounter;
   private volatile boolean videoFlashState;
 
-  private int intCycles;
-  
+  private boolean localResetForAllModules;
+
   public Motherboard(final RomData rom) {
     if (rom == null) {
       throw new NullPointerException("ROM must not be null");
@@ -95,6 +95,14 @@ public final class Motherboard implements ZXPoly {
     if (is3D00NotLocked()) {
       this.port3D00 = value;
       LOG.info("set #3D00 to " + Utils.toHex(value));
+
+      if ((value & PORTw_ZXPOLY_RESET) != 0) {
+        for (final ZXPolyModule m : this.modules) {
+          m.prepareLocalReset();
+        }
+        this.localResetForAllModules = true;
+      }
+
       this.video.setVideoMode((this.port3D00 >> 2) & 0x7);
       return true;
     }
@@ -137,6 +145,8 @@ public final class Motherboard implements ZXPoly {
   }
 
   public void step(final boolean signalInt, final boolean processStep) {
+    this.localResetForAllModules = false;
+
     if (signalInt) {
       this.intCounter++;
       if (this.intCounter >= 25) {
@@ -170,6 +180,9 @@ public final class Motherboard implements ZXPoly {
       switch ((int) System.nanoTime() & 0x3) {
         case 0: {
           zx0halt = this.modules[0].step(signalReset, signalInt);
+          if (localResetForAllModules) {
+            return;
+          }
           zx3halt = this.modules[3].step(signalReset, signalInt);
           zx2halt = this.modules[2].step(signalReset, signalInt);
           zx1halt = this.modules[1].step(signalReset, signalInt);
@@ -179,12 +192,18 @@ public final class Motherboard implements ZXPoly {
           zx1halt = this.modules[1].step(signalReset, signalInt);
           zx2halt = this.modules[2].step(signalReset, signalInt);
           zx0halt = this.modules[0].step(signalReset, signalInt);
+          if (localResetForAllModules) {
+            return;
+          }
           zx3halt = this.modules[3].step(signalReset, signalInt);
         }
         break;
         case 2: {
           zx3halt = this.modules[3].step(signalReset, signalInt);
           zx0halt = this.modules[0].step(signalReset, signalInt);
+          if (localResetForAllModules) {
+            return;
+          }
           zx1halt = this.modules[1].step(signalReset, signalInt);
           zx2halt = this.modules[2].step(signalReset, signalInt);
         }
@@ -194,12 +213,15 @@ public final class Motherboard implements ZXPoly {
           zx3halt = this.modules[3].step(signalReset, signalInt);
           zx1halt = this.modules[1].step(signalReset, signalInt);
           zx0halt = this.modules[0].step(signalReset, signalInt);
+          if (localResetForAllModules) {
+            return;
+          }
         }
         break;
         default:
           throw new Error("Unexpected combination number");
       }
-      
+
       if (is3D00NotLocked() && (zx0halt || zx1halt || zx2halt || zx3halt)) {
         // a cpu has met halt and we need process notification
         if (zx0halt) {
