@@ -33,9 +33,9 @@ import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
 
 public class MainForm extends javax.swing.JFrame implements Runnable {
-//  private static final long CYCLES_BETWEEN_INT = Long.MAX_VALUE;
   private static final long CYCLES_BETWEEN_INT = 68000L;
 
+  private volatile boolean turboMode = false;
   
   private static class TRDFileFilter extends FileFilter {
 
@@ -81,6 +81,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     log.info("Loading test rom [" + romResource + ']');
     final RomData rom = RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romResource));
     this.board = new Motherboard(rom);
+    this.board.setZXPolyMode(false);
+    this.menuOptionsZX128Mode.setSelected(!this.board.isZXPolyMode());
+    this.menuOptionsTurbo.setSelected(this.turboMode);
+    
     log.info("Main form completed");
     this.board.reset();
 
@@ -115,7 +119,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
           intsignal = false;
         }
 
-        this.board.step(intsignal, this.board.getCPU0().getMachineCycles() <= CYCLES_BETWEEN_INT);
+        this.board.step(intsignal, this.turboMode ? true : intsignal || this.board.getCPU0().getMachineCycles() <= CYCLES_BETWEEN_INT);
           
         if (nextScreenRefresh <= System.currentTimeMillis()) {
           updateScreen();
@@ -128,13 +132,18 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     }
   }
 
+  public void setTurboMode(final boolean value){
+    this.turboMode = value;
+  }
+  
+  public boolean isTurboMode(){
+    return this.isTurboMode();
+  }
+  
   private void updateScreen() {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        board.getVideoController().refreshComponent();
-      }
-    });
+    final VideoController vc = board.getVideoController();
+    vc.updateBuffer();
+    vc.repaint();
   }
 
   /**
@@ -155,6 +164,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     menuFileLoadSnapshot = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
     menuOptionsShowIndicators = new javax.swing.JCheckBoxMenuItem();
+    menuOptionsZX128Mode = new javax.swing.JCheckBoxMenuItem();
+    menuOptionsTurbo = new javax.swing.JCheckBoxMenuItem();
 
     setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
     addWindowFocusListener(new java.awt.event.WindowFocusListener() {
@@ -209,6 +220,24 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
       }
     });
     menuOptions.add(menuOptionsShowIndicators);
+
+    menuOptionsZX128Mode.setSelected(true);
+    menuOptionsZX128Mode.setText("ZX 128 Mode");
+    menuOptionsZX128Mode.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsZX128ModeActionPerformed(evt);
+      }
+    });
+    menuOptions.add(menuOptionsZX128Mode);
+
+    menuOptionsTurbo.setSelected(true);
+    menuOptionsTurbo.setText("Turbo");
+    menuOptionsTurbo.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsTurboActionPerformed(evt);
+      }
+    });
+    menuOptions.add(menuOptionsTurbo);
 
     menuBar.add(menuOptions);
 
@@ -279,6 +308,19 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     }
   }//GEN-LAST:event_menuFileLoadSnapshotActionPerformed
 
+  private void menuOptionsZX128ModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsZX128ModeActionPerformed
+    this.stepSemaphor.lock();
+    try{
+      this.board.setZXPolyMode(!this.menuOptionsZX128Mode.isSelected());
+    }finally{
+      this.stepSemaphor.unlock();
+    }
+  }//GEN-LAST:event_menuOptionsZX128ModeActionPerformed
+
+  private void menuOptionsTurboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsTurboActionPerformed
+    this.turboMode = this.menuOptionsTurbo.isSelected();
+  }//GEN-LAST:event_menuOptionsTurboActionPerformed
+
   private File chooseFile(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter ... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     for(final FileFilter f : filter){
@@ -310,6 +352,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   private javax.swing.JMenuItem menuFileSelectDiskA;
   private javax.swing.JMenu menuOptions;
   private javax.swing.JCheckBoxMenuItem menuOptionsShowIndicators;
+  private javax.swing.JCheckBoxMenuItem menuOptionsTurbo;
+  private javax.swing.JCheckBoxMenuItem menuOptionsZX128Mode;
   private javax.swing.JPanel panelIndicators;
   private javax.swing.JScrollPane scrollPanel;
   // End of variables declaration//GEN-END:variables

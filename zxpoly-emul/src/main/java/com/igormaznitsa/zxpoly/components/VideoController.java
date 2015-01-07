@@ -383,7 +383,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     bufferLocker.unlock();
   }
 
-  public void refreshComponent() {
+  public void updateBuffer(){
     lockBuffer();
     try {
       this.refreshBufferData();
@@ -391,9 +391,8 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     finally {
       unlockBuffer();
     }
-    repaint();
   }
-
+  
   @Override
   public Motherboard getMotherboard() {
     return this.board;

@@ -45,6 +45,8 @@ public final class Motherboard implements ZXPoly {
 
   private boolean localResetForAllModules;
 
+  private volatile boolean modeZXPoly = true;
+
   public Motherboard(final RomData rom) {
     if (rom == null) {
       throw new NullPointerException("ROM must not be null");
@@ -171,71 +173,78 @@ public final class Motherboard implements ZXPoly {
         d.preStep(signalReset, signalInt);
       }
 
-      // simpulation of possible racing
-      final boolean zx0halt;
-      final boolean zx1halt;
-      final boolean zx2halt;
-      final boolean zx3halt;
+      if (isZXPolyMode()) {
 
-      switch ((int) System.nanoTime() & 0x3) {
-        case 0: {
-          zx0halt = this.modules[0].step(signalReset, signalInt);
-          if (localResetForAllModules) {
-            return;
+        // simpulation of possible racing
+        final boolean zx0halt;
+        final boolean zx1halt;
+        final boolean zx2halt;
+        final boolean zx3halt;
+
+        switch ((int) System.nanoTime() & 0x3) {
+          case 0: {
+            zx0halt = this.modules[0].step(signalReset, signalInt);
+            if (localResetForAllModules) {
+              return;
+            }
+            zx3halt = this.modules[3].step(signalReset, signalInt);
+            zx2halt = this.modules[2].step(signalReset, signalInt);
+            zx1halt = this.modules[1].step(signalReset, signalInt);
           }
-          zx3halt = this.modules[3].step(signalReset, signalInt);
-          zx2halt = this.modules[2].step(signalReset, signalInt);
-          zx1halt = this.modules[1].step(signalReset, signalInt);
-        }
-        break;
-        case 1: {
-          zx1halt = this.modules[1].step(signalReset, signalInt);
-          zx2halt = this.modules[2].step(signalReset, signalInt);
-          zx0halt = this.modules[0].step(signalReset, signalInt);
-          if (localResetForAllModules) {
-            return;
+          break;
+          case 1: {
+            zx1halt = this.modules[1].step(signalReset, signalInt);
+            zx2halt = this.modules[2].step(signalReset, signalInt);
+            zx0halt = this.modules[0].step(signalReset, signalInt);
+            if (localResetForAllModules) {
+              return;
+            }
+            zx3halt = this.modules[3].step(signalReset, signalInt);
           }
-          zx3halt = this.modules[3].step(signalReset, signalInt);
-        }
-        break;
-        case 2: {
-          zx3halt = this.modules[3].step(signalReset, signalInt);
-          zx0halt = this.modules[0].step(signalReset, signalInt);
-          if (localResetForAllModules) {
-            return;
+          break;
+          case 2: {
+            zx3halt = this.modules[3].step(signalReset, signalInt);
+            zx0halt = this.modules[0].step(signalReset, signalInt);
+            if (localResetForAllModules) {
+              return;
+            }
+            zx1halt = this.modules[1].step(signalReset, signalInt);
+            zx2halt = this.modules[2].step(signalReset, signalInt);
           }
-          zx1halt = this.modules[1].step(signalReset, signalInt);
-          zx2halt = this.modules[2].step(signalReset, signalInt);
+          break;
+          case 3: {
+            zx2halt = this.modules[2].step(signalReset, signalInt);
+            zx3halt = this.modules[3].step(signalReset, signalInt);
+            zx1halt = this.modules[1].step(signalReset, signalInt);
+            zx0halt = this.modules[0].step(signalReset, signalInt);
+            if (localResetForAllModules) {
+              return;
+            }
+          }
+          break;
+          default:
+            throw new Error("Unexpected combination number");
         }
-        break;
-        case 3: {
-          zx2halt = this.modules[2].step(signalReset, signalInt);
-          zx3halt = this.modules[3].step(signalReset, signalInt);
-          zx1halt = this.modules[1].step(signalReset, signalInt);
-          zx0halt = this.modules[0].step(signalReset, signalInt);
-          if (localResetForAllModules) {
-            return;
+
+        if (is3D00NotLocked() && (zx0halt || zx1halt || zx2halt || zx3halt)) {
+          // a cpu has met halt and we need process notification
+          if (zx0halt) {
+            processHaltNotificationForModule(0);
+          }
+          if (zx1halt) {
+            processHaltNotificationForModule(1);
+          }
+          if (zx2halt) {
+            processHaltNotificationForModule(2);
+          }
+          if (zx3halt) {
+            processHaltNotificationForModule(3);
           }
         }
-        break;
-        default:
-          throw new Error("Unexpected combination number");
       }
-
-      if (is3D00NotLocked() && (zx0halt || zx1halt || zx2halt || zx3halt)) {
-        // a cpu has met halt and we need process notification
-        if (zx0halt) {
-          processHaltNotificationForModule(0);
-        }
-        if (zx1halt) {
-          processHaltNotificationForModule(1);
-        }
-        if (zx2halt) {
-          processHaltNotificationForModule(2);
-        }
-        if (zx3halt) {
-          processHaltNotificationForModule(3);
-        }
+      else {
+        // ZX 128 mode
+        this.modules[0].step(signalReset, signalInt);
       }
     }
   }
@@ -276,6 +285,18 @@ public final class Motherboard implements ZXPoly {
     }
   }
 
+  public void setZXPolyMode(final boolean flag){
+    if (this.modeZXPoly!= flag){
+      LOG.info("Changed motherboard mode to "+(flag ? "ZX-POLY" : "ZX128"));
+      this.modeZXPoly = flag;
+      this.reset();
+    }
+  }
+  
+  public boolean isZXPolyMode() {
+    return this.modeZXPoly;
+  }
+
   public ZXPolyModule[] getZXPolyModules() {
     return this.modules;
   }
@@ -296,7 +317,7 @@ public final class Motherboard implements ZXPoly {
     final int mappedCPU = getMappedCPUIndex();
     int result = 0;
 
-    if (module.getModuleIndex() == 0 && mappedCPU > 0) {
+    if (isZXPolyMode() && (module.getModuleIndex() == 0 && mappedCPU > 0)) {
       final ZXPolyModule destmodule = modules[mappedCPU];
       result = this.ram[destmodule.ramOffset2HeapAddress(port)];
       destmodule.prepareLocalInt();
@@ -325,20 +346,27 @@ public final class Motherboard implements ZXPoly {
     final int mappedCPU = getMappedCPUIndex();
     final int moduleIndex = module.getModuleIndex();
 
-    if (moduleIndex == 0) {
-      if (port == PORTrw_ZXPOLY) {
-        set3D00(value);
-      }
-      else {
-        if (mappedCPU > 0) {
-          final ZXPolyModule destmodule = modules[mappedCPU];
-          this.ram[destmodule.ramOffset2HeapAddress(port)] = (byte) value;
-          destmodule.prepareLocalNMI();
+    if (isZXPolyMode()) {
+      if (moduleIndex == 0) {
+        if (port == PORTrw_ZXPOLY) {
+          set3D00(value);
         }
         else {
-          for (final IODevice d : this.ioDevices) {
-            d.writeIO(module, port, value);
+          if (mappedCPU > 0) {
+            final ZXPolyModule destmodule = modules[mappedCPU];
+            this.ram[destmodule.ramOffset2HeapAddress(port)] = (byte) value;
+            destmodule.prepareLocalNMI();
           }
+          else {
+            for (final IODevice d : this.ioDevices) {
+              d.writeIO(module, port, value);
+            }
+          }
+        }
+      }
+      else {
+        for (final IODevice d : this.ioDevices) {
+          d.writeIO(module, port, value);
         }
       }
     }
