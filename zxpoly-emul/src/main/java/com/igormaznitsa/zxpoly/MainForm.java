@@ -35,7 +35,7 @@ import org.apache.commons.io.FileUtils;
 
 public class MainForm extends javax.swing.JFrame implements Runnable {
 
-  private static final long CYCLES_BETWEEN_INT = 68000L;
+  private static final long CYCLES_BETWEEN_INT = 64000L;
   private static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
   private static final long SCREEN_REFRESH_DELAY_MILLISECONDS = 100L;
 
@@ -172,6 +172,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     jMenuItem1 = new javax.swing.JMenuItem();
     jMenuItem2 = new javax.swing.JMenuItem();
     jMenuItem3 = new javax.swing.JMenuItem();
+    jSeparator1 = new javax.swing.JPopupMenu.Separator();
+    jMenuItem4 = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
     menuOptionsShowIndicators = new javax.swing.JCheckBoxMenuItem();
     menuOptionsZX128Mode = new javax.swing.JCheckBoxMenuItem();
@@ -194,6 +196,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
     menuFile.setText("File");
 
+    menuFileReset.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F12, 0));
     menuFileReset.setText("Reset");
     menuFileReset.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -245,6 +248,16 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     jMenu1.add(jMenuItem3);
 
     menuFile.add(jMenu1);
+    menuFile.add(jSeparator1);
+
+    jMenuItem4.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, java.awt.event.InputEvent.ALT_MASK));
+    jMenuItem4.setText("Exit");
+    jMenuItem4.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        jMenuItem4ActionPerformed(evt);
+      }
+    });
+    menuFile.add(jMenuItem4);
 
     menuBar.add(menuFile);
 
@@ -268,6 +281,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuOptions.add(menuOptionsZX128Mode);
 
+    menuOptionsTurbo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F3, 0));
     menuOptionsTurbo.setSelected(true);
     menuOptionsTurbo.setText("Turbo");
     menuOptionsTurbo.addActionListener(new java.awt.event.ActionListener() {
@@ -384,6 +398,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_D);
   }//GEN-LAST:event_jMenuItem3ActionPerformed
 
+  private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem4ActionPerformed
+    this.dispose();
+  }//GEN-LAST:event_jMenuItem4ActionPerformed
+
   private File chooseFile(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     for (final FileFilter f : filter) {
@@ -412,6 +430,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   private javax.swing.JMenuItem jMenuItem1;
   private javax.swing.JMenuItem jMenuItem2;
   private javax.swing.JMenuItem jMenuItem3;
+  private javax.swing.JMenuItem jMenuItem4;
+  private javax.swing.JPopupMenu.Separator jSeparator1;
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuFile;
   private javax.swing.JMenuItem menuFileLoadSnapshot;
