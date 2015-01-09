@@ -361,7 +361,7 @@ public final class Z80 {
     return this.machineCycles;
   }
 
-  public void resetTactCounter() {
+  public void resetMCycleCounter() {
     this.machineCycles = 0L;
   }
 
