@@ -95,15 +95,17 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   @Override
   public void mouseWheelMoved(final MouseWheelEvent e) {
-    final int newzoom;
-    if (e.getPreciseWheelRotation() > 0) {
-      newzoom = Math.max(1, this.zoom - 1);
-    }
-    else {
-      newzoom = Math.min(4, this.zoom + 1);
-    }
-    if (newzoom != this.zoom) {
-      updateZoom(newzoom);
+    if (e.isControlDown()) {
+      final int newzoom;
+      if (e.getPreciseWheelRotation() > 0) {
+        newzoom = Math.max(1, this.zoom - 1);
+      }
+      else {
+        newzoom = Math.min(4, this.zoom + 1);
+      }
+      if (newzoom != this.zoom) {
+        updateZoom(newzoom);
+      }
     }
   }
 
@@ -146,7 +148,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     final int xoff = (width - this.size.width) / 2;
     final int yoff = (height - this.size.height) / 2;
 
-    if (xoff>0 || yoff>0){
+    if (xoff > 0 || yoff > 0) {
       g2.setColor(ZXPALETTE_AS_COLORS[this.portFEw & 7]);
       g2.fillRect(0, 0, width, height);
     }
@@ -360,7 +362,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     lockBuffer();
     try {
       if (this.currentVideoMode != newVideoMode) {
-        log.info("mode set: "+decodeVideoModeCode(newVideoMode));
+        log.info("mode set: " + decodeVideoModeCode(newVideoMode));
         this.currentVideoMode = newVideoMode;
         refreshBufferData();
       }
@@ -370,11 +372,11 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
-  public void setBorderColor(final int colorIndex){
+  public void setBorderColor(final int colorIndex) {
     this.portFEw |= (this.portFEw & 7) | (colorIndex & 0x07);
     repaint();
   }
-  
+
   public void lockBuffer() {
     bufferLocker.lock();
   }
@@ -383,7 +385,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     bufferLocker.unlock();
   }
 
-  public void updateBuffer(){
+  public void updateBuffer() {
     lockBuffer();
     try {
       this.refreshBufferData();
@@ -392,7 +394,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       unlockBuffer();
     }
   }
-  
+
   @Override
   public Motherboard getMotherboard() {
     return this.board;

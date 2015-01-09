@@ -29,6 +29,8 @@ public class TRDOSDisk {
   private static final int SECTORS_PER_TRACK = 16;
   private static final int SECTOR_SIZE = 256;
 
+  private static final Random rnd = new Random();
+  
   public static class Sector {
 
     private final TRDOSDisk owner;
@@ -36,15 +38,18 @@ public class TRDOSDisk {
     private final byte[] data;
     private final int side;
     private final int track;
-    private final int sector;
-
-    private Sector(final TRDOSDisk disk, final int side, final int track, final int sector, final int crc, final byte[] data) {
+    private final int sectorId;
+    private final int offset;
+    
+    private Sector(final TRDOSDisk disk, final int side, final int track, final int sector, final int offset, final byte[] data) {
       this.side = side;
       this.track = track;
-      this.sector = sector;
+      this.sectorId = sector;
       this.crc = crc;
       this.data = data;
       this.owner = disk; 
+      this.offset = offset;
+      updateCrc();
     }
 
     public boolean isWriteProtect(){
@@ -52,43 +57,58 @@ public class TRDOSDisk {
     }
     
     public boolean isLastOnTrack() {
-      return this.sector == SECTORS_PER_TRACK;
+      return this.sectorId == SECTORS_PER_TRACK;
     }
 
     public int getSide() {
       return this.side;
     }
 
-    public int getTrack() {
+    public int getTrackNumber() {
       return this.track;
     }
 
-    public int getSector() {
-      return this.sector;
+    public int getSectorId() {
+      return this.sectorId;
     }
 
     public int getCrc() {
       return this.crc;
     }
 
-    public int readByte(final int offsetFromSectorStart) {
-      if (offsetFromSectorStart < 0 || offsetFromSectorStart >= SECTOR_SIZE) {
+    public int readByte(final int offsetAtSector) {
+      if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
         return -1;
       }
       else {
-        return this.data[getOffset() + offsetFromSectorStart] & 0xFF;
+        return this.data[getOffset() + offsetAtSector] & 0xFF;
       }
     }
 
-    public boolean writeByte(final int offsetFromSectorStart, final int value) {
-      if (offsetFromSectorStart < 0 || offsetFromSectorStart >= SECTOR_SIZE) {
+    public void updateCrc(){
+      int  lcrc = 0xcdb4;
+      for(int off=0;off<SECTOR_SIZE;off++){
+        lcrc^=(this.readByte(off) << 8);
+        for(int i=0;i<8;i++){
+         lcrc<<=1;
+         if ((lcrc & 0x10000)!=0){
+           lcrc ^= 0x1021;
+         }
+        }
+      }
+      this.crc = lcrc & 0xFFFF;
+    }
+    
+    public boolean writeByte(final int offsetAtSector, final int value) {
+      if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
         return false;
       }
       else {
         if (this.owner.isWriteProtect()) {
           return false;
         }
-        this.data[getOffset() + offsetFromSectorStart] = (byte) value;
+        this.data[getOffset() + offsetAtSector] = (byte) value;
+        this.updateCrc();
         return true;
       }
     }
@@ -98,7 +118,7 @@ public class TRDOSDisk {
     }
 
     private int getOffset() {
-      return  (this.track * SIDES + this.side) * SECTOR_SIZE * SECTORS_PER_TRACK + (this.sector - 1) * SECTOR_SIZE;
+      return  this.offset;
     }
 
     public boolean isCrcOk() {
@@ -122,20 +142,31 @@ public class TRDOSDisk {
     this.sectors = new Sector[SECTORS_PER_TRACK*TRACKS_PER_SIDE*SIDES];
 
     int p = 0;
-    for(int side = 0; side<SIDES;side++){
-      for(int track=0;track<TRACKS_PER_SIDE;track++){
-        for(int sector=0;sector<SECTORS_PER_TRACK;sector++){
-          this.sectors[p++] = new Sector(this, side, track, sector+1, track, workData);
-        }
-      }
+    for(int i=0; i<workData.length; i+=SECTOR_SIZE){
+      this.sectors[p++] = new Sector(this, (i>>12) & 1, i>>13, ((i >> 8) & 0x0f) + 1,i, workData);
     }
   }
 
+  public Sector findRandomSector(final int side, final int track) {
+    Sector sector = findFirstSector(side, track);
+    if (sector!=null){
+      int toskip = rnd.nextInt(SECTORS_PER_TRACK);
+      Sector found = sector;
+      while(toskip-->0){
+        found = findSectorAfter(found);
+      }
+      if (found!=null){
+        sector = found;
+      }
+    }
+    return sector;
+  }
+  
   public Sector findFirstSector(final int side, final int track) {
     Sector result = null;
 
     for (final Sector s : this.sectors) {
-      if (s.getSide() == side && s.getTrack() == track) {
+      if (s.getSide() == side && s.getTrackNumber() == track) {
         result = s;
         break;
       }
@@ -161,7 +192,7 @@ public class TRDOSDisk {
     Sector result = null;
 
       for(final Sector s : this.sectors){
-        if (s.getSide() == side && s.getTrack() == track && s.getSector() == sector){
+        if (s.getSide() == side && s.getTrackNumber() == track && s.getSectorId() == sector){
           result = s;
           break;
         }
@@ -171,12 +202,6 @@ public class TRDOSDisk {
       System.out.println("Can't find side = " + side + " track = " + track + " sector = " + sector);
     }
     return result;
-  }
-
-  public void write(final int address, final int value) {
-    if (!this.writeProtect) {
-      this.data[address] = (byte) value;
-    }
   }
 
   public int getSides() {

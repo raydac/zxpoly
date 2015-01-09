@@ -19,25 +19,38 @@ package com.igormaznitsa.zxpoly.components.betadisk;
 import com.igormaznitsa.zxpoly.components.IODevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZXPolyModule;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.logging.Logger;
 
 public class BetaDiscInterface implements IODevice {
 
+  public static final int DRIVE_A = 0;
+  public static final int DRIVE_B = 1;
+  public static final int DRIVE_C = 2;
+  public static final int DRIVE_D = 3;
+  
   private static final Logger log = Logger.getLogger("BD");
 
   private final Motherboard board;
   private final K1818VG93 vg93;
   private int ffPort;
 
+  private final AtomicReferenceArray<TRDOSDisk> diskDrives = new AtomicReferenceArray<>(4);
+  
   public BetaDiscInterface(final Motherboard board) {
     this.board = board;
     this.vg93 = new K1818VG93(log);
   }
 
-  public void setDisk(final TRDOSDisk drive) {
-    this.vg93.setDisk(drive);
+  public void insertDiskIntoDrive(final int driveIndex, final TRDOSDisk disk) {
+    this.diskDrives.set(driveIndex, disk);
+    tuneControllerToDisk();
   }
 
+  private void tuneControllerToDisk(){
+    this.vg93.setDisk(this.diskDrives.get(this.ffPort & 0x3));
+  }
+  
   @Override
   public int readIO(final ZXPolyModule module, final int port) {
     if (module.isTRDOSActive()) {
@@ -95,6 +108,7 @@ public class BetaDiscInterface implements IODevice {
     this.ffPort = value;
     this.vg93.setResetIn((this.ffPort & 0b00000100) != 0);
     this.vg93.setSide((this.ffPort & 0b00010000)==0? 1 : 0);
+    tuneControllerToDisk();
   }
 
   @Override

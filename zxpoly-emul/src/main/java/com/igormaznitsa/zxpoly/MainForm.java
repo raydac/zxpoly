@@ -17,6 +17,7 @@
 package com.igormaznitsa.zxpoly;
 
 import com.igormaznitsa.zxpoly.components.*;
+import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
 import com.igormaznitsa.zxpoly.formats.*;
 import java.awt.*;
@@ -33,10 +34,13 @@ import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
 
 public class MainForm extends javax.swing.JFrame implements Runnable {
+
   private static final long CYCLES_BETWEEN_INT = 68000L;
+  private static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
+  private static final long SCREEN_REFRESH_DELAY_MILLISECONDS = 100L;
 
   private volatile boolean turboMode = false;
-  
+
   private static class TRDFileFilter extends FileFilter {
 
     @Override
@@ -55,8 +59,6 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   public static final Logger log = Logger.getLogger("UI");
 
   private final Motherboard board;
-  private final long SCREEN_REFRESH_DELAY = 100L;
-
   private final ReentrantLock stepSemaphor = new ReentrantLock();
 
   private class KeyboardDispatcher implements KeyEventDispatcher {
@@ -84,7 +86,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     this.board.setZXPolyMode(false);
     this.menuOptionsZX128Mode.setSelected(!this.board.isZXPolyMode());
     this.menuOptionsTurbo.setSelected(this.turboMode);
-    
+
     log.info("Main form completed");
     this.board.reset();
 
@@ -102,28 +104,32 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   @Override
   public void run() {
-    long nextSystemInt = System.currentTimeMillis() + 20;
-    long nextScreenRefresh = System.currentTimeMillis() + SCREEN_REFRESH_DELAY;
+    long nextSystemInt = System.currentTimeMillis() + TIMER_INT_DELAY_MILLISECONDS;
+    long nextScreenRefresh = System.currentTimeMillis() + SCREEN_REFRESH_DELAY_MILLISECONDS;
 
     while (!Thread.currentThread().isInterrupted()) {
+      final long currentMachineCycleCounter = this.board.getCPU0().getMachineCycles();
+      long currentTime = System.currentTimeMillis();
+      
       stepSemaphor.lock();
       try {
-        final boolean intsignal;
 
-        if (nextSystemInt <= System.currentTimeMillis()) {
-          intsignal = true;
-          nextSystemInt = System.currentTimeMillis() + 20;
-          this.board.getCPU0().resetTactCounter();
+        final boolean systemIntSignal;
+        if (nextSystemInt <= currentTime) {
+          systemIntSignal = currentMachineCycleCounter >= CYCLES_BETWEEN_INT;
+          nextSystemInt = currentTime + TIMER_INT_DELAY_MILLISECONDS;
+          this.board.getCPU0().resetMCycleCounter();
         }
         else {
-          intsignal = false;
+          systemIntSignal = false;
         }
 
-        this.board.step(intsignal, this.turboMode ? true : intsignal || this.board.getCPU0().getMachineCycles() <= CYCLES_BETWEEN_INT);
-          
-        if (nextScreenRefresh <= System.currentTimeMillis()) {
+        this.board.step(systemIntSignal, this.turboMode ? true : systemIntSignal || currentMachineCycleCounter <= CYCLES_BETWEEN_INT);
+        currentTime = System.currentTimeMillis();
+
+        if (nextScreenRefresh <= currentTime) {
           updateScreen();
-          nextScreenRefresh = System.currentTimeMillis() + SCREEN_REFRESH_DELAY;
+          nextScreenRefresh = currentTime + SCREEN_REFRESH_DELAY_MILLISECONDS;
         }
       }
       finally {
@@ -132,14 +138,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     }
   }
 
-  public void setTurboMode(final boolean value){
+  public void setTurboMode(final boolean value) {
     this.turboMode = value;
   }
-  
-  public boolean isTurboMode(){
+
+  public boolean isTurboMode() {
     return this.isTurboMode();
   }
-  
+
   private void updateScreen() {
     final VideoController vc = board.getVideoController();
     vc.updateBuffer();
@@ -160,8 +166,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     menuBar = new javax.swing.JMenuBar();
     menuFile = new javax.swing.JMenu();
     menuFileReset = new javax.swing.JMenuItem();
-    menuFileSelectDiskA = new javax.swing.JMenuItem();
     menuFileLoadSnapshot = new javax.swing.JMenuItem();
+    jMenu1 = new javax.swing.JMenu();
+    menuFileSelectDiskA = new javax.swing.JMenuItem();
+    jMenuItem1 = new javax.swing.JMenuItem();
+    jMenuItem2 = new javax.swing.JMenuItem();
+    jMenuItem3 = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
     menuOptionsShowIndicators = new javax.swing.JCheckBoxMenuItem();
     menuOptionsZX128Mode = new javax.swing.JCheckBoxMenuItem();
@@ -192,14 +202,6 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuFile.add(menuFileReset);
 
-    menuFileSelectDiskA.setText("Select TRD for A");
-    menuFileSelectDiskA.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuFileSelectDiskAActionPerformed(evt);
-      }
-    });
-    menuFile.add(menuFileSelectDiskA);
-
     menuFileLoadSnapshot.setText("Load Snapshot");
     menuFileLoadSnapshot.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -207,6 +209,42 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
       }
     });
     menuFile.add(menuFileLoadSnapshot);
+
+    jMenu1.setText("Load Disk..");
+
+    menuFileSelectDiskA.setText("Drive A");
+    menuFileSelectDiskA.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuFileSelectDiskAActionPerformed(evt);
+      }
+    });
+    jMenu1.add(menuFileSelectDiskA);
+
+    jMenuItem1.setText("Drive B");
+    jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        jMenuItem1ActionPerformed(evt);
+      }
+    });
+    jMenu1.add(jMenuItem1);
+
+    jMenuItem2.setText("Drive C");
+    jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        jMenuItem2ActionPerformed(evt);
+      }
+    });
+    jMenu1.add(jMenuItem2);
+
+    jMenuItem3.setText("Drive D");
+    jMenuItem3.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        jMenuItem3ActionPerformed(evt);
+      }
+    });
+    jMenu1.add(jMenuItem3);
+
+    menuFile.add(jMenu1);
 
     menuBar.add(menuFile);
 
@@ -254,21 +292,32 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     this.panelIndicators.setVisible(this.menuOptionsShowIndicators.isSelected());
   }//GEN-LAST:event_menuOptionsShowIndicatorsActionPerformed
 
-  private void menuFileSelectDiskAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskAActionPerformed
-    final File selected = chooseFile("Select Disk A", null, null, new TRDFileFilter());
-    if (selected != null) {
+  private void loadDiskIntoDrive(final int drive) {
+    final char diskName;
+    switch(drive){
+      case BetaDiscInterface.DRIVE_A : diskName = 'A';break;
+      case BetaDiscInterface.DRIVE_B : diskName = 'B';break;
+      case BetaDiscInterface.DRIVE_C : diskName = 'C';break;
+      case BetaDiscInterface.DRIVE_D : diskName = 'D';break;
+      default: throw new Error("Unexpected drive index");
+    }
+    
+    final File selectedFile = chooseFile("Select Disk "+diskName, null, null, new TRDFileFilter());
+    if (selectedFile != null) {
       try {
-        final TRDOSDisk floppy = new TRDOSDisk(FileUtils.readFileToByteArray(selected), false);
-
-        log.info("Loaded TRD disk " + floppy + " from file " + selected);
-
-        this.board.getBetaDiskInterface().setDisk(floppy);
+        final TRDOSDisk floppy = new TRDOSDisk(FileUtils.readFileToByteArray(selectedFile), false);
+        this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
+        log.info("Loaded drive "+diskName + " by file " + selectedFile);
       }
       catch (IOException ex) {
-        log.log(Level.WARNING, "Can't read TRD file [" + selected + ']', ex);
+        log.log(Level.WARNING, "Can't read TRD file [" + selectedFile + ']', ex);
         JOptionPane.showMessageDialog(this, "Can't read TRD file", "Error", JOptionPane.ERROR_MESSAGE);
       }
     }
+  }
+  
+  private void menuFileSelectDiskAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskAActionPerformed
+    loadDiskIntoDrive(BetaDiscInterface.DRIVE_A);
   }//GEN-LAST:event_menuFileSelectDiskAActionPerformed
 
   private void formWindowLostFocus(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowLostFocus
@@ -282,37 +331,39 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   private void menuFileLoadSnapshotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadSnapshotActionPerformed
     stepSemaphor.lock();
-    try{
-    final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
-    final File selected = chooseFile("Select snapshot", null, theFilter, new FormatZ80(), new FormatSNA());
-    if (selected != null) {
-      try {
-        final Snapshot selectedFilter = (Snapshot)theFilter.get();
-        selectedFilter.load(FileUtils.readFileToByteArray(selected));
-        log.info("Loaded image from file " + selectedFilter.getName());
-        stepSemaphor.lock();
+    try {
+      final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
+      final File selected = chooseFile("Select snapshot", null, theFilter, new FormatZ80(), new FormatSNA());
+      if (selected != null) {
         try {
-          this.board.loadSnapshot(selectedFilter, false);
+          final Snapshot selectedFilter = (Snapshot) theFilter.get();
+          selectedFilter.load(FileUtils.readFileToByteArray(selected));
+          log.info("Loaded image from file " + selectedFilter.getName());
+          stepSemaphor.lock();
+          try {
+            this.board.loadSnapshot(selectedFilter, false);
+          }
+          finally {
+            stepSemaphor.unlock();
+          }
         }
-        finally {
-          stepSemaphor.unlock();
+        catch (IOException ex) {
+          log.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
+          JOptionPane.showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
         }
-      }
-      catch (IOException ex) {
-        log.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
-        JOptionPane.showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
       }
     }
-    }finally{
+    finally {
       stepSemaphor.unlock();
     }
   }//GEN-LAST:event_menuFileLoadSnapshotActionPerformed
 
   private void menuOptionsZX128ModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsZX128ModeActionPerformed
     this.stepSemaphor.lock();
-    try{
+    try {
       this.board.setZXPolyMode(!this.menuOptionsZX128Mode.isSelected());
-    }finally{
+    }
+    finally {
       this.stepSemaphor.unlock();
     }
   }//GEN-LAST:event_menuOptionsZX128ModeActionPerformed
@@ -321,9 +372,21 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     this.turboMode = this.menuOptionsTurbo.isSelected();
   }//GEN-LAST:event_menuOptionsTurboActionPerformed
 
-  private File chooseFile(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter ... filter) {
+  private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+    loadDiskIntoDrive(BetaDiscInterface.DRIVE_C);
+  }//GEN-LAST:event_jMenuItem2ActionPerformed
+
+  private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+    loadDiskIntoDrive(BetaDiscInterface.DRIVE_B);
+  }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+  private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
+    loadDiskIntoDrive(BetaDiscInterface.DRIVE_D);
+  }//GEN-LAST:event_jMenuItem3ActionPerformed
+
+  private File chooseFile(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
-    for(final FileFilter f : filter){
+    for (final FileFilter f : filter) {
       chooser.addChoosableFileFilter(f);
     }
     chooser.setAcceptAllFileFilterUsed(false);
@@ -334,7 +397,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     final File result;
     if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
       result = chooser.getSelectedFile();
-      if (selectedFilter!=null) {
+      if (selectedFilter != null) {
         selectedFilter.set(chooser.getFileFilter());
       }
     }
@@ -345,6 +408,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }
 
   // Variables declaration - do not modify//GEN-BEGIN:variables
+  private javax.swing.JMenu jMenu1;
+  private javax.swing.JMenuItem jMenuItem1;
+  private javax.swing.JMenuItem jMenuItem2;
+  private javax.swing.JMenuItem jMenuItem3;
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuFile;
   private javax.swing.JMenuItem menuFileLoadSnapshot;
