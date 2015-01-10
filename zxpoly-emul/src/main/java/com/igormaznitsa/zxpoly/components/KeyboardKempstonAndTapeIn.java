@@ -20,7 +20,7 @@ import java.awt.event.KeyEvent;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
-public class KeyboardKempstonAndTapeIn implements IODevice {
+public final class KeyboardKempstonAndTapeIn implements IODevice {
 
   private static final int KEMPSTON_RIGHT = 1;
   private static final int KEMPSTON_LEFT = 2;

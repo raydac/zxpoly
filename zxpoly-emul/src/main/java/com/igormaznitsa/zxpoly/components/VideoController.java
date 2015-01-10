@@ -84,6 +84,9 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   public VideoController(final Motherboard board) {
     super();
+    
+//    setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT), new Point(0, 0), "InvisibleCursor"));
+    
     this.board = board;
     this.modules = board.getZXPolyModules();
 
@@ -421,5 +424,21 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     if (signalReset) {
       this.portFEw = 0x00;
     }
+  }
+
+  public int getZXScrY(final int compoY) {
+    final int height = getHeight();
+    final int yoff = (height - this.size.height) / 2;
+
+    final int result = ((compoY - yoff) / this.zoom) / 2;
+    return Math.max(0x00, Math.min(191, result));
+  }
+
+  public int getZXScrX(final int compoX) {
+    final int width = getWidth();
+    final int xoff = (width - this.size.width) / 2;
+
+    final int result = ((compoX - xoff) / this.zoom) / 2;
+    return Math.max(0x00, Math.min(0xFF, result));
   }
 }

@@ -62,11 +62,12 @@ public final class Motherboard implements ZXPoly {
     this.betaDisk = new BetaDiscInterface(this);
 
     iodevices.add(this.betaDisk);
-
+    
     this.keyboard = new KeyboardKempstonAndTapeIn(this);
     iodevices.add(keyboard);
     this.video = new VideoController(this);
     iodevices.add(video);
+    iodevices.add(new KempstonMouse(this));
     this.ioDevices = iodevices.toArray(new IODevice[iodevices.size()]);
 
     // simulation of garbage in memory after power on
