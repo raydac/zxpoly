@@ -17,15 +17,23 @@
 package com.igormaznitsa.zxpoly.components;
 
 import java.awt.event.KeyEvent;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
-public class KeyboardAndTape implements IODevice {
+public class KeyboardKempstonAndTapeIn implements IODevice {
+
+  private static final int KEMPSTON_RIGHT = 1;
+  private static final int KEMPSTON_LEFT = 2;
+  private static final int KEMPSTON_DOWN = 4;
+  private static final int KEMPSTON_UP = 8;
+  private static final int KEMPSTON_FIRE = 16;
 
   private final Motherboard board;
 
   private final AtomicIntegerArray keyboardLines = new AtomicIntegerArray(8);
+  private final AtomicInteger kempstonSignals = new AtomicInteger();
 
-  public KeyboardAndTape(final Motherboard board) {
+  public KeyboardKempstonAndTapeIn(final Motherboard board) {
     this.board = board;
   }
 
@@ -42,15 +50,22 @@ public class KeyboardAndTape implements IODevice {
 
   @Override
   public int readIO(final ZXPolyModule module, final int port) {
+    int result = 0;
     if (!module.isTRDOSActive()) {
-      if ((port & 0xFF) == 0xFE) {
-        return getKbdValueForLines((port >> 8) & 0xFF);
-      }
-      else {
-        return 0;
+      switch (port & 0xFF) {
+        case 0xFE: {
+          // KEYBOARD
+          result = getKbdValueForLines(port >>> 8);
+        }
+        break;
+        case 0x1F: {
+          // KEMPSTON
+          result = this.kempstonSignals.get();
+        }
+        break;
       }
     }
-    return 0;
+    return result;
   }
 
   @Override
@@ -62,12 +77,13 @@ public class KeyboardAndTape implements IODevice {
     return this.board;
   }
 
-  public void reset(){
+  public void reset() {
     for (int i = 0; i < this.keyboardLines.length(); i++) {
       this.keyboardLines.set(i, 0x1F);
     }
+    this.kempstonSignals.set(0);
   }
-  
+
   @Override
   public void preStep(final boolean signalReset, final boolean signalInt) {
     if (signalReset) {
@@ -95,8 +111,34 @@ public class KeyboardAndTape implements IODevice {
 
     int line = 0;
     int code = 0;
+    int kempston = 0;
 
     switch (evt.getKeyCode()) {
+      case KeyEvent.VK_KP_LEFT:
+      case KeyEvent.VK_NUMPAD4: {
+        kempston = KEMPSTON_LEFT;
+      }
+      break;
+      case KeyEvent.VK_KP_UP:
+      case KeyEvent.VK_NUMPAD8: {
+        kempston = KEMPSTON_UP;
+      }
+      break;
+      case KeyEvent.VK_KP_RIGHT:
+      case KeyEvent.VK_NUMPAD6: {
+        kempston = KEMPSTON_RIGHT;
+      }
+      break;
+      case KeyEvent.VK_KP_DOWN:
+      case KeyEvent.VK_NUMPAD2: {
+        kempston = KEMPSTON_DOWN;
+      }
+      break;
+      case 65368: // NUMPAD 5 
+      case KeyEvent.VK_NUMPAD5: {
+        kempston = KEMPSTON_FIRE;
+      }
+      break;
       case KeyEvent.VK_1: {
         line = 3;
         code = 0x1E;
@@ -351,6 +393,15 @@ public class KeyboardAndTape implements IODevice {
       }
       else {
         this.keyboardLines.set(theline, this.keyboardLines.get(theline) | (~thecode & 0x1F));
+      }
+    }
+
+    if (kempston != 0) {
+      if (pressed) {
+        this.kempstonSignals.set(kempston | this.kempstonSignals.get());
+      }
+      else {
+        this.kempstonSignals.set((~kempston & this.kempstonSignals.get()) & 0xFF);
       }
     }
   }

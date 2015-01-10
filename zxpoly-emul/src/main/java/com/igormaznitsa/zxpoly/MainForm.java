@@ -63,9 +63,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   private class KeyboardDispatcher implements KeyEventDispatcher {
 
-    private final KeyboardAndTape keyboard;
+    private final KeyboardKempstonAndTapeIn keyboard;
 
-    public KeyboardDispatcher(final KeyboardAndTape kbd) {
+    public KeyboardDispatcher(final KeyboardKempstonAndTapeIn kbd) {
       this.keyboard = kbd;
     }
 
@@ -83,7 +83,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     log.info("Loading test rom [" + romResource + ']');
     final RomData rom = RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romResource));
     this.board = new Motherboard(rom);
-    this.board.setZXPolyMode(false);
+    this.board.setZXPolyMode(true);
     this.menuOptionsZX128Mode.setSelected(!this.board.isZXPolyMode());
     this.menuOptionsTurbo.setSelected(this.turboMode);
 

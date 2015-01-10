@@ -31,7 +31,7 @@ public final class Motherboard implements ZXPoly {
   private final IODevice[] ioDevices;
   private final byte[] ram = new byte[512 * 1024];
   private final VideoController video;
-  private final KeyboardAndTape keyboard;
+  private final KeyboardKempstonAndTapeIn keyboard;
   private final BetaDiscInterface betaDisk;
   private final RomData rom;
 
@@ -63,7 +63,7 @@ public final class Motherboard implements ZXPoly {
 
     iodevices.add(this.betaDisk);
 
-    this.keyboard = new KeyboardAndTape(this);
+    this.keyboard = new KeyboardKempstonAndTapeIn(this);
     iodevices.add(keyboard);
     this.video = new VideoController(this);
     iodevices.add(video);
@@ -377,7 +377,7 @@ public final class Motherboard implements ZXPoly {
     }
   }
 
-  public KeyboardAndTape getKeyboard() {
+  public KeyboardKempstonAndTapeIn getKeyboard() {
     return this.keyboard;
   }
 }
