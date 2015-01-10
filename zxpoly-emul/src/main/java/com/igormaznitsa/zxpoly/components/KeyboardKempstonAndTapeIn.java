@@ -405,4 +405,9 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
       }
     }
   }
+  
+  @Override
+  public void postStep(long spentMachineCyclesForStep) {
+  }
+
 }

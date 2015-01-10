@@ -124,7 +124,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
           systemIntSignal = false;
         }
 
+        
         this.board.step(systemIntSignal, this.turboMode ? true : systemIntSignal || currentMachineCycleCounter <= CYCLES_BETWEEN_INT);
+
         currentTime = System.currentTimeMillis();
 
         if (nextScreenRefresh <= currentTime) {

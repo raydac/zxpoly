@@ -174,6 +174,8 @@ public final class Motherboard implements ZXPoly {
         d.preStep(signalReset, signalInt);
       }
 
+      final long initialMachineCycleCounter = this.modules[0].getCPU().getMachineCycles();
+      
       if (isZXPolyMode()) {
 
         // simpulation of possible racing
@@ -246,6 +248,12 @@ public final class Motherboard implements ZXPoly {
       else {
         // ZX 128 mode
         this.modules[0].step(signalReset, signalInt);
+      }
+    
+      final long spentMachineCycles = this.modules[0].getCPU().getMachineCycles() - initialMachineCycleCounter;
+      
+      for (final IODevice d : this.ioDevices) {
+        d.postStep(spentMachineCycles);
       }
     }
   }

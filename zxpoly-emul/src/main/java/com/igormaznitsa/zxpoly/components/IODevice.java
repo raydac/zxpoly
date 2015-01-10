@@ -21,5 +21,6 @@ public interface IODevice extends ZXPoly {
   int readIO(ZXPolyModule module, int port);
   void writeIO(ZXPolyModule module, int port, int value);
   void preStep(boolean signalReset, boolean signalInt);
+  void postStep(long spentMachineCyclesForStep);
   String getName();
 }

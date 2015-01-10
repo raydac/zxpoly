@@ -425,12 +425,16 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       this.portFEw = 0x00;
     }
   }
+  
+  @Override
+  public void postStep(long spentMachineCyclesForStep) {
+  }
 
   public int getZXScrY(final int compoY) {
     final int height = getHeight();
     final int yoff = (height - this.size.height) / 2;
 
-    final int result = ((compoY - yoff) / this.zoom) / 2;
+    final int result = (compoY - yoff) / (this.zoom << 1);
     return Math.max(0x00, Math.min(191, result));
   }
 
@@ -438,7 +442,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     final int width = getWidth();
     final int xoff = (width - this.size.width) / 2;
 
-    final int result = ((compoX - xoff) / this.zoom) / 2;
+    final int result = (compoX - xoff) / (this.zoom << 1);
     return Math.max(0x00, Math.min(0xFF, result));
   }
 }

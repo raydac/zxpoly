@@ -516,6 +516,10 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     prepareWaitSignal();
   }
 
+  @Override
+  public void postStep(long spentMachineCyclesForStep) {
+  }
+  
   private void prepareWaitSignal() {
     if (this.board.isZXPolyMode()) {
       this.waitSignal = this.stopAddressWait || (this.moduleIndex > 0 && this.board.isCPUModules123InWaitMode());

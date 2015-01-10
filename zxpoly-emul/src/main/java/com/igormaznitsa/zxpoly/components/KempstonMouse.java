@@ -78,6 +78,8 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
   @Override
   public void preStep(boolean signalReset, boolean signalInt) {
     if(signalReset){
+      this.coordX.set(128);
+      this.coordY.set(86);
       this.buttons.set(0);
     }
   }
@@ -89,12 +91,12 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
 
   @Override
   public void mouseExited(final MouseEvent e) {
-    this.buttons.set(0);
+    this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
   }
 
   @Override
   public void mouseEntered(final MouseEvent e) {
-    this.buttons.set(0);
+    this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
   }
 
   @Override
@@ -139,4 +141,9 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
     this.coordX.set(this.videoController.getZXScrX(e.getX()));
     this.coordY.set(191-this.videoController.getZXScrY(e.getY()));
   }
+
+  @Override
+  public void postStep(long spentMachineCyclesForStep) {
+  }
+
 }

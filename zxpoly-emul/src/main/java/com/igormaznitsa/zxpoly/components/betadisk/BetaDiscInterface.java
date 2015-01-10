@@ -131,5 +131,9 @@ public class BetaDiscInterface implements IODevice {
   public String getName() {
     return "BetaDiscInterface";
   }
+  
+  @Override
+  public void postStep(long spentMachineCyclesForStep) {
+  }
 
 }
