@@ -73,6 +73,8 @@ public final class Motherboard implements ZXPoly {
     // simulation of garbage in memory after power on
     final Random rnd = new Random();
     rnd.nextBytes(this.ram);
+    
+    
   }
 
   public void loadSnapshot(final Snapshot snapshot, final boolean mode128) {

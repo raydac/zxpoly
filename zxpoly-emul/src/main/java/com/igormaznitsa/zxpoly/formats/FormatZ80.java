@@ -25,6 +25,7 @@ import com.igormaznitsa.zxpoly.components.VideoController;
 import com.igormaznitsa.zxpoly.components.ZXPolyModule;
 import java.io.*;
 import java.lang.reflect.Field;
+import java.util.Locale;
 
 public class FormatZ80 extends Snapshot {
 
@@ -217,7 +218,7 @@ public class FormatZ80 extends Snapshot {
 
   @Override
   public boolean accept(final File f) {
-    return f != null && (f.isDirectory() || f.getName().toString().endsWith(".z80"));
+    return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".z80"));
   }
 
   @Override

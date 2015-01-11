@@ -17,8 +17,7 @@
 package com.igormaznitsa.zxpoly.components;
 
 import java.awt.event.KeyEvent;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.*;
 
 public final class KeyboardKempstonAndTapeIn implements IODevice {
 
@@ -28,11 +27,14 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
   private static final int KEMPSTON_UP = 8;
   private static final int KEMPSTON_FIRE = 16;
 
+  private static final int TAP_BIT = 0b01000000;
+  
   private final Motherboard board;
 
   private final AtomicIntegerArray keyboardLines = new AtomicIntegerArray(8);
   private final AtomicInteger kempstonSignals = new AtomicInteger();
-
+  private final AtomicReference<TapeFileReader> tap = new AtomicReference<>();
+  
   public KeyboardKempstonAndTapeIn(final Motherboard board) {
     this.board = board;
   }
@@ -55,7 +57,9 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
       switch (port & 0xFF) {
         case 0xFE: {
           // KEYBOARD
-          result = getKbdValueForLines(port >>> 8);
+          final TapeFileReader thetap = getTap();
+          final int tapbit = thetap == null ? 0 : thetap.in() ? TAP_BIT : 0;
+          result = getKbdValueForLines(port >>> 8) | tapbit;
         }
         break;
         case 0x1F: {
@@ -96,6 +100,14 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
     return "Keyboard";
   }
 
+  public void setTap(final TapeFileReader tap){
+    this.tap.set(tap);
+  }
+  
+  public TapeFileReader getTap(){
+    return this.tap.get();
+  }
+  
   public void onKeyEvent(final KeyEvent evt) {
     final boolean pressed;
     switch (evt.getID()) {
@@ -407,7 +419,9 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
   }
   
   @Override
-  public void postStep(long spentMachineCyclesForStep) {
+  public void postStep(final long spentMachineCyclesForStep) {
+    final TapeFileReader currentTap = this.getTap();
+    if (currentTap!=null) currentTap.updateForSpentMachineCycles(spentMachineCyclesForStep);
   }
 
 }

@@ -24,6 +24,7 @@ import com.igormaznitsa.zxpoly.components.VideoController;
 import com.igormaznitsa.zxpoly.components.ZXPolyModule;
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 
 public class FormatSNA extends Snapshot {
 
@@ -94,7 +95,7 @@ public class FormatSNA extends Snapshot {
 
   @Override
   public boolean accept(final File f) {
-    return f!=null && (f.isDirectory() || f.getName().toString().endsWith(".sna"));
+    return f!=null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".sna"));
   }
 
   @Override

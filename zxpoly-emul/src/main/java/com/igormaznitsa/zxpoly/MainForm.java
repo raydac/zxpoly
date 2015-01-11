@@ -22,8 +22,7 @@ import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
 import com.igormaznitsa.zxpoly.formats.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,6 +31,7 @@ import java.util.logging.Logger;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 public class MainForm extends javax.swing.JFrame implements Runnable {
 
@@ -55,13 +55,43 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   }
 
+  private static class TapFileFilter extends FileFilter {
+
+    @Override
+    public boolean accept(File f) {
+      return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".tap");
+    }
+
+    @Override
+    public String getDescription() {
+      return "TAP file (*.tap)";
+    }
+
+  }
+
+  private static class WavFileFilter extends FileFilter {
+
+    @Override
+    public boolean accept(File f) {
+      return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".wav");
+    }
+
+    @Override
+    public String getDescription() {
+      return "WAV file (*.wav)";
+    }
+
+  }
+
   private static final long serialVersionUID = 7309959798344327441L;
   public static final Logger log = Logger.getLogger("UI");
 
   private final Motherboard board;
+  private final KeyboardKempstonAndTapeIn keyboardAnddTapeModule;
+
   private final ReentrantLock stepSemaphor = new ReentrantLock();
 
-  private class KeyboardDispatcher implements KeyEventDispatcher {
+  private static class KeyboardDispatcher implements KeyEventDispatcher {
 
     private final KeyboardKempstonAndTapeIn keyboard;
 
@@ -95,11 +125,28 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     manager.addKeyEventDispatcher(new KeyboardDispatcher(this.board.getKeyboard()));
 
+    this.keyboardAnddTapeModule = this.board.getKeyboard();
+
+    updateTapeMenu();
+
     final Thread daemon = new Thread(this, "ZXPolyThread");
     daemon.setDaemon(true);
     daemon.start();
 
     pack();
+  }
+
+  private void updateTapeMenu() {
+    final TapeFileReader reader = this.keyboardAnddTapeModule.getTap();
+    if (reader == null) {
+      this.menuTap.setEnabled(false);
+      this.menuTapPlay.setSelected(false);
+    }
+    else {
+      this.menuTap.setEnabled(true);
+      this.menuTapPlay.setSelected(reader.isPlaying());
+    }
+
   }
 
   @Override
@@ -110,7 +157,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     while (!Thread.currentThread().isInterrupted()) {
       final long currentMachineCycleCounter = this.board.getCPU0().getMachineCycles();
       long currentTime = System.currentTimeMillis();
-      
+
       stepSemaphor.lock();
       try {
 
@@ -124,7 +171,6 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
           systemIntSignal = false;
         }
 
-        
         this.board.step(systemIntSignal, this.turboMode ? true : systemIntSignal || currentMachineCycleCounter <= CYCLES_BETWEEN_INT);
 
         currentTime = System.currentTimeMillis();
@@ -169,6 +215,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     menuFile = new javax.swing.JMenu();
     menuFileReset = new javax.swing.JMenuItem();
     menuFileLoadSnapshot = new javax.swing.JMenuItem();
+    menuFileLoadTap = new javax.swing.JMenuItem();
     jMenu1 = new javax.swing.JMenu();
     menuFileSelectDiskA = new javax.swing.JMenuItem();
     jMenuItem1 = new javax.swing.JMenuItem();
@@ -176,6 +223,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     jMenuItem3 = new javax.swing.JMenuItem();
     jSeparator1 = new javax.swing.JPopupMenu.Separator();
     jMenuItem4 = new javax.swing.JMenuItem();
+    menuTap = new javax.swing.JMenu();
+    menuTapPrevBlock = new javax.swing.JMenuItem();
+    menuTapPlay = new javax.swing.JCheckBoxMenuItem();
+    menuTapNextBlock = new javax.swing.JMenuItem();
+    menuTapGotoBlock = new javax.swing.JMenuItem();
+    jSeparator2 = new javax.swing.JPopupMenu.Separator();
+    menuTapExportAs = new javax.swing.JMenu();
+    menuTapExportAsWav = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
     menuOptionsShowIndicators = new javax.swing.JCheckBoxMenuItem();
     menuOptionsZX128Mode = new javax.swing.JCheckBoxMenuItem();
@@ -214,6 +269,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
       }
     });
     menuFile.add(menuFileLoadSnapshot);
+
+    menuFileLoadTap.setText("Load TAPE");
+    menuFileLoadTap.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuFileLoadTapActionPerformed(evt);
+      }
+    });
+    menuFile.add(menuFileLoadTap);
 
     jMenu1.setText("Load Disk..");
 
@@ -263,6 +326,46 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
     menuBar.add(menuFile);
 
+    menuTap.setText("Tape");
+
+    menuTapPrevBlock.setText("Prev block");
+    menuTap.add(menuTapPrevBlock);
+
+    menuTapPlay.setSelected(true);
+    menuTapPlay.setText("Play");
+    menuTapPlay.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTapPlayActionPerformed(evt);
+      }
+    });
+    menuTap.add(menuTapPlay);
+
+    menuTapNextBlock.setText("Next block");
+    menuTap.add(menuTapNextBlock);
+
+    menuTapGotoBlock.setText("Go to block");
+    menuTapGotoBlock.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTapGotoBlockActionPerformed(evt);
+      }
+    });
+    menuTap.add(menuTapGotoBlock);
+    menuTap.add(jSeparator2);
+
+    menuTapExportAs.setText("Export as..");
+
+    menuTapExportAsWav.setText("WAV file");
+    menuTapExportAsWav.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTapExportAsWavActionPerformed(evt);
+      }
+    });
+    menuTapExportAs.add(menuTapExportAsWav);
+
+    menuTap.add(menuTapExportAs);
+
+    menuBar.add(menuTap);
+
     menuOptions.setText("Options");
 
     menuOptionsShowIndicators.setSelected(true);
@@ -310,20 +413,29 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   private void loadDiskIntoDrive(final int drive) {
     final char diskName;
-    switch(drive){
-      case BetaDiscInterface.DRIVE_A : diskName = 'A';break;
-      case BetaDiscInterface.DRIVE_B : diskName = 'B';break;
-      case BetaDiscInterface.DRIVE_C : diskName = 'C';break;
-      case BetaDiscInterface.DRIVE_D : diskName = 'D';break;
-      default: throw new Error("Unexpected drive index");
+    switch (drive) {
+      case BetaDiscInterface.DRIVE_A:
+        diskName = 'A';
+        break;
+      case BetaDiscInterface.DRIVE_B:
+        diskName = 'B';
+        break;
+      case BetaDiscInterface.DRIVE_C:
+        diskName = 'C';
+        break;
+      case BetaDiscInterface.DRIVE_D:
+        diskName = 'D';
+        break;
+      default:
+        throw new Error("Unexpected drive index");
     }
-    
-    final File selectedFile = chooseFile("Select Disk "+diskName, null, null, new TRDFileFilter());
+
+    final File selectedFile = chooseFileForOpen("Select Disk " + diskName, null, null, new TRDFileFilter());
     if (selectedFile != null) {
       try {
         final TRDOSDisk floppy = new TRDOSDisk(FileUtils.readFileToByteArray(selectedFile), false);
         this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
-        log.info("Loaded drive "+diskName + " by file " + selectedFile);
+        log.info("Loaded drive " + diskName + " by file " + selectedFile);
       }
       catch (IOException ex) {
         log.log(Level.WARNING, "Can't read TRD file [" + selectedFile + ']', ex);
@@ -331,7 +443,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
       }
     }
   }
-  
+
   private void menuFileSelectDiskAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskAActionPerformed
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_A);
   }//GEN-LAST:event_menuFileSelectDiskAActionPerformed
@@ -349,7 +461,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     stepSemaphor.lock();
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
-      final File selected = chooseFile("Select snapshot", null, theFilter, new FormatZ80(), new FormatSNA());
+      final File selected = chooseFileForOpen("Select snapshot", null, theFilter, new FormatZ80(), new FormatSNA());
       if (selected != null) {
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
@@ -404,7 +516,52 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     this.dispose();
   }//GEN-LAST:event_jMenuItem4ActionPerformed
 
-  private File chooseFile(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
+  private void menuTapGotoBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapGotoBlockActionPerformed
+
+  }//GEN-LAST:event_menuTapGotoBlockActionPerformed
+
+  private void menuFileLoadTapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadTapActionPerformed
+    final File tapFile = chooseFileForOpen("Load Tape", null, null, new TapFileFilter());
+    if (tapFile != null) {
+      InputStream in = null;
+      try {
+        in = new BufferedInputStream(new FileInputStream(tapFile));
+        final TapeFileReader tapfile = new TapeFileReader(in);
+        this.keyboardAnddTapeModule.setTap(tapfile);
+      }
+      catch (Exception ex) {
+        log.log(Level.WARNING, "Can't read " + tapFile, ex);
+        JOptionPane.showMessageDialog(this, "Can't load TAP file", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+      }
+      finally {
+        IOUtils.closeQuietly(in);
+        updateTapeMenu();
+      }
+    }
+  }//GEN-LAST:event_menuFileLoadTapActionPerformed
+
+  private void menuTapExportAsWavActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapExportAsWavActionPerformed
+    try {
+      final byte [] wav = this.keyboardAnddTapeModule.getTap().getAsWAV(11025);
+      final File fileToSave = chooseFileForSave("Select WAV file", null, new WavFileFilter());
+      if (fileToSave!=null){
+        FileUtils.writeByteArrayToFile(fileToSave, wav);
+        log.info("Exported current TAP file as WAV file "+fileToSave+" size "+wav.length+" bytes");
+      }
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+      log.log(Level.WARNING, "Can't export as WAV", ex);
+      JOptionPane.showMessageDialog(this, "Can't export as WAV", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+    }
+  }//GEN-LAST:event_menuTapExportAsWavActionPerformed
+
+  private void menuTapPlayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapPlayActionPerformed
+    this.keyboardAnddTapeModule.getTap().startPlay();
+    updateTapeMenu();
+  }//GEN-LAST:event_menuTapPlayActionPerformed
+  
+  private File chooseFileForOpen(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     for (final FileFilter f : filter) {
       chooser.addChoosableFileFilter(f);
@@ -427,6 +584,26 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     return result;
   }
 
+  private File chooseFileForSave(final String title, final File initial, final FileFilter filter) {
+    final JFileChooser chooser = new JFileChooser(initial);
+    chooser.addChoosableFileFilter(filter);
+    chooser.setAcceptAllFileFilterUsed(true);
+    chooser.setMultiSelectionEnabled(false);
+    chooser.setDialogTitle(title);
+    chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+    final File result;
+    if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+      result = chooser.getSelectedFile();
+    }
+    else {
+      result = null;
+    }
+    return result;
+  }
+
+
+
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JMenu jMenu1;
   private javax.swing.JMenuItem jMenuItem1;
@@ -434,15 +611,24 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   private javax.swing.JMenuItem jMenuItem3;
   private javax.swing.JMenuItem jMenuItem4;
   private javax.swing.JPopupMenu.Separator jSeparator1;
+  private javax.swing.JPopupMenu.Separator jSeparator2;
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuFile;
   private javax.swing.JMenuItem menuFileLoadSnapshot;
+  private javax.swing.JMenuItem menuFileLoadTap;
   private javax.swing.JMenuItem menuFileReset;
   private javax.swing.JMenuItem menuFileSelectDiskA;
   private javax.swing.JMenu menuOptions;
   private javax.swing.JCheckBoxMenuItem menuOptionsShowIndicators;
   private javax.swing.JCheckBoxMenuItem menuOptionsTurbo;
   private javax.swing.JCheckBoxMenuItem menuOptionsZX128Mode;
+  private javax.swing.JMenu menuTap;
+  private javax.swing.JMenu menuTapExportAs;
+  private javax.swing.JMenuItem menuTapExportAsWav;
+  private javax.swing.JMenuItem menuTapGotoBlock;
+  private javax.swing.JMenuItem menuTapNextBlock;
+  private javax.swing.JCheckBoxMenuItem menuTapPlay;
+  private javax.swing.JMenuItem menuTapPrevBlock;
   private javax.swing.JPanel panelIndicators;
   private javax.swing.JScrollPane scrollPanel;
   // End of variables declaration//GEN-END:variables
