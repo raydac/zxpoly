@@ -33,6 +33,7 @@ public final class TapeFileReader {
   private static final long PULSELEN_SYNC1 = 667L;
   private static final long PULSELEN_SYNC2 = 735L;
   private static final long PULSELEN_ZERO = 855L;
+  private static final long PULSELEN_SYNC3 = 954L;
   private static final long PULSELEN_ONE = 1710L;
   private static final long IMPULSNUMBER_PILOT_HEADER = 8063L;
   private static final long IMPULSNUMBER_PILOT_DATA = 3223L;
@@ -47,6 +48,7 @@ public final class TapeFileReader {
     PILOT,
     SYNC1,
     SYNC2,
+    SYNC3,
     FLAG,
     DATA,
     CHECKSUM
@@ -275,7 +277,7 @@ public final class TapeFileReader {
     }
   }
 
-  private void loadDataByteToRead(final int data, final long machineCycles){
+  private void loadDataByteToRead(final int data){
     this.controlChecksum ^= data;
     this.mask = 0x80;
     this.buffered = data;
@@ -386,7 +388,7 @@ public final class TapeFileReader {
             log.log(Level.INFO, "FLAG (#"+Integer.toHexString(block.flag & 0xFF).toUpperCase(Locale.ENGLISH)+')');
             this.controlChecksum = 0;
             this.counterMain = 0L;
-            loadDataByteToRead(block.flag & 0xFF, machineCycles);
+            loadDataByteToRead(block.flag & 0xFF);
           }
           else {
             if (processDataByte(machineCycles)) {
@@ -400,13 +402,12 @@ public final class TapeFileReader {
           if (this.counterMain < 0L) {
             log.log(Level.INFO, "DATA (len=#"+Integer.toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH)+')');
             this.counterMain = 0L;
-            loadDataByteToRead(block.data[(int) this.counterMain],machineCycles);
+            loadDataByteToRead(block.data[(int) this.counterMain++]);
           }
           else {
             if (processDataByte(machineCycles)) {
-              this.counterMain++;
               if (this.counterMain < block.data.length) {
-                loadDataByteToRead(block.data[(int) this.counterMain],machineCycles);
+                loadDataByteToRead(block.data[(int) this.counterMain++]);
               }
               else {
                 this.counterMain = -1;
@@ -418,15 +419,31 @@ public final class TapeFileReader {
         break;
         case CHECKSUM: {
           if (this.counterMain < 0L) {
-            log.log(Level.INFO, "CHK (xor=#{0})", Integer.toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH));
+            log.log(Level.INFO, "CHK (xor=#"+Integer.toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)+')');
             if ((block.checksum & 0xFF) != (this.controlChecksum & 0xFF)) {
               log.warning("Different XOR sum : at file #"+Integer.toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)+", calculated #"+Integer.toHexString(this.controlChecksum & 0xFF).toUpperCase(Locale.ENGLISH));
             }
             this.counterMain = 0L;
-            loadDataByteToRead(block.checksum & 0xFF, machineCycles);
+            loadDataByteToRead(block.checksum & 0xFF);
           }
           else {
             if (processDataByte(machineCycles)) {
+              this.counterMain = -1L;
+              this.state = State.SYNC3;
+            }
+          }
+        }
+        break;
+        case SYNC3: {
+          if (this.counterMain < 0L) {
+            log.info("SYNC3");
+            this.counterEx = PULSELEN_SYNC3;
+            this.inState = !inState;
+            this.counterMain = 0L;
+          }
+          else {
+            this.counterEx -= machineCycles;
+            if (counterEx <= 0) {
               this.counterMain = -1L;
               if (!this.rewindToNextBlock()) {
                 this.state = State.STOPPED;
