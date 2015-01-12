@@ -560,6 +560,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_menuFileLoadTapActionPerformed
 
   private void menuTapExportAsWavActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapExportAsWavActionPerformed
+    this.stepSemaphor.lock();
     try {
       final byte [] wav = this.keyboardAnddTapeModule.getTap().getAsWAV();
       final File fileToSave = chooseFileForSave("Select WAV file", null, new WavFileFilter());
@@ -572,6 +573,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
       ex.printStackTrace();
       log.log(Level.WARNING, "Can't export as WAV", ex);
       JOptionPane.showMessageDialog(this, "Can't export as WAV", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+    }finally{
+      this.stepSemaphor.unlock();
     }
   }//GEN-LAST:event_menuTapExportAsWavActionPerformed
 

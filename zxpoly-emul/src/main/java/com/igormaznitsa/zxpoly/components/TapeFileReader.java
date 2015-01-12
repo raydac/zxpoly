@@ -22,6 +22,7 @@ import com.igormaznitsa.jbbp.mapper.Bin;
 import com.igormaznitsa.jbbp.model.JBBPFieldArrayStruct;
 import java.io.*;
 import java.util.Locale;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class TapeFileReader {
@@ -29,8 +30,8 @@ public final class TapeFileReader {
   private static final Logger log = Logger.getLogger("TAP");
 
   private static final long PULSELEN_PILOT = 2168L;
-  private static final long PULSELEN_SYNC_ON = 667L;
-  private static final long PULSELEN_SYNC_OFF = 735L;
+  private static final long PULSELEN_SYNC1 = 667L;
+  private static final long PULSELEN_SYNC2 = 735L;
   private static final long PULSELEN_ZERO = 855L;
   private static final long PULSELEN_ONE = 1710L;
   private static final long IMPULSNUMBER_PILOT_HEADER = 8063L;
@@ -44,7 +45,8 @@ public final class TapeFileReader {
     STOPPED,
     INBETWEEN,
     PILOT,
-    SYNCHRO,
+    SYNC1,
+    SYNC2,
     FLAG,
     DATA,
     CHECKSUM
@@ -95,102 +97,16 @@ public final class TapeFileReader {
         }
       }
     }
-
-    public void writeAsUnsigned8BitMonoPCMData(final OutputStream out, final int cyclesPerSample) throws IOException {
-      // header
-      generateImpulses(out, cyclesPerSample, PULSELEN_PILOT, PULSELEN_PILOT, isHeader() ? IMPULSNUMBER_PILOT_HEADER >> 1 : IMPULSNUMBER_PILOT_DATA >> 1);
-      // sync
-      generateImpulses(out, cyclesPerSample, PULSELEN_SYNC_ON, PULSELEN_SYNC_OFF, 1);
-      // flag
-      int thedata = this.flag;
-      int mask = 0x80;
-      while (mask != 0) {
-        if ((thedata & mask) == 0) {
-          generateImpulses(out, cyclesPerSample, PULSELEN_ZERO, PULSELEN_ZERO, 1);
-        }
-        else {
-          generateImpulses(out, cyclesPerSample, PULSELEN_ONE, PULSELEN_ONE, 1);
-        }
-        mask >>>= 1;
-      }
-      // data
-      for (final byte b : this.data) {
-        thedata = b;
-        mask = 0x80;
-        while (mask != 0) {
-          if ((thedata & mask) == 0) {
-            generateImpulses(out, cyclesPerSample, PULSELEN_ZERO, PULSELEN_ZERO, 1);
-          }
-          else {
-            generateImpulses(out, cyclesPerSample, PULSELEN_ONE, PULSELEN_ONE, 1);
-          }
-          mask >>>= 1;
-        }
-      }
-      // checksum
-      thedata = this.checksum;
-      mask = 0x80;
-      while (mask != 0) {
-        if ((thedata & mask) == 0) {
-          generateImpulses(out, cyclesPerSample, PULSELEN_ZERO, PULSELEN_ZERO, 1);
-        }
-        else {
-          generateImpulses(out, cyclesPerSample, PULSELEN_ONE, PULSELEN_ONE, 1);
-        }
-        mask >>>= 1;
-      }
-    }
-  }
-
-  private final class DataBuffer {
-
-    private int databuffer;
-    private int mask;
-    private long counter;
-
-    public void load(final int data) {
-      controlChecksum ^= data;
-      this.databuffer = data;
-      this.mask = 0x80;
-      this.counter = 0L;
-      timingForBit();
-      inState = true;
-    }
-
-    private void timingForBit() {
-      this.counter += (this.databuffer & this.mask) == 0 ? PULSELEN_ZERO : PULSELEN_ONE;
-    }
-
-    public boolean process(final long machineCycles) {
-      boolean result = false;
-      this.counter -= machineCycles;
-      if (this.counter <= 0) {
-        if (inState) {
-          timingForBit();
-          inState = false;
-        }
-        else {
-          this.mask >>>= 1;
-          if (this.mask == 0) {
-            result = true;
-          }
-          else {
-            timingForBit();
-            inState = true;
-          }
-        }
-      }
-      return result;
-    }
   }
 
   private TapBlock current;
   private State state = State.STOPPED;
   private long counterMain;
   private long counterEx;
+  private int mask;
+  private int buffered;
   private int controlChecksum;
   private boolean inState;
-  private final DataBuffer buffer = new DataBuffer();
 
   public TapeFileReader(final InputStream tap) throws IOException {
     final JBBPFieldArrayStruct parsed = TAP_FILE_PARSER.parse(tap).findFirstFieldForType(JBBPFieldArrayStruct.class);
@@ -228,14 +144,12 @@ public final class TapeFileReader {
         return false;
       }
     }
-    this.inState = false;
     this.state = State.INBETWEEN;
     this.counterMain = -1L;
     return true;
   }
 
   public synchronized void stopPlay() {
-    this.inState = false;
     this.counterMain = -1L;
     this.state = State.STOPPED;
   }
@@ -285,11 +199,7 @@ public final class TapeFileReader {
   }
 
   public synchronized boolean getSignal() {
-    boolean result = false;
-    if (this.state != State.STOPPED) {
-      result = this.inState;
-    }
-    return result;
+    return this.inState;
   }
 
   public synchronized byte[] getAsWAV() throws IOException {
@@ -298,15 +208,14 @@ public final class TapeFileReader {
 
     final ByteArrayOutputStream data = new ByteArrayOutputStream(1000000);
 
-    TapBlock block = this.current.findFirst();
-    do {
-      for (int i = 0; i < 44100; i++) {
-        data.write(0);
-      }
-      block.writeAsUnsigned8BitMonoPCMData(data, CYCLESPERSAMPLE);
-      block = block.next;
+    rewindToStart();
+    this.inState = false;
+    this.counterMain = -1L;
+    this.state = State.INBETWEEN;
+    while(this.state!=State.STOPPED){
+      data.write(this.inState ? 0xFF : 0x00);
+      updateForSpentMachineCycles(CYCLESPERSAMPLE);
     }
-    while (block != null);
 
     final JBBPOut out = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
 
@@ -366,45 +275,47 @@ public final class TapeFileReader {
     }
   }
 
-  private void initSignalSimulation(final long lengthOn, final long number) {
-    this.counterEx = lengthOn;
-    this.counterMain = number;
-    this.inState = true;
+  private void loadDataByteToRead(final int data, final long machineCycles){
+    this.controlChecksum ^= data;
+    this.mask = 0x80;
+    this.buffered = data;
+    this.counterEx = ((data & this.mask) == 0 ? PULSELEN_ZERO : PULSELEN_ONE);
+    this.inState = !this.inState;
   }
-
-  private boolean processSignalSimulation(final long lengthOn, final long lengthOff, final long spentMachineCycles) {
+  
+  private boolean processDataByte(final long machineCycles){
     boolean result = false;
-    this.counterEx -= spentMachineCycles;
-    if (this.counterEx <= 0) {
-      if (this.inState) {
-        this.inState = false;
-        this.counterEx += lengthOff;
-      }
-      else {
-        this.counterMain--;
-        if (this.counterMain <= 0) {
-          this.inState = false;
-          this.counterMain = -1L;
+    long counter = this.counterEx & 0x8000000000000000L;
+    this.counterEx = (this.counterEx & 0x7FFFFFFFFFFFFFFFL)-machineCycles;
+    if (this.counterEx<=0){
+      if (counter!=0){
+        this.mask >>>= 1;
+        if (this.mask == 0){
           result = true;
+        }else{
+          this.counterEx = (this.buffered & this.mask) == 0 ? PULSELEN_ZERO : PULSELEN_ONE;
+          this.inState = !this.inState;
+          counter = 0;
         }
-        else {
-          this.counterEx = lengthOn;
-          this.inState = true;
-        }
+      }else{
+        this.counterEx = (this.buffered & this.mask) == 0 ? PULSELEN_ZERO : PULSELEN_ONE;
+        counter = 0x8000000000000000L;
+        this.inState = !this.inState;
       }
     }
+    this.counterEx |= counter;
     return result;
   }
-
+  
   public synchronized void updateForSpentMachineCycles(final long machineCycles) {
     if (this.state != State.STOPPED) {
       final TapBlock block = this.current;
 
       switch (this.state) {
         case INBETWEEN: {
-          this.inState = false;
           if (counterMain < 0) {
             log.info("PAUSE");
+            this.inState = false;
             this.counterMain = PAUSE_BETWEEN;
           }
           else {
@@ -413,67 +324,93 @@ public final class TapeFileReader {
               this.state = State.PILOT;
               this.counterMain = -1L;
             }
-            this.inState = true;
           }
         }
         break;
         case PILOT: {
           if (this.counterMain < 0L) {
-            log.info("PILOT (" + (block.isHeader() ? "header" : "data") + ')');
-            initSignalSimulation(PULSELEN_PILOT, block.isHeader() ? IMPULSNUMBER_PILOT_HEADER>>1  : IMPULSNUMBER_PILOT_DATA >> 1);
+            log.log(Level.INFO, "PILOT ("+(block.isHeader() ? "header" : "data")+')');
+            this.counterMain = block.isHeader() ? IMPULSNUMBER_PILOT_HEADER : IMPULSNUMBER_PILOT_DATA;
+            this.inState = !this.inState;
+            this.counterEx = PULSELEN_PILOT;
           }
           else {
-            if (processSignalSimulation(PULSELEN_PILOT, PULSELEN_PILOT, machineCycles)) {
-              this.state = State.SYNCHRO;
+            this.counterEx -= machineCycles;
+            if (this.counterEx<=0){
+              this.counterMain--;
+              if (this.counterMain<=0){
+                this.state = State.SYNC1;
+                this.counterMain = -1L;
+              }else{
+                this.inState = !inState;
+                this.counterEx = PULSELEN_PILOT;
+              }
             }
           }
         }
         break;
-        case SYNCHRO: {
+        case SYNC1: {
           if (this.counterMain < 0L) {
-            log.info("SYNC");
-            initSignalSimulation(PULSELEN_SYNC_ON, 1);
+            log.info("SYNC1");
+            this.counterEx = PULSELEN_SYNC1;
+            this.inState = !inState;
+            this.counterMain = 0L;
           }
           else {
-            if (processSignalSimulation(PULSELEN_SYNC_ON, PULSELEN_SYNC_OFF, machineCycles)) {
+            this.counterEx -= machineCycles;
+            if (counterEx<=0){
+              this.counterMain = -1L;
+              this.state = State.SYNC2;
+            }
+          }
+        }
+        break;
+        case SYNC2: {
+          if (this.counterMain < 0L) {
+            log.info("SYNC1");
+            this.counterEx = PULSELEN_SYNC2;
+            this.inState = !inState;
+            this.counterMain = 0L;
+          }
+          else {
+            this.counterEx -= machineCycles;
+            if (counterEx <= 0) {
+              this.counterMain = -1L;
               this.state = State.FLAG;
-              this.inState = true;
             }
           }
         }
         break;
         case FLAG: {
           if (this.counterMain < 0L) {
-            log.info("FLAG (#" + Integer.toHexString(block.flag & 0xFF).toUpperCase(Locale.ENGLISH) + ')');
+            log.log(Level.INFO, "FLAG (#"+Integer.toHexString(block.flag & 0xFF).toUpperCase(Locale.ENGLISH)+')');
             this.controlChecksum = 0;
             this.counterMain = 0L;
-            this.buffer.load(block.flag & 0xFF);
+            loadDataByteToRead(block.flag & 0xFF, machineCycles);
           }
           else {
-            if (this.buffer.process(machineCycles)) {
+            if (processDataByte(machineCycles)) {
               this.counterMain = -1L;
               this.state = State.DATA;
-              this.inState = true;
             }
           }
         }
         break;
         case DATA: {
           if (this.counterMain < 0L) {
-            log.info("DATA (len=#" + Integer.toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH) + ')');
+            log.log(Level.INFO, "DATA (len=#"+Integer.toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH)+')');
             this.counterMain = 0L;
-            this.buffer.load(block.data[(int) this.counterMain]);
+            loadDataByteToRead(block.data[(int) this.counterMain],machineCycles);
           }
           else {
-            if (this.buffer.process(machineCycles)) {
+            if (processDataByte(machineCycles)) {
               this.counterMain++;
               if (this.counterMain < block.data.length) {
-                this.buffer.load(block.data[(int) this.counterMain]);
+                loadDataByteToRead(block.data[(int) this.counterMain],machineCycles);
               }
               else {
                 this.counterMain = -1;
                 this.state = State.CHECKSUM;
-                this.inState = true;
               }
             }
           }
@@ -481,15 +418,15 @@ public final class TapeFileReader {
         break;
         case CHECKSUM: {
           if (this.counterMain < 0L) {
-            log.info("CHK (xor=#" + Integer.toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH) + ')');
+            log.log(Level.INFO, "CHK (xor=#{0})", Integer.toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH));
             if ((block.checksum & 0xFF) != (this.controlChecksum & 0xFF)) {
-              log.warning("Different XOR sum : at file #" + Integer.toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH) + ", calculated #" + Integer.toHexString(this.controlChecksum & 0xFF).toUpperCase(Locale.ENGLISH));
+              log.warning("Different XOR sum : at file #"+Integer.toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)+", calculated #"+Integer.toHexString(this.controlChecksum & 0xFF).toUpperCase(Locale.ENGLISH));
             }
             this.counterMain = 0L;
-            this.buffer.load(block.checksum & 0xFF);
+            loadDataByteToRead(block.checksum & 0xFF, machineCycles);
           }
           else {
-            if (this.buffer.process(machineCycles)) {
+            if (processDataByte(machineCycles)) {
               this.counterMain = -1L;
               if (!this.rewindToNextBlock()) {
                 this.state = State.STOPPED;
