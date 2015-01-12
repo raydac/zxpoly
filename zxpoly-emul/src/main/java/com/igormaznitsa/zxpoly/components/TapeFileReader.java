@@ -24,14 +24,13 @@ import java.io.*;
 
 public class TapeFileReader {
 
-  private static final long PERIOD_PILOT = 2168L;
-  private static final long PERIOD_SYNCH1 = 667L;
-  private static final long PERIOD_SYNCH2 = 735L;
-  private static final long PERIOD_RES = 855L;
-  private static final long PERIOD_SET = 1710L;
-  private static final long REPEAT_PILOT_HEADER = 8063L;
-  private static final long REPEAT_DATA_HEADER = 3223L;
-  private static final int REPEAT_BIT = 2;
+  private static final long PULSELEN_PILOT = 2168L;
+  private static final long PULSELEN_SYNC_ON = 667L;
+  private static final long PULSELEN_SYNC_OFF = 735L;
+  private static final long PULSELEN_ZERO = 855L;
+  private static final long PULSELEN_ONE = 1710L;
+  private static final long LENGTH_PILOT_HEADER = 8063L;
+  private static final long LENGTH_PILOT_DATA = 3223L;
 
   private static final JBBPParser TAP_FILE_PARSER = JBBPParser.prepare("tapblocks [_]{ <ushort len; byte flag; byte [len-2] data; byte checksum;}");
 
@@ -40,8 +39,7 @@ public class TapeFileReader {
     STOPPED,
     INBETWEEN,
     PILOT,
-    SYNCHRO1,
-    SYNCHRO2,
+    SYNCHRO,
     FLAG,
     DATA,
     CHECKSUM
@@ -79,146 +77,113 @@ public class TapeFileReader {
       return result;
     }
 
-    private static int calculateMCyclesForByte(int data) {
-      int result = 0;
-      for (int i = 0; i < 8; i++) {
-        result += ((data & 0x80) == 0 ? PERIOD_RES : PERIOD_SET) * REPEAT_BIT;
-        data <<= 1;
-      }
-      return result;
-    }
-
-    private void generateImpulses(final OutputStream out, final int cyclesPerSample, final long periodInCycles, final long repeat) throws IOException {
-      final long samples = (periodInCycles+(cyclesPerSample>>1))/cyclesPerSample;
-      final long middle = samples >> 1;
+    private void generateImpulses(final OutputStream out, final int cyclesPerSample, final long cyclesOn, final long cyclesOff, final long repeat) throws IOException {
+      final long samplesOn = Math.round((double) cyclesOn / (double) cyclesPerSample);
+      final long samplesOff = Math.round((double) cyclesOff / (double) cyclesPerSample);
 
       for (int i = 0; i < repeat; i++) {
-        for (long j = 0; j < samples; j++) {
-          if (j < middle) {
-            out.write(0x00);
-          }else{
-            out.write(0xFF);
-          }
-        } 
+        for (int j = 0; j < samplesOn; j++) {
+          out.write(0xFF);
+        }
+        for (int j = 0; j < samplesOff; j++) {
+          out.write(0x00);
+        }
       }
     }
 
     public void writeAsUnsigned8BitMonoPCMData(final OutputStream out, final int cyclesPerSample) throws IOException {
       // header
-      generateImpulses(out, cyclesPerSample, PERIOD_PILOT, isHeader() ? REPEAT_PILOT_HEADER : REPEAT_DATA_HEADER);
-      // sync1
-      generateImpulses(out, cyclesPerSample, PERIOD_SYNCH1, 1);
-      // sync2
-      generateImpulses(out, cyclesPerSample, PERIOD_SYNCH2, 1);
+      generateImpulses(out, cyclesPerSample, PULSELEN_PILOT, PULSELEN_PILOT, isHeader() ? LENGTH_PILOT_HEADER : LENGTH_PILOT_DATA);
+      // sync
+      generateImpulses(out, cyclesPerSample, PULSELEN_SYNC_ON, PULSELEN_SYNC_OFF, 1);
       // flag
       int thedata = this.flag;
-      for (int j = 0; j < 8; j++) {
-        if ((thedata & 0x80) == 0) {
-          generateImpulses(out, cyclesPerSample, PERIOD_RES, REPEAT_BIT);
+      int mask = 0x80;
+      while (mask != 0) {
+        if ((thedata & mask) == 0) {
+          generateImpulses(out, cyclesPerSample, PULSELEN_ZERO, PULSELEN_ZERO, 1);
         }
         else {
-          generateImpulses(out, cyclesPerSample, PERIOD_SET, REPEAT_BIT);
+          generateImpulses(out, cyclesPerSample, PULSELEN_ONE, PULSELEN_ONE, 1);
         }
-        thedata <<= 1;
+        mask >>>= 1;
       }
       // data
       for (final byte b : this.data) {
         thedata = b;
-        for (int j = 0; j < 8; j++) {
-          if ((thedata & 0x80) == 0) {
-            generateImpulses(out, cyclesPerSample, PERIOD_RES, REPEAT_BIT);
+        mask = 0x80;
+        while (mask != 0) {
+          if ((thedata & mask) == 0) {
+            generateImpulses(out, cyclesPerSample, PULSELEN_ZERO, PULSELEN_ZERO, 1);
           }
           else {
-            generateImpulses(out, cyclesPerSample, PERIOD_SET, REPEAT_BIT);
+            generateImpulses(out, cyclesPerSample, PULSELEN_ONE, PULSELEN_ONE, 1);
           }
-          thedata <<= 1;
+          mask >>>= 1;
         }
       }
-      // flag
+      // checksum
       thedata = this.checksum;
-      for (int j = 0; j < 8; j++) {
-        if ((thedata & 0x80) == 0) {
-          generateImpulses(out, cyclesPerSample, PERIOD_RES, REPEAT_BIT);
+      mask = 0x80;
+      while (mask != 0) {
+        if ((thedata & mask) == 0) {
+          generateImpulses(out, cyclesPerSample, PULSELEN_ZERO, PULSELEN_ZERO, 1);
         }
         else {
-          generateImpulses(out, cyclesPerSample, PERIOD_SET, REPEAT_BIT);
+          generateImpulses(out, cyclesPerSample, PULSELEN_ONE, PULSELEN_ONE, 1);
         }
-        thedata <<= 1;
+        mask >>>= 1;
       }
-    }
-
-    public long calculateBlockLengthInCycles() {
-      long counter = 0L;
-
-      if (isHeader()) {
-        counter += REPEAT_PILOT_HEADER * PERIOD_PILOT;
-      }
-      else {
-        counter += REPEAT_DATA_HEADER * PERIOD_PILOT;
-      }
-
-      counter += PERIOD_SYNCH1 + PERIOD_SYNCH2;
-
-      counter += calculateMCyclesForByte(this.flag);
-      for (final byte b : this.data) {
-        counter += calculateMCyclesForByte(b);
-      }
-      counter += calculateMCyclesForByte(this.checksum);
-
-      return counter;
     }
   }
 
-  private class DataBuffer {
-    private int currentdata;
+  private final class DataBuffer {
+
+    private int databuffer;
     private int mask;
     private long counter;
-    private long middlePoint;
-    private int repeat;
-    
-    public void set(final int data){
-      this.currentdata = data;
+
+    public void load(final int data) {
+      this.databuffer = data;
       this.mask = 0x80;
-      initForMask(true);
-    }
-    
-    private void initForMask(final boolean setRepeat){
-      this.counter = (this.currentdata & this.mask) == 0 ? PERIOD_RES : PERIOD_SET;
-      this.middlePoint = this.counter >>> 1;
-      if (setRepeat) this.repeat = REPEAT_BIT;
+      timingForBit();
       inState = true;
     }
-    
-    public boolean process(final long machineCycles){
+
+    private void timingForBit() {
+      this.counter = (this.databuffer & this.mask) == 0 ? PULSELEN_ZERO : PULSELEN_ONE;
+    }
+
+    public boolean process(final long machineCycles) {
       boolean result = false;
       this.counter -= machineCycles;
-      if (this.counter<=0){
-        this.repeat --;
-        if (this.repeat<=0){
+      if (this.counter <= 0) {
+        if (inState) {
+          timingForBit();
+          inState = false;
+        }
+        else {
           this.mask >>>= 1;
-          if (this.mask == 0){
+          if (this.mask == 0) {
             result = true;
           }
-          initForMask(true);
-        }else{
-          initForMask(false);
+          else {
+            timingForBit();
+            inState = true;
+          }
         }
-      }else if (counter<=this.middlePoint){
-        inState = false;
-      }else{
-        inState = true;
       }
       return result;
     }
   }
-  
+
   private TapBlock current;
   private State state = State.STOPPED;
   private long counterMain;
   private long counterEx;
   private boolean inState;
   private final DataBuffer buffer = new DataBuffer();
-  
+
   public TapeFileReader(final InputStream tap) throws IOException {
     final JBBPFieldArrayStruct parsed = TAP_FILE_PARSER.parse(tap).findFirstFieldForType(JBBPFieldArrayStruct.class);
     if (parsed.size() == 0) {
@@ -248,17 +213,20 @@ public class TapeFileReader {
 
   public synchronized boolean startPlay() {
     if (this.state != State.STOPPED) {
-      if (this.current == null){
+      if (this.current == null) {
         this.state = State.STOPPED;
         return false;
       }
     }
+    this.inState = false;
     this.state = State.PILOT;
     this.counterMain = -1L;
     return true;
   }
 
   public synchronized void stopPlay() {
+    this.inState = false;
+    this.counterMain = -1L;
     this.state = State.STOPPED;
   }
 
@@ -311,6 +279,9 @@ public class TapeFileReader {
   }
 
   public synchronized byte[] getAsWAV() throws IOException {
+    final int FREQ = 22050;
+    final int CYCLESPERSAMPLE = (int) ((1000000000L / (long) FREQ) / 286L);
+
     final ByteArrayOutputStream data = new ByteArrayOutputStream(1000000);
 
     TapBlock block = this.current.findFirst();
@@ -318,7 +289,7 @@ public class TapeFileReader {
       for (int i = 0; i < 30000; i++) {
         data.write(0);
       }
-      block.writeAsUnsigned8BitMonoPCMData(data, 158);
+      block.writeAsUnsigned8BitMonoPCMData(data, CYCLESPERSAMPLE);
       block = block.next;
     }
     while (block != null);
@@ -333,8 +304,8 @@ public class TapeFileReader {
             Int(16). // Size
             Short(1). // Audio format
             Short(1). // Num channels
-            Int(22050).// Sample rate
-            Int(22050). // Byte rate 
+            Int(FREQ).// Sample rate
+            Int(FREQ). // Byte rate 
             Short(1). // Block align
             Short(8). // Bits per sample
             Byte("data").
@@ -342,130 +313,136 @@ public class TapeFileReader {
             Byte(data.toByteArray()).End().toByteArray();
   }
 
-  public synchronized void updateForSpentMachineCycles(final long machineCycles) {
-    if (this.state != State.STOPPED){
-      final TapBlock block = this.current;
-              
-      switch(this.state){
-        case INBETWEEN : {
+  private void initSignalSimulation(final long lengthOn, final long number) {
+    this.counterEx = lengthOn;
+    this.counterMain = number;
+    this.inState = true;
+  }
+
+  private boolean processSignalSimulation(final long lengthOn, final long lengthOff, final long spentMachineCycles) {
+    boolean result = false;
+    this.counterEx -= spentMachineCycles;
+    if (this.counterEx <= 0) {
+      if (this.inState) {
+        this.inState = false;
+        this.counterEx = lengthOff;
+      }
+      else {
+        this.counterMain--;
+        if (this.counterMain <= 0) {
           this.inState = false;
-          if (counterMain<0){
-          System.out.println("INBETWEEN");
-            this.counterMain = (REPEAT_DATA_HEADER>>1)*PERIOD_PILOT;
-          }else{
-            this.counterMain-=machineCycles;
-            if (this.counterMain <= 0L){
+          this.counterMain = -1L;
+          result = true;
+        }
+        else {
+          this.counterEx = lengthOn;
+          this.inState = true;
+        }
+      }
+    }
+    return result;
+  }
+
+  public synchronized void updateForSpentMachineCycles(final long machineCycles) {
+    if (this.state != State.STOPPED) {
+      final TapBlock block = this.current;
+
+      switch (this.state) {
+        case INBETWEEN: {
+          this.inState = false;
+          if (counterMain < 0) {
+            System.out.println("INBETWEEN");
+            this.counterMain = LENGTH_PILOT_DATA * PULSELEN_PILOT;
+            this.inState = false;
+          }
+          else {
+            this.counterMain -= machineCycles;
+            if (this.counterMain <= 0L) {
               this.state = State.PILOT;
               this.counterMain = -1L;
             }
-          }
-        }break;
-        case PILOT : {
-          if (this.counterMain<0L){
-          System.out.println("PILOT");
-            if (block.isHeader()){
-              this.counterMain = REPEAT_PILOT_HEADER;
-            }else{
-              this.counterMain = REPEAT_DATA_HEADER;
-            }
-            this.counterEx = PERIOD_PILOT;
             this.inState = true;
-          }else{
-            this.counterEx -= machineCycles;
-            if (this.counterEx<=0){
-              this.counterMain--;
-              if (this.counterMain>0){
-                this.counterEx = PERIOD_PILOT;
-                this.inState = true;
-              }else{
-                this.state = State.SYNCHRO1;
-                this.counterMain = -1L;
-              }
-            }else if (this.counterEx<(PERIOD_PILOT>>1)){
-              this.inState = false;
-            }else{
-              this.inState = true;
-            }
           }
-        }break;
-        case SYNCHRO1 : {
-          if (this.counterMain<0L){
-          System.out.println("SYNCHRO1");
-            this.counterMain = PERIOD_SYNCH1;
-            this.inState = true;
-          }else{
-            this.counterMain -= machineCycles;
-            if (this.counterMain<(PERIOD_SYNCH1>>1)){
-              this.inState = false;
-            }
-            if (this.counterMain<=0L){
-              this.counterMain = -1L;
-              this.state = State.SYNCHRO2;
-            }
-          }
-        }break;
-        case SYNCHRO2 : {
+        }
+        break;
+        case PILOT: {
           if (this.counterMain < 0L) {
-          System.out.println("SYNCHRO2");
-            this.counterMain = PERIOD_SYNCH2;
-            this.inState = true;
+            System.out.println("PILOT");
+            initSignalSimulation(PULSELEN_PILOT, block.isHeader() ? LENGTH_PILOT_HEADER : LENGTH_PILOT_DATA);
           }
           else {
-            this.counterMain -= machineCycles;
-            if (this.counterMain < (PERIOD_SYNCH2 >> 1)) {
-              this.inState = false;
+            if (processSignalSimulation(PULSELEN_PILOT, PULSELEN_PILOT, machineCycles)) {
+              this.state = State.SYNCHRO;
             }
-            if (this.counterMain <= 0L) {
-              this.counterMain = -1L;
+          }
+        }
+        break;
+        case SYNCHRO: {
+          if (this.counterMain < 0L) {
+            System.out.println("SYNCHRO");
+            initSignalSimulation(PULSELEN_SYNC_ON, 1);
+          }
+          else {
+            if (processSignalSimulation(PULSELEN_SYNC_ON, PULSELEN_SYNC_OFF, machineCycles)) {
               this.state = State.FLAG;
             }
           }
-        }break;
-        case FLAG : {
+        }
+        break;
+        case FLAG: {
           if (this.counterMain < 0L) {
             System.out.println("FLAG");
             this.counterMain = 0L;
-            this.buffer.set(block.flag);
+            this.buffer.load(block.flag);
           }
           else {
-            if (this.buffer.process(machineCycles)){
+            if (this.buffer.process(machineCycles)) {
               this.counterMain = -1L;
               this.state = State.DATA;
             }
           }
-        }break;
-        case DATA : {
-          if (this.counterMain<0L){
+        }
+        break;
+        case DATA: {
+          if (this.counterMain < 0L) {
             System.out.println("DATA");
             this.counterMain = 0L;
-            this.buffer.set(block.data[(int) this.counterMain]);
-          }else{
+            this.buffer.load(block.data[(int) this.counterMain]);
+          }
+          else {
             if (this.buffer.process(machineCycles)) {
               this.counterMain++;
-              if (this.counterMain<block.data.length){
-                this.buffer.set(block.data[(int)this.counterMain]);
-              }else{
+              if (this.counterMain < block.data.length) {
+                this.buffer.load(block.data[(int) this.counterMain]);
+              }
+              else {
                 this.counterMain = -1;
                 this.state = State.CHECKSUM;
               }
             }
           }
-        }break;
+        }
+        break;
         case CHECKSUM: {
           if (this.counterMain < 0L) {
             System.out.println("CHECKSUM");
             this.counterMain = 0L;
-            this.buffer.set(block.checksum);
+            this.buffer.load(block.checksum);
           }
           else {
             if (this.buffer.process(machineCycles)) {
               this.counterMain = -1L;
-              this.state = State.INBETWEEN;
+              if (!this.rewindToNextBlock()){
+                this.state = State.STOPPED;
+              }else{
+                this.state = State.INBETWEEN;
+              }
             }
           }
         }
         break;
-        default: throw new Error("Unexpected state ["+this.state+']');
+        default:
+          throw new Error("Unexpected state [" + this.state + ']');
       }
     }
   }
