@@ -95,10 +95,21 @@
             <Property name="text" type="java.lang.String" value="Tape"/>
           </Properties>
           <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="menuTapeRewindToStart">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Rewind to start"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuTapeRewindToStartActionPerformed"/>
+              </Events>
+            </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuTapPrevBlock">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Prev block"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuTapPrevBlockActionPerformed"/>
+              </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuTapPlay">
               <Properties>
@@ -113,6 +124,9 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Next block"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuTapNextBlockActionPerformed"/>
+              </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuTapGotoBlock">
               <Properties>

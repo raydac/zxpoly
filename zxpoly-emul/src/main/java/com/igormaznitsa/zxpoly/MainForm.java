@@ -6,7 +6,7 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * This program is distributed getSignal the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -224,6 +224,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     jSeparator1 = new javax.swing.JPopupMenu.Separator();
     jMenuItem4 = new javax.swing.JMenuItem();
     menuTap = new javax.swing.JMenu();
+    menuTapeRewindToStart = new javax.swing.JMenuItem();
     menuTapPrevBlock = new javax.swing.JMenuItem();
     menuTapPlay = new javax.swing.JCheckBoxMenuItem();
     menuTapNextBlock = new javax.swing.JMenuItem();
@@ -328,7 +329,20 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
     menuTap.setText("Tape");
 
+    menuTapeRewindToStart.setText("Rewind to start");
+    menuTapeRewindToStart.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTapeRewindToStartActionPerformed(evt);
+      }
+    });
+    menuTap.add(menuTapeRewindToStart);
+
     menuTapPrevBlock.setText("Prev block");
+    menuTapPrevBlock.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTapPrevBlockActionPerformed(evt);
+      }
+    });
     menuTap.add(menuTapPrevBlock);
 
     menuTapPlay.setSelected(true);
@@ -341,6 +355,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     menuTap.add(menuTapPlay);
 
     menuTapNextBlock.setText("Next block");
+    menuTapNextBlock.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTapNextBlockActionPerformed(evt);
+      }
+    });
     menuTap.add(menuTapNextBlock);
 
     menuTapGotoBlock.setText("Go to block");
@@ -564,6 +583,30 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     }
     updateTapeMenu();
   }//GEN-LAST:event_menuTapPlayActionPerformed
+
+  private void menuTapPrevBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapPrevBlockActionPerformed
+    final TapeFileReader tap = this.keyboardAnddTapeModule.getTap();
+    if (tap!=null){
+      tap.rewindToPrevBlock();
+    }
+    updateTapeMenu();
+  }//GEN-LAST:event_menuTapPrevBlockActionPerformed
+
+  private void menuTapNextBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapNextBlockActionPerformed
+    final TapeFileReader tap = this.keyboardAnddTapeModule.getTap();
+    if (tap != null) {
+      tap.rewindToNextBlock();
+    }
+    updateTapeMenu();
+  }//GEN-LAST:event_menuTapNextBlockActionPerformed
+
+  private void menuTapeRewindToStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapeRewindToStartActionPerformed
+    final TapeFileReader tap = this.keyboardAnddTapeModule.getTap();
+    if (tap != null) {
+      tap.rewindToStart();
+    }
+    updateTapeMenu();
+  }//GEN-LAST:event_menuTapeRewindToStartActionPerformed
   
   private File chooseFileForOpen(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
@@ -633,6 +676,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   private javax.swing.JMenuItem menuTapNextBlock;
   private javax.swing.JCheckBoxMenuItem menuTapPlay;
   private javax.swing.JMenuItem menuTapPrevBlock;
+  private javax.swing.JMenuItem menuTapeRewindToStart;
   private javax.swing.JPanel panelIndicators;
   private javax.swing.JScrollPane scrollPanel;
   // End of variables declaration//GEN-END:variables

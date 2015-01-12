@@ -6,7 +6,7 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * This program is distributed getSignal the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -58,7 +58,7 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
         case 0xFE: {
           // KEYBOARD
           final TapeFileReader thetap = getTap();
-          final int tapbit = thetap == null ? 0 : thetap.in() ? TAP_BIT : 0;
+          final int tapbit = thetap == null ? 0 : thetap.getSignal() ? TAP_BIT : 0;
           result = (getKbdValueForLines(port >>> 8) & ~TAP_BIT) | tapbit;
         }
         break;
