@@ -59,7 +59,7 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
           // KEYBOARD
           final TapeFileReader thetap = getTap();
           final int tapbit = thetap == null ? 0 : thetap.in() ? TAP_BIT : 0;
-          result = getKbdValueForLines(port >>> 8) | tapbit;
+          result = (getKbdValueForLines(port >>> 8) & ~TAP_BIT) | tapbit;
         }
         break;
         case 0x1F: {

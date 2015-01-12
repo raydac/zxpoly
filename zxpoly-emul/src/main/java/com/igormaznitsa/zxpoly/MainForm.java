@@ -542,7 +542,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   private void menuTapExportAsWavActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapExportAsWavActionPerformed
     try {
-      final byte [] wav = this.keyboardAnddTapeModule.getTap().getAsWAV(11025);
+      final byte [] wav = this.keyboardAnddTapeModule.getTap().getAsWAV();
       final File fileToSave = chooseFileForSave("Select WAV file", null, new WavFileFilter());
       if (fileToSave!=null){
         FileUtils.writeByteArrayToFile(fileToSave, wav);
@@ -557,7 +557,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_menuTapExportAsWavActionPerformed
 
   private void menuTapPlayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapPlayActionPerformed
-    this.keyboardAnddTapeModule.getTap().startPlay();
+    if (this.menuTapPlay.isSelected()){
+      this.keyboardAnddTapeModule.getTap().startPlay();
+    }else{
+      this.keyboardAnddTapeModule.getTap().stopPlay();
+    }
     updateTapeMenu();
   }//GEN-LAST:event_menuTapPlayActionPerformed
   

@@ -24,16 +24,14 @@ import java.io.*;
 
 public class TapeFileReader {
 
-  private static final long CYCLE_LENGTH_NANOSECONDS = 1000000000L / 3500000L;
-
-  private static final long FREQ_PILOT = 2168L;
-  private static final long FREQ_SYNCH1 = 667L;
-  private static final long FREQ_SYNCH2 = 735L;
-  private static final long FREQ_RES = 855L;
-  private static final long FREQ_SET = 1710L;
-  private static final long LEN_PILOT_HEADER = 8063L;
-  private static final long LEN_DATA_HEADER = 3223L;
-  private static final long REPEAT_BIT = 2L;
+  private static final long PERIOD_PILOT = 2168L;
+  private static final long PERIOD_SYNCH1 = 667L;
+  private static final long PERIOD_SYNCH2 = 735L;
+  private static final long PERIOD_RES = 855L;
+  private static final long PERIOD_SET = 1710L;
+  private static final long REPEAT_PILOT_HEADER = 8063L;
+  private static final long REPEAT_DATA_HEADER = 3223L;
+  private static final int REPEAT_BIT = 2;
 
   private static final JBBPParser TAP_FILE_PARSER = JBBPParser.prepare("tapblocks [_]{ <ushort len; byte flag; byte [len-2] data; byte checksum;}");
 
@@ -44,7 +42,9 @@ public class TapeFileReader {
     PILOT,
     SYNCHRO1,
     SYNCHRO2,
-    DATA
+    FLAG,
+    DATA,
+    CHECKSUM
   }
 
   @Bin
@@ -68,7 +68,7 @@ public class TapeFileReader {
     }
 
     public boolean isHeader() {
-      return this.flag == 0x00;
+      return this.flag < 0x80;
     }
 
     public TapBlock findFirst() {
@@ -82,46 +82,42 @@ public class TapeFileReader {
     private static int calculateMCyclesForByte(int data) {
       int result = 0;
       for (int i = 0; i < 8; i++) {
-        result += ((data & 0x80) == 0 ? FREQ_RES : FREQ_SET) * REPEAT_BIT;
+        result += ((data & 0x80) == 0 ? PERIOD_RES : PERIOD_SET) * REPEAT_BIT;
         data <<= 1;
       }
       return result;
     }
 
-    private void writePulses(final OutputStream out, final int baseFreq, final long pulseNumber, final long pulseLenInCycles) throws IOException {
-      final long periodNanosec = 1000000000L / baseFreq;
-      final long cyclesAtPulsePeriod = periodNanosec / CYCLE_LENGTH_NANOSECONDS;
+    private void generateImpulses(final OutputStream out, final int cyclesPerSample, final long periodInCycles, final long repeat) throws IOException {
+      final long samples = (periodInCycles+(cyclesPerSample>>1))/cyclesPerSample;
+      final long middle = samples >> 1;
 
-      final long steps = pulseLenInCycles / cyclesAtPulsePeriod;
-      final long middle = steps >> 1;
-
-      for (int i = 0; i < pulseNumber; i++) {
-        for (long j = 0; j < steps; j++) {
+      for (int i = 0; i < repeat; i++) {
+        for (long j = 0; j < samples; j++) {
           if (j < middle) {
+            out.write(0x00);
+          }else{
             out.write(0xFF);
           }
-          else {
-            out.write(0x00);
-          }
-        }
+        } 
       }
     }
 
-    public void writeAsUnsigned8BitMonoPCMData(final OutputStream out, final int freq) throws IOException {
+    public void writeAsUnsigned8BitMonoPCMData(final OutputStream out, final int cyclesPerSample) throws IOException {
       // header
-      writePulses(out, freq, isHeader() ? LEN_PILOT_HEADER : LEN_DATA_HEADER, FREQ_PILOT);
+      generateImpulses(out, cyclesPerSample, PERIOD_PILOT, isHeader() ? REPEAT_PILOT_HEADER : REPEAT_DATA_HEADER);
       // sync1
-      writePulses(out, freq, 1, FREQ_SYNCH1);
+      generateImpulses(out, cyclesPerSample, PERIOD_SYNCH1, 1);
       // sync2
-      writePulses(out, freq, 1, FREQ_SYNCH2);
+      generateImpulses(out, cyclesPerSample, PERIOD_SYNCH2, 1);
       // flag
       int thedata = this.flag;
       for (int j = 0; j < 8; j++) {
         if ((thedata & 0x80) == 0) {
-          writePulses(out, freq, REPEAT_BIT, FREQ_RES);
+          generateImpulses(out, cyclesPerSample, PERIOD_RES, REPEAT_BIT);
         }
         else {
-          writePulses(out, freq, REPEAT_BIT, FREQ_SET);
+          generateImpulses(out, cyclesPerSample, PERIOD_SET, REPEAT_BIT);
         }
         thedata <<= 1;
       }
@@ -130,13 +126,24 @@ public class TapeFileReader {
         thedata = b;
         for (int j = 0; j < 8; j++) {
           if ((thedata & 0x80) == 0) {
-            writePulses(out, freq, REPEAT_BIT, FREQ_RES);
+            generateImpulses(out, cyclesPerSample, PERIOD_RES, REPEAT_BIT);
           }
           else {
-            writePulses(out, freq, REPEAT_BIT, FREQ_SET);
+            generateImpulses(out, cyclesPerSample, PERIOD_SET, REPEAT_BIT);
           }
           thedata <<= 1;
         }
+      }
+      // flag
+      thedata = this.checksum;
+      for (int j = 0; j < 8; j++) {
+        if ((thedata & 0x80) == 0) {
+          generateImpulses(out, cyclesPerSample, PERIOD_RES, REPEAT_BIT);
+        }
+        else {
+          generateImpulses(out, cyclesPerSample, PERIOD_SET, REPEAT_BIT);
+        }
+        thedata <<= 1;
       }
     }
 
@@ -144,28 +151,73 @@ public class TapeFileReader {
       long counter = 0L;
 
       if (isHeader()) {
-        counter += LEN_PILOT_HEADER * FREQ_PILOT;
+        counter += REPEAT_PILOT_HEADER * PERIOD_PILOT;
       }
       else {
-        counter += LEN_DATA_HEADER * FREQ_PILOT;
+        counter += REPEAT_DATA_HEADER * PERIOD_PILOT;
       }
 
-      counter += FREQ_SYNCH1 + FREQ_SYNCH2;
+      counter += PERIOD_SYNCH1 + PERIOD_SYNCH2;
 
       counter += calculateMCyclesForByte(this.flag);
       for (final byte b : this.data) {
         counter += calculateMCyclesForByte(b);
       }
+      counter += calculateMCyclesForByte(this.checksum);
 
       return counter;
     }
   }
 
+  private class DataBuffer {
+    private int currentdata;
+    private int mask;
+    private long counter;
+    private long middlePoint;
+    private int repeat;
+    
+    public void set(final int data){
+      this.currentdata = data;
+      this.mask = 0x80;
+      initForMask(true);
+    }
+    
+    private void initForMask(final boolean setRepeat){
+      this.counter = (this.currentdata & this.mask) == 0 ? PERIOD_RES : PERIOD_SET;
+      this.middlePoint = this.counter >>> 1;
+      if (setRepeat) this.repeat = REPEAT_BIT;
+      inState = true;
+    }
+    
+    public boolean process(final long machineCycles){
+      boolean result = false;
+      this.counter -= machineCycles;
+      if (this.counter<=0){
+        this.repeat --;
+        if (this.repeat<=0){
+          this.mask >>>= 1;
+          if (this.mask == 0){
+            result = true;
+          }
+          initForMask(true);
+        }else{
+          initForMask(false);
+        }
+      }else if (counter<=this.middlePoint){
+        inState = false;
+      }else{
+        inState = true;
+      }
+      return result;
+    }
+  }
+  
   private TapBlock current;
   private State state = State.STOPPED;
   private long counterMain;
   private long counterEx;
   private boolean inState;
+  private final DataBuffer buffer = new DataBuffer();
   
   public TapeFileReader(final InputStream tap) throws IOException {
     final JBBPFieldArrayStruct parsed = TAP_FILE_PARSER.parse(tap).findFirstFieldForType(JBBPFieldArrayStruct.class);
@@ -258,15 +310,15 @@ public class TapeFileReader {
     return result;
   }
 
-  public synchronized byte[] getAsWAV(final int freq) throws IOException {
+  public synchronized byte[] getAsWAV() throws IOException {
     final ByteArrayOutputStream data = new ByteArrayOutputStream(1000000);
 
     TapBlock block = this.current.findFirst();
     do {
-      for (int i = 0; i < freq; i++) {
-        data.write(128);
+      for (int i = 0; i < 30000; i++) {
+        data.write(0);
       }
-      block.writeAsUnsigned8BitMonoPCMData(data, freq);
+      block.writeAsUnsigned8BitMonoPCMData(data, 158);
       block = block.next;
     }
     while (block != null);
@@ -281,8 +333,8 @@ public class TapeFileReader {
             Int(16). // Size
             Short(1). // Audio format
             Short(1). // Num channels
-            Int(11025).// Sample rate
-            Int(11025). // Byte rate 
+            Int(22050).// Sample rate
+            Int(22050). // Byte rate 
             Short(1). // Block align
             Short(8). // Bits per sample
             Byte("data").
@@ -296,11 +348,10 @@ public class TapeFileReader {
               
       switch(this.state){
         case INBETWEEN : {
-
           this.inState = false;
           if (counterMain<0){
           System.out.println("INBETWEEN");
-            this.counterMain = LEN_DATA_HEADER>>1;
+            this.counterMain = (REPEAT_DATA_HEADER>>1)*PERIOD_PILOT;
           }else{
             this.counterMain-=machineCycles;
             if (this.counterMain <= 0L){
@@ -310,40 +361,41 @@ public class TapeFileReader {
           }
         }break;
         case PILOT : {
-
           if (this.counterMain<0L){
           System.out.println("PILOT");
             if (block.isHeader()){
-              this.counterMain = LEN_PILOT_HEADER;
+              this.counterMain = REPEAT_PILOT_HEADER;
             }else{
-              this.counterMain = LEN_DATA_HEADER;
+              this.counterMain = REPEAT_DATA_HEADER;
             }
-            this.counterEx = FREQ_PILOT;
+            this.counterEx = PERIOD_PILOT;
             this.inState = true;
           }else{
             this.counterEx -= machineCycles;
             if (this.counterEx<=0){
               this.counterMain--;
               if (this.counterMain>0){
-                this.counterEx = FREQ_PILOT;
+                this.counterEx = PERIOD_PILOT;
                 this.inState = true;
               }else{
                 this.state = State.SYNCHRO1;
                 this.counterMain = -1L;
               }
-            }else if (this.counterEx<(FREQ_PILOT>>1)){
+            }else if (this.counterEx<(PERIOD_PILOT>>1)){
               this.inState = false;
+            }else{
+              this.inState = true;
             }
           }
         }break;
         case SYNCHRO1 : {
           if (this.counterMain<0L){
           System.out.println("SYNCHRO1");
-            this.counterMain = FREQ_SYNCH1;
+            this.counterMain = PERIOD_SYNCH1;
             this.inState = true;
           }else{
             this.counterMain -= machineCycles;
-            if (this.counterMain<(FREQ_SYNCH1>>1)){
+            if (this.counterMain<(PERIOD_SYNCH1>>1)){
               this.inState = false;
             }
             if (this.counterMain<=0L){
@@ -355,15 +407,28 @@ public class TapeFileReader {
         case SYNCHRO2 : {
           if (this.counterMain < 0L) {
           System.out.println("SYNCHRO2");
-            this.counterMain = FREQ_SYNCH2;
+            this.counterMain = PERIOD_SYNCH2;
             this.inState = true;
           }
           else {
             this.counterMain -= machineCycles;
-            if (this.counterMain < (FREQ_SYNCH2 >> 1)) {
+            if (this.counterMain < (PERIOD_SYNCH2 >> 1)) {
               this.inState = false;
             }
             if (this.counterMain <= 0L) {
+              this.counterMain = -1L;
+              this.state = State.FLAG;
+            }
+          }
+        }break;
+        case FLAG : {
+          if (this.counterMain < 0L) {
+            System.out.println("FLAG");
+            this.counterMain = 0L;
+            this.buffer.set(block.flag);
+          }
+          else {
+            if (this.buffer.process(machineCycles)){
               this.counterMain = -1L;
               this.state = State.DATA;
             }
@@ -371,11 +436,36 @@ public class TapeFileReader {
         }break;
         case DATA : {
           if (this.counterMain<0L){
+            System.out.println("DATA");
+            this.counterMain = 0L;
+            this.buffer.set(block.data[(int) this.counterMain]);
           }else{
-            
+            if (this.buffer.process(machineCycles)) {
+              this.counterMain++;
+              if (this.counterMain<block.data.length){
+                this.buffer.set(block.data[(int)this.counterMain]);
+              }else{
+                this.counterMain = -1;
+                this.state = State.CHECKSUM;
+              }
+            }
           }
-          
         }break;
+        case CHECKSUM: {
+          if (this.counterMain < 0L) {
+            System.out.println("CHECKSUM");
+            this.counterMain = 0L;
+            this.buffer.set(block.checksum);
+          }
+          else {
+            if (this.buffer.process(machineCycles)) {
+              this.counterMain = -1L;
+              this.state = State.INBETWEEN;
+            }
+          }
+        }
+        break;
+        default: throw new Error("Unexpected state ["+this.state+']');
       }
     }
   }
