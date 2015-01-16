@@ -22,7 +22,18 @@ import java.io.IOException;
 import javax.swing.filechooser.FileFilter;
 
 public abstract class Snapshot extends FileFilter {
+  /**
+   * Fille a cpu module by data. 
+   * @param module the module, must not be null.
+   * @param vc the video controller, must not be null
+   */
   public abstract void fillModule(final ZXPolyModule module, final VideoController vc);
-  public abstract void load(final byte [] array) throws IOException; 
+  /**
+   * Parse array.
+   * @param array the array to be parsed, must not be null
+   * @return true if the system must be locked in mode 48, false for 128 mode
+   * @throws IOException it will be thrown for parsing problems
+   */
+  public abstract boolean load(final byte [] array) throws IOException; 
   public abstract String getName();
 }

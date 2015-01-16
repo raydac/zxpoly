@@ -129,6 +129,10 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     return result;
   }
 
+  public void setTRDOSActive(final boolean flag) {
+    this.trdosROM = flag;
+  }
+
   public boolean isTRDOSActive() {
     return this.trdosROM;
   }
@@ -285,6 +289,20 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     }
 
     return result.toString();
+  }
+
+  public void writeHeapModuleMemory(final int offset, final int data) {
+    if (offset < 0 || offset > 0x1FFFF) {
+      throw new IllegalArgumentException("Outbound memory offset [" + offset + ']');
+    }
+    this.board.writeRAM(this, getHeapOffset() + offset, data);
+  }
+
+  public int readHeapModuleMemory(final int offset) {
+    if (offset < 0 || offset > 0x1FFFF) {
+      throw new IllegalArgumentException("Outbound memory offset [" + offset + ']');
+    }
+    return this.board.readRAM(this, getHeapOffset() + offset);
   }
 
   @Override
@@ -457,8 +475,8 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     return result;
   }
 
-  private void set7FFD(final int value) {
-    if ((this.port7FFD & PORTw_ZX128_LOCK) == 0) {
+  public void set7FFD(final int value, final boolean enforce) {
+    if (((this.port7FFD & PORTw_ZX128_LOCK) == 0) || enforce) {
       this.port7FFD = value;
     }
   }
@@ -477,11 +495,11 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
               this.board.writeBusIO(this, port, val);
             }
             else {
-              set7FFD(val);
+              set7FFD(val, false);
             }
           }
           else {
-            set7FFD(val);
+            set7FFD(val, false);
           }
         }
         else {
@@ -491,7 +509,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     }
     else {
       if (port == PORTw_ZX128) {
-        set7FFD(val);
+        set7FFD(val, false);
       }
       else {
         this.board.writeBusIO(this, port, val);
@@ -519,7 +537,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   @Override
   public void postStep(long spentMachineCyclesForStep) {
   }
-  
+
   private void prepareWaitSignal() {
     if (this.board.isZXPolyMode()) {
       this.waitSignal = this.stopAddressWait || (this.moduleIndex > 0 && this.board.isCPUModules123InWaitMode());

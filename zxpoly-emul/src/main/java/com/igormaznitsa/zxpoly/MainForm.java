@@ -484,11 +484,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
       if (selected != null) {
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
-          selectedFilter.load(FileUtils.readFileToByteArray(selected));
-          log.info("Loaded image from file " + selectedFilter.getName());
+          final boolean mode48 = selectedFilter.load(FileUtils.readFileToByteArray(selected));
+          log.info("Loaded image from file '" +selected + "', " + selectedFilter.getName()+", desired mode "+(mode48 ? "zx48": "zx128"));
           stepSemaphor.lock();
           try {
-            this.board.loadSnapshot(selectedFilter, false);
+            this.board.loadZXSnapshot(selectedFilter, mode48);
           }
           finally {
             stepSemaphor.unlock();

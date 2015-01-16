@@ -77,15 +77,15 @@ public final class Motherboard implements ZXPoly {
     
   }
 
-  public void loadSnapshot(final Snapshot snapshot, final boolean mode128) {
-    if (mode128) {
-      throw new Error("Unsupported");
-    }
-    else {
-      this.port3D00 = PORTw_ZXPOLY_BLOCK;
+  public void loadZXSnapshot(final Snapshot snapshot, final boolean mode48) {
+    this.port3D00 = PORTw_ZXPOLY_BLOCK;
+    if (mode48) {
       for (final ZXPolyModule m : this.modules) {
         m.lockZX48Mode();
       }
+      snapshot.fillModule(this.modules[0], this.video);
+    }
+    else {
       snapshot.fillModule(this.modules[0], this.video);
     }
   }
