@@ -88,6 +88,7 @@ public final class Motherboard implements ZXPoly {
     else {
       snapshot.fillModule(this.modules[0], this.video);
     }
+    this.keyboard.reset();
   }
 
   public void reset() {

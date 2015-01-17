@@ -38,11 +38,11 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private volatile int currentVideoMode = VIDEOMODE_RESERVED2;
 
   private Dimension size = new Dimension(512, 384);
-
   private int zoom = 1;
-
   private volatile int portFEw = 0;
 
+  private boolean holdMouse = false;
+  
   private static final int[] ZXPALETTE = new int[]{
     0xFF000000,
     0xFF0000BE,
@@ -84,9 +84,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   public VideoController(final Motherboard board) {
     super();
-    
-//    setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT), new Point(0, 0), "InvisibleCursor"));
-    
+
     this.board = board;
     this.modules = board.getZXPolyModules();
 
@@ -96,6 +94,19 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     this.addMouseWheelListener(this);
   }
 
+  public void setHoldMouse(final boolean flag){
+    this.holdMouse = flag;
+    if (flag){
+      setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT), new Point(0, 0), "InvisibleCursor"));
+    }else{
+      setCursor(Cursor.getDefaultCursor());
+    }
+  }
+  
+  public boolean isHoldMouse(){
+    return this.holdMouse;
+  }
+  
   @Override
   public void mouseWheelMoved(final MouseWheelEvent e) {
     if (e.isControlDown()) {
@@ -430,6 +441,12 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   public void postStep(long spentMachineCyclesForStep) {
   }
 
+  public int getScrYForZXScr(final int zxY) {
+    final int height = getHeight();
+    final int yoff = (height - this.size.height) / 2;
+    return (zxY* (this.zoom << 1))+yoff;
+  }
+  
   public int getZXScrY(final int compoY) {
     final int height = getHeight();
     final int yoff = (height - this.size.height) / 2;
@@ -444,5 +461,11 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
     final int result = (compoX - xoff) / (this.zoom << 1);
     return Math.max(0x00, Math.min(0xFF, result));
+  }
+
+  public int getScrXForZXScr(final int zxX) {
+    final int width  = getWidth();
+    final int xoff = (width - this.size.width) / 2;
+    return (zxX * (this.zoom << 1)) + xoff;
   }
 }

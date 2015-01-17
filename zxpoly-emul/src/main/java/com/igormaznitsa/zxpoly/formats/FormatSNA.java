@@ -27,8 +27,7 @@ import java.util.Locale;
 
 public class FormatSNA extends Snapshot {
 
-  private static final JBBPParser PARSER_SNA = JBBPParser.prepare(
-          "ubyte regI;"
+  private static final JBBPParser PARSER_SNA = JBBPParser.prepare("ubyte regI;"
           + "<ushort altRegHL; <ushort altRegDE; <ushort altRegBC; <ushort altRegAF;"
           + "<ushort regHL; <ushort regDE; <ushort regBC; <ushort regIY; <ushort regIX;"
           + "ubyte interrupt; ubyte regR;"
@@ -41,7 +40,7 @@ public class FormatSNA extends Snapshot {
           + "byte onTrDos;"
           + "extrabank [_]{"
           + " byte [16384] data;"
-          + "}", JBBPParser.FLAG_IGNORE_REMAINING_FIELDS_FOR_EOF);
+          + "}", JBBPParser.FLAG_SKIP_REMAINING_FIELDS_IF_EOF);
 
   @Bin
   private static class ExtraBank {

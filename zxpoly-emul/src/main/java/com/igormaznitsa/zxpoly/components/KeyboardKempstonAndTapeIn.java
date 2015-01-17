@@ -28,13 +28,13 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
   private static final int KEMPSTON_FIRE = 16;
 
   private static final int TAP_BIT = 0b01000000;
-  
-  private final Motherboard board;
 
+  private final Motherboard board;
+  
   private final AtomicIntegerArray keyboardLines = new AtomicIntegerArray(8);
   private final AtomicInteger kempstonSignals = new AtomicInteger();
   private final AtomicReference<TapeFileReader> tap = new AtomicReference<>();
-  
+
   public KeyboardKempstonAndTapeIn(final Motherboard board) {
     this.board = board;
   }
@@ -100,14 +100,14 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
     return "Keyboard";
   }
 
-  public void setTap(final TapeFileReader tap){
+  public void setTap(final TapeFileReader tap) {
     this.tap.set(tap);
   }
-  
-  public TapeFileReader getTap(){
+
+  public TapeFileReader getTap() {
     return this.tap.get();
   }
-  
+
   public void onKeyEvent(final KeyEvent evt) {
     final boolean pressed;
     switch (evt.getID()) {
@@ -126,6 +126,12 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
     int kempston = 0;
 
     switch (evt.getKeyCode()) {
+      case KeyEvent.VK_ESCAPE: {
+        if (this.board.getVideoController().isHoldMouse()){
+          this.board.getVideoController().setHoldMouse(false);
+        }
+      }
+      break;
       case KeyEvent.VK_KP_LEFT:
       case KeyEvent.VK_NUMPAD4: {
         kempston = KEMPSTON_LEFT;
@@ -417,11 +423,13 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
       }
     }
   }
-  
+
   @Override
   public void postStep(final long spentMachineCyclesForStep) {
     final TapeFileReader currentTap = this.getTap();
-    if (currentTap!=null) currentTap.updateForSpentMachineCycles(spentMachineCyclesForStep);
+    if (currentTap != null) {
+      currentTap.updateForSpentMachineCycles(spentMachineCyclesForStep);
+    }
   }
 
 }

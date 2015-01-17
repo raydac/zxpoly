@@ -16,9 +16,11 @@
  */
 package com.igormaznitsa.zxpoly.components;
 
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.swing.SwingUtilities;
 
 public final class KempstonMouse extends MouseAdapter implements IODevice {
 
@@ -34,7 +36,16 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
 
   private final VideoController videoController;
 
+  private final Robot robot;
+
   public KempstonMouse(final Motherboard board) {
+    try {
+      this.robot = new Robot();
+    }
+    catch (AWTException ex) {
+      throw new Error("Can't create robot", ex);
+    }
+
     this.board = board;
     this.videoController = board.getVideoController();
     this.videoController.addMouseListener(this);
@@ -77,7 +88,7 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
 
   @Override
   public void preStep(boolean signalReset, boolean signalInt) {
-    if(signalReset){
+    if (signalReset) {
       this.coordX.set(128);
       this.coordY.set(86);
       this.buttons.set(0);
@@ -91,59 +102,113 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
 
   @Override
   public void mouseExited(final MouseEvent e) {
-    this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
+    if (this.videoController.isHoldMouse()) {
+      holdMouse(e);
+    }
+    else {
+      this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
+    }
   }
 
   @Override
   public void mouseEntered(final MouseEvent e) {
-    this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
+    if (this.videoController.isHoldMouse()) {
+    }
+    else {
+      this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
+    }
   }
 
   @Override
   public void mouseReleased(final MouseEvent e) {
-    int button = 0;
-    switch(e.getButton()){
-      case MouseEvent.BUTTON1 : {
-        button = MOUSE_BUTTON_LEFT;
-      }break;
-      case MouseEvent.BUTTON2 : {
-        button = MOUSE_BUTTON_CENTRAL;
-      }break;
-      case MouseEvent.BUTTON3 : {
-        button = MOUSE_BUTTON_RIGHT;
-      }break;
+    if (this.videoController.isHoldMouse()) {
+      int button = 0;
+      switch (e.getButton()) {
+        case MouseEvent.BUTTON1: {
+          button = MOUSE_BUTTON_LEFT;
+        }
+        break;
+        case MouseEvent.BUTTON2: {
+          button = MOUSE_BUTTON_CENTRAL;
+        }
+        break;
+        case MouseEvent.BUTTON3: {
+          button = MOUSE_BUTTON_RIGHT;
+        }
+        break;
+      }
+      this.buttons.set(this.buttons.get() | button);
     }
-    this.buttons.set(this.buttons.get() | button);
+    else {
+      this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
+    }
   }
 
   @Override
   public void mousePressed(final MouseEvent e) {
-    int button = 0;
-    switch (e.getButton()) {
-      case MouseEvent.BUTTON1: {
-        button = MOUSE_BUTTON_LEFT;
+    if (this.videoController.isHoldMouse()) {
+
+      int button = 0;
+      switch (e.getButton()) {
+        case MouseEvent.BUTTON1: {
+          button = MOUSE_BUTTON_LEFT;
+        }
+        break;
+        case MouseEvent.BUTTON2: {
+          button = MOUSE_BUTTON_CENTRAL;
+        }
+        break;
+        case MouseEvent.BUTTON3: {
+          button = MOUSE_BUTTON_RIGHT;
+        }
+        break;
       }
-      break;
-      case MouseEvent.BUTTON2: {
-        button = MOUSE_BUTTON_CENTRAL;
-      }
-      break;
-      case MouseEvent.BUTTON3: {
-        button = MOUSE_BUTTON_RIGHT;
-      }
-      break;
+      this.buttons.set((this.buttons.get() & ~button) & MOUSE_BUTTONS_NON_ACTIVE);
     }
-    this.buttons.set((this.buttons.get() & ~button) & MOUSE_BUTTONS_NON_ACTIVE);
+    else {
+      this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
+      this.videoController.setHoldMouse(true);
+    }
+  }
+
+  @Override
+  public void mouseDragged(final MouseEvent e) {
+    this.mouseMoved(e);
   }
 
   @Override
   public void mouseMoved(final MouseEvent e) {
-    this.coordX.set(this.videoController.getZXScrX(e.getX()));
-    this.coordY.set(191-this.videoController.getZXScrY(e.getY()));
+    if (this.videoController.isHoldMouse()) {
+      this.coordX.set((this.videoController.getZXScrX(e.getX()) & 0xFF));
+      this.coordY.set((0xFF - this.videoController.getZXScrY(e.getY())) & 0xFF);
+    }
+    else {
+      this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
+    }
   }
 
   @Override
   public void postStep(long spentMachineCyclesForStep) {
+  }
+
+  private void holdMouse(final MouseEvent e) {
+    Point p = e.getPoint();
+    if (!this.videoController.contains(e.getPoint())){
+      if (p.x<0) {
+        p.x += this.videoController.getWidth();
+      }else if (p.x>=this.videoController.getWidth()){
+        p.x -= this.videoController.getWidth();
+      }
+      if (p.y<0) {
+        p.y += this.videoController.getHeight();
+      }else if (p.y>=this.videoController.getHeight()){
+        p.y -= this.videoController.getHeight();
+      }
+    }
+
+    SwingUtilities.convertPointToScreen(p, this.videoController);
+
+    this.robot.mouseMove(p.x, p.y);
   }
 
 }

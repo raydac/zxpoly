@@ -431,35 +431,41 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_menuOptionsShowIndicatorsActionPerformed
 
   private void loadDiskIntoDrive(final int drive) {
-    final char diskName;
-    switch (drive) {
-      case BetaDiscInterface.DRIVE_A:
-        diskName = 'A';
-        break;
-      case BetaDiscInterface.DRIVE_B:
-        diskName = 'B';
-        break;
-      case BetaDiscInterface.DRIVE_C:
-        diskName = 'C';
-        break;
-      case BetaDiscInterface.DRIVE_D:
-        diskName = 'D';
-        break;
-      default:
-        throw new Error("Unexpected drive index");
-    }
+    this.stepSemaphor.lock();
+    try {
+      final char diskName;
+      switch (drive) {
+        case BetaDiscInterface.DRIVE_A:
+          diskName = 'A';
+          break;
+        case BetaDiscInterface.DRIVE_B:
+          diskName = 'B';
+          break;
+        case BetaDiscInterface.DRIVE_C:
+          diskName = 'C';
+          break;
+        case BetaDiscInterface.DRIVE_D:
+          diskName = 'D';
+          break;
+        default:
+          throw new Error("Unexpected drive index");
+      }
 
-    final File selectedFile = chooseFileForOpen("Select Disk " + diskName, null, null, new TRDFileFilter());
-    if (selectedFile != null) {
-      try {
-        final TRDOSDisk floppy = new TRDOSDisk(FileUtils.readFileToByteArray(selectedFile), false);
-        this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
-        log.info("Loaded drive " + diskName + " by file " + selectedFile);
+      final File selectedFile = chooseFileForOpen("Select Disk " + diskName, null, null, new TRDFileFilter());
+      if (selectedFile != null) {
+        try {
+          final TRDOSDisk floppy = new TRDOSDisk(FileUtils.readFileToByteArray(selectedFile), false);
+          this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
+          log.info("Loaded drive " + diskName + " by file " + selectedFile);
+        }
+        catch (IOException ex) {
+          log.log(Level.WARNING, "Can't read TRD file [" + selectedFile + ']', ex);
+          JOptionPane.showMessageDialog(this, "Can't read TRD file", "Error", JOptionPane.ERROR_MESSAGE);
+        }
       }
-      catch (IOException ex) {
-        log.log(Level.WARNING, "Can't read TRD file [" + selectedFile + ']', ex);
-        JOptionPane.showMessageDialog(this, "Can't read TRD file", "Error", JOptionPane.ERROR_MESSAGE);
-      }
+    }
+    finally {
+      this.stepSemaphor.unlock();
     }
   }
 
@@ -485,7 +491,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
           final boolean mode48 = selectedFilter.load(FileUtils.readFileToByteArray(selected));
-          log.info("Loaded image from file '" +selected + "', " + selectedFilter.getName()+", desired mode "+(mode48 ? "zx48": "zx128"));
+          log.info("Loaded image from file '" + selected + "', " + selectedFilter.getName() + ", desired mode " + (mode48 ? "zx48" : "zx128"));
           stepSemaphor.lock();
           try {
             this.board.loadZXSnapshot(selectedFilter, mode48);
@@ -562,26 +568,28 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   private void menuTapExportAsWavActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapExportAsWavActionPerformed
     this.stepSemaphor.lock();
     try {
-      final byte [] wav = this.keyboardAnddTapeModule.getTap().getAsWAV();
+      final byte[] wav = this.keyboardAnddTapeModule.getTap().getAsWAV();
       final File fileToSave = chooseFileForSave("Select WAV file", null, new WavFileFilter());
-      if (fileToSave!=null){
+      if (fileToSave != null) {
         FileUtils.writeByteArrayToFile(fileToSave, wav);
-        log.info("Exported current TAP file as WAV file "+fileToSave+" size "+wav.length+" bytes");
+        log.info("Exported current TAP file as WAV file " + fileToSave + " size " + wav.length + " bytes");
       }
     }
     catch (Exception ex) {
       ex.printStackTrace();
       log.log(Level.WARNING, "Can't export as WAV", ex);
       JOptionPane.showMessageDialog(this, "Can't export as WAV", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
-    }finally{
+    }
+    finally {
       this.stepSemaphor.unlock();
     }
   }//GEN-LAST:event_menuTapExportAsWavActionPerformed
 
   private void menuTapPlayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapPlayActionPerformed
-    if (this.menuTapPlay.isSelected()){
+    if (this.menuTapPlay.isSelected()) {
       this.keyboardAnddTapeModule.getTap().startPlay();
-    }else{
+    }
+    else {
       this.keyboardAnddTapeModule.getTap().stopPlay();
     }
     updateTapeMenu();
@@ -589,7 +597,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   private void menuTapPrevBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapPrevBlockActionPerformed
     final TapeFileReader tap = this.keyboardAnddTapeModule.getTap();
-    if (tap!=null){
+    if (tap != null) {
       tap.rewindToPrevBlock();
     }
     updateTapeMenu();
@@ -610,7 +618,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     }
     updateTapeMenu();
   }//GEN-LAST:event_menuTapeRewindToStartActionPerformed
-  
+
   private File chooseFileForOpen(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     for (final FileFilter f : filter) {
@@ -651,7 +659,6 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     }
     return result;
   }
-
 
 
   // Variables declaration - do not modify//GEN-BEGIN:variables
