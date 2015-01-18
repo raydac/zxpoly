@@ -78,28 +78,14 @@ public final class Motherboard implements ZXPoly {
     
   }
 
-  public void loadZXSnapshot(final Snapshot snapshot, final boolean mode48) {
-    this.port3D00 = PORTw_ZXPOLY_BLOCK;
-    if (mode48) {
-      for (final ZXPolyModule m : this.modules) {
-        m.lockZX48Mode();
-      }
-      snapshot.fillModule(this.modules[0], this.video);
-    }
-    else {
-      snapshot.fillModule(this.modules[0], this.video);
-    }
-    this.keyboard.reset();
-  }
-
   public void reset() {
     LOG.info("Full system reset");
     this.totalReset = true;
     this.resetCounter = 3;
   }
 
-  public boolean set3D00(final int value) {
-    if (is3D00NotLocked()) {
+  public boolean set3D00(final int value, final boolean force) {
+    if (is3D00NotLocked() || force) {
       this.port3D00 = value;
       LOG.info("set #3D00 to " + Utils.toHex(value));
 
@@ -169,8 +155,7 @@ public final class Motherboard implements ZXPoly {
       if (this.resetCounter > 0) {
         this.resetCounter--;
         if (this.resetCounter == 0) {
-          this.port3D00 = 0;
-          this.set3D00(0);
+          this.set3D00(0,true);
         }
       }
 
@@ -362,7 +347,7 @@ public final class Motherboard implements ZXPoly {
     if (isZXPolyMode()) {
       if (moduleIndex == 0) {
         if (port == PORTrw_ZXPOLY) {
-          set3D00(value);
+          set3D00(value, false);
         }
         else {
           if (mappedCPU > 0) {

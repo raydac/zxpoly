@@ -388,7 +388,6 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   public void setBorderColor(final int colorIndex) {
     this.portFEw |= (this.portFEw & 7) | (colorIndex & 0x07);
-    repaint();
   }
 
   public void lockBuffer() {

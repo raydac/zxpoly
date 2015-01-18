@@ -502,11 +502,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
       if (selected != null) {
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
-          final boolean mode48 = selectedFilter.load(FileUtils.readFileToByteArray(selected));
-          log.info("Loaded image from file '" + selected + "', " + selectedFilter.getName() + ", desired mode " + (mode48 ? "zx48" : "zx128"));
           stepSemaphor.lock();
           try {
-            this.board.loadZXSnapshot(selectedFilter, mode48);
+            log.info("Loading snapshot "+selectedFilter.getName());
+            selectedFilter.loadFromArray(this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
           }
           finally {
             stepSemaphor.unlock();

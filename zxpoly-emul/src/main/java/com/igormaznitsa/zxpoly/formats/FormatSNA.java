@@ -19,8 +19,7 @@ package com.igormaznitsa.zxpoly.formats;
 import com.igormaznitsa.jbbp.JBBPParser;
 import com.igormaznitsa.jbbp.mapper.*;
 import com.igormaznitsa.z80.Z80;
-import com.igormaznitsa.zxpoly.components.VideoController;
-import com.igormaznitsa.zxpoly.components.ZXPolyModule;
+import com.igormaznitsa.zxpoly.components.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
@@ -63,23 +62,22 @@ public class FormatSNA extends Snapshot {
   @Bin
   private ExtraBank[] extrabank;
 
-  private boolean sna128;
-
   public FormatSNA() {
   }
 
   @Override
-  public boolean load(byte[] array) throws IOException {
+  public void loadFromArray(final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
     PARSER_SNA.parse(array).mapTo(this, JBBPMapper.FLAG_IGNORE_MISSING_VALUES);
-    sna128 = array.length > 49179;
-    return !sna128;
-  }
-
-  @Override
-  public void fillModule(final ZXPolyModule module, final VideoController vc) {
-    final Z80 cpu = module.getCPU();
-    cpu.doReset();
-
+    final boolean sna128 = array.length > 49179;
+    if (sna128) {
+      doMode128(board);
+    }else{
+      doMode48(board);
+    }
+    
+    final ZXPolyModule module = board.getZXPolyModules()[0];
+    final Z80 cpu = board.getCPU0();
+    
     cpu.setRegisterPair(Z80.REGPAIR_AF, this.regAF);
     cpu.setRegisterPair(Z80.REGPAIR_BC, this.regBC);
     cpu.setRegisterPair(Z80.REGPAIR_DE, this.regDE);
@@ -102,7 +100,7 @@ public class FormatSNA extends Snapshot {
     vc.writeIO(module, 0xFE, this.borderColor);
     vc.setBorderColor(this.borderColor);
 
-    if (this.sna128) {
+    if (sna128) {
       final int offsetpage2 = 0x8000;
       final int offsetpage5 = 0x14000;
       final int offsetpageTop = (this.port7FFD & 7) * 0x4000;
@@ -114,7 +112,7 @@ public class FormatSNA extends Snapshot {
       }
 
       cpu.setRegister(Z80.REG_PC, this.regPC);
-      cpu.setRegister(Z80.REG_SP, this.regSP+2);
+      cpu.setRegister(Z80.REG_SP, this.regSP + 2);
       module.set7FFD(this.port7FFD, true);
       module.setTRDOSActive(this.onTrDos);
 
@@ -154,6 +152,6 @@ public class FormatSNA extends Snapshot {
 
   @Override
   public String getName() {
-    return "SNA Snapshot";
+    return "SNA snapshot";
   }
 }

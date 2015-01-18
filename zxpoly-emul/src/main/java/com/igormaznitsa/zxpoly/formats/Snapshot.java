@@ -16,24 +16,27 @@
  */
 package com.igormaznitsa.zxpoly.formats;
 
-import com.igormaznitsa.zxpoly.components.VideoController;
-import com.igormaznitsa.zxpoly.components.ZXPolyModule;
+import com.igormaznitsa.zxpoly.components.*;
+import static com.igormaznitsa.zxpoly.components.ZXPoly.PORTw_ZXPOLY_BLOCK;
 import java.io.IOException;
 import javax.swing.filechooser.FileFilter;
 
 public abstract class Snapshot extends FileFilter {
-  /**
-   * Fille a cpu module by data. 
-   * @param module the module, must not be null.
-   * @param vc the video controller, must not be null
-   */
-  public abstract void fillModule(final ZXPolyModule module, final VideoController vc);
-  /**
-   * Parse array.
-   * @param array the array to be parsed, must not be null
-   * @return true if the system must be locked in mode 48, false for 128 mode
-   * @throws IOException it will be thrown for parsing problems
-   */
-  public abstract boolean load(final byte [] array) throws IOException; 
+  
+  public void doMode48(final Motherboard board){
+    board.set3D00(PORTw_ZXPOLY_BLOCK, true);
+    for (final ZXPolyModule m : board.getZXPolyModules()) {
+      m.lockZX48Mode();
+    }
+    board.getCPU0().doReset();
+  }
+  
+  public void doMode128(final Motherboard board){
+    board.set3D00(PORTw_ZXPOLY_BLOCK, true);
+    board.getCPU0().doReset();
+  }
+  
+  public abstract void loadFromArray(Motherboard board, final VideoController vc, byte [] array) throws IOException; 
+  
   public abstract String getName();
 }

@@ -21,8 +21,7 @@ import com.igormaznitsa.jbbp.io.*;
 import com.igormaznitsa.jbbp.mapper.*;
 import com.igormaznitsa.jbbp.model.*;
 import com.igormaznitsa.z80.Z80;
-import com.igormaznitsa.zxpoly.components.VideoController;
-import com.igormaznitsa.zxpoly.components.ZXPolyModule;
+import com.igormaznitsa.zxpoly.components.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -139,8 +138,6 @@ public class FormatZ80 extends Snapshot {
     Bank[] banks;
   }
 
-  private int version;
-
   private static final JBBPParser Z80_VERSION1 = JBBPParser.prepare(
           "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
           + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
@@ -190,8 +187,6 @@ public class FormatZ80 extends Snapshot {
           + "skip:50;" // misc non zx or not supported stuff 
           + "byte [_] data;"
   );
-
-  private Z80Snapshot current;
 
   private static class DataProcessor implements JBBPMapperCustomFieldProcessor {
 
@@ -293,92 +288,14 @@ public class FormatZ80 extends Snapshot {
   }
 
   @Override
-  public void fillModule(final ZXPolyModule module, final VideoController vc) {
-    final Z80 cpu = module.getCPU();
-    cpu.doReset();
-
-    cpu.setRegister(Z80.REG_A, current.reg_a);
-    cpu.setRegister(Z80.REG_F, current.reg_f);
-    cpu.setRegister(Z80.REG_A, current.reg_a_alt, true);
-    cpu.setRegister(Z80.REG_F, current.reg_f_alt, true);
-    cpu.setRegisterPair(Z80.REGPAIR_BC, current.reg_bc);
-    cpu.setRegisterPair(Z80.REGPAIR_BC, current.reg_bc_alt, true);
-    cpu.setRegisterPair(Z80.REGPAIR_DE, current.reg_de);
-    cpu.setRegisterPair(Z80.REGPAIR_DE, current.reg_de_alt, true);
-    cpu.setRegisterPair(Z80.REGPAIR_HL, current.reg_hl);
-    cpu.setRegisterPair(Z80.REGPAIR_HL, current.reg_hl_alt, true);
-
-    cpu.setRegister(Z80.REG_IX, current.reg_ix);
-    cpu.setRegister(Z80.REG_IY, current.reg_iy);
-
-    cpu.setRegister(Z80.REG_R, current.reg_r);
-    cpu.setRegister(Z80.REG_SP, current.reg_sp);
-
-    if (this.version == VERSION_1) {
-      cpu.setRegister(Z80.REG_PC, current.reg_pc);
-    }
-    else {
-      cpu.setRegister(Z80.REG_PC, current.reg_pc2);
+  public void loadFromArray(final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
+    if (array.length < 30) {
+      throw new IOException("File is too short to be Z80 snapshot");
     }
 
-    cpu.setIFF(current.iff != 0, current.iff2 != 0);
-
-    cpu.setRegister(Z80.REG_I, current.reg_ir);
-    cpu.setIM(current.emulFlags.interruptmode);
-
-    switch (this.version) {
-      case VERSION_1: {
-        for (int i = 0; i < current.data.length; i++) {
-          module.writeMemory(cpu, i + 16384, current.data[i]);
-        }
-      }
-      break;
-      default: {
-        if (is48k()) {
-          for (final Bank b : this.current.banks) {
-            int offset = -1;
-            switch (b.page) {
-              case 4: {
-                offset = 0x8000;
-              }
-              break;
-              case 5: {
-                offset = 0xC000;
-              }
-              break;
-              case 8: {
-                offset = 0x4000;
-              }
-              break;
-            }
-            if (offset >= 0) {
-              for (int i = 0; i < 16384; i++) {
-                module.writeMemory(cpu, offset + i, b.data[i]);
-              }
-            }
-          }
-        }
-        else {
-          module.set7FFD(this.current.port7FFD, true);
-          for (final Bank b : this.current.banks) {
-            if (b.page >= 3 && b.page < 10) {
-              final int offset = (b.page - 3) * 0x4000;
-              for (int i = 0; i < 16384; i++) {
-                module.writeHeapModuleMemory(offset + i, b.data[i]);
-              }
-            }
-          }
-        }
-      }
-      break;
-    }
-
-    vc.setBorderColor(current.flags.bordercolor);
-  }
-
-  @Override
-  public boolean load(final byte[] array) throws IOException {
     final JBBPParser parser;
+
+    final int version;
 
     if ((array[6] | array[7]) == 0) {
       switch (((array[31] & 0xFF) << 8 | (array[30] & 0xFF))) {
@@ -406,9 +323,132 @@ public class FormatZ80 extends Snapshot {
       version = VERSION_1;
     }
 
-    current = parser.parse(array).mapTo(Z80Snapshot.class, new DataProcessor(this.version), JBBPMapper.FLAG_IGNORE_MISSING_VALUES);
+    final Z80Snapshot current = parser.parse(array).mapTo(Z80Snapshot.class, new DataProcessor(version), JBBPMapper.FLAG_IGNORE_MISSING_VALUES);
 
-    return is48k();
+    // check hardware mode
+    switch (version) {
+      case VERSION_1: {
+      }
+      break;
+      case VERSION_2: {
+        switch (current.mode) {
+          case 0:
+          case 1:
+          case 3:
+          case 4:
+            break;
+          default:
+            throw new IOException("Unsupported Z80 hardware mode [" + current.mode + ']');
+        }
+      }
+      break;
+      case VERSION_3A:
+      case VERSION_3B: {
+        switch (current.mode) {
+          case 0:
+          case 1:
+          case 3:
+          case 4:
+          case 5:
+          case 6:
+            break;
+          default:
+            throw new IOException("Unsupported Z80 hardware mode [" + current.mode + ']');
+        }
+      }
+      break;
+    }
+
+    final boolean mode48 = is48k(version, current);
+
+    if (mode48) {
+      doMode48(board);
+    }
+    else {
+      doMode128(board);
+    }
+
+    final Z80 cpu = board.getCPU0();
+
+    cpu.setRegister(Z80.REG_A, current.reg_a);
+    cpu.setRegister(Z80.REG_F, current.reg_f);
+    cpu.setRegister(Z80.REG_A, current.reg_a_alt, true);
+    cpu.setRegister(Z80.REG_F, current.reg_f_alt, true);
+    cpu.setRegisterPair(Z80.REGPAIR_BC, current.reg_bc);
+    cpu.setRegisterPair(Z80.REGPAIR_BC, current.reg_bc_alt, true);
+    cpu.setRegisterPair(Z80.REGPAIR_DE, current.reg_de);
+    cpu.setRegisterPair(Z80.REGPAIR_DE, current.reg_de_alt, true);
+    cpu.setRegisterPair(Z80.REGPAIR_HL, current.reg_hl);
+    cpu.setRegisterPair(Z80.REGPAIR_HL, current.reg_hl_alt, true);
+
+    cpu.setRegister(Z80.REG_IX, current.reg_ix);
+    cpu.setRegister(Z80.REG_IY, current.reg_iy);
+
+    cpu.setRegister(Z80.REG_R, current.reg_r);
+    cpu.setRegister(Z80.REG_SP, current.reg_sp);
+
+    if (version == VERSION_1) {
+      cpu.setRegister(Z80.REG_PC, current.reg_pc);
+    }
+    else {
+      cpu.setRegister(Z80.REG_PC, current.reg_pc2);
+    }
+
+    cpu.setIFF(current.iff != 0, current.iff2 != 0);
+
+    cpu.setRegister(Z80.REG_I, current.reg_ir);
+    cpu.setIM(current.emulFlags.interruptmode);
+
+    final ZXPolyModule module = board.getZXPolyModules()[0];
+
+    switch (version) {
+      case VERSION_1: {
+        for (int i = 0; i < current.data.length; i++) {
+          module.writeMemory(cpu, i + 16384, current.data[i]);
+        }
+      }
+      break;
+      default: {
+        if (mode48) {
+          for (final Bank b : current.banks) {
+            int offset = -1;
+            switch (b.page) {
+              case 4: {
+                offset = 0x8000;
+              }
+              break;
+              case 5: {
+                offset = 0xC000;
+              }
+              break;
+              case 8: {
+                offset = 0x4000;
+              }
+              break;
+            }
+            if (offset >= 0) {
+              for (int i = 0; i < 16384; i++) {
+                module.writeMemory(cpu, offset + i, b.data[i]);
+              }
+            }
+          }
+        }
+        else {
+          module.set7FFD(current.port7FFD, true);
+          for (final Bank b : current.banks) {
+            if (b.page >= 3 && b.page < 10) {
+              final int offset = (b.page - 3) * 0x4000;
+              for (int i = 0; i < 16384; i++) {
+                module.writeHeapModuleMemory(offset + i, b.data[i]);
+              }
+            }
+          }
+        }
+      }
+      break;
+    }
+
+    vc.setBorderColor(current.flags.bordercolor);
   }
 
   @Override
@@ -426,16 +466,16 @@ public class FormatZ80 extends Snapshot {
     return "Z80 Snapshot (*.z80)";
   }
 
-  public boolean is48k() {
+  private static boolean is48k(final int version, final Z80Snapshot snapshot) {
     switch (version) {
       case VERSION_1:
         return true;
       case VERSION_2: {
-        return this.current.mode == 0 || this.current.mode == 1;
+        return snapshot.mode == 0 || snapshot.mode == 1;
       }
       case VERSION_3A:
       case VERSION_3B: {
-        return this.current.mode == 0 || this.current.mode == 1 || this.current.mode == 3;
+        return snapshot.mode == 0 || snapshot.mode == 1 || snapshot.mode == 3;
       }
       default:
         return false;
