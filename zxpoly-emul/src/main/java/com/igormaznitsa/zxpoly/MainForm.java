@@ -41,6 +41,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   private volatile boolean turboMode = false;
 
+  private File lastTapFolder;
+  private File lastTRDFolder;
+  private File lastSnapshotFolder;
+  
   private static class TRDFileFilter extends FileFilter {
 
     @Override
@@ -453,8 +457,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
           throw new Error("Unexpected drive index");
       }
 
-      final File selectedFile = chooseFileForOpen("Select Disk " + diskName, null, null, new TRDFileFilter());
+      final File selectedFile = chooseFileForOpen("Select Disk " + diskName, this.lastTRDFolder, null, new TRDFileFilter());
       if (selectedFile != null) {
+        this.lastTRDFolder = selectedFile.getParentFile();
         try {
           final TRDOSDisk floppy = new TRDOSDisk(FileUtils.readFileToByteArray(selectedFile), false);
           this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
@@ -498,8 +503,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     stepSemaphor.lock();
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
-      final File selected = chooseFileForOpen("Select snapshot", null, theFilter, new FormatZ80(), new FormatSNA());
+      final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, new FormatZ80(), new FormatSNA());
       if (selected != null) {
+        this.lastSnapshotFolder = selected.getParentFile();
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
           stepSemaphor.lock();
@@ -559,8 +565,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_menuTapGotoBlockActionPerformed
 
   private void menuFileLoadTapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadTapActionPerformed
-    final File tapFile = chooseFileForOpen("Load Tape", null, null, new TapFileFilter());
+    final File tapFile = chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
     if (tapFile != null) {
+      this.lastTapFolder = tapFile.getParentFile();
       InputStream in = null;
       try {
         in = new BufferedInputStream(new FileInputStream(tapFile));
