@@ -88,6 +88,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   private final Motherboard board;
   private final KeyboardKempstonAndTapeIn keyboardAnddTapeModule;
+  private final KempstonMouse kempstonMouse;
 
   private final ReentrantLock stepSemaphor = new ReentrantLock();
 
@@ -121,12 +122,13 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     this.board.reset();
 
     this.scrollPanel.getViewport().add(this.board.getVideoController());
-
+    this.keyboardAnddTapeModule = this.board.findIODevice(KeyboardKempstonAndTapeIn.class);
+    this.kempstonMouse = this.board.findIODevice(KempstonMouse.class);
+    
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    manager.addKeyEventDispatcher(new KeyboardDispatcher(this.board.getKeyboard()));
-
-    this.keyboardAnddTapeModule = this.board.getKeyboard();
-
+    manager.addKeyEventDispatcher(new KeyboardDispatcher(this.keyboardAnddTapeModule));
+    
+    
     updateTapeMenu();
 
     final Thread daemon = new Thread(this, "ZXPolyThread");
@@ -474,12 +476,22 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_menuFileSelectDiskAActionPerformed
 
   private void formWindowLostFocus(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowLostFocus
-    this.board.getKeyboard().reset();
+    this.stepSemaphor.lock();
+    try{
+    this.keyboardAnddTapeModule.reset();
+    }finally{
+      this.stepSemaphor.unlock();
+    }
   }//GEN-LAST:event_formWindowLostFocus
 
   private void formWindowGainedFocus(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowGainedFocus
+    this.stepSemaphor.lock();
+    try{
     this.getInputContext().selectInputMethod(Locale.ENGLISH);
-    this.board.getKeyboard().reset();
+    this.keyboardAnddTapeModule.reset();
+    }finally{
+      this.stepSemaphor.unlock();
+    }
   }//GEN-LAST:event_formWindowGainedFocus
 
   private void menuFileLoadSnapshotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadSnapshotActionPerformed
@@ -507,6 +519,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
       }
     }
     finally {
+      this.keyboardAnddTapeModule.reset();
+      this.kempstonMouse.reset();
       stepSemaphor.unlock();
     }
   }//GEN-LAST:event_menuFileLoadSnapshotActionPerformed

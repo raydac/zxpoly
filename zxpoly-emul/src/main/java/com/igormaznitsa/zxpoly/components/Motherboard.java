@@ -20,6 +20,7 @@ import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.formats.Snapshot;
+import com.sun.xml.internal.bind.v2.schemagen.episode.Klass;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -389,7 +390,13 @@ public final class Motherboard implements ZXPoly {
     }
   }
 
-  public KeyboardKempstonAndTapeIn getKeyboard() {
-    return this.keyboard;
+  public <T> T findIODevice(final Class<T> klazz) {
+    T result = null;
+    for(final IODevice d : this.ioDevices){
+      if (klazz.isInstance(d)){
+        result = klazz.cast(d);
+      }
+    }
+    return result;
   }
 }
