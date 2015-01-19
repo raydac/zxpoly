@@ -20,6 +20,7 @@ import java.awt.*;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.*;
+import java.util.Arrays;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
@@ -42,7 +43,12 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private volatile int portFEw = 0;
 
   private boolean holdMouse = false;
-  
+
+  public static final long CYCLES_BETWEEN_INT = 64000L;
+  private static final int BORDER_LINES = 64;
+  private static final long MCYCLES_PER_BORDER_LINE = CYCLES_BETWEEN_INT / BORDER_LINES;
+  private final int[] borderLines = new int[BORDER_LINES];
+
   private static final int[] ZXPALETTE = new int[]{
     0xFF000000,
     0xFF0000BE,
@@ -94,19 +100,20 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     this.addMouseWheelListener(this);
   }
 
-  public void setHoldMouse(final boolean flag){
+  public void setHoldMouse(final boolean flag) {
     this.holdMouse = flag;
-    if (flag){
+    if (flag) {
       setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT), new Point(0, 0), "InvisibleCursor"));
-    }else{
+    }
+    else {
       setCursor(Cursor.getDefaultCursor());
     }
   }
-  
-  public boolean isHoldMouse(){
+
+  public boolean isHoldMouse() {
     return this.holdMouse;
   }
-  
+
   @Override
   public void mouseWheelMoved(final MouseWheelEvent e) {
     if (e.isControlDown()) {
@@ -152,6 +159,23 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     return 0x1800 + off;
   }
 
+  private void drawBorder(final Graphics2D g, final int width, final int height) {
+    int curindex = -1;
+    int y = 0;
+    int curheight = height;
+    final int yd = height / BORDER_LINES;
+    for(final int c : this.borderLines){
+      if (curindex!=c){
+        curindex = c;
+        g.setColor(ZXPALETTE_AS_COLORS[c]);
+        g.fillRect(0, y, width, curheight);
+      }
+      y += yd;
+      curheight -= yd;
+    }
+    Arrays.fill(this.borderLines, this.portFEw & 7);
+  }
+  
   @Override
   public void paintComponent(final Graphics g) {
     final Graphics2D g2 = (Graphics2D) g;
@@ -163,8 +187,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     final int yoff = (height - this.size.height) / 2;
 
     if (xoff > 0 || yoff > 0) {
-      g2.setColor(ZXPALETTE_AS_COLORS[this.portFEw & 7]);
-      g2.fillRect(0, 0, width, height);
+      drawBorder(g2, width, height);
     }
     this.drawBuffer(g2, xoff, yoff, this.zoom);
   }
@@ -388,6 +411,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   public void setBorderColor(final int colorIndex) {
     this.portFEw |= (this.portFEw & 7) | (colorIndex & 0x07);
+    Arrays.fill(this.borderLines, colorIndex);
   }
 
   public void lockBuffer() {
@@ -423,9 +447,14 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     if (!module.isTRDOSActive() && (port & 0xFF) == 0xFE) {
       final int old = this.portFEw;
       this.portFEw = value & 0xFF;
-      if (((this.portFEw ^ old) & 7) != 0) {
-        repaint();
+      
+      int borderLineIndex;
+      if (module.isMaster()){
+        borderLineIndex = Math.max(0,Math.min(BORDER_LINES-1, (int)(module.getCPU().getMachineCycles() / MCYCLES_PER_BORDER_LINE)));
+      }else{
+        borderLineIndex = Math.max(0, Math.min(BORDER_LINES - 1, (int) (System.nanoTime() / MCYCLES_PER_BORDER_LINE)));
       }
+      this.borderLines[borderLineIndex] = this.portFEw & 0x7;
     }
   }
 
@@ -435,7 +464,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       this.portFEw = 0x00;
     }
   }
-  
+
   @Override
   public void postStep(long spentMachineCyclesForStep) {
   }
@@ -443,9 +472,9 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   public int getScrYForZXScr(final int zxY) {
     final int height = getHeight();
     final int yoff = (height - this.size.height) / 2;
-    return (zxY* (this.zoom << 1))+yoff;
+    return (zxY * (this.zoom << 1)) + yoff;
   }
-  
+
   public int getZXScrY(final int compoY) {
     final int height = getHeight();
     final int yoff = (height - this.size.height) / 2;
@@ -463,7 +492,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   }
 
   public int getScrXForZXScr(final int zxX) {
-    final int width  = getWidth();
+    final int width = getWidth();
     final int xoff = (width - this.size.width) / 2;
     return (zxX * (this.zoom << 1)) + xoff;
   }

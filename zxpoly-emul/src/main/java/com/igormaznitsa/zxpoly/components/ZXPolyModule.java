@@ -587,6 +587,10 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     return "ZXM#" + this.moduleIndex;
   }
 
+  public boolean isMaster(){
+    return this.moduleIndex == 0;
+  }
+  
   public void lockZX48Mode() {
     this.port7FFD = 0b00110000;
     this.trdosROM = false;

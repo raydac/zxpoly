@@ -35,7 +35,6 @@ import org.apache.commons.io.IOUtils;
 
 public class MainForm extends javax.swing.JFrame implements Runnable {
 
-  private static final long CYCLES_BETWEEN_INT = 64000L;
   private static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
   private static final long SCREEN_REFRESH_DELAY_MILLISECONDS = 100L;
 
@@ -169,7 +168,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
         final boolean systemIntSignal;
         if (nextSystemInt <= currentTime) {
-          systemIntSignal = currentMachineCycleCounter >= CYCLES_BETWEEN_INT;
+          systemIntSignal = currentMachineCycleCounter >= VideoController.CYCLES_BETWEEN_INT;
           nextSystemInt = currentTime + TIMER_INT_DELAY_MILLISECONDS;
           this.board.getCPU0().resetMCycleCounter();
         }
@@ -177,7 +176,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
           systemIntSignal = false;
         }
 
-        this.board.step(systemIntSignal, this.turboMode ? true : systemIntSignal || currentMachineCycleCounter <= CYCLES_BETWEEN_INT);
+        this.board.step(systemIntSignal, this.turboMode ? true : systemIntSignal || currentMachineCycleCounter <= VideoController.CYCLES_BETWEEN_INT);
 
         currentTime = System.currentTimeMillis();
 
