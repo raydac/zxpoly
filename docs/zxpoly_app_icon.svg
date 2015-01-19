@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg3390"
+   version="1.1"
+   inkscape:version="0.91+devel r"
+   width="336.92105"
+   height="250.64757"
+   viewBox="0 0 336.92105 250.64757"
+   sodipodi:docname="zxpoly_app_icon.svg">
+  <metadata
+     id="metadata3396">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs3394">
+    <mask
+       maskUnits="userSpaceOnUse"
+       id="mask4224">
+      <ellipse
+         style="fill:#00ffff;stroke:#000000;stroke-width:1.15850508;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none"
+         id="circle4226"
+         cx="134.70158"
+         cy="40.973358"
+         rx="99.635399"
+         ry="40.738697" />
+    </mask>
+  </defs>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1600"
+     inkscape:window-height="820"
+     id="namedview3392"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="2.04504"
+     inkscape:cx="220.36765"
+     inkscape:cy="151.74608"
+     inkscape:window-x="0"
+     inkscape:window-y="28"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg3390" />
+  <g
+     id="g4215"
+     transform="scale(1.2506201,3.0586653)"
+     mask="url(#mask4224)">
+    <g
+       transform="matrix(1,0,0.2700422,1,-134.93892,-110.44879)"
+       id="g3493">
+      <rect
+         style="fill:#ff0000;stroke:none"
+         id="rect3434"
+         width="57.05151"
+         height="105.46339"
+         x="238.84872"
+         y="142.14485"
+         transform="matrix(1,0,-0.62948113,0.77701577,0,0)" />
+      <rect
+         style="fill:#ffff00;stroke:none"
+         id="rect3434-0"
+         width="57.05151"
+         height="105.46339"
+         x="295.72739"
+         y="142.14485"
+         transform="matrix(1,0,-0.62948113,0.77701577,0,0)" />
+      <rect
+         style="fill:#00ff00;stroke:none"
+         id="rect3434-04"
+         width="57.05151"
+         height="105.46339"
+         x="351.19925"
+         y="142.14485"
+         transform="matrix(1,0,-0.62948113,0.77701577,0,0)" />
+      <rect
+         style="fill:#00ffff;stroke:none"
+         id="rect3434-5"
+         width="57.05151"
+         height="105.46339"
+         x="406.94226"
+         y="142.14485"
+         transform="matrix(1,0,-0.62948113,0.77701577,0,0)" />
+    </g>
+  </g>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:65.13110352px;line-height:125%;font-family:Sans;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:4.78110218;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     x="168.05885"
+     y="107.15727"
+     id="text4228"
+     sodipodi:linespacing="125%"><tspan
+       sodipodi:role="line"
+       id="tspan4230"
+       x="168.05885"
+       y="107.15727"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Sans;-inkscape-font-specification:'Sans Bold';text-align:center;text-anchor:middle;stroke:#ffffff;stroke-width:4.78110218;stroke-miterlimit:4;stroke-dasharray:none">ZX</tspan><tspan
+       sodipodi:role="line"
+       x="168.05885"
+       y="188.57115"
+       id="tspan4232"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Sans;-inkscape-font-specification:'Sans Bold';text-align:center;text-anchor:middle;stroke:#ffffff;stroke-width:4.78110218;stroke-miterlimit:4;stroke-dasharray:none">POLY</tspan></text>
+</svg>
