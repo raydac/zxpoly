@@ -19,13 +19,13 @@ package com.igormaznitsa.zxpoly.components;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
-import com.igormaznitsa.zxpoly.formats.Snapshot;
-import com.sun.xml.internal.bind.v2.schemagen.episode.Klass;
 import java.util.*;
 import java.util.logging.Logger;
 
 public final class Motherboard implements ZXPoly {
 
+  public static final long CPU_FREQ = 3500000L;
+  
   private static final Logger LOG = Logger.getLogger("MB");
 
   private final ZXPolyModule[] modules;

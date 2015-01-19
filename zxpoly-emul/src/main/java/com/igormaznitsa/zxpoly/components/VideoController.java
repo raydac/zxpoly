@@ -44,10 +44,10 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   private boolean holdMouse = false;
 
-  public static final long CYCLES_BETWEEN_INT = 64000L;
+  public static final long CYCLES_BETWEEN_INT = 20000000L / (1000000000L / Motherboard.CPU_FREQ);
   private static final int BORDER_LINES = 64;
   private static final long MCYCLES_PER_BORDER_LINE = CYCLES_BETWEEN_INT / BORDER_LINES;
-  private final int[] borderLines = new int[BORDER_LINES];
+  private final byte[] borderLineColors = new byte[BORDER_LINES];
 
   private static final int[] ZXPALETTE = new int[]{
     0xFF000000,
@@ -163,25 +163,27 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     int curindex = -1;
     int y = 0;
     int curheight = height;
-    final int yd = height / BORDER_LINES;
-    for(final int c : this.borderLines){
-      if (curindex!=c){
+    final int lineHeight = (height+(BORDER_LINES>>1)) / BORDER_LINES;
+    for (final byte c : this.borderLineColors) {
+      if (curindex != c) {
         curindex = c;
         g.setColor(ZXPALETTE_AS_COLORS[c]);
         g.fillRect(0, y, width, curheight);
       }
-      y += yd;
-      curheight -= yd;
+      y += lineHeight;
+      curheight -= lineHeight;
     }
-    Arrays.fill(this.borderLines, this.portFEw & 7);
+    Arrays.fill(this.borderLineColors, (byte)(this.portFEw & 7));
   }
-  
+
   @Override
   public void paintComponent(final Graphics g) {
     final Graphics2D g2 = (Graphics2D) g;
 
-    final int width = getWidth();
-    final int height = getHeight();
+    final Rectangle bounds = this.getBounds();
+    
+    final int width = bounds.width;
+    final int height = bounds.height;
 
     final int xoff = (width - this.size.width) / 2;
     final int yoff = (height - this.size.height) / 2;
@@ -411,7 +413,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   public void setBorderColor(final int colorIndex) {
     this.portFEw |= (this.portFEw & 7) | (colorIndex & 0x07);
-    Arrays.fill(this.borderLines, colorIndex);
+    Arrays.fill(this.borderLineColors, (byte)colorIndex);
   }
 
   public void lockBuffer() {
@@ -445,16 +447,19 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   @Override
   public void writeIO(final ZXPolyModule module, final int port, final int value) {
     if (!module.isTRDOSActive() && (port & 0xFF) == 0xFE) {
-      final int old = this.portFEw;
       this.portFEw = value & 0xFF;
-      
+
       int borderLineIndex;
-      if (module.isMaster()){
-        borderLineIndex = Math.max(0,Math.min(BORDER_LINES-1, (int)(module.getCPU().getMachineCycles() / MCYCLES_PER_BORDER_LINE)));
-      }else{
-        borderLineIndex = Math.max(0, Math.min(BORDER_LINES - 1, (int) (System.nanoTime() / MCYCLES_PER_BORDER_LINE)));
+      final long machineCycles = module.getCPU().getMachineCycles();
+      if (module.isMaster()) {
+        borderLineIndex = (int) (((machineCycles << 8) / MCYCLES_PER_BORDER_LINE) >> 8);
       }
-      this.borderLines[borderLineIndex] = this.portFEw & 0x7;
+      else {
+        borderLineIndex = (int) (machineCycles % BORDER_LINES);
+      }
+      if (borderLineIndex >= 0 && borderLineIndex < BORDER_LINES) {
+        this.borderLineColors[borderLineIndex] = (byte)(this.portFEw & 0x7);
+      }
     }
   }
 
