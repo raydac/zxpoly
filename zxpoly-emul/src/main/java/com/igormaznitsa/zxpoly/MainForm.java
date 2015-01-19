@@ -114,6 +114,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     initComponents();
     this.getInputContext().selectInputMethod(Locale.ENGLISH);
 
+    setIconImage(Utils.loadIcon("appico.png"));
+    
     log.info("Loading test rom [" + romResource + ']');
     final RomData rom = RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romResource));
     this.board = new Motherboard(rom);

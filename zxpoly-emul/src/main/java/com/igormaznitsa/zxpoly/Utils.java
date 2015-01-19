@@ -16,11 +16,29 @@
  */
 package com.igormaznitsa.zxpoly;
 
+import java.awt.Image;
+import java.io.IOException;
 import java.io.InputStream;
+import javax.imageio.ImageIO;
+import org.apache.commons.io.IOUtils;
 
 public enum Utils {
 
   ;
+
+  public static Image loadIcon(final String name) {
+    final InputStream resource = findResourceOrError("com/igormaznitsa/zxpoly/icons/" + name);
+    try {
+      return ImageIO.read(resource);
+    }
+    catch (IOException ex) {
+      throw new Error("Can't read resource icon [" + name + ']');
+    }
+    finally {
+      IOUtils.closeQuietly(resource);
+    }
+  }
+
   public static InputStream findResourceOrError(final String resource) {
     final InputStream result = Utils.class.getClassLoader().getResourceAsStream(resource);
     if (result == null) {
