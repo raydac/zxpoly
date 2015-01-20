@@ -53,27 +53,6 @@ public final class Z80 {
   private static final int FLAG_SZC = FLAG_SZ | FLAG_C;
   private static final int FLAG_HC = FLAG_H | FLAG_C;
 
-  private static final byte[] XOR_CONDITION_TABLE = new byte[]{
-    (byte) FLAG_Z,
-    0,
-    (byte) FLAG_C,
-    0,
-    (byte) FLAG_PV,
-    0,
-    (byte) FLAG_S,
-    0,};
-
-  private static final byte[] AND_CONDITION_TABLE = new byte[]{
-    (byte) FLAG_Z,
-    (byte) FLAG_Z,
-    (byte) FLAG_C,
-    (byte) FLAG_C,
-    (byte) FLAG_PV,
-    (byte) FLAG_PV,
-    (byte) FLAG_S,
-    (byte) FLAG_S
-  };
-
   private static final byte[] FTABLE_OVERFLOW = new byte[]{
     0, (byte) FLAG_PV, (byte) FLAG_PV, 0
   };
@@ -332,7 +311,7 @@ public final class Z80 {
       break;
       case 1: {
         this.regPC = 0;
-        this.regSP = 0xFFFF;
+        this.regSP = 0;
       }
       break;
       case 2: {
@@ -505,7 +484,20 @@ public final class Z80 {
   }
 
   private boolean checkCondition(final int cc) {
-    return ((this.regSet[REG_F] ^ XOR_CONDITION_TABLE[cc]) & AND_CONDITION_TABLE[cc]) != 0;
+    final boolean result;
+    final int flags = this.regSet[REG_F];
+    switch(cc){
+      case 0 : result = (flags & FLAG_Z) == 0 ;break;
+      case 1 : result = (flags & FLAG_Z) != 0;break;
+      case 2 : result = (flags & FLAG_C) == 0;break;
+      case 3 : result = (flags & FLAG_C) != 0;break;
+      case 4 : result = (flags & FLAG_PV) == 0;break;
+      case 5 : result = (flags & FLAG_PV) != 0;break;
+      case 6 : result = (flags & FLAG_S) == 0;break;
+      case 7 : result = (flags & FLAG_S) != 0;break;
+      default: throw new Error("Unexpected condition");
+    }
+    return result;
   }
 
   private int readReg8(final int r) {

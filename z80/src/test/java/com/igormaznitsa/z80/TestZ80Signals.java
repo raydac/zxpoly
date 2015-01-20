@@ -24,6 +24,7 @@ public class TestZ80Signals extends AbstractZ80Test {
   public void testInt_Disabled(){
     final TestBus tb = new TestBus(0, 0, 0x03);
     final Z80 cpu = new Z80(tb);
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
     
     cpu.step(~Z80.SIGNAL_IN_nINT);
     
@@ -38,6 +39,7 @@ public class TestZ80Signals extends AbstractZ80Test {
     final Z80 cpu = new Z80(tb);
     cpu.setIM(0);
     cpu.setIFF(true, true);
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
     
     cpu.step(~Z80.SIGNAL_IN_nINT);
     
@@ -53,6 +55,7 @@ public class TestZ80Signals extends AbstractZ80Test {
     final Z80 cpu = new Z80(tb);
     cpu.setIM(1);
     cpu.setIFF(true, true);
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
     
     cpu.step(~Z80.SIGNAL_IN_nINT);
     
@@ -72,6 +75,7 @@ public class TestZ80Signals extends AbstractZ80Test {
     cpu.setIM(2);
     cpu.setRegister(Z80.REG_I, 0x86);
     cpu.setIFF(true, true);
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
     
     cpu.step(~Z80.SIGNAL_IN_nINT);
     
@@ -89,6 +93,7 @@ public class TestZ80Signals extends AbstractZ80Test {
     final Z80 cpu = new Z80(tb);
     cpu.setIM(0);
     cpu.setIFF(true, true);
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
 
     cpu.step(~(Z80.SIGNAL_IN_nINT | Z80.SIGNAL_IN_nNMI));
 
@@ -105,6 +110,8 @@ public class TestZ80Signals extends AbstractZ80Test {
     cpu.setRegister(Z80.REG_A, 0);
     cpu.setIM(0);
     cpu.setIFF(false, false);
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
+
 
     cpu.nextInstruction(false, false, false);
     assertEquals(0x0001, cpu.getRegister(Z80.REG_PC));
@@ -122,6 +129,8 @@ public class TestZ80Signals extends AbstractZ80Test {
     cpu.setRegister(Z80.REG_A, 0);
     cpu.setIM(0);
     cpu.setIFF(false, false);
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
+
 
     cpu.nextInstruction(false, false, false);
     assertEquals(0x0001, cpu.getRegister(Z80.REG_PC));
@@ -136,7 +145,8 @@ public class TestZ80Signals extends AbstractZ80Test {
     final TestBus tb = new TestBus(0xFF, 0, 0xED, 0xED, 0xED, 0xED, 0xED, 0x4A);
 
     final Z80 cpu = new Z80(tb);
-    
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
+
     cpu.setRegisterPair(Z80.REGPAIR_HL, 0x1111);
     cpu.setRegisterPair(Z80.REGPAIR_BC, 0x2222);
     cpu.setRegister(Z80.REG_F, 0xFF);
@@ -175,6 +185,7 @@ public class TestZ80Signals extends AbstractZ80Test {
     final Z80 cpu = new Z80(tb);
     cpu.setIM(0);
     cpu.setIFF(true, true);
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
 
     // meet HALT
     assertTrue((cpu.getState() & Z80.SIGNAL_OUT_nHALT)!=0);
@@ -217,6 +228,7 @@ public class TestZ80Signals extends AbstractZ80Test {
     tb.writeMemory(null, 0x67, (byte) 0x55);
 
     final Z80 cpu = new Z80(tb);
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
     cpu.setIM(0);
     cpu.setIFF(true, true);
 
