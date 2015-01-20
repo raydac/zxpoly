@@ -41,7 +41,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   private volatile boolean turboMode = false;
 
   private File lastTapFolder;
-  private File lastTRDFolder;
+  private File lastFloppyFolder;
   private File lastSnapshotFolder;
   
   private static class TRDFileFilter extends FileFilter {
@@ -54,6 +54,20 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     @Override
     public String getDescription() {
       return "TR-DOS image (*.trd)";
+    }
+
+  }
+
+  private static class SCLFileFilter extends FileFilter {
+
+    @Override
+    public boolean accept(File f) {
+      return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".scl");
+    }
+
+    @Override
+    public String getDescription() {
+      return "SCL image (*.scl)";
     }
 
   }
@@ -457,18 +471,18 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
         default:
           throw new Error("Unexpected drive index");
       }
-
-      final File selectedFile = chooseFileForOpen("Select Disk " + diskName, this.lastTRDFolder, null, new TRDFileFilter());
+      final AtomicReference<FileFilter> filter = new AtomicReference<>();
+      final File selectedFile = chooseFileForOpen("Select Disk " + diskName, this.lastFloppyFolder, filter, new SCLFileFilter(), new TRDFileFilter());
       if (selectedFile != null) {
-        this.lastTRDFolder = selectedFile.getParentFile();
+        this.lastFloppyFolder = selectedFile.getParentFile();
         try {
-          final TRDOSDisk floppy = new TRDOSDisk(FileUtils.readFileToByteArray(selectedFile), false);
+          final TRDOSDisk floppy = new TRDOSDisk(filter.get().getClass() == SCLFileFilter.class ? TRDOSDisk.Source.SCL : TRDOSDisk.Source.TRD, FileUtils.readFileToByteArray(selectedFile), false);
           this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
-          log.info("Loaded drive " + diskName + " by file " + selectedFile);
+          log.info("Loaded drive " + diskName + " by floppy image file " + selectedFile);
         }
         catch (IOException ex) {
-          log.log(Level.WARNING, "Can't read TRD file [" + selectedFile + ']', ex);
-          JOptionPane.showMessageDialog(this, "Can't read TRD file", "Error", JOptionPane.ERROR_MESSAGE);
+          log.log(Level.WARNING, "Can't read Floppy image file [" + selectedFile + ']', ex);
+          JOptionPane.showMessageDialog(this, "Can't read Floppy image file", "Error", JOptionPane.ERROR_MESSAGE);
         }
       }
     }

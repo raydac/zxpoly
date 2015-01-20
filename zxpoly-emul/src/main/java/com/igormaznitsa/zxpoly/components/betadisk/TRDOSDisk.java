@@ -16,13 +16,17 @@
  */
 package com.igormaznitsa.zxpoly.components.betadisk;
 
+import com.igormaznitsa.jbbp.utils.JBBPUtils;
+import java.nio.charset.Charset;
 import java.util.*;
 
-/**
- *
- * @author Igor Maznitsa (http://www.igormaznitsa.com)
- */
 public class TRDOSDisk {
+
+  public enum Source {
+
+    SCL,
+    TRD
+  }
 
   private static final int SIDES = 2;
   private static final int TRACKS_PER_SIDE = 80;
@@ -30,7 +34,7 @@ public class TRDOSDisk {
   private static final int SECTOR_SIZE = 256;
 
   private static final Random rnd = new Random();
-  
+
   public static class Sector {
 
     private final TRDOSDisk owner;
@@ -40,22 +44,21 @@ public class TRDOSDisk {
     private final int track;
     private final int sectorId;
     private final int offset;
-    
+
     private Sector(final TRDOSDisk disk, final int side, final int track, final int sector, final int offset, final byte[] data) {
       this.side = side;
       this.track = track;
       this.sectorId = sector;
-      this.crc = crc;
       this.data = data;
-      this.owner = disk; 
+      this.owner = disk;
       this.offset = offset;
       updateCrc();
     }
 
-    public boolean isWriteProtect(){
+    public boolean isWriteProtect() {
       return this.owner.isWriteProtect();
     }
-    
+
     public boolean isLastOnTrack() {
       return this.sectorId == SECTORS_PER_TRACK;
     }
@@ -85,20 +88,20 @@ public class TRDOSDisk {
       }
     }
 
-    public void updateCrc(){
-      int  lcrc = 0xcdb4;
-      for(int off=0;off<SECTOR_SIZE;off++){
-        lcrc^=(this.readByte(off) << 8);
-        for(int i=0;i<8;i++){
-         lcrc<<=1;
-         if ((lcrc & 0x10000)!=0){
-           lcrc ^= 0x1021;
-         }
+    public void updateCrc() {
+      int lcrc = 0xcdb4;
+      for (int off = 0; off < SECTOR_SIZE; off++) {
+        lcrc ^= (this.readByte(off) << 8);
+        for (int i = 0; i < 8; i++) {
+          lcrc <<= 1;
+          if ((lcrc & 0x10000) != 0) {
+            lcrc ^= 0x1021;
+          }
         }
       }
       this.crc = lcrc & 0xFFFF;
     }
-    
+
     public boolean writeByte(final int offsetAtSector, final int value) {
       if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
         return false;
@@ -118,7 +121,7 @@ public class TRDOSDisk {
     }
 
     private int getOffset() {
-      return  this.offset;
+      return this.offset;
     }
 
     public boolean isCrcOk() {
@@ -131,37 +134,126 @@ public class TRDOSDisk {
   private final Sector[] sectors;
 
   public TRDOSDisk() {
-    this(new byte[SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
+    this(Source.TRD, new byte[SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
   }
 
-  public TRDOSDisk(final byte[] data, final boolean writeProtect) {
-    final byte[] workData = data.length >= (SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE) ? data : Arrays.copyOf(data, SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
-    this.data = workData;
-    this.writeProtect = writeProtect;
+  public TRDOSDisk(final Source src, final byte[] data, final boolean writeProtect) {
+    this.sectors = new Sector[SECTORS_PER_TRACK * TRACKS_PER_SIDE * SIDES];
+    final byte[] workData;
 
-    this.sectors = new Sector[SECTORS_PER_TRACK*TRACKS_PER_SIDE*SIDES];
+    switch (src) {
+      case SCL: {
+        if (data.length < 10 || !JBBPUtils.arrayStartsWith(data, "SINCLAIR".getBytes(Charset.forName("US-ASCII"))) || data.length < (9 + (0x100 + 14) * (data[8] & 0xFF))) {
+          throw new RuntimeException("Not SCL file");
+        }
+        workData = new byte[SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE];
+        int size = 0;
+        final int items = data[8] & 0xFF;
+        for (int i = 0; i < items; i++) {
+          size += data[9 + 14 * i + 13] & 0xFF;
+        }
+        if (size > 2544) {
+          throw new RuntimeException("The SCL image needs non-standard disk size [" + size + " blocks]");
+        }
+        else {
+          // make catalog area
+          int dataOffset = 0x0000;
+          int sector = 0;
+          int track = 1;
+          int processedSectors = 0;
+          for (int i = 0; i < items; i++) {
+            final int itemOffset = 9 + 14 * i;
+            System.arraycopy(data, itemOffset, workData, dataOffset, 14);
+            final int sectorsForFile = data[itemOffset + 13] & 0xFF;
+            dataOffset += 14;
 
+            workData[dataOffset++] = (byte) sector;
+            workData[dataOffset++] = (byte) track;
+
+            final int srcFileOffset = 9 + 14 * items + processedSectors * SECTOR_SIZE;
+            final int dstFileOffset = track * SECTORS_PER_TRACK * SECTOR_SIZE + sector * SECTOR_SIZE;
+            System.arraycopy(data, srcFileOffset, workData, dstFileOffset, sectorsForFile * SECTOR_SIZE);
+
+            processedSectors += sectorsForFile;
+            for (int s = 0; s < sectorsForFile; s++) {
+              sector++;
+              if (sector == 0x10) {
+                track++;
+                sector = 0;
+              }
+            }
+          }
+          // system sector
+          dataOffset = 8 * SECTOR_SIZE; // sector 9
+          workData[dataOffset++] = 0x00; // must be zero
+
+          dataOffset += 224; // empty
+
+          workData[dataOffset++] = (byte) sector; // number of the first free sector
+          workData[dataOffset++] = (byte) track; // number of the first free track
+
+          workData[dataOffset++] = 0x10; // disk type
+          workData[dataOffset++] = (byte) items; // number of files
+
+          final int freeSectors = 2544 - processedSectors;
+          workData[dataOffset++] = (byte) (freeSectors & 0xFF); // number of free sectors
+          workData[dataOffset++] = (byte) (freeSectors >> 8);
+
+          workData[dataOffset++] = 0x10; // ID of TRDOS
+
+          //not used
+          for (int e = 0; e < 2; e++) {
+            workData[dataOffset++] = 0;
+          }
+          //not used
+          for (int e = 0; e < 9; e++) {
+            workData[dataOffset++] = 32;
+          }
+          workData[dataOffset++] = 0; // not used
+
+          workData[dataOffset++] = 0x00; // number of deleted files
+
+          // name of disk, no more than 11 chars
+          for (final char ch : "SCLIMAGE".toCharArray()) {
+            workData[dataOffset++] = (byte) ch;
+          }
+          //not used
+          for (int e = 0; e < 3; e++) {
+            workData[dataOffset++] = 0; // 
+          }
+        }
+      }
+      break;
+      case TRD: {
+        workData = data.length >= (SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE) ? data : Arrays.copyOf(data, SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
+      }
+      break;
+      default:
+        throw new Error("Unexpected source [" + src + ']');
+    }
     int p = 0;
-    for(int i=0; i<workData.length; i+=SECTOR_SIZE){
-      this.sectors[p++] = new Sector(this, (i>>12) & 1, i>>13, ((i >> 8) & 0x0f) + 1,i, workData);
+    this.writeProtect = writeProtect;
+    this.data = workData;
+    for (int i = 0; i < workData.length; i += SECTOR_SIZE) {
+      this.sectors[p++] = new Sector(this, (i >> 12) & 1, i >> 13, ((i >> 8) & 0x0f) + 1, i, workData);
     }
   }
 
   public Sector findRandomSector(final int side, final int track) {
     Sector sector = findFirstSector(side, track);
-    if (sector!=null){
+    if (sector != null) {
       int toskip = rnd.nextInt(SECTORS_PER_TRACK);
       Sector found = sector;
-      while(toskip-->0){
+      while (toskip-- > 0) {
         found = findSectorAfter(found);
       }
-      if (found!=null){
+      if (found != null) {
         sector = found;
       }
     }
     return sector;
   }
-  
+
   public Sector findFirstSector(final int side, final int track) {
     Sector result = null;
 
@@ -174,29 +266,29 @@ public class TRDOSDisk {
 
     return result;
   }
-  
+
   public Sector findSectorAfter(final Sector sector) {
     boolean next = false;
-    for(final Sector s : this.sectors){
-      if (next){
+    for (final Sector s : this.sectors) {
+      if (next) {
         return s;
       }
-      if (s == sector){
+      if (s == sector) {
         next = true;
       }
     }
     return null;
   }
-  
+
   public Sector findSector(final int side, final int track, final int sector) {
     Sector result = null;
 
-      for(final Sector s : this.sectors){
-        if (s.getSide() == side && s.getTrackNumber() == track && s.getSectorId() == sector){
-          result = s;
-          break;
-        }
+    for (final Sector s : this.sectors) {
+      if (s.getSide() == side && s.getTrackNumber() == track && s.getSectorId() == sector) {
+        result = s;
+        break;
       }
+    }
 
     if (result == null) {
       System.out.println("Can't find side = " + side + " track = " + track + " sector = " + sector);
