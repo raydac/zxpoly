@@ -307,9 +307,9 @@ public class TRDOSDisk {
       }
     }
 
-    if (result == null) {
-      System.out.println("Can't find side = " + side + " ph.track = " + track + " ph.sector = " + physicalSectorIndex);
-    }
+//    if (result == null) {
+//      System.out.println("Can't find side = " + side + " ph.track = " + track + " ph.sector = " + physicalSectorIndex);
+//    }
     return result;
   }
 

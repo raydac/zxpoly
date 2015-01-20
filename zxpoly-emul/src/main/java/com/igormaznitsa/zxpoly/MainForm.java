@@ -36,7 +36,7 @@ import org.apache.commons.io.IOUtils;
 public class MainForm extends javax.swing.JFrame implements Runnable {
 
   private static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
-  private static final long SCREEN_REFRESH_DELAY_MILLISECONDS = 100L;
+  private static final int HOW_MANY_INT_BETWEEN_SCREEN_REFRESH = 4;
 
   private volatile boolean turboMode = false;
 
@@ -173,7 +173,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   @Override
   public void run() {
     long nextSystemInt = System.currentTimeMillis() + TIMER_INT_DELAY_MILLISECONDS;
-    long nextScreenRefresh = System.currentTimeMillis() + SCREEN_REFRESH_DELAY_MILLISECONDS;
+    int countdownToPaint = 0;
 
     while (!Thread.currentThread().isInterrupted()) {
       final long currentMachineCycleCounter = this.board.getCPU0().getMachineCycles();
@@ -187,6 +187,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
           systemIntSignal = currentMachineCycleCounter >= VideoController.CYCLES_BETWEEN_INT;
           nextSystemInt = currentTime + TIMER_INT_DELAY_MILLISECONDS;
           this.board.getCPU0().resetMCycleCounter();
+          countdownToPaint--;
         }
         else {
           systemIntSignal = false;
@@ -196,9 +197,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
         currentTime = System.currentTimeMillis();
 
-        if (nextScreenRefresh <= currentTime) {
+        if (countdownToPaint<=0) {
+          countdownToPaint = HOW_MANY_INT_BETWEEN_SCREEN_REFRESH;
           updateScreen();
-          nextScreenRefresh = currentTime + SCREEN_REFRESH_DELAY_MILLISECONDS;
         }
       }
       finally {
@@ -218,7 +219,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   private void updateScreen() {
     final VideoController vc = board.getVideoController();
     vc.updateBuffer();
-    vc.repaint();
+    vc.paintImmediately(0, 0, vc.getWidth(), vc.getHeight());;
   }
 
   /**
