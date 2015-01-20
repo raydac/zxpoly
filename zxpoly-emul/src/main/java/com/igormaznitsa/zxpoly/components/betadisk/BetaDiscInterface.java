@@ -108,6 +108,7 @@ public class BetaDiscInterface implements IODevice {
     this.ffPort = value;
     this.vg93.setResetIn((this.ffPort & 0b00000100) != 0);
     this.vg93.setSide((this.ffPort & 0b00010000)==0? 1 : 0);
+    this.vg93.setMFMModulation((this.ffPort & 0b00010000)==0);
     tuneControllerToDisk();
   }
 
