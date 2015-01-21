@@ -14,25 +14,69 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.igormaznitsa.z80.disasm;
+package com.igormaznitsa.z80;
 
-import java.util.Arrays;
-import java.util.Locale;
+import com.igormaznitsa.z80.asm.Z80AsmCompileException;
+import java.io.*;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class Z80Instruction {
+
+  public interface ExpressionProcessor {
+
+    int evalExpression(String expression);
+  }
+
+  private static final Pattern CODE_PART_CHECKING = Pattern.compile("([0-9A-F]{2})+(\\s+(d|e|nn|n))*(\\s*[0-9A-F]{2}+)?");
+  private static final Pattern CODE_PART_PARSING = Pattern.compile("[0-9A-F]{2}|\\s+(?:d|e|nn|n)");
+
+  private final static List<Z80Instruction> INSTRUCTIONS;
+
+  static {
+    final List<Z80Instruction> list = new ArrayList<>(1500);
+    final InputStream in = Z80Instruction.class.getClassLoader().getResourceAsStream("z80opcodes.lst");
+    BufferedReader reader = null;
+    try {
+      reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+      while (true) {
+        final String line = reader.readLine();
+        if (line == null) {
+          break;
+        }
+        final String trimmed = line.trim();
+        if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+          continue;
+        }
+        list.add(new Z80Instruction(trimmed));
+      }
+      INSTRUCTIONS = Collections.unmodifiableList(list);
+    }
+    catch (IOException ex) {
+      throw new Error("Can't load Z80 instruction list", ex);
+    }
+    finally {
+      try {
+        if (reader != null) {
+          reader.close();
+        }
+      }
+      catch (IOException ex) {
+        ex.printStackTrace();
+      }
+    }
+  }
 
   public static final int SPEC_INDEX = 0x100;
   public static final int SPEC_OFFSET = 0x101;
   public static final int SPEC_UNSIGNED_BYTE = 0x102;
   public static final int SPEC_UNSIGNED_WORD = 0x103;
 
+  private final Pattern asmPattern;
+  private final int[] asmGroupValues;
   private final int[] codes;
   private final String textRepresentation;
-
-  private static final Pattern CODE_PART_CHECKING = Pattern.compile("([0-9A-F]{2})+(\\s+(d|e|nn|n))*(\\s*[0-9A-F]{2}+)?");
-  private static final Pattern CODE_PART_PARSING = Pattern.compile("[0-9A-F]{2}|\\s+(?:d|e|nn|n)");
 
   private final int length;
   private final int fixedPartLength;
@@ -42,7 +86,11 @@ public final class Z80Instruction {
   private final boolean has_byte;
   private final boolean has_word;
 
-  public Z80Instruction(final String def) {
+  public static List<Z80Instruction> getInstructions() {
+    return INSTRUCTIONS;
+  }
+
+  Z80Instruction(final String def) {
     final String codePart = def.substring(0, 11).trim();
     final String asmPart = def.substring(11).trim();
 
@@ -91,6 +139,154 @@ public final class Z80Instruction {
     this.has_index = hasIndex;
     this.has_offset = hasOffset;
     this.has_word = hasWord;
+
+    final String preprocessed = asmPart.replace("+d", "<").replace("e", ">").replace("nn", "%").replace("n", "&");
+    final StringBuilder builder = new StringBuilder();
+
+    int asmGroupIndex = 0;
+    final int[] asmGroups = new int[10];
+
+    final StringBuilder hexNum = new StringBuilder();
+
+    final String group = "(\\S.*)";
+
+    builder.append('^');
+    int hexNumCntr = 0;
+    for (final char c : preprocessed.toCharArray()) {
+      switch (c) {
+        case '#': {
+          hexNumCntr = 2;
+        }
+        break;
+        case '<': {
+          builder.append(group);
+          asmGroups[asmGroupIndex++] = SPEC_INDEX;
+        }
+        break;
+        case '>': {
+          builder.append(group);
+          asmGroups[asmGroupIndex++] = SPEC_OFFSET;
+        }
+        break;
+        case '%': {
+          builder.append(group);
+          asmGroups[asmGroupIndex++] = SPEC_UNSIGNED_WORD;
+        }
+        break;
+        case '&': {
+          builder.append(group);
+          asmGroups[asmGroupIndex++] = SPEC_UNSIGNED_BYTE;
+        }
+        break;
+        case ',':
+        case ')':
+        case '(': {
+          builder.append("\\s*\\").append(c).append("\\s*");
+        }
+        break;
+        default: {
+          if (hexNumCntr > 0) {
+            hexNum.append(c);
+            hexNumCntr--;
+            if (hexNumCntr == 0) {
+              asmGroups[asmGroupIndex++] = Integer.parseInt(hexNum.toString(), 16);
+              hexNum.setLength(0);
+              builder.append(group);
+            }
+          }
+          else if (Character.isDigit(c)) {
+            asmGroups[asmGroupIndex++] = c - '0';
+            builder.append(group);
+          }
+          else {
+            builder.append(c);
+          }
+        }
+        break;
+      }
+    }
+    builder.append('$');
+
+    this.asmPattern = Pattern.compile(builder.toString(), Pattern.CASE_INSENSITIVE);
+    this.asmGroupValues = Arrays.copyOf(asmGroups, asmGroupIndex);
+  }
+
+  public boolean matches(final String asm) {
+    return this.asmPattern.matcher(asm.trim()).matches();
+  }
+
+  public byte[] compile(final String asm, final ExpressionProcessor expressionCalc) {
+
+    final Matcher m = this.asmPattern.matcher(asm.trim());
+    if (m.find()) {
+      // check constants
+      for (int i = 0; i < this.asmGroupValues.length; i++) {
+        final int value = this.asmGroupValues[i];
+        if (value < SPEC_INDEX) {
+          final int result = expressionCalc.evalExpression(m.group(i + 1));
+          if (result != value) {
+            return null;
+          }
+        }
+      }
+
+      // fill values
+      final byte[] resultBuff = new byte[16];
+
+      int resultIndex = 0;
+
+      for (int i = 0; i < this.codes.length; i++) {
+        final int type = this.codes[i];
+        if (type < SPEC_INDEX) {
+          resultBuff[resultIndex++] = (byte) type;
+        }
+        else {
+          int groupIndex = -1;
+          for (int j = 0; j < this.asmGroupValues.length; j++) {
+            if (this.asmGroupValues[j] == type) {
+              groupIndex = j + 1;
+              break;
+            }
+          }
+          if (groupIndex < 0) {
+            throw new Error("Unexpected state, group nt found!");
+          }
+          final int result = expressionCalc.evalExpression(m.group(groupIndex));
+          switch (type) {
+            case SPEC_INDEX: {
+              if (result < -128 || result > 127) {
+                throw new Z80AsmCompileException("Wrong index value [" + result + ']');
+              }
+              resultBuff[resultIndex++] = (byte) result;
+            }
+            break;
+            case SPEC_OFFSET: {
+              if (result < -128 || result > 127) {
+                throw new Z80AsmCompileException("Wrong offset value [" + result + ']');
+              }
+              resultBuff[resultIndex++] = (byte) result;
+            }
+            break;
+            case SPEC_UNSIGNED_BYTE: {
+              resultBuff[resultIndex++] = (byte) result;
+            }
+            break;
+            case SPEC_UNSIGNED_WORD: {
+              resultBuff[resultIndex++] = (byte) result;
+              resultBuff[resultIndex++] = (byte) (result >>> 8);
+            }
+            break;
+            default: {
+              throw new Error("Unexpected type [" + type + ']');
+            }
+          }
+        }
+      }
+      return Arrays.copyOf(resultBuff, resultIndex);
+    }
+    else {
+      return null;
+    }
   }
 
   public boolean hasIndex() {
@@ -117,7 +313,7 @@ public final class Z80Instruction {
     return this.length;
   }
 
-  int[] getInstructionCodes() {
+  public int[] getInstructionCodes() {
     return this.codes;
   }
 

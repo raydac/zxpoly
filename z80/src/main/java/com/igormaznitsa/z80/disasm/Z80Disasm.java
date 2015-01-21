@@ -16,6 +16,7 @@
  */
 package com.igormaznitsa.z80.disasm;
 
+import com.igormaznitsa.z80.Z80Instruction;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,46 +33,14 @@ public enum Z80Disasm {
   private static final Z80Instruction[] FDCB_PREFIXED;
 
   static {
-    final List<Z80Instruction> list = new ArrayList<>(1500);
-    final InputStream in = Z80Disasm.class.getClassLoader().getResourceAsStream("z80opcodes.lst");
-    BufferedReader reader = null;
-    try {
-      reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-      while (true) {
-        final String line = reader.readLine();
-        if (line == null) {
-          break;
-        }
-        final String trimmed = line.trim();
-        if (trimmed.isEmpty() || trimmed.startsWith("#")) {
-          continue;
-        }
-        list.add(new Z80Instruction(trimmed));
-      }
-      in.close();
-    }
-    catch (IOException ex) {
-      throw new Error("Can't load Z80 opcode list", ex);
-    }
-    finally {
-      try {
-        if (reader != null) {
-          reader.close();
-        }
-      }
-      catch (IOException ex) {
-        ex.printStackTrace();
-      }
-    }
+    final List<Z80Instruction> noPrefixed = new ArrayList<>();
+    final List<Z80Instruction> cbPrefixed = new ArrayList<>();
+    final List<Z80Instruction> ddPrefixed = new ArrayList<>();
+    final List<Z80Instruction> fdPrefixed = new ArrayList<>();
+    final List<Z80Instruction> ddcbPrefixed = new ArrayList<>();
+    final List<Z80Instruction> fdcbPrefixed = new ArrayList<>();
 
-    final List<Z80Instruction> noPrefixed = new ArrayList<Z80Instruction>();
-    final List<Z80Instruction> cbPrefixed = new ArrayList<Z80Instruction>();
-    final List<Z80Instruction> ddPrefixed = new ArrayList<Z80Instruction>();
-    final List<Z80Instruction> fdPrefixed = new ArrayList<Z80Instruction>();
-    final List<Z80Instruction> ddcbPrefixed = new ArrayList<Z80Instruction>();
-    final List<Z80Instruction> fdcbPrefixed = new ArrayList<Z80Instruction>();
-
-    for (final Z80Instruction i : list) {
+    for (final Z80Instruction i : Z80Instruction.getInstructions()) {
       final int[] codes = i.getInstructionCodes();
       switch (i.getLength()) {
         case 1:
@@ -132,7 +101,7 @@ public enum Z80Disasm {
   }
 
   public static List<Z80Instruction> decodeList(final byte[] array, final int offset, final int max) {
-    final List<Z80Instruction> result = new ArrayList<Z80Instruction>();
+    final List<Z80Instruction> result = new ArrayList<>();
 
     int off = offset;
 

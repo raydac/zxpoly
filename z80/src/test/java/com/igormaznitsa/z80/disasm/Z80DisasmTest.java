@@ -16,6 +16,7 @@
  */
 package com.igormaznitsa.z80.disasm;
 
+import com.igormaznitsa.z80.Z80Instruction;
 import java.util.List;
 import org.junit.Test;
 import static org.junit.Assert.*;

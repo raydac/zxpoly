@@ -14,12 +14,50 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.igormaznitsa.z80.disasm;
+package com.igormaznitsa.z80;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class Z80InstructionTest {
+  
+  @Test
+  public void testAsmMatches() {
+    for(final Z80Instruction i : Z80Instruction.getInstructions()){
+      final String template = i.toString();
+      assertTrue(template+" must match",i.matches(template));
+    }
+  }
+  
+  @Test
+  public void testCompile_LD_IY_d_n(){
+    final Z80Instruction ins = new Z80Instruction("FD36 d n   LD (IY+d),n");
+
+    final byte [] compiled = ins.compile("ld (iy+16),87", new Z80Instruction.ExpressionProcessor() {
+
+      @Override
+      public int evalExpression(final String expression) {
+        return Integer.parseInt(expression);
+      }
+    });
+    
+    assertArrayEquals(new byte[]{(byte)0xFD,(byte)0x36,(byte)0x10,87}, compiled);
+  }
+  
+  @Test
+  public void testCompile_CALL_nn(){
+    final Z80Instruction ins = new Z80Instruction("CD nn      CALL nn");
+
+    final byte [] compiled = ins.compile("call 16384", new Z80Instruction.ExpressionProcessor() {
+
+      @Override
+      public int evalExpression(final String expression) {
+        return Integer.parseInt(expression);
+      }
+    });
+    
+    assertArrayEquals(new byte[]{(byte)0xCD,(byte)0x00,(byte)0x40}, compiled);
+  }
   
   @Test
   public void testParse_LD_IY_d_n() {

@@ -2,7 +2,8 @@
 # The File contains definitions of Z80 commands for disassembling
 #
 
-# d - one byte signed offset
+# d - one byte signed offset, plus must be presented
+# e - one byte signed offset, plus can be omitted
 # n - unsigned byte
 # nn - unsigned 16 bit word (little endian)
 
