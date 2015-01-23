@@ -21,11 +21,14 @@ import com.igormaznitsa.jbbp.io.*;
 import com.igormaznitsa.jbbp.mapper.Bin;
 import com.igormaznitsa.jbbp.model.JBBPFieldArrayStruct;
 import java.io.*;
-import java.util.Locale;
+import java.nio.charset.Charset;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.ListModel;
+import javax.swing.event.ListDataListener;
 
-public final class TapeFileReader {
+public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
 
   private static final Logger log = Logger.getLogger("TAP");
 
@@ -55,17 +58,22 @@ public final class TapeFileReader {
   }
 
   @Bin
-  private static final class TapBlock {
+  public static final class TapBlock {
 
+    private static final Charset USASCII = Charset.forName("US-ASCII"); 
+    
     @Bin
     byte flag;
     @Bin
     byte[] data;
     @Bin
     byte checksum;
+    
     transient TapBlock prev;
     transient TapBlock next;
-
+    transient int index;
+    transient String name;
+    
     public boolean isFirst() {
       return this.prev == null;
     }
@@ -78,6 +86,26 @@ public final class TapeFileReader {
       return (this.flag & 0xFF) < 0x80;
     }
 
+    public String getName(){
+      if (this.name==null){
+        if (isHeader()){
+          final String str = new String(this.data,1,10,USASCII);
+          final String type;
+          switch(this.data[0]){
+            case 0 : type = "BAS";break;
+            case 1 : type = "###";break;
+            case 2 : type = "TXT";break;
+            case 3 : type = "COD";break;
+            default : type = "???";break;
+          }
+          this.name = type+": "+str;
+        }else{
+          this.name = "===: ..........";
+        }
+      }
+      return this.name;
+    }
+    
     public TapBlock findFirst() {
       TapBlock result = this;
       while (!result.isFirst()) {
@@ -85,19 +113,14 @@ public final class TapeFileReader {
       }
       return result;
     }
-
-    private void generateImpulses(final OutputStream out, final int cyclesPerSample, final long cyclesOn, final long cyclesOff, final long repeat) throws IOException {
-      final long samplesOn = Math.round((double) cyclesOn / (double) cyclesPerSample);
-      final long samplesOff = Math.round((double) cyclesOff / (double) cyclesPerSample);
-
-      for (int i = 0; i < repeat; i++) {
-        for (int j = 0; j < samplesOn; j++) {
-          out.write(0xFF);
-        }
-        for (int j = 0; j < samplesOff; j++) {
-          out.write(0x00);
-        }
-      }
+    
+    public int getIndex(){
+      return this.index;
+    }
+    
+    @Override
+    public String toString(){
+      return getName()+" ("+this.data.length+" bytes)";
     }
   }
 
@@ -109,8 +132,12 @@ public final class TapeFileReader {
   private int buffered;
   private int controlChecksum;
   private boolean inState;
+  private final String name;
 
-  public TapeFileReader(final InputStream tap) throws IOException {
+  private final List<TapBlock> tapBlockList = new ArrayList<>();
+  
+  public TapeFileReader(final String name, final InputStream tap) throws IOException {
+    this.name = name;
     final JBBPFieldArrayStruct parsed = TAP_FILE_PARSER.parse(tap).findFirstFieldForType(JBBPFieldArrayStruct.class);
     if (parsed.size() == 0) {
       this.current = null;
@@ -118,21 +145,38 @@ public final class TapeFileReader {
     }
     else {
       this.current = parsed.getElementAt(0).mapTo(TapBlock.class);
+      this.current.index = 0;
+      this.tapBlockList.add(current);
       this.current.prev = null;
       TapBlock item = this.current;
       for (int i = 1; i < parsed.size(); i++) {
         final TapBlock newitem = parsed.getElementAt(i).mapTo(TapBlock.class);
+        newitem.index = i;
         newitem.prev = item;
         item.next = newitem;
         item = newitem;
+        
+        this.tapBlockList.add(item);
       }
       item.next = null;
       log.info("Pointer to " + makeDescription(this.current));
     }
   }
 
-  public synchronized String getNameOfCurrentBlock() {
-    return null;
+  public String getName(){
+    return this.name;
+  }
+  
+  public TapBlock getCurrent(){
+    return this.current;
+  }
+  
+  public void setCurrent(int index){
+    this.rewindToStart();
+    while(index>0) {
+      this.rewindToNextBlock();
+      index--;
+    }
   }
 
   public synchronized boolean isPlaying() {
@@ -369,7 +413,7 @@ public final class TapeFileReader {
         break;
         case SYNC2: {
           if (this.counterMain < 0L) {
-            log.info("SYNC1");
+            log.info("SYNC2");
             this.counterEx = PULSELEN_SYNC2;
             this.inState = !inState;
             this.counterMain = 0L;
@@ -460,4 +504,23 @@ public final class TapeFileReader {
       }
     }
   }
+
+  @Override
+  public int getSize() {
+    return this.tapBlockList.size();
+  }
+
+  @Override
+  public TapBlock getElementAt(final int index) {
+    return this.tapBlockList.get(index);
+  }
+
+  @Override
+  public void addListDataListener(final ListDataListener l) {
+  }
+
+  @Override
+  public void removeListDataListener(ListDataListener l) {
+  }
+
 }

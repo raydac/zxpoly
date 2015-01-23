@@ -285,6 +285,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuFile.add(menuFileReset);
 
+    menuFileLoadSnapshot.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/snapshot.png"))); // NOI18N
     menuFileLoadSnapshot.setText("Load Snapshot");
     menuFileLoadSnapshot.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -293,6 +294,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuFile.add(menuFileLoadSnapshot);
 
+    menuFileLoadTap.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/cassette.png"))); // NOI18N
     menuFileLoadTap.setText("Load TAPE");
     menuFileLoadTap.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -301,6 +303,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuFile.add(menuFileLoadTap);
 
+    jMenu1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/disk.png"))); // NOI18N
     jMenu1.setText("Load Disk..");
 
     menuFileSelectDiskA.setText("Drive A");
@@ -351,6 +354,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
     menuTap.setText("Tape");
 
+    menuTapeRewindToStart.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_previous.png"))); // NOI18N
     menuTapeRewindToStart.setText("Rewind to start");
     menuTapeRewindToStart.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -359,6 +363,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuTap.add(menuTapeRewindToStart);
 
+    menuTapPrevBlock.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_backward.png"))); // NOI18N
     menuTapPrevBlock.setText("Prev block");
     menuTapPrevBlock.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -367,8 +372,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuTap.add(menuTapPrevBlock);
 
-    menuTapPlay.setSelected(true);
     menuTapPlay.setText("Play");
+    menuTapPlay.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_play.png"))); // NOI18N
+    menuTapPlay.setInheritsPopupMenu(true);
     menuTapPlay.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         menuTapPlayActionPerformed(evt);
@@ -376,6 +382,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuTap.add(menuTapPlay);
 
+    menuTapNextBlock.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_forward.png"))); // NOI18N
     menuTapNextBlock.setText("Next block");
     menuTapNextBlock.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -384,6 +391,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     });
     menuTap.add(menuTapNextBlock);
 
+    menuTapGotoBlock.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_pos.png"))); // NOI18N
     menuTapGotoBlock.setText("Go to block");
     menuTapGotoBlock.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -393,6 +401,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     menuTap.add(menuTapGotoBlock);
     menuTap.add(jSeparator2);
 
+    menuTapExportAs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png"))); // NOI18N
     menuTapExportAs.setText("Export as..");
 
     menuTapExportAsWav.setText("WAV file");
@@ -577,7 +586,17 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_jMenuItem4ActionPerformed
 
   private void menuTapGotoBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapGotoBlockActionPerformed
-
+    final TapeFileReader currentReader = this.keyboardAnddTapeModule.getTap();
+    if (currentReader!=null){
+      currentReader.stopPlay();
+      updateTapeMenu();
+      final SelectTapPosDialog dialog = new SelectTapPosDialog(this, currentReader);
+      dialog.setVisible(true);
+      final int selected = dialog.getSelectedIndex();
+      if (selected>=0){
+        currentReader.setCurrent(selected);
+      }
+    }
   }//GEN-LAST:event_menuTapGotoBlockActionPerformed
 
   private void menuFileLoadTapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadTapActionPerformed
@@ -587,10 +606,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
       InputStream in = null;
       try {
         in = new BufferedInputStream(new FileInputStream(tapFile));
-        final TapeFileReader tapfile = new TapeFileReader(in);
+        final TapeFileReader tapfile = new TapeFileReader(tapFile.getAbsolutePath(), in);
         this.keyboardAnddTapeModule.setTap(tapfile);
       }
       catch (Exception ex) {
+        ex.printStackTrace();
         log.log(Level.WARNING, "Can't read " + tapFile, ex);
         JOptionPane.showMessageDialog(this, "Can't load TAP file", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
       }

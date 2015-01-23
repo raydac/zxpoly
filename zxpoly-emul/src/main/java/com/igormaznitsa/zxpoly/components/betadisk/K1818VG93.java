@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 public final class K1818VG93 {
 
   private static final boolean TRACE = false;
+  private static final boolean TRACE_RW_RD_BYTES = false;
   
   private final long TIMEOUT = 3000L;
 
@@ -687,7 +688,7 @@ public final class K1818VG93 {
         }
         else {
           final int data = this.sector.readByte(this.counter++);
-          if (TRACE) {
+          if (TRACE && TRACE_RW_RD_BYTES) {
             logger.info("<RDSEC #" + Integer.toHexString(this.counter-1).toUpperCase(Locale.ENGLISH) + "=#" + Integer.toHexString(data).toUpperCase(Locale.ENGLISH));
           }
 
@@ -768,8 +769,8 @@ public final class K1818VG93 {
           }
         }
         else {
-          if (TRACE){
-            logger.info(">WRSEC #"+ Integer.toHexString(this.counter).toUpperCase(Locale.ENGLISH)+"=#"+this.registers[REG_DATA_WR]);
+          if (TRACE && TRACE_RW_RD_BYTES){
+            logger.info(">WRSEC #"+ Integer.toHexString(this.counter).toUpperCase(Locale.ENGLISH)+"=#"+Integer.toHexString(this.registers[REG_DATA_WR]&0xFF).toUpperCase(Locale.ENGLISH));
           }
           if (!this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
             onStatus(STAT_WRFAULT);
@@ -813,7 +814,7 @@ public final class K1818VG93 {
     }
     else {
       if (start) {
-        logger.warning("Reading whole track (fake implementration) [" + this.side + ':' + this.registers[REG_TRACK] + ']');
+        logger.warning("Reading track (fake implementration) [" + this.side + ':' + this.registers[REG_TRACK] + ']');
         this.counter = 0;
         this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
         this.extraCounter = 6250;
@@ -841,6 +842,10 @@ public final class K1818VG93 {
           }
           else {
             final int data = this.sector.readByte(this.counter++);
+            if (TRACE && TRACE_RW_RD_BYTES) {
+              logger.info("<RDTRACK #" + Integer.toHexString(this.counter-1).toUpperCase(Locale.ENGLISH) + "=#" + Integer.toHexString(data).toUpperCase(Locale.ENGLISH));
+            }
+
             this.extraCounter--;
             if (data < 0) {
               onStatus(STAT_TRK00_OR_LOST);
@@ -906,6 +911,9 @@ public final class K1818VG93 {
             }
           }
           else {
+            if (TRACE && TRACE_RW_RD_BYTES) {
+              logger.info(">WRTRACK #" + Integer.toHexString(this.counter).toUpperCase(Locale.ENGLISH) + "=#" + Integer.toHexString(this.registers[REG_DATA_WR]&0xFF).toUpperCase(Locale.ENGLISH));
+            }
             if (!this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
               onStatus(STAT_WRFAULT);
             }
