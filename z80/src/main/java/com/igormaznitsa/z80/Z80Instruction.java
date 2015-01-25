@@ -16,7 +16,6 @@
  */
 package com.igormaznitsa.z80;
 
-import com.igormaznitsa.z80.asm.Z80AsmCompileException;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -73,10 +72,11 @@ public final class Z80Instruction {
   public static final int SPEC_UNSIGNED_BYTE = 0x102;
   public static final int SPEC_UNSIGNED_WORD = 0x103;
 
-  private final Pattern asmPattern;
-  private final int[] asmGroupValues;
-  private final int[] codes;
-  private final String textRepresentation;
+  private final Pattern compilePattern;
+  private final int[] compileGroupTypes;
+  private final int[] instructionCodeTemplate;
+  private final String instructionTextTemplate;
+  private final String instructionTextPrefixInUpperCase;
 
   private final int length;
   private final int fixedPartLength;
@@ -94,8 +94,8 @@ public final class Z80Instruction {
     final String codePart = def.substring(0, 11).trim();
     final String asmPart = def.substring(11).trim();
 
-    this.codes = parseCode(codePart);
-    this.textRepresentation = checkAsmPart(asmPart);
+    this.instructionCodeTemplate = parseCode(codePart);
+    this.instructionTextTemplate = checkAsmPart(asmPart);
 
     int len = 0;
     int fixLength = 0;
@@ -106,7 +106,7 @@ public final class Z80Instruction {
     boolean hasByte = false;
     boolean hasWord = false;
 
-    for (final int c : this.codes) {
+    for (final int c : this.instructionCodeTemplate) {
       len++;
       switch (c) {
         case SPEC_INDEX:
@@ -146,8 +146,19 @@ public final class Z80Instruction {
     int asmGroupIndex = 0;
     final int[] asmGroups = new int[10];
 
-    final StringBuilder hexNum = new StringBuilder();
+    final StringBuilder workBuffer = new StringBuilder();
 
+    for(final char c : this.instructionTextTemplate.toCharArray()){
+      if (c==' '){
+        break;
+      }else{
+        workBuffer.append(c);
+      }
+    }
+    this.instructionTextPrefixInUpperCase = workBuffer.toString();
+    workBuffer.setLength(0);
+    
+    
     final String group = "(\\S.*)";
 
     builder.append('^');
@@ -186,11 +197,11 @@ public final class Z80Instruction {
         break;
         default: {
           if (hexNumCntr > 0) {
-            hexNum.append(c);
+            workBuffer.append(c);
             hexNumCntr--;
             if (hexNumCntr == 0) {
-              asmGroups[asmGroupIndex++] = Integer.parseInt(hexNum.toString(), 16);
-              hexNum.setLength(0);
+              asmGroups[asmGroupIndex++] = Integer.parseInt(workBuffer.toString(), 16);
+              workBuffer.setLength(0);
               builder.append(group);
             }
           }
@@ -207,21 +218,21 @@ public final class Z80Instruction {
     }
     builder.append('$');
 
-    this.asmPattern = Pattern.compile(builder.toString(), Pattern.CASE_INSENSITIVE);
-    this.asmGroupValues = Arrays.copyOf(asmGroups, asmGroupIndex);
+    this.compilePattern = Pattern.compile(builder.toString(), Pattern.CASE_INSENSITIVE);
+    this.compileGroupTypes = Arrays.copyOf(asmGroups, asmGroupIndex);
   }
 
   public boolean matches(final String asm) {
-    return this.asmPattern.matcher(asm.trim()).matches();
+    return this.compilePattern.matcher(asm.trim()).matches();
   }
 
   public byte[] compile(final String asm, final ExpressionProcessor expressionCalc) {
 
-    final Matcher m = this.asmPattern.matcher(asm.trim());
+    final Matcher m = this.compilePattern.matcher(asm.trim());
     if (m.find()) {
       // check constants
-      for (int i = 0; i < this.asmGroupValues.length; i++) {
-        final int value = this.asmGroupValues[i];
+      for (int i = 0; i < this.compileGroupTypes.length; i++) {
+        final int value = this.compileGroupTypes[i];
         if (value < SPEC_INDEX) {
           final int result = expressionCalc.evalExpression(m.group(i + 1));
           if (result != value) {
@@ -235,15 +246,15 @@ public final class Z80Instruction {
 
       int resultIndex = 0;
 
-      for (int i = 0; i < this.codes.length; i++) {
-        final int type = this.codes[i];
+      for (int i = 0; i < this.instructionCodeTemplate.length; i++) {
+        final int type = this.instructionCodeTemplate[i];
         if (type < SPEC_INDEX) {
           resultBuff[resultIndex++] = (byte) type;
         }
         else {
           int groupIndex = -1;
-          for (int j = 0; j < this.asmGroupValues.length; j++) {
-            if (this.asmGroupValues[j] == type) {
+          for (int j = 0; j < this.compileGroupTypes.length; j++) {
+            if (this.compileGroupTypes[j] == type) {
               groupIndex = j + 1;
               break;
             }
@@ -255,14 +266,14 @@ public final class Z80Instruction {
           switch (type) {
             case SPEC_INDEX: {
               if (result < -128 || result > 127) {
-                throw new Z80AsmCompileException("Wrong index value [" + result + ']');
+                throw new CompileInstructionException(this,"Wrong index value [" + result + ']');
               }
               resultBuff[resultIndex++] = (byte) result;
             }
             break;
             case SPEC_OFFSET: {
               if (result < -128 || result > 127) {
-                throw new Z80AsmCompileException("Wrong offset value [" + result + ']');
+                throw new CompileInstructionException(this,"Wrong offset value [" + result + ']');
               }
               resultBuff[resultIndex++] = (byte) result;
             }
@@ -314,15 +325,15 @@ public final class Z80Instruction {
   }
 
   public int[] getInstructionCodes() {
-    return this.codes;
+    return this.instructionCodeTemplate;
   }
 
   public boolean matches(final byte[] array, int offset) {
-    for (int i = 0; i < this.codes.length; i++) {
+    for (int i = 0; i < this.instructionCodeTemplate.length; i++) {
       if (offset >= array.length) {
         return false;
       }
-      switch (this.codes[i]) {
+      switch (this.instructionCodeTemplate[i]) {
         case SPEC_INDEX:
         case SPEC_OFFSET:
         case SPEC_UNSIGNED_BYTE:
@@ -335,7 +346,7 @@ public final class Z80Instruction {
           }
           break;
         default: {
-          if ((array[offset++] & 0xFF) != this.codes[i]) {
+          if ((array[offset++] & 0xFF) != this.instructionCodeTemplate[i]) {
             return false;
           }
         }
@@ -455,11 +466,11 @@ public final class Z80Instruction {
     String sbyte = null;
     String sword = null;
 
-    for (int i = 0; i < this.codes.length; i++) {
+    for (int i = 0; i < this.instructionCodeTemplate.length; i++) {
       if (offset >= array.length) {
         return null;
       }
-      switch (this.codes[i]) {
+      switch (this.instructionCodeTemplate[i]) {
         case SPEC_INDEX: {
           sindex = indexToHex(array[offset++]);
         }
@@ -480,7 +491,7 @@ public final class Z80Instruction {
         }
         break;
         default: {
-          if ((array[offset++] & 0xFF) != this.codes[i]) {
+          if ((array[offset++] & 0xFF) != this.instructionCodeTemplate[i]) {
             return null;
           }
         }
@@ -488,7 +499,7 @@ public final class Z80Instruction {
       }
     }
 
-    String result = this.textRepresentation;
+    String result = this.instructionTextTemplate;
     if (sindex != null) {
       result = result.replace("+d", sindex);
     }
@@ -507,7 +518,7 @@ public final class Z80Instruction {
 
   @Override
   public String toString() {
-    return this.textRepresentation;
+    return this.instructionTextTemplate;
   }
 
 }
