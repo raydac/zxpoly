@@ -474,6 +474,10 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   public void postStep(long spentMachineCyclesForStep) {
   }
 
+  public int getZoom(){
+    return this.zoom;
+  }
+  
   public int getScrYForZXScr(final int zxY) {
     final int height = getHeight();
     final int yoff = (height - this.size.height) / 2;

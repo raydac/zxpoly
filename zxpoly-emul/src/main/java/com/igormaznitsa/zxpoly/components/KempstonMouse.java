@@ -38,6 +38,9 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
 
   private final Robot robot;
 
+  private int pcMouseX;
+  private int pcMouseY;
+  
   public KempstonMouse(final Motherboard board) {
     try {
       this.robot = new Robot();
@@ -103,7 +106,28 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
   @Override
   public void mouseExited(final MouseEvent e) {
     if (this.videoController.isHoldMouse()) {
-      holdMouse(e);
+      int x = e.getX();
+      int y = e.getY();
+      
+      if (x<0){
+        this.pcMouseX += this.videoController.getWidth();
+        x = this.videoController.getWidth()+x;
+      }else if (x>=this.videoController.getWidth()){
+        this.pcMouseX -= this.videoController.getWidth();
+        x = x-this.videoController.getWidth();
+      }
+      
+      if (y<0){
+        this.pcMouseY += this.videoController.getHeight();
+        y = this.videoController.getHeight()+y;
+      }else if (y>=this.videoController.getHeight()){
+        this.pcMouseY += this.videoController.getHeight();
+        y = y-this.videoController.getHeight();
+      }
+      
+      final Point thepoint = new Point(x, y);
+      SwingUtilities.convertPointToScreen(thepoint, this.videoController);
+      this.robot.mouseMove(thepoint.x,thepoint.y);
     }
     else {
       this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
@@ -168,6 +192,8 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
     else {
       this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
       this.videoController.setHoldMouse(true);
+      this.pcMouseX = e.getX();
+      this.pcMouseY = e.getY();
     }
   }
 
@@ -179,8 +205,12 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
   @Override
   public void mouseMoved(final MouseEvent e) {
     if (this.videoController.isHoldMouse()) {
-      this.coordX.set((this.videoController.getZXScrX(e.getX()) & 0xFF));
-      this.coordY.set((0xFF - this.videoController.getZXScrY(e.getY())) & 0xFF);
+      final int dx = (e.getX() - this.pcMouseX) / this.videoController.getZoom();
+      final int dy = (e.getY() - this.pcMouseY) / this.videoController.getZoom();
+      this.coordX.set((this.coordX.get()+dx)&0xFF);
+      this.coordY.set((this.coordY.get()-dy) & 0xFF);
+      this.pcMouseX = e.getX();
+      this.pcMouseY = e.getY();
     }
     else {
       this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
@@ -189,26 +219,6 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
 
   @Override
   public void postStep(long spentMachineCyclesForStep) {
-  }
-
-  private void holdMouse(final MouseEvent e) {
-    Point p = e.getPoint();
-    if (!this.videoController.contains(e.getPoint())){
-      if (p.x<0) {
-        p.x += this.videoController.getWidth();
-      }else if (p.x>=this.videoController.getWidth()){
-        p.x -= this.videoController.getWidth();
-      }
-      if (p.y<0) {
-        p.y += this.videoController.getHeight();
-      }else if (p.y>=this.videoController.getHeight()){
-        p.y -= this.videoController.getHeight();
-      }
-    }
-
-    SwingUtilities.convertPointToScreen(p, this.videoController);
-
-    this.robot.mouseMove(p.x, p.y);
   }
   
   public void reset(){
