@@ -1,115 +1,115 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>com.igormaznitsa</groupId>
-    <artifactId>zxpoly</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.igormaznitsa</groupId>
+  <artifactId>zxpoly</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
 
-    <name>ZXPoly</name>
-    <description>An Emulator of the World's first ZX-Spectrum multi CPU platform providing back compatibility</description>
-    <url>http://zxpoly.googlecode.com/</url>
+  <name>ZXPoly</name>
+  <description>An Emulator of the World's first ZX-Spectrum multi CPU platform providing back compatibility</description>
+  <url>http://zxpoly.googlecode.com/</url>
 
-    <properties>
-      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <maven.compiler.source>1.7</maven.compiler.source>
-      <maven.compiler.target>1.7</maven.compiler.target>
-      <netbeans.hint.license>gpl30</netbeans.hint.license>
-    </properties>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
+    <netbeans.hint.license>gpl30</netbeans.hint.license>
+  </properties>
 
-    <issueManagement>
-      <system>code.google.com</system>
-      <url>https://code.google.com/p/zxpoly/issues/list</url>
-    </issueManagement>
+  <issueManagement>
+    <system>code.google.com</system>
+    <url>https://code.google.com/p/zxpoly/issues/list</url>
+  </issueManagement>
 
-    <inceptionYear>1994</inceptionYear>
+  <inceptionYear>1994</inceptionYear>
 
-    <developers>
-      <developer>
-        <id>raydac</id>
-        <name>Igor Maznitsa</name>
-        <email>rrg4400@gmail.com</email>
-        <url>http://www.igormaznitsa.com</url>
-        <timezone>+3</timezone>
-        <roles>
-          <role>architect</role>
-          <role>developer</role>
-        </roles>
-      </developer>
-    </developers>
+  <developers>
+    <developer>
+      <id>raydac</id>
+      <name>Igor Maznitsa</name>
+      <email>rrg4400@gmail.com</email>
+      <url>http://www.igormaznitsa.com</url>
+      <timezone>+3</timezone>
+      <roles>
+        <role>architect</role>
+        <role>developer</role>
+      </roles>
+    </developer>
+  </developers>
 
-    <prerequisites>
-      <maven>3.0</maven>
-    </prerequisites>
+  <prerequisites>
+    <maven>3.0</maven>
+  </prerequisites>
 
-    <scm>
-      <connection>https://code.google.com/p/zxpoly/hg/</connection>
-      <developerConnection>https://code.google.com/p/zxpoly/hg/</developerConnection>
-      <tag>HEAD</tag>
-      <url>https://code.google.com/p/zxpoly</url>
-    </scm>
+  <scm>
+    <connection>https://code.google.com/p/zxpoly/hg/</connection>
+    <developerConnection>https://code.google.com/p/zxpoly/hg/</developerConnection>
+    <tag>HEAD</tag>
+    <url>https://code.google.com/p/zxpoly</url>
+  </scm>
 
-    <organization>
-      <name>Raydac Research Group Ltd.</name>
-      <url>http://www.coldcore.ru</url>
-    </organization>
+  <organization>
+    <name>Raydac Research Group Ltd.</name>
+    <url>http://www.coldcore.ru</url>
+  </organization>
 
-    <licenses>
-      <license>
-        <name>GNU General Public License, Version 3</name>
-        <url>http://www.gnu.org/licenses/gpl-3.0-standalone.html</url>
-        <distribution>repo</distribution>
-      </license>
-    </licenses>
+  <licenses>
+    <license>
+      <name>GNU General Public License, Version 3</name>
+      <url>http://www.gnu.org/licenses/gpl-3.0-standalone.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
 
-    <modules>
-      <module>z80</module>
-      <module>zxpoly-sprite-corrector</module>
-      <module>zxpoly-emul</module>
-    </modules>
+  <modules>
+    <module>z80</module>
+    <module>zxpoly-sprite-corrector</module>
+    <module>zxpoly-emul</module>
+  </modules>
 
-    <dependencies>
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.11</version>
-        <scope>test</scope>
-      </dependency>
-    </dependencies>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
     
-    <build>
-      <plugins>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>animal-sniffer-maven-plugin</artifactId>
-          <version>1.13</version>
-          <configuration>
-            <signature>
-              <groupId>org.codehaus.mojo.signature</groupId>
-              <artifactId>java17</artifactId>
-              <version>1.0</version>
-            </signature>
-          </configuration>
-          <executions>
-            <execution>
-              <id>ensure-java-1.5-class-library</id>
-              <phase>test</phase>
-              <goals>
-                <goal>check</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.2</version>
-          <configuration>
-            <source>${maven.compiler.source}</source>
-            <target>${maven.compiler.target}</target>
-          </configuration>
-        </plugin>
-      </plugins>
-    </build>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>animal-sniffer-maven-plugin</artifactId>
+        <version>1.13</version>
+        <configuration>
+          <signature>
+            <groupId>org.codehaus.mojo.signature</groupId>
+            <artifactId>java17</artifactId>
+            <version>1.0</version>
+          </signature>
+        </configuration>
+        <executions>
+          <execution>
+            <id>ensure-java-1.5-class-library</id>
+            <phase>test</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.2</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>
