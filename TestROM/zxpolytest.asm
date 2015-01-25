@@ -1,7 +1,7 @@
 ; ZX-Poly TEST ROM
 ;
-; version: 1.00 (06 jan 2007)
-; author: Igor Maznitsa
+; version: 1.01 (06 jan 2007)
+; 2007 Copyright by Raydac Research Group Ltd.
 ;
 ; Can be compiled by ZASM  http://k1.spdns.de/Develop/Projects/zasm-4.0/Distributions/
 
