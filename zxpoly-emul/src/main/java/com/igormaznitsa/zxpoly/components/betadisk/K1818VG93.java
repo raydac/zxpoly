@@ -67,7 +67,8 @@ public final class K1818VG93 {
   private boolean mfmModulation;
 
   private long operationTimeOut;
-
+  private volatile long lastBusyOnTime;
+  
   private final AtomicReference<TRDOSDisk> trdosDisk = new AtomicReference<>();
 
   private final Logger logger;
@@ -113,6 +114,7 @@ public final class K1818VG93 {
   }
 
   private void onStatus(final int flags) {
+    if ((flags & STAT_BUSY)!=0) this.lastBusyOnTime = System.currentTimeMillis();
     registers[REG_STATUS] |= flags;
   }
 
@@ -933,6 +935,10 @@ public final class K1818VG93 {
         }
       }
     }
+  }
+
+  public boolean isMotorOn() {
+    return (System.currentTimeMillis() - this.lastBusyOnTime)<500L;
   }
 
 }

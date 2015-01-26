@@ -20,12 +20,16 @@ import com.igormaznitsa.jbbp.JBBPParser;
 import com.igormaznitsa.jbbp.io.*;
 import com.igormaznitsa.jbbp.mapper.Bin;
 import com.igormaznitsa.jbbp.model.JBBPFieldArrayStruct;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ListModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataListener;
 
 public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
@@ -44,6 +48,8 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
 
   private static final JBBPParser TAP_FILE_PARSER = JBBPParser.prepare("tapblocks [_]{ <ushort len; byte flag; byte [len-2] data; byte checksum;}");
 
+  private final List<ActionListener> listeners = new CopyOnWriteArrayList<ActionListener>();
+  
   private enum State {
 
     STOPPED,
@@ -89,7 +95,12 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
     public String getName(){
       if (this.name==null){
         if (isHeader()){
-          final String str = new String(this.data,1,10,USASCII);
+          final String name;
+          if (this.data.length<11){
+            name = "<NONSTANDARD HEADER LENGTH>";
+          }else{
+            name = new String(this.data,1,10,USASCII);
+          }
           final String type;
           switch(this.data[0]){
             case 0 : type = "BAS";break;
@@ -98,7 +109,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
             case 3 : type = "COD";break;
             default : type = "???";break;
           }
-          this.name = type+": "+str;
+          this.name = type+": "+name;
         }else{
           this.name = "===: ..........";
         }
@@ -124,14 +135,14 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
     }
   }
 
-  private TapBlock current;
-  private State state = State.STOPPED;
+  private volatile TapBlock current;
+  private volatile State state = State.STOPPED;
+  private volatile boolean signalInState;
   private long counterMain;
   private long counterEx;
   private int mask;
   private int buffered;
   private int controlChecksum;
-  private boolean inState;
   private final String name;
 
   private final List<TapBlock> tapBlockList = new ArrayList<>();
@@ -163,6 +174,31 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
     }
   }
 
+  public void addActionListener(final ActionListener l){
+    this.listeners.add(l);
+  }
+  
+  public void removeActionListener(final ActionListener l){
+    this.listeners.remove(l);
+  }
+  
+  public void fireAction(final int id, final String command){
+    final ActionEvent event = new ActionEvent(this, id, command);
+    final Runnable run = new Runnable() {
+     @Override
+      public void run() {
+        for (final ActionListener l : listeners) {
+          l.actionPerformed(event);
+        }
+      }
+    };
+    if (SwingUtilities.isEventDispatchThread()){
+      run.run();
+    }else{
+      SwingUtilities.invokeLater(run);
+    }
+  }
+  
   public String getName(){
     return this.name;
   }
@@ -187,19 +223,30 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
     if (this.state != State.STOPPED) {
       if (this.current == null) {
         this.state = State.STOPPED;
+        fireStop();
         return false;
       }
     }
     this.state = State.INBETWEEN;
     this.counterMain = -1L;
+    firePlay();
     return true;
   }
 
   public synchronized void stopPlay() {
     this.counterMain = -1L;
     this.state = State.STOPPED;
+    fireStop();
   }
 
+  private void fireStop(){
+    fireAction(0, "stop");
+  }
+  
+  private void firePlay(){
+    fireAction(1, "play");
+  }
+  
   public synchronized void rewindToStart() {
     stopPlay();
     if (this.current != null) {
@@ -210,8 +257,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
     }
   }
 
-  public synchronized boolean rewindToNextBlock() {
-    stopPlay();
+  private boolean toNextBlock(){
     if (this.current == null) {
       return false;
     }
@@ -225,6 +271,11 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
         return true;
       }
     }
+  }
+  
+  public synchronized boolean rewindToNextBlock() {
+    stopPlay();
+    return toNextBlock();
   }
 
   public synchronized boolean rewindToPrevBlock() {
@@ -245,7 +296,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
   }
 
   public synchronized boolean getSignal() {
-    return this.inState;
+    return this.signalInState;
   }
 
   public synchronized byte[] getAsWAV() throws IOException {
@@ -255,11 +306,11 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
     final ByteArrayOutputStream data = new ByteArrayOutputStream(1000000);
 
     rewindToStart();
-    this.inState = false;
+    this.signalInState = false;
     this.counterMain = -1L;
     this.state = State.INBETWEEN;
     while(this.state!=State.STOPPED){
-      data.write(this.inState ? 0xFF : 0x00);
+      data.write(this.signalInState ? 0xFF : 0x00);
       updateForSpentMachineCycles(CYCLESPERSAMPLE);
     }
 
@@ -326,7 +377,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
     this.mask = 0x80;
     this.buffered = data;
     this.counterEx = ((data & this.mask) == 0 ? PULSELEN_ZERO : PULSELEN_ONE);
-    this.inState = !this.inState;
+    this.signalInState = !this.signalInState;
   }
   
   private boolean processDataByte(final long machineCycles){
@@ -340,13 +391,13 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
           result = true;
         }else{
           this.counterEx = (this.buffered & this.mask) == 0 ? PULSELEN_ZERO : PULSELEN_ONE;
-          this.inState = !this.inState;
+          this.signalInState = !this.signalInState;
           counter = 0;
         }
       }else{
         this.counterEx = (this.buffered & this.mask) == 0 ? PULSELEN_ZERO : PULSELEN_ONE;
         counter = 0x8000000000000000L;
-        this.inState = !this.inState;
+        this.signalInState = !this.signalInState;
       }
     }
     this.counterEx |= counter;
@@ -361,7 +412,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
         case INBETWEEN: {
           if (counterMain < 0) {
             log.info("PAUSE");
-            this.inState = false;
+            this.signalInState = false;
             this.counterMain = PAUSE_BETWEEN;
           }
           else {
@@ -377,7 +428,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
           if (this.counterMain < 0L) {
             log.log(Level.INFO, "PILOT ("+(block.isHeader() ? "header" : "data")+')');
             this.counterMain = block.isHeader() ? IMPULSNUMBER_PILOT_HEADER : IMPULSNUMBER_PILOT_DATA;
-            this.inState = !this.inState;
+            this.signalInState = !this.signalInState;
             this.counterEx = PULSELEN_PILOT;
           }
           else {
@@ -388,7 +439,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
                 this.state = State.SYNC1;
                 this.counterMain = -1L;
               }else{
-                this.inState = !inState;
+                this.signalInState = !signalInState;
                 this.counterEx = PULSELEN_PILOT;
               }
             }
@@ -399,7 +450,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
           if (this.counterMain < 0L) {
             log.info("SYNC1");
             this.counterEx = PULSELEN_SYNC1;
-            this.inState = !inState;
+            this.signalInState = !signalInState;
             this.counterMain = 0L;
           }
           else {
@@ -415,7 +466,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
           if (this.counterMain < 0L) {
             log.info("SYNC2");
             this.counterEx = PULSELEN_SYNC2;
-            this.inState = !inState;
+            this.signalInState = !signalInState;
             this.counterMain = 0L;
           }
           else {
@@ -482,15 +533,15 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
           if (this.counterMain < 0L) {
             log.info("SYNC3");
             this.counterEx = PULSELEN_SYNC3;
-            this.inState = !inState;
+            this.signalInState = !signalInState;
             this.counterMain = 0L;
           }
           else {
             this.counterEx -= machineCycles;
             if (counterEx <= 0) {
               this.counterMain = -1L;
-              if (!this.rewindToNextBlock()) {
-                this.state = State.STOPPED;
+              if (!this.toNextBlock()) {
+                stopPlay();
               }
               else {
                 this.state = State.INBETWEEN;

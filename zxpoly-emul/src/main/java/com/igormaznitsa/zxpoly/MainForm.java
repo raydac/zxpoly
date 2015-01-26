@@ -21,7 +21,8 @@ import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
 import com.igormaznitsa.zxpoly.formats.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,8 +34,14 @@ import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
-public class MainForm extends javax.swing.JFrame implements Runnable {
+public class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
 
+  private static final Icon ICO_EMPTY_16x16 = new ImageIcon(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB));
+  private static final Icon ICO_MOUSE = new ImageIcon(Utils.loadIcon("mouse.png"));
+  private static final Icon ICO_DISK = new ImageIcon(Utils.loadIcon("disk.png"));
+  private static final Icon ICO_TAPE = new ImageIcon(Utils.loadIcon("cassette.png"));
+  private static final Icon ICO_TURBO = new ImageIcon(Utils.loadIcon("turbo.png"));
+  
   private static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
   private static final int HOW_MANY_INT_BETWEEN_SCREEN_REFRESH = 4;
 
@@ -43,7 +50,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   private File lastTapFolder;
   private File lastFloppyFolder;
   private File lastSnapshotFolder;
-  
+
   private static class TRDFileFilter extends FileFilter {
 
     @Override
@@ -104,7 +111,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   public static final Logger log = Logger.getLogger("UI");
 
   private final Motherboard board;
-  private final KeyboardKempstonAndTapeIn keyboardAnddTapeModule;
+  private final KeyboardKempstonAndTapeIn keyboardAndTapeModule;
   private final KempstonMouse kempstonMouse;
 
   private final ReentrantLock stepSemaphor = new ReentrantLock();
@@ -141,11 +148,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     this.board.reset();
 
     this.scrollPanel.getViewport().add(this.board.getVideoController());
-    this.keyboardAnddTapeModule = this.board.findIODevice(KeyboardKempstonAndTapeIn.class);
+    this.keyboardAndTapeModule = this.board.findIODevice(KeyboardKempstonAndTapeIn.class);
     this.kempstonMouse = this.board.findIODevice(KempstonMouse.class);
     
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    manager.addKeyEventDispatcher(new KeyboardDispatcher(this.keyboardAnddTapeModule));
+    manager.addKeyEventDispatcher(new KeyboardDispatcher(this.keyboardAndTapeModule));
     
     
     updateTapeMenu();
@@ -154,11 +161,13 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     daemon.setDaemon(true);
     daemon.start();
 
+    updateInfoPanel();
+    
     pack();
   }
 
   private void updateTapeMenu() {
-    final TapeFileReader reader = this.keyboardAnddTapeModule.getTap();
+    final TapeFileReader reader = this.keyboardAndTapeModule.getTap();
     if (reader == null) {
       this.menuTap.setEnabled(false);
       this.menuTapPlay.setSelected(false);
@@ -172,9 +181,13 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   @Override
   public void run() {
+    final int INT_TO_UPDATE_INFOPANEL = 10;
+    
     long nextSystemInt = System.currentTimeMillis() + TIMER_INT_DELAY_MILLISECONDS;
     int countdownToPaint = 0;
 
+    int countToUpdatePanel = INT_TO_UPDATE_INFOPANEL;
+    
     while (!Thread.currentThread().isInterrupted()) {
       final long currentMachineCycleCounter = this.board.getCPU0().getMachineCycles();
       long currentTime = System.currentTimeMillis();
@@ -188,6 +201,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
           nextSystemInt = currentTime + TIMER_INT_DELAY_MILLISECONDS;
           this.board.getCPU0().resetMCycleCounter();
           countdownToPaint--;
+          countToUpdatePanel--;
         }
         else {
           systemIntSignal = false;
@@ -200,6 +214,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
         if (countdownToPaint<=0) {
           countdownToPaint = HOW_MANY_INT_BETWEEN_SCREEN_REFRESH;
           updateScreen();
+        }
+        
+        if (countToUpdatePanel<=0){
+          countToUpdatePanel = INT_TO_UPDATE_INFOPANEL;
+          updateInfoPanel();
         }
       }
       finally {
@@ -230,9 +249,15 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   @SuppressWarnings("unchecked")
   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
+    java.awt.GridBagConstraints gridBagConstraints;
 
     scrollPanel = new javax.swing.JScrollPane();
     panelIndicators = new javax.swing.JPanel();
+    filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+    labelTurbo = new javax.swing.JLabel();
+    labelMouseUsage = new javax.swing.JLabel();
+    labelTapeUsage = new javax.swing.JLabel();
+    labelDiskUsage = new javax.swing.JLabel();
     menuBar = new javax.swing.JMenuBar();
     menuFile = new javax.swing.JMenu();
     menuFileReset = new javax.swing.JMenuItem();
@@ -271,7 +296,28 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     getContentPane().add(scrollPanel, java.awt.BorderLayout.CENTER);
 
     panelIndicators.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-    panelIndicators.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
+    panelIndicators.setLayout(new java.awt.GridBagLayout());
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.weightx = 1000.0;
+    panelIndicators.add(filler1, gridBagConstraints);
+
+    labelTurbo.setText(" ");
+    labelTurbo.setToolTipText("Shows turbo mode on");
+    panelIndicators.add(labelTurbo, new java.awt.GridBagConstraints());
+
+    labelMouseUsage.setText(" ");
+    labelMouseUsage.setToolTipText("Indicates kempston mouse activation, ESC - deactivate mouse");
+    panelIndicators.add(labelMouseUsage, new java.awt.GridBagConstraints());
+
+    labelTapeUsage.setText(" ");
+    labelTapeUsage.setToolTipText("Shows tape activity");
+    panelIndicators.add(labelTapeUsage, new java.awt.GridBagConstraints());
+
+    labelDiskUsage.setText(" ");
+    labelDiskUsage.setToolTipText("Shows disk activity");
+    panelIndicators.add(labelDiskUsage, new java.awt.GridBagConstraints());
+
     getContentPane().add(panelIndicators, java.awt.BorderLayout.SOUTH);
 
     menuFile.setText("File");
@@ -501,6 +547,36 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     }
   }
 
+  private void updateInfoPanel(){
+    final Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        final Icon turboico = turboMode ? ICO_TURBO : ICO_EMPTY_16x16;
+        if (labelTurbo.getIcon()!=turboico) labelTurbo.setIcon(turboico);
+        
+        final TapeFileReader reader = keyboardAndTapeModule.getTap();
+        final Icon tapico = reader != null && reader.isPlaying() ? ICO_TAPE : ICO_EMPTY_16x16;
+        if (labelTapeUsage.getIcon() != tapico) {
+          labelTapeUsage.setIcon(tapico);
+        }
+      
+        final Icon mouseIcon = board.getVideoController().isHoldMouse() ? ICO_MOUSE : ICO_EMPTY_16x16;
+        if (labelMouseUsage.getIcon()!=mouseIcon){
+          labelMouseUsage.setIcon(mouseIcon);
+        }
+        
+        final Icon diskIcon = board.getBetaDiskInterface().isActive() ? ICO_DISK : ICO_EMPTY_16x16;
+        if (labelDiskUsage.getIcon()!=diskIcon) labelDiskUsage.setIcon(diskIcon);
+      }
+    };
+    
+    if (SwingUtilities.isEventDispatchThread()){
+      runnable.run();
+    }else{
+      SwingUtilities.invokeLater(runnable);
+    }
+  }
+  
   private void menuFileSelectDiskAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskAActionPerformed
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_A);
   }//GEN-LAST:event_menuFileSelectDiskAActionPerformed
@@ -508,7 +584,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   private void formWindowLostFocus(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowLostFocus
     this.stepSemaphor.lock();
     try{
-    this.keyboardAnddTapeModule.reset();
+    this.keyboardAndTapeModule.reset();
     }finally{
       this.stepSemaphor.unlock();
     }
@@ -518,7 +594,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     this.stepSemaphor.lock();
     try{
     this.getInputContext().selectInputMethod(Locale.ENGLISH);
-    this.keyboardAnddTapeModule.reset();
+    this.keyboardAndTapeModule.reset();
     }finally{
       this.stepSemaphor.unlock();
     }
@@ -549,7 +625,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
       }
     }
     finally {
-      this.keyboardAnddTapeModule.reset();
+      this.keyboardAndTapeModule.reset();
       this.kempstonMouse.reset();
       stepSemaphor.unlock();
     }
@@ -586,7 +662,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_jMenuItem4ActionPerformed
 
   private void menuTapGotoBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapGotoBlockActionPerformed
-    final TapeFileReader currentReader = this.keyboardAnddTapeModule.getTap();
+    final TapeFileReader currentReader = this.keyboardAndTapeModule.getTap();
     if (currentReader!=null){
       currentReader.stopPlay();
       updateTapeMenu();
@@ -600,18 +676,23 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_menuTapGotoBlockActionPerformed
 
   private void menuFileLoadTapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadTapActionPerformed
-    final File tapFile = chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
-    if (tapFile != null) {
-      this.lastTapFolder = tapFile.getParentFile();
+    final File selectedTapFile = chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
+    if (selectedTapFile != null) {
+      this.lastTapFolder = selectedTapFile.getParentFile();
       InputStream in = null;
       try {
-        in = new BufferedInputStream(new FileInputStream(tapFile));
-        final TapeFileReader tapfile = new TapeFileReader(tapFile.getAbsolutePath(), in);
-        this.keyboardAnddTapeModule.setTap(tapfile);
+        in = new BufferedInputStream(new FileInputStream(selectedTapFile));
+        
+        if (this.keyboardAndTapeModule.getTap()!=null){
+          this.keyboardAndTapeModule.getTap().removeActionListener(this);
+        }
+        
+        final TapeFileReader tapfile = new TapeFileReader(selectedTapFile.getAbsolutePath(), in);
+        tapfile.addActionListener(this);
+        this.keyboardAndTapeModule.setTap(tapfile);
       }
       catch (Exception ex) {
-        ex.printStackTrace();
-        log.log(Level.WARNING, "Can't read " + tapFile, ex);
+        log.log(Level.SEVERE, "Can't read " + selectedTapFile, ex);
         JOptionPane.showMessageDialog(this, "Can't load TAP file", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
       }
       finally {
@@ -624,7 +705,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   private void menuTapExportAsWavActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapExportAsWavActionPerformed
     this.stepSemaphor.lock();
     try {
-      final byte[] wav = this.keyboardAnddTapeModule.getTap().getAsWAV();
+      final byte[] wav = this.keyboardAndTapeModule.getTap().getAsWAV();
       final File fileToSave = chooseFileForSave("Select WAV file", null, new WavFileFilter());
       if (fileToSave != null) {
         FileUtils.writeByteArrayToFile(fileToSave, wav);
@@ -643,16 +724,16 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
 
   private void menuTapPlayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapPlayActionPerformed
     if (this.menuTapPlay.isSelected()) {
-      this.keyboardAnddTapeModule.getTap().startPlay();
+      this.keyboardAndTapeModule.getTap().startPlay();
     }
     else {
-      this.keyboardAnddTapeModule.getTap().stopPlay();
+      this.keyboardAndTapeModule.getTap().stopPlay();
     }
     updateTapeMenu();
   }//GEN-LAST:event_menuTapPlayActionPerformed
 
   private void menuTapPrevBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapPrevBlockActionPerformed
-    final TapeFileReader tap = this.keyboardAnddTapeModule.getTap();
+    final TapeFileReader tap = this.keyboardAndTapeModule.getTap();
     if (tap != null) {
       tap.rewindToPrevBlock();
     }
@@ -660,7 +741,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_menuTapPrevBlockActionPerformed
 
   private void menuTapNextBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapNextBlockActionPerformed
-    final TapeFileReader tap = this.keyboardAnddTapeModule.getTap();
+    final TapeFileReader tap = this.keyboardAndTapeModule.getTap();
     if (tap != null) {
       tap.rewindToNextBlock();
     }
@@ -668,7 +749,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   }//GEN-LAST:event_menuTapNextBlockActionPerformed
 
   private void menuTapeRewindToStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapeRewindToStartActionPerformed
-    final TapeFileReader tap = this.keyboardAnddTapeModule.getTap();
+    final TapeFileReader tap = this.keyboardAndTapeModule.getTap();
     if (tap != null) {
       tap.rewindToStart();
     }
@@ -716,8 +797,15 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
     return result;
   }
 
+  @Override
+  public void actionPerformed(final ActionEvent e) {
+    if (e.getSource() instanceof TapeFileReader){
+      updateTapeMenu();
+    }
+  }
 
   // Variables declaration - do not modify//GEN-BEGIN:variables
+  private javax.swing.Box.Filler filler1;
   private javax.swing.JMenu jMenu1;
   private javax.swing.JMenuItem jMenuItem1;
   private javax.swing.JMenuItem jMenuItem2;
@@ -725,6 +813,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable {
   private javax.swing.JMenuItem jMenuItem4;
   private javax.swing.JPopupMenu.Separator jSeparator1;
   private javax.swing.JPopupMenu.Separator jSeparator2;
+  private javax.swing.JLabel labelDiskUsage;
+  private javax.swing.JLabel labelMouseUsage;
+  private javax.swing.JLabel labelTapeUsage;
+  private javax.swing.JLabel labelTurbo;
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuFile;
   private javax.swing.JMenuItem menuFileLoadSnapshot;

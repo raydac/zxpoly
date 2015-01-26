@@ -71,6 +71,11 @@ public class SelectTapPosDialog extends javax.swing.JDialog {
       public int getSize() { return strings.length; }
       public Object getElementAt(int i) { return strings[i]; }
     });
+    tapBlockList.addMouseListener(new java.awt.event.MouseAdapter() {
+      public void mouseClicked(java.awt.event.MouseEvent evt) {
+        tapBlockListMouseClicked(evt);
+      }
+    });
     jScrollPane1.setViewportView(tapBlockList);
 
     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -119,6 +124,16 @@ public class SelectTapPosDialog extends javax.swing.JDialog {
     this.selectedIndex = this.tapBlockList.getSelectedIndex();
     setVisible(false);
   }//GEN-LAST:event_buttonOkActionPerformed
+
+  private void tapBlockListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tapBlockListMouseClicked
+    if (evt.getClickCount()>1){
+      final int index = this.tapBlockList.locationToIndex(evt.getPoint());
+      if (index>=0){
+        this.tapBlockList.setSelectedIndex(index);
+        buttonOkActionPerformed(null);
+      }
+    }
+  }//GEN-LAST:event_tapBlockListMouseClicked
 
   
   // Variables declaration - do not modify//GEN-BEGIN:variables

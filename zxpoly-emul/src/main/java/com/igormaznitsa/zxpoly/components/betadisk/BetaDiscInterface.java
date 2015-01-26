@@ -112,6 +112,10 @@ public class BetaDiscInterface implements IODevice {
     tuneControllerToDisk();
   }
 
+  public boolean isActive(){
+    return this.vg93.isMotorOn();
+  }
+  
   @Override
   public Motherboard getMotherboard() {
     return this.board;
