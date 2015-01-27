@@ -315,7 +315,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
 
       final int address_h = address >>> 8;
 
-      if (address_h == 0x3D){
+      if (address_h == 0x3D && !activeRom128){
         // turn on the TR-DOS ROM Section
         this.trdosROM = true;
       }
