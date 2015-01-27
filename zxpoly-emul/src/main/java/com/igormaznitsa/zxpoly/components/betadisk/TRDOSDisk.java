@@ -28,8 +28,8 @@ public class TRDOSDisk {
     TRD
   }
 
-  private static final int SIDES = 2;
-  private static final int TRACKS_PER_SIDE = 80;
+  private static final int MAX_SIDES = 2;
+  private static final int MAX_TRACKS_PER_SIDE = 86;
   private static final int SECTORS_PER_TRACK = 16;
   private static final int SECTOR_SIZE = 256;
 
@@ -134,11 +134,11 @@ public class TRDOSDisk {
   private final Sector[] sectors;
 
   public TRDOSDisk() {
-    this(Source.TRD, new byte[SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
+    this(Source.TRD, new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
   }
 
   public TRDOSDisk(final Source src, final byte[] srcData, final boolean writeProtect) {
-    this.sectors = new Sector[SECTORS_PER_TRACK * TRACKS_PER_SIDE * SIDES];
+    this.sectors = new Sector[SECTORS_PER_TRACK * MAX_TRACKS_PER_SIDE * MAX_SIDES];
     final byte[] diskData;
 
     switch (src) {
@@ -146,7 +146,7 @@ public class TRDOSDisk {
         if (srcData.length < 10 || !JBBPUtils.arrayStartsWith(srcData, "SINCLAIR".getBytes(Charset.forName("US-ASCII"))) || srcData.length < (9 + (0x100 + 14) * (srcData[8] & 0xFF))) {
           throw new RuntimeException("Not SCL file");
         }
-        diskData = new byte[SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE];
+        diskData = new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE];
         int size = 0;
         final int items = srcData[8] & 0xFF;
         for (int i = 0; i < items; i++) {
@@ -192,7 +192,7 @@ public class TRDOSDisk {
           diskData[track00Pointer++] = 0x10; // disk type
           diskData[track00Pointer++] = (byte) items; // number of files
 
-          final int freeSectors = (SIDES*TRACKS_PER_SIDE*SECTORS_PER_TRACK-SECTORS_PER_TRACK) - processedSectors;
+          final int freeSectors = (MAX_SIDES*MAX_TRACKS_PER_SIDE*SECTORS_PER_TRACK-SECTORS_PER_TRACK) - processedSectors;
           diskData[track00Pointer++] = (byte) (freeSectors & 0xFF); // number of free sectors
           diskData[track00Pointer++] = (byte) (freeSectors >> 8);
 
@@ -222,7 +222,7 @@ public class TRDOSDisk {
       }
       break;
       case TRD: {
-        diskData = srcData.length >= (SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE) ? srcData : Arrays.copyOf(srcData, SIDES * TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
+        diskData = srcData.length >= (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE) ? srcData : Arrays.copyOf(srcData, MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
       }
       break;
       default:
@@ -314,7 +314,7 @@ public class TRDOSDisk {
   }
 
   public int getSides() {
-    return SIDES;
+    return MAX_SIDES;
   }
 
   public int read(final int address) {

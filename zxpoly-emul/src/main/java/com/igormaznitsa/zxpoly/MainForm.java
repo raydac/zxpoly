@@ -418,6 +418,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     });
     menuTap.add(menuTapPrevBlock);
 
+    menuTapPlay.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, 0));
     menuTapPlay.setText("Play");
     menuTapPlay.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_play.png"))); // NOI18N
     menuTapPlay.setInheritsPopupMenu(true);

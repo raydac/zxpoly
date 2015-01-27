@@ -31,6 +31,8 @@ public class BetaDiscInterface implements IODevice {
   
   private static final Logger log = Logger.getLogger("BD");
 
+  private long mcycleCounter = 0L;
+  
   private final Motherboard board;
   private final K1818VG93 vg93;
   private int ffPort;
@@ -48,7 +50,8 @@ public class BetaDiscInterface implements IODevice {
   }
 
   private void tuneControllerToDisk(){
-    this.vg93.setDisk(this.diskDrives.get(this.ffPort & 0x3));
+    final int driveIndex = this.ffPort & 0x3;
+    this.vg93.activateDisk(driveIndex, this.diskDrives.get(driveIndex));
   }
   
   @Override
@@ -124,11 +127,12 @@ public class BetaDiscInterface implements IODevice {
   @Override
   public void preStep(final boolean signalReset, final boolean signalInt) {
     if (signalReset) {
+      this.mcycleCounter = 0L;
       this.vg93.reset();
     }
 
     if ((this.ffPort & 0b00001000)!=0){
-      this.vg93.step();
+      this.vg93.step(this.mcycleCounter);
     }
   }
 
@@ -138,7 +142,8 @@ public class BetaDiscInterface implements IODevice {
   }
   
   @Override
-  public void postStep(long spentMachineCyclesForStep) {
+  public void postStep(final long spentMachineCyclesForStep) {
+    this.mcycleCounter = Math.abs(this.mcycleCounter+spentMachineCyclesForStep);
   }
 
 }

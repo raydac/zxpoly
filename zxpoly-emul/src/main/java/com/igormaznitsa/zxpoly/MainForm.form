@@ -128,6 +128,9 @@
             </MenuItem>
             <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuTapPlay">
               <Properties>
+                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
+                  <KeyStroke key="F4"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Play"/>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/com/igormaznitsa/zxpoly/icons/tape_play.png"/>
