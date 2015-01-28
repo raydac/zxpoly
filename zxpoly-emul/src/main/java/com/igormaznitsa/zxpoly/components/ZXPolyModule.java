@@ -42,7 +42,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
 
   private final int[] zxPolyRegsWritten = new int[4];
 
-  private int port7FFD;
+  private volatile int port7FFD;
   private int lastM1Address;
 
   private boolean activeRegisterReading;

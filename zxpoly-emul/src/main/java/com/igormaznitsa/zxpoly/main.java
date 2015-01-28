@@ -36,7 +36,8 @@ public class main {
       public void run() {
         final MainForm form;
         try {
-          form = new MainForm("zx128dos.rom");
+          form = new MainForm("unr.rom");
+//          form = new MainForm("zx128dos.rom");
 //          form = new MainForm("opense.rom");
 //          form = new MainForm("test128k.rom");
 //          form = new MainForm("zxpolytest.rom");

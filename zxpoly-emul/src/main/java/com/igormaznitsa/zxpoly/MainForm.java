@@ -22,7 +22,6 @@ import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
 import com.igormaznitsa.zxpoly.formats.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,11 +35,12 @@ import org.apache.commons.io.IOUtils;
 
 public class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
 
-  private static final Icon ICO_EMPTY_16x16 = new ImageIcon(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB));
+  private static final Icon ICO_EMPTY_16x16 = new ImageIcon(Utils.loadIcon("empty.png"));
   private static final Icon ICO_MOUSE = new ImageIcon(Utils.loadIcon("mouse.png"));
   private static final Icon ICO_DISK = new ImageIcon(Utils.loadIcon("disk.png"));
   private static final Icon ICO_TAPE = new ImageIcon(Utils.loadIcon("cassette.png"));
   private static final Icon ICO_TURBO = new ImageIcon(Utils.loadIcon("turbo.png"));
+  private static final Icon ICO_ZX128 = new ImageIcon(Utils.loadIcon("zx128.png"));
   
   private static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
   private static final int HOW_MANY_INT_BETWEEN_SCREEN_REFRESH = 4;
@@ -50,6 +50,38 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private File lastTapFolder;
   private File lastFloppyFolder;
   private File lastSnapshotFolder;
+
+  private final Runnable infobarUpdater = new Runnable() {
+    @Override
+    public void run() {
+      final Icon turboico = turboMode ? ICO_TURBO : ICO_EMPTY_16x16;
+      if (labelTurbo.getIcon() != turboico) {
+        labelTurbo.setIcon(turboico);
+      }
+
+      final TapeFileReader reader = keyboardAndTapeModule.getTap();
+      final Icon tapico = reader != null && reader.isPlaying() ? ICO_TAPE : ICO_EMPTY_16x16;
+      if (labelTapeUsage.getIcon() != tapico) {
+        labelTapeUsage.setIcon(tapico);
+      }
+
+      final Icon mouseIcon = board.getVideoController().isHoldMouse() ? ICO_MOUSE : ICO_EMPTY_16x16;
+      if (labelMouseUsage.getIcon() != mouseIcon) {
+        labelMouseUsage.setIcon(mouseIcon);
+      }
+
+      final Icon diskIcon = board.getBetaDiskInterface().isActive() ? ICO_DISK : ICO_EMPTY_16x16;
+      if (labelDiskUsage.getIcon() != diskIcon) {
+        labelDiskUsage.setIcon(diskIcon);
+      }
+
+      final Icon zx128Icon = board.isZXPolyMode()? ICO_EMPTY_16x16 : ICO_ZX128;
+      if (labelZX128.getIcon() != zx128Icon) {
+        labelZX128.setIcon(zx128Icon);
+      }
+
+    }
+  };
 
   private static class TRDFileFilter extends FileFilter {
 
@@ -209,8 +241,6 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
 
         this.board.step(systemIntSignal, this.turboMode ? true : systemIntSignal || currentMachineCycleCounter <= VideoController.CYCLES_BETWEEN_INT);
 
-        currentTime = System.currentTimeMillis();
-
         if (countdownToPaint<=0) {
           countdownToPaint = HOW_MANY_INT_BETWEEN_SCREEN_REFRESH;
           updateScreen();
@@ -256,6 +286,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
     labelTurbo = new javax.swing.JLabel();
     labelMouseUsage = new javax.swing.JLabel();
+    labelZX128 = new javax.swing.JLabel();
     labelTapeUsage = new javax.swing.JLabel();
     labelDiskUsage = new javax.swing.JLabel();
     menuBar = new javax.swing.JMenuBar();
@@ -309,6 +340,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     labelMouseUsage.setText(" ");
     labelMouseUsage.setToolTipText("Indicates kempston mouse activation, ESC - deactivate mouse");
     panelIndicators.add(labelMouseUsage, new java.awt.GridBagConstraints());
+
+    labelZX128.setText(" ");
+    labelZX128.setToolTipText("Shows that active ZX128 emulation mode");
+    panelIndicators.add(labelZX128, new java.awt.GridBagConstraints());
 
     labelTapeUsage.setText(" ");
     labelTapeUsage.setToolTipText("Shows tape activity");
@@ -549,32 +584,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   }
 
   private void updateInfoPanel(){
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        final Icon turboico = turboMode ? ICO_TURBO : ICO_EMPTY_16x16;
-        if (labelTurbo.getIcon()!=turboico) labelTurbo.setIcon(turboico);
-        
-        final TapeFileReader reader = keyboardAndTapeModule.getTap();
-        final Icon tapico = reader != null && reader.isPlaying() ? ICO_TAPE : ICO_EMPTY_16x16;
-        if (labelTapeUsage.getIcon() != tapico) {
-          labelTapeUsage.setIcon(tapico);
-        }
-      
-        final Icon mouseIcon = board.getVideoController().isHoldMouse() ? ICO_MOUSE : ICO_EMPTY_16x16;
-        if (labelMouseUsage.getIcon()!=mouseIcon){
-          labelMouseUsage.setIcon(mouseIcon);
-        }
-        
-        final Icon diskIcon = board.getBetaDiskInterface().isActive() ? ICO_DISK : ICO_EMPTY_16x16;
-        if (labelDiskUsage.getIcon()!=diskIcon) labelDiskUsage.setIcon(diskIcon);
-      }
-    };
-    
     if (SwingUtilities.isEventDispatchThread()){
-      runnable.run();
+      infobarUpdater.run();
     }else{
-      SwingUtilities.invokeLater(runnable);
+      SwingUtilities.invokeLater(infobarUpdater);
     }
   }
   
@@ -818,6 +831,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private javax.swing.JLabel labelMouseUsage;
   private javax.swing.JLabel labelTapeUsage;
   private javax.swing.JLabel labelTurbo;
+  private javax.swing.JLabel labelZX128;
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuFile;
   private javax.swing.JMenuItem menuFileLoadSnapshot;
