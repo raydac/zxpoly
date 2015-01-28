@@ -3217,6 +3217,29 @@ public class Z80Test extends AbstractZ80Test {
   }
 
   @Test
+  public void testCommand_BIT_7_regIX() {
+    for (int i=0;i<0xFF;i++){
+      final Z80State state = new Z80State();
+      state.IX = 0x1010;
+      this.memory[0x1011] = (byte)i;
+      
+      final int origf = i ^ 0xFF;
+      state.F = origf;
+
+      final Z80 cpu = executeCommand(state, 0xDD, 0xCB, 0x01, 0x7E);
+
+      assertEquals(0x1010, cpu.getRegister(Z80.REG_IX));
+      assertMemory(0x1011, i);
+      
+      final int flag = (origf & Z80.FLAG_C) | ((i & 0x80)==0 ? (Z80.FLAG_PV | Z80.FLAG_Z) : 0) | (i & Z80.FLAG_S) | (i & (Z80.FLAG_X | Z80.FLAG_Y)) | Z80.FLAG_H;
+      
+      assertEquals("Value "+i,flag, cpu.getRegister(Z80.REG_F));
+    
+      assertTacts(cpu, 20);
+    }
+  }
+
+  @Test
   public void testCommand_BIT_2_mHL() {
     final Z80State state = new Z80State();
     state.H = 0x50;
@@ -5620,7 +5643,7 @@ public class Z80Test extends AbstractZ80Test {
     cpu.setRegister(Z80.REG_I, 0x10);
 
     final int INT = ~Z80.SIGNAL_IN_nINT;
-    
+
     fillMemory(0x00, 0xFB); // EI at 0x00
     fillMemory(0x1008, 0xFF, 0x3F);//address for interruption at 0x1008
     fillMemory(0x3FFF, 0x00, 0x00, 0xED, 0x4D);//RETI at 0x3FFF
@@ -5707,20 +5730,20 @@ public class Z80Test extends AbstractZ80Test {
     cpu.doReset();
     cpu.setRegister(Z80.REG_SP, 0xFFFF);
     cpu.setIM(1);
-    
+
     cpu.setRegisterPair(Z80.REGPAIR_HL, 0x1234);
-    
+
     fillMemory(0x00, 0xE5, 0xFB, 0xC9); // PUSH HL, EI, RET
- 
+
     final int INT = ~Z80.SIGNAL_IN_nINT;
-    
+
     cpu.step(INT); // push
     assertFalse(cpu.isIFF1());
-    assertEquals(0x01,cpu.getPC());
+    assertEquals(0x01, cpu.getPC());
     assertEquals(0xFFFD, cpu.getSP());
 
     cpu.step(INT); // ei
-    assertEquals(0x02,cpu.getPC());
+    assertEquals(0x02, cpu.getPC());
     assertTrue(cpu.isIFF1());
     assertEquals(0xFFFD, cpu.getSP());
 

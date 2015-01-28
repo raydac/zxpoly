@@ -1476,7 +1476,7 @@ public final class Z80 {
     int f = (z & 0xffff) != 0 ? (z >> 8) & FLAG_SYX : FLAG_Z;
 
     f |= (c >>> 8) & FLAG_H;
-    f |= FTABLE_OVERFLOW[c >> 15];
+    f |= FTABLE_OVERFLOW[c >>> 15];
     f |= z >>> (16 - FLAG_C_SHIFT);
 
     this.regSet[REG_F] = (byte) f;
@@ -1969,10 +1969,10 @@ public final class Z80 {
   }
 
   private void doBIT(final int bit, final int reg) {
-    final int regvalue = readReg8(reg);
-    final int x = regvalue & (1 << bit);
+    final int val = readReg8(reg);
+    final int x = val & (1 << bit);
 
-    this.regSet[REG_F] = (byte) ((x != 0 ? 0 : (FLAG_Z | FLAG_PV)) | (x & FLAG_S) | (regvalue & FLAG_XY) | FLAG_H | (this.regSet[REG_F] & FLAG_C));
+    this.regSet[REG_F] = (byte) ((x == 0 ? (FLAG_Z | FLAG_PV) : 0) | (x & FLAG_S) | (val & FLAG_XY) | FLAG_H | (this.regSet[REG_F] & FLAG_C));
 
     if (reg == 6) {
       this.machineCycles++;
