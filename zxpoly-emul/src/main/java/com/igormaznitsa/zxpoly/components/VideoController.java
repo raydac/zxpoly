@@ -434,6 +434,19 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
+  public RenderedImage makeCopyOfCurrentPicture(){
+    this.lockBuffer();
+    try{
+      final BufferedImage result = new BufferedImage(this.buffer.getWidth(), this.buffer.getHeight(), BufferedImage.TYPE_INT_RGB);
+      final Graphics g = result.getGraphics();
+      g.drawImage(this.buffer, 0, 0, this);
+      g.dispose();
+      return result;
+    }finally{
+      this.unlockBuffer();
+    }
+  }
+  
   @Override
   public Motherboard getMotherboard() {
     return this.board;

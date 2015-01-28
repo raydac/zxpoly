@@ -22,12 +22,14 @@ import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
 import com.igormaznitsa.zxpoly.formats.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.RenderedImage;
 import java.io.*;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
@@ -50,6 +52,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private File lastTapFolder;
   private File lastFloppyFolder;
   private File lastSnapshotFolder;
+  private File lastScreenshotFolder;
 
   private final Runnable infobarUpdater = new Runnable() {
     @Override
@@ -93,6 +96,20 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     @Override
     public String getDescription() {
       return "TR-DOS image (*.trd)";
+    }
+
+  }
+
+  private static class PNGFileFilter extends FileFilter {
+
+    @Override
+    public boolean accept(File f) {
+      return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".png");
+    }
+
+    @Override
+    public String getDescription() {
+      return "PNG image (*.png)";
     }
 
   }
@@ -310,6 +327,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     jSeparator2 = new javax.swing.JPopupMenu.Separator();
     menuTapExportAs = new javax.swing.JMenu();
     menuTapExportAsWav = new javax.swing.JMenuItem();
+    menuService = new javax.swing.JMenu();
+    menuServiceSaveScreen = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
     menuOptionsShowIndicators = new javax.swing.JCheckBoxMenuItem();
     menuOptionsZX128Mode = new javax.swing.JCheckBoxMenuItem();
@@ -497,6 +516,19 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuTap.add(menuTapExportAs);
 
     menuBar.add(menuTap);
+
+    menuService.setText("Service");
+
+    menuServiceSaveScreen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F8, 0));
+    menuServiceSaveScreen.setText("Save screen");
+    menuServiceSaveScreen.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuServiceSaveScreenActionPerformed(evt);
+      }
+    });
+    menuService.add(menuServiceSaveScreen);
+
+    menuBar.add(menuService);
 
     menuOptions.setText("Options");
 
@@ -770,6 +802,28 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     updateTapeMenu();
   }//GEN-LAST:event_menuTapeRewindToStartActionPerformed
 
+  private void menuServiceSaveScreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuServiceSaveScreenActionPerformed
+    final RenderedImage img = this.board.getVideoController().makeCopyOfCurrentPicture();
+    final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    this.stepSemaphor.lock();
+    try {
+      ImageIO.write(img, "png", buffer);
+      final File thefile = chooseFileForSave("Save screenshot", lastScreenshotFolder, new PNGFileFilter());
+      if (thefile!=null){
+        this.lastScreenshotFolder = thefile.getParentFile();
+        FileUtils.writeByteArrayToFile(thefile, buffer.toByteArray());
+      }
+    }
+    catch (IOException ex) {
+      JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!","Error",JOptionPane.ERROR_MESSAGE);
+      log.log(Level.SEVERE, "Can't make screenshot", ex);
+    }finally{
+      this.keyboardAndTapeModule.reset();
+      this.stepSemaphor.unlock();
+    }
+    
+  }//GEN-LAST:event_menuServiceSaveScreenActionPerformed
+
   private File chooseFileForOpen(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     for (final FileFilter f : filter) {
@@ -842,6 +896,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private javax.swing.JCheckBoxMenuItem menuOptionsShowIndicators;
   private javax.swing.JCheckBoxMenuItem menuOptionsTurbo;
   private javax.swing.JCheckBoxMenuItem menuOptionsZX128Mode;
+  private javax.swing.JMenu menuService;
+  private javax.swing.JMenuItem menuServiceSaveScreen;
   private javax.swing.JMenu menuTap;
   private javax.swing.JMenu menuTapExportAs;
   private javax.swing.JMenuItem menuTapExportAsWav;
