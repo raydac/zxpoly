@@ -37,12 +37,16 @@ import org.apache.commons.io.IOUtils;
 
 public class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
 
-  private static final Icon ICO_EMPTY_16x16 = new ImageIcon(Utils.loadIcon("empty.png"));
   private static final Icon ICO_MOUSE = new ImageIcon(Utils.loadIcon("mouse.png"));
+  private static final Icon ICO_MOUSE_DIS =  UIManager.getLookAndFeel().getDisabledIcon(null, ICO_MOUSE);
   private static final Icon ICO_DISK = new ImageIcon(Utils.loadIcon("disk.png"));
+  private static final Icon ICO_DISK_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_DISK);
   private static final Icon ICO_TAPE = new ImageIcon(Utils.loadIcon("cassette.png"));
+  private static final Icon ICO_TAPE_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TAPE);
   private static final Icon ICO_TURBO = new ImageIcon(Utils.loadIcon("turbo.png"));
+  private static final Icon ICO_TURBO_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TURBO);
   private static final Icon ICO_ZX128 = new ImageIcon(Utils.loadIcon("zx128.png"));
+  private static final Icon ICO_ZX128_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_ZX128);
   
   private static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
   private static final int HOW_MANY_INT_BETWEEN_SCREEN_REFRESH = 4;
@@ -57,28 +61,28 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private final Runnable infobarUpdater = new Runnable() {
     @Override
     public void run() {
-      final Icon turboico = turboMode ? ICO_TURBO : ICO_EMPTY_16x16;
+      final Icon turboico = turboMode ? ICO_TURBO : ICO_TURBO_DIS;
       if (labelTurbo.getIcon() != turboico) {
         labelTurbo.setIcon(turboico);
       }
 
       final TapeFileReader reader = keyboardAndTapeModule.getTap();
-      final Icon tapico = reader != null && reader.isPlaying() ? ICO_TAPE : ICO_EMPTY_16x16;
+      final Icon tapico = reader != null && reader.isPlaying() ? ICO_TAPE : ICO_TAPE_DIS;
       if (labelTapeUsage.getIcon() != tapico) {
         labelTapeUsage.setIcon(tapico);
       }
 
-      final Icon mouseIcon = board.getVideoController().isHoldMouse() ? ICO_MOUSE : ICO_EMPTY_16x16;
+      final Icon mouseIcon = board.getVideoController().isHoldMouse() ? ICO_MOUSE : ICO_MOUSE_DIS;
       if (labelMouseUsage.getIcon() != mouseIcon) {
         labelMouseUsage.setIcon(mouseIcon);
       }
 
-      final Icon diskIcon = board.getBetaDiskInterface().isActive() ? ICO_DISK : ICO_EMPTY_16x16;
+      final Icon diskIcon = board.getBetaDiskInterface().isActive() ? ICO_DISK : ICO_DISK_DIS;
       if (labelDiskUsage.getIcon() != diskIcon) {
         labelDiskUsage.setIcon(diskIcon);
       }
 
-      final Icon zx128Icon = board.isZXPolyMode()? ICO_EMPTY_16x16 : ICO_ZX128;
+      final Icon zx128Icon = board.isZXPolyMode()? ICO_ZX128_DIS : ICO_ZX128;
       if (labelZX128.getIcon() != zx128Icon) {
         labelZX128.setIcon(zx128Icon);
       }
@@ -220,10 +224,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     if (reader == null) {
       this.menuTap.setEnabled(false);
       this.menuTapPlay.setSelected(false);
+      this.menuTapExportAs.setEnabled(false);
     }
     else {
       this.menuTap.setEnabled(true);
       this.menuTapPlay.setSelected(reader.isPlaying());
+      this.menuTapExportAs.setEnabled(true);
     }
 
   }
@@ -324,15 +330,16 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuTapPlay = new javax.swing.JCheckBoxMenuItem();
     menuTapNextBlock = new javax.swing.JMenuItem();
     menuTapGotoBlock = new javax.swing.JMenuItem();
-    jSeparator2 = new javax.swing.JPopupMenu.Separator();
-    menuTapExportAs = new javax.swing.JMenu();
-    menuTapExportAsWav = new javax.swing.JMenuItem();
     menuService = new javax.swing.JMenu();
     menuServiceSaveScreen = new javax.swing.JMenuItem();
+    menuTapExportAs = new javax.swing.JMenu();
+    menuTapExportAsWav = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
     menuOptionsShowIndicators = new javax.swing.JCheckBoxMenuItem();
     menuOptionsZX128Mode = new javax.swing.JCheckBoxMenuItem();
     menuOptionsTurbo = new javax.swing.JCheckBoxMenuItem();
+    menuHelp = new javax.swing.JMenu();
+    menuHelpAbout = new javax.swing.JMenuItem();
 
     setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
     addWindowFocusListener(new java.awt.event.WindowFocusListener() {
@@ -500,10 +507,23 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       }
     });
     menuTap.add(menuTapGotoBlock);
-    menuTap.add(jSeparator2);
+
+    menuBar.add(menuTap);
+
+    menuService.setText("Service");
+
+    menuServiceSaveScreen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F8, 0));
+    menuServiceSaveScreen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/photo.png"))); // NOI18N
+    menuServiceSaveScreen.setText("Make Screenshot");
+    menuServiceSaveScreen.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuServiceSaveScreenActionPerformed(evt);
+      }
+    });
+    menuService.add(menuServiceSaveScreen);
 
     menuTapExportAs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png"))); // NOI18N
-    menuTapExportAs.setText("Export as..");
+    menuTapExportAs.setText("Export TAPE as..");
 
     menuTapExportAsWav.setText("WAV file");
     menuTapExportAsWav.addActionListener(new java.awt.event.ActionListener() {
@@ -513,20 +533,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     });
     menuTapExportAs.add(menuTapExportAsWav);
 
-    menuTap.add(menuTapExportAs);
-
-    menuBar.add(menuTap);
-
-    menuService.setText("Service");
-
-    menuServiceSaveScreen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F8, 0));
-    menuServiceSaveScreen.setText("Save screen");
-    menuServiceSaveScreen.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuServiceSaveScreenActionPerformed(evt);
-      }
-    });
-    menuService.add(menuServiceSaveScreen);
+    menuService.add(menuTapExportAs);
 
     menuBar.add(menuService);
 
@@ -561,6 +568,13 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuOptions.add(menuOptionsTurbo);
 
     menuBar.add(menuOptions);
+
+    menuHelp.setText("Help");
+
+    menuHelpAbout.setText("About");
+    menuHelp.add(menuHelpAbout);
+
+    menuBar.add(menuHelp);
 
     setJMenuBar(menuBar);
 
@@ -880,7 +894,6 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private javax.swing.JMenuItem jMenuItem3;
   private javax.swing.JMenuItem jMenuItem4;
   private javax.swing.JPopupMenu.Separator jSeparator1;
-  private javax.swing.JPopupMenu.Separator jSeparator2;
   private javax.swing.JLabel labelDiskUsage;
   private javax.swing.JLabel labelMouseUsage;
   private javax.swing.JLabel labelTapeUsage;
@@ -892,6 +905,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private javax.swing.JMenuItem menuFileLoadTap;
   private javax.swing.JMenuItem menuFileReset;
   private javax.swing.JMenuItem menuFileSelectDiskA;
+  private javax.swing.JMenu menuHelp;
+  private javax.swing.JMenuItem menuHelpAbout;
   private javax.swing.JMenu menuOptions;
   private javax.swing.JCheckBoxMenuItem menuOptionsShowIndicators;
   private javax.swing.JCheckBoxMenuItem menuOptionsTurbo;
