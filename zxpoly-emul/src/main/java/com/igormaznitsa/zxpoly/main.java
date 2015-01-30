@@ -20,6 +20,9 @@ import java.util.logging.*;
 import javax.swing.SwingUtilities;
 
 public class main {
+  public static final String NAME = "ZX-Poly emulator";
+  public static final String VERSION = "v 2.0";
+  
   public static void main(final String ... args) {
     for(final Handler h : Logger.getLogger("").getHandlers()){
       h.setFormatter(new Formatter() {
@@ -36,7 +39,7 @@ public class main {
       public void run() {
         final MainForm form;
         try {
-          form = new MainForm("unr.rom");
+          form = new MainForm(NAME+' '+VERSION,"unr.rom");
 //          form = new MainForm("zx128dos.rom");
 //          form = new MainForm("opense.rom");
 //          form = new MainForm("test128k.rom");

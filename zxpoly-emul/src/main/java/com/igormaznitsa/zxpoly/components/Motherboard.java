@@ -420,4 +420,8 @@ public final class Motherboard implements ZXPoly {
     }
     return result;
   }
+  
+  public void resetInputDevices(){
+    this.keyboard.reset();
+  }
 }

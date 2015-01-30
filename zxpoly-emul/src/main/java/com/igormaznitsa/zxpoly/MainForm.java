@@ -197,8 +197,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     }
   }
 
-  public MainForm(final String romResource) throws IOException {
+  public MainForm(final String title,final String romResource) throws IOException {
     initComponents();
+    this.setTitle(title);
+    
     this.getInputContext().selectInputMethod(Locale.ENGLISH);
 
     setIconImage(Utils.loadIcon("appico.png"));
@@ -351,6 +353,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuTapNextBlock = new javax.swing.JMenuItem();
     menuTapGotoBlock = new javax.swing.JMenuItem();
     menuService = new javax.swing.JMenu();
+    menuResetKeyboard = new javax.swing.JMenuItem();
     menuServiceSaveScreen = new javax.swing.JMenuItem();
     menuTapExportAs = new javax.swing.JMenu();
     menuTapExportAsWav = new javax.swing.JMenuItem();
@@ -421,6 +424,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuFile.setText("File");
 
     menuFileReset.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F12, 0));
+    menuFileReset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset.png"))); // NOI18N
     menuFileReset.setText("Reset");
     menuFileReset.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -548,6 +552,15 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuBar.add(menuTap);
 
     menuService.setText("Service");
+
+    menuResetKeyboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset.png"))); // NOI18N
+    menuResetKeyboard.setText("Reset keyboard");
+    menuResetKeyboard.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuResetKeyboardActionPerformed(evt);
+      }
+    });
+    menuService.add(menuResetKeyboard);
 
     menuServiceSaveScreen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F8, 0));
     menuServiceSaveScreen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/photo.png"))); // NOI18N
@@ -881,6 +894,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     
   }//GEN-LAST:event_menuServiceSaveScreenActionPerformed
 
+  private void menuResetKeyboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuResetKeyboardActionPerformed
+    this.board.resetInputDevices();
+  }//GEN-LAST:event_menuResetKeyboardActionPerformed
+
   private File chooseFileForOpen(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     for (final FileFilter f : filter) {
@@ -954,6 +971,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private javax.swing.JCheckBoxMenuItem menuOptionsShowIndicators;
   private javax.swing.JCheckBoxMenuItem menuOptionsTurbo;
   private javax.swing.JCheckBoxMenuItem menuOptionsZX128Mode;
+  private javax.swing.JMenuItem menuResetKeyboard;
   private javax.swing.JMenu menuService;
   private javax.swing.JMenuItem menuServiceSaveScreen;
   private javax.swing.JMenu menuTap;
