@@ -55,6 +55,8 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   private boolean stopAddressWait;
   private int localResetCounter;
 
+  private long mcyclesOfActivityBetweenInt;
+  
   private boolean trdosROM;
 
   private static int calcRegAddress(final int moduleIndex, final int reg) {
@@ -168,6 +170,10 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     }
   }
 
+  public long getActiveMCyclesBetweeInt(){
+    return Math.max(0L,this.mcyclesOfActivityBetweenInt);
+  }
+  
   @Override
   public Motherboard getMotherboard() {
     return this.board;
@@ -187,10 +193,14 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     this.localInt = true;
   }
 
-  public boolean step(final boolean signalReset, final boolean commonInt) {
+  public boolean step(final boolean signalReset, final boolean commonInt, final boolean resetStatistic) {
     final boolean doInt;
     final boolean doNmi;
 
+    if(resetStatistic){
+      this.mcyclesOfActivityBetweenInt = 0L;
+    }
+    
     if (this.moduleIndex == 0) {
       doInt = commonInt || this.localInt;
     }
@@ -231,12 +241,19 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
 
     final int sigWait = this.waitSignal ? Z80.SIGNAL_IN_nWAIT : 0;
 
+    final long currentmcycles = this.cpu.getMachineCycles();
+    
     final int oldCpuState = this.cpu.getState();
     this.cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.intCounter > 0 ? Z80.SIGNAL_IN_nINT : 0) ^ sigWait ^ (this.nmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
     final int newCpuState = this.cpu.getState();
+    
+    final boolean isHaltDetected = (newCpuState & Z80.SIGNAL_OUT_nHALT) == 0 && (oldCpuState & Z80.SIGNAL_OUT_nHALT) != 0;
 
-    final boolean metHalt = (newCpuState & Z80.SIGNAL_OUT_nHALT) == 0 && (oldCpuState & Z80.SIGNAL_OUT_nHALT) != 0;
-    return metHalt;
+    final boolean cpuIsActive = (sigWait | sigReset) == 0 && !(isHaltDetected || doInt);
+    
+    this.mcyclesOfActivityBetweenInt +=  cpuIsActive ? Math.max(0L, this.cpu.getMachineCycles() - currentmcycles) : -15000L;
+    
+    return isHaltDetected;
   }
 
   public int readVideoMemory(final int videoOffset) {

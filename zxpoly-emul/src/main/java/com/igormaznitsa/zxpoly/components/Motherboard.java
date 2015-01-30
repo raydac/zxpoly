@@ -24,8 +24,9 @@ import java.util.logging.Logger;
 
 public final class Motherboard implements ZXPoly {
 
+  private static final int NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE = 4;
   public static final long CPU_FREQ = 3500000L;
-  
+
   private static final Logger LOG = Logger.getLogger("MB");
 
   private final ZXPolyModule[] modules;
@@ -48,6 +49,10 @@ public final class Motherboard implements ZXPoly {
 
   private volatile boolean modeZXPoly = true;
 
+  private int statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
+
+  private final float[] cpuLoad = new float[4];
+
   public Motherboard(final RomData rom) {
     if (rom == null) {
       throw new NullPointerException("ROM must not be null");
@@ -63,7 +68,7 @@ public final class Motherboard implements ZXPoly {
     this.betaDisk = new BetaDiscInterface(this);
 
     iodevices.add(this.betaDisk);
-    
+
     this.keyboard = new KeyboardKempstonAndTapeIn(this);
     iodevices.add(keyboard);
     this.video = new VideoController(this);
@@ -74,8 +79,6 @@ public final class Motherboard implements ZXPoly {
     // simulation of garbage in memory after power on
     final Random rnd = new Random();
     rnd.nextBytes(this.ram);
-    
-    
   }
 
   public void reset() {
@@ -103,6 +106,22 @@ public final class Motherboard implements ZXPoly {
       LOG.info("Rejected new value for #3D00 because it is locked");
       return false;
     }
+  }
+
+  public float getActivityCPU0() {
+    return this.cpuLoad[0];
+  }
+
+  public float getActivityCPU1() {
+    return this.cpuLoad[1];
+  }
+
+  public float getActivityCPU2() {
+    return this.cpuLoad[2];
+  }
+
+  public float getActivityCPU3() {
+    return this.cpuLoad[3];
   }
 
   public BetaDiscInterface getBetaDiskInterface() {
@@ -140,12 +159,29 @@ public final class Motherboard implements ZXPoly {
   public void step(final boolean signalInt, final boolean processStep) {
     this.localResetForAllModules = false;
 
+    final boolean resetStatisticsAtModules;
+
     if (signalInt) {
+      this.statisticCounter--;
+      if (this.statisticCounter <= 0) {
+        for (int i = 0; i < 4; i++) {
+          this.cpuLoad[i] = Math.min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweeInt()/NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (VideoController.CYCLES_BETWEEN_INT));
+        }
+        this.statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
+        resetStatisticsAtModules = true;
+      }
+      else {
+        resetStatisticsAtModules = false;
+      }
+
       this.intCounter++;
       if (this.intCounter >= 25) {
         this.intCounter = 0;
         this.videoFlashState = !this.videoFlashState;
       }
+    }
+    else {
+      resetStatisticsAtModules = false;
     }
 
     if (processStep) {
@@ -155,7 +191,7 @@ public final class Motherboard implements ZXPoly {
       if (this.resetCounter > 0) {
         this.resetCounter--;
         if (this.resetCounter == 0) {
-          this.set3D00(0,true);
+          this.set3D00(0, true);
         }
       }
 
@@ -164,7 +200,7 @@ public final class Motherboard implements ZXPoly {
       }
 
       final long initialMachineCycleCounter = this.modules[0].getCPU().getMachineCycles();
-      
+
       if (isZXPolyMode()) {
 
         // simpulation of possible racing
@@ -175,40 +211,40 @@ public final class Motherboard implements ZXPoly {
 
         switch ((int) System.nanoTime() & 0x3) {
           case 0: {
-            zx0halt = this.modules[0].step(signalReset, signalInt);
+            zx0halt = this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
             if (localResetForAllModules) {
               return;
             }
-            zx3halt = this.modules[3].step(signalReset, signalInt);
-            zx2halt = this.modules[2].step(signalReset, signalInt);
-            zx1halt = this.modules[1].step(signalReset, signalInt);
+            zx3halt = this.modules[3].step(signalReset, signalInt,resetStatisticsAtModules);
+            zx2halt = this.modules[2].step(signalReset, signalInt,resetStatisticsAtModules);
+            zx1halt = this.modules[1].step(signalReset, signalInt,resetStatisticsAtModules);
           }
           break;
           case 1: {
-            zx1halt = this.modules[1].step(signalReset, signalInt);
-            zx2halt = this.modules[2].step(signalReset, signalInt);
-            zx0halt = this.modules[0].step(signalReset, signalInt);
+            zx1halt = this.modules[1].step(signalReset, signalInt,resetStatisticsAtModules);
+            zx2halt = this.modules[2].step(signalReset, signalInt,resetStatisticsAtModules);
+            zx0halt = this.modules[0].step(signalReset, signalInt,resetStatisticsAtModules);
             if (localResetForAllModules) {
               return;
             }
-            zx3halt = this.modules[3].step(signalReset, signalInt);
+            zx3halt = this.modules[3].step(signalReset, signalInt,resetStatisticsAtModules);
           }
           break;
           case 2: {
-            zx3halt = this.modules[3].step(signalReset, signalInt);
-            zx0halt = this.modules[0].step(signalReset, signalInt);
+            zx3halt = this.modules[3].step(signalReset, signalInt,resetStatisticsAtModules);
+            zx0halt = this.modules[0].step(signalReset, signalInt,resetStatisticsAtModules);
             if (localResetForAllModules) {
               return;
             }
-            zx1halt = this.modules[1].step(signalReset, signalInt);
-            zx2halt = this.modules[2].step(signalReset, signalInt);
+            zx1halt = this.modules[1].step(signalReset, signalInt,resetStatisticsAtModules);
+            zx2halt = this.modules[2].step(signalReset, signalInt,resetStatisticsAtModules);
           }
           break;
           case 3: {
-            zx2halt = this.modules[2].step(signalReset, signalInt);
-            zx3halt = this.modules[3].step(signalReset, signalInt);
-            zx1halt = this.modules[1].step(signalReset, signalInt);
-            zx0halt = this.modules[0].step(signalReset, signalInt);
+            zx2halt = this.modules[2].step(signalReset, signalInt,resetStatisticsAtModules);
+            zx3halt = this.modules[3].step(signalReset, signalInt,resetStatisticsAtModules);
+            zx1halt = this.modules[1].step(signalReset, signalInt,resetStatisticsAtModules);
+            zx0halt = this.modules[0].step(signalReset, signalInt,resetStatisticsAtModules);
             if (localResetForAllModules) {
               return;
             }
@@ -236,11 +272,11 @@ public final class Motherboard implements ZXPoly {
       }
       else {
         // ZX 128 mode
-        this.modules[0].step(signalReset, signalInt);
+        this.modules[0].step(signalReset, signalInt,resetStatisticsAtModules);
       }
-    
+
       final long spentMachineCycles = this.modules[0].getCPU().getMachineCycles() - initialMachineCycleCounter;
-      
+
       for (final IODevice d : this.ioDevices) {
         d.postStep(spentMachineCycles);
       }
@@ -283,14 +319,14 @@ public final class Motherboard implements ZXPoly {
     }
   }
 
-  public void setZXPolyMode(final boolean flag){
-    if (this.modeZXPoly!= flag){
-      LOG.info("Changed motherboard mode to "+(flag ? "ZX-POLY" : "ZX128"));
+  public void setZXPolyMode(final boolean flag) {
+    if (this.modeZXPoly != flag) {
+      LOG.info("Changed motherboard mode to " + (flag ? "ZX-POLY" : "ZX128"));
       this.modeZXPoly = flag;
       this.reset();
     }
   }
-  
+
   public boolean isZXPolyMode() {
     return this.modeZXPoly;
   }
@@ -377,8 +413,8 @@ public final class Motherboard implements ZXPoly {
 
   public <T> T findIODevice(final Class<T> klazz) {
     T result = null;
-    for(final IODevice d : this.ioDevices){
-      if (klazz.isInstance(d)){
+    for (final IODevice d : this.ioDevices) {
+      if (klazz.isInstance(d)) {
         result = klazz.cast(d);
       }
     }

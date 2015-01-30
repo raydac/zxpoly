@@ -20,6 +20,7 @@ import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
 import com.igormaznitsa.zxpoly.formats.*;
+import com.igormaznitsa.zxpoly.ui.CPULoadIndicator;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.RenderedImage;
@@ -58,6 +59,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private File lastSnapshotFolder;
   private File lastScreenshotFolder;
 
+  private final CPULoadIndicator indicatorCPU0 = new CPULoadIndicator(48, 14, 4, "CPU0", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+  private final CPULoadIndicator indicatorCPU1 = new CPULoadIndicator(48, 14, 4, "CPU1", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+  private final CPULoadIndicator indicatorCPU2 = new CPULoadIndicator(48, 14, 4, "CPU2", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+  private final CPULoadIndicator indicatorCPU3 = new CPULoadIndicator(48, 14, 4, "CPU3", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+  
   private final Runnable infobarUpdater = new Runnable() {
     @Override
     public void run() {
@@ -87,6 +93,13 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
         labelZX128.setIcon(zx128Icon);
       }
 
+      if (panelIndicators.isVisible()){
+        indicatorCPU0.updateForState(board.getActivityCPU0());
+        indicatorCPU1.updateForState(board.getActivityCPU1());
+        indicatorCPU2.updateForState(board.getActivityCPU2());
+        indicatorCPU3.updateForState(board.getActivityCPU3());
+      }
+      
     }
   };
 
@@ -207,7 +220,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     manager.addKeyEventDispatcher(new KeyboardDispatcher(this.keyboardAndTapeModule));
     
-    
+    final GridBagConstraints cpuIndicatorConstraint = new GridBagConstraints();
+    cpuIndicatorConstraint.ipadx = 5;
+
+    this.panelIndicators.add(this.indicatorCPU0, cpuIndicatorConstraint, 0);
+    this.panelIndicators.add(this.indicatorCPU1, cpuIndicatorConstraint, 1);
+    this.panelIndicators.add(this.indicatorCPU2, cpuIndicatorConstraint, 2);
+    this.panelIndicators.add(this.indicatorCPU3, cpuIndicatorConstraint, 3);
+
     updateTapeMenu();
 
     final Thread daemon = new Thread(this, "ZXPolyThread");
@@ -355,29 +375,46 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     panelIndicators.setBorder(javax.swing.BorderFactory.createEtchedBorder());
     panelIndicators.setLayout(new java.awt.GridBagLayout());
     gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 4;
+    gridBagConstraints.gridy = 0;
     gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
     gridBagConstraints.weightx = 1000.0;
     panelIndicators.add(filler1, gridBagConstraints);
 
     labelTurbo.setText(" ");
     labelTurbo.setToolTipText("Shows turbo mode on");
-    panelIndicators.add(labelTurbo, new java.awt.GridBagConstraints());
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 5;
+    gridBagConstraints.gridy = 0;
+    panelIndicators.add(labelTurbo, gridBagConstraints);
 
     labelMouseUsage.setText(" ");
     labelMouseUsage.setToolTipText("Indicates kempston mouse activation, ESC - deactivate mouse");
-    panelIndicators.add(labelMouseUsage, new java.awt.GridBagConstraints());
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 6;
+    gridBagConstraints.gridy = 0;
+    panelIndicators.add(labelMouseUsage, gridBagConstraints);
 
     labelZX128.setText(" ");
     labelZX128.setToolTipText("Shows that active ZX128 emulation mode");
-    panelIndicators.add(labelZX128, new java.awt.GridBagConstraints());
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 7;
+    gridBagConstraints.gridy = 0;
+    panelIndicators.add(labelZX128, gridBagConstraints);
 
     labelTapeUsage.setText(" ");
     labelTapeUsage.setToolTipText("Shows tape activity");
-    panelIndicators.add(labelTapeUsage, new java.awt.GridBagConstraints());
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 8;
+    gridBagConstraints.gridy = 0;
+    panelIndicators.add(labelTapeUsage, gridBagConstraints);
 
     labelDiskUsage.setText(" ");
     labelDiskUsage.setToolTipText("Shows disk activity");
-    panelIndicators.add(labelDiskUsage, new java.awt.GridBagConstraints());
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 9;
+    gridBagConstraints.gridy = 0;
+    panelIndicators.add(labelDiskUsage, gridBagConstraints);
 
     getContentPane().add(panelIndicators, java.awt.BorderLayout.SOUTH);
 
@@ -550,6 +587,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
 
     menuOptionsZX128Mode.setSelected(true);
     menuOptionsZX128Mode.setText("ZX 128 Mode");
+    menuOptionsZX128Mode.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/zx128.png"))); // NOI18N
     menuOptionsZX128Mode.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         menuOptionsZX128ModeActionPerformed(evt);
@@ -560,6 +598,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuOptionsTurbo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F3, 0));
     menuOptionsTurbo.setSelected(true);
     menuOptionsTurbo.setText("Turbo");
+    menuOptionsTurbo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/turbo.png"))); // NOI18N
     menuOptionsTurbo.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         menuOptionsTurboActionPerformed(evt);
@@ -586,6 +625,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   }//GEN-LAST:event_menuFileResetActionPerformed
 
   private void menuOptionsShowIndicatorsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsShowIndicatorsActionPerformed
+    this.indicatorCPU0.clear();
+    this.indicatorCPU1.clear();
+    this.indicatorCPU2.clear();
+    this.indicatorCPU3.clear();
     this.panelIndicators.setVisible(this.menuOptionsShowIndicators.isSelected());
   }//GEN-LAST:event_menuOptionsShowIndicatorsActionPerformed
 
