@@ -1,0 +1,3 @@
+#!/bin/bash
+echo ZASM from http://k1.spdns.de/Develop/Projects/zasm-4.0/Distributions/
+zasm zxpolytest.asm

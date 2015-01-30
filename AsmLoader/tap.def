@@ -1,0 +1,39 @@
+; definitions to work with tape loading
+
+TAPHDRADDR: .block 20
+
+	.macro TAP_LOAD name, addr ; load named binary block into memory
+
+	; load header
+
+loadhdr$:
+
+	ld ix, TAPHDRADDR
+	ld de, 17
+	xor a
+	scf
+	call 1366
+	jr nc,end$
+
+	; check header
+	ld b,10
+	ld de,TAPHDRADDR+1
+	ld hl,name
+
+chckname$:
+	ld a,(de)
+	cp (hl)
+	jr nz,loadhdr$
+	inc HL
+	inc DE
+	djnz chckname$
+
+	; load block
+	ld ix,addr
+	ld de,(TAPHDRADDR+11)
+	ld a,$FF
+	scf
+	call 1366
+
+end$:
+	.endm
