@@ -24,14 +24,14 @@ import java.util.logging.Logger;
 
 public final class K1818VG93 {
 
-  private static final boolean TRACE = true;
+  private static final boolean TRACE = false;
   private static final boolean TRACE_RW_RD_BYTES = false;
 
   private final long CYCLE_NANOSECOND = 286L;
 
   private final long CYCLES_FOR_BUFFER_VALID = 120L; // number of cycles to read-write byte to-from disk
   private final long CYCLES_FOR_NEXT_TRACK = 15000000L / CYCLE_NANOSECOND; // number of cycles to move head to next track
-  private final long CYCLES_SECTOR_POSITION = CYCLES_FOR_BUFFER_VALID * 134L;
+  private final long CYCLES_SECTOR_POSITION = CYCLES_FOR_BUFFER_VALID;
 
   public static final int ADDR_COMMAND_STATE = 0;
   public static final int ADDR_TRACK = 1;
@@ -663,14 +663,14 @@ public final class K1818VG93 {
           curtrack = (curtrack + 1) & 0xFF;
         }
         else {
-          curtrack = (curtrack-1) & 0xFF;
+          curtrack = (curtrack - 1) & 0xFF;
         }
         this.sector = thedisk.findRandomSector(this.side, curtrack);
-        
-        if ((command & 0x10)!=0){
+
+        if ((command & 0x10) != 0) {
           this.registers[REG_TRACK] = curtrack;
         }
-        
+
         if (this.sector == null) {
           onStatus(STAT_NOTFOUND);
         }
@@ -763,6 +763,7 @@ public final class K1818VG93 {
           }
           else {
             final int data = this.sector.readByte(this.counter++);
+            this.sectorPositioningCycles = Math.abs(mcycles + CYCLES_SECTOR_POSITION);
             if (TRACE && TRACE_RW_RD_BYTES) {
               logger.info("<RDSEC #" + Integer.toHexString(this.counter - 1).toUpperCase(Locale.ENGLISH) + "=#" + Integer.toHexString(data).toUpperCase(Locale.ENGLISH));
             }
@@ -857,7 +858,7 @@ public final class K1818VG93 {
         if (!this.flagWaitDataWr) {
           this.flagWaitDataWr = true;
           if (this.counter >= this.sector.size()) {
-            this.registers[REG_SECTOR] = (this.registers[REG_SECTOR]+1) & 0xFF;
+            this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
             this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
             if (multiOp) {
               if (!this.sector.isLastOnTrack()) {
