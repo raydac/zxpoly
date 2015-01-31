@@ -20,6 +20,8 @@ import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.logging.Logger;
 
 public final class Motherboard implements ZXPoly {
@@ -31,13 +33,13 @@ public final class Motherboard implements ZXPoly {
 
   private final ZXPolyModule[] modules;
   private final IODevice[] ioDevices;
-  private final byte[] ram = new byte[512 * 1024];
+  private final AtomicIntegerArray ram = new AtomicIntegerArray(512 * 1024);
   private final VideoController video;
   private final KeyboardKempstonAndTapeIn keyboard;
   private final BetaDiscInterface betaDisk;
   private final RomData rom;
 
-  private int port3D00 = (int) System.nanoTime() & 0xFF;
+  private volatile int port3D00 = (int) System.nanoTime() & 0xFF;
 
   private volatile boolean totalReset;
   private volatile int resetCounter;
@@ -78,7 +80,9 @@ public final class Motherboard implements ZXPoly {
 
     // simulation of garbage in memory after power on
     final Random rnd = new Random();
-    rnd.nextBytes(this.ram);
+    for(int i=0;i<this.ram.length();i++){
+        this.ram.set(i, rnd.nextInt());
+    }
   }
 
   public void reset() {
@@ -340,11 +344,11 @@ public final class Motherboard implements ZXPoly {
   }
 
   public int readRAM(final ZXPolyModule module, final int address) {
-    return this.ram[address] & 0xFF;
+    return this.ram.get(address);
   }
 
   public void writeRAM(final ZXPolyModule module, final int heapAddress, final int value) {
-    this.ram[heapAddress] = (byte) value;
+    this.ram.set(heapAddress, value);
   }
 
   public int readBusIO(final ZXPolyModule module, final int port) {
@@ -353,7 +357,7 @@ public final class Motherboard implements ZXPoly {
 
     if (isZXPolyMode() && (module.getModuleIndex() == 0 && mappedCPU > 0)) {
       final ZXPolyModule destmodule = modules[mappedCPU];
-      result = this.ram[destmodule.ramOffset2HeapAddress(port)];
+      result = this.ram.get(destmodule.ramOffset2HeapAddress(port));
       destmodule.prepareLocalInt();
     }
     else {
@@ -388,7 +392,7 @@ public final class Motherboard implements ZXPoly {
         else {
           if (mappedCPU > 0) {
             final ZXPolyModule destmodule = modules[mappedCPU];
-            this.ram[destmodule.ramOffset2HeapAddress(port)] = (byte) value;
+            this.ram.set(destmodule.ramOffset2HeapAddress(port), value);
             destmodule.prepareLocalNMI();
           }
           else {
