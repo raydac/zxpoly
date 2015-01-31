@@ -16,13 +16,13 @@
  */
 package com.igormaznitsa.zxpoly;
 
+import com.igormaznitsa.zxpoly.ui.SelectTapPosDialog;
 import com.igormaznitsa.zxpoly.utils.Utils;
 import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
 import com.igormaznitsa.zxpoly.formats.*;
-import com.igormaznitsa.zxpoly.ui.CPULoadIndicator;
-import com.igormaznitsa.zxpoly.ui.OptionsDialog;
+import com.igormaznitsa.zxpoly.ui.*;
 import com.igormaznitsa.zxpoly.utils.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -690,7 +690,13 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
 
     menuHelp.setText("Help");
 
+    menuHelpAbout.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F1, 0));
     menuHelpAbout.setText("About");
+    menuHelpAbout.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuHelpAboutActionPerformed(evt);
+      }
+    });
     menuHelp.add(menuHelpAbout);
 
     menuBar.add(menuHelp);
@@ -973,6 +979,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     final OptionsDialog dialog = new OptionsDialog(this);
     dialog.setVisible(true);
   }//GEN-LAST:event_menuFileOptionsActionPerformed
+
+  private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuHelpAboutActionPerformed
+    new AboutDialog(this).setVisible(true);
+  }//GEN-LAST:event_menuHelpAboutActionPerformed
 
   private File chooseFileForOpen(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
