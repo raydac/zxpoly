@@ -16,6 +16,7 @@
  */
 package com.igormaznitsa.zxpoly;
 
+import com.igormaznitsa.zxpoly.utils.AppOptions;
 import java.util.logging.*;
 import javax.swing.SwingUtilities;
 
@@ -39,12 +40,7 @@ public class main {
       public void run() {
         final MainForm form;
         try {
-          form = new MainForm(NAME+' '+VERSION,"unr.rom");
-//          form = new MainForm("zx128dos.rom");
-//          form = new MainForm("opense.rom");
-//          form = new MainForm("test128k.rom");
-//          form = new MainForm("zxpolytest.rom");
-//          form = new MainForm("diag_rom_v12.rom");
+          form = new MainForm(NAME+' '+VERSION, AppOptions.getInstance().getActiveRom());
         }
         catch (Exception ex) {
           ex.printStackTrace();

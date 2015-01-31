@@ -16,6 +16,7 @@
  */
 package com.igormaznitsa.zxpoly.components;
 
+import com.igormaznitsa.jbbp.utils.JBBPUtils;
 import java.io.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -25,17 +26,35 @@ public final class RomData {
   private final byte[] data;
   private final int addressMask;
 
+  public RomData(final byte [] ... args){
+    int size = 0;
+    for(final byte [] a : args){
+      size += a.length;
+    }
+    
+    final byte [] result = new byte [size];
+    int pos = 0;
+    for(final byte [] a : args){
+      System.arraycopy(a, 0, result, pos, a.length);
+      pos += a.length;
+    }
+    this.data = result;
+    this.addressMask = JBBPUtils.makeMask(((size / 0x4000)*0x4000) == size ? size -1 : size);
+  }
+  
   public RomData(final byte[] array) {
     if (array.length > 0x10000) {
       throw new IllegalArgumentException("Rom data must not be greater than 64k");
     }
-    int size = 2;
-    while (size < array.length) {
-      size <<= 1;
-    }
+
+    final int size  = ((array.length+0x3FFF) / 0x4000) * 0x4000;
     this.data = new byte[size];
-    this.addressMask = size-1;
+    this.addressMask = JBBPUtils.makeMask(size-1);
     System.arraycopy(array, 0, this.data, 0, array.length);
+  }
+  
+  public int getMask(){
+    return this.addressMask;
   }
 
   public byte[] getAsArray() {
