@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 
 public final class K1818VG93 {
 
-  private static final boolean TRACE = false;
+  private static final boolean TRACE = true;
   private static final boolean TRACE_RW_RD_BYTES = false;
 
   private final long CYCLE_NANOSECOND = 286L;
@@ -658,13 +658,19 @@ public final class K1818VG93 {
         onStatus(STAT_BUSY);
       }
       else {
+        int curtrack = this.registers[REG_TRACK];
         if (this.outwardStepDirection) {
-          this.registers[REG_TRACK] = (this.registers[REG_TRACK] + 1) & 0xFF;
+          curtrack = (curtrack + 1) & 0xFF;
         }
         else {
-          this.registers[REG_TRACK] = (this.registers[REG_TRACK] - 1) & 0xFF;
+          curtrack = (curtrack-1) & 0xFF;
         }
-        this.sector = thedisk.findRandomSector(this.side, this.registers[REG_TRACK]);
+        this.sector = thedisk.findRandomSector(this.side, curtrack);
+        
+        if ((command & 0x10)!=0){
+          this.registers[REG_TRACK] = curtrack;
+        }
+        
         if (this.sector == null) {
           onStatus(STAT_NOTFOUND);
         }
@@ -736,7 +742,7 @@ public final class K1818VG93 {
 
         if (!this.flagWaitDataRd) {
           if (this.counter >= this.sector.size()) {
-            this.registers[REG_SECTOR]++;
+            this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
             this.sectorPositioningCycles = Math.abs(mcycles + CYCLES_SECTOR_POSITION);
             if (multiOp) {
               if (!this.sector.isLastOnTrack()) {
@@ -851,7 +857,7 @@ public final class K1818VG93 {
         if (!this.flagWaitDataWr) {
           this.flagWaitDataWr = true;
           if (this.counter >= this.sector.size()) {
-            this.registers[REG_SECTOR]++;
+            this.registers[REG_SECTOR] = (this.registers[REG_SECTOR]+1) & 0xFF;
             this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
             if (multiOp) {
               if (!this.sector.isLastOnTrack()) {
