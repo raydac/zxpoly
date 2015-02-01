@@ -143,7 +143,7 @@
               <mode>development</mode>
               <url>http://zxpoly.googlecode.com/</url>
               <license>http://www.gnu.org/licenses/gpl.html</license>
-            </manifestEntries>
+            </manifestEntries>  
           </archive>
         </configuration>
       </plugin>      

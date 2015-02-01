@@ -202,7 +202,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     }
     
     if (this.moduleIndex == 0) {
-      doInt = commonInt || this.localInt;
+      doInt = this.board.is3D00NotLocked() || is7FFDLocked() || ((this.port7FFD & PORTw_ZX128_INTCPU0) == 0)  ? (commonInt || this.localInt) : false;
     }
     else {
       doInt = (!this.activeRegisterReading && this.registerReadingCounter <= 0) && ((!this.board.is3D00NotLocked() && commonInt) || this.localInt);
@@ -256,6 +256,10 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     return isHaltDetected;
   }
 
+  public boolean is7FFDLocked(){
+    return (this.port7FFD & PORTw_ZX128_LOCK)!=0;
+  }
+  
   public int readVideoMemory(final int videoOffset) {
     final int moduleRamOffsetInHeap = getHeapOffset();
 
@@ -446,7 +450,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
         final int ramOffsetInHeap = ramOffset2HeapAddress(address);
 
         if (address < 0x4000) {
-          if ((this.port7FFD & PORTw_ZX128_ROMRAM) != 0) {
+          if (this.board.is3D00NotLocked() && (this.port7FFD & PORTw_ZX128_ROMRAM) != 0) {
             //RAM0
             this.board.writeRAM(this, ramOffsetInHeap, val);
           }
