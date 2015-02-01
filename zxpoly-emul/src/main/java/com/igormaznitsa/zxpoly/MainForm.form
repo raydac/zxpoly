@@ -77,6 +77,9 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuFileOptions">
               <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/com/igormaznitsa/zxpoly/icons/settings.png"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Options"/>
               </Properties>
               <Events>
@@ -89,6 +92,9 @@
               <Properties>
                 <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
                   <KeyStroke key="Alt+F4"/>
+                </Property>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/com/igormaznitsa/zxpoly/icons/reset.png"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Exit"/>
               </Properties>
@@ -175,7 +181,7 @@
                   <KeyStroke key="F12"/>
                 </Property>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/com/igormaznitsa/zxpoly/icons/reset.png"/>
+                  <Image iconType="3" name="/com/igormaznitsa/zxpoly/icons/reset2.png"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Reset"/>
               </Properties>
@@ -186,7 +192,7 @@
             <MenuItem class="javax.swing.JMenuItem" name="menuResetKeyboard">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/com/igormaznitsa/zxpoly/icons/reset.png"/>
+                  <Image iconType="3" name="/com/igormaznitsa/zxpoly/icons/keyboard.png"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Reset keyboard"/>
               </Properties>
@@ -236,7 +242,10 @@
             <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuOptionsShowIndicators">
               <Properties>
                 <Property name="selected" type="boolean" value="true"/>
-                <Property name="text" type="java.lang.String" value="Show indicator panel"/>
+                <Property name="text" type="java.lang.String" value="Indicator panel"/>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/com/igormaznitsa/zxpoly/icons/indicator.png"/>
+                </Property>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuOptionsShowIndicatorsActionPerformed"/>
@@ -280,6 +289,9 @@
               <Properties>
                 <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
                   <KeyStroke key="F1"/>
+                </Property>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/com/igormaznitsa/zxpoly/icons/info.png"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="About"/>
               </Properties>

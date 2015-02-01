@@ -537,6 +537,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuFile.add(menuLoadDrive);
     menuFile.add(jSeparator1);
 
+    menuFileOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/settings.png"))); // NOI18N
     menuFileOptions.setText("Options");
     menuFileOptions.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -547,6 +548,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuFile.add(jSeparator3);
 
     menuFileExit.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, java.awt.event.InputEvent.ALT_MASK));
+    menuFileExit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset.png"))); // NOI18N
     menuFileExit.setText("Exit");
     menuFileExit.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -611,7 +613,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuService.setText("Service");
 
     menuFileReset.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F12, 0));
-    menuFileReset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset.png"))); // NOI18N
+    menuFileReset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset2.png"))); // NOI18N
     menuFileReset.setText("Reset");
     menuFileReset.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -620,7 +622,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     });
     menuService.add(menuFileReset);
 
-    menuResetKeyboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset.png"))); // NOI18N
+    menuResetKeyboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/keyboard.png"))); // NOI18N
     menuResetKeyboard.setText("Reset keyboard");
     menuResetKeyboard.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -657,7 +659,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuOptions.setText("Options");
 
     menuOptionsShowIndicators.setSelected(true);
-    menuOptionsShowIndicators.setText("Show indicator panel");
+    menuOptionsShowIndicators.setText("Indicator panel");
+    menuOptionsShowIndicators.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/indicator.png"))); // NOI18N
     menuOptionsShowIndicators.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         menuOptionsShowIndicatorsActionPerformed(evt);
@@ -691,6 +694,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuHelp.setText("Help");
 
     menuHelpAbout.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F1, 0));
+    menuHelpAbout.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/info.png"))); // NOI18N
     menuHelpAbout.setText("About");
     menuHelpAbout.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
