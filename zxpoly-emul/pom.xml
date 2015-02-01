@@ -117,6 +117,14 @@
                 </filter>
               </filters>
               <minimizeJar>false</minimizeJar>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <manifestEntries>
+                    <Main-Class>com.igormaznitsa.zxpoly.main</Main-Class>
+                    <Url>http://zxpoly.googlecode.com/</Url>
+                  </manifestEntries>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
         </executions>
@@ -133,7 +141,8 @@
             </manifest>
             <manifestEntries>
               <mode>development</mode>
-              <url>${pom.url}</url>
+              <url>http://zxpoly.googlecode.com/</url>
+              <license>http://www.gnu.org/licenses/gpl.html</license>
             </manifestEntries>
           </archive>
         </configuration>
