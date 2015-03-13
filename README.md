@@ -1,6 +1,7 @@
 Introduction
 ============
 It is not just a yet another ZX-Spectrum emulator, but the proof of concept for ZX-Poly platform. The ZX-Poly platform was developed by Igor Maznitsa in 1994 and it is a modification of the well-known ZX-Spectrum 128 platform, the main purpose of ZX-Poly is to remove the main graphic issue of ZX-Spectrum - the use of only 2 colours per 8x8 pixel blocks.
+p.s.
 _Of course there are another solutions of the graphic issue but ZX-Poly is the only solution which could be implemented in hardware based on the element base of 80's, it doesn't contain any smart video cards and 64bit Z80 variants. It shows that we had only step to have multi-CPU home computers in the middle of 80's._
 
 License
