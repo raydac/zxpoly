@@ -1,34 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.igormaznitsa</groupId>
-        <artifactId>zxpoly</artifactId>
-        <version>1.0-SNAPSHOT</version>
-    </parent>
-    <artifactId>z80</artifactId>
-    <packaging>jar</packaging>
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.igormaznitsa</groupId>
+    <artifactId>zxpoly</artifactId>
+    <version>${main.version}</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  
+  <artifactId>z80</artifactId>
+  <packaging>jar</packaging>
+  <version>${main.version}</version>
 
-    <name>Z80</name>
-    <description>A Java based emulation of Z80 CPU</description>
+  <name>Z80</name>
+  <description>A Java based emulation of Z80 CPU</description>
 
-    <build>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-site-plugin</artifactId>
-          <version>3.4</version>
-          <configuration>
-            <reportPlugins>
-              <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.6</version>
-              </plugin>
-            </reportPlugins>
-          </configuration>
-        </plugin>
-      </plugins>
-    </build>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>3.4</version>
+        <configuration>
+          <reportPlugins>
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>cobertura-maven-plugin</artifactId>
+              <version>2.6</version>
+            </plugin>
+          </reportPlugins>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

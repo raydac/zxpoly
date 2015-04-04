@@ -3,14 +3,15 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.igormaznitsa</groupId>
   <artifactId>zxpoly</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>${main.version}</version>
   <packaging>pom</packaging>
 
   <name>ZXPoly</name>
   <description>An Emulator of the World's first ZX-Spectrum multi CPU platform providing back compatibility</description>
-  <url>http://zxpoly.googlecode.com/</url>
+  <url>https://github.com/raydac/zxpoly</url>
 
   <properties>
+    <main.version>2.0-SNAPSHOT</main.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
@@ -18,8 +19,8 @@
   </properties>
 
   <issueManagement>
-    <system>code.google.com</system>
-    <url>https://code.google.com/p/zxpoly/issues/list</url>
+    <system>GitHub Issues</system>
+    <url>https://github.com/raydac/zxpoly/issues</url>
   </issueManagement>
 
   <inceptionYear>1994</inceptionYear>
@@ -43,10 +44,9 @@
   </prerequisites>
 
   <scm>
-    <connection>https://code.google.com/p/zxpoly/hg/</connection>
-    <developerConnection>https://code.google.com/p/zxpoly/hg/</developerConnection>
-    <tag>HEAD</tag>
-    <url>https://code.google.com/p/zxpoly</url>
+    <url>https://github.com/raydac/zxpoly</url>
+    <connection>scm:git:git://github.com/raydac/zxpoly.git</connection>
+    <developerConnection>scm:git:git@github.com:raydac/zxpoly.git</developerConnection>
   </scm>
 
   <organization>

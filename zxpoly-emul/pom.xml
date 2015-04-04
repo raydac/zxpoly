@@ -4,19 +4,20 @@
   <parent>
     <groupId>com.igormaznitsa</groupId>
     <artifactId>zxpoly</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>${main.version}</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <name>ZX-Poly Emulator</name>
   <artifactId>zxpoly-emul</artifactId>
-  <version>2.0-SNAPSHOT</version>
+  <version>${main.version}</version>
   <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
       <groupId>com.igormaznitsa</groupId>
       <artifactId>z80</artifactId>
-      <version>${project.parent.version}</version>
+      <version>${main.version}</version>
     </dependency>
     <dependency>
       <groupId>com.igormaznitsa</groupId>

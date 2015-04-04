@@ -4,9 +4,11 @@
     <parent>
         <groupId>com.igormaznitsa</groupId>
         <artifactId>zxpoly</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>${main.version}</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>zxpoly-sprite-corrector</artifactId>
+    <version>${main.version}</version>
     <packaging>jar</packaging>
     
     <name>ZXPoly Sprite Corrector</name>
