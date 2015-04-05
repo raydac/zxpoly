@@ -670,6 +670,10 @@ public class MainFrame extends javax.swing.JFrame {
         ex.printStackTrace();
         JOptionPane.showMessageDialog(this, "Can't read file or its part ["+ex.getMessage()+']', "Error", JOptionPane.ERROR_MESSAGE);
       }
+      catch (Exception ex){
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Unexpected exception! See log!", "Unexpected error", JOptionPane.ERROR_MESSAGE);
+      }
       finally {
         updateAddressScrollBar();
         updateRedoUndo();

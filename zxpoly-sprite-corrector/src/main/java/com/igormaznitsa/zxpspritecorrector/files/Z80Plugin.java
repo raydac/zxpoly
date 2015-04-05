@@ -592,7 +592,7 @@ public class Z80Plugin extends AbstractFilePlugin {
     }
 
     final byte[] extra = new byte[(version == VERSION_1 ? 1 : 1 + current.banks.length) + headerLength];
-    extra[0] = (byte)current.banks.length;
+    extra[0] = current.banks == null ? (byte)0 : (byte)current.banks.length;
     int bankIndex = 1;
     if (version != VERSION_1) {
       for (final Bank b : current.banks) {
@@ -643,6 +643,8 @@ public class Z80Plugin extends AbstractFilePlugin {
     final Z80MainHeader mheader = Z80_MAINPART.parse(z80header).mapTo(Z80MainHeader.class);
     final int regpc = version == VERSION_1 ? mheader.reg_pc : ((z80header[33] & 0xFF) << 8) | (z80header[32] & 0xFF);
 
+    final boolean mode48k = is48k(version, z80header);
+    
     final ZXEMLSnapshotFormat block = new ZXEMLSnapshotFormat();
 
     block.setAF(0, makePair(mheader.reg_a, mheader.reg_f), false);
@@ -726,7 +728,7 @@ public class Z80Plugin extends AbstractFilePlugin {
     
     final int port7ffd;
     if (version == VERSION_1) {
-      port7ffd = 0x20;
+      port7ffd = 0x30;
     }
     else {
       final int hwmode = z80header[34];
@@ -736,7 +738,7 @@ public class Z80Plugin extends AbstractFilePlugin {
             port7ffd = z80header[35] & 0xFF;
           }
           else {
-            port7ffd = 0x20;
+            port7ffd = 0x30;
           }
         }
         break;
@@ -746,12 +748,12 @@ public class Z80Plugin extends AbstractFilePlugin {
             port7ffd = z80header[35] & 0xFF;
           }
           else {
-            port7ffd = 0x20;
+            port7ffd = 0x30;
           }
         }
         break;
         default:
-          port7ffd = 0x20;
+          port7ffd = 0x30;
       }
     }
 
