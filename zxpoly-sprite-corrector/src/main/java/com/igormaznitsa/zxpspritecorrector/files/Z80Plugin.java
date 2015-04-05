@@ -643,89 +643,27 @@ public class Z80Plugin extends AbstractFilePlugin {
     final Z80MainHeader mheader = Z80_MAINPART.parse(z80header).mapTo(Z80MainHeader.class);
     final int regpc = version == VERSION_1 ? mheader.reg_pc : ((z80header[33] & 0xFF) << 8) | (z80header[32] & 0xFF);
 
-    final boolean mode48k = is48k(version, z80header);
-    
     final ZXEMLSnapshotFormat block = new ZXEMLSnapshotFormat();
 
-    block.setAF(0, makePair(mheader.reg_a, mheader.reg_f), false);
-    block.setAF(1, makePair(mheader.reg_a, mheader.reg_f), false);
-    block.setAF(2, makePair(mheader.reg_a, mheader.reg_f), false);
-    block.setAF(3, makePair(mheader.reg_a, mheader.reg_f), false);
-    block.setAF(0, makePair(mheader.reg_a_alt, mheader.reg_f_alt), true);
-    block.setAF(1, makePair(mheader.reg_a_alt, mheader.reg_f_alt), true);
-    block.setAF(2, makePair(mheader.reg_a_alt, mheader.reg_f_alt), true);
-    block.setAF(3, makePair(mheader.reg_a_alt, mheader.reg_f_alt), true);
-    
-    block.setBC(0, mheader.reg_bc, false);
-    block.setBC(1, mheader.reg_bc, false);
-    block.setBC(2, mheader.reg_bc, false);
-    block.setBC(3, mheader.reg_bc, false);
-    
-    block.setBC(0, mheader.reg_bc_alt, true);
-    block.setBC(1, mheader.reg_bc_alt, true);
-    block.setBC(2, mheader.reg_bc_alt, true);
-    block.setBC(3, mheader.reg_bc_alt, true);
-    
-    block.setDE(0, mheader.reg_de, false);
-    block.setDE(1, mheader.reg_de, false);
-    block.setDE(2, mheader.reg_de, false);
-    block.setDE(3, mheader.reg_de, false);
-    
-    block.setDE(0, mheader.reg_de_alt, true);
-    block.setDE(1, mheader.reg_de_alt, true);
-    block.setDE(2, mheader.reg_de_alt, true);
-    block.setDE(3, mheader.reg_de_alt, true);
-    
-    block.setHL(0, mheader.reg_hl, false);
-    block.setHL(1, mheader.reg_hl, false);
-    block.setHL(2, mheader.reg_hl, false);
-    block.setHL(3, mheader.reg_hl, false);
-    
-    block.setHL(0, mheader.reg_hl_alt, true);
-    block.setHL(1, mheader.reg_hl_alt, true);
-    block.setHL(2, mheader.reg_hl_alt, true);
-    block.setHL(3, mheader.reg_hl_alt, true);
+    for (int cpuIndex = 0; cpuIndex<4; cpuIndex++){
+      block.setAF(cpuIndex, makePair(mheader.reg_a, mheader.reg_f), false);
+      block.setAF(cpuIndex, makePair(mheader.reg_a_alt, mheader.reg_f_alt), true);
+      block.setBC(cpuIndex, mheader.reg_bc, false);
+      block.setBC(cpuIndex, mheader.reg_bc_alt, true);
+      block.setDE(cpuIndex, mheader.reg_de, false);
+      block.setDE(cpuIndex, mheader.reg_de_alt, true);
+      block.setHL(cpuIndex, mheader.reg_hl, false);
+      block.setHL(cpuIndex, mheader.reg_hl_alt, true);
+      block.setRegIX(cpuIndex, mheader.reg_ix);
+      block.setRegIY(cpuIndex, mheader.reg_iy);
+      block.setRegIR(cpuIndex, makePair(mheader.reg_ir, mheader.reg_r));
+      block.setRegIM(cpuIndex, mheader.emulFlags.interruptmode);
+      block.setRegPC(cpuIndex, regpc);
+      block.setRegSP(cpuIndex, mheader.reg_sp);
+      block.setIFF(cpuIndex, mheader.iff!=0);
+      block.setIFF2(cpuIndex, mheader.iff2!=0);
+    }
 
-    block.setRegIX(0, mheader.reg_ix);
-    block.setRegIX(1, mheader.reg_ix);
-    block.setRegIX(2, mheader.reg_ix);
-    block.setRegIX(3, mheader.reg_ix);
-
-    block.setRegIY(0, mheader.reg_iy);
-    block.setRegIY(1, mheader.reg_iy);
-    block.setRegIY(2, mheader.reg_iy);
-    block.setRegIY(3, mheader.reg_iy);
-    
-    block.setRegIR(0, makePair(mheader.reg_ir, mheader.reg_r));
-    block.setRegIR(1, makePair(mheader.reg_ir, mheader.reg_r));
-    block.setRegIR(2, makePair(mheader.reg_ir, mheader.reg_r));
-    block.setRegIR(3, makePair(mheader.reg_ir, mheader.reg_r));
-    
-    block.setRegIM(0, mheader.emulFlags.interruptmode);
-    block.setRegIM(1, mheader.emulFlags.interruptmode);
-    block.setRegIM(2, mheader.emulFlags.interruptmode);
-    block.setRegIM(3, mheader.emulFlags.interruptmode);
-    
-    block.setRegPC(0, regpc);
-    block.setRegPC(1, regpc);
-    block.setRegPC(2, regpc);
-    block.setRegPC(3, regpc);
-    
-    block.setRegSP(0, mheader.reg_sp);
-    block.setRegSP(1, mheader.reg_sp);
-    block.setRegSP(2, mheader.reg_sp);
-    block.setRegSP(3, mheader.reg_sp);
-    
-    block.setIFF(0, mheader.iff!=0);
-    block.setIFF(1, mheader.iff!=0);
-    block.setIFF(2, mheader.iff!=0);
-    block.setIFF(3, mheader.iff!=0);
-    
-    block.setIFF2(0, mheader.iff2!=0);
-    block.setIFF2(1, mheader.iff2!=0);
-    block.setIFF2(2, mheader.iff2!=0);
-    block.setIFF2(3, mheader.iff2!=0);
-    
     final int port7ffd;
     if (version == VERSION_1) {
       port7ffd = 0x30;
