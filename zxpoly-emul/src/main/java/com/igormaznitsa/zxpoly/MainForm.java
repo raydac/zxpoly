@@ -805,16 +805,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
         this.lastSnapshotFolder = selected.getParentFile();
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
-          stepSemaphor.lock();
-          try {
             log.info("Loading snapshot " + selectedFilter.getName());
             selectedFilter.loadFromArray(this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
-          }
-          finally {
-            stepSemaphor.unlock();
-          }
         }
-        catch (IOException ex) {
+        catch (Exception ex) {
           log.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
           JOptionPane.showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
         }

@@ -111,6 +111,19 @@ public final class Motherboard implements ZXPoly {
     }
   }
 
+  public int findFirstModuleMemoryDiffOffset(){
+    for(int i=0;i<0x20000;i++){
+      final int m0 = this.modules[0].readHeapModuleMemory(i);
+      final int m1 = this.modules[1].readHeapModuleMemory(i);
+      final int m2 = this.modules[2].readHeapModuleMemory(i);
+      final int m3 = this.modules[3].readHeapModuleMemory(i);
+      if (!(m0 == m1 && m0 == m2 && m0 == m3)){
+        return i;
+      }
+    }
+    return -1;
+  }
+  
   public float getActivityCPU0() {
     return this.cpuLoad[0];
   }

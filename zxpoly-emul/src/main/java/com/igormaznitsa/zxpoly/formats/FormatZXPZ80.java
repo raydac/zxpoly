@@ -63,8 +63,8 @@ public class FormatZXPZ80 extends Snapshot {
       
       for(final Page p : memory.getPages()){
         final int pageOffset = p.getIndex() * 0x4000;
-        for(int i=0; i<0x4000; i++){
-          module.writeHeapModuleMemory(pageOffset + i, p.getData()[i] & 0xFF);
+        for(int addr=0; addr<0x4000; addr++){
+          module.writeHeapModuleMemory(pageOffset + addr, p.getData()[addr] & 0xFF);
         }
       }
     }
