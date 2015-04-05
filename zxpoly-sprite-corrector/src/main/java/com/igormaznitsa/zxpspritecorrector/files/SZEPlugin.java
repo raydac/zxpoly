@@ -31,7 +31,7 @@ public class SZEPlugin extends AbstractFilePlugin {
   private PicoContainer context;
   
   @Override
-  public String getUID() {
+  public String getPluginUID() {
     return "SZEP";
   }
   
@@ -40,27 +40,22 @@ public class SZEPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public String getName() {
-    return "ZX-Poly Sprite corrector files";
-  }
-
-  @Override
-  public String getToolTip() {
+  public String getToolTip(final boolean forExport) {
     return "A ZX-Poly Sprite corrector data file format";
   }
 
   @Override
-  public boolean hasInsideFileList() {
+  public boolean doesImportContainInsideFileList() {
     return false;
   }
 
   @Override
-  public List<Info> getInsideFileList(final File file) {
+  public List<Info> getImportingContainerFileList(final File file) {
       return null;
   }
 
   @Override
-  public String getFileInfo(final File file) {
+  public String getImportingFileInfo(final File file) {
     try {
       FileInputStream in = null;
       try {
@@ -71,7 +66,7 @@ public class SZEPlugin extends AbstractFilePlugin {
         result.append("  Name : ").append(zxpoly.getInfo().getName()).append('\n');
         result.append("  Type : ").append(zxpoly.getInfo().getType()).append('\n');
         result.append("Length : ").append(zxpoly.getInfo().getLength()).append('\n');
-        result.append("Plugin : ").append(zxpoly.getPlugin().getName());
+        result.append("Plugin : ").append(zxpoly.getPlugin().getPluginDescription(false));
         
         return result.toString();
       }
@@ -82,6 +77,11 @@ public class SZEPlugin extends AbstractFilePlugin {
     catch (Exception ex) {
       return null;
     }
+  }
+
+  @Override
+  public String getPluginDescription(final boolean forExport) {
+    return "SZE file";
   }
   
   @Override
@@ -114,13 +114,23 @@ public class SZEPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public String getExtension() {
+  public javax.swing.filechooser.FileFilter getImportFileFilter() {
+    return this;
+  }
+
+  @Override
+  public javax.swing.filechooser.FileFilter getExportFileFilter() {
+    return this;
+  }
+
+  @Override
+  public String getExtension(boolean forExport) {
     return "sze";
   }
 
   @Override
   public String getDescription() {
-    return getToolTip()+" (*.SZE)";
+    return getToolTip(false)+" (*.SZE)";
   }
 
 }

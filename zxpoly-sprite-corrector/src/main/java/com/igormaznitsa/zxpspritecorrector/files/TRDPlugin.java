@@ -45,22 +45,23 @@ public class TRDPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public String getName() {
-    return "TRD files";
+  public String getPluginDescription(final boolean forExport) {
+    return "TRD file";
   }
 
+
   @Override
-  public String getToolTip() {
+  public String getToolTip(final boolean forExport) {
     return "A TR-DOS disk image format";
   }
 
   @Override
-  public boolean hasInsideFileList() {
+  public boolean doesImportContainInsideFileList() {
     return true;
   }
 
   @Override
-  public List<Info> getInsideFileList(final File file) {
+  public List<Info> getImportingContainerFileList(final File file) {
     try{
       final List<Info> result = new ArrayList<Info>();
       
@@ -159,16 +160,26 @@ public class TRDPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return getToolTip()+" (*.TRD)";
+    return getToolTip(false)+" (*.TRD)";
   }
 
   @Override
-  public String getExtension() {
+  public javax.swing.filechooser.FileFilter getImportFileFilter() {
+    return this;
+  }
+
+  @Override
+  public javax.swing.filechooser.FileFilter getExportFileFilter() {
+    return this;
+  }
+
+  @Override
+  public String getExtension(boolean forExport) {
     return "trd";
   }
 
   @Override
-  public String getUID() {
+  public String getPluginUID() {
     return "TRDP";
   }
   

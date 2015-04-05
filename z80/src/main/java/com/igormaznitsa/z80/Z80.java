@@ -18,6 +18,7 @@ package com.igormaznitsa.z80;
 
 import static com.igormaznitsa.z80.Z80.FLAG_C;
 import static com.igormaznitsa.z80.Z80.REG_F;
+import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -2516,4 +2517,18 @@ public final class Z80 {
     this._reset(2);
   }
 
+  public boolean compareState(final Z80 other){
+    if (!Arrays.equals(this.regSet, other.regSet)) return false;
+    if (!Arrays.equals(this.altRegSet, other.altRegSet)) return false;
+    if (this.iff1!=other.iff1) return false;
+    if (this.iff2!=other.iff2) return false;
+    if (this.regI!=other.regI) return false;
+    if (this.regIX!=other.regIX) return false;
+    if (this.regIY!=other.regIY) return false;
+    if (this.regPC!=other.regPC) return false;
+    if (this.regR!=other.regR) return false;
+    if (this.regSP!=other.regSP) return false;
+    return true;
+  }
+  
 }

@@ -100,9 +100,9 @@ public class InsideFileView extends javax.swing.JPanel implements PropertyChange
       if (file != null) {
         final AbstractFilePlugin plugin = (AbstractFilePlugin) this.chooser.getFileFilter();
 
-        if (plugin.hasInsideFileList()) {
+        if (plugin.doesImportContainInsideFileList()) {
 
-          final List<Info> info = plugin.getInsideFileList(file);
+          final List<Info> info = plugin.getImportingContainerFileList(file);
 
           if (info == null) {
             this.listModel.addElement("   Wrong format   ");
@@ -113,7 +113,7 @@ public class InsideFileView extends javax.swing.JPanel implements PropertyChange
               }
           }
         }else{
-          final String fileReference = plugin.getFileInfo(file);
+          final String fileReference = plugin.getImportingFileInfo(file);
           if (fileReference == null){
             this.listModel.addElement("   Wrong format   ");
           }else{

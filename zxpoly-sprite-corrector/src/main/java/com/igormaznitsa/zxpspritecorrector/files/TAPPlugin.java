@@ -36,17 +36,17 @@ public class TAPPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public String getName() {
-    return "TAP files";
+  public String getPluginDescription(final boolean forExport) {
+    return "TAP file";
   }
 
   @Override
-  public String getToolTip() {
+  public String getToolTip(final boolean forExport) {
     return "A Tape image format";
   }
 
   @Override
-  public boolean hasInsideFileList() {
+  public boolean doesImportContainInsideFileList() {
     return true;
   }
 
@@ -74,7 +74,7 @@ public class TAPPlugin extends AbstractFilePlugin {
   }
   
   @Override
-  public List<Info> getInsideFileList(final File file) {
+  public List<Info> getImportingContainerFileList(final File file) {
     try{
       final List<Info> result = new ArrayList<Info>();
       
@@ -291,16 +291,26 @@ public class TAPPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return getToolTip()+" (*.TAP)";
+    return getToolTip(false)+" (*.TAP)";
   }
 
   @Override
-  public String getExtension() {
+  public javax.swing.filechooser.FileFilter getImportFileFilter() {
+    return this;
+  }
+
+  @Override
+  public javax.swing.filechooser.FileFilter getExportFileFilter() {
+    return this;
+  }
+
+  @Override
+  public String getExtension(final boolean forExport) {
     return "tap";
   }
 
   @Override
-  public String getUID() {
+  public String getPluginUID() {
     return "TAPP";
   }
   

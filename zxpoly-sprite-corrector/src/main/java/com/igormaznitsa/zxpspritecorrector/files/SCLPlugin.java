@@ -48,27 +48,27 @@ public class SCLPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public String getUID() {
+  public String getPluginUID() {
     return "SCLP";
   }
 
   @Override
-  public String getName() {
-    return "SCL files";
-  }
-
-  @Override
-  public String getToolTip() {
+  public String getToolTip(final boolean forExport) {
     return "A TR-DOS compact disk image format";
   }
 
   @Override
-  public boolean hasInsideFileList() {
+  public boolean doesImportContainInsideFileList() {
     return true;
   }
 
   @Override
-  public List<Info> getInsideFileList(final File file) {
+  public String getPluginDescription(final boolean forExport) {
+    return "SCL file";
+  }
+
+  @Override
+  public List<Info> getImportingContainerFileList(final File file) {
     try {
       final List<Info> result = new ArrayList<Info>();
 
@@ -173,13 +173,23 @@ public class SCLPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public String getExtension() {
+  public javax.swing.filechooser.FileFilter getImportFileFilter() {
+    return this;
+  }
+
+  @Override
+  public javax.swing.filechooser.FileFilter getExportFileFilter() {
+    return this;
+  }
+
+  @Override
+  public String getExtension(boolean forExport) {
     return "scl";
   }
 
   @Override
   public String getDescription() {
-    return getToolTip() + " (*.SCL)";
+    return getToolTip(false) + " (*.SCL)";
   }
 
 }

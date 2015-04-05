@@ -54,32 +54,27 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public String getUID() {
+  public String getPluginUID() {
     return "HBTA";
   }
 
   @Override
-  public String getName() {
-    return "Hobeta files";
-  }
-
-  @Override
-  public String getToolTip() {
+  public String getToolTip(final boolean forExport) {
     return "A Hobeta file format";
   }
 
   @Override
-  public boolean hasInsideFileList() {
+  public boolean doesImportContainInsideFileList() {
     return false;
   }
 
   @Override
-  public List<Info> getInsideFileList(final File file) {
+  public List<Info> getImportingContainerFileList(final File file) {
     return null;
   }
 
   @Override
-  public String getFileInfo(final File file) {
+  public String getImportingFileInfo(final File file) {
     try {
       JBBPBitInputStream in = null;
       try {
@@ -108,6 +103,11 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     final byte[] wholeFile = FileUtils.readFileToByteArray(file);
     final Hobeta parsed = HOBETA_FILE_PARSER.parse(wholeFile).mapTo(Hobeta.class);
     return new ReadResult(new ZXPolyData(new Info(parsed.name, (char) (parsed.type & 0xFF), parsed.start, parsed.length, 0), this, parsed.data), null);
+  }
+
+  @Override
+  public String getPluginDescription(final boolean forExport) {
+    return "Hobeta file";
   }
 
   @Override
@@ -140,13 +140,23 @@ public class HOBETAPlugin extends AbstractFilePlugin {
         if (!writeDataBlockAsHobeta(savingfile, zxNames[i], (byte)types[i].charValue(), data.getInfo().getStartAddress(), data.getDataForCPU(i))) break;
       }
     }
-
   }
 
   @Override
-  public String getExtension() {
+  public javax.swing.filechooser.FileFilter getImportFileFilter() {
+    return this;
+  }
+
+  @Override
+  public javax.swing.filechooser.FileFilter getExportFileFilter() {
     return null;
   }
+
+  @Override
+  public String getExtension(final boolean forExport) {
+    return null;
+  }
+
 
   private int makeCRC(final byte[] array) {
     int crc = 0;
@@ -167,7 +177,7 @@ public class HOBETAPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return getToolTip() + " (*.$?)";
+    return getToolTip(false) + " (*.$?)";
   }
 
 }

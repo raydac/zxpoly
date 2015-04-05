@@ -54,18 +54,22 @@ public abstract class AbstractFilePlugin extends FileFilter {
     super();
   }
 
-  public abstract String getName();
-  public abstract String getToolTip();
-  public abstract boolean hasInsideFileList();
+  public abstract String getToolTip(boolean forExport);
+  public abstract boolean doesImportContainInsideFileList();
   
-  public String getFileInfo(File file){
+  public abstract FileFilter getImportFileFilter();
+  public abstract FileFilter getExportFileFilter();
+  
+  public abstract String getPluginDescription(boolean forExport);
+  
+  public String getImportingFileInfo(File file){
     return "";
   }
   
-  public abstract String getUID();
+  public abstract String getPluginUID();
   
-  public abstract List<Info> getInsideFileList(File file);
-  public abstract String getExtension();
+  public abstract List<Info> getImportingContainerFileList(File file);
+  public abstract String getExtension(boolean forExport);
   public abstract ReadResult readFrom(File file, int index) throws IOException;
   public abstract void writeTo(File file, ZXPolyData data, SessionData sessionData) throws IOException;
 

@@ -28,32 +28,27 @@ public class SCRPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public String getUID() {
+  public String getPluginUID() {
     return "SCRP";
-  }
-  
-  @Override
-  public String getName() {
-    return "SCR files";
   }
 
   @Override
-  public String getToolTip() {
+  public String getToolTip(final boolean forExport) {
     return "A ZX-Spectrum Screen file";
   }
 
   @Override
-  public boolean hasInsideFileList() {
+  public boolean doesImportContainInsideFileList() {
     return false;
   }
 
   @Override
-  public List<Info> getInsideFileList(final File file) {
+  public List<Info> getImportingContainerFileList(final File file) {
     return null;
   }
 
   @Override
-  public String getFileInfo(File file) {
+  public String getImportingFileInfo(File file) {
     return "  A ZX-Spectrum scrren  \n  256x192  ";
   }
 
@@ -84,13 +79,28 @@ public class SCRPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public String getExtension() {
+  public javax.swing.filechooser.FileFilter getImportFileFilter() {
+    return this;
+  }
+
+  @Override
+  public javax.swing.filechooser.FileFilter getExportFileFilter() {
+    return this;
+  }
+
+  @Override
+  public String getExtension(final boolean forExport) {
     return "scr";
   }
 
   @Override
   public String getDescription() {
-    return getToolTip() + " (*.SCR)";
+    return getToolTip(false) + " (*.SCR)";
+  }
+
+  @Override
+  public String getPluginDescription(final boolean forExport) {
+    return "SCR file";
   }
 
 }

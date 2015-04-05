@@ -36,7 +36,7 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
     this.setLocationRelativeTo(parent);
     this.setTitle(file.getName());
     
-    this.list = plugin.getInsideFileList(file);
+    this.list = plugin.getImportingContainerFileList(file);
     if (list == null) {
       throw new IOException("Can't get list of container items");
     }

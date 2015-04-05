@@ -35,6 +35,7 @@ public class MainFrame extends javax.swing.JFrame {
     container.addComponent(TRDPlugin.class);
     container.addComponent(SCLPlugin.class);
     container.addComponent(SCRPlugin.class);
+    container.addComponent(Z80Plugin.class);
 
     container.addComponent(ToolPencil.class);
     container.addComponent(ToolEraser.class);
@@ -53,9 +54,9 @@ public class MainFrame extends javax.swing.JFrame {
 
     for(final AbstractFilePlugin p : container.getComponents(AbstractFilePlugin.class)){
       if (p instanceof SZEPlugin) continue;
-      final JMenuItem menuItem = new JMenuItem(p.getName());
+      final JMenuItem menuItem = new JMenuItem(p.getPluginDescription(true));
       this.menuFileExportAs.add(menuItem);
-      menuItem.setToolTipText(p.getToolTip());
+      menuItem.setToolTipText(p.getToolTip(true));
       menuItem.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -101,7 +102,7 @@ public class MainFrame extends javax.swing.JFrame {
   }
   
   private File ensureExtension(final File file, final AbstractFilePlugin plugin) {
-    final String extension = plugin.getExtension();
+    final String extension = plugin.getExtension(true);
     if (extension!=null){
       if (FilenameUtils.getExtension(file.getName()).isEmpty()){
         return new File(file.getParent(),file.getName()+'.'+extension);
@@ -118,7 +119,7 @@ public class MainFrame extends javax.swing.JFrame {
     
     final JFileChooser fileChooser = new JFileChooser(this.lastExportedFile);
     fileChooser.setAcceptAllFileFilterUsed(false);
-    fileChooser.addChoosableFileFilter(plugin);
+    fileChooser.addChoosableFileFilter(plugin.getExportFileFilter());
     if (fileChooser.showSaveDialog(this)==JFileChooser.APPROVE_OPTION){
       this.lastExportedFile = ensureExtension(fileChooser.getSelectedFile(),plugin);
       try{
@@ -625,7 +626,7 @@ public class MainFrame extends javax.swing.JFrame {
     chooser.setAcceptAllFileFilterUsed(false);
 
     for (final AbstractFilePlugin plugin : container.getComponents(AbstractFilePlugin.class)) {
-      chooser.addChoosableFileFilter(plugin);
+      chooser.addChoosableFileFilter(plugin.getImportFileFilter());
     }
 
     final InsideFileView insideFileView = new InsideFileView(chooser);
@@ -638,7 +639,7 @@ public class MainFrame extends javax.swing.JFrame {
       
       try {
         int selected = -1;
-        if (plugin.hasInsideFileList()) {
+        if (plugin.doesImportContainInsideFileList()) {
           final SelectInsideDataDialog itemSelector = new SelectInsideDataDialog(this, selectedFile, plugin);
           itemSelector.setVisible(true);
           selected = itemSelector.getSelectedIndex();

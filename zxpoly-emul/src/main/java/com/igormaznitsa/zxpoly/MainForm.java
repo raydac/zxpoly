@@ -800,7 +800,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     stepSemaphor.lock();
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
-      final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, new FormatZ80(), new FormatSNA());
+      final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, new FormatZXPZ80(), new FormatZ80(), new FormatSNA());
       if (selected != null) {
         this.lastSnapshotFolder = selected.getParentFile();
         try {

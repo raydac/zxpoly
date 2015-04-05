@@ -91,6 +91,14 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     return this.cpu;
   }
 
+  public void loadModuleLocalPortsByValues(final int port7ffd, final int reg0, final int reg1, final int reg2, final int reg3){
+    this.port7FFD = port7ffd & 0xFF;
+    this.zxPolyRegsWritten[0] = reg0 & 0xFF;
+    this.zxPolyRegsWritten[1] = reg1 & 0xFF;
+    this.zxPolyRegsWritten[2] = reg2 & 0xFF;
+    this.zxPolyRegsWritten[3] = reg3 & 0xFF;
+  }
+  
   @Override
   public int readIO(final ZXPolyModule module, final int port) {
     final int result;

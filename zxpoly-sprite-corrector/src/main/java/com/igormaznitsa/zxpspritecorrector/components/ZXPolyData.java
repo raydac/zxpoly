@@ -130,7 +130,7 @@ public class ZXPolyData {
 
     AbstractFilePlugin plugin = null;
     for (final AbstractFilePlugin p : plugins) {
-      if (parsed.pluginId == uid2int(p.getUID())) {
+      if (parsed.pluginId == uid2int(p.getPluginUID())) {
         plugin = p;
         break;
       }
@@ -147,7 +147,7 @@ public class ZXPolyData {
 
     return JBBPOut.BeginBin().
             Long(0xABBAFAFABABE0123L).
-            Int(uid2int(this.basePlugin.getUID())).
+            Int(uid2int(this.basePlugin.getPluginUID())).
             Short(packedInfo.length).
             Byte(packedInfo).
             Int(this.basedata.length).
