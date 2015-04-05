@@ -592,6 +592,7 @@ public class Z80Plugin extends AbstractFilePlugin {
     }
 
     final byte[] extra = new byte[(version == VERSION_1 ? 1 : 1 + current.banks.length) + headerLength];
+    extra[0] = (byte)current.banks.length;
     int bankIndex = 1;
     if (version != VERSION_1) {
       for (final Bank b : current.banks) {
@@ -640,7 +641,7 @@ public class Z80Plugin extends AbstractFilePlugin {
     System.arraycopy(extra, banksInExtra+1, z80header, 0, z80header.length);
     final int version = getVersion(z80header);
     final Z80MainHeader mheader = Z80_MAINPART.parse(z80header).mapTo(Z80MainHeader.class);
-    final int regpc = version == VERSION_1 ? mheader.reg_pc : (z80header[32] & 0xFF) << 8 | (z80header[33] & 0xFF);
+    final int regpc = version == VERSION_1 ? mheader.reg_pc : ((z80header[33] & 0xFF) << 8) | (z80header[32] & 0xFF);
 
     final ZXEMLSnapshotFormat block = new ZXEMLSnapshotFormat();
 
