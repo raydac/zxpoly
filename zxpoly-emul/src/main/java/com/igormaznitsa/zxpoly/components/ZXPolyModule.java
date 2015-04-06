@@ -625,4 +625,10 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     this.trdosROM = false;
   }
 
+  @Override
+  public void doReset() {
+    setStateForSystemReset();
+    this.localResetCounter = 0;
+    this.cpu.doReset();
+  }
 }

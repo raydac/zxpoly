@@ -84,6 +84,12 @@ public final class Motherboard implements ZXPoly {
     }
   }
 
+  public synchronized void forceResetCPUs(){
+    for(final ZXPolyModule p : this.modules){
+      p.getCPU().doReset();
+    }
+  }
+  
   public void reset() {
     LOG.info("Full system reset");
     this.totalReset = true;
@@ -437,7 +443,9 @@ public final class Motherboard implements ZXPoly {
     return result;
   }
   
-  public void resetInputDevices(){
-    this.keyboard.reset();
+  public synchronized void resetIODevices(){
+    for(final IODevice d : this.ioDevices){
+      d.doReset();
+    }
   }
 }

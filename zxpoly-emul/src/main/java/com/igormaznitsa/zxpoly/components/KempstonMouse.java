@@ -221,7 +221,8 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
   public void postStep(long spentMachineCyclesForStep) {
   }
   
-  public void reset(){
+  @Override
+  public void doReset(){
     this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
     this.coordX.set(0x80);
     this.coordY.set(0x70);

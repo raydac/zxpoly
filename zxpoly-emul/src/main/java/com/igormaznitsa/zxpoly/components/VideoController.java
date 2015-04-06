@@ -484,6 +484,10 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   }
 
   @Override
+  public void doReset() {
+  }
+
+  @Override
   public void postStep(long spentMachineCyclesForStep) {
   }
 

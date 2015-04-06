@@ -127,8 +127,7 @@ public class BetaDiscInterface implements IODevice {
   @Override
   public void preStep(final boolean signalReset, final boolean signalInt) {
     if (signalReset) {
-      this.mcycleCounter = 0L;
-      this.vg93.reset();
+      doReset();
     }
 
     if ((this.ffPort & 0b00001000)!=0){
@@ -144,6 +143,12 @@ public class BetaDiscInterface implements IODevice {
   @Override
   public void postStep(final long spentMachineCyclesForStep) {
     this.mcycleCounter = Math.abs(this.mcycleCounter+spentMachineCyclesForStep);
+  }
+
+  @Override
+  public void doReset() {
+    this.mcycleCounter = 0L;
+    this.vg93.reset();
   }
 
 }

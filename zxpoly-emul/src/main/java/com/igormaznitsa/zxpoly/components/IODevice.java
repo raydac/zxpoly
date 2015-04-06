@@ -23,4 +23,5 @@ public interface IODevice extends ZXPoly {
   void preStep(boolean signalReset, boolean signalInt);
   void postStep(long spentMachineCyclesForStep);
   String getName();
+  void doReset();
 }

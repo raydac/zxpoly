@@ -778,7 +778,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private void formWindowLostFocus(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowLostFocus
     this.stepSemaphor.lock();
     try {
-      this.keyboardAndTapeModule.reset();
+      this.keyboardAndTapeModule.doReset();
     }
     finally {
       this.stepSemaphor.unlock();
@@ -789,7 +789,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     this.stepSemaphor.lock();
     try {
       this.getInputContext().selectInputMethod(Locale.ENGLISH);
-      this.keyboardAndTapeModule.reset();
+      this.keyboardAndTapeModule.doReset();
     }
     finally {
       this.stepSemaphor.unlock();
@@ -799,6 +799,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private void menuFileLoadSnapshotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadSnapshotActionPerformed
     stepSemaphor.lock();
     try {
+      this.board.forceResetCPUs();
+      this.board.resetIODevices();
+      
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, new FormatZXPZ80(), new FormatZ80(), new FormatSNA());
       if (selected != null) {
@@ -815,8 +818,6 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       }
     }
     finally {
-      this.keyboardAndTapeModule.reset();
-      this.kempstonMouse.reset();
       stepSemaphor.unlock();
     }
   }//GEN-LAST:event_menuFileLoadSnapshotActionPerformed
@@ -963,14 +964,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       log.log(Level.SEVERE, "Can't make screenshot", ex);
     }
     finally {
-      this.keyboardAndTapeModule.reset();
+      this.keyboardAndTapeModule.doReset();
       this.stepSemaphor.unlock();
     }
 
   }//GEN-LAST:event_menuServiceSaveScreenActionPerformed
 
   private void menuResetKeyboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuResetKeyboardActionPerformed
-    this.board.resetInputDevices();
+    this.keyboardAndTapeModule.doReset();
   }//GEN-LAST:event_menuResetKeyboardActionPerformed
 
   private void menuFileOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileOptionsActionPerformed

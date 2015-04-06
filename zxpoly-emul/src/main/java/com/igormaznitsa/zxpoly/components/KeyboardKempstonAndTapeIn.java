@@ -81,7 +81,8 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
     return this.board;
   }
 
-  public void reset() {
+  @Override
+  public void doReset() {
     for (int i = 0; i < this.keyboardLines.length(); i++) {
       this.keyboardLines.set(i, 0x1F);
     }
@@ -91,7 +92,7 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
   @Override
   public void preStep(final boolean signalReset, final boolean signalInt) {
     if (signalReset) {
-      reset();
+      doReset();
     }
   }
 
