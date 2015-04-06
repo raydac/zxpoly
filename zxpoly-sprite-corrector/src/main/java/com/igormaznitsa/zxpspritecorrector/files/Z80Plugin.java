@@ -351,7 +351,7 @@ public class Z80Plugin extends AbstractFilePlugin {
 
   @Override
   public String getPluginDescription(final boolean forExport) {
-    return forExport ? "ZXPZ80 snapshot" : "Z80 snapshot";
+    return forExport ? "ZXP file" : "Z80 file";
   }
 
 
@@ -364,8 +364,6 @@ public class Z80Plugin extends AbstractFilePlugin {
   public String getDescription() {
     return "Z80 Snapshot (*.Z80)";
   }
-
-  
   
   private static boolean is48k(final int version, final Z80Snapshot snapshot) {
     switch (version) {
@@ -430,19 +428,19 @@ public class Z80Plugin extends AbstractFilePlugin {
     return new javax.swing.filechooser.FileFilter(){
       @Override
       public boolean accept(final File f) {
-        return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zxpz80"));
+        return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zxp"));
       }
 
       @Override
       public String getDescription() {
-        return "ZXPZ80 Snapshot (*.ZXPZ80)";
+        return "ZXP Snapshot (*.ZXP)";
       }
     };
   }
 
   @Override
   public String getExtension(boolean forExport) {
-    return forExport ? "zxpz80" : "z80";
+    return forExport ? "zxp" : "z80";
   }
 
   private static int getVersion(final byte[] data) {
