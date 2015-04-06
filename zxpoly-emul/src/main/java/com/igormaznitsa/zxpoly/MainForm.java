@@ -803,7 +803,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       this.board.resetIODevices();
       
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
-      final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, new FormatZXPZ80(), new FormatZ80(), new FormatSNA());
+      final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, new FormatZXP(), new FormatZ80(), new FormatSNA());
       if (selected != null) {
         this.lastSnapshotFolder = selected.getParentFile();
         try {

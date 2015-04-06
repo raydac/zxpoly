@@ -23,7 +23,7 @@ import com.igormaznitsa.zxpoly.formats.ZXEMLSnapshotFormat.Pages;
 import java.io.*;
 import java.util.Locale;
 
-public class FormatZXPZ80 extends Snapshot {
+public class FormatZXP extends Snapshot {
 
   @Override
   public void loadFromArray(final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
@@ -80,12 +80,12 @@ public class FormatZXPZ80 extends Snapshot {
 
   @Override
   public boolean accept(final File f) {
-    return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zxpz80"));
+    return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zxp"));
   }
 
   @Override
   public String getDescription() {
-    return "ZXPoly-Z80 Snapshot (*.zxpz80)";
+    return "ZXPoly-Z80 Snapshot (*.zxp)";
   }
   
 }
