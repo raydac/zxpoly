@@ -26,9 +26,8 @@ Supported formats
  
 Prebuilt versions
 ==================
- - [Java JAR version, start as java -jar zxpoly-emul-2.0-SNAPSHOT.jar](https://googledrive.com/host/0BxHnNp97IgMRSHUzREtwbUQtT28/zxpoly-emul-2.0-SNAPSHOT.jar)
- - [Windows version (needs installed Java), start as zxpoly_2.0-SNAPSHOT.exe](https://googledrive.com/host/0BxHnNp97IgMRSHUzREtwbUQtT28/zxpoly_2.0-SNAPSHOT.exe)
- 
+The Latest prebuilt versions of the emulator and the sprite editor in Java JAR and Windows EXE formats can be downloaded from my [Google Drive folder](https://drive.google.com/open?id=0BxHnNp97IgMRSHUzREtwbUQtT28&authuser=0)
+
 #Videomodes
 ## Standard ZX-Spectrum 256x192 (2 colors per pixel in 8x8 block)
 It is just regular ZX-Spectrum movde 256x192 with 2 attributed colors for 8x8 pixel block.
