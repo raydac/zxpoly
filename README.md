@@ -37,7 +37,7 @@ It is just regular ZX-Spectrum movde 256x192 with 2 attributed colors for 8x8 pi
 The Mode doesn't use attributes and each pixel can have color from 16 color palette.
 
 [TRD disk with the example can be downloaded from here, the game has been partly colorized](https://googledrive.com/host/0BxHnNp97IgMRSHUzREtwbUQtT28/atw1_partly_colorized.trd)
-![ZXPoly256x192 screenshot](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/atw_zxpoly_zxpz80.png)
+![ZXPoly256x192 screenshot](https://raw.githubusercontent.com/raydac/zxpoly/master/docs/screenshots/atw_zxpoly.png)
 
 ## ZX-Poly 512x384 (2 colors per pixel placed in chess order)
 The Mode uses attributes but places pixels in chess order.
