@@ -27,7 +27,7 @@ Supported formats
 Prebuilt versions
 ==================
 The Latest prebuilt versions of the emulator and the sprite editor in Java JAR and Windows EXE formats can be downloaded from my [Google Drive folder](https://drive.google.com/open?id=0BxHnNp97IgMRSHUzREtwbUQtT28&authuser=0)  
-By default it uses the embedded ZX-Poly Test ROM image for start, but you can pass through **File->Options->Active ROM** and select another SOS+TR0DOS 128 ROM source (from list of links) and after that reload the emulator, keep in mind that WorldOfSpectrum FTP works not very stable so I recommend prefer VirtualTRDOS as ROM source. After loading, the ROM will be cached on your machine for future usage.
+By default it uses the embedded ZX-Poly Test ROM image for start, but you can pass through **File->Options->Active ROM** and select another SOS+TR-DOS 128 ROM source (from list of links) and after that reload the emulator, keep in mind that WorldOfSpectrum FTP works not very stable so I recommend prefer VirtualTRDOS as ROM source. After loading, the ROM will be cached on your machine for future usage.
 
 #Videomodes
 ## Standard ZX-Spectrum 256x192 (2 colors per pixel in 8x8 block)
