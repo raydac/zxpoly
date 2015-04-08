@@ -20,7 +20,7 @@ ZX-Poly platform adds several ports to manipulate work modes and the main port o
 
 Supported formats
 ==================
- - Snapshots .Z80, .SNA
+ - Snapshots .Z80, .SNA, .ZXP (ZX-Poly snapshot format produced by the Sprite Editor from .Z80 snapshots and included into the project)
  - Tape .TAP (allows export to WAV file)
  - Disks .TRD, .SCL
  
