@@ -22,8 +22,8 @@ import java.util.Arrays;
 import java.util.Locale;
 
 /**
- * Tables and some flag set algorithms were copied and adapted from
- * https://github.com/anotherlin/z80emu project
+ * Tables and some flag set algorithms were copied and adapted from https://github.com/anotherlin/z80emu project, 
+ * opcode decoding is based on http://www.z80.info/decoding.htm
  */
 public final class Z80 {
 
@@ -2527,8 +2527,7 @@ public final class Z80 {
     if (this.regIY!=other.regIY) return false;
     if (this.regPC!=other.regPC) return false;
     if (this.regR!=other.regR) return false;
-    if (this.regSP!=other.regSP) return false;
-    return true;
+    return this.regSP==other.regSP;
   }
   
 }
