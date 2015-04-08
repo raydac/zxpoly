@@ -34,7 +34,9 @@ public class OptionsDialog extends javax.swing.JDialog {
     this.comboRom.removeAllItems();
     
     this.comboRom.addItem("zxpolytest.rom");
-    this.comboRom.addItem("ftp://ftp.worldofspectrum.org/pub/sinclair/emulators/pc/russian/ukv12f5.zip");
+    this.comboRom.addItem("http://trd.speccy.cz/emulz/UKV12F5.ZIP");
+    this.comboRom.addItem("http://wos.meulie.net/pub/sinclair/emulators/pc/russian/ukv12f5.zip");
+    this.comboRom.addItem("ftp://anonymous:anonymous@ftp.worldofspectrum.org/pub/sinclair/emulators/pc/russian/ukv12f5.zip");
 
     this.comboRom.setSelectedItem(AppOptions.getInstance().getActiveRom());
     if (this.comboRom.getSelectedIndex() < 0) {

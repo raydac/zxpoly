@@ -18,14 +18,20 @@ package com.igormaznitsa.zxpoly.utils;
 
 import com.igormaznitsa.zxpoly.components.RomData;
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import org.apache.commons.compress.archivers.zip.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.net.ftp.*;
+import org.apache.http.*;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.protocol.HttpContext;
 
 public class ROMLoader {
 
-  public static final String FTP_ROM_HOST = "ftp.worldofspectrum.org";
-  public static final String FTP_ROM_FILE_PATH = "/pub/sinclair/emulators/pc/russian/ukv12f5.zip";
   private static final String ROM_48 = "48.rom";
   private static final String ROM_128TR = "128tr.rom";
   private static final String ROM_TRDOS = "trdos.rom";
@@ -34,23 +40,45 @@ public class ROMLoader {
 
   }
 
-  byte[] loadFTPArchive() throws IOException {
+  static byte[] loadHTTPArchive(final String url) throws IOException {
+    final HttpClient client = HttpClientBuilder.create().build();
+    final HttpContext context = HttpClientContext.create();
+    final HttpGet get = new HttpGet(url);
+    final HttpResponse response = client.execute(get, context);
+
+    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+      InputStream in = null;
+      try {
+        final HttpEntity entity = response.getEntity();
+        in = entity.getContent();
+        final byte[] data = entity.getContentLength() < 0L ? IOUtils.toByteArray(entity.getContent()) : IOUtils.toByteArray(entity.getContent(), entity.getContentLength());
+        return data;
+      }
+      finally {
+        IOUtils.closeQuietly(in);
+      }
+    }else{
+      throw new IOException("Can't download from http '" + url + "' code ["+url+']');
+    }
+  }
+
+  static byte[] loadFTPArchive(final String host, final String path, final String name, final String password) throws IOException {
     final FTPClient client = new FTPClient();
-    client.connect(FTP_ROM_HOST);
+    client.connect(host);
     int replyCode = client.getReplyCode();
 
     if (FTPReply.isPositiveCompletion(replyCode)) {
       try {
-        client.login("anonymous", "anonymous");
+        client.login(name == null ? "" : name, password == null ? "": password);
         client.setFileType(FTP.BINARY_FILE_TYPE);
         client.enterLocalPassiveMode();
-
+        
         final ByteArrayOutputStream out = new ByteArrayOutputStream(300000);
-        if (client.retrieveFile(FTP_ROM_FILE_PATH, out)) {
+        if (client.retrieveFile(path, out)) {
           return out.toByteArray();
         }
         else {
-          throw new IOException("Can't load file 'ftp://" + FTP_ROM_HOST + FTP_ROM_FILE_PATH + '\'');
+          throw new IOException("Can't load file 'ftp://" + host + path + "\' status="+client.getReplyCode());
         }
       }
       finally {
@@ -59,12 +87,41 @@ public class ROMLoader {
     }
     else {
       client.disconnect();
-      throw new IOException("Can't connect to ftp " + FTP_ROM_HOST);
+      throw new IOException("Can't connect to ftp '" + host + "'");
     }
   }
 
-  public RomData getROM() throws IOException {
-    final byte[] loaded = loadFTPArchive();
+  public static RomData getROMFrom(final String url) throws IOException{
+    final URI uri;
+    try{
+      uri = new URI(url);
+    }catch(URISyntaxException ex){
+      throw new IOException("Error in URL '"+url+"\'",ex);
+    }
+    final String scheme = uri.getScheme();
+    final String userInfo = uri.getUserInfo();
+    final String name;
+    final String password;
+    if (userInfo!=null){
+      final String [] splitted = userInfo.split("\\:");
+      name = splitted[0];
+      password = splitted[1];
+    }else{
+      name = null;
+      password = null;
+    }
+    
+    final byte[] loaded;
+    if (scheme.startsWith("http")) {
+      loaded = loadHTTPArchive(url);
+    }
+    else if (scheme.startsWith("ftp")) {
+      loaded = loadFTPArchive(uri.getHost(), uri.getPath(), name, password);
+    }
+    else {
+      throw new IllegalArgumentException("Unsupported scheme [" + scheme + ']');
+    }
+
     final ZipArchiveInputStream in = new ZipArchiveInputStream(new ByteArrayInputStream(loaded));
 
     byte[] rom48 = null;
@@ -117,6 +174,6 @@ public class ROMLoader {
       throw new IOException(ROM_TRDOS + " not found");
     }
 
-    return new RomData(rom48,rom128,romTrDos);
+    return new RomData(rom48, rom128, romTrDos);
   }
 }

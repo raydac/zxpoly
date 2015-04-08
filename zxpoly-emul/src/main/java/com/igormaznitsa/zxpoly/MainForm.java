@@ -201,49 +201,43 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   }
 
   private RomData loadRom(final String romPath) throws IOException {
-    if (romPath == null || !(romPath.contains(":") || romPath.contains("/") || romPath.contains("\\"))) {
-      final String testRom = "zxpolytest.rom";
-      log.info("Load ROM from embedded resource '" + testRom + "'");
-      return RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + testRom));
-    }
-    else {
-      if (romPath.startsWith("ftp://")) {
-        final String cached = "ftpcached_" + Integer.toHexString(romPath.hashCode()).toUpperCase(Locale.ENGLISH) + ".rom";
-        final File cacheFolder = new File(AppOptions.getInstance().getAppConfigFolder(), "cache");
-        final File cachedRom = new File(cacheFolder, cached);
-        RomData result = null;
-        boolean load = true;
-        if (cachedRom.isFile()) {
-          log.info("Load ROM from cached file : " + cachedRom);
-          result = new RomData(FileUtils.readFileToByteArray(cachedRom));
-          load = false;
-        }
-
-        if (load) {
-          log.info("Load ROM from external FTP : " + romPath);
-          result = new ROMLoader().getROM();
-          if (cacheFolder.isDirectory() || cacheFolder.mkdirs()){
-            FileUtils.writeByteArrayToFile(cachedRom, result.getAsArray());
-            log.info("Loaded ROM saved in cache as file : " + romPath);
+    if (romPath != null) {
+      if (romPath.contains("://")) {
+        try {
+          final String cached = "loaded_" + Integer.toHexString(romPath.hashCode()).toUpperCase(Locale.ENGLISH) + ".rom";
+          final File cacheFolder = new File(AppOptions.getInstance().getAppConfigFolder(), "cache");
+          final File cachedRom = new File(cacheFolder, cached);
+          RomData result = null;
+          boolean load = true;
+          if (cachedRom.isFile()) {
+            log.info("Load cached ROM downloaded from '"+ romPath+"' : " + cachedRom);
+            result = new RomData(FileUtils.readFileToByteArray(cachedRom));
+            load = false;
           }
+
+          if (load) {
+            log.info("Load ROM from external URL: " + romPath);
+            result = ROMLoader.getROMFrom(romPath);
+            if (cacheFolder.isDirectory() || cacheFolder.mkdirs()) {
+              FileUtils.writeByteArrayToFile(cachedRom, result.getAsArray());
+              log.info("Loaded ROM saved in cache as file : " + romPath);
+            }
+          }
+          return result;
         }
-        return result;
+        catch (Exception ex) {
+          log.log(Level.WARNING, "Can't load ROM from '" + romPath + "\'", ex);
+        }
       }
       else {
-        log.info("Load ROM from file : " + romPath);
-        final File thefile = new File(romPath);
-        if (!thefile.isFile()) {
-          log.warning("Can't find ROM file '" + romPath + "\'");
-          JOptionPane.showMessageDialog(this, "Can't find ROM file '" + romPath + "\'", "Can't find ROM", JOptionPane.ERROR_MESSAGE);
-          final String testRom = "zxpolytest.rom";
-          log.info("Load ROM from embedded resource '" + testRom + "'");
-          return RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + testRom));
-        }
-        else {
-          return RomData.read(thefile);
-        }
+        log.info("Load ROM from embedded resource '" + romPath + "'");
+        return RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romPath));
       }
     }
+
+    final String testRom = "zxpolytest.rom";
+    log.info("Load ROM from embedded resource '" + testRom + "'");
+    return RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + testRom));
   }
 
   public MainForm(final String title, final String romPath) throws IOException {
@@ -801,15 +795,15 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     try {
       this.board.forceResetCPUs();
       this.board.resetIODevices();
-      
+
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, new FormatZXP(), new FormatZ80(), new FormatSNA());
       if (selected != null) {
         this.lastSnapshotFolder = selected.getParentFile();
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
-            log.info("Loading snapshot " + selectedFilter.getName());
-            selectedFilter.loadFromArray(this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
+          log.info("Loading snapshot " + selectedFilter.getName());
+          selectedFilter.loadFromArray(this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
         }
         catch (Exception ex) {
           log.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);

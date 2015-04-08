@@ -25,15 +25,18 @@ import org.junit.Ignore;
 public class ROMLoaderTest {
   
   @Test
-  public void testLoadFromWOS() throws Exception {
-    final byte [] data = new ROMLoader().loadFTPArchive();
-    assertNotNull(data);
-    assertTrue(data.length>100000);
+  public void testLoadAndExtractROMFromArchiveVTRD() throws Exception {
+    final RomData data = ROMLoader.getROMFrom("http://trd.speccy.cz/emulz/UKV12F5.ZIP");
+    assertEquals(0x4000*3,data.getAsArray().length);
+    assertEquals("48.rom",0xAF,data.getAsArray()[0x01] & 0xFF);
+    assertEquals("128tr.rom",0x01,data.getAsArray()[0x4001] & 0xFF);
+    assertEquals("trdos.rom",0x11,data.getAsArray()[0x8001] & 0xFF);
+    assertEquals(0xFFFF, data.getMask());
   }
   
   @Test
-  public void testLoadAndExtractROMFromArchive() throws Exception {
-    final RomData data = new ROMLoader().getROM();
+  public void testLoadAndExtractROMFromArchiveWOS() throws Exception {
+    final RomData data = ROMLoader.getROMFrom("ftp://anonymous:anonymous@ftp.worldofspectrum.org/pub/sinclair/emulators/pc/russian/ukv12f5.zip");
     assertEquals(0x4000*3,data.getAsArray().length);
     assertEquals("48.rom",0xAF,data.getAsArray()[0x01] & 0xFF);
     assertEquals("128tr.rom",0x01,data.getAsArray()[0x4001] & 0xFF);

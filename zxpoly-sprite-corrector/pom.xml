@@ -59,7 +59,7 @@
                   <configuration>
                     <headerType>gui</headerType>
                     <jar>${project.build.directory}/${artifactId}-${version}.jar</jar>
-                    <outfile>${project.build.directory}/zxpspriteeditor_${project.version}.exe</outfile>
+                    <outfile>${project.build.directory}/zxpoly-sprite-corrector_${project.version}.exe</outfile>
                     <downloadUrl>http://www.oracle.com/technetwork/java/javase/downloads</downloadUrl>
                     <classPath>
                       <mainClass>com.igormaznitsa.zxpspritecorrector.main</mainClass>
@@ -82,7 +82,7 @@
                       <productName>${project.name}</productName>
                       <companyName>igormaznitsa.com</companyName>
                       <internalName>${project.name}</internalName>
-                      <originalFilename>zxpspriteeditor_${project.version}.exe</originalFilename>
+                      <originalFilename>zxpoly-sprite-corrector_${project.version}.exe</originalFilename>
                     </versionInfo>
                   </configuration>
                 </execution>
