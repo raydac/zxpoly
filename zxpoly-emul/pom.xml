@@ -5,7 +5,7 @@
     <groupId>com.igormaznitsa</groupId>
     <artifactId>zxpoly</artifactId>
     <version>${main.version}</version>
-    <relativePath>../pom.xml</relativePath>
+    <relativePath>..</relativePath>
   </parent>
 
   <name>ZX-Poly Emulator</name>
@@ -22,7 +22,7 @@
     <dependency>
       <groupId>com.igormaznitsa</groupId>
       <artifactId>jbbp</artifactId>
-      <version>1.1.0</version>
+      <version>1.2.0</version>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>

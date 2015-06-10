@@ -5,7 +5,7 @@
     <groupId>com.igormaznitsa</groupId>
     <artifactId>zxpoly</artifactId>
     <version>${main.version}</version>
-    <relativePath>../pom.xml</relativePath>
+    <relativePath>..</relativePath>
   </parent>
   
   <artifactId>z80</artifactId>

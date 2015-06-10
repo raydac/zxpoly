@@ -9,6 +9,9 @@ public final class AboutDialog extends javax.swing.JDialog {
   public AboutDialog(final JFrame parent) {
     super(parent, true);
     initComponents();
+    
+    this.jTextArea1.setText(this.jTextArea1.getText().replace("${project.version}", "2.0-SNAPSHOT"));
+    
     this.setLocationRelativeTo(null);
     setVisible(true);
   }
@@ -41,7 +44,7 @@ public final class AboutDialog extends javax.swing.JDialog {
     jTextArea1.setFont(jTextArea1.getFont().deriveFont(jTextArea1.getFont().getSize()+3f));
     jTextArea1.setLineWrap(true);
     jTextArea1.setRows(5);
-    jTextArea1.setText("The ZX-Poly sprite corrector v. 1.1\n--------------------------------------\n(C) 2008-2014 Igor Maznitsa (igor.maznitsa@igormaznitsa.com)\n\n  The utility allows to load a Hobeta file and find sprites inside of opened binary block. Found sprites can be colorized with the editor and the result can be saved as separated Hobeta files.\n--------------------------------------\nThe Icon set from http://www.fatcow.com/free-icons");
+    jTextArea1.setText("The ZX-Poly sprite corrector v. ${project.version}\n--------------------------------------\n(C) 2008-2015 Igor Maznitsa (igor.maznitsa@igormaznitsa.com)\n\n  The utility allows to load a Hobeta file and find sprites inside of opened binary block. Found sprites can be colorized with the editor and the result can be saved as separated Hobeta files.\n--------------------------------------\nSome icons from http://www.fatcow.com/free-icons");
     jTextArea1.setWrapStyleWord(true);
     jScrollPane1.setViewportView(jTextArea1);
 

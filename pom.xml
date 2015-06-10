@@ -6,8 +6,8 @@
   <version>${main.version}</version>
   <packaging>pom</packaging>
 
-  <name>ZXPoly</name>
-  <description>An Emulator of the World's first ZX-Spectrum multi CPU platform providing back compatibility</description>
+  <name>ZXPoly-Main</name>
+  <description>Emulator of ZX-Spectrum multi CPU clone</description>
   <url>https://github.com/raydac/zxpoly</url>
 
   <properties>
