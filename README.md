@@ -8,7 +8,7 @@ License
 ========
 The Emulator and all its parts are published under [GNU GPL3 license]. 
 
-The Emulator Main window
+UI
 =========================
 ![The Main Window of the Emulator](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/tapeloading.png)
 
