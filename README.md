@@ -6,7 +6,7 @@ _Of course there are another solutions for the ZX-Spectrum graphic approach but 
 
 License
 ========
-The Emulator and all its parts are published under [GNU GPL3 license]. 
+The Emulator and all its parts are published under [GNU GPL3 license](http://www.gnu.org/licenses/gpl.html). 
 
 UI
 =========================
@@ -45,8 +45,6 @@ The Mode uses attributes but places pixels in chess order.
 
 [TRD disk with the example can be downloaded from here](https://googledrive.com/host/0BxHnNp97IgMRSHUzREtwbUQtT28/zxw26_adapted_for_zxpoly.trd)
 ![ZXPoly512x384 screenshot](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/zxw_zxpoly512x384.png)
-
-[GNU GPL3 License]:http://www.gnu.org/licenses/gpl.html
 
 # Donation   
 If you like the software you can make some donation to the author   
