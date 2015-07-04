@@ -47,3 +47,7 @@ The Mode uses attributes but places pixels in chess order.
 ![ZXPoly512x384 screenshot](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/zxw_zxpoly512x384.png)
 
 [GNU GPL3 License]:http://www.gnu.org/licenses/gpl.html
+
+# Donation   
+If you like the software you can make some donation to the author   
+[![https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AHWJHJFBAWGL2)
