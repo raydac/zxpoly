@@ -985,6 +985,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     chooser.setAcceptAllFileFilterUsed(false);
     chooser.setMultiSelectionEnabled(false);
     chooser.setDialogTitle(title);
+    chooser.setFileFilter(filter[0]);
     chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
     final File result;
