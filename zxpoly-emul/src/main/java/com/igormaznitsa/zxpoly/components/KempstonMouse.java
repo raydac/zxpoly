@@ -27,11 +27,11 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
   private final int MOUSE_BUTTON_LEFT = 1;
   private final int MOUSE_BUTTON_RIGHT = 2;
   private final int MOUSE_BUTTON_CENTRAL = 4;
-  private final int MOUSE_BUTTONS_NON_ACTIVE = 0xFF;
+  private final int MOUSE_BUTTONS_NON_ACTIVE = MOUSE_BUTTON_LEFT | MOUSE_BUTTON_RIGHT | MOUSE_BUTTON_CENTRAL;
 
   private final Motherboard board;
-  private final AtomicInteger coordX = new AtomicInteger();
-  private final AtomicInteger coordY = new AtomicInteger();
+  private final AtomicInteger coordX = new AtomicInteger(38);
+  private final AtomicInteger coordY = new AtomicInteger(93);
   private final AtomicInteger buttons = new AtomicInteger(MOUSE_BUTTONS_NON_ACTIVE);
 
   private final VideoController videoController;
@@ -94,7 +94,7 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
     if (signalReset) {
       this.coordX.set(128);
       this.coordY.set(86);
-      this.buttons.set(0);
+      this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
     }
   }
 
@@ -187,7 +187,7 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
         }
         break;
       }
-      this.buttons.set((this.buttons.get() & ~button) & MOUSE_BUTTONS_NON_ACTIVE);
+      this.buttons.set(this.buttons.get() & (button ^ MOUSE_BUTTONS_NON_ACTIVE));
     }
     else {
       this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
