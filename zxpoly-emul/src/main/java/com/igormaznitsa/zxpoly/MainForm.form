@@ -232,6 +232,45 @@
                 </MenuItem>
               </SubComponents>
             </Menu>
+            <Menu class="javax.swing.JMenu" name="menuTracer">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Trace"/>
+              </Properties>
+              <SubComponents>
+                <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuTraceCPU0">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="CPU0"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuTraceCPU0ActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuTraceCPU1">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="CPU1"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuTraceCPU1ActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuTraceCPU2">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="CPU2"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuTraceCPU2ActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuTraceCPU3">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="CPU3"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuTraceCPU3ActionPerformed"/>
+                  </Events>
+                </MenuItem>
+              </SubComponents>
+            </Menu>
           </SubComponents>
         </Menu>
         <Menu class="javax.swing.JMenu" name="menuOptions">

@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 public final class Motherboard implements ZXPoly {
 
   private static final int NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE = 4;
-  public static final long CPU_FREQ = 3500000L;
+  public static final long CPU_FREQ = 3540000L;
 
   private static final Logger LOG = Logger.getLogger("MB");
 
@@ -38,7 +38,7 @@ public final class Motherboard implements ZXPoly {
   private final BetaDiscInterface betaDisk;
   private final RomData rom;
 
-  private volatile int port3D00 = (int) System.nanoTime() & 0xFF;
+  private volatile int port3D00 = (int) System.nanoTime() & 0xFF; // simulate noise after turning on
 
   private volatile boolean totalReset;
   private volatile int resetCounter;

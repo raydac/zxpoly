@@ -21,6 +21,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.*;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
@@ -39,10 +40,10 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private volatile int currentVideoMode = VIDEOMODE_RESERVED2;
 
   private Dimension size = new Dimension(512, 384);
-  private int zoom = 1;
+  private volatile float zoom = 1.0f;
   private volatile int portFEw = 0;
 
-  private boolean holdMouse = false;
+  private volatile boolean holdMouse = false;
 
   public static final long CYCLES_BETWEEN_INT = 20000000L / (1000000000L / Motherboard.CPU_FREQ);
   private static final int BORDER_LINES = 64;
@@ -77,7 +78,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     new Color(0, 190, 190),
     new Color(190, 190, 0),
     new Color(190, 190, 190),
-    // high bright
+    // high bright  
     new Color(0, 0, 0),
     new Color(0, 0, 255),
     new Color(255, 0, 0),
@@ -88,7 +89,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     new Color(255, 255, 255)
   };
 
-  public VideoController(final Motherboard board) {
+  public VideoController (final Motherboard board) {
     super();
 
     this.board = board;
@@ -100,7 +101,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     this.addMouseWheelListener(this);
   }
 
-  public void setHoldMouse(final boolean flag) {
+  public void setHoldMouse (final boolean flag) {
     this.holdMouse = flag;
     if (flag) {
       setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT), new Point(0, 0), "InvisibleCursor"));
@@ -110,19 +111,19 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
-  public boolean isHoldMouse() {
+  public boolean isHoldMouse () {
     return this.holdMouse;
   }
 
   @Override
-  public void mouseWheelMoved(final MouseWheelEvent e) {
+  public void mouseWheelMoved (final MouseWheelEvent e) {
     if (e.isControlDown()) {
-      final int newzoom;
+      final float newzoom;
       if (e.getPreciseWheelRotation() > 0) {
-        newzoom = Math.max(1, this.zoom - 1);
+        newzoom = Math.max(1.0f, this.zoom - 0.2f);
       }
       else {
-        newzoom = Math.min(4, this.zoom + 1);
+        newzoom = Math.min(5.0f, this.zoom + 0.2f);
       }
       if (newzoom != this.zoom) {
         updateZoom(newzoom);
@@ -131,39 +132,39 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   }
 
   @Override
-  public Dimension getPreferredSize() {
+  public Dimension getPreferredSize () {
     return this.size;
   }
 
   @Override
-  public Dimension getMinimumSize() {
+  public Dimension getMinimumSize () {
     return this.size;
   }
 
-  private void updateZoom(final int value) {
+  private void updateZoom (final float value) {
     this.zoom = value;
-    this.size = new Dimension(512 * value, 384 * value);
+    this.size = new Dimension(Math.round(512 * value), Math.round(384 * value));
 
     revalidate();
     repaint();
   }
 
-  public static int extractYFromAddress(final int address) {
+  public static int extractYFromAddress (final int address) {
     return ((address & 0x1800) >> 5) | ((address & 0x700) >> 8) | ((address & 0xE0) >> 2);
   }
 
-  public static int calcAttributeAddressZXMode(final int screenOffset) {
+  public static int calcAttributeAddressZXMode (final int screenOffset) {
     final int line = ((screenOffset >>> 5) & 0x07) | ((screenOffset >>> 8) & 0x18);
     final int column = screenOffset & 0x1F;
     final int off = ((line >>> 3) << 8) | (((line & 0x07) << 5) | column);
     return 0x1800 + off;
   }
 
-  private void drawBorder(final Graphics2D g, final int width, final int height) {
+  private void drawBorder (final Graphics2D g, final int width, final int height) {
     int curindex = -1;
     int y = 0;
     int curheight = height;
-    final int lineHeight = (height+(BORDER_LINES>>1)) / BORDER_LINES;
+    final int lineHeight = (height + (BORDER_LINES >> 1)) / BORDER_LINES;
     for (final byte c : this.borderLineColors) {
       if (curindex != c) {
         curindex = c;
@@ -173,15 +174,15 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       y += lineHeight;
       curheight -= lineHeight;
     }
-    Arrays.fill(this.borderLineColors, (byte)(this.portFEw & 7));
+    Arrays.fill(this.borderLineColors, (byte) (this.portFEw & 7));
   }
 
   @Override
-  public void paintComponent(final Graphics g) {
+  public void paintComponent (final Graphics g) {
     final Graphics2D g2 = (Graphics2D) g;
 
     final Rectangle bounds = this.getBounds();
-    
+
     final int width = bounds.width;
     final int height = bounds.height;
 
@@ -194,7 +195,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     this.drawBuffer(g2, xoff, yoff, this.zoom);
   }
 
-  private int extractInkColor(final int attribute, final boolean flashActive) {
+  private int extractInkColor (final int attribute, final boolean flashActive) {
     final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
     final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
     final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
@@ -216,7 +217,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     return result;
   }
 
-  private int extractPaperColor(final int attribute, final boolean flashActive) {
+  private int extractPaperColor (final int attribute, final boolean flashActive) {
     final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
     final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
     final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
@@ -238,7 +239,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     return result;
   }
 
-  private void refreshBufferData() {
+  private void refreshBufferData () {
     final boolean isflash = this.board.isFlashActive();
 
     switch (this.currentVideoMode) {
@@ -293,9 +294,9 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
           int x = 8;
           while (x-- > 0) {
             final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
-                    | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
-                    | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
-                    | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
+                | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
+                | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
+                | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
 
             videoValue0 <<= 1;
             videoValue1 <<= 1;
@@ -352,17 +353,17 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
-  public void drawBuffer(final Graphics2D gfx, final int x, final int y, final int zoom) {
+  public void drawBuffer (final Graphics2D gfx, final int x, final int y, final float zoom) {
     lockBuffer();
     try {
-      if (zoom < 2) {
+      if (zoom == 1.0f) {
         gfx.drawImage(this.buffer, null, x, y);
       }
       else {
-        final int nzoom = Math.max(1, zoom);
+        final float nzoom = Math.max(1.0f, zoom);
         gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-        gfx.drawImage(this.buffer, x, y, 512 * nzoom, 384 * nzoom, null);
+        gfx.drawImage(this.buffer, x, y, Math.round(512 * nzoom), Math.round(384 * nzoom), null);
       }
     }
     finally {
@@ -370,7 +371,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
-  private static String decodeVideoModeCode(final int code) {
+  private static String decodeVideoModeCode (final int code) {
     switch (code) {
       case 0:
         return "ZX-Spectrum 0";
@@ -393,11 +394,11 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
-  public int getVideoMode() {
+  public int getVideoMode () {
     return this.currentVideoMode;
   }
 
-  public void setVideoMode(final int newVideoMode) {
+  public void setVideoMode (final int newVideoMode) {
     lockBuffer();
     try {
       if (this.currentVideoMode != newVideoMode) {
@@ -411,20 +412,20 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
-  public void setBorderColor(final int colorIndex) {
+  public void setBorderColor (final int colorIndex) {
     this.portFEw |= (this.portFEw & 7) | (colorIndex & 0x07);
-    Arrays.fill(this.borderLineColors, (byte)colorIndex);
+    Arrays.fill(this.borderLineColors, (byte) colorIndex);
   }
 
-  public void lockBuffer() {
+  public void lockBuffer () {
     bufferLocker.lock();
   }
 
-  public void unlockBuffer() {
+  public void unlockBuffer () {
     bufferLocker.unlock();
   }
 
-  public void updateBuffer() {
+  public void updateBuffer () {
     lockBuffer();
     try {
       this.refreshBufferData();
@@ -434,31 +435,32 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
-  public RenderedImage makeCopyOfCurrentPicture(){
+  public RenderedImage makeCopyOfCurrentPicture () {
     this.lockBuffer();
-    try{
+    try {
       final BufferedImage result = new BufferedImage(this.buffer.getWidth(), this.buffer.getHeight(), BufferedImage.TYPE_INT_RGB);
       final Graphics g = result.getGraphics();
       g.drawImage(this.buffer, 0, 0, this);
       g.dispose();
       return result;
-    }finally{
+    }
+    finally {
       this.unlockBuffer();
     }
   }
-  
+
   @Override
-  public Motherboard getMotherboard() {
+  public Motherboard getMotherboard () {
     return this.board;
   }
 
   @Override
-  public int readIO(final ZXPolyModule module, final int port) {
+  public int readIO (final ZXPolyModule module, final int port) {
     return 0;
   }
 
   @Override
-  public void writeIO(final ZXPolyModule module, final int port, final int value) {
+  public void writeIO (final ZXPolyModule module, final int port, final int value) {
     if (!module.isTRDOSActive() && (port & 0xFF) == 0xFE) {
       this.portFEw = value & 0xFF;
 
@@ -471,55 +473,55 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
         borderLineIndex = (int) (machineCycles % BORDER_LINES);
       }
       if (borderLineIndex >= 0 && borderLineIndex < BORDER_LINES) {
-        this.borderLineColors[borderLineIndex] = (byte)(this.portFEw & 0x7);
+        this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
       }
     }
   }
 
   @Override
-  public void preStep(final boolean signalReset, final boolean signalInt) {
+  public void preStep (final boolean signalReset, final boolean signalInt) {
     if (signalReset) {
       this.portFEw = 0x00;
     }
   }
 
   @Override
-  public void doReset() {
+  public void doReset () {
   }
 
   @Override
-  public void postStep(long spentMachineCyclesForStep) {
+  public void postStep (long spentMachineCyclesForStep) {
   }
 
-  public int getZoom(){
+  public float getZoom () {
     return this.zoom;
   }
-  
-  public int getScrYForZXScr(final int zxY) {
+
+  public int getScrYForZXScr (final int zxY) {
     final int height = getHeight();
     final int yoff = (height - this.size.height) / 2;
-    return (zxY * (this.zoom << 1)) + yoff;
+    return (zxY * Math.round(this.zoom * 2)) + yoff;
   }
 
-  public int getZXScrY(final int compoY) {
+  public int getZXScrY (final int compoY) {
     final int height = getHeight();
     final int yoff = (height - this.size.height) / 2;
 
-    final int result = (compoY - yoff) / (this.zoom << 1);
+    final int result = (compoY - yoff) / Math.round(this.zoom * 2);
     return Math.max(0x00, Math.min(191, result));
   }
 
-  public int getZXScrX(final int compoX) {
+  public int getZXScrX (final int compoX) {
     final int width = getWidth();
     final int xoff = (width - this.size.width) / 2;
 
-    final int result = (compoX - xoff) / (this.zoom << 1);
+    final int result = (compoX - xoff) / Math.round(this.zoom * 2);
     return Math.max(0x00, Math.min(0xFF, result));
   }
 
-  public int getScrXForZXScr(final int zxX) {
+  public int getScrXForZXScr (final int zxX) {
     final int width = getWidth();
     final int xoff = (width - this.size.width) / 2;
-    return (zxX * (this.zoom << 1)) + xoff;
+    return (zxX * Math.round(this.zoom * 2)) + xoff;
   }
 }

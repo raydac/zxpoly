@@ -17,8 +17,9 @@
 package com.igormaznitsa.zxpoly.components;
 
 import com.igormaznitsa.z80.*;
-import java.util.Arrays;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.logging.Logger;
 
 public final class ZXPolyModule implements IODevice, Z80CPUBus {
@@ -40,9 +41,9 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   private final int PORT_REG2;
   private final int PORT_REG3;
 
-  private final int[] zxPolyRegsWritten = new int[4];
+  private final AtomicIntegerArray zxPolyRegsWritten = new AtomicIntegerArray(4);
 
-  private volatile int port7FFD;
+  private final AtomicInteger port7FFD = new AtomicInteger();
   private int lastM1Address;
 
   private boolean activeRegisterReading;
@@ -57,14 +58,14 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
 
   private long mcyclesOfActivityBetweenInt;
   
-  private boolean trdosROM;
+  private volatile boolean trdosROM;
 
   private static int calcRegAddress(final int moduleIndex, final int reg) {
     return (moduleIndex << 12) | (reg << 8) | 0xFF;
   }
 
   public int getHeapOffset() {
-    return (this.zxPolyRegsWritten[0] & 7) * 0x10000;
+    return (this.zxPolyRegsWritten.get(0) & 7) * 0x10000;
   }
 
   public ZXPolyModule(final Motherboard board, final int index) {
@@ -84,7 +85,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   }
 
   private int getRAMOffsetInHeap() {
-    return (this.zxPolyRegsWritten[0] & 7) * 0x10000;
+    return (this.zxPolyRegsWritten.get(0) & 7) * 0x10000;
   }
 
   public Z80 getCPU() {
@@ -92,11 +93,11 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   }
 
   public void loadModuleLocalPortsByValues(final int port7ffd, final int reg0, final int reg1, final int reg2, final int reg3){
-    this.port7FFD = port7ffd & 0xFF;
-    this.zxPolyRegsWritten[0] = reg0 & 0xFF;
-    this.zxPolyRegsWritten[1] = reg1 & 0xFF;
-    this.zxPolyRegsWritten[2] = reg2 & 0xFF;
-    this.zxPolyRegsWritten[3] = reg3 & 0xFF;
+    this.port7FFD.set(port7ffd & 0xFF);
+    this.zxPolyRegsWritten.set(0,reg0 & 0xFF);
+    this.zxPolyRegsWritten.set(1,reg1 & 0xFF);
+    this.zxPolyRegsWritten.set(2,reg2 & 0xFF);
+    this.zxPolyRegsWritten.set(3,reg3 & 0xFF);
   }
   
   @Override
@@ -152,7 +153,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     if (this.board.isZXPolyMode()) {
       if (this.board.is3D00NotLocked() && module.moduleIndex <= this.moduleIndex && !module.isTRDOSActive()) {
         if (port == PORT_REG0) {
-          this.zxPolyRegsWritten[0] = value;
+          this.zxPolyRegsWritten.set(0,value);
           if ((value & ZXPOLY_wREG0_RESET) != 0) {
             prepareLocalReset();
           }
@@ -165,13 +166,13 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
         }
         else if (!module.isTRDOSActive()) {
           if (port == PORT_REG1) {
-            this.zxPolyRegsWritten[1] = value;
+            this.zxPolyRegsWritten.set(1,value);
           }
           else if (port == PORT_REG2) {
-            this.zxPolyRegsWritten[2] = value;
+            this.zxPolyRegsWritten.set(2,value);
           }
           else if (port == PORT_REG3) {
-            this.zxPolyRegsWritten[3] = value;
+            this.zxPolyRegsWritten.set(3,value);
           }
         }
       }
@@ -210,14 +211,14 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     }
     
     if (this.moduleIndex == 0) {
-      doInt = this.board.is3D00NotLocked() || is7FFDLocked() || ((this.port7FFD & PORTw_ZX128_INTCPU0) == 0)  ? (commonInt || this.localInt) : false;
+      doInt = this.board.is3D00NotLocked() || is7FFDLocked() || ((this.port7FFD.get() & PORTw_ZX128_INTCPU0) == 0)  ? (commonInt || this.localInt) : false;
     }
     else {
       doInt = (!this.activeRegisterReading && this.registerReadingCounter <= 0) && ((!this.board.is3D00NotLocked() && commonInt) || this.localInt);
     }
     this.localInt = false;
 
-    doNmi = (this.zxPolyRegsWritten[1] & ZXPOLY_wREG1_DISABLE_NMI) == 0 ? this.localNmi : false;
+    doNmi = (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_DISABLE_NMI) == 0 ? this.localNmi : false;
     this.localNmi = false;
 
     if (doInt) {
@@ -265,14 +266,14 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   }
 
   public boolean is7FFDLocked(){
-    return (this.port7FFD & PORTw_ZX128_LOCK)!=0;
+    return (this.port7FFD.get() & PORTw_ZX128_LOCK)!=0;
   }
   
   public int readVideoMemory(final int videoOffset) {
     final int moduleRamOffsetInHeap = getHeapOffset();
 
     final int result;
-    if ((this.port7FFD & PORTw_ZX128_SCREEN) == 0) {
+    if ((this.port7FFD.get() & PORTw_ZX128_SCREEN) == 0) {
       // RAM 5
       result = this.board.readRAM(this, 0x14000 + moduleRamOffsetInHeap + videoOffset);
     }
@@ -296,7 +297,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
 
       final int value;
       if (theaddress < 0x4000) {
-        if ((this.port7FFD & PORTw_ZX128_ROMRAM) == 0) {
+        if ((this.port7FFD.get() & PORTw_ZX128_ROMRAM) == 0) {
           value = this.board.readROM(theaddress);
         }
         else {
@@ -337,7 +338,9 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   @Override
   public byte readMemory(final Z80 cpu, final int address, final boolean m1) {
 
-    final boolean activeRom128 = (this.port7FFD & PORTw_ZX128_ROM) == 0;
+    final int value7FFD = this.port7FFD.get();
+    
+    final boolean activeRom128 = (value7FFD & PORTw_ZX128_ROM) == 0;
 
     if (m1) {
       this.lastM1Address = address;
@@ -357,7 +360,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     final byte result;
     if (this.board.isZXPolyMode()) {
       if (m1 && this.board.is3D00NotLocked() && this.registerReadingCounter == 0) {
-        this.stopAddressWait = address != 0 && address == (this.zxPolyRegsWritten[2] | (this.zxPolyRegsWritten[3] << 8));
+        this.stopAddressWait = address != 0 && address == (this.zxPolyRegsWritten.get(2) | (this.zxPolyRegsWritten.get(3) << 8));
       }
 
       if (this.registerReadingCounter > 0 && !this.activeRegisterReading && m1 && address == 0) {
@@ -366,19 +369,19 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
 
       if (this.activeRegisterReading) {
         // read local registers R1-R3 instead of memory
-        result = (byte) this.zxPolyRegsWritten[4 - this.registerReadingCounter];
+        result = (byte) this.zxPolyRegsWritten.get(4 - this.registerReadingCounter);
         this.registerReadingCounter--;
         if (this.registerReadingCounter == 0) {
-          this.zxPolyRegsWritten[1] = 0;
-          this.zxPolyRegsWritten[2] = 0;
-          this.zxPolyRegsWritten[3] = 0;
+          this.zxPolyRegsWritten.set(1,0);
+          this.zxPolyRegsWritten.set(2,0);
+          this.zxPolyRegsWritten.set(3,0);
           this.activeRegisterReading = false;
         }
       }
       else {
         final int ramAddress = ramOffset2HeapAddress(address);
         if (address < 0x4000) {
-          if ((this.port7FFD & PORTw_ZX128_ROMRAM) != 0) {
+          if ((value7FFD & PORTw_ZX128_ROMRAM) != 0) {
             //RAM0
             result = (byte) this.board.readRAM(this, ramAddress);
           }
@@ -399,7 +402,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     else {
       final int ramAddress = ramOffset2HeapAddress(address);
       if (address < 0x4000) {
-        if ((this.port7FFD & PORTw_ZX128_ROMRAM) != 0) {
+        if ((value7FFD & PORTw_ZX128_ROMRAM) != 0) {
           //RAM0
           result = (byte) this.board.readRAM(this, ramAddress);
         }
@@ -441,7 +444,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
       break;
       case 3: {
         //CPU3, top page
-        result = 0x4000 * (this.port7FFD & 0x7);
+        result = 0x4000 * (this.port7FFD.get() & 0x7);
       }
       break;
     }
@@ -452,13 +455,13 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   public void writeMemory(final Z80 cpu, final int address, final byte data) {
     final int val = data & 0xFF;
     if (this.board.isZXPolyMode()) {
-      final int reg0 = this.zxPolyRegsWritten[0];
+      final int reg0 = this.zxPolyRegsWritten.get(0);
 
       if ((reg0 & REG0w_MEMORY_WRITING_DISABLED) == 0) {
         final int ramOffsetInHeap = ramOffset2HeapAddress(address);
 
         if (address < 0x4000) {
-          if (this.board.is3D00NotLocked() && (this.port7FFD & PORTw_ZX128_ROMRAM) != 0) {
+          if (this.board.is3D00NotLocked() && (this.port7FFD.get() & PORTw_ZX128_ROMRAM) != 0) {
             //RAM0
             this.board.writeRAM(this, ramOffsetInHeap, val);
           }
@@ -486,11 +489,11 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
           result = (byte) this.board.readBusIO(this, port);
         }
         else {
-          final int reg0 = zxPolyRegsWritten[0];
+          final int reg0 = zxPolyRegsWritten.get(0);
           final int outForCPU0 = this.moduleIndex == this.board.getMappedCPUIndex() ? PORTr_ZXPOLY_IOFORCPU0 : 0;
           final int memDisabled = (reg0 & ZXPOLY_wREG0_MEMWR_DISABLED) == 0 ? 0 : PORTr_ZXPOLY_MEMDISABLED;
           final int ioDisabled = (reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 ? 0 : PORTr_ZXPOLY_IODISABLED;
-          result = (byte) (this.moduleIndex | ((this.zxPolyRegsWritten[0] & 7) << 5) | outForCPU0 | memDisabled | ioDisabled);
+          result = (byte) (this.moduleIndex | ((reg0 & 7) << 5) | outForCPU0 | memDisabled | ioDisabled);
 
         }
       }
@@ -505,8 +508,8 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   }
 
   public void set7FFD(final int value, final boolean enforce) {
-    if (((this.port7FFD & PORTw_ZX128_LOCK) == 0) || enforce) {
-      this.port7FFD = value;
+    if (((this.port7FFD.get() & PORTw_ZX128_LOCK) == 0) || enforce) {
+      this.port7FFD.set(value);
     }
   }
 
@@ -515,12 +518,12 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     final int val = data & 0xFF;
 
     if (this.board.isZXPolyMode()) {
-      final int reg0 = this.zxPolyRegsWritten[0];
+      final int reg0 = this.zxPolyRegsWritten.get(0);
 
       if ((reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 || port == PORTw_ZX128) {
         if (port == PORTw_ZX128) {
           if (this.moduleIndex == 0) {
-            if (this.board.getMappedCPUIndex() > 0 && (this.zxPolyRegsWritten[1] & ZXPOLY_wREG1_WRITE_MAPPED_IO_7FFD) != 0) {
+            if (this.board.getMappedCPUIndex() > 0 && (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_WRITE_MAPPED_IO_7FFD) != 0) {
               this.board.writeBusIO(this, port, val);
             }
             else {
@@ -582,14 +585,14 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   }
 
   public int getReg1WrittenData() {
-    return this.zxPolyRegsWritten[1];
+    return this.zxPolyRegsWritten.get(1);
   }
 
   private void setStateForSystemReset() {
     LOGGER.info("Reset");
     this.intCounter = 0;
     this.nmiCounter = 0;
-    this.port7FFD = 0;
+    this.port7FFD.set(0);
     this.trdosROM = false;
     this.registerReadingCounter = 0;
     this.activeRegisterReading = false;
@@ -597,10 +600,13 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     this.lastM1Address = 0;
     this.localInt = false;
     this.localNmi = false;
-    Arrays.fill(this.zxPolyRegsWritten, 0);
+    
+    for(int i=0;i<this.zxPolyRegsWritten.length();i++){
+      this.zxPolyRegsWritten.set(i, 0);
+    }
 
     // set the intitial module memory offset in the heap
-    this.zxPolyRegsWritten[0] = this.moduleIndex << 1;
+    this.zxPolyRegsWritten.set(0,this.moduleIndex << 1);
   }
 
   public int getLastM1Address() {
@@ -621,7 +627,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
   }
   
   public void lockZX48Mode() {
-    this.port7FFD = 0b00110000;
+    this.port7FFD.set(0b00110000);
     this.trdosROM = false;
   }
 

@@ -205,8 +205,10 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
   @Override
   public void mouseMoved(final MouseEvent e) {
     if (this.videoController.isHoldMouse()) {
-      final int dx = (e.getX() - this.pcMouseX) / this.videoController.getZoom();
-      final int dy = (e.getY() - this.pcMouseY) / this.videoController.getZoom();
+      final float zoom = this.videoController.getZoom();
+      
+      final int dx = Math.round((e.getX() - this.pcMouseX) / zoom);
+      final int dy = Math.round((e.getY() - this.pcMouseY) / zoom);
       this.coordX.set((this.coordX.get()+dx)&0xFF);
       this.coordY.set((this.coordY.get()-dy) & 0xFF);
       this.pcMouseX = e.getX();

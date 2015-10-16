@@ -22,13 +22,16 @@ import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
 import com.igormaznitsa.zxpoly.formats.*;
+import com.igormaznitsa.zxpoly.tracer.TraceCPUForm;
 import com.igormaznitsa.zxpoly.ui.*;
 import com.igormaznitsa.zxpoly.utils.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.RenderedImage;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -67,9 +70,24 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private final CPULoadIndicator indicatorCPU2 = new CPULoadIndicator(48, 14, 4, "CPU2", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final CPULoadIndicator indicatorCPU3 = new CPULoadIndicator(48, 14, 4, "CPU3", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
 
+  private final TraceCPUForm[] cpuTracers = new TraceCPUForm[4];
+  private final AtomicInteger activeTracerWindowCounter = new AtomicInteger();
+
+  private final Runnable traceWindowsUpdater = new Runnable() {
+
+    @Override
+    public void run () {
+      for (final TraceCPUForm form : cpuTracers) {
+        if (form != null) {
+          form.refreshViewState();
+        }
+      }
+    }
+  };
+
   private final Runnable infobarUpdater = new Runnable() {
     @Override
-    public void run() {
+    public void run () {
       final Icon turboico = turboMode ? ICO_TURBO : ICO_TURBO_DIS;
       if (labelTurbo.getIcon() != turboico) {
         labelTurbo.setIcon(turboico);
@@ -103,18 +121,19 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
         indicatorCPU3.updateForState(board.getActivityCPU3());
       }
 
+      updateTracerCheckBoxes();
     }
   };
 
   private static class TRDFileFilter extends FileFilter {
 
     @Override
-    public boolean accept(File f) {
+    public boolean accept (File f) {
       return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".trd");
     }
 
     @Override
-    public String getDescription() {
+    public String getDescription () {
       return "TR-DOS image (*.trd)";
     }
 
@@ -123,12 +142,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private static class PNGFileFilter extends FileFilter {
 
     @Override
-    public boolean accept(File f) {
+    public boolean accept (File f) {
       return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".png");
     }
 
     @Override
-    public String getDescription() {
+    public String getDescription () {
       return "PNG image (*.png)";
     }
 
@@ -137,12 +156,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private static class SCLFileFilter extends FileFilter {
 
     @Override
-    public boolean accept(File f) {
+    public boolean accept (File f) {
       return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".scl");
     }
 
     @Override
-    public String getDescription() {
+    public String getDescription () {
       return "SCL image (*.scl)";
     }
 
@@ -151,12 +170,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private static class TapFileFilter extends FileFilter {
 
     @Override
-    public boolean accept(File f) {
+    public boolean accept (File f) {
       return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".tap");
     }
 
     @Override
-    public String getDescription() {
+    public String getDescription () {
       return "TAP file (*.tap)";
     }
 
@@ -165,12 +184,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private static class WavFileFilter extends FileFilter {
 
     @Override
-    public boolean accept(File f) {
+    public boolean accept (File f) {
       return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".wav");
     }
 
     @Override
-    public String getDescription() {
+    public String getDescription () {
       return "WAV file (*.wav)";
     }
 
@@ -189,18 +208,18 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
 
     private final KeyboardKempstonAndTapeIn keyboard;
 
-    public KeyboardDispatcher(final KeyboardKempstonAndTapeIn kbd) {
+    public KeyboardDispatcher (final KeyboardKempstonAndTapeIn kbd) {
       this.keyboard = kbd;
     }
 
     @Override
-    public boolean dispatchKeyEvent(KeyEvent e) {
+    public boolean dispatchKeyEvent (KeyEvent e) {
       this.keyboard.onKeyEvent(e);
       return false;
     }
   }
 
-  private RomData loadRom(final String romPath) throws IOException {
+  private RomData loadRom (final String romPath) throws IOException {
     if (romPath != null) {
       if (romPath.contains("://")) {
         try {
@@ -210,7 +229,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
           RomData result = null;
           boolean load = true;
           if (cachedRom.isFile()) {
-            log.info("Load cached ROM downloaded from '"+ romPath+"' : " + cachedRom);
+            log.info("Load cached ROM downloaded from '" + romPath + "' : " + cachedRom);
             result = new RomData(FileUtils.readFileToByteArray(cachedRom));
             load = false;
           }
@@ -240,7 +259,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     return RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + testRom));
   }
 
-  public MainForm(final String title, final String romPath) throws IOException {
+  public MainForm (final String title, final String romPath) throws IOException {
     initComponents();
     this.setTitle(title);
 
@@ -286,7 +305,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     this.setLocationRelativeTo(null);
   }
 
-  private void updateTapeMenu() {
+  private void updateTapeMenu () {
     final TapeFileReader reader = this.keyboardAndTapeModule.getTap();
     if (reader == null) {
       this.menuTap.setEnabled(false);
@@ -302,8 +321,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   }
 
   @Override
-  public void run() {
-    final int INT_TO_UPDATE_INFOPANEL = 10;
+  public void run () {
+    final int INT_TO_UPDATE_INFOPANEL = 20;
 
     long nextSystemInt = System.currentTimeMillis() + TIMER_INT_DELAY_MILLISECONDS;
     int countdownToPaint = 0;
@@ -344,18 +363,35 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       finally {
         stepSemaphor.unlock();
       }
+
+      if (this.activeTracerWindowCounter.get() > 0) {
+        updateTracerWindowsForStep();
+      }
     }
   }
 
-  public void setTurboMode(final boolean value) {
+  private void updateTracerWindowsForStep () {
+    try {
+      SwingUtilities.invokeAndWait(this.traceWindowsUpdater);
+    }
+    catch (InterruptedException ex) {
+      log.log(Level.INFO, "Interrupted trace window updater");
+    }
+    catch (InvocationTargetException ex) {
+      ex.printStackTrace();
+      log.log(Level.SEVERE, "Error in trace window updater", ex);
+    }
+  }
+
+  public void setTurboMode (final boolean value) {
     this.turboMode = value;
   }
 
-  public boolean isTurboMode() {
+  public boolean isTurboMode () {
     return this.isTurboMode();
   }
 
-  private void updateScreen() {
+  private void updateScreen () {
     final VideoController vc = board.getVideoController();
     vc.updateBuffer();
     vc.paintImmediately(0, 0, vc.getWidth(), vc.getHeight());;
@@ -366,7 +402,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
    * WARNING: Do NOT modify this code. The content of this method is always
    * regenerated by the Form Editor.
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings ("unchecked")
   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
     java.awt.GridBagConstraints gridBagConstraints;
@@ -405,6 +441,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuServiceSaveScreen = new javax.swing.JMenuItem();
     menuTapExportAs = new javax.swing.JMenu();
     menuTapExportAsWav = new javax.swing.JMenuItem();
+    menuTracer = new javax.swing.JMenu();
+    menuTraceCPU0 = new javax.swing.JCheckBoxMenuItem();
+    menuTraceCPU1 = new javax.swing.JCheckBoxMenuItem();
+    menuTraceCPU2 = new javax.swing.JCheckBoxMenuItem();
+    menuTraceCPU3 = new javax.swing.JCheckBoxMenuItem();
     menuOptions = new javax.swing.JMenu();
     menuOptionsShowIndicators = new javax.swing.JCheckBoxMenuItem();
     menuOptionsZX128Mode = new javax.swing.JCheckBoxMenuItem();
@@ -648,6 +689,42 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
 
     menuService.add(menuTapExportAs);
 
+    menuTracer.setText("Trace");
+
+    menuTraceCPU0.setText("CPU0");
+    menuTraceCPU0.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTraceCPU0ActionPerformed(evt);
+      }
+    });
+    menuTracer.add(menuTraceCPU0);
+
+    menuTraceCPU1.setText("CPU1");
+    menuTraceCPU1.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTraceCPU1ActionPerformed(evt);
+      }
+    });
+    menuTracer.add(menuTraceCPU1);
+
+    menuTraceCPU2.setText("CPU2");
+    menuTraceCPU2.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTraceCPU2ActionPerformed(evt);
+      }
+    });
+    menuTracer.add(menuTraceCPU2);
+
+    menuTraceCPU3.setText("CPU3");
+    menuTraceCPU3.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTraceCPU3ActionPerformed(evt);
+      }
+    });
+    menuTracer.add(menuTraceCPU3);
+
+    menuService.add(menuTracer);
+
     menuBar.add(menuService);
 
     menuOptions.setText("Options");
@@ -716,7 +793,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     this.panelIndicators.setVisible(this.menuOptionsShowIndicators.isSelected());
   }//GEN-LAST:event_menuOptionsShowIndicatorsActionPerformed
 
-  private void loadDiskIntoDrive(final int drive) {
+  private void loadDiskIntoDrive (final int drive) {
     this.stepSemaphor.lock();
     try {
       final char diskName;
@@ -756,7 +833,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     }
   }
 
-  private void updateInfoPanel() {
+  private void updateInfoPanel () {
     if (SwingUtilities.isEventDispatchThread()) {
       infobarUpdater.run();
     }
@@ -977,7 +1054,81 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     new AboutDialog(this).setVisible(true);
   }//GEN-LAST:event_menuHelpAboutActionPerformed
 
-  private File chooseFileForOpen(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
+  private void menuTraceCPU0ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU0ActionPerformed
+    if (this.menuTraceCPU0.isSelected()) {
+      activateTracerForCPUModule(0);
+    }
+    else {
+      deactivateTracerForCPUModule(0);
+    }
+  }//GEN-LAST:event_menuTraceCPU0ActionPerformed
+
+  private void menuTraceCPU1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU1ActionPerformed
+    if (this.menuTraceCPU1.isSelected()) {
+      activateTracerForCPUModule(1);
+    }
+    else {
+      deactivateTracerForCPUModule(1);
+    }
+  }//GEN-LAST:event_menuTraceCPU1ActionPerformed
+
+  private void menuTraceCPU2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU2ActionPerformed
+    if (this.menuTraceCPU2.isSelected()) {
+      activateTracerForCPUModule(2);
+    }
+    else {
+      deactivateTracerForCPUModule(2);
+    }
+  }//GEN-LAST:event_menuTraceCPU2ActionPerformed
+
+  private void menuTraceCPU3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU3ActionPerformed
+    if (this.menuTraceCPU3.isSelected()) {
+      activateTracerForCPUModule(3);
+    }
+    else {
+      deactivateTracerForCPUModule(3);
+    }
+  }//GEN-LAST:event_menuTraceCPU3ActionPerformed
+
+  private void activateTracerForCPUModule (final int index) {
+    TraceCPUForm form = this.cpuTracers[index];
+    if (form == null) {
+      form = new TraceCPUForm(this, this.board, index);
+      form.setVisible(true);
+    }
+    form.toFront();
+    form.requestFocus();
+  }
+
+  private void deactivateTracerForCPUModule (final int index) {
+    TraceCPUForm form = this.cpuTracers[index];
+    if (form != null) {
+      form.dispose();
+    }
+  }
+
+  private void updateTracerCheckBoxes () {
+    this.menuTraceCPU0.setSelected(this.cpuTracers[0] != null);
+    this.menuTraceCPU1.setSelected(this.cpuTracers[1] != null);
+    this.menuTraceCPU2.setSelected(this.cpuTracers[2] != null);
+    this.menuTraceCPU3.setSelected(this.cpuTracers[3] != null);
+  }
+
+  public void onTracerActivated (final TraceCPUForm tracer) {
+    final int index = tracer.getModuleIndex();
+    this.cpuTracers[index] = tracer;
+    updateTracerCheckBoxes();
+    this.activeTracerWindowCounter.incrementAndGet();
+  }
+
+  public void onTracerDeactivated (final TraceCPUForm tracer) {
+    final int index = tracer.getModuleIndex();
+    this.cpuTracers[index] = null;
+    updateTracerCheckBoxes();
+    this.activeTracerWindowCounter.decrementAndGet();
+  }
+
+  private File chooseFileForOpen (final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     for (final FileFilter f : filter) {
       chooser.addChoosableFileFilter(f);
@@ -1001,7 +1152,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     return result;
   }
 
-  private File chooseFileForSave(final String title, final File initial, final FileFilter filter) {
+  private File chooseFileForSave (final String title, final File initial, final FileFilter filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     chooser.addChoosableFileFilter(filter);
     chooser.setAcceptAllFileFilterUsed(true);
@@ -1020,7 +1171,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   }
 
   @Override
-  public void actionPerformed(final ActionEvent e) {
+  public void actionPerformed (final ActionEvent e) {
     if (e.getSource() instanceof TapeFileReader) {
       updateTapeMenu();
     }
@@ -1065,6 +1216,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private javax.swing.JCheckBoxMenuItem menuTapPlay;
   private javax.swing.JMenuItem menuTapPrevBlock;
   private javax.swing.JMenuItem menuTapeRewindToStart;
+  private javax.swing.JCheckBoxMenuItem menuTraceCPU0;
+  private javax.swing.JCheckBoxMenuItem menuTraceCPU1;
+  private javax.swing.JCheckBoxMenuItem menuTraceCPU2;
+  private javax.swing.JCheckBoxMenuItem menuTraceCPU3;
+  private javax.swing.JMenu menuTracer;
   private javax.swing.JPanel panelIndicators;
   private javax.swing.JScrollPane scrollPanel;
   // End of variables declaration//GEN-END:variables
