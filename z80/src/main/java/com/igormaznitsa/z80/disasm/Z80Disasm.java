@@ -16,8 +16,8 @@
  */
 package com.igormaznitsa.z80.disasm;
 
+import com.igormaznitsa.z80.MemoryAccessProvider;
 import com.igormaznitsa.z80.Z80Instruction;
-import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +25,7 @@ public enum Z80Disasm {
 
   ;
 
+    
   private static final Z80Instruction[] NO_PREFIXED;
   private static final Z80Instruction[] CB_PREFIXED;
   private static final Z80Instruction[] DD_PREFIXED;
@@ -100,15 +101,15 @@ public enum Z80Disasm {
     FDCB_PREFIXED = fdcbPrefixed.toArray(new Z80Instruction[fdcbPrefixed.size()]);
   }
 
-  public static List<Z80Instruction> decodeList(final byte[] array, final int offset, final int max) {
-    final List<Z80Instruction> result = new ArrayList<>();
+  public static List<Z80Instruction> decodeList (final MemoryAccessProvider memoryAccessProvider, final List<Z80Instruction> container, final int offset, final int instructionsToDecode) {
+    final List<Z80Instruction> result = container == null ? new ArrayList<Z80Instruction>() : container;
 
     int off = offset;
 
-    int size = max;
+    int instructionsCounter = instructionsToDecode;
 
-    while (off < array.length && size != 0) {
-      final Z80Instruction i = decodeInstruction(array, off);
+    while (instructionsCounter > 0) {
+      final Z80Instruction i = decodeInstruction(memoryAccessProvider, off);
       result.add(i);
       if (i == null) {
         off++;
@@ -116,37 +117,28 @@ public enum Z80Disasm {
       else {
         off += i.getLength();
       }
-      size--;
+
+      instructionsCounter--;
     }
 
     return result;
   }
 
-  public static Z80Instruction decodeInstruction(final byte[] array, final int offset) {
+  public static Z80Instruction decodeInstruction (final MemoryAccessProvider memoryAccessProvider, final int offset) {
     final Z80Instruction[] arraytofind;
 
     int off = offset;
 
-    if (off >= array.length) {
-      return null;
-    }
-
-    switch (array[off++] & 0xFF) {
+    switch (memoryAccessProvider.readAddress(off++) & 0xFF) {
       case 0xCB:
         arraytofind = CB_PREFIXED;
         break;
       case 0xDD: {
-        if (off >= array.length) {
-          return null;
-        }
-        arraytofind = (array[off] & 0xFF) == 0xCB ? DDCB_PREFIXED : DD_PREFIXED;
+        arraytofind = (memoryAccessProvider.readAddress(off) & 0xFF) == 0xCB ? DDCB_PREFIXED : DD_PREFIXED;
       }
       break;
       case 0xFD: {
-        if (off >= array.length) {
-          return null;
-        }
-        arraytofind = (array[off] & 0xFF) == 0xCB ? FDCB_PREFIXED : FD_PREFIXED;
+        arraytofind = (memoryAccessProvider.readAddress(off) & 0xFF) == 0xCB ? FDCB_PREFIXED : FD_PREFIXED;
       }
       break;
       default:
@@ -157,7 +149,7 @@ public enum Z80Disasm {
     Z80Instruction result = null;
 
     for (final Z80Instruction i : arraytofind) {
-      if (i.matches(array, offset)) {
+      if (i.matches(memoryAccessProvider, offset)) {
         result = i;
         break;
       }

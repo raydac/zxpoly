@@ -76,7 +76,6 @@ public final class Z80Instruction {
   private final int[] compileGroupTypes;
   private final int[] instructionCodeTemplate;
   private final String instructionTextTemplate;
-  private final String instructionTextPrefixInUpperCase;
 
   private final int length;
   private final int fixedPartLength;
@@ -155,9 +154,7 @@ public final class Z80Instruction {
         workBuffer.append(c);
       }
     }
-    this.instructionTextPrefixInUpperCase = workBuffer.toString();
     workBuffer.setLength(0);
-    
     
     final String group = "(\\S.*)";
 
@@ -328,11 +325,8 @@ public final class Z80Instruction {
     return this.instructionCodeTemplate;
   }
 
-  public boolean matches(final byte[] array, int offset) {
+  public boolean matches(final MemoryAccessProvider memoryAccessProvider, int offset) {
     for (int i = 0; i < this.instructionCodeTemplate.length; i++) {
-      if (offset >= array.length) {
-        return false;
-      }
       switch (this.instructionCodeTemplate[i]) {
         case SPEC_INDEX:
         case SPEC_OFFSET:
@@ -341,12 +335,9 @@ public final class Z80Instruction {
           break;
         case SPEC_UNSIGNED_WORD:
           offset += 2;
-          if (offset >= array.length) {
-            return false;
-          }
           break;
         default: {
-          if ((array[offset++] & 0xFF) != this.instructionCodeTemplate[i]) {
+          if ((memoryAccessProvider.readAddress(offset++) & 0xFF) != this.instructionCodeTemplate[i]) {
             return false;
           }
         }
@@ -452,7 +443,7 @@ public final class Z80Instruction {
   /**
    * Decode instruction placed in byte array for its offset.
    *
-   * @param array a byte array contains the instruction, must not be null
+   * @param memoryAccessProvider provider of access to memory content, must not be null
    * @param offset the offset to the instruction in the byte array, must be 0 or
    * greater
    * @param pcCounter the current PC counter, it can be negative if its value is
@@ -460,38 +451,32 @@ public final class Z80Instruction {
    * @return the string representation of instruction or null if it was
    * impossible to decode the instruction
    */
-  public String decode(final byte[] array, int offset, final int pcCounter) {
+  public String decode(final MemoryAccessProvider memoryAccessProvider, int offset, final int pcCounter) {
     String sindex = null;
     String soffset = null;
     String sbyte = null;
     String sword = null;
 
     for (int i = 0; i < this.instructionCodeTemplate.length; i++) {
-      if (offset >= array.length) {
-        return null;
-      }
       switch (this.instructionCodeTemplate[i]) {
         case SPEC_INDEX: {
-          sindex = indexToHex(array[offset++]);
+          sindex = indexToHex(memoryAccessProvider.readAddress(offset++));
         }
         break;
         case SPEC_OFFSET: {
-          soffset = offsetToHex(array[offset++], this.fixedPartLength, pcCounter);
+          soffset = offsetToHex(memoryAccessProvider.readAddress(offset++), this.fixedPartLength, pcCounter);
         }
         break;
         case SPEC_UNSIGNED_BYTE: {
-          sbyte = unsignedByteToHex(array[offset++]);
+          sbyte = unsignedByteToHex(memoryAccessProvider.readAddress(offset++));
         }
         break;
         case SPEC_UNSIGNED_WORD: {
-          if (offset > (array.length - 2)) {
-            return null;
-          }
-          sword = unsignedWordToHex(array[offset++], array[offset++]);
+          sword = unsignedWordToHex(memoryAccessProvider.readAddress(offset++), memoryAccessProvider.readAddress(offset++));
         }
         break;
         default: {
-          if ((array[offset++] & 0xFF) != this.instructionCodeTemplate[i]) {
+          if ((memoryAccessProvider.readAddress(offset++) & 0xFF) != this.instructionCodeTemplate[i]) {
             return null;
           }
         }
