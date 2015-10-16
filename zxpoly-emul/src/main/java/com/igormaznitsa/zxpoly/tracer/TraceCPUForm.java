@@ -17,6 +17,7 @@
 package com.igormaznitsa.zxpoly.tracer;
 
 import com.igormaznitsa.z80.MemoryAccessProvider;
+import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.z80.Z80Instruction;
 import com.igormaznitsa.z80.disasm.Z80Disasm;
 import com.igormaznitsa.zxpoly.MainForm;
@@ -26,7 +27,6 @@ import java.util.List;
 import java.util.Locale;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
-import javax.swing.ListModel;
 
 public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProvider {
 
@@ -34,17 +34,18 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
   private final Motherboard motherboard;
   private final ZXPolyModule module;
   private final int moduleIndex;
-  
+  private final StringBuilder buffer = new StringBuilder(32);
+
   public TraceCPUForm (final MainForm mainForm, final Motherboard motherboard, final int moduleIndex) {
     initComponents();
     this.moduleIndex = moduleIndex;
     this.mainForm = mainForm;
     this.motherboard = motherboard;
     this.module = this.motherboard.getZXPolyModules()[moduleIndex];
-    this.setTitle("Tracing module #"+moduleIndex);
-    
+    this.setTitle("Tracing module #" + moduleIndex);
+
     this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    
+
     pack();
   }
 
@@ -57,18 +58,15 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
 
-    jScrollPane1 = new javax.swing.JScrollPane();
-    disasmList = new javax.swing.JList();
     jPanel1 = new javax.swing.JPanel();
-    jCheckBox1 = new javax.swing.JCheckBox();
-    jCheckBox2 = new javax.swing.JCheckBox();
-    jCheckBox3 = new javax.swing.JCheckBox();
-    jCheckBox4 = new javax.swing.JCheckBox();
-    jCheckBox5 = new javax.swing.JCheckBox();
-    jCheckBox6 = new javax.swing.JCheckBox();
-    checkBoxFlagN = new javax.swing.JCheckBox();
-    jCheckBox8 = new javax.swing.JCheckBox();
-    jLabel7 = new javax.swing.JLabel();
+    checkBoxS = new javax.swing.JCheckBox();
+    checkBoxZ = new javax.swing.JCheckBox();
+    checkBoxF5 = new javax.swing.JCheckBox();
+    checkBoxH = new javax.swing.JCheckBox();
+    checkBoxF3 = new javax.swing.JCheckBox();
+    checkBoxPV = new javax.swing.JCheckBox();
+    checkBoxN = new javax.swing.JCheckBox();
+    checkBoxC = new javax.swing.JCheckBox();
     jPanel2 = new javax.swing.JPanel();
     jLabel1 = new javax.swing.JLabel();
     jLabel2 = new javax.swing.JLabel();
@@ -76,17 +74,53 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
     jLabel4 = new javax.swing.JLabel();
     jLabel5 = new javax.swing.JLabel();
     jLabel6 = new javax.swing.JLabel();
-    jPanel3 = new javax.swing.JPanel();
+    fieldRegA = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    fieldRegC = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    fieldRegD = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    fieldRegE = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    fieldRegB = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    fieldRegF = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    jLabel19 = new javax.swing.JLabel();
+    fieldRegH = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    jLabel20 = new javax.swing.JLabel();
+    fieldRegL = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
     jPanel4 = new javax.swing.JPanel();
+    fieldPC = new com.igormaznitsa.zxpoly.tracer.HexValue4Field();
+    jLabel7 = new javax.swing.JLabel();
+    fieldSP = new com.igormaznitsa.zxpoly.tracer.HexValue4Field();
     jLabel8 = new javax.swing.JLabel();
     jLabel9 = new javax.swing.JLabel();
+    fieldIX = new com.igormaznitsa.zxpoly.tracer.HexValue4Field();
     jLabel10 = new javax.swing.JLabel();
+    fieldIY = new com.igormaznitsa.zxpoly.tracer.HexValue4Field();
     jLabel11 = new javax.swing.JLabel();
     jLabel12 = new javax.swing.JLabel();
-    jCheckBox7 = new javax.swing.JCheckBox();
-    jCheckBox9 = new javax.swing.JCheckBox();
+    fieldR = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    fieldIM = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    checkBoxIFF1 = new javax.swing.JCheckBox();
+    checkBoxIFF2 = new javax.swing.JCheckBox();
+    jPanel5 = new javax.swing.JPanel();
+    jLabel13 = new javax.swing.JLabel();
+    jLabel14 = new javax.swing.JLabel();
+    jLabel15 = new javax.swing.JLabel();
+    jLabel16 = new javax.swing.JLabel();
+    jLabel17 = new javax.swing.JLabel();
+    jLabel18 = new javax.swing.JLabel();
+    fieldAltRegA = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    fieldAltRegC = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    fieldAltRegD = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    fieldAltRegE = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    fieldAltRegB = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    fieldAltRegF = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    jLabel21 = new javax.swing.JLabel();
+    fieldAltRegH = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    jLabel22 = new javax.swing.JLabel();
+    fieldAltRegL = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
+    jPanel3 = new javax.swing.JPanel();
+    disasmList = new javax.swing.JList();
 
-    setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+    setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+    setResizable(false);
     addWindowListener(new java.awt.event.WindowAdapter() {
       public void windowClosed(java.awt.event.WindowEvent evt) {
         formWindowClosed(evt);
@@ -96,114 +130,102 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
       }
     });
 
-    disasmList.setFont(new java.awt.Font("Courier 10 Pitch", 1, 12)); // NOI18N
-    disasmList.setModel(new javax.swing.AbstractListModel() {
-      String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-      public int getSize() { return strings.length; }
-      public Object getElementAt(int i) { return strings[i]; }
-    });
-    jScrollPane1.setViewportView(disasmList);
-
     jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Flags"));
 
-    jCheckBox1.setText("S");
-    jCheckBox1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    jCheckBox1.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    checkBoxS.setText("S");
+    checkBoxS.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+    checkBoxS.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    jPanel1.add(checkBoxS);
 
-    jCheckBox2.setText("Z");
-    jCheckBox2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    jCheckBox2.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-    jCheckBox2.addActionListener(new java.awt.event.ActionListener() {
+    checkBoxZ.setText("Z");
+    checkBoxZ.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+    checkBoxZ.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    checkBoxZ.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
-        jCheckBox2ActionPerformed(evt);
+        checkBoxZActionPerformed(evt);
       }
     });
+    jPanel1.add(checkBoxZ);
 
-    jCheckBox3.setText("F5");
-    jCheckBox3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    jCheckBox3.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    checkBoxF5.setText("F5");
+    checkBoxF5.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+    checkBoxF5.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    jPanel1.add(checkBoxF5);
 
-    jCheckBox4.setText("H");
-    jCheckBox4.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    jCheckBox4.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    checkBoxH.setText("H");
+    checkBoxH.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+    checkBoxH.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    jPanel1.add(checkBoxH);
 
-    jCheckBox5.setText("F3");
-    jCheckBox5.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    jCheckBox5.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    checkBoxF3.setText("F3");
+    checkBoxF3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+    checkBoxF3.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    jPanel1.add(checkBoxF3);
 
-    jCheckBox6.setText("P/V");
-    jCheckBox6.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    jCheckBox6.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    checkBoxPV.setText("P/V");
+    checkBoxPV.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+    checkBoxPV.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    jPanel1.add(checkBoxPV);
 
-    checkBoxFlagN.setText("N");
-    checkBoxFlagN.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    checkBoxFlagN.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    checkBoxN.setText("N");
+    checkBoxN.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+    checkBoxN.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    jPanel1.add(checkBoxN);
 
-    jCheckBox8.setText("C");
-    jCheckBox8.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    jCheckBox8.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    checkBoxC.setText("C");
+    checkBoxC.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+    checkBoxC.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+    jPanel1.add(checkBoxC);
 
-    jLabel7.setText("= #00");
-    jLabel7.setEnabled(false);
+    jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Reg.set"));
 
-    javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-    jPanel1.setLayout(jPanel1Layout);
-    jPanel1Layout.setHorizontalGroup(
-      jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(jPanel1Layout.createSequentialGroup()
-        .addContainerGap()
-        .addComponent(jCheckBox1)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jCheckBox2)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jCheckBox3)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jCheckBox4)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jCheckBox5)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jCheckBox6)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(checkBoxFlagN)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jCheckBox8)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jLabel7)
-        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-    );
-    jPanel1Layout.setVerticalGroup(
-      jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(jPanel1Layout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-          .addComponent(jCheckBox8)
-          .addComponent(checkBoxFlagN)
-          .addComponent(jCheckBox6)
-          .addComponent(jCheckBox5)
-          .addComponent(jCheckBox4)
-          .addComponent(jCheckBox3)
-          .addComponent(jCheckBox2)
-          .addComponent(jCheckBox1))
-        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-      .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        .addComponent(jLabel7)
-        .addContainerGap())
-    );
+    jLabel1.setText("A:");
 
-    jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("RegSet A"));
+    jLabel2.setText("F:");
 
-    jLabel1.setText("A");
+    jLabel3.setText("B:");
 
-    jLabel2.setText("F");
+    jLabel4.setText("C:");
 
-    jLabel3.setText("B");
+    jLabel5.setText("D:");
 
-    jLabel4.setText("C");
+    jLabel6.setText("E:");
 
-    jLabel5.setText("D");
+    fieldRegA.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldRegA.setText("FF");
+    fieldRegA.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
 
-    jLabel6.setText("E");
+    fieldRegC.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldRegC.setText("FF");
+    fieldRegC.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    fieldRegD.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldRegD.setText("FF");
+    fieldRegD.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    fieldRegE.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldRegE.setText("FF");
+    fieldRegE.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    fieldRegB.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldRegB.setText("FF");
+    fieldRegB.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    fieldRegF.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldRegF.setText("FF");
+    fieldRegF.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    jLabel19.setText("H:");
+
+    fieldRegH.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldRegH.setText("FF");
+    fieldRegH.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    jLabel20.setText("L:");
+
+    fieldRegL.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldRegL.setText("FF");
+    fieldRegL.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
 
     javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
     jPanel2.setLayout(jPanel2Layout);
@@ -212,71 +234,120 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
       .addGroup(jPanel2Layout.createSequentialGroup()
         .addContainerGap()
         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-            .addComponent(jLabel5)
-            .addContainerGap(100, Short.MAX_VALUE))
-          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-            .addComponent(jLabel4)
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-            .addComponent(jLabel1)
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-            .addComponent(jLabel2)
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+          .addGroup(jPanel2Layout.createSequentialGroup()
+            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+              .addComponent(jLabel6)
+              .addComponent(jLabel5)
+              .addComponent(jLabel19)
+              .addComponent(jLabel20))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+              .addComponent(fieldRegD, javax.swing.GroupLayout.DEFAULT_SIZE, 35, Short.MAX_VALUE)
+              .addComponent(fieldRegE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+              .addComponent(fieldRegH, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+              .addComponent(fieldRegL, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+          .addGroup(jPanel2Layout.createSequentialGroup()
+            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+              .addComponent(jLabel2)
+              .addComponent(jLabel1))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+              .addComponent(fieldRegA, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
+              .addComponent(fieldRegF, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+          .addGroup(jPanel2Layout.createSequentialGroup()
             .addComponent(jLabel3)
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-            .addComponent(jLabel6)
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(fieldRegB, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+          .addGroup(jPanel2Layout.createSequentialGroup()
+            .addComponent(jLabel4)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(fieldRegC, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)))
+        .addContainerGap(24, Short.MAX_VALUE))
     );
+
+    jPanel2Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {fieldRegA, fieldRegB, fieldRegC, fieldRegD, fieldRegE, fieldRegF});
+
     jPanel2Layout.setVerticalGroup(
       jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
       .addGroup(jPanel2Layout.createSequentialGroup()
         .addContainerGap()
-        .addComponent(jLabel1)
+        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel1)
+          .addComponent(fieldRegA, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jLabel2)
+        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel2)
+          .addComponent(fieldRegF, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jLabel3)
+        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel3)
+          .addComponent(fieldRegB, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jLabel4)
+        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel4)
+          .addComponent(fieldRegC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jLabel5)
+        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel5)
+          .addComponent(fieldRegD, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jLabel6)
-        .addContainerGap(15, Short.MAX_VALUE))
-    );
-
-    jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("RegSet B"));
-
-    javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-    jPanel3.setLayout(jPanel3Layout);
-    jPanel3Layout.setHorizontalGroup(
-      jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGap(0, 122, Short.MAX_VALUE)
-    );
-    jPanel3Layout.setVerticalGroup(
-      jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGap(0, 0, Short.MAX_VALUE)
+        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel6)
+          .addComponent(fieldRegE, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel19)
+          .addComponent(fieldRegH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel20)
+          .addComponent(fieldRegL, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
     );
 
     jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Common registers"));
 
-    jLabel8.setText("IX");
+    fieldPC.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldPC.setText("FFFF");
+    fieldPC.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
 
-    jLabel9.setText("IY");
+    jLabel7.setText("PC:");
 
-    jLabel10.setText("PC");
+    fieldSP.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldSP.setText("FFFF");
+    fieldSP.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
 
-    jLabel11.setText("SP");
+    jLabel8.setText("SP:");
 
-    jLabel12.setText("IM");
+    jLabel9.setText("IX:");
 
-    jCheckBox7.setText("IFF0");
+    fieldIX.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldIX.setText("FFFF");
+    fieldIX.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
 
-    jCheckBox9.setText("IFF1");
+    jLabel10.setText("IY:");
+
+    fieldIY.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldIY.setText("FFFF");
+    fieldIY.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    jLabel11.setText("R:");
+
+    jLabel12.setText("I:");
+
+    fieldR.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldR.setText("FF");
+    fieldR.setToolTipText("");
+    fieldR.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    fieldIM.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldIM.setText("FF");
+    fieldIM.setToolTipText("");
+    fieldIM.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    checkBoxIFF1.setText("IFF1");
+
+    checkBoxIFF2.setText("IFF2");
 
     javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
     jPanel4.setLayout(jPanel4Layout);
@@ -286,87 +357,247 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
         .addContainerGap()
         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
           .addGroup(jPanel4Layout.createSequentialGroup()
-            .addComponent(jCheckBox7)
-            .addGap(18, 18, 18)
-            .addComponent(jCheckBox9)
-            .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(checkBoxIFF1)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(checkBoxIFF2))
           .addGroup(jPanel4Layout.createSequentialGroup()
             .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-              .addComponent(jLabel8)
-              .addComponent(jLabel9))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+              .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addComponent(jLabel12)
+                .addGroup(jPanel4Layout.createSequentialGroup()
+                  .addComponent(jLabel7)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(fieldPC, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                  .addComponent(jLabel11)))
+              .addGroup(jPanel4Layout.createSequentialGroup()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                  .addComponent(jLabel9)
+                  .addComponent(jLabel8)
+                  .addComponent(jLabel10))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                  .addComponent(fieldIX, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addComponent(fieldIY, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addComponent(fieldSP, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE))))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-              .addComponent(jLabel10)
-              .addComponent(jLabel11))
-            .addGap(35, 35, 35))
-          .addGroup(jPanel4Layout.createSequentialGroup()
-            .addComponent(jLabel12)
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+              .addComponent(fieldR, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
+              .addComponent(fieldIM, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE))))
+        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
     );
     jPanel4Layout.setVerticalGroup(
       jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
       .addGroup(jPanel4Layout.createSequentialGroup()
         .addContainerGap()
         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+          .addComponent(fieldPC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+          .addComponent(jLabel7)
+          .addComponent(jLabel11)
+          .addComponent(fieldR, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+          .addComponent(fieldSP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
           .addComponent(jLabel8)
+          .addComponent(jLabel12)
+          .addComponent(fieldIM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+          .addComponent(fieldIX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+          .addComponent(jLabel9))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+          .addComponent(fieldIY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
           .addComponent(jLabel10))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGap(18, 18, 18)
         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-          .addComponent(jLabel9)
-          .addComponent(jLabel11))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jLabel12)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-          .addComponent(jCheckBox7)
-          .addComponent(jCheckBox9))
-        .addContainerGap(23, Short.MAX_VALUE))
+          .addComponent(checkBoxIFF1)
+          .addComponent(checkBoxIFF2))
+        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
     );
+
+    jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder("Alt.reg.set"));
+
+    jLabel13.setText("A:");
+
+    jLabel14.setText("F:");
+
+    jLabel15.setText("B:");
+
+    jLabel16.setText("C:");
+
+    jLabel17.setText("D:");
+
+    jLabel18.setText("E:");
+
+    fieldAltRegA.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldAltRegA.setText("FF");
+    fieldAltRegA.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    fieldAltRegC.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldAltRegC.setText("FF");
+    fieldAltRegC.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    fieldAltRegD.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldAltRegD.setText("FF");
+    fieldAltRegD.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    fieldAltRegE.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldAltRegE.setText("FF");
+    fieldAltRegE.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    fieldAltRegB.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldAltRegB.setText("FF");
+    fieldAltRegB.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    fieldAltRegF.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldAltRegF.setText("FF");
+    fieldAltRegF.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    jLabel21.setText("H:");
+
+    fieldAltRegH.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldAltRegH.setText("FF");
+    fieldAltRegH.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    jLabel22.setText("L:");
+
+    fieldAltRegL.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+    fieldAltRegL.setText("FF");
+    fieldAltRegL.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+
+    javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+    jPanel5.setLayout(jPanel5Layout);
+    jPanel5Layout.setHorizontalGroup(
+      jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+      .addGroup(jPanel5Layout.createSequentialGroup()
+        .addContainerGap()
+        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+          .addGroup(jPanel5Layout.createSequentialGroup()
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+              .addComponent(jLabel18)
+              .addComponent(jLabel17)
+              .addComponent(jLabel21)
+              .addComponent(jLabel22))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+              .addComponent(fieldAltRegD, javax.swing.GroupLayout.DEFAULT_SIZE, 35, Short.MAX_VALUE)
+              .addComponent(fieldAltRegE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+              .addComponent(fieldAltRegH, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+              .addComponent(fieldAltRegL, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+          .addGroup(jPanel5Layout.createSequentialGroup()
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+              .addComponent(jLabel14)
+              .addComponent(jLabel13))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+              .addComponent(fieldAltRegA, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
+              .addComponent(fieldAltRegF, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+          .addGroup(jPanel5Layout.createSequentialGroup()
+            .addComponent(jLabel15)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(fieldAltRegB, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+          .addGroup(jPanel5Layout.createSequentialGroup()
+            .addComponent(jLabel16)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(fieldAltRegC, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)))
+        .addContainerGap(24, Short.MAX_VALUE))
+    );
+
+    jPanel5Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {fieldAltRegA, fieldAltRegB, fieldAltRegC, fieldAltRegD, fieldAltRegE, fieldAltRegF});
+
+    jPanel5Layout.setVerticalGroup(
+      jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+      .addGroup(jPanel5Layout.createSequentialGroup()
+        .addContainerGap()
+        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel13)
+          .addComponent(fieldAltRegA, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel14)
+          .addComponent(fieldAltRegF, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel15)
+          .addComponent(fieldAltRegB, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel16)
+          .addComponent(fieldAltRegC, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel17)
+          .addComponent(fieldAltRegD, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel18)
+          .addComponent(fieldAltRegE, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel21)
+          .addComponent(fieldAltRegH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+          .addComponent(jLabel22)
+          .addComponent(fieldAltRegL, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+
+    jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Disassembled"));
+    jPanel3.setLayout(new java.awt.BorderLayout());
+
+    disasmList.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
+    disasmList.setModel(new javax.swing.AbstractListModel() {
+      String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+      public int getSize() { return strings.length; }
+      public Object getElementAt(int i) { return strings[i]; }
+    });
+    jPanel3.add(disasmList, java.awt.BorderLayout.CENTER);
 
     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
     getContentPane().setLayout(layout);
     layout.setHorizontalGroup(
       layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
       .addGroup(layout.createSequentialGroup()
-        .addContainerGap()
-        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 292, javax.swing.GroupLayout.PREFERRED_SIZE)
+        .addGap(5, 5, 5)
+        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 356, javax.swing.GroupLayout.PREFERRED_SIZE)
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-          .addGroup(layout.createSequentialGroup()
-            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-            .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGap(0, 0, Short.MAX_VALUE))
           .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
           .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        .addContainerGap())
+        .addGap(5, 5, 5))
     );
 
-    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jPanel2, jPanel3});
+    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jPanel2, jPanel5});
 
     layout.setVerticalGroup(
       layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
       .addGroup(layout.createSequentialGroup()
         .addContainerGap()
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-          .addComponent(jScrollPane1)
+        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+          .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
           .addGroup(layout.createSequentialGroup()
             .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
               .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-              .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+              .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-        .addGap(0, 16, Short.MAX_VALUE))
+        .addGap(13, 13, 13))
     );
 
     pack();
   }// </editor-fold>//GEN-END:initComponents
 
-  private void jCheckBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox2ActionPerformed
+  private void checkBoxZActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkBoxZActionPerformed
     // TODO add your handling code here:
-  }//GEN-LAST:event_jCheckBox2ActionPerformed
+  }//GEN-LAST:event_checkBoxZActionPerformed
 
   private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
     this.mainForm.onTracerDeactivated(this);
@@ -376,24 +607,56 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
     this.mainForm.onTracerActivated(this);
   }//GEN-LAST:event_formWindowActivated
 
-  
+
   // Variables declaration - do not modify//GEN-BEGIN:variables
-  private javax.swing.JCheckBox checkBoxFlagN;
+  private javax.swing.JCheckBox checkBoxC;
+  private javax.swing.JCheckBox checkBoxF3;
+  private javax.swing.JCheckBox checkBoxF5;
+  private javax.swing.JCheckBox checkBoxH;
+  private javax.swing.JCheckBox checkBoxIFF1;
+  private javax.swing.JCheckBox checkBoxIFF2;
+  private javax.swing.JCheckBox checkBoxN;
+  private javax.swing.JCheckBox checkBoxPV;
+  private javax.swing.JCheckBox checkBoxS;
+  private javax.swing.JCheckBox checkBoxZ;
   private javax.swing.JList disasmList;
-  private javax.swing.JCheckBox jCheckBox1;
-  private javax.swing.JCheckBox jCheckBox2;
-  private javax.swing.JCheckBox jCheckBox3;
-  private javax.swing.JCheckBox jCheckBox4;
-  private javax.swing.JCheckBox jCheckBox5;
-  private javax.swing.JCheckBox jCheckBox6;
-  private javax.swing.JCheckBox jCheckBox7;
-  private javax.swing.JCheckBox jCheckBox8;
-  private javax.swing.JCheckBox jCheckBox9;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegA;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegB;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegC;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegD;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegE;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegF;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegH;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegL;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldIM;
+  private com.igormaznitsa.zxpoly.tracer.HexValue4Field fieldIX;
+  private com.igormaznitsa.zxpoly.tracer.HexValue4Field fieldIY;
+  private com.igormaznitsa.zxpoly.tracer.HexValue4Field fieldPC;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldR;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegA;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegB;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegC;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegD;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegE;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegF;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegH;
+  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegL;
+  private com.igormaznitsa.zxpoly.tracer.HexValue4Field fieldSP;
   private javax.swing.JLabel jLabel1;
   private javax.swing.JLabel jLabel10;
   private javax.swing.JLabel jLabel11;
   private javax.swing.JLabel jLabel12;
+  private javax.swing.JLabel jLabel13;
+  private javax.swing.JLabel jLabel14;
+  private javax.swing.JLabel jLabel15;
+  private javax.swing.JLabel jLabel16;
+  private javax.swing.JLabel jLabel17;
+  private javax.swing.JLabel jLabel18;
+  private javax.swing.JLabel jLabel19;
   private javax.swing.JLabel jLabel2;
+  private javax.swing.JLabel jLabel20;
+  private javax.swing.JLabel jLabel21;
+  private javax.swing.JLabel jLabel22;
   private javax.swing.JLabel jLabel3;
   private javax.swing.JLabel jLabel4;
   private javax.swing.JLabel jLabel5;
@@ -405,7 +668,7 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
   private javax.swing.JPanel jPanel2;
   private javax.swing.JPanel jPanel3;
   private javax.swing.JPanel jPanel4;
-  private javax.swing.JScrollPane jScrollPane1;
+  private javax.swing.JPanel jPanel5;
   // End of variables declaration//GEN-END:variables
 
   public int getModuleIndex () {
@@ -414,27 +677,102 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
 
   public void refreshViewState () {
     final int pc = this.module.getCPU().getPC();
-    final List<Z80Instruction> instructions = Z80Disasm.decodeList(this, null, pc, 15);
-    
-    final DefaultListModel model = new DefaultListModel();
-    
-    int address = pc;
-    
-    for(final Z80Instruction i : instructions){
-      model.addElement(int2hex(address)+" "+i.decode(this, address, pc));
-      address += i.getLength();
+
+    if (this.module.isActiveRegistersAsMemorySource()) {
+      final DefaultListModel model = new DefaultListModel();
+      model.addElement("Registers as data source!");
+      this.disasmList.setModel(model);
     }
-    
-    this.disasmList.setModel(model);
+    else {
+      final List<Z80Instruction> instructions = Z80Disasm.decodeList(this, null, pc, 28);
+
+      final DefaultListModel model = new DefaultListModel();
+
+      int address = pc;
+
+      for (final Z80Instruction i : instructions) {
+        model.addElement(makeInstructionLine(i, address));
+        address += i == null ? 1 : i.getLength();
+      }
+
+      this.disasmList.setModel(model);
+      this.disasmList.setSelectedIndex(0);
+
+    }
+    refreshRegisterValue();
+  }
+
+  private void refreshRegisterValue () {
+    final Z80 cpu = this.module.getCPU();
+    this.fieldPC.setValue(cpu.getPC());
+    this.fieldSP.setValue(cpu.getSP());
+    this.fieldIX.setValue(cpu.getRegister(Z80.REG_IX));
+    this.fieldIY.setValue(cpu.getRegister(Z80.REG_IY));
+    this.fieldIM.setValue(cpu.getRegister(Z80.REG_I));
+    this.fieldR.setValue(cpu.getRegister(Z80.REG_R));
+
+    final int regf = cpu.getRegister(Z80.REG_F);
+
+    this.checkBoxC.setSelected((regf & Z80.FLAG_C) != 0);
+    this.checkBoxF3.setSelected((regf & Z80.FLAG_X) != 0);
+    this.checkBoxF5.setSelected((regf & Z80.FLAG_Y) != 0);
+    this.checkBoxH.setSelected((regf & Z80.FLAG_H) != 0);
+    this.checkBoxN.setSelected((regf & Z80.FLAG_N) != 0);
+    this.checkBoxPV.setSelected((regf & Z80.FLAG_PV) != 0);
+    this.checkBoxS.setSelected((regf & Z80.FLAG_S) != 0);
+    this.checkBoxZ.setSelected((regf & Z80.FLAG_Z) != 0);
+
+    this.checkBoxIFF1.setSelected(cpu.isIFF1());
+    this.checkBoxIFF2.setSelected(cpu.isIFF2());
+
+    this.fieldRegA.setValue(cpu.getRegister(Z80.REG_A));
+    this.fieldRegF.setValue(cpu.getRegister(Z80.REG_F));
+    this.fieldRegB.setValue(cpu.getRegister(Z80.REG_B));
+    this.fieldRegC.setValue(cpu.getRegister(Z80.REG_C));
+    this.fieldRegD.setValue(cpu.getRegister(Z80.REG_D));
+    this.fieldRegE.setValue(cpu.getRegister(Z80.REG_E));
+    this.fieldRegH.setValue(cpu.getRegister(Z80.REG_H));
+    this.fieldRegL.setValue(cpu.getRegister(Z80.REG_L));
+
+    this.fieldAltRegA.setValue(cpu.getRegister(Z80.REG_A, true));
+    this.fieldAltRegF.setValue(cpu.getRegister(Z80.REG_F, true));
+    this.fieldAltRegB.setValue(cpu.getRegister(Z80.REG_B, true));
+    this.fieldAltRegC.setValue(cpu.getRegister(Z80.REG_C, true));
+    this.fieldAltRegD.setValue(cpu.getRegister(Z80.REG_D, true));
+    this.fieldAltRegE.setValue(cpu.getRegister(Z80.REG_E, true));
+    this.fieldAltRegH.setValue(cpu.getRegister(Z80.REG_H, true));
+    this.fieldAltRegL.setValue(cpu.getRegister(Z80.REG_L, true));
+
+  }
+
+  private String makeInstructionLine (final Z80Instruction instruction, final int address) {
+    this.buffer.setLength(0);
+
+    int2hex4(this.buffer, address);
+    this.buffer.append("    ");
+
+    if (instruction == null) {
+      this.buffer.append("---");
+    }
+    else {
+      this.buffer.append(instruction.decode(this, address, address));
+    }
+
+    return this.buffer.toString();
   }
 
   @Override
   public byte readAddress (final int address) {
-    return (byte)this.module.readHeapModuleMemory(address & 0xFFFF);
+    return (byte) this.module.readMemory(this.module.getCPU(), address & 0xFFFF, false);
   }
-  
-  private static String int2hex(final int value){
+
+  private static void int2hex4 (final StringBuilder buffer, final int value) {
     final String str = Integer.toHexString(value).toUpperCase(Locale.ENGLISH);
-    return str.length()>=4 ? str : "0000".substring(3-str.length())+str;
+    if (str.length() < 4) {
+      for (int i = 0; i < 4 - str.length(); i++) {
+        buffer.append('0');
+      }
+    }
+    buffer.append(str);
   }
 }

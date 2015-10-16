@@ -444,14 +444,13 @@ public final class Z80Instruction {
    * Decode instruction placed in byte array for its offset.
    *
    * @param memoryAccessProvider provider of access to memory content, must not be null
-   * @param offset the offset to the instruction in the byte array, must be 0 or
-   * greater
+   * @param address the address of the instruction in memory
    * @param pcCounter the current PC counter, it can be negative if its value is
    * not known
    * @return the string representation of instruction or null if it was
    * impossible to decode the instruction
    */
-  public String decode(final MemoryAccessProvider memoryAccessProvider, int offset, final int pcCounter) {
+  public String decode(final MemoryAccessProvider memoryAccessProvider, int address, final int pcCounter) {
     String sindex = null;
     String soffset = null;
     String sbyte = null;
@@ -460,23 +459,23 @@ public final class Z80Instruction {
     for (int i = 0; i < this.instructionCodeTemplate.length; i++) {
       switch (this.instructionCodeTemplate[i]) {
         case SPEC_INDEX: {
-          sindex = indexToHex(memoryAccessProvider.readAddress(offset++));
+          sindex = indexToHex(memoryAccessProvider.readAddress(address++));
         }
         break;
         case SPEC_OFFSET: {
-          soffset = offsetToHex(memoryAccessProvider.readAddress(offset++), this.fixedPartLength, pcCounter);
+          soffset = offsetToHex(memoryAccessProvider.readAddress(address++), this.fixedPartLength, pcCounter);
         }
         break;
         case SPEC_UNSIGNED_BYTE: {
-          sbyte = unsignedByteToHex(memoryAccessProvider.readAddress(offset++));
+          sbyte = unsignedByteToHex(memoryAccessProvider.readAddress(address++));
         }
         break;
         case SPEC_UNSIGNED_WORD: {
-          sword = unsignedWordToHex(memoryAccessProvider.readAddress(offset++), memoryAccessProvider.readAddress(offset++));
+          sword = unsignedWordToHex(memoryAccessProvider.readAddress(address++), memoryAccessProvider.readAddress(address++));
         }
         break;
         default: {
-          if ((memoryAccessProvider.readAddress(offset++) & 0xFF) != this.instructionCodeTemplate[i]) {
+          if ((memoryAccessProvider.readAddress(address++) & 0xFF) != this.instructionCodeTemplate[i]) {
             return null;
           }
         }
