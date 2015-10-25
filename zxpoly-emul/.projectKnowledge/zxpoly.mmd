@@ -89,6 +89,8 @@ The Bit sends /WAIT signal for CPU1,2,3</pre>
 - NOTE
 <pre>if set the bit then local RESET signal will be sent to all CPU (0-3)
 the first three bytes will be read not from memory but from local registers R1-R3 of each CPU module</pre>
+- TOPIC
+<pre>1509F6A63E0A</pre>
 
 ####### bit 2,3,4<br/>\(Video mode\)
 - FILE
@@ -367,6 +369,8 @@ in the case CPU which bit is set will get notification through /INT or /NMI sign
 ###### Read
 
 ####### bit 0\-7<br/>\(First command byte\)
+- NOTE
+<pre>After local RESET, the register will be the source to read the first command byte.</pre>
 - TOPIC
 <pre>1509EB11309A</pre>
 
@@ -374,11 +378,17 @@ in the case CPU which bit is set will get notification through /INT or /NMI sign
 
 ###### Write
 
-####### bit 0\-7<br/>\(Lower byte of STOP ADDR\)
+####### bit 0\-7<br/>\(Low byte of STOP ADDR\)
+- NOTE
+<pre>The Register contains the low byte of the STOP-ADDRESS</pre>
+- TOPIC
+<pre>1509F6AC5DCA</pre>
 
 ###### Read
 
 ####### bit 0\-7<br/>\(Second command byte\)
+- NOTE
+<pre>After local RESET, the register will be the source to read the second command byte.</pre>
 - TOPIC
 <pre>1509EB11309A</pre>
 
@@ -386,10 +396,54 @@ in the case CPU which bit is set will get notification through /INT or /NMI sign
 
 ###### Write
 
-####### bit 0\-7<br/>\(Higher byte of STOP ADDR\)
+####### bit 0\-7<br/>\(High byte of STOP ADDR\)
+- NOTE
+<pre>The Register contains the high byte of the STOP-ADDRESS</pre>
+- TOPIC
+<pre>1509F6AC5DCA</pre>
 
 ###### Read
 
 ####### bit 0\-7<br/>\(Third command byte\)
+- NOTE
+<pre>After local RESET, the register will be the source to read the third command byte.</pre>
 - TOPIC
 <pre>1509EB11309A</pre>
+
+### Concepts
+> fillColor=`#FFFF99`
+
+
+#### Priorities
+> fillColor=`#99FF99`
+
+
+##### CPU0 \(highest\)
+> fillColor=`#66CCFF`
+
+
+##### CPU1
+> fillColor=`#9999FF`
+
+
+##### CPU2
+> fillColor=`#9999FF`
+
+
+##### CPU3 \(lowest\)
+> fillColor=`#CC66FF`
+
+
+#### Stop\-address
+> topicLinkUID=`1509F6AC5DCA`
+
+- NOTE
+<pre>Stop-Address means special address where CPU will be stopped
+The Stop-Address should not be zero and it will be checked every M1 cycle and if the Stop-Address is the same as the address on the bus then the Wait mode for the CPU will be activated.
+</pre>
+
+#### Local RESET
+> topicLinkUID=`1509F6A63E0A`
+
+- NOTE
+<pre>It is special mode when RESET signal has been sent only to CPU and the first three command bytes will be read from R1-R3 registers.</pre>
