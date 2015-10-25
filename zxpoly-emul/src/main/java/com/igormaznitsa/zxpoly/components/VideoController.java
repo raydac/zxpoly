@@ -21,7 +21,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.*;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
