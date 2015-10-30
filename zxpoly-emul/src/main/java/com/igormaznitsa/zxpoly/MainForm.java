@@ -77,8 +77,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
 
     @Override
     public void run () {
+      int index = 0;
       for (final TraceCPUForm form : cpuTracers) {
-        if (form != null) {
+        if (form != null && board.getZXPolyModules()[index++].getCPU().getPrefixInProcessing() == 0) {
           form.refreshViewState();
         }
       }
