@@ -22,7 +22,7 @@ import java.util.Locale;
 import javax.swing.JFormattedTextField;
 import javax.swing.text.MaskFormatter;
 
-public class HexValue4Field extends JFormattedTextField {
+public class HexValue4Field extends AbstractHexValueField {
 
   private int numValue;
 
