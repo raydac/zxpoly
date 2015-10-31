@@ -16,6 +16,7 @@
  */
 package com.igormaznitsa.zxpoly;
 
+import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.ui.SelectTapPosDialog;
 import com.igormaznitsa.zxpoly.utils.Utils;
 import com.igormaznitsa.zxpoly.components.*;
@@ -79,8 +80,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     public void run () {
       int index = 0;
       for (final TraceCPUForm form : cpuTracers) {
-        if (form != null && board.getZXPolyModules()[index++].getCPU().getPrefixInProcessing() == 0) {
-          form.refreshViewState();
+        if (form != null) {
+          final Z80 cpu = board.getZXPolyModules()[index++].getCPU();
+          if (cpu.getPrefixInProcessing() == 0 && !cpu.isInsideBlockLoop()){
+            form.refreshViewState();
+          }
         }
       }
     }
