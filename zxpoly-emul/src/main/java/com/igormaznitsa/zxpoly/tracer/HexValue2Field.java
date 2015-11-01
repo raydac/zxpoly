@@ -16,7 +16,6 @@
  */
 package com.igormaznitsa.zxpoly.tracer;
 
-import java.awt.Font;
 import java.text.ParseException;
 import java.util.Locale;
 import javax.swing.JFormattedTextField;
@@ -24,14 +23,14 @@ import javax.swing.text.MaskFormatter;
 
 public class HexValue2Field extends AbstractHexValueField {
 
-  private int numValue;
-
   public HexValue2Field () {
     super();
     final JFormattedTextField.AbstractFormatter FORMAT;
     try {
       final MaskFormatter formatter = new MaskFormatter("HH");
+      formatter.setValidCharacters(ALLOWED_CHARS);
       formatter.setPlaceholderCharacter('0');
+      formatter.setAllowsInvalid(false);
       FORMAT = formatter;
     }
     catch (ParseException ex) {
@@ -42,25 +41,16 @@ public class HexValue2Field extends AbstractHexValueField {
     refreshTextValue();
   }
 
-  public void setValue (final int value) {
-    if (this.numValue != value) {
-      this.numValue = value;
-      this.setFont(getFont().deriveFont(Font.BOLD));
-      refreshTextValue();
-    }
-    else {
-      this.setFont(getFont().deriveFont(Font.PLAIN));
-    }
+  @Override
+  protected int processValue (int value) {
+    return value & 0xFF;
   }
 
-  private void refreshTextValue () {
-    String hex = Integer.toHexString(this.numValue).toUpperCase(Locale.ENGLISH);
-    hex = hex.length() < 2 ? "0" + hex.length() : hex.substring(0, 2);
+  @Override
+  protected final void refreshTextValue () {
+    String hex = Integer.toHexString(this.intValue).toUpperCase(Locale.ENGLISH);
+    hex = hex.length() < 2 ? "0" + hex : hex.substring(0, 2);
     this.setText(hex);
-  }
-
-  public int getIntValue () {
-    return Integer.parseInt(this.getText());
   }
 
 }

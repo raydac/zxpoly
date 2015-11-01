@@ -59,6 +59,8 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
       setEnableForComponentsOfPanel(this.panelRegSet, this.changeEnabled);
     }
     
+    this.setLocationByPlatform(true);
+    
     pack();
   }
 
@@ -131,6 +133,7 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
     fieldAltRegL = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
     jPanel3 = new javax.swing.JPanel();
     disasmList = new javax.swing.JList();
+    buttonMemory = new javax.swing.JButton();
 
     setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     setResizable(false);
@@ -568,6 +571,13 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
     });
     jPanel3.add(disasmList, java.awt.BorderLayout.CENTER);
 
+    buttonMemory.setText("Memory");
+    buttonMemory.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        buttonMemoryActionPerformed(evt);
+      }
+    });
+
     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
     getContentPane().setLayout(layout);
     layout.setHorizontalGroup(
@@ -578,11 +588,15 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
           .addComponent(panelFlags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+          .addComponent(panelCommonRegisters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
           .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-            .addComponent(panelRegSet, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(panelAltRegSet, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-          .addComponent(panelCommonRegisters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+              .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(panelRegSet, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(panelAltRegSet, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+              .addComponent(buttonMemory, javax.swing.GroupLayout.Alignment.TRAILING))))
         .addGap(5, 5, 5))
     );
 
@@ -602,7 +616,8 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
               .addComponent(panelAltRegSet, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(panelCommonRegisters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGap(0, 31, Short.MAX_VALUE)))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(buttonMemory)))
         .addGap(13, 13, 13))
     );
 
@@ -621,8 +636,13 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
     this.mainForm.onTracerActivated(this);
   }//GEN-LAST:event_formWindowActivated
 
+  private void buttonMemoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonMemoryActionPerformed
+    new MemoryDialog(this, true, this.module).setVisible(true);
+  }//GEN-LAST:event_buttonMemoryActionPerformed
+
 
   // Variables declaration - do not modify//GEN-BEGIN:variables
+  private javax.swing.JButton buttonMemory;
   private javax.swing.JCheckBox checkBoxC;
   private javax.swing.JCheckBox checkBoxF3;
   private javax.swing.JCheckBox checkBoxF5;
