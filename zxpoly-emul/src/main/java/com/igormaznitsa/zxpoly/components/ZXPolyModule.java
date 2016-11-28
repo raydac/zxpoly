@@ -215,7 +215,11 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus {
     }
 
     if (this.moduleIndex == 0) {
-      doInt = this.board.is3D00NotLocked() || is7FFDLocked() || ((this.port7FFD.get() & PORTw_ZX128_INTCPU0) == 0) ? (commonInt || this.localInt) : false;
+      if (this.board.is3D00NotLocked() && !is7FFDLocked()){
+        doInt = (this.port7FFD.get() & PORTw_ZX128_INTCPU0) == 0 ? (commonInt || this.localInt) : false; 
+      }else{
+        doInt = commonInt || this.localInt; 
+      }
     }
     else {
       doInt = (!this.activeRegisterReading && this.registerReadingCounter <= 0) && ((!this.board.is3D00NotLocked() && commonInt) || this.localInt);
