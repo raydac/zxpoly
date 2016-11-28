@@ -20,6 +20,7 @@ UI
 
 Theory and structure of the ZX-Poly platform
 ==============================================
+![ZXPoly test ROM screen](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/zxpolytestromscreen.png)
 The Base of the platform is the theory that stable synchronous systems (without any inside random processes) which are based on the same element base (because different element base can be also source of random processes) by being started synchronously in the same time from the same state will have the same state in any point of time if all synchronous system get the same input signal states in the same time.
 ![Structure of ZXPoly](https://github.com/raydac/zxpoly/blob/master/docs/zxpolystruct.png)
 ZX-Poly platform adds several ports to manipulate work modes and the main port of the platform is #3D00. [In more details it is desribed in wiki.](https://github.com/raydac/zxpoly/wiki/Short-description-of-ZX-Poly-platform) 
