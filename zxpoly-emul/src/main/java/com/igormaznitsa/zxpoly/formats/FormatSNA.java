@@ -16,58 +16,22 @@
  */
 package com.igormaznitsa.zxpoly.formats;
 
-import com.igormaznitsa.jbbp.JBBPParser;
-import com.igormaznitsa.jbbp.mapper.*;
+import java.io.ByteArrayInputStream;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 
 public class FormatSNA extends Snapshot {
-
-  private static final JBBPParser PARSER_SNA = JBBPParser.prepare("ubyte regI;"
-          + "<ushort altRegHL; <ushort altRegDE; <ushort altRegBC; <ushort altRegAF;"
-          + "<ushort regHL; <ushort regDE; <ushort regBC; <ushort regIY; <ushort regIX;"
-          + "ubyte interrupt; ubyte regR;"
-          + "<ushort regAF; <ushort regSP;"
-          + "ubyte intMode;"
-          + "ubyte borderColor;"
-          + "byte [49152] ramDump;"
-          + "<ushort regPC;"
-          + "ubyte port7FFD;"
-          + "byte onTrDos;"
-          + "extrabank [_]{"
-          + " byte [16384] data;"
-          + "}", JBBPParser.FLAG_SKIP_REMAINING_FIELDS_IF_EOF);
-
-  @Bin
-  private static class ExtraBank {
-
-    private byte[] data;
-  }
-
-  @Bin(type = BinType.UBYTE)
-  private int regI, intMode, borderColor, interrupt, regR;
-  @Bin(type = BinType.USHORT)
-  private int altRegHL, altRegDE, altRegBC, altRegAF, regHL, regDE, regBC, regIY, regIX, regAF, regSP;
-  @Bin
-  private byte[] ramDump;
-  @Bin(type = BinType.USHORT)
-  private int regPC;
-  @Bin(type = BinType.UBYTE)
-  private int port7FFD;
-  @Bin(type = BinType.BYTE)
-  private boolean onTrDos;
-  @Bin
-  private ExtraBank[] extrabank;
 
   public FormatSNA() {
   }
 
   @Override
   public void loadFromArray(final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
-    PARSER_SNA.parse(array).mapTo(this, JBBPMapper.FLAG_IGNORE_MISSING_VALUES);
+    final SNAParser parser = new SNAParser().read(new JBBPBitInputStream(new ByteArrayInputStream(array)));
     final boolean sna128 = array.length > 49179;
     if (sna128) {
       doMode128(board);
@@ -78,49 +42,49 @@ public class FormatSNA extends Snapshot {
     final ZXPolyModule module = board.getZXPolyModules()[0];
     final Z80 cpu = board.getCPU0();
     
-    cpu.setRegisterPair(Z80.REGPAIR_AF, this.regAF);
-    cpu.setRegisterPair(Z80.REGPAIR_BC, this.regBC);
-    cpu.setRegisterPair(Z80.REGPAIR_DE, this.regDE);
-    cpu.setRegisterPair(Z80.REGPAIR_HL, this.regHL);
+    cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getREGAF());
+    cpu.setRegisterPair(Z80.REGPAIR_BC, parser.getREGBC());
+    cpu.setRegisterPair(Z80.REGPAIR_DE, parser.getREGDE());
+    cpu.setRegisterPair(Z80.REGPAIR_HL, parser.getREGHL());
 
-    cpu.setRegisterPair(Z80.REGPAIR_AF, this.altRegAF, true);
-    cpu.setRegisterPair(Z80.REGPAIR_BC, this.altRegBC, true);
-    cpu.setRegisterPair(Z80.REGPAIR_DE, this.altRegDE, true);
-    cpu.setRegisterPair(Z80.REGPAIR_HL, this.altRegHL, true);
+    cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getALTREGAF(), true);
+    cpu.setRegisterPair(Z80.REGPAIR_BC, parser.getALTREGBC(), true);
+    cpu.setRegisterPair(Z80.REGPAIR_DE, parser.getALTREGDE(), true);
+    cpu.setRegisterPair(Z80.REGPAIR_HL, parser.getALTREGHL(), true);
 
-    cpu.setRegister(Z80.REG_IX, this.regIX);
-    cpu.setRegister(Z80.REG_IY, this.regIY);
+    cpu.setRegister(Z80.REG_IX, parser.getREGIX());
+    cpu.setRegister(Z80.REG_IY, parser.getREGIY());
 
-    cpu.setRegister(Z80.REG_I, this.regI);
-    cpu.setRegister(Z80.REG_R, this.regR);
+    cpu.setRegister(Z80.REG_I, parser.getREGI());
+    cpu.setRegister(Z80.REG_R, parser.getREGR());
 
-    cpu.setIM(this.intMode);
-    cpu.setIFF((this.interrupt & 2) != 0, (this.interrupt & 2) != 0);
+    cpu.setIM(parser.getINTMODE());
+    cpu.setIFF((parser.getINTERRUPT() & 2) != 0, (parser.getINTERRUPT() & 2) != 0);
 
-    vc.writeIO(module, 0xFE, this.borderColor);
-    vc.setBorderColor(this.borderColor);
+    vc.writeIO(module, 0xFE, parser.getBORDERCOLOR());
+    vc.setBorderColor(parser.getBORDERCOLOR());
 
     if (sna128) {
       final int offsetpage2 = 0x8000;
       final int offsetpage5 = 0x14000;
-      final int offsetpageTop = (this.port7FFD & 7) * 0x4000;
+      final int offsetpageTop = (parser.getPORT7FFD() & 7) * 0x4000;
 
       for (int i = 0; i < 0x4000; i++) {
-        module.writeHeapModuleMemory(offsetpage5 + i, this.ramDump[i]);
-        module.writeHeapModuleMemory(offsetpage2 + i, this.ramDump[i + 0x4000]);
-        module.writeHeapModuleMemory(offsetpageTop + i, this.ramDump[i + 0x8000]);
+        module.writeHeapModuleMemory(offsetpage5 + i, parser.getRAMDUMP()[i]);
+        module.writeHeapModuleMemory(offsetpage2 + i, parser.getRAMDUMP()[i + 0x4000]);
+        module.writeHeapModuleMemory(offsetpageTop + i, parser.getRAMDUMP()[i + 0x8000]);
       }
 
-      cpu.setRegister(Z80.REG_PC, this.regPC);
-      cpu.setRegister(Z80.REG_SP, this.regSP + 2);
-      module.set7FFD(this.port7FFD, true);
-      module.setTRDOSActive(this.onTrDos);
+      cpu.setRegister(Z80.REG_PC, parser.getREGPC());
+      cpu.setRegister(Z80.REG_SP, parser.getREGSP() + 2);
+      module.set7FFD(parser.getPORT7FFD(), true);
+      module.setTRDOSActive(parser.getONTRDOS()!=0);
 
       int bankindex = 0;
-      final int mapped = 0x24 | (1 << (this.port7FFD & 7));
-      for (int i = 0; i < 8 && bankindex < this.extrabank.length; i++) {
+      final int mapped = 0x24 | (1 << (parser.getPORT7FFD() & 7));
+      for (int i = 0; i < 8 && bankindex < parser.getEXTRABANK().length; i++) {
         if ((mapped & (1 << i)) == 0) {
-          final byte[] data = this.extrabank[bankindex++].data;
+          final byte[] data = parser.getEXTRABANK()[bankindex++].getDATA();
           final int heapoffset = i * 0x4000;
           for (int a = 0; a < data.length; a++) {
             module.writeHeapModuleMemory(heapoffset + a, data[a]);
@@ -130,12 +94,12 @@ public class FormatSNA extends Snapshot {
 
     }
     else {
-      for (int i = 0; i < this.ramDump.length; i++) {
-        module.writeMemory(cpu, 16384 + i, this.ramDump[i]);
+      for (int i = 0; i < parser.getRAMDUMP().length; i++) {
+        module.writeMemory(cpu, 16384 + i, parser.getRAMDUMP()[i]);
       }
 
-      final int calculatedPC = (module.readMemory(cpu, this.regSP, false) & 0xFF) + 0x100 * (module.readMemory(cpu, this.regSP + 1, false) & 0xFF);
-      cpu.setRegister(Z80.REG_SP, this.regSP + 2);
+      final int calculatedPC = (module.readMemory(cpu, parser.getREGSP(), false) & 0xFF) + 0x100 * (module.readMemory(cpu, parser.getREGSP() + 1, false) & 0xFF);
+      cpu.setRegister(Z80.REG_SP, parser.getREGSP() + 2);
       cpu.setRegister(Z80.REG_PC, calculatedPC);
     }
   }

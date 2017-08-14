@@ -1,0 +1,26 @@
+ubyte regI;
+<ushort altRegHL;
+<ushort altRegDE;
+<ushort altRegBC;
+<ushort altRegAF;
+<ushort regHL;
+<ushort regDE;
+<ushort regBC;
+<ushort regIY;
+<ushort regIX;
+ubyte interrupt;
+ubyte regR;
+<ushort regAF;
+<ushort regSP;
+ubyte intMode;
+ubyte borderColor;
+
+byte [49152] ramDump;
+
+<ushort regPC;
+ubyte port7FFD;
+byte onTrDos;
+
+extrabank [_] {
+   byte [16384] data;
+}

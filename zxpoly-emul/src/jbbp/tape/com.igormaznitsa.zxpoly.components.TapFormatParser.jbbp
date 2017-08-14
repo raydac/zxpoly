@@ -1,0 +1,7 @@
+// TAP file format (https://faqwiki.zxnet.co.uk/wiki/TAP_format)
+tapblock [_]{ 
+    <ushort len; 
+    byte flag; 
+    byte [len-2] data; 
+    byte checksum;
+}

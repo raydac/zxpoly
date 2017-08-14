@@ -16,32 +16,29 @@
  */
 package com.igormaznitsa.zxpoly.formats;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 
 public class ZXEMLSnapshotFormatTest {
+
+  private static byte [] loadResource(final String name) throws Exception {
+    final InputStream ins = ZXEMLSnapshotFormatTest.class.getResourceAsStream(name);
+    assertNotNull("Can't find resource "+name,ins);
+    final JBBPBitInputStream in = new JBBPBitInputStream(ins);
+    final byte [] result = in.readByteArray(-1);
+    in.close();
+    return result;
+  }
   
   @Test
-  public void testSaveLoad() throws Exception {
+  public void testSaveLoad_Snapshot() throws Exception {
+    final byte [] array = loadResource("fh.zxp");
+    
     final ZXEMLSnapshotFormat data = new ZXEMLSnapshotFormat();
-
-    data.setRegIR(0, 0x0101);
-    data.setRegIR(1, 0x0212);
-    data.setRegIR(2, 0x0323);
-    data.setRegIR(3, 0x0434);
-    
-    final byte [] saved = data.save();
-    
-    final ZXEMLSnapshotFormat unpacked = new ZXEMLSnapshotFormat(saved);
-
-    assertEquals(0x0101, unpacked.getRegIR(0));
-    assertEquals(0x0212, unpacked.getRegIR(1));
-    assertEquals(0x0323, unpacked.getRegIR(2));
-    assertEquals(0x0434, unpacked.getRegIR(3));
-    
+    data.read(new JBBPBitInputStream(new ByteArrayInputStream(array.clone())));
+    assertArrayEquals(array, data.save());
   }
 }

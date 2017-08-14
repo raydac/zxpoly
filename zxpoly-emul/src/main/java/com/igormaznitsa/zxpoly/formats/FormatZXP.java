@@ -18,8 +18,6 @@ package com.igormaznitsa.zxpoly.formats;
 
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.*;
-import com.igormaznitsa.zxpoly.formats.ZXEMLSnapshotFormat.Page;
-import com.igormaznitsa.zxpoly.formats.ZXEMLSnapshotFormat.Pages;
 import java.io.*;
 import java.util.Locale;
 
@@ -33,44 +31,44 @@ public class FormatZXP extends Snapshot {
       final ZXPolyModule module = board.getZXPolyModules()[cpu];
       final Z80 z80 = module.getCPU();
       
-      z80.setRegister(Z80.REG_PC, snapshot.getRegPC(cpu));
-      z80.setRegister(Z80.REG_SP, snapshot.getRegSP(cpu));
+      z80.setRegister(Z80.REG_PC, snapshot.getREG_PC()[cpu]);
+      z80.setRegister(Z80.REG_SP, snapshot.getREG_SP()[cpu]);
 
-      z80.setRegisterPair(Z80.REGPAIR_AF, snapshot.getAF(cpu,false),false);
-      z80.setRegisterPair(Z80.REGPAIR_AF, snapshot.getAF(cpu,true),true);
+      z80.setRegisterPair(Z80.REGPAIR_AF, snapshot.getREG_AF()[cpu],false);
+      z80.setRegisterPair(Z80.REGPAIR_AF, snapshot.getREG_AF_ALT()[cpu],true);
       
-      z80.setRegisterPair(Z80.REGPAIR_BC, snapshot.getBC(cpu,false),false);
-      z80.setRegisterPair(Z80.REGPAIR_BC, snapshot.getBC(cpu,true),true);
+      z80.setRegisterPair(Z80.REGPAIR_BC, snapshot.getREG_BC()[cpu],false);
+      z80.setRegisterPair(Z80.REGPAIR_BC, snapshot.getREG_BC_ALT()[cpu],true);
       
-      z80.setRegisterPair(Z80.REGPAIR_DE, snapshot.getDE(cpu,false),false);
-      z80.setRegisterPair(Z80.REGPAIR_DE, snapshot.getDE(cpu,true),true);
+      z80.setRegisterPair(Z80.REGPAIR_DE, snapshot.getREG_DE()[cpu],false);
+      z80.setRegisterPair(Z80.REGPAIR_DE, snapshot.getREG_DE_ALT()[cpu],true);
       
-      z80.setRegisterPair(Z80.REGPAIR_HL, snapshot.getHL(cpu,false),false);
-      z80.setRegisterPair(Z80.REGPAIR_HL, snapshot.getHL(cpu,true),true);
+      z80.setRegisterPair(Z80.REGPAIR_HL, snapshot.getREG_HL()[cpu],false);
+      z80.setRegisterPair(Z80.REGPAIR_HL, snapshot.getREG_HL_ALT()[cpu],true);
       
-      z80.setRegister(Z80.REG_IX, snapshot.getRegIX(cpu));
-      z80.setRegister(Z80.REG_IY, snapshot.getRegIY(cpu));
+      z80.setRegister(Z80.REG_IX, snapshot.getREG_IX()[cpu]);
+      z80.setRegister(Z80.REG_IY, snapshot.getREG_IY()[cpu]);
 
-      z80.setRegister(Z80.REG_R, snapshot.getRegIR(cpu) & 0xFF);
-      z80.setRegister(Z80.REG_I, (snapshot.getRegIR(cpu)>>8) & 0xFF);
+      z80.setRegister(Z80.REG_R, snapshot.getREG_IR()[cpu] & 0xFF);
+      z80.setRegister(Z80.REG_I, (snapshot.getREG_IR()[cpu]>>8) & 0xFF);
       
-      z80.setIFF(snapshot.isIFF(cpu),snapshot.isIFF2(cpu));
-      z80.setIM(snapshot.getRegIM(cpu));
+      z80.setIFF(snapshot.getIFF()[cpu],snapshot.getIFF2()[cpu]);
+      z80.setIM(snapshot.getREG_IM()[cpu]);
 
       module.loadModuleLocalPortsByValues(snapshot.getModulePorts(cpu)[0], snapshot.getModulePorts(cpu)[1], snapshot.getModulePorts(cpu)[2], snapshot.getModulePorts(cpu)[3], snapshot.getModulePorts(cpu)[4]);
     
-      final Pages memory = snapshot.getPages(cpu);
+      final ZXPParser.PAGES memory = snapshot.getPAGES()[cpu];
       
-      for(final Page p : memory.getPages()){
-        final int pageOffset = p.getIndex() * 0x4000;
+      for(final ZXPParser.PAGES.PAGE p : memory.getPAGE()){
+        final int pageOffset = p.getINDEX()* 0x4000;
         for(int addr=0; addr<0x4000; addr++){
-          module.writeHeapModuleMemory(pageOffset + addr, p.getData()[addr] & 0xFF);
+          module.writeHeapModuleMemory(pageOffset + addr, p.getDATA()[addr] & 0xFF);
         }
       }
     }
  
-    board.set3D00(snapshot.getPort3D00(), true);
-    vc.setBorderColor(snapshot.getPortFE() &  7);
+    board.set3D00(snapshot.getPORT3D00(), true);
+    vc.setBorderColor(snapshot.getPORTFE() &  7);
   }
 
   @Override

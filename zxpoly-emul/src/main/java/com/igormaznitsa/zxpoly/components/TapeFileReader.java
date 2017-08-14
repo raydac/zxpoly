@@ -16,10 +16,7 @@
  */
 package com.igormaznitsa.zxpoly.components;
 
-import com.igormaznitsa.jbbp.JBBPParser;
 import com.igormaznitsa.jbbp.io.*;
-import com.igormaznitsa.jbbp.mapper.Bin;
-import com.igormaznitsa.jbbp.model.JBBPFieldArrayStruct;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
@@ -31,6 +28,7 @@ import java.util.logging.Logger;
 import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataListener;
+import com.igormaznitsa.zxpoly.components.TapFormatParser.TAPBLOCK;
 
 public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
 
@@ -45,8 +43,6 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
   private static final long IMPULSNUMBER_PILOT_HEADER = 8063L;
   private static final long IMPULSNUMBER_PILOT_DATA = 3223L;
   private static final long PAUSE_BETWEEN = 7000000L; // two sec
-
-  private static final JBBPParser TAP_FILE_PARSER = JBBPParser.prepare("tapblocks [_]{ <ushort len; byte flag; byte [len-2] data; byte checksum;}");
 
   private final List<ActionListener> listeners = new CopyOnWriteArrayList<ActionListener>();
   
@@ -63,22 +59,24 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
     CHECKSUM
   }
 
-  @Bin
   public static final class TapBlock {
 
     private static final Charset USASCII = Charset.forName("US-ASCII"); 
     
-    @Bin
     byte flag;
-    @Bin
     byte[] data;
-    @Bin
     byte checksum;
     
     transient TapBlock prev;
     transient TapBlock next;
     transient int index;
     transient String name;
+
+    public TapBlock(TAPBLOCK block) {
+      this.flag = block.getFLAG();
+      this.checksum = block.getCHECKSUM();
+      this.data = block.getDATA().clone();
+    }
     
     public boolean isFirst() {
       return this.prev == null;
@@ -95,11 +93,10 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
     public String getName(){
       if (this.name==null){
         if (isHeader()){
-          final String name;
           if (this.data.length<11){
-            name = "<NONSTANDARD HEADER LENGTH>";
+            this.name = "<NONSTANDARD HEADER LENGTH>";
           }else{
-            name = new String(this.data,1,10,USASCII);
+            this.name = new String(this.data,1,10,USASCII);
           }
           final String type;
           switch(this.data[0]){
@@ -109,7 +106,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
             case 3 : type = "COD";break;
             default : type = "???";break;
           }
-          this.name = type+": "+name;
+          this.name = type+": "+this.name;
         }else{
           this.name = "===: ..........";
         }
@@ -149,19 +146,19 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
   
   public TapeFileReader(final String name, final InputStream tap) throws IOException {
     this.name = name;
-    final JBBPFieldArrayStruct parsed = TAP_FILE_PARSER.parse(tap).findFirstFieldForType(JBBPFieldArrayStruct.class);
-    if (parsed.size() == 0) {
+    final TapFormatParser tapParser = new TapFormatParser().read(new JBBPBitInputStream(tap));
+    if (tapParser.getTAPBLOCK().length == 0) {
       this.current = null;
       log.warning("Can't find blocks in TAP file");
     }
     else {
-      this.current = parsed.getElementAt(0).mapTo(TapBlock.class);
+      this.current = new TapBlock(tapParser.getTAPBLOCK()[0]);
       this.current.index = 0;
       this.tapBlockList.add(current);
       this.current.prev = null;
       TapBlock item = this.current;
-      for (int i = 1; i < parsed.size(); i++) {
-        final TapBlock newitem = parsed.getElementAt(i).mapTo(TapBlock.class);
+      for (int i = 1; i < tapParser.getTAPBLOCK().length; i++) {
+        final TapBlock newitem = new TapBlock(tapParser.getTAPBLOCK()[i]);
         newitem.index = i;
         newitem.prev = item;
         item.next = newitem;

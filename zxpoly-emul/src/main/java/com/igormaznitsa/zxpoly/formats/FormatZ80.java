@@ -16,15 +16,11 @@
  */
 package com.igormaznitsa.zxpoly.formats;
 
-import com.igormaznitsa.jbbp.JBBPParser;
-import com.igormaznitsa.jbbp.io.*;
-import com.igormaznitsa.jbbp.mapper.*;
-import com.igormaznitsa.jbbp.model.*;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.*;
 import java.io.*;
-import java.lang.reflect.Field;
 import java.util.*;
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 
 public class FormatZ80 extends Snapshot {
 
@@ -33,35 +29,100 @@ public class FormatZ80 extends Snapshot {
   private static final int VERSION_3A = 2;
   private static final int VERSION_3B = 3;
 
-  class EmulFlags {
+  public static interface Z80EmulFlags {
 
-    @Bin(outOrder = 1, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_2)
-    byte interruptmode;
-    @Bin(outOrder = 2, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_1)
-    byte issue2emulation;
-    @Bin(outOrder = 3, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_1)
-    byte doubleintfreq;
-    @Bin(outOrder = 4, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_2)
-    byte videosync;
-    @Bin(outOrder = 5, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_2)
-    byte inputdevice;
+    byte getINTERRUPTMODE();
+
+    byte getISSUE2EMULATION();
+
+    byte getDOUBLEINTFREQ();
+
+    byte getVIDEOSYNC();
+
+    byte getINPUTDEVICE();
   }
 
-  class Flags {
+  public static interface Z80Flags {
 
-    @Bin(outOrder = 1, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_1)
-    byte reg_r_bit7;
-    @Bin(outOrder = 2, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_3)
-    byte bordercolor;
-    @Bin(outOrder = 3, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_1)
-    byte basic_samrom;
-    @Bin(outOrder = 4, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_1)
-    byte compressed;
-    @Bin(outOrder = 5, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_2)
-    byte nomeaning;
+    byte getREG_R_BIT7();
+
+    byte getBORDERCOLOR();
+
+    byte getBASIC_SAMROM();
+
+    byte getCOMPRESSED();
+
+    byte getNOMEANING();
   }
 
-  static class Bank {
+  public static abstract class AbstractZ80Snapshot {
+
+    public abstract byte getREG_A();
+
+    public abstract byte getREG_F();
+
+    public abstract short getREG_BC();
+
+    public abstract short getREG_HL();
+
+    public abstract short getREG_PC();
+
+    public abstract short getREG_SP();
+
+    public abstract byte getREG_IR();
+
+    public abstract byte getREG_R();
+
+    public abstract Z80Flags getFLAGS();
+
+    public abstract short getREG_DE();
+
+    public abstract short getREG_BC_ALT();
+
+    public abstract short getREG_DE_ALT();
+
+    public abstract short getREG_HL_ALT();
+
+    public abstract byte getREG_A_ALT();
+
+    public abstract byte getREG_F_ALT();
+
+    public abstract short getREG_IY();
+
+    public abstract short getREG_IX();
+
+    public abstract byte getIFF();
+
+    public abstract byte getIFF2();
+
+    public abstract Z80EmulFlags getEMULFLAGS();
+
+    public abstract byte[] getDATA();
+
+    public char getREG_PC2() {
+      throw new Error("Must not be called directly");
+    }
+
+    public char getMODE() {
+      throw new Error("Must not be called directly");
+    }
+
+    public char getPORT7FFD() {
+      throw new Error("Must not be called directly");
+    }
+
+    public char getPORTFF() {
+      throw new Error("Must not be called directly");
+    }
+
+    public abstract AbstractZ80Snapshot read(JBBPBitInputStream in) throws IOException;
+
+    public void fillFromArray(final byte[] array) throws IOException {
+      this.read(new JBBPBitInputStream(new ByteArrayInputStream(array)));
+    }
+  }
+
+  private static class Bank {
 
     final int page;
     final byte[] data;
@@ -70,203 +131,36 @@ public class FormatZ80 extends Snapshot {
       this.page = page;
       this.data = data;
     }
-  }
 
-  class Z80Snapshot {
+    static byte[] decodeRLE(final byte[] data) {
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length << 1);
+      int i = 0;
 
-    @Bin(outOrder = 1)
-    byte reg_a;
-    @Bin(outOrder = 2)
-    byte reg_f;
-    @Bin(outOrder = 3)
-    short reg_bc;
-    @Bin(outOrder = 4)
-    short reg_hl;
-    @Bin(outOrder = 5)
-    short reg_pc;
-    @Bin(outOrder = 6)
-    short reg_sp;
-    @Bin(outOrder = 7)
-    byte reg_ir;
-    @Bin(outOrder = 8)
-    byte reg_r;
+      final int len = data.length - 4;
 
-    @Bin(outOrder = 9)
-    Flags flags;
-
-    @Bin(outOrder = 10)
-    short reg_de;
-    @Bin(outOrder = 11)
-    short reg_bc_alt;
-    @Bin(outOrder = 12)
-    short reg_de_alt;
-    @Bin(outOrder = 13)
-    short reg_hl_alt;
-    @Bin(outOrder = 14)
-    byte reg_a_alt;
-    @Bin(outOrder = 15)
-    byte reg_f_alt;
-    @Bin(outOrder = 16)
-    short reg_iy;
-    @Bin(outOrder = 17)
-    short reg_ix;
-    @Bin(outOrder = 18)
-    byte iff;
-    @Bin(outOrder = 19)
-    byte iff2;
-
-    @Bin(outOrder = 20)
-    EmulFlags emulFlags;
-
-    @Bin(outOrder = 21, custom = true)
-    byte[] data;
-
-    // version 2,3A
-    @Bin(type = BinType.USHORT)
-    int reg_pc2;
-
-    @Bin(type = BinType.UBYTE)
-    int mode;
-
-    @Bin(type = BinType.UBYTE)
-    int port7FFD;
-
-    @Bin(type = BinType.UBYTE)
-    int portFF;
-
-    @Bin(custom = true)
-    Bank[] banks;
-  }
-
-  private static final JBBPParser Z80_VERSION1 = JBBPParser.prepare(
-          "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
-          + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
-          + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
-          + "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
-          + "byte [_] data;"
-  );
-
-  private static final JBBPParser Z80_VERSION2 = JBBPParser.prepare(
-          "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
-          + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
-          + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
-          + "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
-          + "skip:2;" // header length
-          + "<ushort reg_pc2;"
-          + "ubyte mode;"
-          + "ubyte port7FFD;"
-          + "ubyte portFF;"
-          + "skip:18;"// misc non zx or not supported stuff 
-          + "byte [_] data;"
-  );
-
-  private static final JBBPParser Z80_VERSION3A = JBBPParser.prepare(
-          "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
-          + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
-          + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
-          + "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
-          + "skip:2;" // header length
-          + "<ushort reg_pc2;"
-          + "ubyte mode;"
-          + "ubyte port7FFD;"
-          + "ubyte portFF;"
-          + "skip:49;" // misc non zx or not supported stuff 
-          + "byte [_] data;"
-  );
-
-  private static final JBBPParser Z80_VERSION3B = JBBPParser.prepare(
-          "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
-          + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
-          + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
-          + "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
-          + "skip:2;" // header length
-          + "<ushort reg_pc2;"
-          + "ubyte mode;"
-          + "ubyte port7FFD;"
-          + "ubyte portFF;"
-          + "skip:50;" // misc non zx or not supported stuff 
-          + "byte [_] data;"
-  );
-
-  private static class DataProcessor implements JBBPMapperCustomFieldProcessor {
-
-    private final int version;
-
-    private DataProcessor(final int version) {
-      this.version = version;
-    }
-
-    @Override
-    public Object prepareObjectForMapping(JBBPFieldStruct parsedBlock, Bin annotation, Field field) {
-      if (this.version == VERSION_1) {
-        if (field.getName().equals("data")) {
-          final byte[] data = parsedBlock.findFieldForNameAndType("data", JBBPFieldArrayByte.class).getArray();
-
-          if (parsedBlock.findFieldForPathAndType("flags.compressed", JBBPFieldBit.class).getAsBool()) {
-            // RLE compressed
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length << 1);
-            int i = 0;
-
-            final int len = data.length - 4;
-
-            while (i < len) {
-              final int a = data[i++] & 0xFF;
-              if (a == 0xED) {
-                final int b = data[i++] & 0xFF;
-                if (b == 0xED) {
-                  int num = data[i++] & 0xFF;
-                  final int val = data[i++] & 0xFF;
-                  while (num > 0) {
-                    baos.write(val);
-                    num--;
-                  }
-                }
-                else {
-                  baos.write(a);
-                  baos.write(b);
-                }
-              }
-              else {
-                baos.write(a);
-              }
+      while (i < len) {
+        final int a = data[i++] & 0xFF;
+        if (a == 0xED) {
+          final int b = data[i++] & 0xFF;
+          if (b == 0xED) {
+            int num = data[i++] & 0xFF;
+            final int val = data[i++] & 0xFF;
+            while (num > 0) {
+              baos.write(val);
+              num--;
             }
-            return baos.toByteArray();
+          } else {
+            baos.write(a);
+            baos.write(b);
           }
-          else {
-            // uncompressed
-            return data;
-          }
-        }
-        else {
-          return null;
+        } else {
+          baos.write(a);
         }
       }
-      else {
-        if (field.getName().equalsIgnoreCase("data")) {
-          return parsedBlock.findFieldForNameAndType("data", JBBPFieldArrayByte.class).getArray();
-        }
-        else if (field.getName().equalsIgnoreCase("banks")) {
-          final byte[] rawdata = parsedBlock.findFieldForNameAndType("data", JBBPFieldArrayByte.class).getArray();
-          int pos = 0;
-          int len = rawdata.length;
-          final List<Bank> banks = new ArrayList<Bank>();
-          while (len > 0) {
-            final int blocklength = ((rawdata[pos++] & 0xFF)) | ((rawdata[pos++] & 0xFF) << 8);
-            final int page = rawdata[pos++] & 0xFF;
-            len -= 3 + (blocklength == 0xFFFF ? 16384 : blocklength);
-            final byte[] uncompressed = blocklength == 0xFFFF ? Arrays.copyOfRange(rawdata, pos, 16384) : unpack(rawdata, pos, blocklength);
-            pos += blocklength;
-            banks.add(new Bank(page, uncompressed));
-          }
-          return banks.toArray(new Bank[banks.size()]);
-        }
-        else {
-          return null;
-        }
-      }
+      return baos.toByteArray();
     }
 
-    private byte[] unpack(final byte[] src, int srcoffset, int srclen) {
+    static byte[] unpackBank(final byte[] src, int srcoffset, int srclen) {
       final ByteArrayOutputStream result = new ByteArrayOutputStream(16384);
       while (srclen > 0) {
         if (srclen >= 4 && src[srcoffset] == (byte) 0xED && src[srcoffset + 1] == (byte) 0xED) {
@@ -277,13 +171,27 @@ public class FormatZ80 extends Snapshot {
             result.write(value);
           }
           srclen -= 4;
-        }
-        else {
+        } else {
           result.write(src[srcoffset++]);
           srclen--;
         }
       }
       return result.toByteArray();
+    }
+
+    static Bank[] toBanks(final byte[] data) {
+      int pos = 0;
+      int len = data.length;
+      final List<Bank> banks = new ArrayList<Bank>();
+      while (len > 0) {
+        final int blocklength = ((data[pos++] & 0xFF)) | ((data[pos++] & 0xFF) << 8);
+        final int page = data[pos++] & 0xFF;
+        len -= 3 + (blocklength == 0xFFFF ? 16384 : blocklength);
+        final byte[] uncompressed = blocklength == 0xFFFF ? Arrays.copyOfRange(data, pos, 16384) : unpackBank(data, pos, blocklength);
+        pos += blocklength;
+        banks.add(new Bank(page, uncompressed));
+      }
+      return banks.toArray(new Bank[banks.size()]);
     }
   }
 
@@ -293,37 +201,36 @@ public class FormatZ80 extends Snapshot {
       throw new IOException("File is too short to be Z80 snapshot");
     }
 
-    final JBBPParser parser;
+    final AbstractZ80Snapshot snapshot;
 
     final int version;
 
     if ((array[6] | array[7]) == 0) {
       switch (((array[31] & 0xFF) << 8 | (array[30] & 0xFF))) {
         case 23: { // Verison 2
-          parser = Z80_VERSION2;
+          snapshot = new Z80V2Parser();
           version = VERSION_2;
         }
         break;
         case 54: { // Version 3a
-          parser = Z80_VERSION3A;
+          snapshot = new Z80V3AParser();
           version = VERSION_3A;
         }
         break;
         case 55: { // Version 3b
-          parser = Z80_VERSION3B;
+          snapshot = new Z80V3BParser();
           version = VERSION_3B;
         }
         break;
         default:
           throw new IOException("Detected unknown Z80 snapshot version");
       }
-    }
-    else {
-      parser = Z80_VERSION1;
+    } else {
+      snapshot = new Z80V1Parser();
       version = VERSION_1;
     }
 
-    final Z80Snapshot current = parser.parse(array).mapTo(Z80Snapshot.class, new DataProcessor(version), JBBPMapper.FLAG_IGNORE_MISSING_VALUES);
+    snapshot.fillFromArray(array);
 
     // check hardware mode
     switch (version) {
@@ -331,20 +238,20 @@ public class FormatZ80 extends Snapshot {
       }
       break;
       case VERSION_2: {
-        switch (current.mode) {
+        switch (snapshot.getMODE()) {
           case 0:
           case 1:
           case 3:
           case 4:
             break;
           default:
-            throw new IOException("Unsupported Z80 hardware mode [" + current.mode + ']');
+            throw new IOException("Unsupported Z80 hardware mode [" + snapshot.getMODE() + ']');
         }
       }
       break;
       case VERSION_3A:
       case VERSION_3B: {
-        switch (current.mode) {
+        switch (snapshot.getMODE()) {
           case 0:
           case 1:
           case 3:
@@ -353,64 +260,65 @@ public class FormatZ80 extends Snapshot {
           case 6:
             break;
           default:
-            throw new IOException("Unsupported Z80 hardware mode [" + current.mode + ']');
+            throw new IOException("Unsupported Z80 hardware mode [" + snapshot.getMODE() + ']');
         }
       }
       break;
     }
 
-    final boolean mode48 = is48k(version, current);
+    final boolean mode48 = is48k(version, snapshot);
 
     if (mode48) {
       doMode48(board);
-    }
-    else {
+    } else {
       doMode128(board);
     }
 
     final Z80 cpu = board.getCPU0();
 
-    cpu.setRegister(Z80.REG_A, current.reg_a);
-    cpu.setRegister(Z80.REG_F, current.reg_f);
-    cpu.setRegister(Z80.REG_A, current.reg_a_alt, true);
-    cpu.setRegister(Z80.REG_F, current.reg_f_alt, true);
-    cpu.setRegisterPair(Z80.REGPAIR_BC, current.reg_bc);
-    cpu.setRegisterPair(Z80.REGPAIR_BC, current.reg_bc_alt, true);
-    cpu.setRegisterPair(Z80.REGPAIR_DE, current.reg_de);
-    cpu.setRegisterPair(Z80.REGPAIR_DE, current.reg_de_alt, true);
-    cpu.setRegisterPair(Z80.REGPAIR_HL, current.reg_hl);
-    cpu.setRegisterPair(Z80.REGPAIR_HL, current.reg_hl_alt, true);
+    cpu.setRegister(Z80.REG_A, snapshot.getREG_A());
+    cpu.setRegister(Z80.REG_F, snapshot.getREG_F());
+    cpu.setRegister(Z80.REG_A, snapshot.getREG_A_ALT(), true);
+    cpu.setRegister(Z80.REG_F, snapshot.getREG_F_ALT(), true);
+    cpu.setRegisterPair(Z80.REGPAIR_BC, snapshot.getREG_BC());
+    cpu.setRegisterPair(Z80.REGPAIR_BC, snapshot.getREG_BC_ALT(), true);
+    cpu.setRegisterPair(Z80.REGPAIR_DE, snapshot.getREG_DE());
+    cpu.setRegisterPair(Z80.REGPAIR_DE, snapshot.getREG_DE_ALT(), true);
+    cpu.setRegisterPair(Z80.REGPAIR_HL, snapshot.getREG_HL());
+    cpu.setRegisterPair(Z80.REGPAIR_HL, snapshot.getREG_HL_ALT(), true);
 
-    cpu.setRegister(Z80.REG_IX, current.reg_ix);
-    cpu.setRegister(Z80.REG_IY, current.reg_iy);
+    cpu.setRegister(Z80.REG_IX, snapshot.getREG_IX());
+    cpu.setRegister(Z80.REG_IY, snapshot.getREG_IY());
 
-    cpu.setRegister(Z80.REG_R, current.reg_r);
-    cpu.setRegister(Z80.REG_SP, current.reg_sp);
+    cpu.setRegister(Z80.REG_R, snapshot.getREG_R());
+    cpu.setRegister(Z80.REG_SP, snapshot.getREG_SP());
 
     if (version == VERSION_1) {
-      cpu.setRegister(Z80.REG_PC, current.reg_pc);
-    }
-    else {
-      cpu.setRegister(Z80.REG_PC, current.reg_pc2);
+      cpu.setRegister(Z80.REG_PC, snapshot.getREG_PC());
+    } else {
+      cpu.setRegister(Z80.REG_PC, snapshot.getREG_PC2());
     }
 
-    cpu.setIFF(current.iff != 0, current.iff2 != 0);
+    cpu.setIFF(snapshot.getIFF() != 0, snapshot.getIFF2() != 0);
 
-    cpu.setRegister(Z80.REG_I, current.reg_ir);
-    cpu.setIM(current.emulFlags.interruptmode);
+    cpu.setRegister(Z80.REG_I, snapshot.getREG_IR());
+    cpu.setIM(snapshot.getEMULFLAGS().getINTERRUPTMODE());
 
     final ZXPolyModule module = board.getZXPolyModules()[0];
 
     switch (version) {
       case VERSION_1: {
-        for (int i = 0; i < current.data.length; i++) {
-          module.writeMemory(cpu, i + 16384, current.data[i]);
+        ((Z80V1Parser) snapshot).setDATA(Bank.decodeRLE(snapshot.getDATA()));
+        for (int i = 0; i < snapshot.getDATA().length; i++) {
+          module.writeMemory(cpu, i + 16384, snapshot.getDATA()[i]);
         }
       }
       break;
       default: {
+        final Bank[] banks = Bank.toBanks(snapshot.getDATA());
+
         if (mode48) {
-          for (final Bank b : current.banks) {
+          for (final Bank b : banks) {
             int offset = -1;
             switch (b.page) {
               case 4: {
@@ -432,10 +340,9 @@ public class FormatZ80 extends Snapshot {
               }
             }
           }
-        }
-        else {
-          module.set7FFD(current.port7FFD, true);
-          for (final Bank b : current.banks) {
+        } else {
+          module.set7FFD(snapshot.getPORT7FFD(), true);
+          for (final Bank b : banks) {
             if (b.page >= 3 && b.page < 10) {
               final int offset = (b.page - 3) * 0x4000;
               for (int i = 0; i < 16384; i++) {
@@ -448,7 +355,7 @@ public class FormatZ80 extends Snapshot {
       break;
     }
 
-    vc.setBorderColor(current.flags.bordercolor);
+    vc.setBorderColor(snapshot.getFLAGS().getBORDERCOLOR());
   }
 
   @Override
@@ -466,16 +373,16 @@ public class FormatZ80 extends Snapshot {
     return "Z80 Snapshot (*.z80)";
   }
 
-  private static boolean is48k(final int version, final Z80Snapshot snapshot) {
+  private static boolean is48k(final int version, final AbstractZ80Snapshot snapshot) {
     switch (version) {
       case VERSION_1:
         return true;
       case VERSION_2: {
-        return snapshot.mode == 0 || snapshot.mode == 1;
+        return snapshot.getMODE() == 0 || snapshot.getMODE() == 1;
       }
       case VERSION_3A:
       case VERSION_3B: {
-        return snapshot.mode == 0 || snapshot.mode == 1 || snapshot.mode == 3;
+        return snapshot.getMODE() == 0 || snapshot.getMODE() == 1 || snapshot.getMODE() == 3;
       }
       default:
         return false;
