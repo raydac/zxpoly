@@ -11,11 +11,14 @@
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    id="svg3390"
    version="1.1"
-   inkscape:version="0.91+devel r"
-   width="336.92105"
-   height="250.64757"
-   viewBox="0 0 336.92105 250.64757"
-   sodipodi:docname="zxpoly_app_icon.svg">
+   inkscape:version="0.91 r13725"
+   width="251"
+   height="251"
+   viewBox="0 0 251 251"
+   sodipodi:docname="zxpoly_app_icon.svg"
+   inkscape:export-filename="/home/igorm/Projects_PET/zxpoly/docs/zxpoly_app_icon.png"
+   inkscape:export-xdpi="45.900002"
+   inkscape:export-ydpi="45.900002">
   <metadata
      id="metadata3396">
     <rdf:RDF>
@@ -41,6 +44,40 @@
          id="ellipse4282"
          style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:2.26582646;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </mask>
+    <filter
+       y="-0.25"
+       height="1.5"
+       inkscape:menu-tooltip="Darkens the edge with an inner blur and adds a flexible glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:label="Dark And Glow"
+       style="color-interpolation-filters:sRGB"
+       id="filter4143">
+      <feGaussianBlur
+         stdDeviation="5"
+         result="result6"
+         id="feGaussianBlur4145" />
+      <feComposite
+         result="result8"
+         in="SourceGraphic"
+         operator="atop"
+         in2="result6"
+         id="feComposite4147" />
+      <feComposite
+         result="result9"
+         operator="over"
+         in2="SourceAlpha"
+         in="result8"
+         id="feComposite4149" />
+      <feColorMatrix
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0 "
+         result="result10"
+         id="feColorMatrix4151" />
+      <feBlend
+         in="result10"
+         mode="normal"
+         in2="result6"
+         id="feBlend4153" />
+    </filter>
   </defs>
   <sodipodi:namedview
      pagecolor="#ffffff"
@@ -51,77 +88,99 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1600"
-     inkscape:window-height="820"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
      id="namedview3392"
      showgrid="false"
      fit-margin-top="0"
      fit-margin-left="0"
-     fit-margin-right="0"
+     fit-margin-right="-2.7755576e-17"
      fit-margin-bottom="0"
      inkscape:zoom="2.04504"
-     inkscape:cx="220.36765"
-     inkscape:cy="151.74608"
+     inkscape:cx="-202.07205"
+     inkscape:cy="94.70584"
      inkscape:window-x="0"
-     inkscape:window-y="28"
+     inkscape:window-y="24"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg3390" />
   <g
-     id="g4215"
-     transform="scale(1.2506201,3.0586653)"
-     mask="url(#mask4280)">
+     id="g4168"
+     transform="translate(-42.96052,0.82378171)">
     <g
-       transform="matrix(1,0,0.2700422,1,-134.93892,-110.44879)"
-       id="g3493">
-      <rect
-         style="fill:#ff0000;stroke:none"
-         id="rect3434"
-         width="57.05151"
-         height="105.46339"
-         x="238.84872"
-         y="142.14485"
-         transform="matrix(1,0,-0.62948113,0.77701577,0,0)" />
-      <rect
-         style="fill:#ffff00;stroke:none"
-         id="rect3434-0"
-         width="57.05151"
-         height="105.46339"
-         x="295.72739"
-         y="142.14485"
-         transform="matrix(1,0,-0.62948113,0.77701577,0,0)" />
-      <rect
-         style="fill:#00ff00;stroke:none"
-         id="rect3434-04"
-         width="57.05151"
-         height="105.46339"
-         x="351.19925"
-         y="142.14485"
-         transform="matrix(1,0,-0.62948113,0.77701577,0,0)" />
-      <rect
-         style="fill:#00ffff;stroke:none"
-         id="rect3434-5"
-         width="57.05151"
-         height="105.46339"
-         x="406.94226"
-         y="142.14485"
-         transform="matrix(1,0,-0.62948113,0.77701577,0,0)" />
+       mask="url(#mask4280)"
+       transform="matrix(1.2506201,0,0,3.0586653,4.4387648e-6,-0.64757198)"
+       id="g4215">
+      <g
+         id="g3493"
+         transform="matrix(1,0,0.2700422,1,-134.93892,-110.44879)">
+        <rect
+           transform="matrix(1,0,-0.62948113,0.77701577,0,0)"
+           y="142.14485"
+           x="238.84872"
+           height="105.46339"
+           width="57.05151"
+           id="rect3434"
+           style="fill:#ff0000;stroke:none" />
+        <rect
+           transform="matrix(1,0,-0.62948113,0.77701577,0,0)"
+           y="142.14485"
+           x="295.72739"
+           height="105.46339"
+           width="57.05151"
+           id="rect3434-0"
+           style="fill:#ffff00;stroke:none" />
+        <rect
+           transform="matrix(1,0,-0.62948113,0.77701577,0,0)"
+           y="142.14485"
+           x="351.19925"
+           height="105.46339"
+           width="57.05151"
+           id="rect3434-04"
+           style="fill:#00ff00;stroke:none" />
+        <rect
+           transform="matrix(1,0,-0.62948113,0.77701577,0,0)"
+           y="142.14485"
+           x="406.94226"
+           height="105.46339"
+           width="57.05151"
+           id="rect3434-5"
+           style="fill:#00ffff;stroke:none" />
+      </g>
+    </g>
+    <g
+       transform="translate(2.1373804,0.95966385)"
+       id="text4228"
+       style="font-style:normal;font-weight:normal;font-size:58.89200592px;line-height:125%;font-family:Sans;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:#ffff00;stroke-width:2.00600004;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter4143)">
+      <path
+         inkscape:connector-curvature="0"
+         id="path4156"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'ZX Spectrum';-inkscape-font-specification:'ZX Spectrum';text-align:center;text-anchor:middle;stroke:#ffff00;stroke-width:2.00600004;stroke-miterlimit:4;stroke-dasharray:none"
+         d="m 162.96163,102.99355 0,-7.361498 -29.446,0 0,-14.723001 14.79662,0 0,-14.723002 -29.51962,0 0,-7.3615 44.169,0 0,7.3615 -7.3615,0 0,7.361501 -14.723,0 0,14.723002 -14.723,0 0,7.3615 -7.3615,0 0,7.361498 44.169,0 z" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path4158"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'ZX Spectrum';-inkscape-font-specification:'ZX Spectrum';text-align:center;text-anchor:middle;stroke:#ffff00;stroke-width:2.00600004;stroke-miterlimit:4;stroke-dasharray:none"
+         d="m 221.85364,102.99355 -7.3615,0 0,-14.722998 -29.446,0 0,14.722998 -7.3615,0 0,-7.361498 14.723,0 0,-29.446003 -14.723,0 0,-7.3615 7.3615,0 0,14.723001 29.446,0 0,-14.723001 7.3615,0 0,7.3615 -14.64939,0 0,29.446003 14.64939,0 0,7.361498 z" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path4160"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'ZX Spectrum';-inkscape-font-specification:'ZX Spectrum';text-align:center;text-anchor:middle;stroke:#ffff00;stroke-width:2.00600004;stroke-miterlimit:4;stroke-dasharray:none"
+         d="m 59.900624,176.60856 0,-44.169 36.807504,0 0,29.446 -29.446003,0 0,14.723 -7.361501,0 z m 44.169006,-36.8075 -36.807505,0 0,14.723 36.807505,0 0,-14.723 z" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path4162"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'ZX Spectrum';-inkscape-font-specification:'ZX Spectrum';text-align:center;text-anchor:middle;stroke:#ffff00;stroke-width:2.00600004;stroke-miterlimit:4;stroke-dasharray:none"
+         d="m 118.79263,139.80106 0,29.446 44.169,0 0,-29.446 -44.169,0 z m 7.3615,-7.3615 29.446,0 0,44.169 -29.446,0 0,-44.169 z" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path4164"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'ZX Spectrum';-inkscape-font-specification:'ZX Spectrum';text-align:center;text-anchor:middle;stroke:#ffff00;stroke-width:2.00600004;stroke-miterlimit:4;stroke-dasharray:none"
+         d="m 177.68464,176.60856 44.169,0 0,-7.3615 -36.8075,0 0,-36.8075 -7.3615,0 0,44.169 z" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path4166"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'ZX Spectrum';-inkscape-font-specification:'ZX Spectrum';text-align:center;text-anchor:middle;stroke:#ffff00;stroke-width:2.00600004;stroke-miterlimit:4;stroke-dasharray:none"
+         d="m 280.74565,139.80106 -14.64938,0 0,14.723 -22.15812,0 0,-14.723 -14.723,0 0,-7.3615 7.3615,0 0,14.723 14.723,0 0,29.446 7.3615,0 0,-29.446 14.723,0 0,-14.723 7.3615,0 0,7.3615 z" />
     </g>
   </g>
-  <text
-     xml:space="preserve"
-     style="font-style:normal;font-weight:normal;font-size:65.13110352px;line-height:125%;font-family:Sans;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:4.78110218;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-     x="168.05885"
-     y="107.15727"
-     id="text4228"
-     sodipodi:linespacing="125%"><tspan
-       sodipodi:role="line"
-       id="tspan4230"
-       x="168.05885"
-       y="107.15727"
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-family:'Shaston 320';-inkscape-font-specification:'Shaston 320 Medium';text-align:center;text-anchor:middle;stroke:#ffffff;stroke-width:4.78110218;stroke-miterlimit:4;stroke-dasharray:none">ZX</tspan><tspan
-       sodipodi:role="line"
-       x="168.05885"
-       y="188.57115"
-       id="tspan4232"
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-family:'Shaston 320';-inkscape-font-specification:'Shaston 320 Medium';text-align:center;text-anchor:middle;stroke:#ffffff;stroke-width:4.78110218;stroke-miterlimit:4;stroke-dasharray:none">POLY</tspan></text>
 </svg>

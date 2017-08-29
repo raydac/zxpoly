@@ -52,13 +52,40 @@
 
   <profiles>
     <profile>
-      <id>WindowsExecutable</id>
+      <id>publish</id>
       <build>
         <plugins>
           <plugin>
+            <groupId>sh.tak.appbundler</groupId>
+            <artifactId>appbundle-maven-plugin</artifactId>
+            <version>1.2.0</version>
+            <configuration>
+              <bundleName>${app.name}</bundleName>
+              <diskImageFile>${project.build.directory}/${project.build.finalName}_OSX.dmg</diskImageFile>
+              <mainClass>com.igormaznitsa.zxpoly.main</mainClass>
+              <iconFile>appico.icns</iconFile>
+              <bundleName>ZXPoly</bundleName>
+              <generateDiskImageFile>true</generateDiskImageFile>
+              <includeApplicationsSymlink>true</includeApplicationsSymlink>
+              <diskImageInternetEnable>true</diskImageInternetEnable>
+              <jvmVersion>1.7+</jvmVersion>
+              <jvmOptions>
+                <opt>-Dprol.stack.depth=512m</opt>
+              </jvmOptions>
+            </configuration>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>bundle</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
             <groupId>com.akathist.maven.plugins.launch4j</groupId>
             <artifactId>launch4j-maven-plugin</artifactId>
-            <version>1.7.4</version>
+            <version>1.7.19</version>
             <executions>
               <execution>
                 <id>l4j-clui</id>
@@ -147,7 +174,7 @@
           <execution>
             <id>tape-jbbp</id>
             <goals>
-              <goal>jbbp</goal>
+              <goal>generate</goal>
             </goals>
             <configuration>
               <includes>
@@ -158,23 +185,23 @@
           <execution>
             <id>z80-jbbp</id>
             <goals>
-              <goal>jbbp</goal>
+              <goal>generate</goal>
             </goals>
             <configuration>
               <includes>
                 <include>snapshots/z80/**/*.jbbp</include>
               </includes>
               <superClass>com.igormaznitsa.zxpoly.formats.FormatZ80.AbstractZ80Snapshot</superClass>
-              <structInterfaces>
+              <mapStructToInterfaces>
                 <emulflags>com.igormaznitsa.zxpoly.formats.FormatZ80.Z80EmulFlags</emulflags>
                 <flags>com.igormaznitsa.zxpoly.formats.FormatZ80.Z80Flags</flags>
-              </structInterfaces>
+              </mapStructToInterfaces>
             </configuration>
           </execution>
           <execution>
             <id>sna-jbbp</id>
             <goals>
-              <goal>jbbp</goal>
+              <goal>generate</goal>
             </goals>
             <configuration>
               <includes>
@@ -188,7 +215,7 @@
           <execution>
             <id>zxp-jbbp</id>
             <goals>
-              <goal>jbbp</goal>
+              <goal>generate</goal>
             </goals>
             <configuration>
               <includes>
@@ -198,7 +225,7 @@
           </execution>
         </executions>
         <configuration>
-          <doGettersSetters>true</doGettersSetters>
+          <addGettersSetters>true</addGettersSetters>
         </configuration>
       </plugin>
       <plugin>
@@ -234,14 +261,6 @@
           <mainClass>com.igormaznitsa.zxpoly.main</mainClass>
         </configuration>
       </plugin>      
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.3.2</version>
-        <configuration>
-          <mainClass>com.igormaznitsa.zxpoly.main</mainClass>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 
