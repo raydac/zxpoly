@@ -33,6 +33,8 @@ public abstract class AbstractZ80Test {
   public static class Z80State {
 
     public int A, F, B, C, D, E, H, L;
+    public int WZ;
+    public int altWZ;
     public int altA, altF, altB, altC, altD, altE, altH, altL;
     public int IX, IY, SP, PC;
     public int I, R;
@@ -56,6 +58,9 @@ public abstract class AbstractZ80Test {
       this.H = cpu.getRegister(Z80.REG_H, false);
       this.L = cpu.getRegister(Z80.REG_L, false);
 
+      this.WZ = cpu.getWZ(false);
+      this.altWZ = cpu.getWZ(true);
+      
       this.altA = cpu.getRegister(Z80.REG_A, true);
       this.altF = cpu.getRegister(Z80.REG_F, true);
       this.altB = cpu.getRegister(Z80.REG_B, true);
@@ -85,6 +90,9 @@ public abstract class AbstractZ80Test {
       cpu.setRegister(Z80.REG_H, this.H, false);
       cpu.setRegister(Z80.REG_L, this.L, false);
 
+      cpu.setWZ(this.WZ, false);
+      cpu.setWZ(this.altWZ, true);
+      
       cpu.setRegister(Z80.REG_A, this.altA, true);
       cpu.setRegister(Z80.REG_F, this.altF, true);
       cpu.setRegister(Z80.REG_B, this.altB, true);
@@ -129,6 +137,7 @@ public abstract class AbstractZ80Test {
         assertEquals("Register E", this.E, that.E);
         assertEquals("Register H", this.H, that.H);
         assertEquals("Register L", this.L, that.L);
+        assertEquals("Register WZ", this.WZ, that.WZ);
 
         assertEquals("Register A'", this.altA, that.altA);
         assertEquals("Register F'", this.altF, that.altF);
@@ -138,6 +147,7 @@ public abstract class AbstractZ80Test {
         assertEquals("Register E'", this.altE, that.altE);
         assertEquals("Register H'", this.altH, that.altH);
         assertEquals("Register L'", this.altL, that.altL);
+        assertEquals("Register WZ'", this.altWZ, that.altWZ);
 
         assertEquals("Register IX", this.IX, that.IX);
         assertEquals("Register IY", this.IY, that.IY);

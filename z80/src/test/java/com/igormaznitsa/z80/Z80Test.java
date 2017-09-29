@@ -877,6 +877,7 @@ public class Z80Test extends AbstractZ80Test {
     state.L = 0x60;
     state.IX = 0x61;
     state.IY = 0x62;
+    state.WZ = 0x1234;
 
     state.altA = 2;
     state.altF = 5;
@@ -886,6 +887,8 @@ public class Z80Test extends AbstractZ80Test {
     state.altE = 0xA0;
     state.altH = 0xB0;
     state.altL = 0xC0;
+    state.altWZ = 0x4321;
+    
     final Z80 cpu = executeCommand(state, 0xD9);
     assertEquals(0x70, cpu.getRegister(Z80.REG_B));
     assertEquals(0x80, cpu.getRegister(Z80.REG_C));
@@ -905,6 +908,8 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(0x60, cpu.getRegister(Z80.REG_L, true));
     assertEquals(2, cpu.getRegister(Z80.REG_A, true));
     assertEquals(5, cpu.getRegister(Z80.REG_F, true));
+    assertEquals(0x1234, cpu.getWZ(true));
+    assertEquals(0x4321, cpu.getWZ(false));
     assertTacts(cpu, 4);
   }
 
@@ -3231,7 +3236,7 @@ public class Z80Test extends AbstractZ80Test {
       assertEquals(0x1010, cpu.getRegister(Z80.REG_IX));
       assertMemory(0x1011, i);
       
-      final int flag = (origf & Z80.FLAG_C) | ((i & 0x80)==0 ? (Z80.FLAG_PV | Z80.FLAG_Z) : 0) | (i & Z80.FLAG_S) | (i & (Z80.FLAG_X | Z80.FLAG_Y)) | Z80.FLAG_H;
+      final int flag = (origf & Z80.FLAG_C) | ((i & 0x80)==0 ? (Z80.FLAG_PV | Z80.FLAG_Z) : 0) | (i & Z80.FLAG_S) | (state.WZ & (Z80.FLAG_X | Z80.FLAG_Y)) | Z80.FLAG_H;
       
       assertEquals("Value "+i,flag, cpu.getRegister(Z80.REG_F));
     
