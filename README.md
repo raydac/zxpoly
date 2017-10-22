@@ -26,7 +26,7 @@ ZX-Poly platform adds several ports to manipulate work modes and the main port o
  - Tape .TAP (allows export to WAV file)
  - Disks .TRD, .SCL
 
-# A Prebuilt versions
+# Prebuilt versions
 The Latest prebuilt versions of the emulator and sprite editor can be downloaded from [the release page](https://github.com/raydac/zxpoly/releases).   
 By default it uses the embedded ZX-Poly Test ROM image for start, but you can pass through **File->Options->Active ROM** and select another SOS+TR-DOS 128 ROM source (from list of links) and after that reload the emulator, keep in mind that WorldOfSpectrum FTP works not very stable so I recommend prefer VirtualTRDOS as ROM source. After loading, the ROM will be cached on your machine for future usage.
 
