@@ -4,7 +4,7 @@
 [![Yandex.Money donation](https://img.shields.io/badge/donation-Я.деньги-yellow.svg)](http://yasobe.ru/na/iamoss)
 
 
-![ZX-Poly logo](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/zxpoly_logo.png)
+![ZX-Poly logo](https://raw.githubusercontent.com/raydac/zxpoly/master/docs/zxpoly_logo.png)
 
 # Introduction
 It is not just a yet another ZX-Spectrum emulator, but the proof of concept of the ZX-Poly platform. The ZX-Poly platform was developed by Igor Maznitsa in Summer 1994 and it was not something absolutely new one but just a hardware modification of the old well-known ZX-Spectrum 128 platform (it even didn't  provide or require any new operating system and could use the ZX-Spectrum SOS), the main purpose of the modification was to remove the main graphic issue of ZX-Spectrum (color clashing) and save the same speed of graphic processing without injecting any extra GPU into the system with saving back-compatibility with the original platform.
