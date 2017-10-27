@@ -28,6 +28,7 @@ import com.igormaznitsa.zxpoly.ui.*;
 import com.igormaznitsa.zxpoly.utils.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -444,6 +445,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuFileReset = new javax.swing.JMenuItem();
     menuResetKeyboard = new javax.swing.JMenuItem();
     menuServiceSaveScreen = new javax.swing.JMenuItem();
+    menuServiceSaveScreenAllVRAM = new javax.swing.JMenuItem();
     menuTapExportAs = new javax.swing.JMenu();
     menuTapExportAsWav = new javax.swing.JMenuItem();
     menuTracer = new javax.swing.JMenu();
@@ -680,6 +682,15 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       }
     });
     menuService.add(menuServiceSaveScreen);
+
+    menuServiceSaveScreenAllVRAM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/photom.png"))); // NOI18N
+    menuServiceSaveScreenAllVRAM.setText("Make Screenshot of all VRAM");
+    menuServiceSaveScreenAllVRAM.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuServiceSaveScreenAllVRAMActionPerformed(evt);
+      }
+    });
+    menuService.add(menuServiceSaveScreenAllVRAM);
 
     menuTapExportAs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png"))); // NOI18N
     menuTapExportAs.setText("Export TAPE as..");
@@ -1095,6 +1106,36 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     }
   }//GEN-LAST:event_menuTraceCPU3ActionPerformed
 
+  private void menuServiceSaveScreenAllVRAMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuServiceSaveScreenAllVRAMActionPerformed
+    final RenderedImage [] images = this.board.getVideoController().renderAllModuleVideoMemoryInZX48Mode();
+    
+    final BufferedImage result = new BufferedImage(images[0].getWidth()*images.length, images[0].getHeight(), BufferedImage.TYPE_INT_RGB);
+    final Graphics g = result.getGraphics();
+    for(int i=0;i<images.length;i++){
+      g.drawImage((Image)images[i],i*images[0].getWidth(),0,null);
+    }
+    g.dispose();
+    
+    final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    this.stepSemaphor.lock();
+    try {
+      ImageIO.write(result, "png", buffer);
+      final File thefile = chooseFileForSave("Save screenshot", lastScreenshotFolder, new PNGFileFilter());
+      if (thefile != null) {
+        this.lastScreenshotFolder = thefile.getParentFile();
+        FileUtils.writeByteArrayToFile(thefile, buffer.toByteArray());
+      }
+    }
+    catch (IOException ex) {
+      JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error", JOptionPane.ERROR_MESSAGE);
+      log.log(Level.SEVERE, "Can't make screenshot", ex);
+    }
+    finally {
+      this.keyboardAndTapeModule.doReset();
+      this.stepSemaphor.unlock();
+    }
+  }//GEN-LAST:event_menuServiceSaveScreenAllVRAMActionPerformed
+
   private void activateTracerForCPUModule (final int index) {
     TraceCPUForm form = this.cpuTracers[index];
     if (form == null) {
@@ -1213,6 +1254,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private javax.swing.JMenuItem menuResetKeyboard;
   private javax.swing.JMenu menuService;
   private javax.swing.JMenuItem menuServiceSaveScreen;
+  private javax.swing.JMenuItem menuServiceSaveScreenAllVRAM;
   private javax.swing.JMenu menuTap;
   private javax.swing.JMenu menuTapExportAs;
   private javax.swing.JMenuItem menuTapExportAsWav;
