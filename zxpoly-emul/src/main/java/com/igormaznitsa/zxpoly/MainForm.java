@@ -43,6 +43,9 @@ import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import com.igormaznitsa.zxpoly.animeencoders.AnimGifEncoder;
+import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
+import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
 
 public class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
 
@@ -50,6 +53,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private static final Icon ICO_MOUSE_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_MOUSE);
   private static final Icon ICO_DISK = new ImageIcon(Utils.loadIcon("disk.png"));
   private static final Icon ICO_DISK_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_DISK);
+  private static final Icon ICO_AGIF_RECORD = new ImageIcon(Utils.loadIcon("record.png"));
+  private static final Icon ICO_AGIF_STOP = new ImageIcon(Utils.loadIcon("tape_stop.png"));
   private static final Icon ICO_TAPE = new ImageIcon(Utils.loadIcon("cassette.png"));
   private static final Icon ICO_TAPE_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TAPE);
   private static final Icon ICO_TURBO = new ImageIcon(Utils.loadIcon("turbo.png"));
@@ -57,11 +62,16 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private static final Icon ICO_ZX128 = new ImageIcon(Utils.loadIcon("zx128.png"));
   private static final Icon ICO_ZX128_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_ZX128);
 
-  private static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
+  public static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
   private static final int HOW_MANY_INT_BETWEEN_SCREEN_REFRESH = 4;
 
+  private static final String TEXT_START_ANIM_GIF = "Record AGIF";
+  private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
+  
   private volatile boolean turboMode = false;
 
+  private AnimatedGifTunePanel.AnimGifOptions lastAnimGifOptions = new AnimatedGifTunePanel.AnimGifOptions("./zxpoly.gif", 10, false);
+  
   private File lastTapFolder;
   private File lastFloppyFolder;
   private File lastSnapshotFolder;
@@ -75,15 +85,16 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private final TraceCPUForm[] cpuTracers = new TraceCPUForm[4];
   private final AtomicInteger activeTracerWindowCounter = new AtomicInteger();
 
+  private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
   private final Runnable traceWindowsUpdater = new Runnable() {
 
     @Override
-    public void run () {
+    public void run() {
       int index = 0;
       for (final TraceCPUForm form : cpuTracers) {
         if (form != null) {
           final Z80 cpu = board.getZXPolyModules()[index++].getCPU();
-          if (cpu.getPrefixInProcessing() == 0 && !cpu.isInsideBlockLoop()){
+          if (cpu.getPrefixInProcessing() == 0 && !cpu.isInsideBlockLoop()) {
             form.refreshViewState();
           }
         }
@@ -93,7 +104,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
 
   private final Runnable infobarUpdater = new Runnable() {
     @Override
-    public void run () {
+    public void run() {
       final Icon turboico = turboMode ? ICO_TURBO : ICO_TURBO_DIS;
       if (labelTurbo.getIcon() != turboico) {
         labelTurbo.setIcon(turboico);
@@ -134,12 +145,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private static class TRDFileFilter extends FileFilter {
 
     @Override
-    public boolean accept (File f) {
+    public boolean accept(File f) {
       return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".trd");
     }
 
     @Override
-    public String getDescription () {
+    public String getDescription() {
       return "TR-DOS image (*.trd)";
     }
 
@@ -148,12 +159,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private static class PNGFileFilter extends FileFilter {
 
     @Override
-    public boolean accept (File f) {
+    public boolean accept(File f) {
       return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".png");
     }
 
     @Override
-    public String getDescription () {
+    public String getDescription() {
       return "PNG image (*.png)";
     }
 
@@ -162,12 +173,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private static class SCLFileFilter extends FileFilter {
 
     @Override
-    public boolean accept (File f) {
+    public boolean accept(File f) {
       return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".scl");
     }
 
     @Override
-    public String getDescription () {
+    public String getDescription() {
       return "SCL image (*.scl)";
     }
 
@@ -176,12 +187,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private static class TapFileFilter extends FileFilter {
 
     @Override
-    public boolean accept (File f) {
+    public boolean accept(File f) {
       return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".tap");
     }
 
     @Override
-    public String getDescription () {
+    public String getDescription() {
       return "TAP file (*.tap)";
     }
 
@@ -190,12 +201,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private static class WavFileFilter extends FileFilter {
 
     @Override
-    public boolean accept (File f) {
+    public boolean accept(File f) {
       return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".wav");
     }
 
     @Override
-    public String getDescription () {
+    public String getDescription() {
       return "WAV file (*.wav)";
     }
 
@@ -214,18 +225,18 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
 
     private final KeyboardKempstonAndTapeIn keyboard;
 
-    public KeyboardDispatcher (final KeyboardKempstonAndTapeIn kbd) {
+    public KeyboardDispatcher(final KeyboardKempstonAndTapeIn kbd) {
       this.keyboard = kbd;
     }
 
     @Override
-    public boolean dispatchKeyEvent (KeyEvent e) {
+    public boolean dispatchKeyEvent(KeyEvent e) {
       this.keyboard.onKeyEvent(e);
       return false;
     }
   }
 
-  private RomData loadRom (final String romPath) throws IOException {
+  private RomData loadRom(final String romPath) throws IOException {
     if (romPath != null) {
       if (romPath.contains("://")) {
         try {
@@ -253,8 +264,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
         catch (Exception ex) {
           log.log(Level.WARNING, "Can't load ROM from '" + romPath + "\'", ex);
         }
-      }
-      else {
+      } else {
         log.info("Load ROM from embedded resource '" + romPath + "'");
         return RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romPath));
       }
@@ -265,10 +275,13 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     return RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + testRom));
   }
 
-  public MainForm (final String title, final String romPath) throws IOException {
+  public MainForm(final String title, final String romPath) throws IOException {
     initComponents();
     this.setTitle(title);
 
+    this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
+    this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
+    
     this.getInputContext().selectInputMethod(Locale.ENGLISH);
 
     setIconImage(Utils.loadIcon("appico.png"));
@@ -311,14 +324,13 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     this.setLocationRelativeTo(null);
   }
 
-  private void updateTapeMenu () {
+  private void updateTapeMenu() {
     final TapeFileReader reader = this.keyboardAndTapeModule.getTap();
     if (reader == null) {
       this.menuTap.setEnabled(false);
       this.menuTapPlay.setSelected(false);
       this.menuTapExportAs.setEnabled(false);
-    }
-    else {
+    } else {
       this.menuTap.setEnabled(true);
       this.menuTapPlay.setSelected(reader.isPlaying());
       this.menuTapExportAs.setEnabled(true);
@@ -327,11 +339,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   }
 
   @Override
-  public void run () {
+  public void run() {
     final int INT_TO_UPDATE_INFOPANEL = 20;
 
     long nextSystemInt = System.currentTimeMillis() + TIMER_INT_DELAY_MILLISECONDS;
     int countdownToPaint = 0;
+    int countdownToAnimationSave = 0;
 
     int countToUpdatePanel = INT_TO_UPDATE_INFOPANEL;
 
@@ -349,8 +362,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
           this.board.getCPU0().resetMCycleCounter();
           countdownToPaint--;
           countToUpdatePanel--;
-        }
-        else {
+          countdownToAnimationSave--;
+        } else {
           systemIntSignal = false;
         }
 
@@ -359,6 +372,16 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
         if (countdownToPaint <= 0) {
           countdownToPaint = HOW_MANY_INT_BETWEEN_SCREEN_REFRESH;
           updateScreen();
+        }
+
+        if (countdownToAnimationSave <= 0) {
+          final AnimationEncoder theAnimationEncoder = this.currentAnimationEncoder.get();
+          if (theAnimationEncoder == null) {
+            countdownToAnimationSave = 0;
+          } else {
+            countdownToAnimationSave = theAnimationEncoder.getIntsBetweenFrames();
+            theAnimationEncoder.addFrame(board.getVideoController().makeCopyOfCurrentPicture());
+          }
         }
 
         if (countToUpdatePanel <= 0) {
@@ -376,7 +399,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     }
   }
 
-  private void updateTracerWindowsForStep () {
+  private void updateTracerWindowsForStep() {
     try {
       SwingUtilities.invokeAndWait(this.traceWindowsUpdater);
     }
@@ -389,15 +412,15 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     }
   }
 
-  public void setTurboMode (final boolean value) {
+  public void setTurboMode(final boolean value) {
     this.turboMode = value;
   }
 
-  public boolean isTurboMode () {
+  public boolean isTurboMode() {
     return this.isTurboMode();
   }
 
-  private void updateScreen () {
+  private void updateScreen() {
     final VideoController vc = board.getVideoController();
     vc.updateBuffer();
     vc.paintImmediately(0, 0, vc.getWidth(), vc.getHeight());;
@@ -408,7 +431,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
    * WARNING: Do NOT modify this code. The content of this method is always
    * regenerated by the Form Editor.
    */
-  @SuppressWarnings ("unchecked")
+  @SuppressWarnings("unchecked")
   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
     java.awt.GridBagConstraints gridBagConstraints;
@@ -446,6 +469,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuResetKeyboard = new javax.swing.JMenuItem();
     menuServiceSaveScreen = new javax.swing.JMenuItem();
     menuServiceSaveScreenAllVRAM = new javax.swing.JMenuItem();
+    menuActionAnimatedGIF = new javax.swing.JMenuItem();
     menuTapExportAs = new javax.swing.JMenu();
     menuTapExportAsWav = new javax.swing.JMenuItem();
     menuTracer = new javax.swing.JMenu();
@@ -468,6 +492,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       }
       public void windowLostFocus(java.awt.event.WindowEvent evt) {
         formWindowLostFocus(evt);
+      }
+    });
+    addWindowListener(new java.awt.event.WindowAdapter() {
+      public void windowClosed(java.awt.event.WindowEvent evt) {
+        formWindowClosed(evt);
       }
     });
 
@@ -692,6 +721,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     });
     menuService.add(menuServiceSaveScreenAllVRAM);
 
+    menuActionAnimatedGIF.setText("Make Animated GIF");
+    menuActionAnimatedGIF.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuActionAnimatedGIFActionPerformed(evt);
+      }
+    });
+    menuService.add(menuActionAnimatedGIF);
+
     menuTapExportAs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png"))); // NOI18N
     menuTapExportAs.setText("Export TAPE as..");
 
@@ -809,7 +846,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     this.panelIndicators.setVisible(this.menuOptionsShowIndicators.isSelected());
   }//GEN-LAST:event_menuOptionsShowIndicatorsActionPerformed
 
-  private void loadDiskIntoDrive (final int drive) {
+  private void loadDiskIntoDrive(final int drive) {
     this.stepSemaphor.lock();
     try {
       final char diskName;
@@ -849,11 +886,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     }
   }
 
-  private void updateInfoPanel () {
+  private void updateInfoPanel() {
     if (SwingUtilities.isEventDispatchThread()) {
       infobarUpdater.run();
-    }
-    else {
+    } else {
       SwingUtilities.invokeLater(infobarUpdater);
     }
   }
@@ -1003,8 +1039,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private void menuTapPlayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapPlayActionPerformed
     if (this.menuTapPlay.isSelected()) {
       this.keyboardAndTapeModule.getTap().startPlay();
-    }
-    else {
+    } else {
       this.keyboardAndTapeModule.getTap().stopPlay();
     }
     updateTapeMenu();
@@ -1035,10 +1070,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   }//GEN-LAST:event_menuTapeRewindToStartActionPerformed
 
   private void menuServiceSaveScreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuServiceSaveScreenActionPerformed
-    final RenderedImage img = this.board.getVideoController().makeCopyOfCurrentPicture();
-    final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     this.stepSemaphor.lock();
     try {
+      final RenderedImage img = this.board.getVideoController().makeCopyOfCurrentPicture();
+      final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       ImageIO.write(img, "png", buffer);
       final File thefile = chooseFileForSave("Save screenshot", lastScreenshotFolder, new PNGFileFilter());
       if (thefile != null) {
@@ -1073,8 +1108,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private void menuTraceCPU0ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU0ActionPerformed
     if (this.menuTraceCPU0.isSelected()) {
       activateTracerForCPUModule(0);
-    }
-    else {
+    } else {
       deactivateTracerForCPUModule(0);
     }
   }//GEN-LAST:event_menuTraceCPU0ActionPerformed
@@ -1082,8 +1116,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private void menuTraceCPU1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU1ActionPerformed
     if (this.menuTraceCPU1.isSelected()) {
       activateTracerForCPUModule(1);
-    }
-    else {
+    } else {
       deactivateTracerForCPUModule(1);
     }
   }//GEN-LAST:event_menuTraceCPU1ActionPerformed
@@ -1091,8 +1124,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private void menuTraceCPU2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU2ActionPerformed
     if (this.menuTraceCPU2.isSelected()) {
       activateTracerForCPUModule(2);
-    }
-    else {
+    } else {
       deactivateTracerForCPUModule(2);
     }
   }//GEN-LAST:event_menuTraceCPU2ActionPerformed
@@ -1100,25 +1132,24 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private void menuTraceCPU3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU3ActionPerformed
     if (this.menuTraceCPU3.isSelected()) {
       activateTracerForCPUModule(3);
-    }
-    else {
+    } else {
       deactivateTracerForCPUModule(3);
     }
   }//GEN-LAST:event_menuTraceCPU3ActionPerformed
 
   private void menuServiceSaveScreenAllVRAMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuServiceSaveScreenAllVRAMActionPerformed
-    final RenderedImage [] images = this.board.getVideoController().renderAllModuleVideoMemoryInZX48Mode();
-    
-    final BufferedImage result = new BufferedImage(images[0].getWidth()*images.length, images[0].getHeight(), BufferedImage.TYPE_INT_RGB);
-    final Graphics g = result.getGraphics();
-    for(int i=0;i<images.length;i++){
-      g.drawImage((Image)images[i],i*images[0].getWidth(),0,null);
-    }
-    g.dispose();
-    
-    final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     this.stepSemaphor.lock();
     try {
+      final RenderedImage[] images = this.board.getVideoController().renderAllModuleVideoMemoryInZX48Mode();
+
+      final BufferedImage result = new BufferedImage(images[0].getWidth() * images.length, images[0].getHeight(), BufferedImage.TYPE_INT_RGB);
+      final Graphics g = result.getGraphics();
+      for (int i = 0; i < images.length; i++) {
+        g.drawImage((Image) images[i], i * images[0].getWidth(), 0, null);
+      }
+      g.dispose();
+
+      final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       ImageIO.write(result, "png", buffer);
       final File thefile = chooseFileForSave("Save screenshot", lastScreenshotFolder, new PNGFileFilter());
       if (thefile != null) {
@@ -1136,7 +1167,48 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     }
   }//GEN-LAST:event_menuServiceSaveScreenAllVRAMActionPerformed
 
-  private void activateTracerForCPUModule (final int index) {
+  private void menuActionAnimatedGIFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuActionAnimatedGIFActionPerformed
+    this.stepSemaphor.lock();
+    try {
+      AnimationEncoder encoder = this.currentAnimationEncoder.get();
+      if (encoder == null) {
+        final AnimatedGifTunePanel panel = new AnimatedGifTunePanel(this.lastAnimGifOptions);
+        if (JOptionPane.showConfirmDialog(this, panel, "Options for Animated GIF", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) return;  
+        this.lastAnimGifOptions = panel.getValue();
+        try {
+          encoder = new AnimGifEncoder(new File(this.lastAnimGifOptions.filePath), (int)(1000 / TIMER_INT_DELAY_MILLISECONDS)  / this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
+        }
+        catch (IOException ex) {
+          ex.printStackTrace();
+          return;
+        }
+        if (this.currentAnimationEncoder.compareAndSet(null, encoder)) {
+          this.menuActionAnimatedGIF.setIcon(ICO_AGIF_STOP);
+          this.menuActionAnimatedGIF.setText(TEXT_STOP_ANIM_GIF);
+          log.info("Animated GIF recording has been stopped");
+        }
+      } else {
+        encoder.dispose();
+        if (this.currentAnimationEncoder.compareAndSet(encoder, null)) {
+          this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
+          this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
+          log.info("Animated GIF recording has been started");
+        }
+      }
+    }
+    finally {
+      this.stepSemaphor.unlock();
+    }
+  }//GEN-LAST:event_menuActionAnimatedGIFActionPerformed
+
+  private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+     final AnimationEncoder encoder = this.currentAnimationEncoder.get();
+     if (encoder!=null){
+       encoder.dispose();
+     }
+  }//GEN-LAST:event_formWindowClosed
+
+  private void activateTracerForCPUModule(final int index) {
     TraceCPUForm form = this.cpuTracers[index];
     if (form == null) {
       form = new TraceCPUForm(this, this.board, index);
@@ -1146,35 +1218,35 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     form.requestFocus();
   }
 
-  private void deactivateTracerForCPUModule (final int index) {
+  private void deactivateTracerForCPUModule(final int index) {
     TraceCPUForm form = this.cpuTracers[index];
     if (form != null) {
       form.dispose();
     }
   }
 
-  private void updateTracerCheckBoxes () {
+  private void updateTracerCheckBoxes() {
     this.menuTraceCPU0.setSelected(this.cpuTracers[0] != null);
     this.menuTraceCPU1.setSelected(this.cpuTracers[1] != null);
     this.menuTraceCPU2.setSelected(this.cpuTracers[2] != null);
     this.menuTraceCPU3.setSelected(this.cpuTracers[3] != null);
   }
 
-  public void onTracerActivated (final TraceCPUForm tracer) {
+  public void onTracerActivated(final TraceCPUForm tracer) {
     final int index = tracer.getModuleIndex();
     this.cpuTracers[index] = tracer;
     updateTracerCheckBoxes();
     this.activeTracerWindowCounter.incrementAndGet();
   }
 
-  public void onTracerDeactivated (final TraceCPUForm tracer) {
+  public void onTracerDeactivated(final TraceCPUForm tracer) {
     final int index = tracer.getModuleIndex();
     this.cpuTracers[index] = null;
     updateTracerCheckBoxes();
     this.activeTracerWindowCounter.decrementAndGet();
   }
 
-  private File chooseFileForOpen (final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
+  private File chooseFileForOpen(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     for (final FileFilter f : filter) {
       chooser.addChoosableFileFilter(f);
@@ -1191,14 +1263,13 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       if (selectedFilter != null) {
         selectedFilter.set(chooser.getFileFilter());
       }
-    }
-    else {
+    } else {
       result = null;
     }
     return result;
   }
 
-  private File chooseFileForSave (final String title, final File initial, final FileFilter filter) {
+  private File chooseFileForSave(final String title, final File initial, final FileFilter filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     chooser.addChoosableFileFilter(filter);
     chooser.setAcceptAllFileFilterUsed(true);
@@ -1209,15 +1280,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     final File result;
     if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
       result = chooser.getSelectedFile();
-    }
-    else {
+    } else {
       result = null;
     }
     return result;
   }
 
   @Override
-  public void actionPerformed (final ActionEvent e) {
+  public void actionPerformed(final ActionEvent e) {
     if (e.getSource() instanceof TapeFileReader) {
       updateTapeMenu();
     }
@@ -1236,6 +1306,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private javax.swing.JLabel labelTapeUsage;
   private javax.swing.JLabel labelTurbo;
   private javax.swing.JLabel labelZX128;
+  private javax.swing.JMenuItem menuActionAnimatedGIF;
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuFile;
   private javax.swing.JMenuItem menuFileExit;
