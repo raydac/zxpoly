@@ -85,6 +85,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private final TraceCPUForm[] cpuTracers = new TraceCPUForm[4];
   private final AtomicInteger activeTracerWindowCounter = new AtomicInteger();
 
+  public static final AtomicReference<MainForm> theInstance = new AtomicReference<>();
+  
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
   private final Runnable traceWindowsUpdater = new Runnable() {
 
@@ -322,8 +324,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     pack();
 
     this.setLocationRelativeTo(null);
+    
+    theInstance.set(this);
   }
 
+  public static MainForm getInstance() {
+    return theInstance.get();
+  }
+  
   private void updateTapeMenu() {
     final TapeFileReader reader = this.keyboardAndTapeModule.getTap();
     if (reader == null) {
@@ -932,7 +940,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
           log.info("Loading snapshot " + selectedFilter.getName());
-          selectedFilter.loadFromArray(this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
+          selectedFilter.loadFromArray(selected, this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
         }
         catch (Exception ex) {
           log.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);

@@ -17,10 +17,12 @@ ubyte borderColor;
 
 byte [49152] ramDump;
 
-<ushort regPC;
-ubyte port7FFD;
-byte onTrDos;
+extendedData {
+  <ushort regPC;
+  ubyte port7FFD;
+  byte onTrDos;
 
-extrabank [_] {
-   byte [16384] data;
+  extrabank [_] {
+    byte [16384] data;
+  }
 }

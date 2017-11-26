@@ -5,17 +5,13 @@
     <groupId>com.igormaznitsa</groupId>
     <artifactId>zxpoly</artifactId>
     <version>${main.version}</version>
-    <relativePath>..</relativePath>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <name>ZX-Poly Emulator</name>
   <artifactId>zxpoly-emul</artifactId>
   <version>${main.version}</version>
   <packaging>jar</packaging>
-
-  <properties>
-    <jbbp.version>1.3.0</jbbp.version>
-  </properties>
 
   <dependencies>
     <dependency>

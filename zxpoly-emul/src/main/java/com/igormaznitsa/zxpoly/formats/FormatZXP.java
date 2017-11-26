@@ -24,7 +24,7 @@ import java.util.Locale;
 public class FormatZXP extends Snapshot {
 
   @Override
-  public void loadFromArray(final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
+  public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
     final ZXEMLSnapshotFormat snapshot = new ZXEMLSnapshotFormat(array);
 
     for(int cpu = 0 ; cpu<4; cpu++){

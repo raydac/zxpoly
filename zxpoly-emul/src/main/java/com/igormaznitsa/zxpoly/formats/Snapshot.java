@@ -18,6 +18,7 @@ package com.igormaznitsa.zxpoly.formats;
 
 import com.igormaznitsa.zxpoly.components.*;
 import static com.igormaznitsa.zxpoly.components.ZXPoly.PORTw_ZXPOLY_BLOCK;
+import java.io.File;
 import java.io.IOException;
 import javax.swing.filechooser.FileFilter;
 
@@ -36,7 +37,7 @@ public abstract class Snapshot extends FileFilter {
     board.getCPU0().doReset();
   }
   
-  public abstract void loadFromArray(Motherboard board, final VideoController vc, byte [] array) throws IOException; 
+  public abstract void loadFromArray(File srcFile, Motherboard board, final VideoController vc, byte [] array) throws IOException; 
   
   public abstract String getName();
 }

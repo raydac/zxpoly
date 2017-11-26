@@ -196,7 +196,7 @@ public class FormatZ80 extends Snapshot {
   }
 
   @Override
-  public void loadFromArray(final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
+  public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
     if (array.length < 30) {
       throw new IOException("File is too short to be Z80 snapshot");
     }

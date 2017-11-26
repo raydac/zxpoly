@@ -30,18 +30,19 @@ public class FormatSNA extends Snapshot {
   }
 
   @Override
-  public void loadFromArray(final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
+  public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
     final SNAParser parser = new SNAParser().read(new JBBPBitInputStream(new ByteArrayInputStream(array)));
     final boolean sna128 = array.length > 49179;
     if (sna128) {
       doMode128(board);
-    }else{
+    }
+    else{
       doMode48(board);
     }
-    
+
     final ZXPolyModule module = board.getZXPolyModules()[0];
     final Z80 cpu = board.getCPU0();
-    
+
     cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getREGAF());
     cpu.setRegisterPair(Z80.REGPAIR_BC, parser.getREGBC());
     cpu.setRegisterPair(Z80.REGPAIR_DE, parser.getREGDE());
@@ -67,7 +68,7 @@ public class FormatSNA extends Snapshot {
     if (sna128) {
       final int offsetpage2 = 0x8000;
       final int offsetpage5 = 0x14000;
-      final int offsetpageTop = (parser.getPORT7FFD() & 7) * 0x4000;
+      final int offsetpageTop = (parser.getEXTENDEDDATA().getPORT7FFD() & 7) * 0x4000;
 
       for (int i = 0; i < 0x4000; i++) {
         module.writeHeapModuleMemory(offsetpage5 + i, parser.getRAMDUMP()[i]);
@@ -75,16 +76,16 @@ public class FormatSNA extends Snapshot {
         module.writeHeapModuleMemory(offsetpageTop + i, parser.getRAMDUMP()[i + 0x8000]);
       }
 
-      cpu.setRegister(Z80.REG_PC, parser.getREGPC());
+      cpu.setRegister(Z80.REG_PC, parser.getEXTENDEDDATA().getREGPC());
       cpu.setRegister(Z80.REG_SP, parser.getREGSP() + 2);
-      module.set7FFD(parser.getPORT7FFD(), true);
-      module.setTRDOSActive(parser.getONTRDOS()!=0);
+      module.set7FFD(parser.getEXTENDEDDATA().getPORT7FFD(), true);
+      module.setTRDOSActive(parser.getEXTENDEDDATA().getONTRDOS() != 0);
 
       int bankindex = 0;
-      final int mapped = 0x24 | (1 << (parser.getPORT7FFD() & 7));
-      for (int i = 0; i < 8 && bankindex < parser.getEXTRABANK().length; i++) {
+      final int mapped = 0x24 | (1 << (parser.getEXTENDEDDATA().getPORT7FFD() & 7));
+      for (int i = 0; i < 8 && bankindex < parser.getEXTENDEDDATA().getEXTRABANK().length; i++) {
         if ((mapped & (1 << i)) == 0) {
-          final byte[] data = parser.getEXTRABANK()[bankindex++].getDATA();
+          final byte[] data = parser.getEXTENDEDDATA().getEXTRABANK()[bankindex++].getDATA();
           final int heapoffset = i * 0x4000;
           for (int a = 0; a < data.length; a++) {
             module.writeHeapModuleMemory(heapoffset + a, data[a]);
@@ -95,10 +96,10 @@ public class FormatSNA extends Snapshot {
     }
     else {
       for (int i = 0; i < parser.getRAMDUMP().length; i++) {
-        module.writeMemory(cpu, 16384 + i, parser.getRAMDUMP()[i]);
+        module.writeMemory(cpu, 0x4000 + i, parser.getRAMDUMP()[i]);
       }
 
-      final int calculatedPC = (module.readMemory(cpu, parser.getREGSP(), false) & 0xFF) + 0x100 * (module.readMemory(cpu, parser.getREGSP() + 1, false) & 0xFF);
+      final int calculatedPC = (module.readMemory(cpu, parser.getREGSP(), false) & 0xFF) + ((module.readMemory(cpu, parser.getREGSP() + 1, false) & 0xFF) << 8);
       cpu.setRegister(Z80.REG_SP, parser.getREGSP() + 2);
       cpu.setRegister(Z80.REG_PC, calculatedPC);
     }

@@ -30,7 +30,7 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
   private static final int TAP_BIT = 0b01000000;
 
   private final Motherboard board;
-  
+
   private final AtomicIntegerArray keyboardLines = new AtomicIntegerArray(8);
   private final AtomicInteger kempstonSignals = new AtomicInteger();
   private final AtomicReference<TapeFileReader> tap = new AtomicReference<>();
@@ -128,7 +128,7 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
 
     switch (evt.getKeyCode()) {
       case KeyEvent.VK_ESCAPE: {
-        if (this.board.getVideoController().isHoldMouse()){
+        if (this.board.getVideoController().isHoldMouse()) {
           this.board.getVideoController().setHoldMouse(false);
         }
       }
@@ -409,8 +409,7 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
 
       if (pressed) {
         this.keyboardLines.set(theline, this.keyboardLines.get(theline) & thecode);
-      }
-      else {
+      } else {
         this.keyboardLines.set(theline, this.keyboardLines.get(theline) | (~thecode & 0x1F));
       }
     }
@@ -418,8 +417,7 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
     if (kempston != 0) {
       if (pressed) {
         this.kempstonSignals.set(kempston | this.kempstonSignals.get());
-      }
-      else {
+      } else {
         this.kempstonSignals.set((~kempston & this.kempstonSignals.get()) & 0xFF);
       }
     }
