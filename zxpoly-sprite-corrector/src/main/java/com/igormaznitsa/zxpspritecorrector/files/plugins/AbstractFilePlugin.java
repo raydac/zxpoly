@@ -15,10 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.igormaznitsa.zxpspritecorrector.files;
+package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
 import com.igormaznitsa.zxpspritecorrector.MainFrame;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
+import com.igormaznitsa.zxpspritecorrector.files.Info;
+import com.igormaznitsa.zxpspritecorrector.files.SessionData;
 import java.io.*;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -54,6 +56,10 @@ public abstract class AbstractFilePlugin extends FileFilter {
     super();
   }
 
+  public boolean allowsExport() {
+    return true;
+  }
+  
   public abstract String getToolTip(boolean forExport);
   public abstract boolean doesImportContainInsideFileList();
   

@@ -21,7 +21,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.mapper.Bin;
-import com.igormaznitsa.zxpspritecorrector.files.AbstractFilePlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import java.io.*;
 import java.util.*;

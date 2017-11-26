@@ -14,13 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.igormaznitsa.zxpspritecorrector.files;
+package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
+import com.igormaznitsa.zxpspritecorrector.files.ZXEMLSnapshotFormat;
 import com.igormaznitsa.jbbp.JBBPParser;
 import com.igormaznitsa.jbbp.io.*;
 import com.igormaznitsa.jbbp.mapper.*;
 import com.igormaznitsa.jbbp.model.*;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
+import com.igormaznitsa.zxpspritecorrector.files.Info;
+import com.igormaznitsa.zxpspritecorrector.files.SessionData;
+import com.igormaznitsa.zxpspritecorrector.files.Z80ExportDialog;
 import com.igormaznitsa.zxpspritecorrector.files.ZXEMLSnapshotFormat.Page;
 import com.igormaznitsa.zxpspritecorrector.files.ZXEMLSnapshotFormat.Pages;
 import java.io.*;
@@ -415,7 +419,7 @@ public class Z80Plugin extends AbstractFilePlugin {
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return forExport ? "Z80 snapshot file" : "ZXPZ80 snapshot";
+    return forExport ? "ZXPZ80 snapshot" : "Z80 snapshot file";
   }
 
   @Override

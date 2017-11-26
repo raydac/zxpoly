@@ -1,5 +1,13 @@
 package com.igormaznitsa.zxpspritecorrector;
 
+import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.TAPPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SCRPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SCLPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.TRDPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.HOBETAPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SZEPlugin;
 import com.igormaznitsa.zxpspritecorrector.components.*;
 import com.igormaznitsa.zxpspritecorrector.files.*;
 import com.igormaznitsa.zxpspritecorrector.tools.*;
@@ -12,6 +20,7 @@ import javax.swing.*;
 import org.apache.commons.io.FilenameUtils;
 import org.picocontainer.*;
 import org.picocontainer.injectors.*;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SNA48Plugin;
 
 public class MainFrame extends javax.swing.JFrame {
 
@@ -36,6 +45,7 @@ public class MainFrame extends javax.swing.JFrame {
     container.addComponent(SCLPlugin.class);
     container.addComponent(SCRPlugin.class);
     container.addComponent(Z80Plugin.class);
+    container.addComponent(SNA48Plugin.class);
 
     container.addComponent(ToolPencil.class);
     container.addComponent(ToolEraser.class);
@@ -53,7 +63,7 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     for(final AbstractFilePlugin p : container.getComponents(AbstractFilePlugin.class)){
-      if (p instanceof SZEPlugin) continue;
+      if (!p.allowsExport()) continue;
       final JMenuItem menuItem = new JMenuItem(p.getPluginDescription(true));
       this.menuFileExportAs.add(menuItem);
       menuItem.setToolTipText(p.getToolTip(true));

@@ -16,6 +16,8 @@
  */
 package com.igormaznitsa.zxpspritecorrector;
 
+import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SCRPlugin;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.*;
 import javax.swing.SpinnerNumberModel;

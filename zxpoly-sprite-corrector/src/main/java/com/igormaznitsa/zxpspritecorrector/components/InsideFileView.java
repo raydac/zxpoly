@@ -16,7 +16,7 @@
  */
 package com.igormaznitsa.zxpspritecorrector.components;
 
-import com.igormaznitsa.zxpspritecorrector.files.AbstractFilePlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import java.awt.Component;
 import java.beans.*;

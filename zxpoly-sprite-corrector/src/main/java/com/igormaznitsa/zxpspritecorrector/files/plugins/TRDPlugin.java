@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.igormaznitsa.zxpspritecorrector.files;
+package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
 import com.igormaznitsa.jbbp.JBBPParser;
 import com.igormaznitsa.jbbp.io.*;
@@ -23,6 +23,9 @@ import com.igormaznitsa.jbbp.mapper.Bin;
 import com.igormaznitsa.jbbp.mapper.BinType;
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
+import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
+import com.igormaznitsa.zxpspritecorrector.files.Info;
+import com.igormaznitsa.zxpspritecorrector.files.SessionData;
 import java.io.*;
 import java.util.*;
 
