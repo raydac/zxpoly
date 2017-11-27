@@ -60,7 +60,7 @@ public class FormatSNA extends Snapshot {
     cpu.setRegister(Z80.REG_R, parser.getREGR());
 
     cpu.setIM(parser.getINTMODE());
-    cpu.setIFF((parser.getINTERRUPT() & 2) != 0, (parser.getINTERRUPT() & 2) != 0);
+    cpu.setIFF(true, (parser.getINTERRUPT() & 2) != 0);
 
     vc.writeIO(module, 0xFE, parser.getBORDERCOLOR());
     vc.setBorderColor(parser.getBORDERCOLOR());
@@ -99,9 +99,16 @@ public class FormatSNA extends Snapshot {
         module.writeMemory(cpu, 0x4000 + i, parser.getRAMDUMP()[i]);
       }
 
-      final int calculatedPC = (module.readMemory(cpu, parser.getREGSP(), false) & 0xFF) + ((module.readMemory(cpu, parser.getREGSP() + 1, false) & 0xFF) << 8);
-      cpu.setRegister(Z80.REG_SP, parser.getREGSP() + 2);
-      cpu.setRegister(Z80.REG_PC, calculatedPC);
+      int regsp = parser.getREGSP();
+      final int lowaddr = parser.getRAMDUMP()[regsp-0x4000] & 0xFF;
+      regsp = (regsp + 1) & 0xFFFF;
+      final int highaddr = parser.getRAMDUMP()[regsp-0x4000] & 0xFF;
+      regsp = (regsp + 1) & 0xFFFF;
+      parser.setREGSP((char)regsp);
+      final int startAddress = (highaddr<<8)|lowaddr;      
+      
+      cpu.setRegister(Z80.REG_SP, parser.getREGSP());
+      cpu.setRegister(Z80.REG_PC, startAddress);
     }
   }
 
