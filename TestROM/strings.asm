@@ -5,7 +5,7 @@ STR_HEADER:
 STR_COPY:
 			DEFB 32
 			DEFB 127
-			DEFM "2008 Raydac Research Group Ltd."
+			DEFM "2007 Raydac Research Group Ltd."
 
 ST_ZXPOLY:
 			DEFB 20
