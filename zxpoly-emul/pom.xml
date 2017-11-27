@@ -57,6 +57,27 @@
       <build>
         <plugins>
           <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+              <execution>
+                <id>make-linux</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration>
+                  <appendAssemblyId>false</appendAssemblyId>
+                  <finalName>${app.name}</finalName>
+                  <descriptors>
+                    <descriptor>src/assemble/zip.xml</descriptor>
+                  </descriptors>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
             <groupId>sh.tak.appbundler</groupId>
             <artifactId>appbundle-maven-plugin</artifactId>
             <version>1.2.0</version>
