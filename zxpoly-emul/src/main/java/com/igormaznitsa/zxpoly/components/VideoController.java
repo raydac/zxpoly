@@ -25,12 +25,17 @@ import java.util.Arrays;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
+import com.igormaznitsa.zxpoly.utils.Utils;
 
 public final class VideoController extends JComponent implements ZXPoly, MouseWheelListener, IODevice {
 
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
 
+  private static final Image ESCMOUSE = Utils.loadIcon("escmouse.png");
+  private static final int ESCMOUSE_WIDTH = ESCMOUSE.getWidth(null);
+  private static final int ESCMOUSE_HEIGHT = ESCMOUSE.getHeight(null);
+  
   private final Motherboard board;
   private final ReentrantLock bufferLocker = new ReentrantLock();
   private final BufferedImage buffer;
@@ -191,6 +196,10 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       drawBorder(g2, width, height);
     }
     this.drawBuffer(g2, xoff, yoff, this.zoom);
+    
+    if (this.holdMouse) {
+      g2.drawImage(ESCMOUSE, width-ESCMOUSE_WIDTH, height-ESCMOUSE_HEIGHT, null);
+    }
   }
 
   private static int extractInkColor(final int attribute, final boolean flashActive) {
