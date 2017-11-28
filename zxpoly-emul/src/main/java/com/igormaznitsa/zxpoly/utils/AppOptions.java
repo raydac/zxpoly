@@ -25,6 +25,7 @@ public final class AppOptions {
   private final Preferences preferences = Preferences.userNodeForPackage(AppOptions.class);
   
   private static final String ROMPATH = "ROM_PATH";
+  private static final String INT_BETWEEN_FRAMES = "INT_BETWEEN_FRAMES";
   private static final AppOptions INSTANCE = new AppOptions();
   private static final String APP_FOLDER_NAME = ".zxpolyemul";
   
@@ -34,6 +35,14 @@ public final class AppOptions {
   
   public synchronized String getActiveRom(){
     return preferences.get(ROMPATH, null);
+  }
+  
+  public synchronized int getIntBetweenFrames(){
+    return preferences.getInt(INT_BETWEEN_FRAMES, 4);
+  }
+
+  public synchronized void setIntBetweenFrames(final int value){
+    preferences.putInt(INT_BETWEEN_FRAMES, Math.max(0, value));
   }
   
   public synchronized void setActiveRom(final String romPath){

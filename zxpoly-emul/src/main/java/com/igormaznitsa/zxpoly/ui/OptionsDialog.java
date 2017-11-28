@@ -21,29 +21,56 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 
-public class OptionsDialog extends javax.swing.JDialog {
+public final class OptionsDialog extends javax.swing.JDialog {
 
   private static final long serialVersionUID = -8781309696283010727L;
 
   private final Preferences preferences = Preferences.userNodeForPackage(OptionsDialog.class);
+
+  private static class RomUrl {
+
+    private final String name;
+    private final String link;
+
+    private RomUrl(final String name, final String link) {
+      this.name = name;
+      this.link = link;
+    }
+
+    public String getLink() {
+      return this.link;
+    }
+
+    @Override
+    public String toString() {
+      return this.name;
+    }
+  }
 
   public OptionsDialog(final java.awt.Frame parent) {
     super(parent, true);
     initComponents();
 
     this.comboRom.removeAllItems();
-    
-    this.comboRom.addItem("zxpolytest.rom");
-    this.comboRom.addItem("http://trd.speccy.cz/emulz/UKV12F5.ZIP");
-    this.comboRom.addItem("http://wos.meulie.net/pub/sinclair/emulators/pc/russian/ukv12f5.zip");
-    this.comboRom.addItem("ftp://anonymous:anonymous@ftp.worldofspectrum.org/pub/sinclair/emulators/pc/russian/ukv12f5.zip");
 
-    this.comboRom.setSelectedItem(AppOptions.getInstance().getActiveRom());
-    if (this.comboRom.getSelectedIndex() < 0) {
-      this.comboRom.setSelectedIndex(0);
+    this.comboRom.addItem(new RomUrl("ROM TEST", "zxpolytest.rom"));
+    this.comboRom.addItem(new RomUrl("ROM ZX-128 TRDOS (VTR-DOS)", "http://trd.speccy.cz/emulz/UKV12F5.ZIP"));
+    this.comboRom.addItem(new RomUrl("ROM ZX-128 TRDOS (WoS)", "http://wos.meulie.net/pub/sinclair/emulators/pc/russian/ukv12f5.zip"));
+
+    this.spinnerScrRefreshIntTicks.setValue(AppOptions.getInstance().getIntBetweenFrames());
+    final String activeLink = AppOptions.getInstance().getActiveRom();
+    int selectedIndex = -1;
+    for (int i = 0; i < this.comboRom.getItemCount(); i++) {
+      if (((RomUrl) this.comboRom.getItemAt(i)).getLink().equals(activeLink)) {
+        selectedIndex = i;
+        break;
+      }
     }
-    
+    this.comboRom.setSelectedIndex(Math.max(selectedIndex, 0));
     setLocationRelativeTo(parent);
+
+    doLayout();
+    pack();
   }
 
   /**
@@ -54,91 +81,121 @@ public class OptionsDialog extends javax.swing.JDialog {
   @SuppressWarnings("unchecked")
   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
+    java.awt.GridBagConstraints gridBagConstraints;
 
-    buttonCancel = new javax.swing.JButton();
-    buttonOk = new javax.swing.JButton();
     comboRom = new javax.swing.JComboBox();
     jLabel1 = new javax.swing.JLabel();
-    jLabel2 = new javax.swing.JLabel();
+    jLabel3 = new javax.swing.JLabel();
+    spinnerScrRefreshIntTicks = new javax.swing.JSpinner();
+    jPanel1 = new javax.swing.JPanel();
+    buttonCancel = new javax.swing.JButton();
+    buttonOk = new javax.swing.JButton();
+    filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
 
     setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     setTitle("Options");
+    getContentPane().setLayout(new java.awt.GridBagLayout());
+
+    comboRom.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+    comboRom.setToolTipText("ROM image, it will be downoaded from remote site");
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 0;
+    gridBagConstraints.gridwidth = 2;
+    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.weightx = 1000.0;
+    gridBagConstraints.insets = new java.awt.Insets(8, 0, 0, 8);
+    getContentPane().add(comboRom, gridBagConstraints);
+
+    jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    jLabel1.setText("ROM Image:");
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 0;
+    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.insets = new java.awt.Insets(8, 8, 0, 0);
+    getContentPane().add(jLabel1, gridBagConstraints);
+
+    jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    jLabel3.setText("INT/Frame:");
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 1;
+    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.insets = new java.awt.Insets(8, 8, 0, 0);
+    getContentPane().add(jLabel3, gridBagConstraints);
+
+    spinnerScrRefreshIntTicks.setModel(new javax.swing.SpinnerNumberModel(4, 1, 50, 1));
+    spinnerScrRefreshIntTicks.setToolTipText("Number of INT periods to refresh screen buffer");
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 1;
+    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.ipadx = 3;
+    gridBagConstraints.insets = new java.awt.Insets(8, 0, 0, 0);
+    getContentPane().add(spinnerScrRefreshIntTicks, gridBagConstraints);
+
+    jPanel1.setLayout(new java.awt.GridBagLayout());
 
     buttonCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/cancel.png"))); // NOI18N
     buttonCancel.setText("Cancel");
+    buttonCancel.setToolTipText("Reject changes");
     buttonCancel.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         buttonCancelActionPerformed(evt);
       }
     });
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 2;
+    gridBagConstraints.gridy = 0;
+    gridBagConstraints.gridwidth = java.awt.GridBagConstraints.RELATIVE;
+    gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+    jPanel1.add(buttonCancel, gridBagConstraints);
 
     buttonOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/ok.png"))); // NOI18N
     buttonOk.setText("Ok");
+    buttonOk.setToolTipText("Save changes");
     buttonOk.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         buttonOkActionPerformed(evt);
       }
     });
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 0;
+    gridBagConstraints.ipadx = 28;
+    gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+    gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 8);
+    jPanel1.add(buttonOk, gridBagConstraints);
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 0;
+    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.weightx = 1000.0;
+    jPanel1.add(filler3, gridBagConstraints);
 
-    comboRom.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
-    jLabel1.setText("Active ROM:");
-
-    jLabel2.setText("(after restart)");
-
-    javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-    getContentPane().setLayout(layout);
-    layout.setHorizontalGroup(
-      layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(layout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-          .addGroup(layout.createSequentialGroup()
-            .addGap(0, 0, Short.MAX_VALUE)
-            .addComponent(buttonOk)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(buttonCancel))
-          .addGroup(layout.createSequentialGroup()
-            .addComponent(jLabel1)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(comboRom, 0, 383, Short.MAX_VALUE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jLabel2)))
-        .addContainerGap())
-    );
-
-    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {buttonCancel, buttonOk});
-
-    layout.setVerticalGroup(
-      layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-          .addComponent(jLabel1)
-          .addComponent(comboRom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-          .addComponent(jLabel2))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-          .addComponent(buttonCancel)
-          .addComponent(buttonOk))
-        .addContainerGap())
-    );
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 2;
+    gridBagConstraints.gridwidth = 3;
+    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.insets = new java.awt.Insets(8, 8, 8, 8);
+    getContentPane().add(jPanel1, gridBagConstraints);
 
     pack();
   }// </editor-fold>//GEN-END:initComponents
 
   private void buttonOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOkActionPerformed
-    final String selectedRom = (String) this.comboRom.getSelectedItem();
+    final String selectedRom = ((RomUrl) this.comboRom.getSelectedItem()).getLink();
     final String previousRom = AppOptions.getInstance().getActiveRom();
-    if (!selectedRom.equals(previousRom)) {
-      try {
-        AppOptions.getInstance().setActiveRom(selectedRom);
-        AppOptions.getInstance().flush();
-        JOptionPane.showMessageDialog(this, "Don't forget to restart emulator!", "Restart needed", JOptionPane.INFORMATION_MESSAGE);
-      }
-      catch (BackingStoreException ee) {
-        JOptionPane.showMessageDialog(this, "Can't save options!", "Error", JOptionPane.ERROR_MESSAGE);
-      }
+    try {
+      AppOptions.getInstance().setActiveRom(selectedRom);
+      AppOptions.getInstance().setIntBetweenFrames((Integer) this.spinnerScrRefreshIntTicks.getValue());
+      AppOptions.getInstance().flush();
+      JOptionPane.showMessageDialog(this, "Changes need reloading!", "Warning!", JOptionPane.WARNING_MESSAGE);
+    }
+    catch (BackingStoreException ee) {
+      JOptionPane.showMessageDialog(this, "Can't save options!", "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     setVisible(false);
@@ -152,7 +209,10 @@ public class OptionsDialog extends javax.swing.JDialog {
   private javax.swing.JButton buttonCancel;
   private javax.swing.JButton buttonOk;
   private javax.swing.JComboBox comboRom;
+  private javax.swing.Box.Filler filler3;
   private javax.swing.JLabel jLabel1;
-  private javax.swing.JLabel jLabel2;
+  private javax.swing.JLabel jLabel3;
+  private javax.swing.JPanel jPanel1;
+  private javax.swing.JSpinner spinnerScrRefreshIntTicks;
   // End of variables declaration//GEN-END:variables
 }

@@ -63,7 +63,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private static final Icon ICO_ZX128_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_ZX128);
 
   public static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
-  private static final int HOW_MANY_INT_BETWEEN_SCREEN_REFRESH = 4;
+  private static final int INT_BETWEEN_FRAMES = AppOptions.getInstance().getIntBetweenFrames();
 
   private static final String TEXT_START_ANIM_GIF = "Record AGIF";
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
@@ -278,6 +278,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   }
 
   public MainForm(final String title, final String romPath) throws IOException {
+    log.info("INT ticks between frames: "+INT_BETWEEN_FRAMES);
     initComponents();
     this.setTitle(title);
 
@@ -378,7 +379,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
         this.board.step(systemIntSignal, this.turboMode ? true : systemIntSignal || currentMachineCycleCounter <= VideoController.CYCLES_BETWEEN_INT);
 
         if (countdownToPaint <= 0) {
-          countdownToPaint = HOW_MANY_INT_BETWEEN_SCREEN_REFRESH;
+          countdownToPaint = INT_BETWEEN_FRAMES;
           updateScreen();
         }
 
