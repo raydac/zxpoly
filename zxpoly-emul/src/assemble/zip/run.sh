@@ -24,9 +24,9 @@ then
         echo Emulator already started! if it is wrong, just delete the .pid file in the editor folder root!
 	exit 1
     fi
-fi    
+fi
 
-echo \$JAVA_RUN=$JAVA_RUN &>>$LOG_FILE
+echo \$JAVA_RUN=$JAVA_RUN &>$LOG_FILE
 
 echo ------JAVA_VERSION------ &>>$LOG_FILE
 
@@ -34,10 +34,9 @@ $JAVA_RUN -version &>>$LOG_FILE
 
 echo ------------------------ &>>$LOG_FILE
 
-$JAVA_RUN $JAVA_FLAGS $JAVA_EXTRA_GFX_FLAGS -jar $ZXPOLY_HOME/zxpoly-emul.jar $@ &>> $ZXPOLY_HOME/console.log&
+$JAVA_RUN $JAVA_FLAGS $JAVA_EXTRA_GFX_FLAGS -jar $ZXPOLY_HOME/zxpoly-emul.jar $@ &>>$LOG_FILE&
 THE_PID=$!
 echo $THE_PID>$ZXPOLY_HOME/.pid
 wait $THE_PID
 rm $ZXPOLY_HOME/.pid
 exit 0
-
