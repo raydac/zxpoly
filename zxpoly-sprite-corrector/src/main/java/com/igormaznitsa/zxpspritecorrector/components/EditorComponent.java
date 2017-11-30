@@ -11,7 +11,13 @@ import javax.swing.event.ChangeListener;
 
 public final class EditorComponent extends JComponent implements SpinnerModel {
 
-  public enum ShowAttributes {
+  public enum ColumnMode {
+    ALL,
+    ODD,
+    EVEN
+  }
+  
+  public enum AttributeMode {
 
     DONT_SHOW,
     SHOW_BASE,
@@ -39,7 +45,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   private boolean invertShowBaseData;
   private boolean showColumnBorders;
   private boolean showGrid;
-  private ShowAttributes showAttributes = ShowAttributes.DONT_SHOW;
+  private AttributeMode attributeMode = AttributeMode.DONT_SHOW;
+  private ColumnMode columnMode = ColumnMode.ALL;
   private boolean addressingModeZXScreen;
   private Dimension preferredSize;
   private int zoom = 1;
@@ -51,7 +58,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
   private int gridStep = 1;
 
-  private final ZXGraphics zxGraphics = new ZXGraphics();
+  private final ZXGraphics zxGraphics = new ZXGraphics(this);
 
   private final List<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
   
@@ -75,26 +82,35 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     return new Point(pointAtComponent.x / this.zoom, pointAtComponent.y / this.zoom);
   }
 
-  public class ZXGraphics {
+  public static final class ZXGraphics {
 
-    private ZXGraphics() {
-
+    private final EditorComponent editor;
+    
+    private ZXGraphics(final EditorComponent editor) {
+      this.editor = editor;
     }
 
     private int coordToAddress(final int x, final int y) {
       final int result;
 
-      if (processingData == null || x < 0 || y < 0) {
+      final ZXPolyData data = this.editor.processingData;
+      
+      if (data == null || x < 0 || y < 0) {
         result = -1;
       }
       else {
-        final int dx = mode512 ? x >> 1 : x;
-        final int dy = mode512 ? y >> 1 : y;
+        final boolean m512 = this.editor.mode512;
+        final int columns = this.editor.columns;
+        final int visibleColumns = columns;
+        final int startAddr = this.editor.startAddress;
+        
+        final int dx = m512 ? x >> 1 : x;
+        final int dy = m512 ? y >> 1 : y;
+        
+        final int theY = this.editor.addressingModeZXScreen ? VideoMode.zxy2y(dy) : dy;
+        final int rowAddress = theY * columns + startAddr;
 
-        final int theY = addressingModeZXScreen ? VideoMode.zxy2y(dy) : dy;
-        final int rowAddress = theY * columns + startAddress;
-
-        if (dx >= (columns << 3) || rowAddress >= processingData.length()) {
+        if (dx >= (visibleColumns << 3) || rowAddress >= data.length()) {
           result = -1;
         }
         else {
@@ -105,18 +121,18 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       return result;
     }
 
-    private int makeXMask(final int x) {
+    private static int makeXMask(final int x) {
       return 1 << (7 - (x & 0x7));
     }
 
     public ZXGraphics setPoint(final int x, final int y, final int cpu3012) {
       final int address = coordToAddress(x, y);
       if (address >= 0) {
-        final int mask = processingData.getMask(address);
+        final int mask = this.editor.processingData.getMask(address);
 
-        final int packed3012 = processingData.getPackedZxPolyData3012(address);
+        final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
 
-        if (mode512) {
+        if (this.editor.mode512) {
           final int bitmask = makeXMask(x >> 1);
           final int invertedbitmask = ~bitmask;
 
@@ -125,7 +141,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
           if ((x & 1) == 0) {
             if ((y & 1) == 0) {
               // CPU 0
-              processingData.setZXPolyData(address, mask | bitmask,
+              this.editor.processingData.setZXPolyData(address, mask | bitmask,
                       ((packed3012 >>> 16) & invertedbitmask) | value,
                       packed3012 >>> 8,
                       packed3012,
@@ -133,7 +149,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
             }
             else {
               // CPU 2
-              processingData.setZXPolyData(address, mask | bitmask,
+              this.editor.processingData.setZXPolyData(address, mask | bitmask,
                       packed3012 >>> 16,
                       packed3012 >>> 8,
                       (packed3012 & invertedbitmask) | value,
@@ -143,7 +159,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
           else {
             if ((y & 1) == 0) {
               // CPU 1
-              processingData.setZXPolyData(address, mask | bitmask,
+              this.editor.processingData.setZXPolyData(address, mask | bitmask,
                       packed3012 >>> 16,
                       ((packed3012 >>> 8) & invertedbitmask) | value,
                       packed3012,
@@ -151,7 +167,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
             }
             else {
               // CPU 3
-              processingData.setZXPolyData(address, mask | bitmask,
+              this.editor.processingData.setZXPolyData(address, mask | bitmask,
                       packed3012 >>> 16,
                       packed3012 >>> 8,
                       packed3012,
@@ -163,7 +179,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
         else {
           final int bitmask = makeXMask(x);
           final int invertedbitmask = ~bitmask;
-          processingData.setZXPolyData(address, mask | bitmask,
+          this.editor.processingData.setZXPolyData(address, mask | bitmask,
                   ((packed3012 >>> 16) & invertedbitmask) | (((cpu3012 & 4) == 0 ? 0 : 0xFF) & bitmask),
                   ((packed3012 >>> 8) & invertedbitmask) | (((cpu3012 & 2) == 0 ? 0 : 0xFF) & bitmask),
                   (packed3012 & invertedbitmask) | (((cpu3012 & 1) == 0 ? 0 : 0xFF) & bitmask),
@@ -178,13 +194,13 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     public ZXGraphics resetPoint(final int x, final int y) {
       final int address = coordToAddress(x, y);
       if (address >= 0) {
-        final int mask = processingData.getMask(address);
+        final int mask = this.editor.processingData.getMask(address);
 
-        final int packed3012 = processingData.getPackedZxPolyData3012(address);
+        final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
 
-        final int bitmask = makeXMask(x >> (mode512 ? 1 : 0));
+        final int bitmask = makeXMask(x >> (this.editor.mode512 ? 1 : 0));
         final int invertedbitmask = ~bitmask;
-        processingData.setZXPolyData(address, mask & invertedbitmask,
+        this.editor.processingData.setZXPolyData(address, mask & invertedbitmask,
                 (packed3012 >>> 16) & invertedbitmask,
                 (packed3012 >>> 8) & invertedbitmask,
                 packed3012 & invertedbitmask,
@@ -203,11 +219,11 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       if (address >= 0) {
         final int bitmask = makeXMask(x);
 
-        if ((processingData.getMask(address) & bitmask) == 0) {
+        if ((this.editor.processingData.getMask(address) & bitmask) == 0) {
           result = 0;
         }
         else {
-          final int packed3012 = processingData.getPackedZxPolyData3012(address);
+          final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
           result = ((packed3012 & bitmask) == 0 ? 0 : 1)
                   | ((packed3012 & (bitmask << 8)) == 0 ? 0 : 2)
                   | ((packed3012 & (bitmask << 16)) == 0 ? 0 : 4)
@@ -221,15 +237,15 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     public boolean isBaseBitSet(final int x, final int y) {
       final int address = coordToAddress(x, y);
       if (address >= 0) {
-        return (processingData.getBaseData(address) & makeXMask(x)) != 0;
+        return (this.editor.processingData.getBaseData(address) & makeXMask(x)) != 0;
       }
 
       return false;
     }
 
     public void flush() {
-      _updatePictureInBuffer();
-      repaint();
+      this.editor._updatePictureInBuffer();
+      this.editor.repaint();
     }
   }
 
@@ -440,14 +456,24 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     repaint();
   }
 
-  public void setShowAttributes(final ShowAttributes selected) {
-    this.showAttributes = selected;
+  public void setShowAttributes(final AttributeMode selected) {
+    this.attributeMode = selected;
     _updatePictureInBuffer();
     repaint();
   }
 
-  public ShowAttributes getShowAttributes() {
-    return this.showAttributes;
+  public void setColumnMode(final ColumnMode selected) {
+    this.columnMode = selected;
+    _updatePictureInBuffer();
+    repaint();
+  }
+
+  public AttributeMode getShowAttributes() {
+    return this.attributeMode;
+  }
+
+  public ColumnMode getColumnMode() {
+    return this.columnMode;
   }
 
   public Color getColorGrid() {
@@ -525,7 +551,30 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       int y = 0;
       final int step = this.mode512 ? 2 : 1;
 
-      for (int addr = this.startAddress; addr < this.processingData.length(); addr++) {
+      final int addrStep;
+      final int startAddr;
+      final int columnMax;
+      switch(this.columnMode) {
+        case EVEN : {
+          startAddr = this.startAddress + ((this.startAddress & 1) ^ 1);
+          addrStep = 2;
+          columnMax = Math.max(1, this.columns>>1);
+        }break;
+        case ODD : {
+          startAddr = this.startAddress + (this.startAddress & 1);
+          addrStep = 2;
+          columnMax = Math.max(1, this.columns>>1);
+        }break;
+        default:{
+          addrStep = 1;
+          startAddr = this.startAddress;
+          columnMax = this.columns;
+        }break;
+      }
+      
+      final int procLen = this.processingData.length();
+      
+      for (int addr = startAddr; addr < procLen; addr += addrStep) {
         int basedata = this.processingData.getBaseData(addr);
         int mask = this.processingData.getMask(addr);
 
@@ -550,7 +599,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
         for (int i = 0; i < 8; i++) {
           if ((mask & 0x80) == 0) {
             // point of base
-            if (this.showAttributes == ShowAttributes.SHOW_BASE) {
+            if (this.attributeMode == AttributeMode.SHOW_BASE) {
               final Color inkColor = ZXPalette.extractInk(baseAttribute);
               final Color paperColor = ZXPalette.extractPaper(baseAttribute);
               gfx.setColor((basedata & 0x80) == 0 ? paperColor : inkColor);
@@ -567,7 +616,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
             // point of a zxpoly mode
             if (this.mode512) {
               // 512x384 mode
-              if (this.showAttributes == ShowAttributes.SHOW_512x384_ZXPOLY_PLANES) {
+              if (this.attributeMode == AttributeMode.SHOW_512x384_ZXPOLY_PLANES) {
                 final int packedAttributes3012 = attributeAddress >= this.processingData.length() ? 0 : this.processingData.getPackedZxPolyData3012(attributeAddress);
                 final int attr0 = (packedAttributes3012 >>> 16) & 0xFF;
                 gfx.setColor((data0 & 0x80) == 0 ? ZXPalette.extractPaper(attr0) : ZXPalette.extractInk(attr0));
@@ -614,7 +663,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
         }
 
         column++;
-        if (column >= this.columns) {
+        if (column >= columnMax) {
           x = 0;
           column = 0;
           y += step;
