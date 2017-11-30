@@ -48,7 +48,7 @@ public class SZEPlugin extends AbstractFilePlugin {
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return "A ZX-Poly Sprite corrector data file format";
+    return "ZX-Poly Sprite corrector session";
   }
 
   @Override

@@ -108,6 +108,7 @@ public class MainFrame extends javax.swing.JFrame {
     deactivateCheckbox(this.menuOptionsColumns);
     deactivateCheckbox(this.menuOptionsInvertBase);
     this.menuOptionDontShowAttributes.doClick();
+    this.menuOptionsColumnsAll.doClick();
     this.sliderColumns.setValue(32);
   }
   
@@ -149,7 +150,8 @@ public class MainFrame extends javax.swing.JFrame {
     final int address = sessionData.getBaseAddress();
     
     sessionData.fill(this.mainEditor);
-
+    
+    this.menuOptionsColumnsAll.setSelected(true);
     this.menuOptionsZXScreen.setSelected(sessionData.isZXAddressing());
     this.menuOptionsColumns.setSelected(sessionData.isShowColumns());
     this.menuOptionsGrid.setSelected(sessionData.isShowGrid());
@@ -183,6 +185,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     toolsButtonGroup = new javax.swing.ButtonGroup();
     attributesButtonGroup = new javax.swing.ButtonGroup();
+    columnModeGroup = new javax.swing.ButtonGroup();
     scrollBarAddress = new javax.swing.JScrollBar();
     sliderColumns = new javax.swing.JSlider();
     buttonLock = new javax.swing.JToggleButton();
@@ -222,6 +225,10 @@ public class MainFrame extends javax.swing.JFrame {
     menuOptionDontShowAttributes = new javax.swing.JRadioButtonMenuItem();
     menuOptionsShowBaseAttributes = new javax.swing.JRadioButtonMenuItem();
     menuOptionsShow512x384Attributes = new javax.swing.JRadioButtonMenuItem();
+    jSeparator3 = new javax.swing.JPopupMenu.Separator();
+    menuOptionsColumnsAll = new javax.swing.JRadioButtonMenuItem();
+    menuOptionsColumnsOdd = new javax.swing.JRadioButtonMenuItem();
+    menuOptionsColumnsEven = new javax.swing.JRadioButtonMenuItem();
     menuHelp = new javax.swing.JMenu();
     menuHelpAbout = new javax.swing.JMenuItem();
 
@@ -510,6 +517,35 @@ public class MainFrame extends javax.swing.JFrame {
       }
     });
     menuOptions.add(menuOptionsShow512x384Attributes);
+    menuOptions.add(jSeparator3);
+
+    columnModeGroup.add(menuOptionsColumnsAll);
+    menuOptionsColumnsAll.setSelected(true);
+    menuOptionsColumnsAll.setText("All columns");
+    menuOptionsColumnsAll.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsColumnsAllActionPerformed(evt);
+      }
+    });
+    menuOptions.add(menuOptionsColumnsAll);
+
+    columnModeGroup.add(menuOptionsColumnsOdd);
+    menuOptionsColumnsOdd.setText("Odd columns");
+    menuOptionsColumnsOdd.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsColumnsOddActionPerformed(evt);
+      }
+    });
+    menuOptions.add(menuOptionsColumnsOdd);
+
+    columnModeGroup.add(menuOptionsColumnsEven);
+    menuOptionsColumnsEven.setText("Even columns");
+    menuOptionsColumnsEven.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsColumnsEvenActionPerformed(evt);
+      }
+    });
+    menuOptions.add(menuOptionsColumnsEven);
 
     menuBar.add(menuOptions);
 
@@ -789,11 +825,11 @@ public class MainFrame extends javax.swing.JFrame {
   }//GEN-LAST:event_menuEditClearActionPerformed
 
   private void menuOptionDontShowAttributesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionDontShowAttributesActionPerformed
-    this.mainEditor.setShowAttributes(EditorComponent.ShowAttributes.DONT_SHOW);
+    this.mainEditor.setShowAttributes(EditorComponent.AttributeMode.DONT_SHOW);
   }//GEN-LAST:event_menuOptionDontShowAttributesActionPerformed
 
   private void menuOptionsShowBaseAttributesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsShowBaseAttributesActionPerformed
-    this.mainEditor.setShowAttributes(EditorComponent.ShowAttributes.SHOW_BASE);
+    this.mainEditor.setShowAttributes(EditorComponent.AttributeMode.SHOW_BASE);
   }//GEN-LAST:event_menuOptionsShowBaseAttributesActionPerformed
 
   private void menuFileSaveAsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSaveAsActionPerformed
@@ -820,7 +856,7 @@ public class MainFrame extends javax.swing.JFrame {
   }//GEN-LAST:event_menuFileSaveAsActionPerformed
 
   private void menuOptionsShow512x384AttributesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsShow512x384AttributesActionPerformed
-    this.mainEditor.setShowAttributes(EditorComponent.ShowAttributes.SHOW_512x384_ZXPOLY_PLANES);
+    this.mainEditor.setShowAttributes(EditorComponent.AttributeMode.SHOW_512x384_ZXPOLY_PLANES);
   }//GEN-LAST:event_menuOptionsShow512x384AttributesActionPerformed
 
   private void menuEditCopyBaseToPlansActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditCopyBaseToPlansActionPerformed
@@ -853,6 +889,18 @@ public class MainFrame extends javax.swing.JFrame {
     repaint();
   }//GEN-LAST:event_menuFileNewActionPerformed
 
+  private void menuOptionsColumnsAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsColumnsAllActionPerformed
+    this.mainEditor.setColumnMode(EditorComponent.ColumnMode.ALL);
+  }//GEN-LAST:event_menuOptionsColumnsAllActionPerformed
+
+  private void menuOptionsColumnsOddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsColumnsOddActionPerformed
+    this.mainEditor.setColumnMode(EditorComponent.ColumnMode.ODD);
+  }//GEN-LAST:event_menuOptionsColumnsOddActionPerformed
+
+  private void menuOptionsColumnsEvenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsColumnsEvenActionPerformed
+    this.mainEditor.setColumnMode(EditorComponent.ColumnMode.EVEN);
+  }//GEN-LAST:event_menuOptionsColumnsEvenActionPerformed
+
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);
     this.scrollBarAddress.setMinimum(0);
@@ -874,10 +922,12 @@ public class MainFrame extends javax.swing.JFrame {
   private javax.swing.ButtonGroup attributesButtonGroup;
   private javax.swing.JToggleButton buttonLock;
   private com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector colorSelector;
+  private javax.swing.ButtonGroup columnModeGroup;
   private javax.swing.JPanel jPanel2;
   private javax.swing.JScrollPane jScrollPane1;
   private javax.swing.JSeparator jSeparator1;
   private javax.swing.JPopupMenu.Separator jSeparator2;
+  private javax.swing.JPopupMenu.Separator jSeparator3;
   private javax.swing.JPopupMenu.Separator jSeparator4;
   private javax.swing.JPopupMenu.Separator jSeparator5;
   private javax.swing.JPopupMenu.Separator jSeparator6;
@@ -901,6 +951,9 @@ public class MainFrame extends javax.swing.JFrame {
   private javax.swing.JRadioButtonMenuItem menuOptionDontShowAttributes;
   private javax.swing.JMenu menuOptions;
   private javax.swing.JCheckBoxMenuItem menuOptionsColumns;
+  private javax.swing.JRadioButtonMenuItem menuOptionsColumnsAll;
+  private javax.swing.JRadioButtonMenuItem menuOptionsColumnsEven;
+  private javax.swing.JRadioButtonMenuItem menuOptionsColumnsOdd;
   private javax.swing.JCheckBoxMenuItem menuOptionsGrid;
   private javax.swing.JCheckBoxMenuItem menuOptionsInvertBase;
   private javax.swing.JCheckBoxMenuItem menuOptionsMode512;

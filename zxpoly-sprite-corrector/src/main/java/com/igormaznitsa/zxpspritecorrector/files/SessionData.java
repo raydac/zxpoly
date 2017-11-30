@@ -29,7 +29,7 @@ public class SessionData {
   private final boolean invertBase;
   private final boolean mode512x384;
   private final int zoom;
-  private final EditorComponent.ShowAttributes attributeMode;
+  private final EditorComponent.AttributeMode attributeMode;
   
   public int getBaseAddress(){
     return this.baseAddress;
@@ -63,7 +63,7 @@ public class SessionData {
     return this.zxAddressing;
   }
   
-  public EditorComponent.ShowAttributes getAttributeMode(){
+  public EditorComponent.AttributeMode getAttributeMode(){
     return this.attributeMode;
   }
   
@@ -75,7 +75,7 @@ public class SessionData {
     invertBase = inStream.readBoolean();
     mode512x384 = inStream.readBoolean();
     columnNumber = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
-    attributeMode = EditorComponent.ShowAttributes.values()[inStream.readInt(JBBPByteOrder.BIG_ENDIAN)];
+    attributeMode = EditorComponent.AttributeMode.values()[inStream.readInt(JBBPByteOrder.BIG_ENDIAN)];
     zoom = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
   }
           
