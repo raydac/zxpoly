@@ -35,7 +35,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private static final Image ESCMOUSE = Utils.loadIcon("escmouse.png");
   private static final int ESCMOUSE_WIDTH = ESCMOUSE.getWidth(null);
   private static final int ESCMOUSE_HEIGHT = ESCMOUSE.getHeight(null);
-  
+
   private final Motherboard board;
   private final ReentrantLock bufferLocker = new ReentrantLock();
   private final BufferedImage buffer;
@@ -196,9 +196,9 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       drawBorder(g2, width, height);
     }
     this.drawBuffer(g2, xoff, yoff, this.zoom);
-    
+
     if (this.holdMouse) {
-      g2.drawImage(ESCMOUSE, width-ESCMOUSE_WIDTH, height-ESCMOUSE_HEIGHT, null);
+      g2.drawImage(ESCMOUSE, 2, 2, null);
     }
   }
 
@@ -248,7 +248,6 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   private static void fillDataBufferForVideoMode(final int videoMode, final ZXPolyModule[] modules, final int[] buffer, final boolean flashActive) {
     switch (videoMode) {
-      case VIDEOMODE_RESERVED1:
       case VIDEOMODE_RESERVED2:
       case VIDEOMODE_ZX48_CPU0:
       case VIDEOMODE_ZX48_CPU1:
@@ -261,6 +260,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
         for (int i = 0; i < 0x1800; i++) {
           if ((i & 0x1F) == 0) {
+            // the first byte in the line
             offset = extractYFromAddress(i) << 10;
             attributeoffset = calcAttributeAddressZXMode(i);
           }
@@ -283,18 +283,49 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
         }
       }
       break;
+      case VIDEOMODE_ZXPOLY_256x192_A0:
       case VIDEOMODE_ZXPOLY_256x192: {
         int offset = 0;
+        int attributeoffset = 0;
+
+        final boolean masked = videoMode == VIDEOMODE_ZXPOLY_256x192_A0;
+
+        final ZXPolyModule module0 = modules[0];
+        final ZXPolyModule module1 = modules[1];
+        final ZXPolyModule module2 = modules[2];
+        final ZXPolyModule module3 = modules[3];
 
         for (int i = 0; i < 0x1800; i++) {
           if ((i & 0x1F) == 0) {
+            // the first byte in the line
             offset = extractYFromAddress(i) << 10;
+            attributeoffset = calcAttributeAddressZXMode(i);
           }
 
-          int videoValue0 = modules[0].readVideoMemory(i);
-          int videoValue1 = modules[1].readVideoMemory(i);
-          int videoValue2 = modules[2].readVideoMemory(i);
-          int videoValue3 = modules[3].readVideoMemory(i);
+          int videoValue0 = module0.readVideoMemory(i);
+          int videoValue1 = module1.readVideoMemory(i);
+          int videoValue2 = module2.readVideoMemory(i);
+          int videoValue3 = module3.readVideoMemory(i);
+
+          if (masked) {
+            // check attribute from 0-module
+            final int attribute = module0.readVideoMemory(attributeoffset++);
+
+            final int inkColor = extractInkColor(attribute, flashActive);
+            final int paperColor = extractPaperColor(attribute, flashActive);
+
+            if (inkColor == paperColor) {
+              // mask by ink color because it is the same as paper color
+              int x = 8;
+              while (x-- > 0) {
+                buffer[offset] = inkColor;
+                buffer[offset + 512] = inkColor;
+                buffer[++offset] = inkColor;
+                buffer[offset++ + 512] = inkColor;
+              }
+              continue; // skip rest of the loop because pixel already processed
+            }
+          }
 
           int x = 8;
           while (x-- > 0) {
@@ -322,31 +353,42 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
         int offset = 0;
         int attributeoffset = 0;
 
+        final ZXPolyModule module0 = modules[0];
+        final ZXPolyModule module1 = modules[1];
+        final ZXPolyModule module2 = modules[2];
+        final ZXPolyModule module3 = modules[3];
+
         for (int i = 0; i < 0x1800; i++) {
           if ((i & 0x1F) == 0) {
+            // the first byte in the line
             offset = extractYFromAddress(i) << 10;
             attributeoffset = calcAttributeAddressZXMode(i);
           }
 
-          int videoValue0 = modules[0].readVideoMemory(i);
-          int videoValue1 = modules[1].readVideoMemory(i);
-          int videoValue2 = modules[2].readVideoMemory(i);
-          int videoValue3 = modules[3].readVideoMemory(i);
+          int videoValue0 = module0.readVideoMemory(i);
+          final int attribute0 = module0.readVideoMemory(attributeoffset);
 
-          final int attribute0 = modules[0].readVideoMemory(attributeoffset);
-          final int attribute1 = modules[1].readVideoMemory(attributeoffset);
-          final int attribute2 = modules[2].readVideoMemory(attributeoffset);
-          final int attribute3 = modules[3].readVideoMemory(attributeoffset++);
+          int videoValue1 = module1.readVideoMemory(i);
+          final int attribute1 = module1.readVideoMemory(attributeoffset);
+
+          int videoValue2 = module2.readVideoMemory(i);
+          final int attribute2 = module2.readVideoMemory(attributeoffset);
+
+          int videoValue3 = module3.readVideoMemory(i);
+          final int attribute3 = module3.readVideoMemory(attributeoffset++);
 
           int x = 8;
           while (x-- > 0) {
             buffer[offset] = (videoValue0 & 0x80) == 0 ? extractPaperColor(attribute0, flashActive) : extractInkColor(attribute0, flashActive);
-            buffer[offset + 512] = (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) : extractInkColor(attribute2, flashActive);
-            buffer[++offset] = (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, flashActive) : extractInkColor(attribute1, flashActive);
-            buffer[offset++ + 512] = (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) : extractInkColor(attribute3, flashActive);
             videoValue0 <<= 1;
-            videoValue1 <<= 1;
+            
+            buffer[offset + 512] = (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) : extractInkColor(attribute2, flashActive);
             videoValue2 <<= 1;
+            
+            buffer[++offset] = (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, flashActive) : extractInkColor(attribute1, flashActive);
+            videoValue1 <<= 1;
+            
+            buffer[offset++ + 512] = (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) : extractInkColor(attribute3, flashActive);
             videoValue3 <<= 1;
 
           }
@@ -439,7 +481,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
-  public RenderedImage [] renderAllModuleVideoMemoryInZX48Mode() {
+  public RenderedImage[] renderAllModuleVideoMemoryInZX48Mode() {
     this.lockBuffer();
     try {
       final java.util.List<RenderedImage> result = new ArrayList<RenderedImage>();
@@ -457,21 +499,21 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       g.drawImage(this.buffer, 0, 0, this);
       g.dispose();
       result.add(buffImage);
-      
+
       buffImage = new BufferedImage(this.buffer.getWidth(), this.buffer.getHeight(), BufferedImage.TYPE_INT_RGB);
       g = buffImage.getGraphics();
       fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU1, this.modules, this.dataBuffer, this.board.isFlashActive());
       g.drawImage(this.buffer, 0, 0, this);
       g.dispose();
       result.add(buffImage);
-      
+
       buffImage = new BufferedImage(this.buffer.getWidth(), this.buffer.getHeight(), BufferedImage.TYPE_INT_RGB);
       g = buffImage.getGraphics();
       fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU2, this.modules, this.dataBuffer, this.board.isFlashActive());
       g.drawImage(this.buffer, 0, 0, this);
       g.dispose();
       result.add(buffImage);
-      
+
       buffImage = new BufferedImage(this.buffer.getWidth(), this.buffer.getHeight(), BufferedImage.TYPE_INT_RGB);
       g = buffImage.getGraphics();
       fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU3, this.modules, this.dataBuffer, this.board.isFlashActive());

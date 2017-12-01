@@ -50,7 +50,7 @@ public interface ZXPoly {
   public static final int VIDEOMODE_ZX48_CPU3 = 3;
   public static final int VIDEOMODE_ZXPOLY_256x192 = 4;
   public static final int VIDEOMODE_ZXPOLY_512x384 = 5;
-  public static final int VIDEOMODE_RESERVED1 = 6;
+  public static final int VIDEOMODE_ZXPOLY_256x192_A0 = 6;
   public static final int VIDEOMODE_RESERVED2 = 7;
 
   public static final int ZXPOLY_wREG0_INT = 0x80;
