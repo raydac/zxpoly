@@ -21,21 +21,39 @@ public class Z80ExportDialog extends javax.swing.JDialog {
 
   private boolean accepted;
   private int videoMode;
+
+  private static final class VideoMode {
+    private final String name;
+    private final int code;
+    
+    private VideoMode(final String name, final int code) {
+      this.name = name;
+      this.code = code;
+    }
+
+    @Override
+    public String toString() {
+      return this.name;
+    }
+  }
   
-  private static final String [] VIDEO_MODES = new String[]{
-    "Standard ZX 256x192 (src CPU0)",
-    "Standard ZX 256x192 (src CPU1)",
-    "Standard ZX 256x192 (src CPU2)",
-    "Standard ZX 256x192 (src CPU3)",
-    "ZX-POLY 256x192",
-    "ZX-POLY 512x384"};
+  private static final VideoMode [] VIDEO_MODES = new VideoMode[]{
+    new VideoMode("ZX 256x192 (src CPU0)",0),
+    new VideoMode("ZX 256x192 (src CPU1)",1),
+    new VideoMode("ZX 256x192 (src CPU2)",2),
+    new VideoMode("ZX 256x192 (src CPU3)",3),
+    new VideoMode("ZX-POLY 256x192",4),
+    new VideoMode("ZX-POLY 256x192-A0",6),
+    new VideoMode("ZX-POLY 512x384",5),
+    new VideoMode("RESERVED",7)
+  };
   
   public Z80ExportDialog(final java.awt.Frame parent) {
     super(parent, true);
     initComponents();
     
     comboVideoMode.removeAllItems();
-    for(final String s : VIDEO_MODES) comboVideoMode.addItem(s);
+    for(final VideoMode s : VIDEO_MODES) comboVideoMode.addItem(s);
     comboVideoMode.setSelectedIndex(4);
     this.setLocationRelativeTo(parent);
   }
@@ -130,7 +148,7 @@ public class Z80ExportDialog extends javax.swing.JDialog {
 
   private void buttonOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOkActionPerformed
     this.accepted = true;
-    this.videoMode = this.comboVideoMode.getSelectedIndex();
+    this.videoMode = ((VideoMode)this.comboVideoMode.getSelectedItem()).code;
     setVisible(false);
   }//GEN-LAST:event_buttonOkActionPerformed
 
