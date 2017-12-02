@@ -16,6 +16,8 @@
  */
 package com.igormaznitsa.zxpoly;
 
+import static com.igormaznitsa.z80.Utils.toHex;
+import static com.igormaznitsa.z80.Utils.toHexByte;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.ui.SelectTapPosDialog;
 import com.igormaznitsa.zxpoly.utils.Utils;
@@ -67,11 +69,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
 
   private static final String TEXT_START_ANIM_GIF = "Record AGIF";
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
-  
+
   private volatile boolean turboMode = false;
 
   private AnimatedGifTunePanel.AnimGifOptions lastAnimGifOptions = new AnimatedGifTunePanel.AnimGifOptions("./zxpoly.gif", 10, false);
-  
+
   private File lastTapFolder;
   private File lastFloppyFolder;
   private File lastSnapshotFolder;
@@ -86,7 +88,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private final AtomicInteger activeTracerWindowCounter = new AtomicInteger();
 
   public static final AtomicReference<MainForm> theInstance = new AtomicReference<>();
-  
+
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
   private final Runnable traceWindowsUpdater = new Runnable() {
 
@@ -278,13 +280,13 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   }
 
   public MainForm(final String title, final String romPath) throws IOException {
-    log.info("INT ticks between frames: "+INT_BETWEEN_FRAMES);
+    log.info("INT ticks between frames: " + INT_BETWEEN_FRAMES);
     initComponents();
     this.setTitle(title);
 
     this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
     this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
-    
+
     this.getInputContext().selectInputMethod(Locale.ENGLISH);
 
     setIconImage(Utils.loadIcon("appico.png"));
@@ -325,14 +327,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     pack();
 
     this.setLocationRelativeTo(null);
-    
+
     theInstance.set(this);
   }
 
   public static MainForm getInstance() {
     return theInstance.get();
   }
-  
+
   private void updateTapeMenu() {
     final TapeFileReader reader = this.keyboardAndTapeModule.getTap();
     if (reader == null) {
@@ -376,7 +378,21 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
           systemIntSignal = false;
         }
 
-        this.board.step(systemIntSignal, this.turboMode ? true : systemIntSignal || currentMachineCycleCounter <= VideoController.CYCLES_BETWEEN_INT);
+        final int triggers = this.board.step(systemIntSignal, this.turboMode ? true : systemIntSignal || currentMachineCycleCounter <= VideoController.CYCLES_BETWEEN_INT);
+
+        if (triggers != Motherboard.TRIGGER_NONE) {
+          final Z80[] cpuStates = new Z80[4];
+          final int lastM1Address = this.board.getZXPolyModules()[0].getLastM1Address();
+          for (int i = 0; i < 4; i++) {
+            cpuStates[i] = new Z80(this.board.getZXPolyModules()[i].getCPU());
+          }
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              onTrigger(triggers, lastM1Address, cpuStates);
+            }
+          });
+        }
 
         if (countdownToPaint <= 0) {
           countdownToPaint = INT_BETWEEN_FRAMES;
@@ -418,6 +434,96 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     catch (InvocationTargetException ex) {
       ex.printStackTrace();
       log.log(Level.SEVERE, "Error in trace window updater", ex);
+    }
+  }
+
+  private String getCellContentForAddress(final int address) {
+    final StringBuilder result = new StringBuilder();
+
+    for (int i = 0; i < 4; i++) {
+      if (result.length() > 0) {
+        result.append("  ");
+      }
+      result.append(toHexByte(this.board.getZXPolyModules()[i].readAddress(address)));
+      result.append(" (").append(i).append(')');
+    }
+
+    return result.toString();
+  }
+
+  private void logTrigger(final int triggered, final int lastAddress, final Z80[] cpuModuleStates) {
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("TRIGGER: ");
+    
+    if ((triggered & Motherboard.TRIGGER_DIFF_MODULESTATES) != 0) {
+      buffer.append("MODULE CPU DESYNCHRONIZATION");
+    }
+    
+    if ((triggered & Motherboard.TRIGGER_DIFF_MEM_ADDR) != 0) {
+      buffer.append("MEMORY CONTENT DIFFERENCE: ").append(toHex(this.board.getMemTriggerAddress()));
+      buffer.append('\n').append(getCellContentForAddress(lastAddress)).append('\n');
+    }
+    
+    buffer.append("\n\nDisasm since last executed address : ").append(toHex(lastAddress)).append('\n');
+
+    buffer.append(this.board.getZXPolyModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
+
+    for (final DisasmLine l : this.board.getZXPolyModules()[0].disasmSinceAddress(lastAddress, 5)) {
+      buffer.append(l.toString()).append('\n');
+    }
+
+    buffer.append('\n');
+
+    for (int i = 0; i < cpuModuleStates.length; i++) {
+      buffer.append("CPU MODULE: ").append(i).append('\n');
+      buffer.append(cpuModuleStates[i].getStateAsString());
+      buffer.append("\n\n");
+    }
+    buffer.append('\n');
+    log.info(buffer.toString());
+  }
+
+  private String makeInfoStringForRegister(final Z80[] cpuModuleStates, final int lastAddress, final String extraString, final int register, final boolean alt) {
+    final StringBuilder result = new StringBuilder();
+
+    if (extraString != null) {
+      result.append(extraString).append('\n');
+    }
+
+    for (int i = 0; i < cpuModuleStates.length; i++) {
+      if (i>0) {
+        result.append(", ");
+      }
+      result.append("CPU#").append(i).append('=').append(toHex(cpuModuleStates[i].getRegister(register, alt)));
+    }
+    result.append("\n\nLast executed address : ").append(toHex(lastAddress)).append("\n--------------\n\n");
+
+    result.append(this.board.getZXPolyModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
+
+    for (final DisasmLine l : this.board.getZXPolyModules()[0].disasmSinceAddress(lastAddress, 5)) {
+      result.append(l.toString()).append('\n');
+    }
+
+    return result.toString();
+  }
+
+  public void onTrigger(final int triggered, final int lastM1Address, final Z80[] cpuModuleStates) {
+    this.stepSemaphor.lock();
+    try {
+      logTrigger(triggered, lastM1Address, cpuModuleStates);
+
+      if ((triggered & Motherboard.TRIGGER_DIFF_MODULESTATES) != 0) {
+        this.menuTriggerModuleCPUDesync.setSelected(false);
+        JOptionPane.showMessageDialog(theInstance.get(), "Detected desync of module CPUs\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
+      }
+
+      if ((triggered & Motherboard.TRIGGER_DIFF_MEM_ADDR) != 0) {
+        this.menuTriggerDiffMem.setSelected(false);
+        JOptionPane.showMessageDialog(theInstance.get(), "Detected memory cell difference " + toHex(this.board.getMemTriggerAddress()) + "\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, getCellContentForAddress(this.board.getMemTriggerAddress()), Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
+      }
+    }
+    finally {
+      this.stepSemaphor.unlock();
     }
   }
 
@@ -481,6 +587,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuActionAnimatedGIF = new javax.swing.JMenuItem();
     menuTapExportAs = new javax.swing.JMenu();
     menuTapExportAsWav = new javax.swing.JMenuItem();
+    menuCatcher = new javax.swing.JMenu();
+    menuTriggerDiffMem = new javax.swing.JCheckBoxMenuItem();
+    menuTriggerModuleCPUDesync = new javax.swing.JCheckBoxMenuItem();
     menuTracer = new javax.swing.JMenu();
     menuTraceCPU0 = new javax.swing.JCheckBoxMenuItem();
     menuTraceCPU1 = new javax.swing.JCheckBoxMenuItem();
@@ -750,6 +859,26 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuTapExportAs.add(menuTapExportAsWav);
 
     menuService.add(menuTapExportAs);
+
+    menuCatcher.setText("Test triggers");
+
+    menuTriggerDiffMem.setText("Diff mem.content");
+    menuTriggerDiffMem.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTriggerDiffMemActionPerformed(evt);
+      }
+    });
+    menuCatcher.add(menuTriggerDiffMem);
+
+    menuTriggerModuleCPUDesync.setText("CPUs state desync");
+    menuTriggerModuleCPUDesync.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTriggerModuleCPUDesyncActionPerformed(evt);
+      }
+    });
+    menuCatcher.add(menuTriggerModuleCPUDesync);
+
+    menuService.add(menuCatcher);
 
     menuTracer.setText("Trace");
 
@@ -1182,10 +1311,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       AnimationEncoder encoder = this.currentAnimationEncoder.get();
       if (encoder == null) {
         final AnimatedGifTunePanel panel = new AnimatedGifTunePanel(this.lastAnimGifOptions);
-        if (JOptionPane.showConfirmDialog(this, panel, "Options for Animated GIF", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) return;  
+        if (JOptionPane.showConfirmDialog(this, panel, "Options for Animated GIF", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+          return;
+        }
         this.lastAnimGifOptions = panel.getValue();
         try {
-          encoder = new AnimGifEncoder(new File(this.lastAnimGifOptions.filePath), (int)(1000 / TIMER_INT_DELAY_MILLISECONDS)  / this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
+          encoder = new AnimGifEncoder(new File(this.lastAnimGifOptions.filePath), (int) (1000 / TIMER_INT_DELAY_MILLISECONDS) / this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
         }
         catch (IOException ex) {
           ex.printStackTrace();
@@ -1211,11 +1342,53 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   }//GEN-LAST:event_menuActionAnimatedGIFActionPerformed
 
   private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-     final AnimationEncoder encoder = this.currentAnimationEncoder.get();
-     if (encoder!=null){
-       encoder.dispose();
-     }
+    final AnimationEncoder encoder = this.currentAnimationEncoder.get();
+    if (encoder != null) {
+      encoder.dispose();
+    }
   }//GEN-LAST:event_formWindowClosed
+
+  private void menuTriggerModuleCPUDesyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTriggerModuleCPUDesyncActionPerformed
+    this.stepSemaphor.lock();
+    try {
+      if (this.menuTriggerModuleCPUDesync.isSelected()) {
+        this.board.setTrigger(Motherboard.TRIGGER_DIFF_MODULESTATES);
+      } else {
+        this.board.resetTrigger(Motherboard.TRIGGER_DIFF_MODULESTATES);
+      }
+    }
+    finally {
+      this.stepSemaphor.unlock();
+    }
+  }//GEN-LAST:event_menuTriggerModuleCPUDesyncActionPerformed
+
+  private void menuTriggerDiffMemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTriggerDiffMemActionPerformed
+    this.stepSemaphor.lock();
+    try {
+      if (this.menuTriggerDiffMem.isSelected()) {
+        final AddressPanel panel = new AddressPanel(this.board.getMemTriggerAddress());
+        if (JOptionPane.showConfirmDialog(theInstance.get(), panel, "Triggering address", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
+          try {
+            final int addr = panel.extractAddressFromText();
+            if (addr < 0 || addr > 0xFFFF) {
+              JOptionPane.showMessageDialog(theInstance.get(), "Error address must be in #0000...#FFFF", "Error address", JOptionPane.ERROR_MESSAGE);
+            } else {
+              this.board.setMemTriggerAddress(addr);
+              this.board.setTrigger(Motherboard.TRIGGER_DIFF_MEM_ADDR);
+            }
+          }
+          catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(theInstance.get(), "Error address format, use # for hexadecimal address (example #AA00)", "Error address", JOptionPane.ERROR_MESSAGE);
+          }
+        }
+      } else {
+        this.board.resetTrigger(Motherboard.TRIGGER_DIFF_MEM_ADDR);
+      }
+    }
+    finally {
+      this.stepSemaphor.unlock();
+    }
+  }//GEN-LAST:event_menuTriggerDiffMemActionPerformed
 
   private void activateTracerForCPUModule(final int index) {
     TraceCPUForm form = this.cpuTracers[index];
@@ -1317,6 +1490,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private javax.swing.JLabel labelZX128;
   private javax.swing.JMenuItem menuActionAnimatedGIF;
   private javax.swing.JMenuBar menuBar;
+  private javax.swing.JMenu menuCatcher;
   private javax.swing.JMenu menuFile;
   private javax.swing.JMenuItem menuFileExit;
   private javax.swing.JMenuItem menuFileLoadSnapshot;
@@ -1348,6 +1522,8 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private javax.swing.JCheckBoxMenuItem menuTraceCPU2;
   private javax.swing.JCheckBoxMenuItem menuTraceCPU3;
   private javax.swing.JMenu menuTracer;
+  private javax.swing.JCheckBoxMenuItem menuTriggerDiffMem;
+  private javax.swing.JCheckBoxMenuItem menuTriggerModuleCPUDesync;
   private javax.swing.JPanel panelIndicators;
   private javax.swing.JScrollPane scrollPanel;
   // End of variables declaration//GEN-END:variables

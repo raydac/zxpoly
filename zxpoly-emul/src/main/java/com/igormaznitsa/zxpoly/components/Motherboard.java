@@ -28,6 +28,10 @@ public final class Motherboard implements ZXPoly {
   private static final int NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE = 4;
   public static final long CPU_FREQ = 3540000L;
 
+  public static final int TRIGGER_NONE = 0;
+  public static final int TRIGGER_DIFF_MODULESTATES = 1;
+  public static final int TRIGGER_DIFF_MEM_ADDR = 2;
+
   private static final Logger LOG = Logger.getLogger("MB");
 
   private final ZXPolyModule[] modules;
@@ -42,6 +46,9 @@ public final class Motherboard implements ZXPoly {
 
   private volatile boolean totalReset;
   private volatile int resetCounter;
+  private int triggerMemAddress = 0;
+
+  private int triggers = TRIGGER_NONE;
 
   private int intCounter;
   private volatile boolean videoFlashState;
@@ -79,17 +86,17 @@ public final class Motherboard implements ZXPoly {
 
     // simulation of garbage in memory after power on
     final Random rnd = new Random();
-    for(int i=0;i<this.ram.length();i++){
-        this.ram.set(i, rnd.nextInt());
+    for (int i = 0; i < this.ram.length(); i++) {
+      this.ram.set(i, rnd.nextInt());
     }
   }
 
-  public synchronized void forceResetCPUs(){
-    for(final ZXPolyModule p : this.modules){
+  public synchronized void forceResetCPUs() {
+    for (final ZXPolyModule p : this.modules) {
       p.getCPU().doReset();
     }
   }
-  
+
   public void reset() {
     LOG.info("Full system reset");
     this.totalReset = true;
@@ -110,26 +117,25 @@ public final class Motherboard implements ZXPoly {
 
       this.video.setVideoMode((this.port3D00 >> 2) & 0x7);
       return true;
-    }
-    else {
+    } else {
       LOG.info("Rejected new value for #3D00 because it is locked");
       return false;
     }
   }
 
-  public int findFirstModuleMemoryDiffOffset(){
-    for(int i=0;i<0x20000;i++){
+  public int findFirstModuleMemoryDiffOffset() {
+    for (int i = 0; i < 0x20000; i++) {
       final int m0 = this.modules[0].readHeapModuleMemory(i);
       final int m1 = this.modules[1].readHeapModuleMemory(i);
       final int m2 = this.modules[2].readHeapModuleMemory(i);
       final int m3 = this.modules[3].readHeapModuleMemory(i);
-      if (!(m0 == m1 && m0 == m2 && m0 == m3)){
+      if (!(m0 == m1 && m0 == m2 && m0 == m3)) {
         return i;
       }
     }
     return -1;
   }
-  
+
   public float getActivityCPU0() {
     return this.cpuLoad[0];
   }
@@ -178,21 +184,42 @@ public final class Motherboard implements ZXPoly {
     return this.modules[0].getCPU();
   }
 
-  public void step(final boolean signalInt, final boolean processStep) {
+  public int getTriggers() {
+    return this.triggers;
+  }
+
+  public void setTrigger(final int flag) {
+    this.triggers |= flag;
+  }
+
+  public void resetTrigger(final int flag) {
+    this.triggers &= ~flag;
+  }
+
+  public void setMemTriggerAddress(final int address) {
+    this.triggerMemAddress = address;
+  }
+
+  public int getMemTriggerAddress() {
+    return this.triggerMemAddress;
+  }
+
+  public int step(final boolean signalInt, final boolean processStep) {
     this.localResetForAllModules = false;
 
     final boolean resetStatisticsAtModules;
+
+    int result = TRIGGER_NONE;
 
     if (signalInt) {
       this.statisticCounter--;
       if (this.statisticCounter <= 0) {
         for (int i = 0; i < 4; i++) {
-          this.cpuLoad[i] = Math.min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweeInt()/NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (VideoController.CYCLES_BETWEEN_INT));
+          this.cpuLoad[i] = Math.min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweeInt() / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (VideoController.CYCLES_BETWEEN_INT));
         }
         this.statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
         resetStatisticsAtModules = true;
-      }
-      else {
+      } else {
         resetStatisticsAtModules = false;
       }
 
@@ -201,8 +228,7 @@ public final class Motherboard implements ZXPoly {
         this.intCounter = 0;
         this.videoFlashState = !this.videoFlashState;
       }
-    }
-    else {
+    } else {
       resetStatisticsAtModules = false;
     }
 
@@ -235,40 +261,40 @@ public final class Motherboard implements ZXPoly {
           case 0: {
             zx0halt = this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
             if (localResetForAllModules) {
-              return;
+              return result;
             }
-            zx3halt = this.modules[3].step(signalReset, signalInt,resetStatisticsAtModules);
-            zx2halt = this.modules[2].step(signalReset, signalInt,resetStatisticsAtModules);
-            zx1halt = this.modules[1].step(signalReset, signalInt,resetStatisticsAtModules);
+            zx3halt = this.modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx2halt = this.modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx1halt = this.modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
           }
           break;
           case 1: {
-            zx1halt = this.modules[1].step(signalReset, signalInt,resetStatisticsAtModules);
-            zx2halt = this.modules[2].step(signalReset, signalInt,resetStatisticsAtModules);
-            zx0halt = this.modules[0].step(signalReset, signalInt,resetStatisticsAtModules);
-            if (localResetForAllModules) {
-              return;
+            zx1halt = this.modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx2halt = this.modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx0halt = this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+            if (this.localResetForAllModules) {
+              return result;
             }
-            zx3halt = this.modules[3].step(signalReset, signalInt,resetStatisticsAtModules);
+            zx3halt = this.modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
           }
           break;
           case 2: {
-            zx3halt = this.modules[3].step(signalReset, signalInt,resetStatisticsAtModules);
-            zx0halt = this.modules[0].step(signalReset, signalInt,resetStatisticsAtModules);
-            if (localResetForAllModules) {
-              return;
+            zx3halt = this.modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx0halt = this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+            if (this.localResetForAllModules) {
+              return result;
             }
-            zx1halt = this.modules[1].step(signalReset, signalInt,resetStatisticsAtModules);
-            zx2halt = this.modules[2].step(signalReset, signalInt,resetStatisticsAtModules);
+            zx1halt = this.modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx2halt = this.modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
           }
           break;
           case 3: {
-            zx2halt = this.modules[2].step(signalReset, signalInt,resetStatisticsAtModules);
-            zx3halt = this.modules[3].step(signalReset, signalInt,resetStatisticsAtModules);
-            zx1halt = this.modules[1].step(signalReset, signalInt,resetStatisticsAtModules);
-            zx0halt = this.modules[0].step(signalReset, signalInt,resetStatisticsAtModules);
-            if (localResetForAllModules) {
-              return;
+            zx2halt = this.modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx3halt = this.modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx1halt = this.modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx0halt = this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+            if (this.localResetForAllModules) {
+              return result;
             }
           }
           break;
@@ -291,10 +317,9 @@ public final class Motherboard implements ZXPoly {
             processHaltNotificationForModule(3);
           }
         }
-      }
-      else {
+      } else {
         // ZX 128 mode
-        this.modules[0].step(signalReset, signalInt,resetStatisticsAtModules);
+        this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
       }
 
       final long spentMachineCycles = this.modules[0].getCPU().getMachineCycles() - initialMachineCycleCounter;
@@ -302,7 +327,47 @@ public final class Motherboard implements ZXPoly {
       for (final IODevice d : this.ioDevices) {
         d.postStep(spentMachineCycles);
       }
+
+      final int cur_triggers = this.triggers;
+
+      if (cur_triggers != TRIGGER_NONE) {
+        if ((cur_triggers & TRIGGER_DIFF_MODULESTATES) != 0 && !areZXPolyModuleStateEquals()) {
+          this.triggers = this.triggers & ~TRIGGER_DIFF_MODULESTATES;
+          result |= TRIGGER_DIFF_MODULESTATES;
+        }
+        if ((cur_triggers & TRIGGER_DIFF_MEM_ADDR) != 0) {
+          this.triggers = this.triggers & ~TRIGGER_DIFF_MEM_ADDR;
+          int val = this.modules[0].readAddress(this.triggerMemAddress);
+          for (int i = 1; i < 4; i++) {
+            if (val != this.modules[i].readAddress(this.triggerMemAddress)) {
+              result |= TRIGGER_DIFF_MEM_ADDR;
+              break;
+            }
+          }
+        }
+      }
     }
+    return result;
+  }
+
+  private boolean areZXPolyModuleStateEquals() {
+    final int pc = this.modules[0].getCPU().getRegister(Z80.REG_PC);
+    final int sp = this.modules[0].getCPU().getRegister(Z80.REG_SP);
+    final int im = this.modules[0].getCPU().getIM();
+    final boolean iff1 = this.modules[0].getCPU().isIFF1();
+    final boolean iff2 = this.modules[0].getCPU().isIFF2();
+
+    boolean result = true;
+
+    for (int i = 1; result && i < 4; i++) {
+      result = pc == this.modules[i].getCPU().getRegister(Z80.REG_PC)
+          && sp == this.modules[i].getCPU().getRegister(Z80.REG_SP)
+          && im == this.modules[i].getCPU().getIM()
+          && iff1 == this.modules[0].getCPU().isIFF1()
+          && iff2 == this.modules[0].getCPU().isIFF2();
+
+    }
+    return result;
   }
 
   private void processHaltNotificationForModule(final int index) {
@@ -377,8 +442,7 @@ public final class Motherboard implements ZXPoly {
       final ZXPolyModule destmodule = modules[mappedCPU];
       result = this.ram.get(destmodule.ramOffset2HeapAddress(port));
       destmodule.prepareLocalInt();
-    }
-    else {
+    } else {
       IODevice firstDetected = null;
 
       for (final IODevice d : this.ioDevices) {
@@ -388,8 +452,7 @@ public final class Motherboard implements ZXPoly {
           // changed
           if (prevResult == 0) {
             firstDetected = d;
-          }
-          else {
+          } else {
             LOG.warning("Detected collision during IO reading: " + firstDetected.getName() + ", " + d.getName() + " port #" + Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
           }
         }
@@ -406,27 +469,23 @@ public final class Motherboard implements ZXPoly {
       if (moduleIndex == 0) {
         if (port == PORTrw_ZXPOLY) {
           set3D00(value, false);
-        }
-        else {
+        } else {
           if (mappedCPU > 0) {
             final ZXPolyModule destmodule = modules[mappedCPU];
             this.ram.set(destmodule.ramOffset2HeapAddress(port), value);
             destmodule.prepareLocalNMI();
-          }
-          else {
+          } else {
             for (final IODevice d : this.ioDevices) {
               d.writeIO(module, port, value);
             }
           }
         }
-      }
-      else {
+      } else {
         for (final IODevice d : this.ioDevices) {
           d.writeIO(module, port, value);
         }
       }
-    }
-    else {
+    } else {
       for (final IODevice d : this.ioDevices) {
         d.writeIO(module, port, value);
       }
@@ -442,9 +501,9 @@ public final class Motherboard implements ZXPoly {
     }
     return result;
   }
-  
-  public synchronized void resetIODevices(){
-    for(final IODevice d : this.ioDevices){
+
+  public synchronized void resetIODevices() {
+    for (final IODevice d : this.ioDevices) {
       d.doReset();
     }
   }

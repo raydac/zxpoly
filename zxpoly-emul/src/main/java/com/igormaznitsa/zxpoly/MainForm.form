@@ -251,6 +251,29 @@
                 </MenuItem>
               </SubComponents>
             </Menu>
+            <Menu class="javax.swing.JMenu" name="menuCatcher">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Test triggers"/>
+              </Properties>
+              <SubComponents>
+                <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuTriggerDiffMem">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Diff mem.content"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuTriggerDiffMemActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuTriggerModuleCPUDesync">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="CPUs state desync"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuTriggerModuleCPUDesyncActionPerformed"/>
+                  </Events>
+                </MenuItem>
+              </SubComponents>
+            </Menu>
             <Menu class="javax.swing.JMenu" name="menuTracer">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Trace"/>
