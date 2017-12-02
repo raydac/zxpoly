@@ -37,7 +37,7 @@ It is just regular ZX-Spectrum movde 256x192 with 2 attributed colors for 8x8 pi
 ![Standard ZX screenshot](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/atw_standard.png)
 
 ## ZX-Poly 256x192 (16 colors per pixel)
-The Mode doesn't use attributes and each pixel can have color from 16 color palette.
+The Mode doesn't use attributes and each pixel can have color from 16 color palette. Also there is modification of the mode which uses attributes from CPU0 module to mask screen areas by INK color if it is the sime as PAPER color in attribute. 
 
 [TRD disk with the example can be downloaded from here, the game has been partly colorized](https://raydac.github.io/downloads/zips/atw1_partly_colorized.trd)
 ![ZXPoly256x192 screenshot](https://raw.githubusercontent.com/raydac/zxpoly/master/docs/screenshots/atw_zxpoly.png)

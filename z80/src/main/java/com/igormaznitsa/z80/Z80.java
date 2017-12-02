@@ -145,6 +145,39 @@ public final class Z80 {
 
   private int resetCycle = 0;
 
+  /**
+   * Make full copy of state of the source CPU. NB! pointer to bus will be copied!
+   * @param cpu source CPU which state should be copied, must not be null
+   */
+  public Z80(final Z80 cpu) {
+    this.iff1 = cpu.iff1;
+    this.iff2 = cpu.iff2;
+    this.im = cpu.im;
+    this.regI = cpu.regI;
+    this.regIX = cpu.regIX;
+    this.regIY = cpu.regIY;
+    this.regPC = cpu.regPC;
+    this.regR = cpu.regR;
+    this.regSP = cpu.regSP;
+    this.regW = cpu.regW;
+    this.regZ = cpu.regZ;
+    this.regWalt = cpu.regWalt;
+    this.regZalt = cpu.regZalt;
+    System.arraycopy(cpu.regSet, 0, this.regSet, 0, cpu.regSet.length);
+    System.arraycopy(cpu.altRegSet, 0, this.altRegSet, 0, cpu.altRegSet.length);
+    this.lastReadInstructionByte = cpu.lastReadInstructionByte;
+    this.machineCycles = cpu.machineCycles;
+    this.cbDisplacementByte = cpu.cbDisplacementByte;
+    this.outSignals = cpu.outSignals;
+    this.prevINSignals = cpu.prevINSignals;
+    this.interruptAllowedForStep = cpu.interruptAllowedForStep;
+    this.detectedINT = cpu.detectedINT;
+    this.detectedNMI = cpu.detectedNMI;
+    this.insideBlockInstruction = cpu.insideBlockInstruction;
+    this.insideBlockInstructionPrev = cpu.insideBlockInstructionPrev;
+    this.bus = cpu.bus;
+  }
+  
   public Z80(final Z80CPUBus bus) {
     if (bus == null) {
       throw new NullPointerException("The CPU BUS must not be null");
@@ -2603,6 +2636,9 @@ public final class Z80 {
     result.append("HL'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_HL, true))).append(',');
     result.append("R=").append(Utils.toHex(this.getRegister(Z80.REG_R))).append(',');
     result.append("I=").append(Utils.toHex(this.getRegister(Z80.REG_I))).append(',');
+    result.append("IM=").append(this.getIM()).append(',');
+    result.append("IFF1=").append(this.iff1).append(',');
+    result.append("IFF2=").append(this.iff2);
     return result.toString();
   }
 
@@ -2615,6 +2651,7 @@ public final class Z80 {
   public boolean compareState(final Z80 other){
     if (!Arrays.equals(this.regSet, other.regSet)) return false;
     if (!Arrays.equals(this.altRegSet, other.altRegSet)) return false;
+    if (this.im!=other.im) return false;
     if (this.iff1!=other.iff1) return false;
     if (this.iff2!=other.iff2) return false;
     if (this.regI!=other.regI) return false;

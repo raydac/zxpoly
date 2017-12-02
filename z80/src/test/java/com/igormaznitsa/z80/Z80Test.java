@@ -77,6 +77,17 @@ public class Z80Test extends AbstractZ80Test {
   }
 
   @Test
+  public void testCompareStateWithClonedCPU() {
+    final Z80State state = new Z80State();
+    state.A = 12;
+    state.C = 15;
+    final Z80 cpu = executeCommand(state, 0x79);
+    cpu.setIM(2);
+    cpu.setIFF(false,true);
+    assertTrue(cpu.compareState(new Z80(cpu)));
+  }
+  
+  @Test
   public void testCommand_LD_A_C() {
     final Z80State state = new Z80State();
     state.A = 12;
