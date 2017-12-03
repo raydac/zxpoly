@@ -39,6 +39,7 @@ public abstract class AbstractZ80Test {
     public int IX, IY, SP, PC;
     public int I, R;
     public boolean iff1, iff2;
+    public int lastM1InstructionByte, lastInstructionByte;
 
     public Z80State() {
       this.PC = 0;
@@ -49,6 +50,9 @@ public abstract class AbstractZ80Test {
       this.iff1 = cpu.isIFF1();
       this.iff2 = cpu.isIFF2();
 
+      this.lastInstructionByte = cpu.getLastInstructionByte();
+      this.lastM1InstructionByte = cpu.getLastM1InstructionByte();
+      
       this.A = cpu.getRegister(Z80.REG_A, false);
       this.F = cpu.getRegister(Z80.REG_F, false);
       this.B = cpu.getRegister(Z80.REG_B, false);

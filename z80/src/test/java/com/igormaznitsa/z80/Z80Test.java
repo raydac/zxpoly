@@ -83,10 +83,10 @@ public class Z80Test extends AbstractZ80Test {
     state.C = 15;
     final Z80 cpu = executeCommand(state, 0x79);
     cpu.setIM(2);
-    cpu.setIFF(false,true);
-    assertTrue(cpu.compareState(new Z80(cpu)));
+    cpu.setIFF(false, true);
+    assertTrue(cpu.compareState(new Z80(cpu),false));
   }
-  
+
   @Test
   public void testCommand_LD_A_C() {
     final Z80State state = new Z80State();
@@ -899,7 +899,7 @@ public class Z80Test extends AbstractZ80Test {
     state.altH = 0xB0;
     state.altL = 0xC0;
     state.altWZ = 0x4321;
-    
+
     final Z80 cpu = executeCommand(state, 0xD9);
     assertEquals(0x70, cpu.getRegister(Z80.REG_B));
     assertEquals(0x80, cpu.getRegister(Z80.REG_C));
@@ -3234,11 +3234,11 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_BIT_7_regIX() {
-    for (int i=0;i<0xFF;i++){
+    for (int i = 0; i < 0xFF; i++) {
       final Z80State state = new Z80State();
       state.IX = 0x1010;
-      this.memory[0x1011] = (byte)i;
-      
+      this.memory[0x1011] = (byte) i;
+
       final int origf = i ^ 0xFF;
       state.F = origf;
 
@@ -3246,11 +3246,11 @@ public class Z80Test extends AbstractZ80Test {
 
       assertEquals(0x1010, cpu.getRegister(Z80.REG_IX));
       assertMemory(0x1011, i);
-      
-      final int flag = (origf & Z80.FLAG_C) | ((i & 0x80)==0 ? (Z80.FLAG_PV | Z80.FLAG_Z) : 0) | (i & Z80.FLAG_S) | (state.WZ & (Z80.FLAG_X | Z80.FLAG_Y)) | Z80.FLAG_H;
-      
-      assertEquals("Value "+i,flag, cpu.getRegister(Z80.REG_F));
-    
+
+      final int flag = (origf & Z80.FLAG_C) | ((i & 0x80) == 0 ? (Z80.FLAG_PV | Z80.FLAG_Z) : 0) | (i & Z80.FLAG_S) | (state.WZ & (Z80.FLAG_X | Z80.FLAG_Y)) | Z80.FLAG_H;
+
+      assertEquals("Value " + i, flag, cpu.getRegister(Z80.REG_F));
+
       assertTacts(cpu, 20);
     }
   }
@@ -3538,6 +3538,21 @@ public class Z80Test extends AbstractZ80Test {
 
     assertTacts(cpu, 17);
     assertEquals(0x88, cpu.getRegister(Z80.REG_F));
+  }
+
+  @Test
+  public void testM1andLastInstructionByte() {
+    final TestBus testbus = new TestBus(0, 0x1A47, 0xCD, 0x35, 0x21);
+    final Z80 cpu = new Z80(testbus);
+
+    cpu.setRegister(Z80.REG_PC, 0x1A47);
+    cpu.setRegister(Z80.REG_SP, 0x3002);
+    cpu.setRegister(Z80.REG_F, 0x88);
+
+    cpu.nextInstruction(false, false, false);
+
+    assertEquals("M1 byte", 0xCD, cpu.getLastM1InstructionByte());
+    assertEquals("Last command byte", 0x21, cpu.getLastInstructionByte());
   }
 
   @Test
@@ -5380,6 +5395,10 @@ public class Z80Test extends AbstractZ80Test {
     state.H = 0xCA;
     state.L = 0xFE;
     final Z80 cpu = executeCommand(state, 0x22, 0x34, 0x12);
+
+    assertEquals("M1 byte", 0x22, cpu.getLastM1InstructionByte());
+    assertEquals("Last command byte", 0x12, cpu.getLastInstructionByte());
+
     assertFlagsNotChanged(state, cpu);
     assertMemory(0x1234, 0xFE);
     assertMemory(0x1235, 0xCA);
