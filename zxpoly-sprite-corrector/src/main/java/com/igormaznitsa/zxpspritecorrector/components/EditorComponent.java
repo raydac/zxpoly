@@ -260,9 +260,10 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     return this.zxGraphics;
   }
 
-  public void setToolArea(final Rectangle rect) {
+  public int setToolArea(final Rectangle rect) {
     this.toolArea = rect;
     repaint();
+    return this.toolArea == null ? -1 : this.zxGraphics.coordToAddress(this.toolArea.x, this.toolArea.y);
   }
 
   public Rectangle getToolArea() {

@@ -16,7 +16,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.util.Locale;
 import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import org.apache.commons.io.FilenameUtils;
 import org.picocontainer.*;
 import org.picocontainer.injectors.*;
@@ -62,8 +65,10 @@ public class MainFrame extends javax.swing.JFrame {
       this.toolsButtonGroup.add(tool);
     }
 
-    for(final AbstractFilePlugin p : container.getComponents(AbstractFilePlugin.class)){
-      if (!p.allowsExport()) continue;
+    for (final AbstractFilePlugin p : container.getComponents(AbstractFilePlugin.class)) {
+      if (!p.allowsExport()) {
+        continue;
+      }
       final JMenuItem menuItem = new JMenuItem(p.getPluginDescription(true));
       this.menuFileExportAs.add(menuItem);
       menuItem.setToolTipText(p.getToolTip(true));
@@ -74,33 +79,53 @@ public class MainFrame extends javax.swing.JFrame {
         }
       });
     }
-    
+
     this.setLocationRelativeTo(null);
     updateAddressScrollBar();
 
     loadStateFromSession(new SessionData(this.mainEditor));
     setCurrentSZEFile(null);
     updateBottomBar();
-    
+
     this.spinnerCurrentAddress.setModel(this.mainEditor);
-    
+
     this.setIconImage(GfxUtils.loadImage("ico.png"));
+
+    for(final Component j : this.menuBar.getComponents()) {
+      if (j instanceof JMenu) {
+        ((JMenu)j).addMenuListener(new MenuListener(){
+          @Override
+          public void menuSelected(MenuEvent e) {
+            toolsButtonGroup.clearSelection();
+          }
+
+          @Override
+          public void menuDeselected(MenuEvent e) {
+          }
+
+          @Override
+          public void menuCanceled(MenuEvent e) {
+          }
+        });
+      }
+    }
     
     setVisible(true);
 
-    
     repaint();
   }
-  
-  public PicoContainer getPico(){
+
+  public PicoContainer getPico() {
     return this.container;
   }
 
-  private void deactivateCheckbox(final JCheckBoxMenuItem item){
-    if (item.isSelected()) item.doClick();
+  private void deactivateCheckbox(final JCheckBoxMenuItem item) {
+    if (item.isSelected()) {
+      item.doClick();
+    }
   }
-  
-  private void resetOptions(){
+
+  private void resetOptions() {
     deactivateCheckbox(this.menuOptionsMode512);
     deactivateCheckbox(this.menuOptionsZXScreen);
     this.spinnerCurrentAddress.setValue(0);
@@ -111,46 +136,47 @@ public class MainFrame extends javax.swing.JFrame {
     this.menuOptionsColumnsAll.doClick();
     this.sliderColumns.setValue(32);
   }
-  
+
   private File ensureExtension(final File file, final AbstractFilePlugin plugin) {
     final String extension = plugin.getExtension(true);
-    if (extension!=null){
-      if (FilenameUtils.getExtension(file.getName()).isEmpty()){
-        return new File(file.getParent(),file.getName()+'.'+extension);
+    if (extension != null) {
+      if (FilenameUtils.getExtension(file.getName()).isEmpty()) {
+        return new File(file.getParent(), file.getName() + '.' + extension);
       }
     }
     return file;
   }
-  
-  private void exportDataWithPlugin(final AbstractFilePlugin plugin){
-    if (!this.mainEditor.hasData()){
-      JOptionPane.showMessageDialog(this, "There is no data to export!","There is no data",JOptionPane.WARNING_MESSAGE);
+
+  private void exportDataWithPlugin(final AbstractFilePlugin plugin) {
+    if (!this.mainEditor.hasData()) {
+      JOptionPane.showMessageDialog(this, "There is no data to export!", "There is no data", JOptionPane.WARNING_MESSAGE);
       return;
     }
-    
+
     final JFileChooser fileChooser = new JFileChooser(this.lastExportedFile);
     fileChooser.setAcceptAllFileFilterUsed(false);
     fileChooser.addChoosableFileFilter(plugin.getExportFileFilter());
-    if (fileChooser.showSaveDialog(this)==JFileChooser.APPROVE_OPTION){
-      this.lastExportedFile = ensureExtension(fileChooser.getSelectedFile(),plugin);
-      try{
+    if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+      this.lastExportedFile = ensureExtension(fileChooser.getSelectedFile(), plugin);
+      try {
         plugin.writeTo(this.lastExportedFile, this.mainEditor.getProcessingData(), new SessionData(this.mainEditor));
-      }catch(Exception ex){
+      }
+      catch (Exception ex) {
         ex.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Can't export data for exception ["+ex.getMessage()+']',"Error",JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Can't export data for exception [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
       }
     }
   }
-  
-  private void updateBottomBar(){
-    this.labelZoom.setText("x"+this.mainEditor.getZoom());
+
+  private void updateBottomBar() {
+    this.labelZoom.setText("x" + this.mainEditor.getZoom());
   }
-  
+
   private void loadStateFromSession(final SessionData sessionData) {
     final int address = sessionData.getBaseAddress();
-    
+
     sessionData.fill(this.mainEditor);
-    
+
     this.menuOptionsColumnsAll.setSelected(true);
     this.menuOptionsZXScreen.setSelected(sessionData.isZXAddressing());
     this.menuOptionsColumns.setSelected(sessionData.isShowColumns());
@@ -169,9 +195,9 @@ public class MainFrame extends javax.swing.JFrame {
         this.menuOptionsShow512x384Attributes.setSelected(true);
         break;
     }
-    
+
     this.scrollBarAddress.setValue(address);
-    
+
     updateBottomBar();
   }
 
@@ -182,6 +208,7 @@ public class MainFrame extends javax.swing.JFrame {
    */
   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
+    java.awt.GridBagConstraints gridBagConstraints;
 
     toolsButtonGroup = new javax.swing.ButtonGroup();
     attributesButtonGroup = new javax.swing.ButtonGroup();
@@ -197,6 +224,8 @@ public class MainFrame extends javax.swing.JFrame {
     mainEditor = new com.igormaznitsa.zxpspritecorrector.components.EditorComponent();
     jPanel2 = new javax.swing.JPanel();
     labelZoom = new javax.swing.JLabel();
+    filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+    labelAddress = new javax.swing.JLabel();
     spinnerCurrentAddress = new javax.swing.JSpinner();
     menuBar = new javax.swing.JMenuBar();
     menuFile = new javax.swing.JMenu();
@@ -293,6 +322,14 @@ public class MainFrame extends javax.swing.JFrame {
     sliderPenWidth.setMinimumSize(new java.awt.Dimension(96, 84));
     sliderPenWidth.setPreferredSize(new java.awt.Dimension(96, 84));
 
+    mainEditorPanel.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+      public void mouseMoved(java.awt.event.MouseEvent evt) {
+        mainEditorPanelMouseMoved(evt);
+      }
+      public void mouseDragged(java.awt.event.MouseEvent evt) {
+        mainEditorPanelMouseDragged(evt);
+      }
+    });
     mainEditorPanel.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
       public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
         mainEditorPanelMouseWheelMoved(evt);
@@ -302,19 +339,14 @@ public class MainFrame extends javax.swing.JFrame {
       public void mousePressed(java.awt.event.MouseEvent evt) {
         mainEditorPanelMousePressed(evt);
       }
-      public void mouseEntered(java.awt.event.MouseEvent evt) {
-        mainEditorPanelMouseEntered(evt);
+      public void mouseReleased(java.awt.event.MouseEvent evt) {
+        mainEditorPanelMouseReleased(evt);
       }
       public void mouseExited(java.awt.event.MouseEvent evt) {
         mainEditorPanelMouseExited(evt);
       }
-    });
-    mainEditorPanel.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
-      public void mouseMoved(java.awt.event.MouseEvent evt) {
-        mainEditorPanelMouseMoved(evt);
-      }
-      public void mouseDragged(java.awt.event.MouseEvent evt) {
-        mainEditorPanelMouseDragged(evt);
+      public void mouseEntered(java.awt.event.MouseEvent evt) {
+        mainEditorPanelMouseEntered(evt);
       }
     });
 
@@ -342,10 +374,22 @@ public class MainFrame extends javax.swing.JFrame {
     jScrollPane1.setViewportView(mainEditorPanel);
 
     jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-    jPanel2.setLayout(new java.awt.BorderLayout());
+    jPanel2.setLayout(new java.awt.GridBagLayout());
 
     labelZoom.setText("Zoom");
-    jPanel2.add(labelZoom, java.awt.BorderLayout.EAST);
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 2;
+    gridBagConstraints.gridy = 0;
+    jPanel2.add(labelZoom, gridBagConstraints);
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 0;
+    gridBagConstraints.weightx = 1000.0;
+    jPanel2.add(filler1, gridBagConstraints);
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 0;
+    jPanel2.add(labelAddress, gridBagConstraints);
 
     menuFile.setText("File");
 
@@ -624,8 +668,10 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_menuFileExitActionPerformed
 
     private void applicationClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_applicationClosing
-      if (this.mainEditor.hasData()){
-        if (JOptionPane.showConfirmDialog(this, "Close application?","Confirmation",JOptionPane.YES_NO_OPTION)==JOptionPane.NO_OPTION) return;
+      if (this.mainEditor.hasData()) {
+        if (JOptionPane.showConfirmDialog(this, "Close application?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
+          return;
+        }
       }
       dispose();
     }//GEN-LAST:event_applicationClosing
@@ -634,8 +680,7 @@ public class MainFrame extends javax.swing.JFrame {
           if (this.buttonLock.isSelected()) {
             this.scrollBarAddress.setEnabled(false);
             this.sliderColumns.setEnabled(false);
-          }
-          else {
+          } else {
             if (this.mainEditor.getProcessingData() != null) {
               this.scrollBarAddress.setEnabled(true);
             }
@@ -650,8 +695,7 @@ public class MainFrame extends javax.swing.JFrame {
   private void mainEditorPanelMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseWheelMoved
     if (evt.getWheelRotation() < 0) {
       this.mainEditor.zoomIn();
-    }
-    else {
+    } else {
       this.mainEditor.zoomOut();
     }
     updateBottomBar();
@@ -662,11 +706,11 @@ public class MainFrame extends javax.swing.JFrame {
     updateAddressScrollBar();
   }//GEN-LAST:event_sliderColumnsStateChanged
 
-  private void setCurrentSZEFile(final File file){
+  private void setCurrentSZEFile(final File file) {
     this.szeFile = file;
-    this.menuSave.setEnabled(file!=null);
+    this.menuSave.setEnabled(file != null);
   }
-  
+
   private void menuFileOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileOpenActionPerformed
     final JFileChooser chooser = new JFileChooser(this.lastOpenedFile);
     chooser.setAcceptAllFileFilterUsed(false);
@@ -682,7 +726,7 @@ public class MainFrame extends javax.swing.JFrame {
       final AbstractFilePlugin plugin = (AbstractFilePlugin) chooser.getFileFilter();
       final File selectedFile = chooser.getSelectedFile();
       this.lastOpenedFile = selectedFile;
-      
+
       try {
         int selected = -1;
         if (plugin.doesImportContainInsideFileList()) {
@@ -696,27 +740,27 @@ public class MainFrame extends javax.swing.JFrame {
         final AbstractFilePlugin.ReadResult result = plugin.readFrom(selectedFile, selected);
         this.setTitle(selectedFile.getAbsolutePath());
         this.mainEditor.setProcessingData(result.getData());
-        if (result.getSessionData()!=null){
+        if (result.getSessionData() != null) {
           loadStateFromSession(result.getSessionData());
-        }else{
+        } else {
           resetOptions();
         }
-      
+
         setCurrentSZEFile(plugin instanceof SZEPlugin ? selectedFile : null);
-        
-        if ((plugin instanceof SCRPlugin) && !this.menuOptionsZXScreen.isSelected()){
+
+        if ((plugin instanceof SCRPlugin) && !this.menuOptionsZXScreen.isSelected()) {
           this.menuOptionsZXScreen.setSelected(true);
         }
       }
-      catch (IllegalArgumentException ex){
+      catch (IllegalArgumentException ex) {
         ex.printStackTrace();
         JOptionPane.showMessageDialog(this, ex.getMessage(), "Can't read", JOptionPane.WARNING_MESSAGE);
       }
       catch (IOException ex) {
         ex.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Can't read file or its part ["+ex.getMessage()+']', "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Can't read file or its part [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
       }
-      catch (Exception ex){
+      catch (Exception ex) {
         ex.printStackTrace();
         JOptionPane.showMessageDialog(this, "Unexpected exception! See log!", "Unexpected error", JOptionPane.ERROR_MESSAGE);
       }
@@ -749,13 +793,26 @@ public class MainFrame extends javax.swing.JFrame {
     final Rectangle rect;
     if (width <= 1) {
       rect = new Rectangle(editorPoint.x, editorPoint.y, 1, 1);
-    }
-    else {
+    } else {
       rect = new Rectangle(editorPoint.x - (width >> 1), editorPoint.y - (width >> 1), width, width);
     }
 
-    this.mainEditor.setToolArea(rect);
+    setLabelAddress(this.mainEditor.setToolArea(rect));
+
     return rect;
+  }
+
+  public static String toHex(final int value) {
+    final String h = Integer.toHexString(value).toUpperCase(Locale.ENGLISH);
+    return '#' + (h.length() < 4 ? "0000".substring(0, 4 - h.length()) + h : h);
+  }
+
+  private void setLabelAddress(final int address) {
+    if (address < 0) {
+      this.labelAddress.setText("Addr: ----");
+    } else {
+      this.labelAddress.setText("Addr: " + address + " (" + toHex(address) + ')');
+    }
   }
 
   private void updateRedoUndo() {
@@ -841,9 +898,9 @@ public class MainFrame extends javax.swing.JFrame {
       fileChoolser.addChoosableFileFilter(container.getComponent(SZEPlugin.class));
       if (fileChoolser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
         try {
-          final File thefile = ensureExtension(fileChoolser.getSelectedFile(),container.getComponent(SZEPlugin.class));
+          final File thefile = ensureExtension(fileChoolser.getSelectedFile(), container.getComponent(SZEPlugin.class));
           container.getComponent(SZEPlugin.class).writeTo(thefile, zxpolydata, new SessionData(this.mainEditor));
-          
+
           this.setTitle(thefile.getAbsolutePath());
           setCurrentSZEFile(thefile);
         }
@@ -866,23 +923,26 @@ public class MainFrame extends javax.swing.JFrame {
   }//GEN-LAST:event_menuEditCopyBaseToPlansActionPerformed
 
   private void menuSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuSaveActionPerformed
-    try{
+    try {
       container.getComponent(SZEPlugin.class).writeTo(this.szeFile, this.mainEditor.getProcessingData(), new SessionData(this.mainEditor));
-    }catch(Exception ex){
+    }
+    catch (Exception ex) {
       ex.printStackTrace();
-      JOptionPane.showMessageDialog(this, "Can't save file for exception ["+ex.getMessage()+']',"Error",JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(this, "Can't save file for exception [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
     }
   }//GEN-LAST:event_menuSaveActionPerformed
 
   private void menuFileNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileNewActionPerformed
-    if (this.mainEditor.hasData()){
-      if (JOptionPane.showConfirmDialog(this, "Do you really want to create new data?","Confirmation",JOptionPane.YES_NO_OPTION)!=JOptionPane.YES_OPTION) return;
+    if (this.mainEditor.hasData()) {
+      if (JOptionPane.showConfirmDialog(this, "Do you really want to create new data?", "Confirmation", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+        return;
+      }
     }
 
     final NewDataDialog dialog = new NewDataDialog(this);
     dialog.setVisible(true);
     final AbstractFilePlugin.ReadResult result = dialog.getResult();
-    if (result!=null){
+    if (result != null) {
       this.mainEditor.setProcessingData(result.getData());
       setCurrentSZEFile(null);
     }
@@ -901,13 +961,16 @@ public class MainFrame extends javax.swing.JFrame {
     this.mainEditor.setColumnMode(EditorComponent.ColumnMode.EVEN);
   }//GEN-LAST:event_menuOptionsColumnsEvenActionPerformed
 
+  private void mainEditorPanelMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseReleased
+
+  }//GEN-LAST:event_mainEditorPanelMouseReleased
+
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);
     this.scrollBarAddress.setMinimum(0);
     if (this.mainEditor.getProcessingData() == null) {
       this.scrollBarAddress.setEnabled(false);
-    }
-    else {
+    } else {
       this.scrollBarAddress.setMaximum(Math.max(0, this.mainEditor.getProcessingData().length() - 32));
       this.scrollBarAddress.setEnabled(true);
       this.scrollBarAddress.setValue(this.mainEditor.getAddress());
@@ -923,6 +986,7 @@ public class MainFrame extends javax.swing.JFrame {
   private javax.swing.JToggleButton buttonLock;
   private com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector colorSelector;
   private javax.swing.ButtonGroup columnModeGroup;
+  private javax.swing.Box.Filler filler1;
   private javax.swing.JPanel jPanel2;
   private javax.swing.JScrollPane jScrollPane1;
   private javax.swing.JSeparator jSeparator1;
@@ -931,6 +995,7 @@ public class MainFrame extends javax.swing.JFrame {
   private javax.swing.JPopupMenu.Separator jSeparator4;
   private javax.swing.JPopupMenu.Separator jSeparator5;
   private javax.swing.JPopupMenu.Separator jSeparator6;
+  private javax.swing.JLabel labelAddress;
   private javax.swing.JLabel labelZoom;
   private com.igormaznitsa.zxpspritecorrector.components.EditorComponent mainEditor;
   private javax.swing.JPanel mainEditorPanel;
