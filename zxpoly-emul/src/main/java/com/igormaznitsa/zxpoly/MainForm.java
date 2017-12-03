@@ -464,7 +464,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       buffer.append('\n').append(getCellContentForAddress(lastAddress)).append('\n');
     }
     
-    buffer.append("\n\nDisasm since last executed address : ").append(toHex(lastAddress)).append('\n');
+    if ((triggered & Motherboard.TRIGGER_DIFF_EXE_CODE) != 0) {
+      buffer.append("EXE CODE DIFFERENCE");
+    }
+    
+    buffer.append("\n\nDisasm since last executed address in CPU0 memory: ").append(toHex(lastAddress)).append('\n');
 
     buffer.append(this.board.getZXPolyModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
 
@@ -520,6 +524,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       if ((triggered & Motherboard.TRIGGER_DIFF_MEM_ADDR) != 0) {
         this.menuTriggerDiffMem.setSelected(false);
         JOptionPane.showMessageDialog(theInstance.get(), "Detected memory cell difference " + toHex(this.board.getMemTriggerAddress()) + "\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, getCellContentForAddress(this.board.getMemTriggerAddress()), Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
+      }
+
+      if ((triggered & Motherboard.TRIGGER_DIFF_EXE_CODE) != 0) {
+        this.menuTriggerExeCodeDiff.setSelected(false);
+        JOptionPane.showMessageDialog(theInstance.get(), "Detected EXE code difference\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
     }
     finally {
@@ -590,6 +599,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     menuCatcher = new javax.swing.JMenu();
     menuTriggerDiffMem = new javax.swing.JCheckBoxMenuItem();
     menuTriggerModuleCPUDesync = new javax.swing.JCheckBoxMenuItem();
+    menuTriggerExeCodeDiff = new javax.swing.JCheckBoxMenuItem();
     menuTracer = new javax.swing.JMenu();
     menuTraceCPU0 = new javax.swing.JCheckBoxMenuItem();
     menuTraceCPU1 = new javax.swing.JCheckBoxMenuItem();
@@ -877,6 +887,14 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       }
     });
     menuCatcher.add(menuTriggerModuleCPUDesync);
+
+    menuTriggerExeCodeDiff.setText("Exe code difference");
+    menuTriggerExeCodeDiff.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuTriggerExeCodeDiffActionPerformed(evt);
+      }
+    });
+    menuCatcher.add(menuTriggerExeCodeDiff);
 
     menuService.add(menuCatcher);
 
@@ -1390,6 +1408,20 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     }
   }//GEN-LAST:event_menuTriggerDiffMemActionPerformed
 
+  private void menuTriggerExeCodeDiffActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTriggerExeCodeDiffActionPerformed
+    this.stepSemaphor.lock();
+    try {
+      if (this.menuTriggerExeCodeDiff.isSelected()) {
+        this.board.setTrigger(Motherboard.TRIGGER_DIFF_EXE_CODE);
+      } else {
+        this.board.resetTrigger(Motherboard.TRIGGER_DIFF_EXE_CODE);
+      }
+    }
+    finally {
+      this.stepSemaphor.unlock();
+    }
+  }//GEN-LAST:event_menuTriggerExeCodeDiffActionPerformed
+
   private void activateTracerForCPUModule(final int index) {
     TraceCPUForm form = this.cpuTracers[index];
     if (form == null) {
@@ -1523,6 +1555,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private javax.swing.JCheckBoxMenuItem menuTraceCPU3;
   private javax.swing.JMenu menuTracer;
   private javax.swing.JCheckBoxMenuItem menuTriggerDiffMem;
+  private javax.swing.JCheckBoxMenuItem menuTriggerExeCodeDiff;
   private javax.swing.JCheckBoxMenuItem menuTriggerModuleCPUDesync;
   private javax.swing.JPanel panelIndicators;
   private javax.swing.JScrollPane scrollPanel;

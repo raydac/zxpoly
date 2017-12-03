@@ -31,6 +31,7 @@ public final class Motherboard implements ZXPoly {
   public static final int TRIGGER_NONE = 0;
   public static final int TRIGGER_DIFF_MODULESTATES = 1;
   public static final int TRIGGER_DIFF_MEM_ADDR = 2;
+  public static final int TRIGGER_DIFF_EXE_CODE = 4;
 
   private static final Logger LOG = Logger.getLogger("MB");
 
@@ -336,11 +337,24 @@ public final class Motherboard implements ZXPoly {
           result |= TRIGGER_DIFF_MODULESTATES;
         }
         if ((cur_triggers & TRIGGER_DIFF_MEM_ADDR) != 0) {
-          this.triggers = this.triggers & ~TRIGGER_DIFF_MEM_ADDR;
           int val = this.modules[0].readAddress(this.triggerMemAddress);
           for (int i = 1; i < 4; i++) {
             if (val != this.modules[i].readAddress(this.triggerMemAddress)) {
               result |= TRIGGER_DIFF_MEM_ADDR;
+              this.triggers = this.triggers & ~TRIGGER_DIFF_MEM_ADDR;
+              break;
+            }
+          }
+        }
+        
+        if ((cur_triggers & TRIGGER_DIFF_EXE_CODE) != 0) {
+          final int m1ExeByte = this.modules[0].getCPU().getLastM1InstructionByte();
+          final int exeByte = this.modules[0].getCPU().getLastInstructionByte();
+          
+          for (int i = 1; i < 4; i++) {
+            if (m1ExeByte != this.modules[i].getCPU().getLastM1InstructionByte() || exeByte != this.modules[i].getCPU().getLastInstructionByte()) {
+              result |= TRIGGER_DIFF_EXE_CODE;
+              this.triggers = this.triggers & ~TRIGGER_DIFF_EXE_CODE;
               break;
             }
           }
