@@ -22,6 +22,9 @@ import java.util.prefs.Preferences;
 import org.apache.commons.io.FileUtils;
 
 public final class AppOptions {
+  
+  public static final String TEST_ROM = "zxpolytest.rom";
+  
   private final Preferences preferences = Preferences.userNodeForPackage(AppOptions.class);
   
   private static final String ROMPATH = "ROM_PATH";
@@ -33,12 +36,16 @@ public final class AppOptions {
     return INSTANCE;
   } 
   
+  public synchronized boolean isTestRomActive() {
+    return TEST_ROM.equals(this.getActiveRom());
+  }
+  
   public synchronized String getActiveRom(){
-    return preferences.get(ROMPATH, null);
+    return preferences.get(ROMPATH, AppOptions.TEST_ROM);
   }
   
   public synchronized int getIntBetweenFrames(){
-    return preferences.getInt(INT_BETWEEN_FRAMES, 4);
+    return preferences.getInt(INT_BETWEEN_FRAMES, 3);
   }
 
   public synchronized void setIntBetweenFrames(final int value){

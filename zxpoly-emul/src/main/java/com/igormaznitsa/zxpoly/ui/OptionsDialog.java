@@ -53,7 +53,7 @@ public final class OptionsDialog extends javax.swing.JDialog {
 
     this.comboRom.removeAllItems();
 
-    this.comboRom.addItem(new RomUrl("ROM TEST", "zxpolytest.rom"));
+    this.comboRom.addItem(new RomUrl("ROM TEST", AppOptions.TEST_ROM));
     this.comboRom.addItem(new RomUrl("ROM ZX-128 TRDOS (VTR-DOS)", "http://trd.speccy.cz/emulz/UKV12F5.ZIP"));
     this.comboRom.addItem(new RomUrl("ROM ZX-128 TRDOS (WoS)", "http://wos.meulie.net/pub/sinclair/emulators/pc/russian/ukv12f5.zip"));
 

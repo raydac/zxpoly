@@ -274,7 +274,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       }
     }
 
-    final String testRom = "zxpolytest.rom";
+    final String testRom = AppOptions.TEST_ROM;
     log.info("Load ROM from embedded resource '" + testRom + "'");
     return RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + testRom));
   }
@@ -454,20 +454,20 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private void logTrigger(final int triggered, final int lastAddress, final Z80[] cpuModuleStates) {
     final StringBuilder buffer = new StringBuilder();
     buffer.append("TRIGGER: ");
-    
+
     if ((triggered & Motherboard.TRIGGER_DIFF_MODULESTATES) != 0) {
       buffer.append("MODULE CPU DESYNCHRONIZATION");
     }
-    
+
     if ((triggered & Motherboard.TRIGGER_DIFF_MEM_ADDR) != 0) {
       buffer.append("MEMORY CONTENT DIFFERENCE: ").append(toHex(this.board.getMemTriggerAddress()));
       buffer.append('\n').append(getCellContentForAddress(lastAddress)).append('\n');
     }
-    
+
     if ((triggered & Motherboard.TRIGGER_DIFF_EXE_CODE) != 0) {
       buffer.append("EXE CODE DIFFERENCE");
     }
-    
+
     buffer.append("\n\nDisasm since last executed address in CPU0 memory: ").append(toHex(lastAddress)).append('\n');
 
     buffer.append(this.board.getZXPolyModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
@@ -495,7 +495,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     }
 
     for (int i = 0; i < cpuModuleStates.length; i++) {
-      if (i>0) {
+      if (i > 0) {
         result.append(", ");
       }
       result.append("CPU#").append(i).append('=').append(toHex(cpuModuleStates[i].getRegister(register, alt)));
@@ -1078,6 +1078,11 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   private void menuFileLoadSnapshotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadSnapshotActionPerformed
     stepSemaphor.lock();
     try {
+      if (AppOptions.getInstance().isTestRomActive()) {
+        JOptionPane.showMessageDialog(theInstance.get(), "<html><body><b>Test ROM is active!</b><br><br>ROM 128 is needed for snapshot loading.<br>Go to menu <b><i>File->Options</i></b> and choose ROM 128.</body></html>", "Test ROM detected", JOptionPane.ERROR_MESSAGE);
+        return;
+      }
+
       this.board.forceResetCPUs();
       this.board.resetIODevices();
 
