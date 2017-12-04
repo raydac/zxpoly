@@ -47,3 +47,8 @@ The Mode uses attributes but places pixels in chess order.
 
 [TRD disk with the example can be downloaded from here](https://raydac.github.io/downloads/zips/zxw26_adapted_for_zxpoly.trd)
 ![ZXPoly512x384 screenshot](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/zxw_zxpoly512x384.png)
+
+# Adaptation of games
+
+To adapt old games, I have developed special utility called ZX-Poly Sprite corrector, which can be found in releases. It is a very easy editor which shows images in data blocks and allows to redraw them. It supports import from Z80 and SNA snapshots and as the result it generates ZXP snapshots.
+![ZXPoly Sprite Corrector screenshot](https://github.com/raydac/zxpoly/blob/master/docs/zxpoly_sprite_editor.png)

@@ -118,7 +118,7 @@
                 <configuration>
                   <headerType>gui</headerType>
                   <jar>${project.build.directory}/${artifactId}-${version}.jar</jar>
-                  <outfile>${project.build.directory}/zxpoly_${project.version}.exe</outfile>
+                  <outfile>${project.build.directory}/${project.build.finalName}.exe</outfile>
                   <downloadUrl>http://www.oracle.com/technetwork/java/javase/downloads</downloadUrl>
                   <classPath>
                     <mainClass>com.igormaznitsa.zxpoly.main</mainClass>
