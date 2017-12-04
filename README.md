@@ -37,10 +37,10 @@ It is just regular ZX-Spectrum movde 256x192 with 2 attributed colors for 8x8 pi
 ![Standard ZX screenshot](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/atw_standard.png)
 
 ## ZX-Poly 256x192 (16 colors per pixel)
-The Mode doesn't use attributes and each pixel can have color from 16 color palette. Also there is modification of the mode which uses attributes from CPU0 module to mask screen areas by INK color if it is the sime as PAPER color in attribute. 
+The Mode doesn't use attributes and each pixel can have color from 16 color palette. Also there is modification of the mode which uses attributes from CPU0 module to mask screen areas by INK color if it is the sime as PAPER color in attribute.
 
 [TRD disk with the example can be downloaded from here, the game has been partly colorized](https://raydac.github.io/downloads/zips/atw1_partly_colorized.trd)
-![ZXPoly256x192 screenshot](https://raw.githubusercontent.com/raydac/zxpoly/master/docs/screenshots/atw_zxpoly.png)
+![ZXPoly256x192 screenshot](https://raw.githubusercontent.com/raydac/zxpoly/master/docs/screenshots/atw_zxpoly.png)   
 
 ## ZX-Poly 512x384 (2 colors per pixel placed in chess order)
 The Mode uses attributes but places pixels in chess order.
@@ -52,3 +52,8 @@ The Mode uses attributes but places pixels in chess order.
 
 To adapt old games, I have developed special utility called ZX-Poly Sprite corrector, which can be found in releases. It is a very easy editor which shows images in data blocks and allows to redraw them. It supports import from Z80 and SNA snapshots and as the result it generates ZXP snapshots.
 ![ZXPoly Sprite Corrector screenshot](https://github.com/raydac/zxpoly/blob/master/docs/zxpoly_sprite_editor.png)
+
+## "Official Father Christmas" (1989)
+
+On Christmas 2017 I made some adaptation of the old game ["Official Father Christmas" (1989)](http://www.worldofspectrum.org/infoseekid.cgi?id=0003493) for ZX-Poly. Of course not all was smoothly, as you can see in the game, some elements of third level were not colorized because their colorization broke game process and made desynchronize CPU modules, it looks like that there is some optimization in graphics processing for those elements and presented some check for empty areas to optimize speed.
+![Official Father Christmas GIF](https://raw.githubusercontent.com/raydac/zxpoly/master/adapted/OfficialFatherChristmas/movie.gif)
