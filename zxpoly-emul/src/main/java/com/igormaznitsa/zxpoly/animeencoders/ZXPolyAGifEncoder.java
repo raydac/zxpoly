@@ -166,6 +166,7 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
   private final int intsBetweenFrames;
   private final int frameDelay;
   private final byte[] dataBuffer256 = new byte[256];
+  private final byte[] indexBuffer = new byte[VideoController.SCREEN_WIDTH * VideoController.SCREEN_HEIGHT];
 
   @Override
   public int getIntsBetweenFrames() {
@@ -241,16 +242,15 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
     this.stream.write(0); // flag
 
     // pack frame
-    final byte[] b = new byte[VideoController.SCREEN_WIDTH * VideoController.SCREEN_HEIGHT];
     for (int i = 0; i < VideoController.SCREEN_WIDTH * VideoController.SCREEN_HEIGHT; i++) {
       final int ci = VideoController.rgbColorToIndex(rgbPixels[i]);
       if (ci < 0) {
         throw new IOException("Detected unsupported color in buffer [" + Integer.toHexString(rgbPixels[i]) + ']');
       }
-      b[i] = (byte) ci;
+      this.indexBuffer[i] = (byte) ci;
     }
     this.stream.write(4);
-    ZXPolyAGifEncoder.compress(this.stream, 4, b, this.dataBuffer256);
+    ZXPolyAGifEncoder.compress(this.stream, 4, this.indexBuffer, this.dataBuffer256);
     this.stream.write(0);
 
   }
