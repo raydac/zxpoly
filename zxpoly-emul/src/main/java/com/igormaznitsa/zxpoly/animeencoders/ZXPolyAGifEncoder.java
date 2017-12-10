@@ -42,13 +42,13 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
 
     private final byte strChr_[];
     private final short strNxt_[];
-    private final short strHsh_[];
+    private final short stringHashes[];
     private short numStrings;
 
     private LzwTable() {
       this.strChr_ = new byte[MAXSTR];
       this.strNxt_ = new short[MAXSTR];
-      this.strHsh_ = new short[HASHSIZE];
+      this.stringHashes = new short[HASHSIZE];
     }
 
     private int addCharString(final short index, final byte b) {
@@ -58,11 +58,11 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
       }
 
       hshidx = hash(index, b);
-      while (this.strHsh_[hshidx] != HASH_FREE) {
+      while (this.stringHashes[hshidx] != HASH_FREE) {
         hshidx = (hshidx + HASHSTEP) % HASHSIZE;
       }
 
-      this.strHsh_[hshidx] = this.numStrings;
+      this.stringHashes[hshidx] = this.numStrings;
       this.strChr_[this.numStrings] = b;
       this.strNxt_[this.numStrings] = (index != HASH_FREE) ? index : NEXT_FIRST;
 
@@ -77,7 +77,7 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
       }
 
       hshidx = hash(index, b);
-      while ((nxtidx = this.strHsh_[hshidx]) != HASH_FREE) {
+      while ((nxtidx = this.stringHashes[hshidx]) != HASH_FREE) {
         if (this.strNxt_[nxtidx] == index && this.strChr_[nxtidx] == b) {
           return (short) nxtidx;
         }
@@ -91,7 +91,7 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
       this.numStrings = 0;
 
       for (int q = 0; q < HASHSIZE; q++) {
-        this.strHsh_[q] = HASH_FREE;
+        this.stringHashes[q] = HASH_FREE;
       }
 
       int w = (1 << codesize) + RES_CODES;
@@ -107,9 +107,10 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
 
   private static final class BitBuffer256 {
 
-    private OutputStream targetStream = null;
-    private int streamIndex, bitsLeft;
+    private final OutputStream targetStream;
     private final byte[] buffer;
+    private int streamIndex;
+    private int bitsLeft;
 
     private BitBuffer256(final OutputStream stream, final byte[] dataBuffer256) {
       this.targetStream = stream;
