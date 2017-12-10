@@ -31,7 +31,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   public static final int SCREEN_WIDTH = 512;
   public static final int SCREEN_HEIGHT = 384;
-  
+
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
 
@@ -95,6 +95,43 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     new Color(255, 255, 255)
   };
 
+  public static int rgbColorToIndex(final int rgbColor) {
+    switch (rgbColor | 0xFF000000) {
+      case 0xFF000000:
+        return 0;
+      case 0xFF0000BE:
+        return 1;
+      case 0xFFBE0000:
+        return 2;
+      case 0xFFBE00BE:
+        return 3;
+      case 0xFF00BE00:
+        return 4;
+      case 0xFF00BEBE:
+        return 5;
+      case 0xFFBEBE00:
+        return 6;
+      case 0xFFBEBEBE:
+        return 7;
+      case 0xFF0000FF:
+        return 9;
+      case 0xFFFF0000:
+        return 10;
+      case 0xFFFF00FF:
+        return 11;
+      case 0xFF00FF00:
+        return 12;
+      case 0xFF00FFFF:
+        return 13;
+      case 0xFFFFFF00:
+        return 14;
+      case 0xFFFFFFFF:
+        return 15;
+      default:
+        return -1;
+    }
+  }
+
   public VideoController(final Motherboard board) {
     super();
 
@@ -147,7 +184,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   private void updateZoom(final float value) {
     this.zoom = value;
-    this.size = new Dimension(Math.round(SCREEN_WIDTH* value), Math.round(SCREEN_HEIGHT* value));
+    this.size = new Dimension(Math.round(SCREEN_WIDTH * value), Math.round(SCREEN_HEIGHT * value));
 
     revalidate();
     repaint();
@@ -526,6 +563,16 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
     finally {
       refreshBufferData();
+      this.unlockBuffer();
+    }
+  }
+
+  public int[] makeCopyOfVideoBuffer() {
+    this.lockBuffer();
+    try {
+      return this.dataBuffer.clone();
+    }
+    finally {
       this.unlockBuffer();
     }
   }

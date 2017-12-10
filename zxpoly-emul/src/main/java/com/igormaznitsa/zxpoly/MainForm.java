@@ -45,7 +45,7 @@ import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import com.igormaznitsa.zxpoly.animeencoders.AnimGifEncoder;
+import com.igormaznitsa.zxpoly.animeencoders.ZXPolyAGifEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
 
@@ -405,7 +405,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
             countdownToAnimationSave = 0;
           } else {
             countdownToAnimationSave = theAnimationEncoder.getIntsBetweenFrames();
-            theAnimationEncoder.addFrame(board.getVideoController().makeCopyOfCurrentPicture());
+            try {
+              theAnimationEncoder.saveFrame(board.getVideoController().makeCopyOfVideoBuffer());
+            }
+            catch (IOException ex) {
+              log.warning("Can't write animation frame");
+            }
           }
         }
 
@@ -1338,24 +1343,24 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
           return;
         }
         this.lastAnimGifOptions = panel.getValue();
-        try {
-          encoder = new AnimGifEncoder(new File(this.lastAnimGifOptions.filePath), (int) (1000 / TIMER_INT_DELAY_MILLISECONDS) / this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
-        }
-        catch (IOException ex) {
-          ex.printStackTrace();
-          return;
-        }
+        closeAnimationSave();
         if (this.currentAnimationEncoder.compareAndSet(null, encoder)) {
           this.menuActionAnimatedGIF.setIcon(ICO_AGIF_STOP);
           this.menuActionAnimatedGIF.setText(TEXT_STOP_ANIM_GIF);
-          log.info("Animated GIF recording has been stopped");
+          log.info("Animated GIF recording has been started");
         }
       } else {
-        encoder.dispose();
+        try {
+          encoder.close();
+        }
+        catch (IOException ex) {
+          log.warning("Error during animation file close");
+        }
+
         if (this.currentAnimationEncoder.compareAndSet(encoder, null)) {
           this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
           this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
-          log.info("Animated GIF recording has been started");
+          log.info("Animated GIF recording has been stopped");
         }
       }
     }
@@ -1364,11 +1369,20 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     }
   }//GEN-LAST:event_menuActionAnimatedGIFActionPerformed
 
-  private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-    final AnimationEncoder encoder = this.currentAnimationEncoder.get();
+  private void closeAnimationSave() {
+    AnimationEncoder encoder = this.currentAnimationEncoder.get();
     if (encoder != null) {
-      encoder.dispose();
+      try {
+        encoder.close();
+      }
+      catch (IOException ex) {
+        log.warning("Error during animation file close");
+      }
     }
+  }
+
+  private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+    closeAnimationSave();
   }//GEN-LAST:event_formWindowClosed
 
   private void menuTriggerModuleCPUDesyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTriggerModuleCPUDesyncActionPerformed

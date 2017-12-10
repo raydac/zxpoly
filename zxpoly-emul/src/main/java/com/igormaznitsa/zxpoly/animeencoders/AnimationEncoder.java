@@ -16,10 +16,10 @@
  */
 package com.igormaznitsa.zxpoly.animeencoders;
 
-import java.awt.image.RenderedImage;
+import java.io.IOException;
 
 public interface AnimationEncoder {
-  void addFrame(RenderedImage currentScreen);
+  void saveFrame(int [] frameAsRgbPixelBuffer) throws IOException;
   int getIntsBetweenFrames();
-  void dispose();
+  void close() throws IOException;
 }
