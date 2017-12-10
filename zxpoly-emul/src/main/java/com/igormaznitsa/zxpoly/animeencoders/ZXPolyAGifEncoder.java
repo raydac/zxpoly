@@ -1,18 +1,5 @@
 /*
- * Copyright (C) 2017 Raydac Research Group Ltd.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * The class is absolutely free for reusage and modifications.
  */
 package com.igormaznitsa.zxpoly.animeencoders;
 
@@ -40,14 +27,14 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
     private final static short HASHSIZE = 9973;
     private final static short HASHSTEP = 2039;
 
-    private final byte strChr_[];
-    private final short strNxt_[];
+    private final byte strChr[];
+    private final short strNxt[];
     private final short stringHashes[];
     private short numStrings;
 
     private LzwTable() {
-      this.strChr_ = new byte[MAXSTR];
-      this.strNxt_ = new short[MAXSTR];
+      this.strChr = new byte[MAXSTR];
+      this.strNxt = new short[MAXSTR];
       this.stringHashes = new short[HASHSIZE];
     }
 
@@ -63,8 +50,8 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
       }
 
       this.stringHashes[hshidx] = this.numStrings;
-      this.strChr_[this.numStrings] = b;
-      this.strNxt_[this.numStrings] = (index != HASH_FREE) ? index : NEXT_FIRST;
+      this.strChr[this.numStrings] = b;
+      this.strNxt[this.numStrings] = (index != HASH_FREE) ? index : NEXT_FIRST;
 
       return this.numStrings++;
     }
@@ -78,7 +65,7 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
 
       hshidx = hash(index, b);
       while ((nxtidx = this.stringHashes[hshidx]) != HASH_FREE) {
-        if (this.strNxt_[nxtidx] == index && this.strChr_[nxtidx] == b) {
+        if (this.strNxt[nxtidx] == index && this.strChr[nxtidx] == b) {
           return (short) nxtidx;
         }
         hshidx = (hshidx + HASHSTEP) % HASHSIZE;
