@@ -1343,20 +1343,21 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
           return;
         }
         this.lastAnimGifOptions = panel.getValue();
-        closeAnimationSave();
+        try {
+          encoder = new ZXPolyAGifEncoder(new File(this.lastAnimGifOptions.filePath), this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
+        }
+        catch (IOException ex) {
+          log.log(Level.SEVERE, "Can't create GIF encoder", ex);
+          return;
+        }
+        
         if (this.currentAnimationEncoder.compareAndSet(null, encoder)) {
           this.menuActionAnimatedGIF.setIcon(ICO_AGIF_STOP);
           this.menuActionAnimatedGIF.setText(TEXT_STOP_ANIM_GIF);
           log.info("Animated GIF recording has been started");
         }
       } else {
-        try {
-          encoder.close();
-        }
-        catch (IOException ex) {
-          log.warning("Error during animation file close");
-        }
-
+        closeAnimationSave();
         if (this.currentAnimationEncoder.compareAndSet(encoder, null)) {
           this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
           this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);

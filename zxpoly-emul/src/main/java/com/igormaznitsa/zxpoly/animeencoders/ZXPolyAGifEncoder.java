@@ -30,7 +30,7 @@ import com.igormaznitsa.zxpoly.components.VideoController;
 
 public final class ZXPolyAGifEncoder implements AnimationEncoder {
 
-  private static class LzwStringTable {
+  private static class LzwTable {
 
     private final static int RES_CODES = 2;
     private final static short HASH_FREE = (short) 0xFFFF;
@@ -40,36 +40,36 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
     private final static short HASHSIZE = 9973;
     private final static short HASHSTEP = 2039;
 
-    private byte strChr_[];
-    private short strNxt_[];
-    private short strHsh_[];
-    private short nStrings_;
+    private final byte strChr_[];
+    private final short strNxt_[];
+    private final short strHsh_[];
+    private short numStrings;
 
-    LzwStringTable() {
-      strChr_ = new byte[MAXSTR];
-      strNxt_ = new short[MAXSTR];
-      strHsh_ = new short[HASHSIZE];
+    private LzwTable() {
+      this.strChr_ = new byte[MAXSTR];
+      this.strNxt_ = new short[MAXSTR];
+      this.strHsh_ = new short[HASHSIZE];
     }
 
-    int addCharString(final short index, final byte b) {
+    private int addCharString(final short index, final byte b) {
       int hshidx;
-      if (nStrings_ >= MAXSTR) {
+      if (this.numStrings >= MAXSTR) {
         return 0xFFFF;
       }
 
       hshidx = hash(index, b);
-      while (strHsh_[hshidx] != HASH_FREE) {
+      while (this.strHsh_[hshidx] != HASH_FREE) {
         hshidx = (hshidx + HASHSTEP) % HASHSIZE;
       }
 
-      strHsh_[hshidx] = nStrings_;
-      strChr_[nStrings_] = b;
-      strNxt_[nStrings_] = (index != HASH_FREE) ? index : NEXT_FIRST;
+      this.strHsh_[hshidx] = this.numStrings;
+      this.strChr_[this.numStrings] = b;
+      this.strNxt_[this.numStrings] = (index != HASH_FREE) ? index : NEXT_FIRST;
 
-      return nStrings_++;
+      return this.numStrings++;
     }
 
-    short findCharString(short index, byte b) {
+    private short findCharString(final short index, final byte b) {
       int hshidx, nxtidx;
 
       if (index == HASH_FREE) {
@@ -77,8 +77,8 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
       }
 
       hshidx = hash(index, b);
-      while ((nxtidx = strHsh_[hshidx]) != HASH_FREE) {
-        if (strNxt_[nxtidx] == index && strChr_[nxtidx] == b) {
+      while ((nxtidx = this.strHsh_[hshidx]) != HASH_FREE) {
+        if (this.strNxt_[nxtidx] == index && this.strChr_[nxtidx] == b) {
           return (short) nxtidx;
         }
         hshidx = (hshidx + HASHSTEP) % HASHSIZE;
@@ -87,11 +87,11 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
       return (short) 0xFFFF;
     }
 
-    void clearTable(int codesize) {
-      nStrings_ = 0;
+    private void clearTable(final int codesize) {
+      this.numStrings = 0;
 
       for (int q = 0; q < HASHSIZE; q++) {
-        strHsh_[q] = HASH_FREE;
+        this.strHsh_[q] = HASH_FREE;
       }
 
       int w = (1 << codesize) + RES_CODES;
@@ -100,67 +100,61 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
       }
     }
 
-    int hash(short index, byte lastbyte) {
+    private int hash(final short index, final byte lastbyte) {
       return ((int) ((short) (lastbyte << 8) ^ index) & 0xFFFF) % HASHSIZE;
     }
   }
 
-  private static class BitFile {
+  private static final class BitBuffer256 {
 
-    private OutputStream stream_ = null;
-    private final byte[] buffer_;
-    private int streamIndex_, bitsLeft_;
+    private OutputStream targetStream = null;
+    private int streamIndex, bitsLeft;
+    private final byte[] buffer;
 
-    BitFile(OutputStream stream) {
-      stream_ = stream;
-      buffer_ = new byte[256];
-      streamIndex_ = 0;
-      bitsLeft_ = 8;
+    private BitBuffer256(final OutputStream stream, final byte[] dataBuffer256) {
+      this.targetStream = stream;
+      this.streamIndex = 0;
+      this.bitsLeft = 8;
+      this.buffer = dataBuffer256;
     }
 
-    void flush()
-        throws IOException {
-      int nBytes = streamIndex_ + ((bitsLeft_ == 8) ? 0 : 1);
+    private void flush() throws IOException {
+      int nBytes = this.streamIndex + ((this.bitsLeft == 8) ? 0 : 1);
 
       if (nBytes > 0) {
-        stream_.write(nBytes);
-        stream_.write(buffer_, 0, nBytes);
+        this.targetStream.write(nBytes);
+        this.targetStream.write(buffer, 0, nBytes);
 
-        buffer_[0] = 0;
-        streamIndex_ = 0;
-        bitsLeft_ = 8;
+        this.buffer[0] = 0;
+        this.streamIndex = 0;
+        this.bitsLeft = 8;
       }
     }
 
-    void writeBits(int bits, int nBits) throws IOException {
-      int nBitsWritten = 0;
+    private void writeBits(int bits, int nBits) throws IOException {
       int nBytes = 255;
 
       do {
-        if ((streamIndex_ == 254 && bitsLeft_ == 0) || streamIndex_ > 254) {
-          stream_.write(nBytes);
-          stream_.write(buffer_, 0, nBytes);
+        if ((this.streamIndex == 254 && this.bitsLeft == 0) || this.streamIndex > 254) {
+          this.targetStream.write(nBytes);
+          this.targetStream.write(this.buffer, 0, nBytes);
 
-          buffer_[0] = 0;
-          streamIndex_ = 0;
-          bitsLeft_ = 8;
+          this.buffer[0] = 0;
+          this.streamIndex = 0;
+          this.bitsLeft = 8;
         }
 
-        if (nBits <= bitsLeft_) {
-          buffer_[streamIndex_] |= (bits & ((1 << nBits) - 1)) << (8 - bitsLeft_);
+        if (nBits <= this.bitsLeft) {
+          this.buffer[this.streamIndex] |= (bits & ((1 << nBits) - 1)) << (8 - this.bitsLeft);
 
-          nBitsWritten += nBits;
-          bitsLeft_ -= nBits;
+          this.bitsLeft -= nBits;
           nBits = 0;
         } else {
-          buffer_[streamIndex_] |= (bits & ((1 << bitsLeft_) - 1))
-              << (8 - bitsLeft_);
-
-          nBitsWritten += bitsLeft_;
-          bits >>= bitsLeft_;
-          nBits -= bitsLeft_;
-          buffer_[++streamIndex_] = 0;
-          bitsLeft_ = 8;
+          this.buffer[this.streamIndex] |= (bits & ((1 << this.bitsLeft) - 1)) << (8 - this.bitsLeft);
+          bits >>= this.bitsLeft;
+          nBits -= this.bitsLeft;
+          this.buffer[++this.streamIndex] = 0;
+          this.bitsLeft = 8;
         }
 
       }
@@ -171,6 +165,7 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
   private final JBBPBitOutputStream stream;
   private final int intsBetweenFrames;
   private final int frameDelay;
+  private final byte[] dataBuffer256 = new byte[256];
 
   @Override
   public int getIntsBetweenFrames() {
@@ -255,7 +250,7 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
       b[i] = (byte) ci;
     }
     this.stream.write(4);
-    ZXPolyAGifEncoder.writeLzwCompressed(this.stream, 4, b);
+    ZXPolyAGifEncoder.compress(this.stream, 4, b, this.dataBuffer256);
     this.stream.write(0);
 
   }
@@ -272,14 +267,14 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
     }
   }
 
-  private static void writeLzwCompressed(OutputStream stream, int codeSize, byte toCompress[]) throws IOException {
+  private static void compress(final OutputStream stream, final int codeSize, final byte data[], final byte[] dataBuffer256) throws IOException {
     byte c;
     short index;
     int clearcode, endofinfo, numbits, limit;
     short prefix = (short) 0xFFFF;
 
-    BitFile bitFile = new BitFile(stream);
-    LzwStringTable strings = new LzwStringTable();
+    final BitBuffer256 bitFile = new BitBuffer256(stream, dataBuffer256);
+    final LzwTable strings = new LzwTable();
 
     clearcode = 1 << codeSize;
     endofinfo = clearcode + 1;
@@ -290,8 +285,8 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
     strings.clearTable(codeSize);
     bitFile.writeBits(clearcode, numbits);
 
-    for (int loop = 0; loop < toCompress.length; loop++) {
-      c = toCompress[loop];
+    for (int loop = 0; loop < data.length; loop++) {
+      c = data[loop];
       if ((index = strings.findCharString(prefix, c)) != -1) {
         prefix = index;
       } else {
