@@ -29,12 +29,13 @@ import com.igormaznitsa.zxpoly.utils.Utils;
 
 public final class VideoController extends JComponent implements ZXPoly, MouseWheelListener, IODevice {
 
+  public static final int SCREEN_WIDTH = 512;
+  public static final int SCREEN_HEIGHT = 384;
+  
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
 
   private static final Image ESCMOUSE = Utils.loadIcon("escmouse.png");
-  private static final int ESCMOUSE_WIDTH = ESCMOUSE.getWidth(null);
-  private static final int ESCMOUSE_HEIGHT = ESCMOUSE.getHeight(null);
 
   private final Motherboard board;
   private final ReentrantLock bufferLocker = new ReentrantLock();
@@ -44,7 +45,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private final ZXPolyModule[] modules;
   private volatile int currentVideoMode = VIDEOMODE_RESERVED2;
 
-  private Dimension size = new Dimension(512, 384);
+  private Dimension size = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
   private volatile float zoom = 1.0f;
   private volatile int portFEw = 0;
 
@@ -55,7 +56,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private static final long MCYCLES_PER_BORDER_LINE = CYCLES_BETWEEN_INT / BORDER_LINES;
   private final byte[] borderLineColors = new byte[BORDER_LINES];
 
-  private static final int[] ZXPALETTE = new int[]{
+  public static final int[] ZXPALETTE = new int[]{
     0xFF000000,
     0xFF0000BE,
     0xFFBE0000,
@@ -100,7 +101,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     this.board = board;
     this.modules = board.getZXPolyModules();
 
-    this.buffer = new BufferedImage(512, 384, BufferedImage.TYPE_INT_ARGB);
+    this.buffer = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_ARGB);
     this.dataBuffer = ((DataBufferInt) this.buffer.getRaster().getDataBuffer()).getData();
 
     this.addMouseWheelListener(this);
@@ -146,7 +147,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
   private void updateZoom(final float value) {
     this.zoom = value;
-    this.size = new Dimension(Math.round(512 * value), Math.round(384 * value));
+    this.size = new Dimension(Math.round(SCREEN_WIDTH* value), Math.round(SCREEN_HEIGHT* value));
 
     revalidate();
     repaint();
@@ -276,9 +277,9 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
             videoValue <<= 1;
 
             buffer[offset] = color;
-            buffer[offset + 512] = color;
+            buffer[offset + SCREEN_WIDTH] = color;
             buffer[++offset] = color;
-            buffer[offset++ + 512] = color;
+            buffer[offset++ + SCREEN_WIDTH] = color;
           }
         }
       }
@@ -319,9 +320,9 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
               int x = 8;
               while (x-- > 0) {
                 buffer[offset] = inkColor;
-                buffer[offset + 512] = inkColor;
+                buffer[offset + SCREEN_WIDTH] = inkColor;
                 buffer[++offset] = inkColor;
-                buffer[offset++ + 512] = inkColor;
+                buffer[offset++ + SCREEN_WIDTH] = inkColor;
               }
               continue; // skip rest of the loop because pixel already processed
             }
@@ -342,9 +343,9 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
             final int color = ZXPALETTE[value];
 
             buffer[offset] = color;
-            buffer[offset + 512] = color;
+            buffer[offset + SCREEN_WIDTH] = color;
             buffer[++offset] = color;
-            buffer[offset++ + 512] = color;
+            buffer[offset++ + SCREEN_WIDTH] = color;
           }
         }
       }
@@ -381,14 +382,14 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
           while (x-- > 0) {
             buffer[offset] = (videoValue0 & 0x80) == 0 ? extractPaperColor(attribute0, flashActive) : extractInkColor(attribute0, flashActive);
             videoValue0 <<= 1;
-            
-            buffer[offset + 512] = (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) : extractInkColor(attribute2, flashActive);
+
+            buffer[offset + SCREEN_WIDTH] = (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) : extractInkColor(attribute2, flashActive);
             videoValue2 <<= 1;
-            
+
             buffer[++offset] = (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, flashActive) : extractInkColor(attribute1, flashActive);
             videoValue1 <<= 1;
-            
-            buffer[offset++ + 512] = (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) : extractInkColor(attribute3, flashActive);
+
+            buffer[offset++ + SCREEN_WIDTH] = (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) : extractInkColor(attribute3, flashActive);
             videoValue3 <<= 1;
 
           }
@@ -409,7 +410,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
         final float nzoom = Math.max(1.0f, zoom);
         gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-        gfx.drawImage(this.buffer, x, y, Math.round(512 * nzoom), Math.round(384 * nzoom), null);
+        gfx.drawImage(this.buffer, x, y, Math.round(SCREEN_WIDTH * nzoom), Math.round(SCREEN_HEIGHT * nzoom), null);
       }
     }
     finally {
