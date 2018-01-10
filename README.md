@@ -25,8 +25,8 @@ ZX-Poly platform adds several ports to manipulate work modes and the main port o
 ## Is there a hardware implementation?
 The Idea of the Platform was born in 1994 and it was too late to invest money and resources into hardware implementation because in Russia the sunset of ZX-Spectrum was in 1992-1993. I had some discussions with management of the Peters Plus company (the main developer of the Sprinter platform, the first world FPGA based ZX-Spectrum clone) but their platform was single-CPU one and the on-board FPGA of Sprinter didn't allow to simulate multi-Z80 platform.
 
-## Does the platform need specia OS?
-Not, it works under absolute standard ZX-Spectrum 128 OS + TR-DOS.
+## Does the platform need a custom OS?
+Not, it works under standard ZX-Spectrum 128 OS + TR-DOS.
 
 ## What is difference with Spec256?
 Both ZX-Poly and Spec256 work in SIMD scheme but ZX-Poly is based on 4 Z80 CPUs and Spec256 has the only virtual 64 bit Z80 CPU under the hood, I tried to convert some games from Spec256 to ZX-Poly but it is impossible because Spec256 is much more tolerant for damage of execution code and desynchronization. Also ZX-Poly allows its CPUs to work separately in real hardware multi-threading mode, the platform even hav some primitive semaphore mechanism (of course it doesn't make the platform very easy to be implemented). So that the main difference - ZX-Poly doesn't have magic and fantastic virtual devices under the hood.
