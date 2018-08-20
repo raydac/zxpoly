@@ -16,7 +16,7 @@
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
     <netbeans.hint.license>gpl30</netbeans.hint.license>
-    <jbbp.version>1.3.1-SNAPSHOT</jbbp.version>
+    <jbbp.version>1.4.1</jbbp.version>
   </properties>
 
   <issueManagement>

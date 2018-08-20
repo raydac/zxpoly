@@ -102,7 +102,7 @@
           <plugin>
             <groupId>com.akathist.maven.plugins.launch4j</groupId>
             <artifactId>launch4j-maven-plugin</artifactId>
-            <version>1.7.19</version>
+            <version>1.7.22</version>
             <executions>
               <execution>
                 <id>l4j-clui</id>
@@ -127,7 +127,7 @@
                     <maxHeapSize>1024</maxHeapSize>
                   </jre>
                   <versionInfo>
-                    <fileVersion>1.0.0.0</fileVersion>
+                    <fileVersion>1.0.0.1</fileVersion>
                     <txtFileVersion>${project.version}</txtFileVersion>
                     <fileDescription>ZX-Poly Emulator</fileDescription>
                     <copyright>2015 Igor Maznitsa</copyright>
@@ -152,7 +152,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.1.1</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -248,7 +248,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.0.2</version>
+        <version>3.1.0</version>
         <configuration>
           <archive>
             <manifest>
