@@ -33,7 +33,7 @@ public class TRDOSDisk {
   private static final int SECTORS_PER_TRACK = 16;
   private static final int SECTOR_SIZE = 256;
 
-  private static final Random rnd = new Random();
+  private static final Random RND = new Random();
 
   public static class Sector {
 
@@ -259,7 +259,7 @@ public class TRDOSDisk {
   public Sector findRandomSector(final int side, final int track) {
     Sector sector = findFirstSector(side, track);
     if (sector != null) {
-      int toskip = rnd.nextInt(SECTORS_PER_TRACK);
+      int toskip = RND.nextInt(SECTORS_PER_TRACK);
       Sector found = sector;
       while (toskip-- > 0) {
         found = findSectorAfter(found);

@@ -29,7 +29,7 @@ public class BetaDiscInterface implements IODevice {
   public static final int DRIVE_C = 2;
   public static final int DRIVE_D = 3;
   
-  private static final Logger log = Logger.getLogger("BD");
+  private static final Logger LOGGER = Logger.getLogger("BD");
 
   private long mcycleCounter = 0L;
   
@@ -41,7 +41,7 @@ public class BetaDiscInterface implements IODevice {
   
   public BetaDiscInterface(final Motherboard board) {
     this.board = board;
-    this.vg93 = new K1818VG93(log);
+    this.vg93 = new K1818VG93(LOGGER);
   }
 
   public void insertDiskIntoDrive(final int driveIndex, final TRDOSDisk disk) {

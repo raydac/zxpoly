@@ -507,7 +507,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus, MemoryAccessProv
   }
   
   public List<DisasmLine> disasmSinceAddress(final int address, final int itemsToDecode) {
-    final List<DisasmLine> result = new ArrayList<DisasmLine>();
+    final List<DisasmLine> result = new ArrayList<>();
     
     int addr = address;
     for (final Z80Instruction i : Z80Disasm.decodeList(this, null, address, itemsToDecode)) {
