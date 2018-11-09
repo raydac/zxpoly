@@ -175,7 +175,7 @@ public class HOBETAPlugin extends AbstractFilePlugin {
 
   @Override
   public boolean accept(final File pathname) {
-    return pathname != null && pathname.isDirectory() || pathname.getName().lastIndexOf(".$") == (pathname.getName().length() - 3);
+    return pathname != null && (pathname.isDirectory() || pathname.getName().lastIndexOf(".$") == (pathname.getName().length() - 3));
   }
 
   @Override

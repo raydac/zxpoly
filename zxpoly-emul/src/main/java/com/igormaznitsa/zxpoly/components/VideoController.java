@@ -26,6 +26,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
 import com.igormaznitsa.zxpoly.utils.Utils;
+import java.util.logging.Level;
 
 public final class VideoController extends JComponent implements ZXPoly, MouseWheelListener, IODevice {
 
@@ -55,6 +56,8 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private static final int BORDER_LINES = 64;
   private static final long MCYCLES_PER_BORDER_LINE = CYCLES_BETWEEN_INT / BORDER_LINES;
   private final byte[] borderLineColors = new byte[BORDER_LINES];
+
+  private static final RenderedImage [] EMPTY_ARRAY = new RenderedImage[0];
 
   public static final int[] ZXPALETTE = new int[]{
     0xFF000000,
@@ -486,7 +489,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     lockBuffer();
     try {
       if (this.currentVideoMode != newVideoMode) {
-        log.info("mode set: " + decodeVideoModeCode(newVideoMode));
+        log.log(Level.INFO, "mode set: {0}", decodeVideoModeCode(newVideoMode));
         this.currentVideoMode = newVideoMode;
         refreshBufferData();
       }
@@ -559,7 +562,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       g.dispose();
       result.add(buffImage);
 
-      return result.toArray(new RenderedImage[result.size()]);
+      return result.toArray(EMPTY_ARRAY);
     }
     finally {
       refreshBufferData();
@@ -664,5 +667,10 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     final int width = getWidth();
     final int xoff = (width - this.size.width) / 2;
     return (zxX * Math.round(this.zoom * 2)) + xoff;
+  }
+  
+  @Override
+  public String toString() {
+    return this.getName();
   }
 }

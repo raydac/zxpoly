@@ -19,7 +19,6 @@ package com.igormaznitsa.zxpoly;
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
 import com.igormaznitsa.z80.Z80;
-import com.igormaznitsa.zxpoly.ui.SelectTapPosDialog;
 import com.igormaznitsa.zxpoly.utils.Utils;
 import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
@@ -49,7 +48,7 @@ import com.igormaznitsa.zxpoly.animeencoders.ZXPolyAGifEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
 
-public class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
+public final class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
 
   private static final Icon ICO_MOUSE = new ImageIcon(Utils.loadIcon("mouse.png"));
   private static final Icon ICO_MOUSE_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_MOUSE);
@@ -250,17 +249,17 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
           RomData result = null;
           boolean load = true;
           if (cachedRom.isFile()) {
-            log.info("Load cached ROM downloaded from '" + romPath + "' : " + cachedRom);
+            log.log(Level.INFO, "Load cached ROM downloaded from ''{0}'' : {1}", new Object[]{romPath, cachedRom});
             result = new RomData(FileUtils.readFileToByteArray(cachedRom));
             load = false;
           }
 
           if (load) {
-            log.info("Load ROM from external URL: " + romPath);
+            log.log(Level.INFO, "Load ROM from external URL: {0}", romPath);
             result = ROMLoader.getROMFrom(romPath);
             if (cacheFolder.isDirectory() || cacheFolder.mkdirs()) {
               FileUtils.writeByteArrayToFile(cachedRom, result.getAsArray());
-              log.info("Loaded ROM saved in cache as file : " + romPath);
+              log.log(Level.INFO, "Loaded ROM saved in cache as file : {0}", romPath);
             }
           }
           return result;
@@ -269,7 +268,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
           log.log(Level.WARNING, "Can't load ROM from '" + romPath + "\'", ex);
         }
       } else {
-        log.info("Load ROM from embedded resource '" + romPath + "'");
+        log.log(Level.INFO, "Load ROM from embedded resource ''{0}''", romPath);
         return RomData.read(Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romPath));
       }
     }
@@ -280,7 +279,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   }
 
   public MainForm(final String title, final String romPath) throws IOException {
-    log.info("INT ticks between frames: " + INT_BETWEEN_FRAMES);
+    log.log(Level.INFO, "INT ticks between frames: {0}", INT_BETWEEN_FRAMES);
     initComponents();
     this.setTitle(title);
 
@@ -318,10 +317,6 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
 
     updateTapeMenu();
 
-    final Thread daemon = new Thread(this, "ZXPolyThread");
-    daemon.setDaemon(true);
-    daemon.start();
-
     updateInfoPanel();
 
     pack();
@@ -329,6 +324,12 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
     this.setLocationRelativeTo(null);
 
     theInstance.set(this);
+
+    SwingUtilities.invokeLater(()->{
+      final Thread daemon = new Thread(this, "ZXPolyThread");
+      daemon.setDaemon(true);
+      daemon.start();
+    });
   }
 
   public static MainForm getInstance() {
@@ -437,7 +438,6 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       log.log(Level.INFO, "Interrupted trace window updater");
     }
     catch (InvocationTargetException ex) {
-      ex.printStackTrace();
       log.log(Level.SEVERE, "Error in trace window updater", ex);
     }
   }
@@ -477,9 +477,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
 
     buffer.append(this.board.getZXPolyModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
 
-    for (final DisasmLine l : this.board.getZXPolyModules()[0].disasmSinceAddress(lastAddress, 5)) {
+    this.board.getZXPolyModules()[0].disasmSinceAddress(lastAddress, 5).forEach((l) -> {
       buffer.append(l.toString()).append('\n');
-    }
+    });
 
     buffer.append('\n');
 
@@ -509,9 +509,9 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
 
     result.append(this.board.getZXPolyModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
 
-    for (final DisasmLine l : this.board.getZXPolyModules()[0].disasmSinceAddress(lastAddress, 5)) {
+    this.board.getZXPolyModules()[0].disasmSinceAddress(lastAddress, 5).forEach((l) -> {
       result.append(l.toString()).append('\n');
-    }
+    });
 
     return result.toString();
   }
@@ -546,13 +546,13 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
   }
 
   public boolean isTurboMode() {
-    return this.isTurboMode();
+    return this.turboMode;
   }
 
   private void updateScreen() {
     final VideoController vc = board.getVideoController();
     vc.updateBuffer();
-    vc.paintImmediately(0, 0, vc.getWidth(), vc.getHeight());;
+    vc.paintImmediately(0, 0, vc.getWidth(), vc.getHeight());
   }
 
   /**
@@ -1034,7 +1034,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
         try {
           final TRDOSDisk floppy = new TRDOSDisk(filter.get().getClass() == SCLFileFilter.class ? TRDOSDisk.Source.SCL : TRDOSDisk.Source.TRD, FileUtils.readFileToByteArray(selectedFile), false);
           this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
-          log.info("Loaded drive " + diskName + " by floppy image file " + selectedFile);
+          log.log(Level.INFO, "Loaded drive {0} by floppy image file {1}", new Object[]{diskName, selectedFile});
         }
         catch (IOException ex) {
           log.log(Level.WARNING, "Can't read Floppy image file [" + selectedFile + ']', ex);
@@ -1097,7 +1097,7 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
         this.lastSnapshotFolder = selected.getParentFile();
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
-          log.info("Loading snapshot " + selectedFilter.getName());
+          log.log(Level.INFO, "Loading snapshot {0}", selectedFilter.getName());
           selectedFilter.loadFromArray(selected, this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
         }
         catch (Exception ex) {
@@ -1189,11 +1189,10 @@ public class MainForm extends javax.swing.JFrame implements Runnable, ActionList
       final File fileToSave = chooseFileForSave("Select WAV file", null, new WavFileFilter());
       if (fileToSave != null) {
         FileUtils.writeByteArrayToFile(fileToSave, wav);
-        log.info("Exported current TAP file as WAV file " + fileToSave + " size " + wav.length + " bytes");
+        log.log(Level.INFO, "Exported current TAP file as WAV file {0} size {1} bytes", new Object[]{fileToSave, wav.length});
       }
     }
     catch (Exception ex) {
-      ex.printStackTrace();
       log.log(Level.WARNING, "Can't export as WAV", ex);
       JOptionPane.showMessageDialog(this, "Can't export as WAV", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
     }

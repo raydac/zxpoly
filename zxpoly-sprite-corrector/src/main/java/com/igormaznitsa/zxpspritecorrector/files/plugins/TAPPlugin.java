@@ -289,7 +289,7 @@ public class TAPPlugin extends AbstractFilePlugin {
   
   @Override
   public boolean accept(final File pathname) {
-    return pathname!= null && pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".tap");
+    return pathname!= null && (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".tap"));
   }
 
   @Override

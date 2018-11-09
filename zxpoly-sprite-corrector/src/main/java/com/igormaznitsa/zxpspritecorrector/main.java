@@ -6,7 +6,7 @@ import javax.swing.UIManager.LookAndFeelInfo;
 
 public class main {
 
-  public static final void main(String[] _args) {
+  public static void main(String[] _args) {
     java.util.Locale.setDefault(Locale.ROOT);
 
     try {

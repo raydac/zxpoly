@@ -18,7 +18,6 @@ package com.igormaznitsa.zxpoly.ui;
 
 import java.awt.Cursor;
 import java.awt.Desktop;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;

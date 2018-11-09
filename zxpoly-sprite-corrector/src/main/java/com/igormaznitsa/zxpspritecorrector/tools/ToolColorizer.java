@@ -37,6 +37,8 @@ public class ToolColorizer extends AbstractTool {
   public void process(final EditorComponent editComponent, final Rectangle area, final int modifiers) {
     final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
 
+    final boolean mode512 = editComponent.isMode512();
+    
     if ((modifiers & MouseEvent.BUTTON1_MASK) != 0) {
       final int index = colorSelector.getSelectedInk();
       for (int x = 0; x < area.width; x++) {
@@ -44,7 +46,7 @@ public class ToolColorizer extends AbstractTool {
           final int dx = x + area.x;
           final int dy = y + area.y;
 
-          if (!isCoordValid(dx, dy)) {
+          if (!isCoordValid(dx, dy, mode512)) {
             continue;
           }
 
@@ -61,7 +63,7 @@ public class ToolColorizer extends AbstractTool {
           final int dx = x + area.x;
           final int dy = y + area.y;
 
-          if (!isCoordValid(dx, dy)) {
+          if (!isCoordValid(dx, dy, mode512)) {
             continue;
           }
 

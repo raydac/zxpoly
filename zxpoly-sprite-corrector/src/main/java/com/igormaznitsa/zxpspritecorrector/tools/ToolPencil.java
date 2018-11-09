@@ -39,11 +39,13 @@ public class ToolPencil extends AbstractTool {
 
     final int index;
 
+    final boolean mode512 = editComponent.isMode512();
+    
     if ((modifiers & MouseEvent.BUTTON1_MASK) != 0) {
-      index = editComponent.isMode512() ? 1 : colorSelector.getSelectedInk();
+      index = mode512 ? 1 : colorSelector.getSelectedInk();
     }
     else if ((modifiers & MouseEvent.BUTTON3_MASK) != 0) {
-      index = editComponent.isMode512() ? 0 : colorSelector.getSelectedPaint();
+      index = mode512 ? 0 : colorSelector.getSelectedPaint();
     }
     else {
       return;
@@ -53,7 +55,7 @@ public class ToolPencil extends AbstractTool {
       for (int y = 0; y < area.height; y++) {
         final int dx = x + area.x;
         final int dy = y + area.y;
-        if (!isCoordValid(dx, dy)) {
+        if (!isCoordValid(dx, dy, mode512)) {
           continue;
         }
         gfx.setPoint(dx, dy, index);

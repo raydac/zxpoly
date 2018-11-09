@@ -247,7 +247,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
       while (this.current.prev != null) {
         this.current = this.current.prev;
       }
-      LOGGER.info("Pointer to " + makeDescription(this.current));
+      LOGGER.log(Level.INFO, "Pointer to {0}", makeDescription(this.current));
     }
   }
 
@@ -261,7 +261,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
       }
       else {
         this.current = this.current.next;
-        LOGGER.info("Pointer to " + makeDescription(this.current));
+        LOGGER.log(Level.INFO, "Pointer to {0}", makeDescription(this.current));
         return true;
       }
     }
@@ -280,7 +280,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
     else {
       if (!this.current.isFirst()) {
         this.current = this.current.prev;
-        LOGGER.info("Pointer to " + makeDescription(this.current));
+        LOGGER.log(Level.INFO, "Pointer to {0}", makeDescription(this.current));
         return true;
       }
       else {
@@ -420,7 +420,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
         break;
         case PILOT: {
           if (this.counterMain < 0L) {
-            LOGGER.log(Level.INFO, "PILOT ("+(block.isHeader() ? "header" : "data")+')');
+            LOGGER.log(Level.INFO, "PILOT ({0})", block.isHeader() ? "header" : "data");
             this.counterMain = block.isHeader() ? IMPULSNUMBER_PILOT_HEADER : IMPULSNUMBER_PILOT_DATA;
             this.signalInState = !this.signalInState;
             this.counterEx = PULSELEN_PILOT;
@@ -474,7 +474,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
         break;
         case FLAG: {
           if (this.counterMain < 0L) {
-            LOGGER.log(Level.INFO, "FLAG (#"+Integer.toHexString(block.flag & 0xFF).toUpperCase(Locale.ENGLISH)+')');
+            LOGGER.log(Level.INFO, "FLAG (#{0})", Integer.toHexString(block.flag & 0xFF).toUpperCase(Locale.ENGLISH));
             this.controlChecksum = 0;
             this.counterMain = 0L;
             loadDataByteToRead(block.flag & 0xFF);
@@ -489,7 +489,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>{
         break;
         case DATA: {
           if (this.counterMain < 0L) {
-            LOGGER.log(Level.INFO, "DATA (len=#"+Integer.toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH)+')');
+            LOGGER.log(Level.INFO, "DATA (len=#{0})", Integer.toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH));
             this.counterMain = 0L;
             loadDataByteToRead(block.data[(int) this.counterMain++]);
           }

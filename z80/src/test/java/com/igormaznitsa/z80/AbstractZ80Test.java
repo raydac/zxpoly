@@ -245,7 +245,7 @@ public abstract class AbstractZ80Test {
 
       @Override
       public void writeMemory(final Z80 cpu, final int address, final byte data) {
-        memory[address] = (byte) data;
+        memory[address] = data;
       }
 
       @Override
@@ -307,7 +307,7 @@ public abstract class AbstractZ80Test {
 
       @Override
       public void writeMemory(final Z80 cpu, final int address, final byte data) {
-        memory[address] = (byte) data;
+        memory[address] = data;
       }
 
       @Override

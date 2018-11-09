@@ -88,7 +88,7 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
     }
 
     private int hash(final short index, final byte lastbyte) {
-      return ((int) ((short) (lastbyte << 8) ^ index) & 0xFFFF) % HASHSIZE;
+      return (((short) (lastbyte << 8) ^ index) & 0xFFFF) % HASHSIZE;
     }
   }
 

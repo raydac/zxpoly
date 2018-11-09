@@ -31,12 +31,14 @@ public class ToolEraser extends AbstractTool {
   public void process(EditorComponent editComponent, Rectangle area, int modifiers) {
     final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
 
+    final boolean mode512 = editComponent.isMode512();
+    
     for (int x = 0; x < area.width; x++) {
       for (int y = 0; y < area.height; y++) {
         final int dx = x + area.x;
         final int dy = y + area.y;
 
-        if (!isCoordValid(dx, dy)) {
+        if (!isCoordValid(dx, dy, mode512)) {
           continue;
         }
         gfx.resetPoint(dx, dy);

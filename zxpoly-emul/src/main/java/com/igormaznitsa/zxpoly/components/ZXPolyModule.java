@@ -29,7 +29,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus, MemoryAccessProv
 
   private static final int INTERRUPTION_LENGTH_CYCLES = 5;
 
-  private final Logger LOGGER;
+  private final Logger logger;
 
   private int intCounter;
   private int nmiCounter;
@@ -82,9 +82,9 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus, MemoryAccessProv
 
     this.cpu = new Z80(this);
 
-    this.LOGGER = Logger.getLogger("ZX#" + index);
+    this.logger = Logger.getLogger("ZX#" + index);
 
-    LOGGER.info("Inited");
+    logger.info("Inited");
   }
 
   private int getRAMOffsetInHeap() {
@@ -645,7 +645,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus, MemoryAccessProv
   }
 
   private void setStateForSystemReset() {
-    LOGGER.info("Reset");
+    logger.info("Reset");
     this.intCounter = 0;
     this.nmiCounter = 0;
     this.port7FFD.set(0);

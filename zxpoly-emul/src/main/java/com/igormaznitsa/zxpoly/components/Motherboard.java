@@ -21,6 +21,7 @@ import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class Motherboard implements ZXPoly {
@@ -107,7 +108,7 @@ public final class Motherboard implements ZXPoly {
   public boolean set3D00(final int value, final boolean force) {
     if (is3D00NotLocked() || force) {
       this.port3D00 = value;
-      LOG.info("set #3D00 to " + Utils.toHex(value));
+      LOG.log(Level.INFO, "set #3D00 to {0}", Utils.toHex(value));
 
       if ((value & PORTw_ZXPOLY_RESET) != 0) {
         for (final ZXPolyModule m : this.modules) {
@@ -422,7 +423,7 @@ public final class Motherboard implements ZXPoly {
 
   public void setZXPolyMode(final boolean flag) {
     if (this.modeZXPoly != flag) {
-      LOG.info("Changed motherboard mode to " + (flag ? "ZX-POLY" : "ZX128"));
+      LOG.log(Level.INFO, "Changed motherboard mode to {0}", flag ? "ZX-POLY" : "ZX128");
       this.modeZXPoly = flag;
       this.reset();
     }
@@ -467,7 +468,7 @@ public final class Motherboard implements ZXPoly {
           if (prevResult == 0) {
             firstDetected = d;
           } else {
-            LOG.warning("Detected collision during IO reading: " + firstDetected.getName() + ", " + d.getName() + " port #" + Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
+            LOG.log(Level.WARNING, "Detected collision during IO reading: {0}, {1} port #{2}", new Object[]{firstDetected, d.getName(), Integer.toHexString(port).toUpperCase(Locale.ENGLISH)});
           }
         }
       }

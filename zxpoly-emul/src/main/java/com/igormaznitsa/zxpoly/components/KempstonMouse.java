@@ -229,5 +229,10 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
     this.coordX.set(0x80);
     this.coordY.set(0x70);
   }
+  
+  @Override
+  public String toString(){
+    return this.getName();
+  }
 
 }

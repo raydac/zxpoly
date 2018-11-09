@@ -437,4 +437,9 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
     }
   }
 
+  @Override
+  public String toString() {
+    return this.getName();
+  }
+  
 }

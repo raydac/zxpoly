@@ -78,7 +78,7 @@ public class SCRPlugin extends AbstractFilePlugin {
 
   @Override
   public boolean accept(final File pathname) {
-    return pathname != null && pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".scr");
+    return pathname != null && (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".scr"));
   }
 
   @Override

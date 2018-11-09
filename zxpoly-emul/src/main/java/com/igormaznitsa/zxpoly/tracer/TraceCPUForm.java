@@ -741,7 +741,7 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
       if (c instanceof AbstractHexValueField){
         ((AbstractHexValueField)c).setEditable(flag);
       }else if (c instanceof JCheckBox){
-        ((JCheckBox)c).setEnabled(flag);
+        c.setEnabled(flag);
       }
     }
   }

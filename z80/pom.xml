@@ -4,13 +4,11 @@
   <parent>
     <groupId>com.igormaznitsa</groupId>
     <artifactId>zxpoly</artifactId>
-    <version>${main.version}</version>
-    <relativePath>..</relativePath>
+    <version>2.0-SNAPSHOT</version>
   </parent>
-  
+
   <artifactId>z80</artifactId>
   <packaging>jar</packaging>
-  <version>${main.version}</version>
 
   <name>Z80</name>
   <description>A Java based emulation of Z80 CPU</description>

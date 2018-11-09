@@ -151,4 +151,10 @@ public class BetaDiscInterface implements IODevice {
     this.vg93.reset();
   }
 
+
+  @Override
+  public String toString() {
+    return this.getName();
+  }
+
 }
