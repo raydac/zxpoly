@@ -24,6 +24,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.picocontainer.*;
 import org.picocontainer.injectors.*;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SNA48Plugin;
+import java.awt.event.MouseWheelEvent;
 
 public class MainFrame extends javax.swing.JFrame {
 
@@ -91,9 +92,9 @@ public class MainFrame extends javax.swing.JFrame {
 
     this.setIconImage(GfxUtils.loadImage("ico.png"));
 
-    for(final Component j : this.menuBar.getComponents()) {
+    for (final Component j : this.menuBar.getComponents()) {
       if (j instanceof JMenu) {
-        ((JMenu)j).addMenuListener(new MenuListener(){
+        ((JMenu) j).addMenuListener(new MenuListener() {
           @Override
           public void menuSelected(MenuEvent e) {
             toolsButtonGroup.clearSelection();
@@ -109,7 +110,7 @@ public class MainFrame extends javax.swing.JFrame {
         });
       }
     }
-    
+
     setVisible(true);
 
     repaint();
@@ -160,8 +161,7 @@ public class MainFrame extends javax.swing.JFrame {
       this.lastExportedFile = ensureExtension(fileChooser.getSelectedFile(), plugin);
       try {
         plugin.writeTo(this.lastExportedFile, this.mainEditor.getProcessingData(), new SessionData(this.mainEditor));
-      }
-      catch (Exception ex) {
+      } catch (Exception ex) {
         ex.printStackTrace();
         JOptionPane.showMessageDialog(this, "Can't export data for exception [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
       }
@@ -693,12 +693,14 @@ public class MainFrame extends javax.swing.JFrame {
         }//GEN-LAST:event_menuHelpAboutActionPerformed
 
   private void mainEditorPanelMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseWheelMoved
-    if (evt.getWheelRotation() < 0) {
-      this.mainEditor.zoomIn();
-    } else {
-      this.mainEditor.zoomOut();
+    if (evt.getModifiersEx() == MouseWheelEvent.CTRL_DOWN_MASK) {
+      if (evt.getWheelRotation() < 0) {
+        this.mainEditor.zoomIn();
+      } else {
+        this.mainEditor.zoomOut();
+      }
+      updateBottomBar();
     }
-    updateBottomBar();
   }//GEN-LAST:event_mainEditorPanelMouseWheelMoved
 
   private void sliderColumnsStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderColumnsStateChanged
@@ -751,20 +753,16 @@ public class MainFrame extends javax.swing.JFrame {
         if ((plugin instanceof SCRPlugin) && !this.menuOptionsZXScreen.isSelected()) {
           this.menuOptionsZXScreen.setSelected(true);
         }
-      }
-      catch (IllegalArgumentException ex) {
+      } catch (IllegalArgumentException ex) {
         ex.printStackTrace();
         JOptionPane.showMessageDialog(this, ex.getMessage(), "Can't read", JOptionPane.WARNING_MESSAGE);
-      }
-      catch (IOException ex) {
+      } catch (IOException ex) {
         ex.printStackTrace();
         JOptionPane.showMessageDialog(this, "Can't read file or its part [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
-      }
-      catch (Exception ex) {
+      } catch (Exception ex) {
         ex.printStackTrace();
         JOptionPane.showMessageDialog(this, "Unexpected exception! See log!", "Unexpected error", JOptionPane.ERROR_MESSAGE);
-      }
-      finally {
+      } finally {
         updateAddressScrollBar();
         updateRedoUndo();
       }
@@ -903,8 +901,7 @@ public class MainFrame extends javax.swing.JFrame {
 
           this.setTitle(thefile.getAbsolutePath());
           setCurrentSZEFile(thefile);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
           ex.printStackTrace();
           JOptionPane.showMessageDialog(this, "Error during operation [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -925,8 +922,7 @@ public class MainFrame extends javax.swing.JFrame {
   private void menuSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuSaveActionPerformed
     try {
       container.getComponent(SZEPlugin.class).writeTo(this.szeFile, this.mainEditor.getProcessingData(), new SessionData(this.mainEditor));
-    }
-    catch (Exception ex) {
+    } catch (Exception ex) {
       ex.printStackTrace();
       JOptionPane.showMessageDialog(this, "Can't save file for exception [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
     }
