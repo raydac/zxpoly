@@ -43,7 +43,6 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import com.igormaznitsa.zxpoly.animeencoders.ZXPolyAGifEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
@@ -504,8 +503,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
       result.append("CPU#").append(i).append('=').append(toHex(cpuModuleStates[i].getRegister(register, alt)));
     }
-    result.append("\n\nLast executed address : ").append(toHex(lastAddress)).append("\n--------------\n\n");
 
+    result.append("\n\nLast executed address : ").append(toHex(lastAddress)).append("\n--------------\n\n");
     result.append(this.board.getZXPolyModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
 
     this.board.getZXPolyModules()[0].disasmSinceAddress(lastAddress, 5).forEach((l) -> {
@@ -1082,12 +1081,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         return;
       }
 
-      this.board.forceResetCPUs();
-      this.board.resetIODevices();
-
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, new FormatZXP(), new FormatZ80(), new FormatSNA());
+
       if (selected != null) {
+        this.board.forceResetCPUs();
+        this.board.resetIODevices();
+
         this.lastSnapshotFolder = selected.getParentFile();
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
@@ -1150,9 +1150,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     final File selectedTapFile = chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
     if (selectedTapFile != null) {
       this.lastTapFolder = selectedTapFile.getParentFile();
-      InputStream in = null;
-      try {
-        in = new BufferedInputStream(new FileInputStream(selectedTapFile));
+      try(InputStream in = new BufferedInputStream(new FileInputStream(selectedTapFile))) {
 
         if (this.keyboardAndTapeModule.getTap() != null) {
           this.keyboardAndTapeModule.getTap().removeActionListener(this);
@@ -1165,7 +1163,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         log.log(Level.SEVERE, "Can't read " + selectedTapFile, ex);
         JOptionPane.showMessageDialog(this, "Can't load TAP file", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
       } finally {
-        IOUtils.closeQuietly(in);
         updateTapeMenu();
       }
     }
