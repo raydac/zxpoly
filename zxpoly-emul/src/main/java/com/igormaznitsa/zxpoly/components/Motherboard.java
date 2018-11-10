@@ -69,7 +69,7 @@ public final class Motherboard implements ZXPoly {
     }
     this.rom = rom;
     this.modules = new ZXPolyModule[4];
-    final List<IODevice> iodevices = new ArrayList<IODevice>();
+    final List<IODevice> iodevices = new ArrayList<>();
     for (int i = 0; i < this.modules.length; i++) {
       this.modules[i] = new ZXPolyModule(this, i);
       iodevices.add(this.modules[i]);
@@ -253,12 +253,12 @@ public final class Motherboard implements ZXPoly {
 
       if (isZXPolyMode()) {
 
-        // simpulation of possible racing
         final boolean zx0halt;
         final boolean zx1halt;
         final boolean zx2halt;
         final boolean zx3halt;
 
+        // process modules in pseudo-random order to simulate some parallelism and racing
         switch ((int) System.nanoTime() & 0x3) {
           case 0: {
             zx0halt = this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);

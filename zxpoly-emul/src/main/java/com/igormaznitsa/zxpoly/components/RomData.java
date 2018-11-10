@@ -66,12 +66,7 @@ public final class RomData {
   }
 
   public static RomData read(final InputStream in) throws IOException {
-    try {
-      return new RomData(IOUtils.toByteArray(in));
-    }
-    finally {
-      IOUtils.closeQuietly(in);
-    }
+    return new RomData(IOUtils.toByteArray(in));
   }
 
   public int readAdress(final int address) {
