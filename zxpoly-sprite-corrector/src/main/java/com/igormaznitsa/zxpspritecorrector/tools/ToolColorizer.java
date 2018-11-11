@@ -34,7 +34,7 @@ public class ToolColorizer extends AbstractTool {
   }
 
   @Override
-  public void process(final EditorComponent editComponent, final Rectangle area, final int modifiers) {
+  public void process(final EditorComponent editComponent, final Rectangle area, final int modifiers, final int modifiersExt) {
     final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
 
     final boolean mode512 = editComponent.isMode512();

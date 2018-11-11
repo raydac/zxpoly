@@ -32,7 +32,7 @@ public abstract class AbstractTool extends JToggleButton {
     setToolTipText(toolTip);
   }
   
-  public abstract void process(final EditorComponent editComponent, final Rectangle area, final int modifiers);
+  public abstract void process(final EditorComponent editComponent, final Rectangle area, final int modifiers, final int modifiersExt);
 
   public static boolean isCoordValid(final int x, final int y, final boolean mode512){
     if (mode512) {

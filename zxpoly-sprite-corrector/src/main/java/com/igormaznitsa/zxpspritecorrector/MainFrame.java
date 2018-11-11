@@ -774,13 +774,13 @@ public class MainFrame extends javax.swing.JFrame {
     this.mainEditor.setAddress(address);
   }//GEN-LAST:event_scrollBarAddressAdjustmentValueChanged
 
-  private void processCurrentToolForPoint(final int modifiers) {
+  private void processCurrentToolForPoint(final int modifiers, final int modifiersExt) {
     final Rectangle toolRect = this.mainEditor.getToolArea();
 
     if (toolRect != null) {
       final ToolButtonModel tool = (ToolButtonModel) this.toolsButtonGroup.getSelection();
       if (tool != null) {
-        tool.getTool().process(this.mainEditor, toolRect, modifiers);
+        tool.getTool().process(this.mainEditor, toolRect, modifiers, modifiersExt);
       }
     }
   }
@@ -823,7 +823,7 @@ public class MainFrame extends javax.swing.JFrame {
     updateRedoUndo();
 
     updateToolRectangle(evt.getPoint());
-    processCurrentToolForPoint(evt.getModifiersEx());
+    processCurrentToolForPoint(evt.getModifiers(), evt.getModifiersEx());
   }//GEN-LAST:event_mainEditorPanelMousePressed
 
   private void mainEditorPanelMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseMoved
@@ -840,7 +840,7 @@ public class MainFrame extends javax.swing.JFrame {
 
   private void mainEditorPanelMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseDragged
     updateToolRectangle(evt.getPoint());
-    processCurrentToolForPoint(evt.getModifiersEx());
+    processCurrentToolForPoint(evt.getModifiers(), evt.getModifiersEx());
   }//GEN-LAST:event_mainEditorPanelMouseDragged
 
   private void menuOptionsMode512StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_menuOptionsMode512StateChanged
