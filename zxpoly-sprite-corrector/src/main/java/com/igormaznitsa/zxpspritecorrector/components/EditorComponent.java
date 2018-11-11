@@ -154,33 +154,33 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
             if ((y & 1) == 0) {
               // CPU 0
               this.editor.processingData.setZXPolyData(address, mask | bitmask,
-                  ((packed3012 >>> 16) & invertedbitmask) | value,
-                  packed3012 >>> 8,
-                  packed3012,
-                  packed3012 >>> 24);
+                      ((packed3012 >>> 16) & invertedbitmask) | value,
+                      packed3012 >>> 8,
+                      packed3012,
+                      packed3012 >>> 24);
             } else {
               // CPU 2
               this.editor.processingData.setZXPolyData(address, mask | bitmask,
-                  packed3012 >>> 16,
-                  packed3012 >>> 8,
-                  (packed3012 & invertedbitmask) | value,
-                  packed3012 >>> 24);
+                      packed3012 >>> 16,
+                      packed3012 >>> 8,
+                      (packed3012 & invertedbitmask) | value,
+                      packed3012 >>> 24);
             }
           } else {
             if ((y & 1) == 0) {
               // CPU 1
               this.editor.processingData.setZXPolyData(address, mask | bitmask,
-                  packed3012 >>> 16,
-                  ((packed3012 >>> 8) & invertedbitmask) | value,
-                  packed3012,
-                  packed3012 >>> 24);
+                      packed3012 >>> 16,
+                      ((packed3012 >>> 8) & invertedbitmask) | value,
+                      packed3012,
+                      packed3012 >>> 24);
             } else {
               // CPU 3
               this.editor.processingData.setZXPolyData(address, mask | bitmask,
-                  packed3012 >>> 16,
-                  packed3012 >>> 8,
-                  packed3012,
-                  ((packed3012 >>> 24) & invertedbitmask) | value);
+                      packed3012 >>> 16,
+                      packed3012 >>> 8,
+                      packed3012,
+                      ((packed3012 >>> 24) & invertedbitmask) | value);
             }
           }
 
@@ -188,10 +188,10 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
           final int bitmask = makeXMask(x);
           final int invertedbitmask = ~bitmask;
           this.editor.processingData.setZXPolyData(address, mask | bitmask,
-              ((packed3012 >>> 16) & invertedbitmask) | (((cpu3012 & 4) == 0 ? 0 : 0xFF) & bitmask),
-              ((packed3012 >>> 8) & invertedbitmask) | (((cpu3012 & 2) == 0 ? 0 : 0xFF) & bitmask),
-              (packed3012 & invertedbitmask) | (((cpu3012 & 1) == 0 ? 0 : 0xFF) & bitmask),
-              ((packed3012 >>> 24) & invertedbitmask) | (((cpu3012 & 8) == 0 ? 0 : 0xFF) & bitmask)
+                  ((packed3012 >>> 16) & invertedbitmask) | (((cpu3012 & 4) == 0 ? 0 : 0xFF) & bitmask),
+                  ((packed3012 >>> 8) & invertedbitmask) | (((cpu3012 & 2) == 0 ? 0 : 0xFF) & bitmask),
+                  (packed3012 & invertedbitmask) | (((cpu3012 & 1) == 0 ? 0 : 0xFF) & bitmask),
+                  ((packed3012 >>> 24) & invertedbitmask) | (((cpu3012 & 8) == 0 ? 0 : 0xFF) & bitmask)
           );
         }
       }
@@ -199,21 +199,46 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       return this;
     }
 
-    public ZXGraphics resetPoint(final int x, final int y) {
+    public ZXGraphics resetPoint(final int x, final int y, final boolean copyBasePointToPlanes) {
       final int address = coordToAddress(x, y);
       if (address >= 0) {
         final int mask = this.editor.processingData.getMask(address);
 
-        final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
-
-        final int bitmask = makeXMask(x >> (this.editor.mode512 ? 1 : 0));
-        final int invertedbitmask = ~bitmask;
-        this.editor.processingData.setZXPolyData(address, mask & invertedbitmask,
-            (packed3012 >>> 16) & invertedbitmask,
-            (packed3012 >>> 8) & invertedbitmask,
-            packed3012 & invertedbitmask,
-            (packed3012 >>> 24) & invertedbitmask
-        );
+        if (copyBasePointToPlanes) {
+          final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
+          final int bitmask = makeXMask(x >> (this.editor.mode512 ? 1 : 0));
+          final boolean reset = (this.editor.processingData.getBaseData(address) & bitmask) == 0;
+          if (reset) {
+            final int invertedmask = ~bitmask;
+            this.editor.processingData.setZXPolyData(
+                    address,
+                    bitmask | this.editor.processingData.getMask(address),
+                    (packed3012 >>> 16) & invertedmask,
+                    (packed3012 >>> 8) & invertedmask,
+                    packed3012 & invertedmask,
+                    (packed3012 >>> 24) & invertedmask
+            );
+          } else {
+            this.editor.processingData.setZXPolyData(
+                    address,
+                    bitmask | this.editor.processingData.getMask(address),
+                    (packed3012 >>> 16) | bitmask,
+                    (packed3012 >>> 8) | bitmask,
+                    packed3012 | bitmask,
+                    (packed3012 >>> 24) | bitmask
+            );
+          }
+        } else {
+          final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
+          final int bitmask = makeXMask(x >> (this.editor.mode512 ? 1 : 0));
+          final int invertedbitmask = ~bitmask;
+          this.editor.processingData.setZXPolyData(address, mask & invertedbitmask,
+                  (packed3012 >>> 16) & invertedbitmask,
+                  (packed3012 >>> 8) & invertedbitmask,
+                  packed3012 & invertedbitmask,
+                  (packed3012 >>> 24) & invertedbitmask
+          );
+        }
       }
 
       return this;
@@ -232,9 +257,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
         } else {
           final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
           result = ((packed3012 & bitmask) == 0 ? 0 : 1)
-              | ((packed3012 & (bitmask << 8)) == 0 ? 0 : 2)
-              | ((packed3012 & (bitmask << 16)) == 0 ? 0 : 4)
-              | ((packed3012 & (bitmask << 24)) == 0 ? 0 : 8);
+                  | ((packed3012 & (bitmask << 8)) == 0 ? 0 : 2)
+                  | ((packed3012 & (bitmask << 16)) == 0 ? 0 : 4)
+                  | ((packed3012 & (bitmask << 24)) == 0 ? 0 : 8);
         }
       }
 

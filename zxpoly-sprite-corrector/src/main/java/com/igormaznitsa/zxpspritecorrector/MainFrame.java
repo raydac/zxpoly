@@ -823,7 +823,7 @@ public class MainFrame extends javax.swing.JFrame {
     updateRedoUndo();
 
     updateToolRectangle(evt.getPoint());
-    processCurrentToolForPoint(evt.getModifiers());
+    processCurrentToolForPoint(evt.getModifiersEx());
   }//GEN-LAST:event_mainEditorPanelMousePressed
 
   private void mainEditorPanelMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseMoved
@@ -840,7 +840,7 @@ public class MainFrame extends javax.swing.JFrame {
 
   private void mainEditorPanelMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseDragged
     updateToolRectangle(evt.getPoint());
-    processCurrentToolForPoint(evt.getModifiers());
+    processCurrentToolForPoint(evt.getModifiersEx());
   }//GEN-LAST:event_mainEditorPanelMouseDragged
 
   private void menuOptionsMode512StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_menuOptionsMode512StateChanged

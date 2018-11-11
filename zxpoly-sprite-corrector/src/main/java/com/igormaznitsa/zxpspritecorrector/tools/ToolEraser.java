@@ -18,6 +18,7 @@ package com.igormaznitsa.zxpspritecorrector.tools;
 
 import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 
 public class ToolEraser extends AbstractTool {
 
@@ -28,7 +29,7 @@ public class ToolEraser extends AbstractTool {
   }
 
   @Override
-  public void process(EditorComponent editComponent, Rectangle area, int modifiers) {
+  public void process(final EditorComponent editComponent, final Rectangle area, final int modifiers) {
     final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
 
     final boolean mode512 = editComponent.isMode512();
@@ -41,7 +42,8 @@ public class ToolEraser extends AbstractTool {
         if (!isCoordValid(dx, dy, mode512)) {
           continue;
         }
-        gfx.resetPoint(dx, dy);
+
+        gfx.resetPoint(dx, dy, (modifiers & MouseEvent.CTRL_DOWN_MASK) != 0);
       }
     }
 
