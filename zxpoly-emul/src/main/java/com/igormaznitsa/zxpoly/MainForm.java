@@ -46,6 +46,7 @@ import org.apache.commons.io.FileUtils;
 import com.igormaznitsa.zxpoly.animeencoders.ZXPolyAGifEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
+import org.apache.commons.io.FilenameUtils;
 
 public final class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
 
@@ -596,6 +597,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuServiceSaveScreen = new javax.swing.JMenuItem();
     menuServiceSaveScreenAllVRAM = new javax.swing.JMenuItem();
     menuActionAnimatedGIF = new javax.swing.JMenuItem();
+    menuServicemakeSnapshot = new javax.swing.JMenuItem();
     menuTapExportAs = new javax.swing.JMenu();
     menuTapExportAsWav = new javax.swing.JMenuItem();
     menuCatcher = new javax.swing.JMenu();
@@ -858,6 +860,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
     menuService.add(menuActionAnimatedGIF);
+
+    menuServicemakeSnapshot.setText("Save snapshot");
+    menuServicemakeSnapshot.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuServicemakeSnapshotActionPerformed(evt);
+      }
+    });
+    menuService.add(menuServicemakeSnapshot);
 
     menuTapExportAs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png"))); // NOI18N
     menuTapExportAs.setText("Export TAPE as..");
@@ -1150,7 +1160,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     final File selectedTapFile = chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
     if (selectedTapFile != null) {
       this.lastTapFolder = selectedTapFile.getParentFile();
-      try(InputStream in = new BufferedInputStream(new FileInputStream(selectedTapFile))) {
+      try (InputStream in = new BufferedInputStream(new FileInputStream(selectedTapFile))) {
 
         if (this.keyboardAndTapeModule.getTap() != null) {
           this.keyboardAndTapeModule.getTap().removeActionListener(this);
@@ -1172,7 +1182,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.stepSemaphor.lock();
     try {
       final byte[] wav = this.keyboardAndTapeModule.getTap().getAsWAV();
-      final File fileToSave = chooseFileForSave("Select WAV file", null, new WavFileFilter());
+      final File fileToSave = chooseFileForSave("Select WAV file", null, null, true, new WavFileFilter());
       if (fileToSave != null) {
         FileUtils.writeByteArrayToFile(fileToSave, wav);
         log.log(Level.INFO, "Exported current TAP file as WAV file {0} size {1} bytes", new Object[]{fileToSave, wav.length});
@@ -1224,7 +1234,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       final RenderedImage img = this.board.getVideoController().makeCopyOfCurrentPicture();
       final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       ImageIO.write(img, "png", buffer);
-      final File thefile = chooseFileForSave("Save screenshot", lastScreenshotFolder, new PNGFileFilter());
+      final File thefile = chooseFileForSave("Save screenshot", lastScreenshotFolder, null, true, new PNGFileFilter());
       if (thefile != null) {
         this.lastScreenshotFolder = thefile.getParentFile();
         FileUtils.writeByteArrayToFile(thefile, buffer.toByteArray());
@@ -1298,7 +1308,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
       final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       ImageIO.write(result, "png", buffer);
-      final File thefile = chooseFileForSave("Save screenshot", lastScreenshotFolder, new PNGFileFilter());
+      final File thefile = chooseFileForSave("Save screenshot", lastScreenshotFolder, null, true, new PNGFileFilter());
       if (thefile != null) {
         this.lastScreenshotFolder = thefile.getParentFile();
         FileUtils.writeByteArrayToFile(thefile, buffer.toByteArray());
@@ -1414,6 +1424,39 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }//GEN-LAST:event_menuTriggerExeCodeDiffActionPerformed
 
+  private void menuServicemakeSnapshotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuServicemakeSnapshotActionPerformed
+    stepSemaphor.lock();
+    try {
+      final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
+      File selected = chooseFileForSave("Save snapshot", this.lastSnapshotFolder, theFilter, false, new FormatZXP(), new FormatZ80(), new FormatSNA());
+
+      if (selected != null) {
+        this.lastSnapshotFolder = selected.getParentFile();
+        try {
+          final Snapshot selectedFilter = (Snapshot) theFilter.get();
+          if (!selectedFilter.getExtension().equals(FilenameUtils.getExtension(selected.getName()).toLowerCase(Locale.ENGLISH))) {
+            selected = new File(selected.getParentFile(), selected.getName() + '.' + selectedFilter.getExtension());
+          }
+
+          if (selected.isFile() && JOptionPane.showConfirmDialog(this, "Do you want override file '" + selected.getName() + "\'?", "File exists", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+            return;
+          }
+
+          log.info("Saving snapshot " + selectedFilter.getName() + " as file " + selected.getName());
+          final byte[] preparedSnapshotData = selectedFilter.saveToArray(this.board, this.board.getVideoController());
+          log.info("Prepared snapshot data, size " + preparedSnapshotData.length + " bytes");
+          FileUtils.writeByteArrayToFile(selected, preparedSnapshotData);
+        } catch (Exception ex) {
+          ex.printStackTrace();
+          log.log(Level.WARNING, "Can't save snapshot file [" + ex.getMessage() + ']', ex);
+          JOptionPane.showMessageDialog(this, "Can't save snapshot file [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
+        }
+      }
+    } finally {
+      stepSemaphor.unlock();
+    }
+  }//GEN-LAST:event_menuServicemakeSnapshotActionPerformed
+
   private void activateTracerForCPUModule(final int index) {
     TraceCPUForm form = this.cpuTracers[index];
     if (form == null) {
@@ -1475,10 +1518,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     return result;
   }
 
-  private File chooseFileForSave(final String title, final File initial, final FileFilter filter) {
+  private File chooseFileForSave(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final boolean allowAcceptAll, final FileFilter... filters) {
     final JFileChooser chooser = new JFileChooser(initial);
-    chooser.addChoosableFileFilter(filter);
-    chooser.setAcceptAllFileFilterUsed(true);
+    for (final FileFilter f : filters) {
+      chooser.addChoosableFileFilter(f);
+    }
+    chooser.setAcceptAllFileFilterUsed(allowAcceptAll);
     chooser.setMultiSelectionEnabled(false);
     chooser.setDialogTitle(title);
     chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -1486,6 +1531,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     final File result;
     if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
       result = chooser.getSelectedFile();
+      if (selectedFilter != null) {
+        selectedFilter.set(chooser.getFileFilter());
+      }
     } else {
       result = null;
     }
@@ -1533,6 +1581,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private javax.swing.JMenu menuService;
   private javax.swing.JMenuItem menuServiceSaveScreen;
   private javax.swing.JMenuItem menuServiceSaveScreenAllVRAM;
+  private javax.swing.JMenuItem menuServicemakeSnapshot;
   private javax.swing.JMenu menuTap;
   private javax.swing.JMenu menuTapExportAs;
   private javax.swing.JMenuItem menuTapExportAsWav;

@@ -24,6 +24,16 @@ import java.util.Locale;
 public class FormatZXP extends Snapshot {
 
   @Override
+  public String getExtension() {
+    return "zxp";
+  }
+
+  @Override
+  public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+  
+  @Override
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
     final ZXEMLSnapshotFormat snapshot = new ZXEMLSnapshotFormat(array);
 

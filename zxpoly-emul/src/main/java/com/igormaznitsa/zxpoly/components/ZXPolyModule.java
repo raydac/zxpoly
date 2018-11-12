@@ -569,6 +569,10 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus, MemoryAccessProv
     return result;
   }
 
+  public int get7FFD() {
+    return this.port7FFD.get();
+  }
+  
   public void set7FFD(final int value, final boolean enforce) {
     if (((this.port7FFD.get() & PORTw_ZX128_LOCK) == 0) || enforce) {
       this.port7FFD.set(value);

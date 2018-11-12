@@ -37,7 +37,11 @@ public abstract class Snapshot extends FileFilter {
     board.getCPU0().doReset();
   }
   
-  public abstract void loadFromArray(File srcFile, Motherboard board, final VideoController vc, byte [] array) throws IOException; 
+  public abstract String getExtension();
+  
+  public abstract void loadFromArray(File srcFile, Motherboard board, VideoController vc, byte [] array) throws IOException; 
+  
+  public abstract byte [] saveToArray(Motherboard board, VideoController vc) throws IOException;
   
   public abstract String getName();
 }
