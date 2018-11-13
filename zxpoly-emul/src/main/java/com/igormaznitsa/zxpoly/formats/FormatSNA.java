@@ -149,7 +149,7 @@ public class FormatSNA extends Snapshot {
     parser.setINTMODE((char) cpu.getIM());
     parser.setINTERRUPT((char) (cpu.isIFF1() ? 2 : 0));
 
-    parser.setBORDERCOLOR((char) module.readIO(module, 0xFE));
+    parser.setBORDERCOLOR((char) vc.getPortFE());
 
     final int topPageIndex = module.get7FFD() & 7;
     

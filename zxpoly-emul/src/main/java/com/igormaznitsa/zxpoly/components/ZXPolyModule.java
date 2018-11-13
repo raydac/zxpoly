@@ -95,6 +95,14 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus, MemoryAccessProv
     return this.cpu;
   }
 
+  public void loadModuleLocalPortValues(final byte [] fiveElementArray) {
+    fiveElementArray[0] = (byte)this.port7FFD.get(); 
+    fiveElementArray[1] = (byte)this.zxPolyRegsWritten.get(0); 
+    fiveElementArray[2] = (byte)this.zxPolyRegsWritten.get(1); 
+    fiveElementArray[3] = (byte)this.zxPolyRegsWritten.get(2); 
+    fiveElementArray[4] = (byte)this.zxPolyRegsWritten.get(3); 
+  }
+  
   public void loadModuleLocalPortsByValues(final int port7ffd, final int reg0, final int reg1, final int reg2, final int reg3) {
     this.port7FFD.set(port7ffd & 0xFF);
     this.zxPolyRegsWritten.set(0, reg0 & 0xFF);

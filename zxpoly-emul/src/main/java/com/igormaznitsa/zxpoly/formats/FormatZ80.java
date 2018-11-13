@@ -259,7 +259,7 @@ public class FormatZ80 extends Snapshot {
     final Z80V3AParser.FLAGS flags = parser.makeFLAGS();
 
     flags.setREG_R_BIT7((byte) (cpu.getRegister(Z80.REG_R) >>> 7));
-    flags.setBORDERCOLOR((byte) module.readIO(module, 0xFE));
+    flags.setBORDERCOLOR((byte) vc.getPortFE());
     flags.setBASIC_SAMROM((byte) 0);
     flags.setCOMPRESSED((byte) 0);
     flags.setNOMEANING((byte) 0);

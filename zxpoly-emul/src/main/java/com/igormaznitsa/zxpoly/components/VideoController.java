@@ -525,7 +525,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   public RenderedImage[] renderAllModuleVideoMemoryInZX48Mode() {
     this.lockBuffer();
     try {
-      final java.util.List<RenderedImage> result = new ArrayList<RenderedImage>();
+      final java.util.List<RenderedImage> result = new ArrayList<>();
 
       BufferedImage buffImage = new BufferedImage(this.buffer.getWidth(), this.buffer.getHeight(), BufferedImage.TYPE_INT_RGB);
       Graphics g = buffImage.getGraphics();
@@ -604,6 +604,10 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     return 0;
   }
 
+  public int getPortFE() {
+    return this.portFEw;
+  }
+  
   @Override
   public void writeIO(final ZXPolyModule module, final int port, final int value) {
     if (!module.isTRDOSActive() && (port & 0xFF) == 0xFE) {

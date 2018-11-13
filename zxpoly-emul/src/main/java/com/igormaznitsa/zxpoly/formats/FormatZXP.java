@@ -16,6 +16,7 @@
  */
 package com.igormaznitsa.zxpoly.formats;
 
+import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.*;
 import java.io.*;
@@ -30,7 +31,56 @@ public class FormatZXP extends Snapshot {
 
   @Override
   public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    final ZXEMLSnapshotFormat snapshot = new ZXEMLSnapshotFormat();
+
+    for (int cpu = 0; cpu < 4; cpu++) {
+      final ZXPolyModule module = board.getZXPolyModules()[cpu];
+      final Z80 z80 = module.getCPU();
+
+      snapshot.getREG_PC()[cpu] = (short)z80.getRegister(Z80.REG_PC);
+      snapshot.getREG_SP()[cpu] = (short)z80.getRegister(Z80.REG_SP);
+      
+      snapshot.getREG_AF()[cpu] = (short) z80.getRegisterPair(Z80.REGPAIR_AF, false);
+      snapshot.getREG_AF_ALT()[cpu] = (short)z80.getRegisterPair(Z80.REGPAIR_AF, true);
+      
+      snapshot.getREG_BC()[cpu] = (short) z80.getRegisterPair(Z80.REGPAIR_BC, false);
+      snapshot.getREG_BC_ALT()[cpu] = (short)z80.getRegisterPair(Z80.REGPAIR_BC, true);
+      
+      snapshot.getREG_DE()[cpu] = (short) z80.getRegisterPair(Z80.REGPAIR_DE, false);
+      snapshot.getREG_DE_ALT()[cpu] = (short)z80.getRegisterPair(Z80.REGPAIR_DE, true);
+
+      snapshot.getREG_HL()[cpu] = (short) z80.getRegisterPair(Z80.REGPAIR_HL, false);
+      snapshot.getREG_HL_ALT()[cpu] = (short)z80.getRegisterPair(Z80.REGPAIR_HL, true);
+
+      snapshot.getREG_IX()[cpu] = (short) z80.getRegister(Z80.REG_IX);
+      snapshot.getREG_IY()[cpu] = (short) z80.getRegister(Z80.REG_IY);
+
+      snapshot.getREG_IR()[cpu] = (short) ((z80.getRegister(Z80.REG_I) << 8) | z80.getRegister(Z80.REG_R));
+
+      snapshot.getIFF()[cpu] = z80.isIFF1();
+      snapshot.getIFF2()[cpu] = z80.isIFF2();
+      snapshot.getREG_IM()[cpu] = (byte)z80.getIM();
+
+      module.loadModuleLocalPortValues(snapshot.getModulePorts(cpu));
+
+      final ZXPParser.PAGES memory = snapshot.getPAGES()[cpu];
+
+      for (final ZXPParser.PAGES.PAGE p : memory.getPAGE()) {
+        final int pageOffset = p.getINDEX() * 0x4000;
+        for (int addr = 0; addr < 0x4000; addr++) {
+          p.getDATA()[addr] = (byte)module.readHeapModuleMemory(pageOffset + addr);
+        }
+      }
+    }
+
+    snapshot.setPORT3D00((char)board.get3D00());
+    snapshot.setPORTFE((char)vc.getPortFE());
+
+    final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    try(JBBPBitOutputStream out = new JBBPBitOutputStream(bos)) {
+      snapshot.write(out);
+    }
+    return bos.toByteArray();
   }
   
   @Override
