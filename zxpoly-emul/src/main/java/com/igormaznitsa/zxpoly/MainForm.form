@@ -235,6 +235,9 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuServicemakeSnapshot">
               <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/com/igormaznitsa/zxpoly/icons/save_snapshot.png"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Save snapshot"/>
               </Properties>
               <Events>

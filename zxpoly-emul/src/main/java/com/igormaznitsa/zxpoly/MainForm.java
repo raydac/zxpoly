@@ -861,6 +861,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     });
     menuService.add(menuActionAnimatedGIF);
 
+    menuServicemakeSnapshot.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/save_snapshot.png"))); // NOI18N
     menuServicemakeSnapshot.setText("Save snapshot");
     menuServicemakeSnapshot.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
