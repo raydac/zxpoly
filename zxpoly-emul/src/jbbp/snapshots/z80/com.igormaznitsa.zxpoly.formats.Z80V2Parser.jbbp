@@ -36,7 +36,7 @@ emulFlags {
 }
 
 skip:2; // header length
-<ushort reg_pc2;
+<short reg_pc2;
 ubyte mode;
 ubyte port7FFD;
 ubyte portFF;

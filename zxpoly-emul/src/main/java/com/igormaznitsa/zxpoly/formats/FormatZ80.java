@@ -21,6 +21,7 @@ import com.igormaznitsa.zxpoly.components.*;
 import java.io.*;
 import java.util.*;
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 public class FormatZ80 extends Snapshot {
 
@@ -99,7 +100,7 @@ public class FormatZ80 extends Snapshot {
 
     public abstract byte[] getDATA();
 
-    public char getREG_PC2() {
+    public short getREG_PC2() {
       throw new Error("Must not be called directly");
     }
 
@@ -160,20 +161,36 @@ public class FormatZ80 extends Snapshot {
       return baos.toByteArray();
     }
 
+    void writeNonCompressed(final OutputStream out) throws IOException {
+      out.write(0xFF);
+      out.write(0xFF);
+      out.write(this.page);
+      out.write(this.data);
+    }
+
     static byte[] unpackBank(final byte[] src, int srcoffset, int srclen) {
       final ByteArrayOutputStream result = new ByteArrayOutputStream(16384);
-      while (srclen > 0) {
-        if (srclen >= 4 && src[srcoffset] == (byte) 0xED && src[srcoffset + 1] == (byte) 0xED) {
-          srcoffset += 2;
-          final int len = src[srcoffset++] & 0xFF;
-          final int value = src[srcoffset++] & 0xFF;
-          for (int i = len; i > 0; i--) {
-            result.write(value);
-          }
-          srclen -= 4;
-        } else {
+      if (srclen == 0xFFFF) {
+        // non packed
+        int len = 0x4000;
+        while (len > 0) {
           result.write(src[srcoffset++]);
-          srclen--;
+          len--;
+        }
+      } else {
+        while (srclen > 0) {
+          if (srclen >= 4 && src[srcoffset] == (byte) 0xED && src[srcoffset + 1] == (byte) 0xED) {
+            srcoffset += 2;
+            final int len = src[srcoffset++] & 0xFF;
+            final int value = src[srcoffset++] & 0xFF;
+            for (int i = len; i > 0; i--) {
+              result.write(value);
+            }
+            srclen -= 4;
+          } else {
+            result.write(src[srcoffset++]);
+            srclen--;
+          }
         }
       }
       return result.toByteArray();
@@ -182,13 +199,13 @@ public class FormatZ80 extends Snapshot {
     static Bank[] toBanks(final byte[] data) {
       int pos = 0;
       int len = data.length;
-      final List<Bank> banks = new ArrayList<Bank>();
+      final List<Bank> banks = new ArrayList<>();
       while (len > 0) {
         final int blocklength = ((data[pos++] & 0xFF)) | ((data[pos++] & 0xFF) << 8);
         final int page = data[pos++] & 0xFF;
-        len -= 3 + (blocklength == 0xFFFF ? 16384 : blocklength);
-        final byte[] uncompressed = blocklength == 0xFFFF ? Arrays.copyOfRange(data, pos, 16384) : unpackBank(data, pos, blocklength);
-        pos += blocklength;
+        len -= 3 + (blocklength == 0xFFFF ? 0x4000 : blocklength);
+        final byte[] uncompressed = unpackBank(data, pos, blocklength);
+        pos += (blocklength == 0xFFFF ? 0x4000 : blocklength);
         banks.add(new Bank(page, uncompressed));
       }
       return banks.toArray(new Bank[banks.size()]);
@@ -197,12 +214,88 @@ public class FormatZ80 extends Snapshot {
 
   @Override
   public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    final Z80V3AParser parser = new Z80V3AParser();
+    final Z80 cpu = board.getCPU0();
+
+    parser.setREG_A((byte) cpu.getRegister(Z80.REG_A));
+    parser.setREG_F((byte) cpu.getRegister(Z80.REG_F));
+
+    parser.setREG_A_ALT((byte) cpu.getRegister(Z80.REG_A, true));
+    parser.setREG_F_ALT((byte) cpu.getRegister(Z80.REG_F, true));
+
+    parser.setREG_BC((short) cpu.getRegisterPair(Z80.REGPAIR_BC));
+    parser.setREG_BC_ALT((short) cpu.getRegisterPair(Z80.REGPAIR_BC, true));
+
+    parser.setREG_DE((short) cpu.getRegisterPair(Z80.REGPAIR_DE));
+    parser.setREG_DE_ALT((short) cpu.getRegisterPair(Z80.REGPAIR_DE, true));
+
+    parser.setREG_HL((short) cpu.getRegisterPair(Z80.REGPAIR_HL));
+    parser.setREG_HL_ALT((short) cpu.getRegisterPair(Z80.REGPAIR_HL, true));
+
+    parser.setREG_IX((short) cpu.getRegister(Z80.REG_IX));
+    parser.setREG_IY((short) cpu.getRegister(Z80.REG_IY));
+
+    parser.setREG_R((byte) cpu.getRegister(Z80.REG_R));
+    parser.setREG_SP((short) cpu.getRegister(Z80.REG_SP));
+
+    parser.setREG_PC((short) 0);
+    parser.setREG_PC2((short) cpu.getRegister(Z80.REG_PC));
+
+    parser.setIFF((byte) (cpu.isIFF1() ? 1 : 0));
+    parser.setIFF2((byte) (cpu.isIFF2() ? 1 : 0));
+
+    parser.setREG_IR((byte) cpu.getRegister(Z80.REG_I));
+
+    final Z80V3AParser.EMULFLAGS emulflags = parser.makeEMULFLAGS();
+
+    emulflags.setINTERRUPTMODE((byte) cpu.getIM());
+    emulflags.setISSUE2EMULATION((byte) 0);
+    emulflags.setDOUBLEINTFREQ((byte) 0);
+    emulflags.setVIDEOSYNC((byte) 0);
+    emulflags.setINPUTDEVICE((byte) 0);
+
+    final ZXPolyModule module = board.getZXPolyModules()[0];
+
+    final Z80V3AParser.FLAGS flags = parser.makeFLAGS();
+
+    flags.setREG_R_BIT7((byte) (cpu.getRegister(Z80.REG_R) >>> 7));
+    flags.setBORDERCOLOR((byte) module.readIO(module, 0xFE));
+    flags.setBASIC_SAMROM((byte) 0);
+    flags.setCOMPRESSED((byte) 0);
+    flags.setNOMEANING((byte) 0);
+
+    parser.setPORT7FFD((char) module.get7FFD());
+    parser.setPORTFF((char) module.readIO(module, 0xFF));
+
+    parser.setHEADERLEN((char) 54);
+    parser.setMODE((char) 4);
+    parser.setMISCNONZX(new byte[49]);
+
+    // save non compressed data blocks
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    for (int i = 0; i < 8; i++) {
+      int addr = i * 0x4000;
+      final byte[] data = new byte[0x4000];
+      for (int x = 0; x < 0x4000; x++) {
+        data[x] = (byte) module.readHeapModuleMemory(addr++);
+      }
+      new Bank(i + 3, data).writeNonCompressed(bos);
+    }
+    bos.flush();
+    bos.close();
+    parser.setDATA(bos.toByteArray());
+
+    bos = new ByteArrayOutputStream();
+    try (JBBPBitOutputStream bitOut = new JBBPBitOutputStream(bos)) {
+      parser.write(bitOut);
+    }
+
+    return bos.toByteArray();
   }
 
   @Override
   public String getExtension() {
-    return "zxp";
+    return "z80";
   }
 
   @Override
