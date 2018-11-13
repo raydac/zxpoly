@@ -286,32 +286,26 @@ public class Z80Plugin extends AbstractFilePlugin {
                     baos.write(val);
                     num--;
                   }
-                }
-                else {
+                } else {
                   baos.write(a);
                   baos.write(b);
                 }
-              }
-              else {
+              } else {
                 baos.write(a);
               }
             }
             return baos.toByteArray();
-          }
-          else {
+          } else {
             // uncompressed
             return data;
           }
-        }
-        else {
+        } else {
           return null;
         }
-      }
-      else {
+      } else {
         if (field.getName().equalsIgnoreCase("data")) {
           return parsedBlock.findFieldForNameAndType("data", JBBPFieldArrayByte.class).getArray();
-        }
-        else if (field.getName().equalsIgnoreCase("banks")) {
+        } else if (field.getName().equalsIgnoreCase("banks")) {
           final byte[] rawdata = parsedBlock.findFieldForNameAndType("data", JBBPFieldArrayByte.class).getArray();
           int pos = 0;
           int len = rawdata.length;
@@ -319,34 +313,41 @@ public class Z80Plugin extends AbstractFilePlugin {
           while (len > 0) {
             final int blocklength = ((rawdata[pos++] & 0xFF)) | ((rawdata[pos++] & 0xFF) << 8);
             final int page = rawdata[pos++] & 0xFF;
-            len -= 3 + (blocklength == 0xFFFF ? 16384 : blocklength);
-            final byte[] uncompressed = blocklength == 0xFFFF ? Arrays.copyOfRange(rawdata, pos, 16384) : unpack(rawdata, pos, blocklength);
-            pos += blocklength;
+            len -= 3 + (blocklength == 0xFFFF ? 0x4000 : blocklength);
+            final byte[] uncompressed = unpack(rawdata, pos, blocklength);
+            pos += blocklength == 0xFFFF ? 0x4000 : blocklength;
             banks.add(new Bank(page, uncompressed));
           }
           return banks.toArray(new Bank[banks.size()]);
-        }
-        else {
+        } else {
           return null;
         }
       }
     }
 
     private byte[] unpack(final byte[] src, int srcoffset, int srclen) {
-      final ByteArrayOutputStream result = new ByteArrayOutputStream(16384);
-      while (srclen > 0) {
-        if (srclen >= 4 && src[srcoffset] == (byte) 0xED && src[srcoffset + 1] == (byte) 0xED) {
-          srcoffset += 2;
-          final int len = src[srcoffset++] & 0xFF;
-          final int value = src[srcoffset++] & 0xFF;
-          for (int i = len; i > 0; i--) {
-            result.write(value);
-          }
-          srclen -= 4;
-        }
-        else {
+      final ByteArrayOutputStream result = new ByteArrayOutputStream(0x4000);
+      if (srclen == 0xFFFF) {
+        // non packed
+        int len = 0x4000;
+        while (len > 0) {
           result.write(src[srcoffset++]);
-          srclen--;
+          len--;
+        }
+      } else {
+        while (srclen > 0) {
+          if (srclen >= 4 && src[srcoffset] == (byte) 0xED && src[srcoffset + 1] == (byte) 0xED) {
+            srcoffset += 2;
+            final int len = src[srcoffset++] & 0xFF;
+            final int value = src[srcoffset++] & 0xFF;
+            for (int i = len; i > 0; i--) {
+              result.write(value);
+            }
+            srclen -= 4;
+          } else {
+            result.write(src[srcoffset++]);
+            srclen--;
+          }
         }
       }
       return result.toByteArray();
@@ -358,7 +359,6 @@ public class Z80Plugin extends AbstractFilePlugin {
     return forExport ? "ZXP file" : "Z80 file";
   }
 
-
   @Override
   public boolean accept(final File f) {
     return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".z80"));
@@ -368,7 +368,7 @@ public class Z80Plugin extends AbstractFilePlugin {
   public String getDescription() {
     return "Z80 Snapshot (*.Z80)";
   }
-  
+
   private static boolean is48k(final int version, final Z80Snapshot snapshot) {
     switch (version) {
       case VERSION_1:
@@ -385,7 +385,7 @@ public class Z80Plugin extends AbstractFilePlugin {
     }
   }
 
-  private static boolean is48k(final int version, final byte [] header) {
+  private static boolean is48k(final int version, final byte[] header) {
     switch (version) {
       case VERSION_1:
         return true;
@@ -400,7 +400,6 @@ public class Z80Plugin extends AbstractFilePlugin {
         return false;
     }
   }
-
 
   @Override
   public boolean doesImportContainInsideFileList() {
@@ -429,7 +428,7 @@ public class Z80Plugin extends AbstractFilePlugin {
 
   @Override
   public javax.swing.filechooser.FileFilter getExportFileFilter() {
-    return new javax.swing.filechooser.FileFilter(){
+    return new javax.swing.filechooser.FileFilter() {
       @Override
       public boolean accept(final File f) {
         return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zxp"));
@@ -466,8 +465,7 @@ public class Z80Plugin extends AbstractFilePlugin {
         default:
           version = -1;
       }
-    }
-    else {
+    } else {
       version = VERSION_1;
     }
     return version;
@@ -577,8 +575,7 @@ public class Z80Plugin extends AbstractFilePlugin {
               }
             }
           }
-        }
-        else {
+        } else {
           data = new byte[0x4000 * 8];
           for (final Bank b : current.banks) {
             if (b.page >= 3 && b.page < 10) {
@@ -594,7 +591,7 @@ public class Z80Plugin extends AbstractFilePlugin {
     }
 
     final byte[] extra = new byte[(version == VERSION_1 ? 1 : 1 + current.banks.length) + headerLength];
-    extra[0] = current.banks == null ? (byte)0 : (byte)current.banks.length;
+    extra[0] = current.banks == null ? (byte) 0 : (byte) current.banks.length;
     int bankIndex = 1;
     if (version != VERSION_1) {
       for (final Bank b : current.banks) {
@@ -605,10 +602,10 @@ public class Z80Plugin extends AbstractFilePlugin {
     return new ReadResult(new ZXPolyData(new Info(file.getName(), 'C', startAddress, data.length, 0x4000, extra), this, data), null);
   }
 
-  private static int makePair(final byte a, final byte b){
-    return ((a & 0xFF)<<8) | (b & 0xFF);
+  private static int makePair(final byte a, final byte b) {
+    return ((a & 0xFF) << 8) | (b & 0xFF);
   }
-  
+
   @Override
   public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
     if (!(data.getPlugin() instanceof Z80Plugin)) {
@@ -631,8 +628,7 @@ public class Z80Plugin extends AbstractFilePlugin {
     if (extra[0] == 0) {
       banksInExtra = 0;
       bankIndexes = new byte[]{8, 4, 5};
-    }
-    else {
+    } else {
       bankIndexes = new byte[extra[0] & 0xFF];
       banksInExtra = bankIndexes.length;
       for (int i = 0; i < bankIndexes.length; i++) {
@@ -640,14 +636,14 @@ public class Z80Plugin extends AbstractFilePlugin {
       }
     }
     final byte[] z80header = new byte[extra.length - (banksInExtra + 1)];
-    System.arraycopy(extra, banksInExtra+1, z80header, 0, z80header.length);
+    System.arraycopy(extra, banksInExtra + 1, z80header, 0, z80header.length);
     final int version = getVersion(z80header);
     final Z80MainHeader mheader = Z80_MAINPART.parse(z80header).mapTo(Z80MainHeader.class);
     final int regpc = version == VERSION_1 ? mheader.reg_pc : ((z80header[33] & 0xFF) << 8) | (z80header[32] & 0xFF);
 
     final ZXEMLSnapshotFormat block = new ZXEMLSnapshotFormat();
 
-    for (int cpuIndex = 0; cpuIndex<4; cpuIndex++){
+    for (int cpuIndex = 0; cpuIndex < 4; cpuIndex++) {
       block.setAF(cpuIndex, makePair(mheader.reg_a, mheader.reg_f), false);
       block.setAF(cpuIndex, makePair(mheader.reg_a_alt, mheader.reg_f_alt), true);
       block.setBC(cpuIndex, mheader.reg_bc, false);
@@ -662,22 +658,20 @@ public class Z80Plugin extends AbstractFilePlugin {
       block.setRegIM(cpuIndex, mheader.emulFlags.interruptmode);
       block.setRegPC(cpuIndex, regpc);
       block.setRegSP(cpuIndex, mheader.reg_sp);
-      block.setIFF(cpuIndex, mheader.iff!=0);
-      block.setIFF2(cpuIndex, mheader.iff2!=0);
+      block.setIFF(cpuIndex, mheader.iff != 0);
+      block.setIFF2(cpuIndex, mheader.iff2 != 0);
     }
 
     final int port7ffd;
     if (version == VERSION_1) {
       port7ffd = 0x30;
-    }
-    else {
+    } else {
       final int hwmode = z80header[34];
       switch (version) {
         case VERSION_2: {
           if (hwmode == 3 || hwmode == 4) {
             port7ffd = z80header[35] & 0xFF;
-          }
-          else {
+          } else {
             port7ffd = 0x30;
           }
         }
@@ -686,8 +680,7 @@ public class Z80Plugin extends AbstractFilePlugin {
         case VERSION_3B: {
           if (hwmode == 4 || hwmode == 5 || hwmode == 6) {
             port7ffd = z80header[35] & 0xFF;
-          }
-          else {
+          } else {
             port7ffd = 0x30;
           }
         }
@@ -698,50 +691,57 @@ public class Z80Plugin extends AbstractFilePlugin {
     }
 
     block.setPort3D00((videoMode << 2) | 0x80 | 1);
-    
+
     block.setModulePorts(0, port7ffd, 0, 0, 0, 0);
     block.setModulePorts(1, port7ffd, 0x10 | (1 << 1), 0, 0, 0);
     block.setModulePorts(2, port7ffd, 0x10 | (2 << 1), 0, 0, 0);
     block.setModulePorts(3, port7ffd, 0x10 | (3 << 1), 0, 0, 0);
-    
+
     block.setPortFE(mheader.flags.bordercolor & 7);
-    
-    final byte [] pageIndexes = convertZ80BankIndexesToPages(bankIndexes, is48k(version, z80header), version);
-    
+
+    final byte[] pageIndexes = convertZ80BankIndexesToPages(bankIndexes, is48k(version, z80header), version);
+
     for (int cpu = 0; cpu < 4; cpu++) {
       final List<Page> pages = new ArrayList<Page>();
       int offsetIndex = 0;
       for (final byte page : pageIndexes) {
         pages.add(makePage(cpu, page & 0xFF, data, offsetIndex * 0x4000));
-        offsetIndex ++;
+        offsetIndex++;
       }
       block.setPages(cpu, new Pages(pages.toArray(new Page[pages.size()])));
     }
     saveDataToFile(file, block.save());
   }
 
-  private static byte [] convertZ80BankIndexesToPages(final byte [] bankIndexes, final boolean mode48, final int version){
-    final byte [] result;
-    switch(version){
-      case VERSION_1 : {
-        result = new byte []{5,2,0};
-      }break;
-      default : {
-        if (mode48){
-          result = new byte [bankIndexes.length];
-          for(int i=0;i<bankIndexes.length;i++){
-            switch(bankIndexes[i] & 0xFF){
-              case 8 : result[i] = 5; break;
-              case 4 : result[i] = 2; break;
-              default : result[i] = 0; break;
-            }
-          }
-        }else{
+  private static byte[] convertZ80BankIndexesToPages(final byte[] bankIndexes, final boolean mode48, final int version) {
+    final byte[] result;
+    switch (version) {
+      case VERSION_1: {
+        result = new byte[]{5, 2, 0};
+      }
+      break;
+      default: {
+        if (mode48) {
           result = new byte[bankIndexes.length];
           for (int i = 0; i < bankIndexes.length; i++) {
-            final int page = (bankIndexes[i] & 0xFF)-3;
-            if (page >=0 && page<8){
-              result[i] = (byte)page;
+            switch (bankIndexes[i] & 0xFF) {
+              case 8:
+                result[i] = 5;
+                break;
+              case 4:
+                result[i] = 2;
+                break;
+              default:
+                result[i] = 0;
+                break;
+            }
+          }
+        } else {
+          result = new byte[bankIndexes.length];
+          for (int i = 0; i < bankIndexes.length; i++) {
+            final int page = (bankIndexes[i] & 0xFF) - 3;
+            if (page >= 0 && page < 8) {
+              result[i] = (byte) page;
             }
           }
         }
@@ -749,7 +749,7 @@ public class Z80Plugin extends AbstractFilePlugin {
     }
     return result;
   }
-  
+
   private static Page makePage(final int cpu, final int page, final ZXPolyData data, final int offset) throws IOException {
     final byte[] bankData = new byte[0x4000];
     System.arraycopy(data.getDataForCPU(cpu), offset, bankData, 0, 0x4000);
