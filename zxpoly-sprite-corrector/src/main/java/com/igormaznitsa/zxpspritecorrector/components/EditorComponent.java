@@ -29,14 +29,19 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   private static final Stroke GRID_STROKE = new BasicStroke(0.3f);
   private static final Stroke COLUMN_BORDER_STROKE = new BasicStroke(0.7f);
   private static final Stroke TOOL_AREA_STROKE = new BasicStroke(2.3f);
+  private static final Stroke SELECTED_AREA_STROKE = new BasicStroke(3.0f,
+          BasicStroke.CAP_BUTT,
+          BasicStroke.JOIN_BEVEL,
+          0.0f, new float[]{4.0f, 4.0f}, 0.0f);
 
+  private Color colorSelectedArea = Color.GREEN.darker();
   private Color colorToolArea = Color.WHITE;
 
   private Color colorPixelOn = Color.GRAY.darker();
   private Color colorPixelOff = Color.DARK_GRAY.darker();
   private Color colorZX512On = Color.YELLOW;
   private Color colorZX512Off = Color.BLUE;
-  private Color colorGrid = Color.ORANGE;
+  private Color colorGrid = Color.ORANGE.darker();
   private Color colorColumnBorder = Color.CYAN;
 
   private BufferedImage image;
@@ -54,6 +59,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   private ZXPolyData processingData;
   private int startAddress;
 
+  private Point startSelectedAreaPoint;
+  private Rectangle selectedArea;
   private Rectangle toolArea;
 
   private int gridStep = 1;
@@ -82,6 +89,47 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     return new Point(pointAtComponent.x / this.zoom, pointAtComponent.y / this.zoom);
   }
 
+  public RenderedImage getSelectedAreaAsImage(final boolean baseData) {
+    BufferedImage result = null;
+    if (this.processingData != null && this.selectedArea != null) {
+      final int w;
+      final int h;
+      if (this.mode512) {
+        w = this.selectedArea.width;
+        h = this.selectedArea.height;
+      } else {
+        w = this.selectedArea.width >> 1;
+        h = this.selectedArea.height >> 1;
+      }
+      result = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+      
+      if (baseData) {
+        final Graphics gfx = result.createGraphics();
+        for(int y=0;y<h;y++){
+          for(int x=0;x<w;x++) {
+            if (this.zxGraphics.isBaseBitSet(x, y)) {
+              gfx.setColor(Color.WHITE);
+            } else {
+              gfx.setColor(Color.BLACK);
+            }
+            gfx.drawLine(x, y, x, y);
+          }
+        }
+        gfx.dispose();
+      }
+      
+    }
+    return result;
+  }
+
+  public boolean hasSelectedArea() {
+    return this.selectedArea != null;
+  }
+  
+  public Rectangle getSelectedArea() {
+    return this.selectedArea == null ? null : new Rectangle(this.selectedArea);
+  }
+  
   public static final class ZXGraphics {
 
     private final EditorComponent editor;
@@ -343,7 +391,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   public void addUndo() {
     if (this.processingData != null) {
       this.listRedo.clear();
-      this.listUndo.add(this.processingData.makeUndo());
+      this.listUndo.add(this.processingData.makeUndo(this.selectedArea));
       while (this.listUndo.size() > 15) {
         this.listUndo.remove(0);
       }
@@ -354,11 +402,12 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     if (this.processingData != null && !this.listUndo.isEmpty()) {
       final ZXPolyData.UndoBlock blockPrevious = this.listUndo.remove(this.listUndo.size() - 1);
       if (this.listRedo.isEmpty()) {
-        this.listRedo.add(this.processingData.makeUndo());
+        this.listRedo.add(this.processingData.makeUndo(this.selectedArea));
       }
 
       this.listRedo.add(blockPrevious);
       this.processingData.restoreFromUndo(blockPrevious);
+      this.selectedArea = blockPrevious.getSelectedArea();
       _updatePictureInBuffer();
       repaint();
     }
@@ -369,6 +418,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       final ZXPolyData.UndoBlock block = this.listRedo.remove(this.listRedo.size() - 1);
       this.listUndo.add(block);
       this.processingData.restoreFromUndo(block);
+      this.selectedArea = block.getSelectedArea();
       _updatePictureInBuffer();
       repaint();
     }
@@ -414,8 +464,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     }
 
     this.changeListeners.forEach((l) -> {
-        l.stateChanged(new ChangeEvent(this));
-      });
+      l.stateChanged(new ChangeEvent(this));
+    });
 
     _updatePictureInBuffer();
     repaint();
@@ -541,6 +591,59 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     _updatePreferredSize();
 
     revalidate();
+    repaint();
+  }
+
+  public void resetSelectArea() {
+    this.selectedArea = null;
+    repaint();
+  }
+
+  private Point ensureInsideScreenAndEven(final Point point) {
+    return new Point(
+            Math.min(512, Math.max(0, point.x & 0xFFFFFFFE)),
+            Math.min(384, Math.max(0, point.y & 0xFFFFFFFE))
+    );
+  }
+
+  public void startSelectArea(final Point editorPoint) {
+    this.startSelectedAreaPoint = ensureInsideScreenAndEven(editorPoint);
+    this.selectedArea = new Rectangle(ensureInsideScreenAndEven(this.startSelectedAreaPoint), new Dimension(1, 1));
+    repaint();
+  }
+
+  public void updateSelectArea(final Point editorPoint) {
+    final Point point = ensureInsideScreenAndEven(editorPoint);
+    
+    final int dx = this.startSelectedAreaPoint.x - point.x;
+    final int dy = this.startSelectedAreaPoint.y - point.y;
+
+    final int newX;
+    final int newY;
+    final int newW;
+    final int newH;
+    
+    if (dx < 0) {
+      newX = this.startSelectedAreaPoint.x;
+      newW = -dx;
+    } else {
+      newX = point.x;
+      newW = dx;
+    }
+    
+    if (dy < 0) {
+      newY = this.startSelectedAreaPoint.y;
+      newH = -dy;
+    } else {
+      newY = point.y;
+      newH = dy;
+    }
+
+    this.selectedArea.setBounds(newX, newY, newW, newH);
+    repaint();
+  }
+
+  public void endSelectArea(final Point editorPoint) {
     repaint();
   }
 
@@ -776,6 +879,15 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       }
     }
 
+    if (this.selectedArea != null) {
+      gfx.setRenderingHints(RENDERING_LINE_HINTS);
+      gfx.setStroke(SELECTED_AREA_STROKE);
+      gfx.setColor(colorSelectedArea);
+
+      final Rectangle rect = new Rectangle(this.selectedArea.x * this.zoom, this.selectedArea.y * this.zoom, this.selectedArea.width * this.zoom, this.selectedArea.height * this.zoom);
+      gfx.draw(rect);
+    }
+
     if (this.toolArea != null) {
       gfx.setRenderingHints(RENDERING_LINE_HINTS);
       gfx.setStroke(TOOL_AREA_STROKE);
@@ -784,12 +896,12 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
       gfx.setColor(this.colorToolArea);
       gfx.draw(zoomed);
-      
+
       zoomed.x--;
       zoomed.y--;
-      zoomed.width+=2;
-      zoomed.height+=2;
-      
+      zoomed.width += 2;
+      zoomed.height += 2;
+
       gfx.setColor(this.colorToolArea.darker().darker().darker());
       gfx.draw(zoomed);
     }

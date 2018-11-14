@@ -22,7 +22,7 @@ public final class PenWidth extends JPanel {
   
   private final ChangeListener changeListener;
   
-  private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Tool width: ---");
+  private final TitledBorder titledBorder = BorderFactory.createTitledBorder("---");
   
   public PenWidth() {
     super();

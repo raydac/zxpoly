@@ -22,10 +22,12 @@ import org.apache.commons.io.FilenameUtils;
 import org.picocontainer.*;
 import org.picocontainer.injectors.*;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SNA48Plugin;
+import com.igormaznitsa.zxpspritecorrector.utils.ImageTransferable;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class MainFrame extends javax.swing.JFrame {
@@ -44,10 +46,12 @@ public final class MainFrame extends javax.swing.JFrame {
   private File lastExportedFile;
   private File szeFile;
 
+  private boolean selectAreaMode = false;
+
   private final Cursor CURSOR_BLANK = Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB), new Point(0, 0), "blank cursor");
-  
+
   private final AtomicReference<AbstractTool> currentAbstractTool = new AtomicReference<>();
-  
+
   public MainFrame() {
     initComponents();
 
@@ -74,32 +78,33 @@ public final class MainFrame extends javax.swing.JFrame {
     this.container.start();
 
     this.container.getComponents(AbstractTool.class).stream().forEachOrdered(tool -> {
-        this.panelTools.add(tool);
-        this.toolsButtonGroup.add(tool);
-        
-        tool.addItemListener((ItemEvent e) -> {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                this.sliderPenWidth.setModel(((AbstractTool) e.getItem()).getScaleModel());
-                this.currentAbstractTool.set(tool);
-            } else if (e.getStateChange() == ItemEvent.DESELECTED) {
-                if (this.currentAbstractTool.compareAndSet(tool, null)){
-                    this.sliderPenWidth.setModel(null);
-                }
-            }
-        });
+      this.panelTools.add(tool);
+      this.toolsButtonGroup.add(tool);
+
+      tool.addItemListener((ItemEvent e) -> {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          this.selectAreaMode = false;
+          this.sliderPenWidth.setModel(((AbstractTool) e.getItem()).getScaleModel());
+          this.currentAbstractTool.set(tool);
+        } else if (e.getStateChange() == ItemEvent.DESELECTED) {
+          if (this.currentAbstractTool.compareAndSet(tool, null)) {
+            this.sliderPenWidth.setModel(null);
+          }
+        }
+      });
     }
     );
 
     this.container.getComponents(AbstractFilePlugin.class).stream()
             .filter((p) -> !(!p.allowsExport()))
             .forEachOrdered((p) -> {
-        final JMenuItem menuItem = new JMenuItem(p.getPluginDescription(true));
-        this.menuFileExportAs.add(menuItem);
-        menuItem.setToolTipText(p.getToolTip(true));
-        menuItem.addActionListener(e -> {
-            exportDataWithPlugin(p);
-        });
-      });
+              final JMenuItem menuItem = new JMenuItem(p.getPluginDescription(true));
+              this.menuFileExportAs.add(menuItem);
+              menuItem.setToolTipText(p.getToolTip(true));
+              menuItem.addActionListener(e -> {
+                exportDataWithPlugin(p);
+              });
+            });
 
     this.setLocationRelativeTo(null);
     updateAddressScrollBar();
@@ -117,6 +122,7 @@ public final class MainFrame extends javax.swing.JFrame {
         ((JMenu) j).addMenuListener(new MenuListener() {
           @Override
           public void menuSelected(MenuEvent e) {
+            selectAreaMode = false;
             toolsButtonGroup.clearSelection();
           }
 
@@ -265,6 +271,9 @@ public final class MainFrame extends javax.swing.JFrame {
     menuEditUndo = new javax.swing.JMenuItem();
     menuEditRedo = new javax.swing.JMenuItem();
     jSeparator2 = new javax.swing.JPopupMenu.Separator();
+    menuEditSelectArea = new javax.swing.JMenuItem();
+    menuEditCopySelectedAsImage = new javax.swing.JMenuItem();
+    jSeparator7 = new javax.swing.JPopupMenu.Separator();
     menuEditCopyBaseToPlans = new javax.swing.JMenuItem();
     menuEditClear = new javax.swing.JMenuItem();
     menuOptions = new javax.swing.JMenu();
@@ -337,7 +346,7 @@ public final class MainFrame extends javax.swing.JFrame {
     );
     colorSelectorLayout.setVerticalGroup(
       colorSelectorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGap(0, 86, Short.MAX_VALUE)
+      .addGap(0, 110, Short.MAX_VALUE)
     );
 
     sliderPenWidth.setToolTipText("Width of an operation tool");
@@ -487,6 +496,23 @@ public final class MainFrame extends javax.swing.JFrame {
     menuEdit.add(menuEditRedo);
     menuEdit.add(jSeparator2);
 
+    menuEditSelectArea.setText("Select area");
+    menuEditSelectArea.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuEditSelectAreaActionPerformed(evt);
+      }
+    });
+    menuEdit.add(menuEditSelectArea);
+
+    menuEditCopySelectedAsImage.setText("Copy selected as image");
+    menuEditCopySelectedAsImage.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuEditCopySelectedAsImageActionPerformed(evt);
+      }
+    });
+    menuEdit.add(menuEditCopySelectedAsImage);
+    menuEdit.add(jSeparator7);
+
     menuEditCopyBaseToPlans.setText("Copy base to all plans");
     menuEditCopyBaseToPlans.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -550,11 +576,6 @@ public final class MainFrame extends javax.swing.JFrame {
     menuOptionsMode512.addChangeListener(new javax.swing.event.ChangeListener() {
       public void stateChanged(javax.swing.event.ChangeEvent evt) {
         menuOptionsMode512StateChanged(evt);
-      }
-    });
-    menuOptionsMode512.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuOptionsMode512ActionPerformed(evt);
       }
     });
     menuOptions.add(menuOptionsMode512);
@@ -722,14 +743,17 @@ public final class MainFrame extends javax.swing.JFrame {
         }//GEN-LAST:event_menuHelpAboutActionPerformed
 
   private void mainEditorPanelMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseWheelMoved
-    if (evt.getModifiersEx() == MouseWheelEvent.CTRL_DOWN_MASK) {
+    if (this.selectAreaMode) {
+      this.selectAreaMode = false;
+      this.mainEditor.resetSelectArea();
+    } else if (evt.getModifiersEx() == MouseWheelEvent.CTRL_DOWN_MASK) {
       if (evt.getWheelRotation() < 0) {
         this.mainEditor.zoomIn();
       } else {
         this.mainEditor.zoomOut();
       }
-      updateBottomBar();
     }
+    updateBottomBar();
   }//GEN-LAST:event_mainEditorPanelMouseWheelMoved
 
   private void sliderColumnsStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sliderColumnsStateChanged
@@ -747,8 +771,8 @@ public final class MainFrame extends javax.swing.JFrame {
     chooser.setAcceptAllFileFilterUsed(false);
 
     container.getComponents(AbstractFilePlugin.class).forEach((plugin) -> {
-        chooser.addChoosableFileFilter(plugin.getImportFileFilter());
-      });
+      chooser.addChoosableFileFilter(plugin.getImportFileFilter());
+    });
 
     final InsideFileView insideFileView = new InsideFileView(chooser);
     chooser.setAccessory(insideFileView);
@@ -814,8 +838,11 @@ public final class MainFrame extends javax.swing.JFrame {
     }
   }
 
-  private Rectangle updateToolRectangle(final Point point) {
-    final Point editorPoint = this.mainEditor.mousePoint2ScreenPoint(SwingUtilities.convertPoint(this.mainEditorPanel, point, this.mainEditor));
+  private Point mouseCoord2EditorCoord(final MouseEvent evt) {
+    return this.mainEditor.mousePoint2ScreenPoint(SwingUtilities.convertPoint(this.mainEditorPanel, evt.getPoint(), this.mainEditor));
+  }
+  
+  private Rectangle updateToolRectangle(final Point editorPoint) {
     final int width = this.sliderPenWidth.getValue();
     final Rectangle rect;
     if (width <= 1) {
@@ -825,13 +852,13 @@ public final class MainFrame extends javax.swing.JFrame {
     }
 
     if (this.currentAbstractTool.get() == null) {
-        this.mainEditor.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-        this.mainEditor.setToolArea(null);
+      this.mainEditor.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+      this.mainEditor.setToolArea(null);
     } else {
-        this.mainEditor.setCursor(CURSOR_BLANK);
-        this.mainEditor.setToolArea(rect);
+      this.mainEditor.setCursor(CURSOR_BLANK);
+      this.mainEditor.setToolArea(rect);
     }
-    
+
     setLabelAddress(this.mainEditor.getZXGraphics().coordToAddress(rect.x, rect.y));
 
     return rect;
@@ -882,12 +909,16 @@ public final class MainFrame extends javax.swing.JFrame {
     this.mainEditor.addUndo();
     updateRedoUndo();
 
-    updateToolRectangle(evt.getPoint());
-    processCurrentToolForPoint(extractButtons(evt));
+    if (this.selectAreaMode) {
+      this.mainEditor.startSelectArea(mouseCoord2EditorCoord(evt));
+    } else {
+      updateToolRectangle(mouseCoord2EditorCoord(evt));
+      processCurrentToolForPoint(extractButtons(evt));
+    }
   }//GEN-LAST:event_mainEditorPanelMousePressed
 
   private void mainEditorPanelMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseMoved
-    updateToolRectangle(evt.getPoint());
+    updateToolRectangle(mouseCoord2EditorCoord(evt));
   }//GEN-LAST:event_mainEditorPanelMouseMoved
 
   private void mainEditorPanelMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseExited
@@ -895,15 +926,20 @@ public final class MainFrame extends javax.swing.JFrame {
   }//GEN-LAST:event_mainEditorPanelMouseExited
 
   private void mainEditorPanelMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseEntered
-    updateToolRectangle(evt.getPoint());
+    updateToolRectangle(mouseCoord2EditorCoord(evt));
   }//GEN-LAST:event_mainEditorPanelMouseEntered
 
   private void mainEditorPanelMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseDragged
-    updateToolRectangle(evt.getPoint());
-    processCurrentToolForPoint(extractButtons(evt));
+    if (this.selectAreaMode) {
+      this.mainEditor.updateSelectArea(mouseCoord2EditorCoord(evt));
+    } else {
+      updateToolRectangle(mouseCoord2EditorCoord(evt));
+      processCurrentToolForPoint(extractButtons(evt));
+    }
   }//GEN-LAST:event_mainEditorPanelMouseDragged
 
   private void menuOptionsMode512StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_menuOptionsMode512StateChanged
+    this.mainEditor.resetSelectArea();
     this.mainEditor.setMode512(this.menuOptionsMode512.isSelected());
   }//GEN-LAST:event_menuOptionsMode512StateChanged
 
@@ -1018,11 +1054,28 @@ public final class MainFrame extends javax.swing.JFrame {
   }//GEN-LAST:event_menuOptionsColumnsEvenActionPerformed
 
   private void mainEditorPanelMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseReleased
-
+    if (this.selectAreaMode) {
+      this.selectAreaMode = false;
+      this.mainEditor.endSelectArea(mouseCoord2EditorCoord(evt));
+    }
   }//GEN-LAST:event_mainEditorPanelMouseReleased
 
-  private void menuOptionsMode512ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsMode512ActionPerformed
-  }//GEN-LAST:event_menuOptionsMode512ActionPerformed
+  private void menuEditSelectAreaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditSelectAreaActionPerformed
+    this.selectAreaMode = true;
+    this.mainEditor.addUndo();
+    this.mainEditor.resetSelectArea();
+  }//GEN-LAST:event_menuEditSelectAreaActionPerformed
+
+  private void menuEditCopySelectedAsImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditCopySelectedAsImageActionPerformed
+      final RenderedImage selectedAreaImage = this.mainEditor.getSelectedAreaAsImage(true);
+      if (selectedAreaImage!=null){
+        try{
+        new ImageTransferable(selectedAreaImage).copy();
+        }catch(IOException ex){
+          ex.printStackTrace();
+        }
+      }
+  }//GEN-LAST:event_menuEditCopySelectedAsImageActionPerformed
 
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);
@@ -1054,6 +1107,7 @@ public final class MainFrame extends javax.swing.JFrame {
   private javax.swing.JPopupMenu.Separator jSeparator4;
   private javax.swing.JPopupMenu.Separator jSeparator5;
   private javax.swing.JPopupMenu.Separator jSeparator6;
+  private javax.swing.JPopupMenu.Separator jSeparator7;
   private javax.swing.JLabel labelAddress;
   private javax.swing.JLabel labelZoom;
   private com.igormaznitsa.zxpspritecorrector.components.EditorComponent mainEditor;
@@ -1062,7 +1116,9 @@ public final class MainFrame extends javax.swing.JFrame {
   private javax.swing.JMenu menuEdit;
   private javax.swing.JMenuItem menuEditClear;
   private javax.swing.JMenuItem menuEditCopyBaseToPlans;
+  private javax.swing.JMenuItem menuEditCopySelectedAsImage;
   private javax.swing.JMenuItem menuEditRedo;
+  private javax.swing.JMenuItem menuEditSelectArea;
   private javax.swing.JMenuItem menuEditUndo;
   private javax.swing.JMenu menuFile;
   private javax.swing.JMenuItem menuFileExit;

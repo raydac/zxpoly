@@ -23,6 +23,7 @@ import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.mapper.Bin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
+import java.awt.Rectangle;
 import java.io.*;
 import java.util.*;
 
@@ -54,21 +55,26 @@ public class ZXPolyData {
   private final Info info;
 
   public static class UndoBlock {
-
+    private final Rectangle selectedArea;
     private final byte[] mask;
     private final byte[][] zxpoly;
 
-    private UndoBlock(final byte[] mask, final byte[][] zxpoly) {
+    private UndoBlock(final Rectangle selectedArea, final byte[] mask, final byte[][] zxpoly) {
+      this.selectedArea = selectedArea == null ? null : new Rectangle(selectedArea);
       this.mask = mask.clone();
       this.zxpoly = new byte[4][];
       for (int i = 0; i < 4; i++) {
         this.zxpoly[i] = zxpoly[i].clone();
       }
     }
+    
+    public Rectangle getSelectedArea() {
+      return this.selectedArea;
+    }
   }
 
-  public UndoBlock makeUndo() {
-    return new UndoBlock(this.mask, this.zxpoly);
+  public UndoBlock makeUndo(final Rectangle selectedArea) {
+    return new UndoBlock(selectedArea, this.mask, this.zxpoly);
   }
 
   public void restoreFromUndo(final UndoBlock undo) {

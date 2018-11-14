@@ -24,7 +24,6 @@ import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
 import java.io.*;
 import java.util.*;
-import org.apache.commons.io.*;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.annotations.Inject;
 
@@ -93,15 +92,11 @@ public class SZEPlugin extends AbstractFilePlugin {
   
   @Override
   public ReadResult readFrom(final File file, final int index) throws IOException {
-    FileInputStream inStream = null;
-    try{
-      inStream = new FileInputStream(file);
+    try(FileInputStream inStream = new FileInputStream(file)){
       final ZXPolyData zxpolyData = new ZXPolyData(inStream, this.context.getComponents(AbstractFilePlugin.class));
       final JBBPBitInputStream in = new JBBPBitInputStream(inStream);
       final int length = in.readInt(JBBPByteOrder.BIG_ENDIAN);
       return new ReadResult(zxpolyData, new SessionData(in));
-    }finally{
-      IOUtils.closeQuietly(inStream);
     }
   }
 
