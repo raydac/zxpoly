@@ -25,6 +25,14 @@ import javax.swing.*;
 public abstract class AbstractTool extends JToggleButton {
   private static final long serialVersionUID = 5453667415344533432L;
   
+  public static final int BUTTON_NONE = 0;
+  public static final int BUTTON_MOUSE_LEFT = 1;
+  public static final int BUTTON_MOUSE_MIDDLE = 2;
+  public static final int BUTTON_MOUSE_RIGHT = 4;
+  public static final int BUTTON_SHIFT = 8;
+  public static final int BUTTON_CTRL = 16;
+  public static final int BUTTON_ALT = 32;
+  
   public AbstractTool(final String iconName, final String toolTip){
     super();
     setModel(new ToolButtonModel(this));
@@ -32,7 +40,11 @@ public abstract class AbstractTool extends JToggleButton {
     setToolTipText(toolTip);
   }
   
-  public abstract void process(final EditorComponent editComponent, final Rectangle area, final int modifiers, final int modifiersExt);
+  public boolean doesSupport512x384(){
+    return true;
+  }
+  
+  public abstract void process(final EditorComponent editComponent, final Rectangle area, final int buttons);
 
   public static boolean isCoordValid(final int x, final int y, final boolean mode512){
     if (mode512) {

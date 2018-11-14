@@ -19,7 +19,6 @@ package com.igormaznitsa.zxpspritecorrector.tools;
 import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
 import com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector;
 import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
 import org.picocontainer.annotations.Inject;
 
 public class ToolPencil extends AbstractTool {
@@ -34,17 +33,17 @@ public class ToolPencil extends AbstractTool {
   }
 
   @Override
-  public void process(final EditorComponent editComponent, final Rectangle area, final int modifiers, final int modifiresExt) {
+  public void process(final EditorComponent editComponent, final Rectangle area, final int buttons) {
     final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
 
     final int index;
 
     final boolean mode512 = editComponent.isMode512();
     
-    if ((modifiers & MouseEvent.BUTTON1_MASK) != 0) {
+    if ((buttons & BUTTON_MOUSE_LEFT) != 0) {
       index = mode512 ? 1 : colorSelector.getSelectedInk();
     }
-    else if ((modifiers & MouseEvent.BUTTON3_MASK) != 0) {
+    else if ((buttons & BUTTON_MOUSE_RIGHT) != 0) {
       index = mode512 ? 0 : colorSelector.getSelectedPaint();
     }
     else {

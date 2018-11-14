@@ -19,7 +19,6 @@ package com.igormaznitsa.zxpspritecorrector.tools;
 import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
 import com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector;
 import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
 import org.picocontainer.annotations.Inject;
 
 public class ToolColorizer extends AbstractTool {
@@ -34,12 +33,17 @@ public class ToolColorizer extends AbstractTool {
   }
 
   @Override
-  public void process(final EditorComponent editComponent, final Rectangle area, final int modifiers, final int modifiersExt) {
+  public boolean doesSupport512x384() {
+    return false;
+  }
+
+  @Override
+  public void process(final EditorComponent editComponent, final Rectangle area, final int buttons) {
     final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
 
     final boolean mode512 = editComponent.isMode512();
     
-    if ((modifiers & MouseEvent.BUTTON1_MASK) != 0) {
+    if ((buttons & BUTTON_MOUSE_LEFT) != 0) {
       final int index = colorSelector.getSelectedInk();
       for (int x = 0; x < area.width; x++) {
         for (int y = 0; y < area.height; y++) {
@@ -56,7 +60,7 @@ public class ToolColorizer extends AbstractTool {
         }
       }
     }
-    else if ((modifiers & MouseEvent.BUTTON3_MASK) != 0) {
+    else if ((buttons & BUTTON_MOUSE_RIGHT) != 0) {
       final int index = colorSelector.getSelectedPaint();
       for (int x = 0; x < area.width; x++) {
         for (int y = 0; y < area.height; y++) {

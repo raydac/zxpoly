@@ -29,7 +29,7 @@ public class ToolEraser extends AbstractTool {
   }
 
   @Override
-  public void process(final EditorComponent editComponent, final Rectangle area, final int modifiers, final int modifiersExt) {
+  public void process(final EditorComponent editComponent, final Rectangle area, final int buttons) {
     final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
 
     final boolean mode512 = editComponent.isMode512();
@@ -43,7 +43,7 @@ public class ToolEraser extends AbstractTool {
           continue;
         }
 
-        gfx.resetPoint(dx, dy, (modifiersExt & MouseEvent.CTRL_DOWN_MASK) != 0);
+        gfx.resetPoint(dx, dy, (buttons & BUTTON_CTRL) != 0);
       }
     }
 

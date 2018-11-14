@@ -24,6 +24,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.picocontainer.*;
 import org.picocontainer.injectors.*;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SNA48Plugin;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
 public class MainFrame extends javax.swing.JFrame {
@@ -42,24 +43,24 @@ public class MainFrame extends javax.swing.JFrame {
     sliderColumns.setModel(new DefaultBoundedRangeModel(32, 0, 1, 32));
     sliderColumns.setValue(this.mainEditor.getColumns());
 
-    container.addComponent(SZEPlugin.class);
-    container.addComponent(HOBETAPlugin.class);
-    container.addComponent(TAPPlugin.class);
-    container.addComponent(TRDPlugin.class);
-    container.addComponent(SCLPlugin.class);
-    container.addComponent(SCRPlugin.class);
-    container.addComponent(Z80Plugin.class);
-    container.addComponent(SNA48Plugin.class);
-
-    container.addComponent(ToolPencil.class);
-    container.addComponent(ToolEraser.class);
-    container.addComponent(ToolColorizer.class);
-
+    container.start();
+    
     container.addAdapter(new ProviderAdapter(new ContextProvider(container)));
     container.addComponent(this);
     container.addComponent(this.colorSelector);
 
-    container.start();
+    container.addComponent(new SZEPlugin());
+    container.addComponent(new HOBETAPlugin());
+    container.addComponent(new TAPPlugin());
+    container.addComponent(new TRDPlugin());
+    container.addComponent(new SCLPlugin());
+    container.addComponent(new SCRPlugin());
+    container.addComponent(new Z80Plugin());
+    container.addComponent(new SNA48Plugin());
+
+    container.addComponent(new ToolPencil());
+    container.addComponent(new ToolEraser());
+    container.addComponent(new ToolColorizer());
 
     for (final AbstractTool tool : container.getComponents(AbstractTool.class)) {
       this.panelTools.add(tool);
@@ -111,8 +112,14 @@ public class MainFrame extends javax.swing.JFrame {
       }
     }
 
+    this.menuOptionsMode512.addActionListener(x -> {
+      final boolean mode512 = this.menuOptionsMode512.isSelected();
+      this.container.getComponents(AbstractTool.class).forEach((t) -> {
+        t.setEnabled(!mode512 || (mode512 && t.doesSupport512x384()));
+      });
+    });
+    
     setVisible(true);
-
     repaint();
   }
 
@@ -528,6 +535,11 @@ public class MainFrame extends javax.swing.JFrame {
         menuOptionsMode512StateChanged(evt);
       }
     });
+    menuOptionsMode512.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsMode512ActionPerformed(evt);
+      }
+    });
     menuOptions.add(menuOptionsMode512);
     menuOptions.add(jSeparator6);
 
@@ -774,13 +786,13 @@ public class MainFrame extends javax.swing.JFrame {
     this.mainEditor.setAddress(address);
   }//GEN-LAST:event_scrollBarAddressAdjustmentValueChanged
 
-  private void processCurrentToolForPoint(final int modifiers, final int modifiersExt) {
+  private void processCurrentToolForPoint(final int buttons) {
     final Rectangle toolRect = this.mainEditor.getToolArea();
 
     if (toolRect != null) {
       final ToolButtonModel tool = (ToolButtonModel) this.toolsButtonGroup.getSelection();
       if (tool != null) {
-        tool.getTool().process(this.mainEditor, toolRect, modifiers, modifiersExt);
+        tool.getTool().process(this.mainEditor, toolRect, buttons);
       }
     }
   }
@@ -818,12 +830,35 @@ public class MainFrame extends javax.swing.JFrame {
     this.menuEditUndo.setEnabled(this.mainEditor.hasUndo());
   }
 
+  private int extractButtons(final MouseEvent event) {
+    int result = AbstractTool.BUTTON_NONE;
+    if ((event.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) != 0) {
+      result |= AbstractTool.BUTTON_CTRL;
+    }
+    if ((event.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) != 0) {
+      result |= AbstractTool.BUTTON_ALT;
+    }
+    if ((event.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) != 0) {
+      result |= AbstractTool.BUTTON_SHIFT;
+    }
+    if ((event.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) != 0) {
+      result |= AbstractTool.BUTTON_MOUSE_LEFT;
+    }
+    if ((event.getModifiersEx() & MouseEvent.BUTTON2_DOWN_MASK) != 0) {
+      result |= AbstractTool.BUTTON_MOUSE_MIDDLE;
+    }
+    if ((event.getModifiersEx() & MouseEvent.BUTTON3_DOWN_MASK) != 0) {
+      result |= AbstractTool.BUTTON_MOUSE_RIGHT;
+    }
+    return result;
+  }
+
   private void mainEditorPanelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMousePressed
     this.mainEditor.addUndo();
     updateRedoUndo();
 
     updateToolRectangle(evt.getPoint());
-    processCurrentToolForPoint(evt.getModifiers(), evt.getModifiersEx());
+    processCurrentToolForPoint(extractButtons(evt));
   }//GEN-LAST:event_mainEditorPanelMousePressed
 
   private void mainEditorPanelMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseMoved
@@ -840,7 +875,7 @@ public class MainFrame extends javax.swing.JFrame {
 
   private void mainEditorPanelMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseDragged
     updateToolRectangle(evt.getPoint());
-    processCurrentToolForPoint(evt.getModifiers(), evt.getModifiersEx());
+    processCurrentToolForPoint(extractButtons(evt));
   }//GEN-LAST:event_mainEditorPanelMouseDragged
 
   private void menuOptionsMode512StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_menuOptionsMode512StateChanged
@@ -960,6 +995,9 @@ public class MainFrame extends javax.swing.JFrame {
   private void mainEditorPanelMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseReleased
 
   }//GEN-LAST:event_mainEditorPanelMouseReleased
+
+  private void menuOptionsMode512ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsMode512ActionPerformed
+  }//GEN-LAST:event_menuOptionsMode512ActionPerformed
 
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);
