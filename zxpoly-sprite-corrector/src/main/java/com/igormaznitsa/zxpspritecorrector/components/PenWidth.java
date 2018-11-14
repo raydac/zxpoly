@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 
 public final class PenWidth extends JPanel {
@@ -21,6 +22,8 @@ public final class PenWidth extends JPanel {
   
   private final ChangeListener changeListener;
   
+  private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Tool width: ---");
+  
   public PenWidth() {
     super();
         this.changeListener = (ChangeEvent e) -> {
@@ -29,23 +32,23 @@ public final class PenWidth extends JPanel {
     setOpaque(false);
     setLayout(new BorderLayout(0, 0));
 
-    showImage = new BufferedImage(ICON_WIDTH, ICON_HEIGHT, BufferedImage.TYPE_INT_RGB);
+    this.showImage = new BufferedImage(ICON_WIDTH, ICON_HEIGHT, BufferedImage.TYPE_INT_RGB);
 
-    widthSlider = new JSlider();
-    widthSlider.setMajorTickSpacing(10);
-    widthSlider.setMinorTickSpacing(5);
-    widthSlider.setSnapToTicks(true);
+    this.widthSlider = new JSlider();
+    this.widthSlider.setMajorTickSpacing(10);
+    this.widthSlider.setMinorTickSpacing(5);
+    this.widthSlider.setSnapToTicks(true);
     
-    showLabel = new JLabel(new ImageIcon(showImage));
+    this.showLabel = new JLabel(new ImageIcon(showImage));
 
-    add(showLabel, BorderLayout.CENTER);
-    add(widthSlider, BorderLayout.SOUTH);
+    add(this.showLabel, BorderLayout.CENTER);
+    add(this.widthSlider, BorderLayout.SOUTH);
 
-    widthSlider.setSize(ICON_WIDTH << 1, 10);
+    this.widthSlider.setSize(ICON_WIDTH << 1, 10);
 
-    widthSlider.setFocusable(false);
+    this.widthSlider.setFocusable(false);
 
-    setBorder(BorderFactory.createTitledBorder("Tool size"));
+    setBorder(this.titledBorder);
 
     setSize(getPreferredSize());
 
@@ -88,8 +91,12 @@ public final class PenWidth extends JPanel {
         gfx.setColor(Color.white);
         gfx.fillRect(0, 0, ICON_WIDTH, ICON_HEIGHT);
       if (newValue>0){
+        this.titledBorder.setTitle("Width:" + newValue + " px");
+
         gfx.setColor(Color.black);
         gfx.fillRect((ICON_WIDTH - newValue) / 2, (ICON_HEIGHT - newValue) / 2, newValue, newValue);
+      }else{
+        this.titledBorder.setTitle("Width:---");
       }
         gfx.dispose();
         repaint();
