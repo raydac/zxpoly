@@ -18,7 +18,6 @@ package com.igormaznitsa.zxpspritecorrector.tools;
 
 import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
 import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
 
 public class ToolEraser extends AbstractTool {
 

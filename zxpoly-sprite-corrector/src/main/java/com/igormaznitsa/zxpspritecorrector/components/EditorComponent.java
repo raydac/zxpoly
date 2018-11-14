@@ -60,10 +60,10 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
   private final ZXGraphics zxGraphics = new ZXGraphics(this);
 
-  private final List<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
+  private final List<ChangeListener> changeListeners = new ArrayList<>();
 
-  private final java.util.List<ZXPolyData.UndoBlock> listUndo = new ArrayList<ZXPolyData.UndoBlock>();
-  private final java.util.List<ZXPolyData.UndoBlock> listRedo = new ArrayList<ZXPolyData.UndoBlock>();
+  private final java.util.List<ZXPolyData.UndoBlock> listUndo = new ArrayList<>();
+  private final java.util.List<ZXPolyData.UndoBlock> listRedo = new ArrayList<>();
 
   private static final RenderingHints RENDERING_IMAGE_HINTS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
   private static final RenderingHints RENDERING_LINE_HINTS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
@@ -90,7 +90,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       this.editor = editor;
     }
 
-    private int coordToAddress(int x, final int y) {
+    public int coordToAddress(int x, final int y) {
       final int result;
 
       final ZXPolyData data = this.editor.processingData;
@@ -285,10 +285,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     return this.zxGraphics;
   }
 
-  public int setToolArea(final Rectangle rect) {
+  public void setToolArea(final Rectangle rect) {
     this.toolArea = rect;
     repaint();
-    return this.toolArea == null ? -1 : this.zxGraphics.coordToAddress(this.toolArea.x, this.toolArea.y);
   }
 
   public Rectangle getToolArea() {
@@ -414,9 +413,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       this.startAddress = Math.max(0, Math.min(this.processingData.length() - 1, address));
     }
 
-    for (final ChangeListener l : this.changeListeners) {
-      l.stateChanged(new ChangeEvent(this));
-    }
+    this.changeListeners.forEach((l) -> {
+        l.stateChanged(new ChangeEvent(this));
+      });
 
     _updatePictureInBuffer();
     repaint();
@@ -780,10 +779,19 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     if (this.toolArea != null) {
       gfx.setRenderingHints(RENDERING_LINE_HINTS);
       gfx.setStroke(TOOL_AREA_STROKE);
+
+      final Rectangle zoomed = new Rectangle(this.toolArea.x * this.zoom, this.toolArea.y * this.zoom, this.toolArea.width * this.zoom, this.toolArea.height * this.zoom);
+
       gfx.setColor(this.colorToolArea);
-      gfx.drawRect(this.toolArea.x * this.zoom, this.toolArea.y * this.zoom, this.toolArea.width * this.zoom, this.toolArea.height * this.zoom);
+      gfx.draw(zoomed);
+      
+      zoomed.x--;
+      zoomed.y--;
+      zoomed.width+=2;
+      zoomed.height+=2;
+      
       gfx.setColor(this.colorToolArea.darker().darker().darker());
-      gfx.drawRect(this.toolArea.x * this.zoom - 1, this.toolArea.y * this.zoom - 1, this.toolArea.width * this.zoom + 1, this.toolArea.height * this.zoom + 1);
+      gfx.draw(zoomed);
     }
   }
 

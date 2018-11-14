@@ -13,7 +13,6 @@ public final class AboutDialog extends javax.swing.JDialog {
     this.jTextArea1.setText(this.jTextArea1.getText().replace("${project.version}", "2.0-SNAPSHOT"));
     
     this.setLocationRelativeTo(null);
-    setVisible(true);
   }
 
   /**

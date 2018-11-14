@@ -2,12 +2,11 @@ package com.igormaznitsa.zxpspritecorrector.components;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.*;
-import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.*;
 import javax.swing.event.*;
 
-public final class PenWidth extends JPanel implements BoundedRangeModel {
+public final class PenWidth extends JPanel {
 
   private static final long serialVersionUID = -7662850701072499309L;
   
@@ -18,24 +17,29 @@ public final class PenWidth extends JPanel implements BoundedRangeModel {
   private static final int ICON_WIDTH = 32;
   private static final int ICON_HEIGHT = 32;
 
-  private final List<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
-
-  private int selectedPenWidth;
-
+  private final AtomicReference<BoundedRangeModel> currentModel = new AtomicReference<>();
+  
+  private final ChangeListener changeListener;
+  
   public PenWidth() {
     super();
+        this.changeListener = (ChangeEvent e) -> {
+            drawImageForValue(((BoundedRangeModel)e.getSource()).getValue());
+        };
     setOpaque(false);
     setLayout(new BorderLayout(0, 0));
 
     showImage = new BufferedImage(ICON_WIDTH, ICON_HEIGHT, BufferedImage.TYPE_INT_RGB);
 
     widthSlider = new JSlider();
+    widthSlider.setMajorTickSpacing(10);
+    widthSlider.setMinorTickSpacing(5);
+    widthSlider.setSnapToTicks(true);
+    
     showLabel = new JLabel(new ImageIcon(showImage));
 
     add(showLabel, BorderLayout.CENTER);
     add(widthSlider, BorderLayout.SOUTH);
-
-    widthSlider.setModel(this);
 
     widthSlider.setSize(ICON_WIDTH << 1, 10);
 
@@ -43,14 +47,57 @@ public final class PenWidth extends JPanel implements BoundedRangeModel {
 
     setBorder(BorderFactory.createTitledBorder("Tool size"));
 
-    setValue(1);
-
     setSize(getPreferredSize());
+
+    updateLookForCurrentModel();
   }
 
+  public int getValue(){
+      final BoundedRangeModel model = this.currentModel.get();
+      return model == null ? -1 : model.getValue();
+  }
+  
+  protected void updateLookForCurrentModel() {
+      final BoundedRangeModel model = this.currentModel.get();
+      if (model == null) {
+          this.showLabel.setEnabled(false);
+          this.widthSlider.setEnabled(false);
+          drawImageForValue(-1);
+      } else {
+          this.showLabel.setEnabled(true);
+          this.widthSlider.setEnabled(true);
+          drawImageForValue(model.getValue());
+      }
+  }
+  
+  public void setModel(final BoundedRangeModel model) {
+      final BoundedRangeModel prev = this.currentModel.getAndSet(model);
+      if (prev!=null) prev.removeChangeListener(this.changeListener);
+      if (model==null){
+        this.widthSlider.setPaintTicks(false);
+      }else{
+        this.widthSlider.setModel(model);
+        this.widthSlider.setPaintTicks(true);
+        model.addChangeListener(this.changeListener);
+      }
+      updateLookForCurrentModel();
+  }
+
+    private void drawImageForValue(final int newValue) {
+        final Graphics gfx = showImage.getGraphics();
+        gfx.setColor(Color.white);
+        gfx.fillRect(0, 0, ICON_WIDTH, ICON_HEIGHT);
+      if (newValue>0){
+        gfx.setColor(Color.black);
+        gfx.fillRect((ICON_WIDTH - newValue) / 2, (ICON_HEIGHT - newValue) / 2, newValue, newValue);
+      }
+        gfx.dispose();
+        repaint();
+    }
+  
   @Override
   public Dimension getPreferredSize() {
-    return new Dimension(96, 86);
+    return new Dimension(100, 110);
   }
 
   @Override
@@ -63,84 +110,4 @@ public final class PenWidth extends JPanel implements BoundedRangeModel {
     return getPreferredSize();
   }
 
-  @Override
-  public int getMinimum() {
-    return 1;
-  }
-
-  @Override
-  public void setMinimum(int newMinimum) {
-
-  }
-
-  @Override
-  public int getMaximum() {
-    return 24;
-  }
-
-  @Override
-  public void setMaximum(int newMaximum) {
-
-  }
-
-  @Override
-  public int getValue() {
-    return selectedPenWidth;
-  }
-
-  @Override
-  public void setValue(final int newValue) {
-    final int value = Math.min(getMaximum(), Math.max(getMinimum(), newValue));
-
-    selectedPenWidth = value;
-    final Graphics gfx = showImage.getGraphics();
-    gfx.setColor(Color.white);
-    gfx.fillRect(0, 0, ICON_WIDTH, ICON_HEIGHT);
-    gfx.setColor(Color.black);
-    gfx.fillRect((ICON_WIDTH - selectedPenWidth) / 2, (ICON_HEIGHT - selectedPenWidth) / 2, selectedPenWidth, selectedPenWidth);
-    gfx.dispose();
-
-    for (final ChangeListener l : changeListeners) {
-      l.stateChanged(new ChangeEvent(this));
-    }
-    
-    repaint();
-  }
-
-  @Override
-  public void setValueIsAdjusting(boolean b) {
-
-  }
-
-  @Override
-  public boolean getValueIsAdjusting() {
-    return true;
-  }
-
-  @Override
-  public int getExtent() {
-    return 0;
-  }
-
-  @Override
-  public void setExtent(int newExtent) {
-
-  }
-
-  @Override
-  public void setRangeProperties(int value, int extent, int min, int max, boolean adjusting) {
-
-  }
-
-  @Override
-  public void addChangeListener(final ChangeListener l) {
-    if (l!=null) {
-      this.changeListeners.add(l);
-    }
-  }
-
-  @Override
-  public void removeChangeListener(final ChangeListener l) {
-    this.changeListeners.remove(l);
-  }
 }

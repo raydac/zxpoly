@@ -17,7 +17,7 @@ public final class ZXColorSelector extends JComponent implements MouseListener {
   private final Image iconINK;
   private final Image iconPAINT;
 
-  private final List<ActionListener> actionListeners = new ArrayList<ActionListener>();
+  private final List<ActionListener> actionListeners = new ArrayList<>();
 
   private final Dimension minSize;
   
@@ -122,9 +122,9 @@ public final class ZXColorSelector extends JComponent implements MouseListener {
         this.selectedInk = row * 8 + column;
         repaint();
 
-        for (ActionListener p_listener : actionListeners) {
-          p_listener.actionPerformed(new ActionEvent(this, 0, null));
-        }
+        actionListeners.forEach((p_listener) -> {
+            p_listener.actionPerformed(new ActionEvent(this, 0, null));
+        });
 
       }
       break;
@@ -132,9 +132,9 @@ public final class ZXColorSelector extends JComponent implements MouseListener {
         this.selectedPaint = row * 8 + column;
         repaint();
 
-        for (final ActionListener l : this.actionListeners) {
-          l.actionPerformed(new ActionEvent(this, 0, null));
-        }
+        this.actionListeners.forEach((l) -> {
+            l.actionPerformed(new ActionEvent(this, 0, null));
+        });
       }
       break;
     }

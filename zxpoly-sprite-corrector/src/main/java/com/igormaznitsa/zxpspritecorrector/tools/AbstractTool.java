@@ -32,12 +32,18 @@ public abstract class AbstractTool extends JToggleButton {
   public static final int BUTTON_SHIFT = 8;
   public static final int BUTTON_CTRL = 16;
   public static final int BUTTON_ALT = 32;
+
+  protected final BoundedRangeModel model = new DefaultBoundedRangeModel(1, 0, 1, 32);
   
   public AbstractTool(final String iconName, final String toolTip){
     super();
     setModel(new ToolButtonModel(this));
     setIcon(new ImageIcon(GfxUtils.loadImage(iconName)));
     setToolTipText(toolTip);
+  }
+
+  public BoundedRangeModel getScaleModel() {
+      return this.model;
   }
   
   public boolean doesSupport512x384(){

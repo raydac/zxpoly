@@ -20,7 +20,7 @@ package com.igormaznitsa.zxpspritecorrector.files;
 import javax.swing.*;
 import org.apache.commons.io.FilenameUtils;
 
-public class FileNameDialog extends javax.swing.JDialog {
+public final class FileNameDialog extends javax.swing.JDialog {
   private static final long serialVersionUID = -5397359066835236154L;
 
   private boolean approved;
@@ -126,7 +126,7 @@ public class FileNameDialog extends javax.swing.JDialog {
   
   private Character getCharacter(final JFormattedTextField field){
     final String text = field.getText().trim();
-    return text.isEmpty() ? null : Character.valueOf(text.charAt(0));
+    return text.isEmpty() ? null : text.charAt(0);
   }
   
   public Character [] getZxType(){

@@ -13,8 +13,6 @@ import com.igormaznitsa.zxpspritecorrector.files.*;
 import com.igormaznitsa.zxpspritecorrector.tools.*;
 import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.Locale;
 import javax.swing.*;
@@ -24,12 +22,21 @@ import org.apache.commons.io.FilenameUtils;
 import org.picocontainer.*;
 import org.picocontainer.injectors.*;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SNA48Plugin;
+import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
+import java.util.concurrent.atomic.AtomicReference;
 
-public class MainFrame extends javax.swing.JFrame {
+public final class MainFrame extends javax.swing.JFrame {
 
-  public final MutablePicoContainer container = new DefaultPicoContainer();
+  public final MutablePicoContainer container = new PicoBuilder()
+          .withAutomatic()
+          .withAnnotatedMethodInjection()
+          .withAnnotatedFieldInjection()
+          .withConstructorInjection()
+          .withCaching()
+          .build();
 
   private static final long serialVersionUID = -5031012548284731523L;
 
@@ -37,50 +44,62 @@ public class MainFrame extends javax.swing.JFrame {
   private File lastExportedFile;
   private File szeFile;
 
+  private final Cursor CURSOR_BLANK = Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB), new Point(0, 0), "blank cursor");
+  
+  private final AtomicReference<AbstractTool> currentAbstractTool = new AtomicReference<>();
+  
   public MainFrame() {
     initComponents();
 
-    sliderColumns.setModel(new DefaultBoundedRangeModel(32, 0, 1, 32));
-    sliderColumns.setValue(this.mainEditor.getColumns());
+    this.sliderColumns.setModel(new DefaultBoundedRangeModel(32, 0, 1, 32));
+    this.sliderColumns.setValue(this.mainEditor.getColumns());
 
-    container.start();
-    
-    container.addAdapter(new ProviderAdapter(new ContextProvider(container)));
-    container.addComponent(this);
-    container.addComponent(this.colorSelector);
+    this.container.addAdapter(new ProviderAdapter(new ContextProvider(container)));
+    this.container.addComponent(this);
+    this.container.addComponent(this.colorSelector);
 
-    container.addComponent(new SZEPlugin());
-    container.addComponent(new HOBETAPlugin());
-    container.addComponent(new TAPPlugin());
-    container.addComponent(new TRDPlugin());
-    container.addComponent(new SCLPlugin());
-    container.addComponent(new SCRPlugin());
-    container.addComponent(new Z80Plugin());
-    container.addComponent(new SNA48Plugin());
+    this.container.addComponent(SZEPlugin.class);
+    this.container.addComponent(HOBETAPlugin.class);
+    this.container.addComponent(TAPPlugin.class);
+    this.container.addComponent(TRDPlugin.class);
+    this.container.addComponent(SCLPlugin.class);
+    this.container.addComponent(SCRPlugin.class);
+    this.container.addComponent(Z80Plugin.class);
+    this.container.addComponent(SNA48Plugin.class);
 
-    container.addComponent(new ToolPencil());
-    container.addComponent(new ToolEraser());
-    container.addComponent(new ToolColorizer());
+    this.container.addComponent(ToolPencil.class);
+    this.container.addComponent(ToolEraser.class);
+    this.container.addComponent(ToolColorizer.class);
 
-    for (final AbstractTool tool : container.getComponents(AbstractTool.class)) {
-      this.panelTools.add(tool);
-      this.toolsButtonGroup.add(tool);
+    this.container.start();
+
+    this.container.getComponents(AbstractTool.class).stream().forEachOrdered(tool -> {
+        this.panelTools.add(tool);
+        this.toolsButtonGroup.add(tool);
+        
+        tool.addItemListener((ItemEvent e) -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                this.sliderPenWidth.setModel(((AbstractTool) e.getItem()).getScaleModel());
+                this.currentAbstractTool.set(tool);
+            } else if (e.getStateChange() == ItemEvent.DESELECTED) {
+                if (this.currentAbstractTool.compareAndSet(tool, null)){
+                    this.sliderPenWidth.setModel(null);
+                }
+            }
+        });
     }
+    );
 
-    for (final AbstractFilePlugin p : container.getComponents(AbstractFilePlugin.class)) {
-      if (!p.allowsExport()) {
-        continue;
-      }
-      final JMenuItem menuItem = new JMenuItem(p.getPluginDescription(true));
-      this.menuFileExportAs.add(menuItem);
-      menuItem.setToolTipText(p.getToolTip(true));
-      menuItem.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          exportDataWithPlugin(p);
-        }
+    this.container.getComponents(AbstractFilePlugin.class).stream()
+            .filter((p) -> !(!p.allowsExport()))
+            .forEachOrdered((p) -> {
+        final JMenuItem menuItem = new JMenuItem(p.getPluginDescription(true));
+        this.menuFileExportAs.add(menuItem);
+        menuItem.setToolTipText(p.getToolTip(true));
+        menuItem.addActionListener(e -> {
+            exportDataWithPlugin(p);
+        });
       });
-    }
 
     this.setLocationRelativeTo(null);
     updateAddressScrollBar();
@@ -118,9 +137,7 @@ public class MainFrame extends javax.swing.JFrame {
         t.setEnabled(!mode512 || (mode512 && t.doesSupport512x384()));
       });
     });
-    
-    setVisible(true);
-    repaint();
+
   }
 
   public PicoContainer getPico() {
@@ -701,7 +718,7 @@ public class MainFrame extends javax.swing.JFrame {
 }//GEN-LAST:event_buttonLockActionPerformed
 
         private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuHelpAboutActionPerformed
-          new AboutDialog(this);
+          new AboutDialog(this).setVisible(true);
         }//GEN-LAST:event_menuHelpAboutActionPerformed
 
   private void mainEditorPanelMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseWheelMoved
@@ -729,9 +746,9 @@ public class MainFrame extends javax.swing.JFrame {
     final JFileChooser chooser = new JFileChooser(this.lastOpenedFile);
     chooser.setAcceptAllFileFilterUsed(false);
 
-    for (final AbstractFilePlugin plugin : container.getComponents(AbstractFilePlugin.class)) {
-      chooser.addChoosableFileFilter(plugin.getImportFileFilter());
-    }
+    container.getComponents(AbstractFilePlugin.class).forEach((plugin) -> {
+        chooser.addChoosableFileFilter(plugin.getImportFileFilter());
+      });
 
     final InsideFileView insideFileView = new InsideFileView(chooser);
     chooser.setAccessory(insideFileView);
@@ -807,7 +824,15 @@ public class MainFrame extends javax.swing.JFrame {
       rect = new Rectangle(editorPoint.x - (width >> 1), editorPoint.y - (width >> 1), width, width);
     }
 
-    setLabelAddress(this.mainEditor.setToolArea(rect));
+    if (this.currentAbstractTool.get() == null) {
+        this.mainEditor.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+        this.mainEditor.setToolArea(null);
+    } else {
+        this.mainEditor.setCursor(CURSOR_BLANK);
+        this.mainEditor.setToolArea(rect);
+    }
+    
+    setLabelAddress(this.mainEditor.getZXGraphics().coordToAddress(rect.x, rect.y));
 
     return rect;
   }

@@ -18,16 +18,12 @@ public class main {
       }
     }
     catch (Exception e) {
+        e.printStackTrace();
     }
 
-    SwingUtilities.invokeLater(new Runnable() {
-
-      @Override
-      public void run() {
+    SwingUtilities.invokeLater(() -> {
         final JFrame frame = new MainFrame();
-        frame.invalidate();
-        frame.repaint();
-      }
+        frame.setVisible(true);
     });
 
   }

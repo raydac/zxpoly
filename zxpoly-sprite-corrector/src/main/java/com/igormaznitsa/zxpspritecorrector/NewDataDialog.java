@@ -22,7 +22,7 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.*;
 import javax.swing.SpinnerNumberModel;
 
-public class NewDataDialog extends javax.swing.JDialog {
+public final class NewDataDialog extends javax.swing.JDialog {
   private static final long serialVersionUID = 233857924099132156L;
 
   private AbstractFilePlugin.ReadResult result;
