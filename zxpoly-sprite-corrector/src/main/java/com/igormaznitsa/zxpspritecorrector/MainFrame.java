@@ -22,7 +22,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.picocontainer.*;
 import org.picocontainer.injectors.*;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SNA48Plugin;
-import com.igormaznitsa.zxpspritecorrector.utils.ImageTransferable;
+import com.igormaznitsa.zxpspritecorrector.utils.TransferableImage;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -1069,11 +1069,7 @@ public final class MainFrame extends javax.swing.JFrame {
   private void menuEditCopySelectedAsImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditCopySelectedAsImageActionPerformed
       final RenderedImage selectedAreaImage = this.mainEditor.getSelectedAreaAsImage(true);
       if (selectedAreaImage!=null){
-        try{
-        new ImageTransferable(selectedAreaImage).copy();
-        }catch(IOException ex){
-          ex.printStackTrace();
-        }
+        new TransferableImage(selectedAreaImage).toClipboard();
       }
   }//GEN-LAST:event_menuEditCopySelectedAsImageActionPerformed
 

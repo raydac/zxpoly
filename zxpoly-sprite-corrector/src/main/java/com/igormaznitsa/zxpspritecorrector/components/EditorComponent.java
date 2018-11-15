@@ -92,22 +92,17 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   public RenderedImage getSelectedAreaAsImage(final boolean baseData) {
     BufferedImage result = null;
     if (this.processingData != null && this.selectedArea != null) {
-      final int w;
-      final int h;
-      if (this.mode512) {
-        w = this.selectedArea.width;
-        h = this.selectedArea.height;
-      } else {
-        w = this.selectedArea.width >> 1;
-        h = this.selectedArea.height >> 1;
-      }
-      result = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+      final int w = this.selectedArea.width;
+      final int h = this.selectedArea.height;
+      final int sx = this.selectedArea.x;
+      final int sy = this.selectedArea.y;
+      result = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_BINARY);
       
       if (baseData) {
         final Graphics gfx = result.createGraphics();
         for(int y=0;y<h;y++){
           for(int x=0;x<w;x++) {
-            if (this.zxGraphics.isBaseBitSet(x, y)) {
+            if (this.zxGraphics.isBaseBitSet(sx+x, sy+y)) {
               gfx.setColor(Color.WHITE);
             } else {
               gfx.setColor(Color.BLACK);
