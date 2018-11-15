@@ -29,9 +29,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   private static final Stroke GRID_STROKE = new BasicStroke(0.3f);
   private static final Stroke COLUMN_BORDER_STROKE = new BasicStroke(0.7f);
   private static final Stroke TOOL_AREA_STROKE = new BasicStroke(2.3f);
-  private static final Stroke SELECTED_AREA_STROKE = new BasicStroke(4.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3, 3}, 0);
+  private static final Stroke SELECTED_AREA_STROKE = new BasicStroke(3.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3, 3}, 0);
 
-  private Color colorSelectedAreaBorder = Color.MAGENTA.brighter();
+  private Color colorSelectedAreaBorder = Color.MAGENTA.brighter().brighter();
   private Color colorToolArea = Color.WHITE;
 
   private Color colorPixelOn = Color.GRAY.darker();
@@ -93,23 +93,39 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       final int h = this.selectedArea.height;
       final int sx = this.selectedArea.x;
       final int sy = this.selectedArea.y;
-      result = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_BINARY);
+
+      if (baseData || this.mode512) { 
+        result = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_BINARY);
+      } else {
+        result = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_BINARY, ZXPalette.makeIndexPalette());
+      }
       
-      if (baseData) {
-        final Graphics gfx = result.createGraphics();
-        for(int y=0;y<h;y++){
-          for(int x=0;x<w;x++) {
-            if (this.zxGraphics.isBaseBitSet(sx+x, sy+y)) {
+      final Graphics gfx = result.createGraphics();
+      for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+          if (baseData) {
+            if (this.zxGraphics.isBaseBitSet(sx + x, sy + y)) {
               gfx.setColor(Color.WHITE);
             } else {
               gfx.setColor(Color.BLACK);
             }
             gfx.drawLine(x, y, x, y);
+          } else {
+            if (this.mode512) {
+              if (this.zxGraphics.isBaseBitSet(sx + x, sy + y)) {
+                gfx.setColor(Color.WHITE);
+              } else {
+                gfx.setColor(Color.BLACK);
+              }
+              gfx.drawLine(x, y, x, y);
+            } else {
+              gfx.setColor(ZXPalette.COLORS[this.zxGraphics.getPoint3012(sx + x, sy + y)]);
+              gfx.drawLine(x, y, x, y);
+            }
           }
         }
-        gfx.dispose();
       }
-      
+      gfx.dispose();
     }
     return result;
   }
@@ -117,11 +133,11 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   public boolean hasSelectedArea() {
     return this.selectedArea != null;
   }
-  
+
   public Rectangle getSelectedArea() {
     return this.selectedArea == null ? null : new Rectangle(this.selectedArea);
   }
-  
+
   public static final class ZXGraphics {
 
     private final EditorComponent editor;
@@ -143,9 +159,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
         final int vcolumn = m512 ? x >> 4 : x >> 3;
 
         if (vcolumn > 31) {
-            return -1;
+          return -1;
         }
-        
+
         int startAddr = this.editor.startAddress;
 
         switch (this.editor.columnMode) {
@@ -165,9 +181,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
         final int dy = m512 ? y >> 1 : y;
 
         if (dy > 191) {
-            return -1;
+          return -1;
         }
-        
+
         final int theY = this.editor.addressingModeZXScreen ? VideoMode.zxy2y(dy) : dy;
         final int rowAddress = theY * columns + startAddr;
 
@@ -317,7 +333,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     public boolean isBaseBitSet(final int x, final int y) {
       final int address = coordToAddress(x, y);
       if (address >= 0) {
-        return (this.editor.processingData.getBaseData(address) & makeXMask(x)) != 0;
+        return (this.editor.processingData.getBaseData(address) & makeXMask(x >> (this.editor.mode512 ? 1 : 0))) != 0;
       }
 
       return false;
@@ -518,13 +534,13 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public Color getColorSelectedAreaBorder() {
-      return this.colorSelectedAreaBorder;
+    return this.colorSelectedAreaBorder;
   }
-  
+
   public void setColorSelectedAreaBorder(final Color color) {
-      this.colorSelectedAreaBorder = color;
+    this.colorSelectedAreaBorder = color;
   }
-  
+
   public Color getColorZX512On() {
     return colorZX512On;
   }
@@ -629,7 +645,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
   public void updateSelectArea(final Point editorPoint) {
     final Point point = ensureInsideScreenAndEven(editorPoint);
-    
+
     final int dx = this.startSelectedAreaPoint.x - point.x;
     final int dy = this.startSelectedAreaPoint.y - point.y;
 
@@ -637,9 +653,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     final int newY;
     final int newW;
     final int newH;
-    
+
     final boolean m512 = this.mode512;
-    
+
     if (dx < 0) {
       newX = this.startSelectedAreaPoint.x;
       newW = -dx;
@@ -647,7 +663,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       newX = point.x;
       newW = dx;
     }
-    
+
     if (dy < 0) {
       newY = this.startSelectedAreaPoint.y;
       newH = -dy;

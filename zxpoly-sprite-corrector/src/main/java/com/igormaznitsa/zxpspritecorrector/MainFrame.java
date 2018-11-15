@@ -272,7 +272,8 @@ public final class MainFrame extends javax.swing.JFrame {
     menuEditRedo = new javax.swing.JMenuItem();
     jSeparator2 = new javax.swing.JPopupMenu.Separator();
     menuEditSelectArea = new javax.swing.JMenuItem();
-    menuEditCopySelectedAsImage = new javax.swing.JMenuItem();
+    menuEditCopySelectedBaseAsImage = new javax.swing.JMenuItem();
+    menuEditCopySelectedZxPolyAsImage = new javax.swing.JMenuItem();
     jSeparator7 = new javax.swing.JPopupMenu.Separator();
     menuEditCopyBaseToPlans = new javax.swing.JMenuItem();
     menuEditClear = new javax.swing.JMenuItem();
@@ -355,6 +356,7 @@ public final class MainFrame extends javax.swing.JFrame {
     sliderPenWidth.setMinimumSize(new java.awt.Dimension(96, 84));
     sliderPenWidth.setPreferredSize(new java.awt.Dimension(96, 84));
 
+    mainEditorPanel.setCursor(new java.awt.Cursor(java.awt.Cursor.CROSSHAIR_CURSOR));
     mainEditorPanel.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
       public void mouseMoved(java.awt.event.MouseEvent evt) {
         mainEditorPanelMouseMoved(evt);
@@ -504,13 +506,23 @@ public final class MainFrame extends javax.swing.JFrame {
     });
     menuEdit.add(menuEditSelectArea);
 
-    menuEditCopySelectedAsImage.setText("Copy selected as image");
-    menuEditCopySelectedAsImage.addActionListener(new java.awt.event.ActionListener() {
+    menuEditCopySelectedBaseAsImage.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.CTRL_MASK));
+    menuEditCopySelectedBaseAsImage.setText("Copy area (base)");
+    menuEditCopySelectedBaseAsImage.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditCopySelectedAsImageActionPerformed(evt);
+        menuEditCopySelectedBaseAsImageActionPerformed(evt);
       }
     });
-    menuEdit.add(menuEditCopySelectedAsImage);
+    menuEdit.add(menuEditCopySelectedBaseAsImage);
+
+    menuEditCopySelectedZxPolyAsImage.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+    menuEditCopySelectedZxPolyAsImage.setText("Copy area (zxpoly)");
+    menuEditCopySelectedZxPolyAsImage.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuEditCopySelectedZxPolyAsImageActionPerformed(evt);
+      }
+    });
+    menuEdit.add(menuEditCopySelectedZxPolyAsImage);
     menuEdit.add(jSeparator7);
 
     menuEditCopyBaseToPlans.setText("Copy base to all plans");
@@ -1066,12 +1078,19 @@ public final class MainFrame extends javax.swing.JFrame {
     this.mainEditor.resetSelectArea();
   }//GEN-LAST:event_menuEditSelectAreaActionPerformed
 
-  private void menuEditCopySelectedAsImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditCopySelectedAsImageActionPerformed
+  private void menuEditCopySelectedBaseAsImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditCopySelectedBaseAsImageActionPerformed
       final RenderedImage selectedAreaImage = this.mainEditor.getSelectedAreaAsImage(true);
       if (selectedAreaImage!=null){
         new TransferableImage(selectedAreaImage).toClipboard();
       }
-  }//GEN-LAST:event_menuEditCopySelectedAsImageActionPerformed
+  }//GEN-LAST:event_menuEditCopySelectedBaseAsImageActionPerformed
+
+  private void menuEditCopySelectedZxPolyAsImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditCopySelectedZxPolyAsImageActionPerformed
+    final RenderedImage selectedAreaImage = this.mainEditor.getSelectedAreaAsImage(false);
+    if (selectedAreaImage != null) {
+      new TransferableImage(selectedAreaImage).toClipboard();
+    }
+  }//GEN-LAST:event_menuEditCopySelectedZxPolyAsImageActionPerformed
 
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);
@@ -1112,7 +1131,8 @@ public final class MainFrame extends javax.swing.JFrame {
   private javax.swing.JMenu menuEdit;
   private javax.swing.JMenuItem menuEditClear;
   private javax.swing.JMenuItem menuEditCopyBaseToPlans;
-  private javax.swing.JMenuItem menuEditCopySelectedAsImage;
+  private javax.swing.JMenuItem menuEditCopySelectedBaseAsImage;
+  private javax.swing.JMenuItem menuEditCopySelectedZxPolyAsImage;
   private javax.swing.JMenuItem menuEditRedo;
   private javax.swing.JMenuItem menuEditSelectArea;
   private javax.swing.JMenuItem menuEditUndo;

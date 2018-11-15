@@ -17,6 +17,7 @@
 package com.igormaznitsa.zxpspritecorrector.utils;
 
 import java.awt.Color;
+import java.awt.image.IndexColorModel;
 
 public final class ZXPalette {
   public static final Color[] COLORS = new Color[]{
@@ -40,6 +41,18 @@ public final class ZXPalette {
     new Color(255, 255, 255)
   };
  
+  public static IndexColorModel makeIndexPalette() {
+    final byte [] r = new byte[COLORS.length];
+    final byte [] g = new byte[COLORS.length];
+    final byte [] b = new byte[COLORS.length];
+    for(int i = 0; i<COLORS.length;i++){
+      r[i] = (byte)COLORS[i].getRed();
+      g[i] = (byte)COLORS[i].getGreen();
+      b[i] = (byte)COLORS[i].getBlue();
+    }
+    return new IndexColorModel(4, COLORS.length, r, g, b);
+  }
+  
   public static Color extractInk(final int attribute){
     final int bright = (attribute & 0x40) == 0 ? 0x08 : 0x00;
     return COLORS[bright | (attribute & 0x7)];
