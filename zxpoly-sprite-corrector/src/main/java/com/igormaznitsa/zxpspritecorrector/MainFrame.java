@@ -918,7 +918,7 @@ public final class MainFrame extends javax.swing.JFrame {
   }//GEN-LAST:event_mainEditorPanelMousePressed
 
   private void mainEditorPanelMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseMoved
-    updateToolRectangle(mouseCoord2EditorCoord(evt));
+      updateToolRectangle(mouseCoord2EditorCoord(evt));
   }//GEN-LAST:event_mainEditorPanelMouseMoved
 
   private void mainEditorPanelMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseExited

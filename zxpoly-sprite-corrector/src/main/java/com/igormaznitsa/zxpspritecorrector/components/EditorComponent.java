@@ -29,12 +29,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   private static final Stroke GRID_STROKE = new BasicStroke(0.3f);
   private static final Stroke COLUMN_BORDER_STROKE = new BasicStroke(0.7f);
   private static final Stroke TOOL_AREA_STROKE = new BasicStroke(2.3f);
-  private static final Stroke SELECTED_AREA_STROKE = new BasicStroke(3.0f,
-          BasicStroke.CAP_BUTT,
-          BasicStroke.JOIN_BEVEL,
-          0.0f, new float[]{4.0f, 4.0f}, 0.0f);
+  private static final Stroke SELECTED_AREA_STROKE = new BasicStroke(4.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3, 3}, 0);
 
-  private Color colorSelectedArea = Color.GREEN.darker();
+  private Color colorSelectedAreaBorder = Color.MAGENTA.brighter();
   private Color colorToolArea = Color.WHITE;
 
   private Color colorPixelOn = Color.GRAY.darker();
@@ -145,6 +142,10 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
         final int columns = this.editor.columns;
         final int vcolumn = m512 ? x >> 4 : x >> 3;
 
+        if (vcolumn > 31) {
+            return -1;
+        }
+        
         int startAddr = this.editor.startAddress;
 
         switch (this.editor.columnMode) {
@@ -163,6 +164,10 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
         final int dx = m512 ? x >> 1 : x;
         final int dy = m512 ? y >> 1 : y;
 
+        if (dy > 191) {
+            return -1;
+        }
+        
         final int theY = this.editor.addressingModeZXScreen ? VideoMode.zxy2y(dy) : dy;
         final int rowAddress = theY * columns + startAddr;
 
@@ -512,6 +517,14 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     repaint();
   }
 
+  public Color getColorSelectedAreaBorder() {
+      return this.colorSelectedAreaBorder;
+  }
+  
+  public void setColorSelectedAreaBorder(final Color color) {
+      this.colorSelectedAreaBorder = color;
+  }
+  
   public Color getColorZX512On() {
     return colorZX512On;
   }
@@ -596,14 +609,14 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
   private Point ensureInsideScreenAndEven(final Point point) {
     return new Point(
-            Math.min(512, Math.max(0, point.x & 0xFFFFFFFE)),
-            Math.min(384, Math.max(0, point.y & 0xFFFFFFFE))
+            Math.min(511, Math.max(0, point.x)),
+            Math.min(383, Math.max(0, point.y))
     );
   }
 
   public void startSelectArea(final Point editorPoint) {
     this.startSelectedAreaPoint = ensureInsideScreenAndEven(editorPoint);
-    this.selectedArea = new Rectangle(ensureInsideScreenAndEven(this.startSelectedAreaPoint), new Dimension(1, 1));
+    this.selectedArea = new Rectangle(ensureInsideScreenAndEven(this.startSelectedAreaPoint), new Dimension(this.mode512 ? 2 : 1, this.mode512 ? 2 : 1));
     repaint();
   }
 
@@ -618,23 +631,25 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     final int newW;
     final int newH;
     
+    final boolean m512 = this.mode512;
+    
     if (dx < 0) {
       newX = this.startSelectedAreaPoint.x;
-      newW = -dx;
+      newW = Math.max(m512 ? 2 : 1, -dx);
     } else {
       newX = point.x;
-      newW = dx;
+      newW = Math.max(m512 ? 2 : 1,dx);
     }
     
     if (dy < 0) {
       newY = this.startSelectedAreaPoint.y;
-      newH = -dy;
+      newH = Math.max(m512 ? 2 : 1, -dy);
     } else {
       newY = point.y;
-      newH = dy;
+      newH = Math.max(m512 ? 2 : 1, dy);
     }
 
-    this.selectedArea.setBounds(newX, newY, newW, newH);
+    this.selectedArea.setBounds(newX, newY, m512 ? newW & 0xFFFFFFFE : newW, m512 ?  newH & 0xFFFFFFFE : newH);
     repaint();
   }
 
@@ -877,7 +892,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     if (this.selectedArea != null) {
       gfx.setRenderingHints(RENDERING_LINE_HINTS);
       gfx.setStroke(SELECTED_AREA_STROKE);
-      gfx.setColor(colorSelectedArea);
+      gfx.setColor(colorSelectedAreaBorder);
 
       final Rectangle rect = new Rectangle(this.selectedArea.x * this.zoom, this.selectedArea.y * this.zoom, this.selectedArea.width * this.zoom, this.selectedArea.height * this.zoom);
       gfx.draw(rect);
