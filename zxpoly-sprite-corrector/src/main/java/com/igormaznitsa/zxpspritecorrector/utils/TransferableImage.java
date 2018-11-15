@@ -27,12 +27,13 @@ import java.io.IOException;
 
 public final class TransferableImage implements Transferable {
   
-  RenderedImage image;
+  final Image image;
 
-  public TransferableImage(RenderedImage image) {
+  public TransferableImage(final Image image) {
     this.image = image;
   }
 
+  @Override
   public Object getTransferData(DataFlavor flavor)
           throws UnsupportedFlavorException, IOException {
     if (flavor.equals(DataFlavor.imageFlavor) && image != null) {
@@ -42,13 +43,15 @@ public final class TransferableImage implements Transferable {
     }
   }
 
+  @Override
   public DataFlavor[] getTransferDataFlavors() {
     DataFlavor[] flavors = new DataFlavor[1];
     flavors[0] = DataFlavor.imageFlavor;
     return flavors;
   }
 
-  public boolean isDataFlavorSupported(DataFlavor flavor) {
+  @Override
+  public boolean isDataFlavorSupported(final DataFlavor flavor) {
     DataFlavor[] flavors = getTransferDataFlavors();
     for (int i = 0; i < flavors.length; i++) {
       if (flavor.equals(flavors[i])) {

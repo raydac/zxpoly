@@ -59,6 +59,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   private Point startSelectedAreaPoint;
   private Rectangle selectedArea;
   private Rectangle toolArea;
+  private Point cursorPoint = new Point(0, 0);
+
+  private Image draggedImage;
 
   private int gridStep = 1;
 
@@ -86,7 +89,12 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     return new Point(pointAtComponent.x / this.zoom, pointAtComponent.y / this.zoom);
   }
 
-  public RenderedImage getSelectedAreaAsImage(final boolean baseData) {
+  public void setCursorPoint(final Point point) {
+    this.cursorPoint = point;
+    repaint();
+  }
+
+  public Image getSelectedAreaAsImage(final boolean baseData) {
     BufferedImage result = null;
     if (this.processingData != null && this.selectedArea != null) {
       final int w = this.selectedArea.width;
@@ -94,12 +102,12 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       final int sx = this.selectedArea.x;
       final int sy = this.selectedArea.y;
 
-      if (baseData || this.mode512) { 
+      if (baseData || this.mode512) {
         result = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_BINARY);
       } else {
         result = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_BINARY, ZXPalette.makeIndexPalette());
       }
-      
+
       final Graphics gfx = result.createGraphics();
       for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
@@ -416,6 +424,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
   public void undo() {
     if (this.processingData != null && !this.listUndo.isEmpty()) {
+      this.selectedArea = null;
+      this.draggedImage = null;
+
       final ZXPolyData.UndoBlock blockPrevious = this.listUndo.remove(this.listUndo.size() - 1);
       if (this.listRedo.isEmpty()) {
         this.listRedo.add(this.processingData.makeUndo(this.selectedArea));
@@ -431,6 +442,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
   public void redo() {
     if (this.processingData != null && !this.listRedo.isEmpty()) {
+      this.selectedArea = null;
+      this.draggedImage = null;
+
       final ZXPolyData.UndoBlock block = this.listRedo.remove(this.listRedo.size() - 1);
       this.listUndo.add(block);
       this.processingData.restoreFromUndo(block);
@@ -442,6 +456,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
   public void clear() {
     if (this.processingData != null) {
+      this.selectedArea = null;
+      this.draggedImage = null;
+
       this.listRedo.clear();
       this.listUndo.clear();
       this.processingData.clear();
@@ -878,6 +895,65 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     setMode512(false);
   }
 
+  public Image getDraggedImage() {
+    return this.draggedImage;
+  }
+
+  public void doStampDraggedImage() {
+    if (this.draggedImage != null) {
+      final int w = this.draggedImage.getWidth(null);
+      final int h = this.draggedImage.getHeight(null);
+      final int[] pixels = new int[w * h];
+      final PixelGrabber pixelGrabber = new PixelGrabber(this.draggedImage, 0, 0, w, h, pixels, 0, w);
+      try {
+        pixelGrabber.grabPixels();
+      } catch (InterruptedException ex) {
+        Thread.interrupted();
+        return;
+      }
+      int x = this.cursorPoint.x;
+      int y = this.cursorPoint.y;
+
+      if (this.mode512) {
+        for (int dy = 0; dy < h; dy++) {
+          for (int dx = 0; dx < w; dx++) {
+            final int pixel = pixels[dy*w + dx];
+            if (intensity(pixel)>128){
+              this.zxGraphics.setPoint(x+ dx, y+dy, 0xF);
+            } else {
+              this.zxGraphics.setPoint(x + dx, y + dy, 0x0);
+            }
+          }
+        }
+      } else {
+        for (int dy = 0; dy < h; dy++) {
+          for (int dx = 0; dx < w; dx++) {
+            final int pixel = pixels[dy * w + dx];
+              this.zxGraphics.setPoint(x + dx, y + dy, 0xF);
+          }
+        }
+      }
+      _updatePictureInBuffer();
+      repaint();
+    }
+  }
+
+  public static double intensity(final int rgb) {
+    int r = (rgb >>> 16) &0xFF;
+    int g = (rgb >>> 8) &0xFF;
+    int b = rgb &0xFF;
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+  }
+  
+  public boolean hasDraggedImage() {
+    return this.draggedImage != null;
+  }
+
+  public void setDraggedImage(final Image draggedImage) {
+    this.draggedImage = draggedImage;
+    repaint();
+  }
+
   @Override
   public void paintComponent(final Graphics g) {
     final Graphics2D gfx = (Graphics2D) g;
@@ -921,6 +997,13 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
       final Rectangle rect = new Rectangle(this.selectedArea.x * this.zoom, this.selectedArea.y * this.zoom, this.selectedArea.width * this.zoom, this.selectedArea.height * this.zoom);
       gfx.draw(rect);
+    }
+
+    if (this.draggedImage != null && this.cursorPoint != null) {
+      final Composite prev = gfx.getComposite();
+      gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+      gfx.drawImage(this.draggedImage, this.cursorPoint.x * this.zoom, this.cursorPoint.y * this.zoom, this.draggedImage.getWidth(null) * this.zoom, this.draggedImage.getHeight(null) * this.zoom, null);
+      gfx.setComposite(prev);
     }
 
     if (this.toolArea != null) {
