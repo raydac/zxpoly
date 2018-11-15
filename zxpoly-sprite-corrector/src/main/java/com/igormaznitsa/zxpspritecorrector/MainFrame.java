@@ -512,7 +512,7 @@ public final class MainFrame extends javax.swing.JFrame {
     menuEdit.add(menuEditRedo);
     menuEdit.add(jSeparator2);
 
-    menuEditSelectArea.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+    menuEditSelectArea.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.CTRL_MASK));
     menuEditSelectArea.setText("Select area");
     menuEditSelectArea.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1098,7 +1098,16 @@ public final class MainFrame extends javax.swing.JFrame {
     }
   }//GEN-LAST:event_mainEditorPanelMouseReleased
 
+  private void deactivateCurrentTool(){
+    final AbstractTool tool = this.currentAbstractTool.get();
+    if (tool!=null){
+      tool.setSelected(false);
+    }
+  }
+  
   private void menuEditSelectAreaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditSelectAreaActionPerformed
+    deactivateCurrentTool();
+    this.mainEditor.setDraggedImage(null);
     this.selectAreaMode = true;
     this.mainEditor.addUndo();
     this.mainEditor.resetSelectArea();

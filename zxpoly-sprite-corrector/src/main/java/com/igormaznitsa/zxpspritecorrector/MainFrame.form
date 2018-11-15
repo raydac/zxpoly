@@ -105,7 +105,7 @@
             <MenuItem class="javax.swing.JMenuItem" name="menuEditSelectArea">
               <Properties>
                 <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Shift+Ctrl+R"/>
+                  <KeyStroke key="Ctrl+R"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Select area"/>
               </Properties>
