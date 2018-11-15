@@ -608,10 +608,17 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   private Point ensureInsideScreenAndEven(final Point point) {
-    return new Point(
-            Math.min(511, Math.max(0, point.x)),
-            Math.min(383, Math.max(0, point.y))
-    );
+    if (this.mode512) {
+      return new Point(
+              Math.min(511, Math.max(0, point.x)),
+              Math.min(383, Math.max(0, point.y))
+      );
+    } else {
+      return new Point(
+              Math.min(255, Math.max(0, point.x)),
+              Math.min(191, Math.max(0, point.y))
+      );
+    }
   }
 
   public void startSelectArea(final Point editorPoint) {
@@ -635,25 +642,26 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     
     if (dx < 0) {
       newX = this.startSelectedAreaPoint.x;
-      newW = Math.max(m512 ? 2 : 1, -dx);
+      newW = -dx;
     } else {
       newX = point.x;
-      newW = Math.max(m512 ? 2 : 1,dx);
+      newW = dx;
     }
     
     if (dy < 0) {
       newY = this.startSelectedAreaPoint.y;
-      newH = Math.max(m512 ? 2 : 1, -dy);
+      newH = -dy;
     } else {
       newY = point.y;
-      newH = Math.max(m512 ? 2 : 1, dy);
+      newH = dy;
     }
 
-    this.selectedArea.setBounds(newX, newY, m512 ? newW & 0xFFFFFFFE : newW, m512 ?  newH & 0xFFFFFFFE : newH);
+    this.selectedArea.setBounds(newX, newY, newW + 1, newH + 1);
     repaint();
   }
 
   public void endSelectArea(final Point editorPoint) {
+    updateSelectArea(editorPoint);
     repaint();
   }
 
@@ -850,6 +858,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
   public EditorComponent() {
     super();
+    this.setBorder(BorderFactory.createEmptyBorder());
     setMode512(false);
   }
 
