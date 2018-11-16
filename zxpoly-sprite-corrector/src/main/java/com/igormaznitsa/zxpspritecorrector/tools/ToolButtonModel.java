@@ -14,23 +14,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.igormaznitsa.zxpspritecorrector.tools;
 
 import javax.swing.JToggleButton;
 
 public class ToolButtonModel extends JToggleButton.ToggleButtonModel {
+
   private static final long serialVersionUID = -7323125408259131773L;
 
   private final AbstractTool tool;
-  
+
   public ToolButtonModel(final AbstractTool tool) {
     super();
     this.tool = tool;
   }
-  
-  public AbstractTool getTool(){
+
+  public AbstractTool getTool() {
     return this.tool;
   }
-  
+
 }

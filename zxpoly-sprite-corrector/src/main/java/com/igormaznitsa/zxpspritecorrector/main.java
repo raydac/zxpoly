@@ -16,14 +16,13 @@ public class main {
           break;
         }
       }
-    }
-    catch (Exception e) {
-        e.printStackTrace();
+    } catch (Exception e) {
+      e.printStackTrace();
     }
 
     SwingUtilities.invokeLater(() -> {
-        final JFrame frame = new MainFrame();
-        frame.setVisible(true);
+      final JFrame frame = new MainFrame();
+      frame.setVisible(true);
     });
 
   }

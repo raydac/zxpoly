@@ -23,24 +23,25 @@ import com.igormaznitsa.zxpspritecorrector.files.*;
 import javax.swing.SpinnerNumberModel;
 
 public final class NewDataDialog extends javax.swing.JDialog {
+
   private static final long serialVersionUID = 233857924099132156L;
 
   private AbstractFilePlugin.ReadResult result;
   private final MainFrame frame;
-  
+
   public NewDataDialog(final MainFrame parent) {
     super(parent, true);
     this.frame = parent;
     initComponents();
     this.spinnerSize.setModel(new SpinnerNumberModel(6912, 1, 65536, 1));
-    
+
     this.setLocationRelativeTo(parent);
   }
 
-  public AbstractFilePlugin.ReadResult getResult(){
+  public AbstractFilePlugin.ReadResult getResult() {
     return this.result;
   }
-  
+
   /**
    * This method is called from within the constructor to initialize the form.
    * WARNING: Do NOT modify this code. The content of this method is always
@@ -120,8 +121,8 @@ public final class NewDataDialog extends javax.swing.JDialog {
   }// </editor-fold>//GEN-END:initComponents
 
   private void buttonOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOkActionPerformed
-    final int len = ((Integer)spinnerSize.getValue());
-    this.result = new AbstractFilePlugin.ReadResult(new ZXPolyData(new Info("Undefined", '$', 0x4000, len, 0), frame.getPico().getComponent(SCRPlugin.class),new byte[len]), null);
+    final int len = ((Integer) spinnerSize.getValue());
+    this.result = new AbstractFilePlugin.ReadResult(new ZXPolyData(new Info("Undefined", '$', 0x4000, len, 0), frame.getPico().getComponent(SCRPlugin.class), new byte[len]), null);
     dispose();
   }//GEN-LAST:event_buttonOkActionPerformed
 
@@ -129,7 +130,6 @@ public final class NewDataDialog extends javax.swing.JDialog {
     this.result = null;
     dispose();
   }//GEN-LAST:event_buttonCancelActionPerformed
-
 
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JButton buttonCancel;

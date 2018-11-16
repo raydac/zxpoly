@@ -86,19 +86,16 @@ public class SCLPlugin extends AbstractFilePlugin {
             final SCLCatalogItem item = CATALOG_PARSER.parse(in).mapTo(SCLCatalogItem.class);
             result.add(new Info(item.name, item.type, item.start, item.length, -1));
           }
-        }
-        else {
+        } else {
           // it's not scl
           return null;
         }
-      }
-      finally {
+      } finally {
         JBBPUtils.closeQuietly(in);
       }
 
       return result;
-    }
-    catch (Exception ex) {
+    } catch (Exception ex) {
       return null;
     }
   }
@@ -128,12 +125,10 @@ public class SCLPlugin extends AbstractFilePlugin {
         final long offset = in.getCounter();
         return new ReadResult(new ZXPolyData(new Info(itemToRead.name, itemToRead.type, itemToRead.start, itemToRead.length, (int) offset), this, in.readByteArray(itemToRead.sectors * 256)), null);
 
-      }
-      else {
+      } else {
         throw new IllegalArgumentException("It's not a SCl file [" + file.getAbsolutePath() + ']');
       }
-    }
-    finally {
+    } finally {
       JBBPUtils.closeQuietly(in);
     }
   }
@@ -151,16 +146,16 @@ public class SCLPlugin extends AbstractFilePlugin {
     if (fileNameDialog.approved()) {
       final JBBPOut out = JBBPOut.BeginBin();
       out.Long(0x53494E434C414952L).ByteOrder(JBBPByteOrder.LITTLE_ENDIAN).Byte(4);
-      
-      final String [] fnames = fileNameDialog.getZxName();
-      final Character [] fchars = fileNameDialog.getZxType();
-      
-      final int sectors = (data.length() >>> 8)+((data.length() & 0xFF)==0 ? 0 : 1);
-      
-      for(int i=0; i<4; i++){
+
+      final String[] fnames = fileNameDialog.getZxName();
+      final Character[] fchars = fileNameDialog.getZxType();
+
+      final int sectors = (data.length() >>> 8) + ((data.length() & 0xFF) == 0 ? 0 : 1);
+
+      for (int i = 0; i < 4; i++) {
         out.Byte(fnames[i]).Byte(fchars[i].charValue()).Short(data.getInfo().getStartAddress(), data.getInfo().getLength()).Byte(sectors);
       }
-      
+
       out.ResetCounter();
       for (int i = 0; i < 4; i++) {
         final byte[] arr = data.getDataForCPU(i);

@@ -75,6 +75,7 @@
             <Property name="text" type="java.lang.String" value="Edit"/>
           </Properties>
           <Events>
+            <EventHandler event="menuDeselected" listener="javax.swing.event.MenuListener" parameters="javax.swing.event.MenuEvent" handler="menuEditMenuDeselected"/>
             <EventHandler event="menuSelected" listener="javax.swing.event.MenuListener" parameters="javax.swing.event.MenuEvent" handler="menuEditMenuSelected"/>
           </Events>
           <SubComponents>
@@ -116,9 +117,9 @@
             <MenuItem class="javax.swing.JMenuItem" name="menuEditCopySelectedZxPolyAsImage">
               <Properties>
                 <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Ctrl+C"/>
+                  <KeyStroke key="Ctrl+Alt+C"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Copy area (zxpoly)"/>
+                <Property name="text" type="java.lang.String" value="Copy selection (zxpoly)"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuEditCopySelectedZxPolyAsImageActionPerformed"/>
@@ -126,13 +127,21 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuEditCopySelectedBaseAsImage">
               <Properties>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Shift+Ctrl+C"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="Copy area (base)"/>
+                <Property name="text" type="java.lang.String" value="Copy selection (base)"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuEditCopySelectedBaseAsImageActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="menuEditPasteImage">
+              <Properties>
+                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
+                  <KeyStroke key="Ctrl+Alt+V"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Paste image"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuEditPasteImageActionPerformed"/>
               </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JPopupMenu$Separator" name="jSeparator7">
@@ -446,6 +455,7 @@
             <TitledBorder title="Tools"/>
           </Border>
         </Property>
+        <Property name="focusable" type="boolean" value="false"/>
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignFlowLayout"/>
@@ -587,6 +597,9 @@
       </SubComponents>
     </Container>
     <Component class="javax.swing.JSpinner" name="spinnerCurrentAddress">
+      <Properties>
+        <Property name="focusable" type="boolean" value="false"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

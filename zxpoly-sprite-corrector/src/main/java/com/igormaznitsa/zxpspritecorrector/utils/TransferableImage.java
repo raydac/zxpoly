@@ -22,11 +22,10 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.image.RenderedImage;
 import java.io.IOException;
 
 public final class TransferableImage implements Transferable {
-  
+
   final Image image;
 
   public TransferableImage(final Image image) {
@@ -37,7 +36,7 @@ public final class TransferableImage implements Transferable {
   public Object getTransferData(DataFlavor flavor)
           throws UnsupportedFlavorException, IOException {
     if (flavor.equals(DataFlavor.imageFlavor) && image != null) {
-      return image;
+      return this.image;
     } else {
       throw new UnsupportedFlavorException(flavor);
     }
@@ -45,26 +44,23 @@ public final class TransferableImage implements Transferable {
 
   @Override
   public DataFlavor[] getTransferDataFlavors() {
-    DataFlavor[] flavors = new DataFlavor[1];
-    flavors[0] = DataFlavor.imageFlavor;
-    return flavors;
+    return new DataFlavor[]{DataFlavor.imageFlavor};
   }
 
   @Override
   public boolean isDataFlavorSupported(final DataFlavor flavor) {
     DataFlavor[] flavors = getTransferDataFlavors();
-    for (int i = 0; i < flavors.length; i++) {
-      if (flavor.equals(flavors[i])) {
+    for (final DataFlavor flavor1 : flavors) {
+      if (flavor.equals(flavor1)) {
         return true;
       }
     }
 
     return false;
   }
-  
-  public void toClipboard(){
+
+  public void toClipboard() {
     Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
     c.setContents(this, null);
-
   }
 }

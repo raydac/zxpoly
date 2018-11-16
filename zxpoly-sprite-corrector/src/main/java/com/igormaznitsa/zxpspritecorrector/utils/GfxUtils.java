@@ -17,18 +17,40 @@
 package com.igormaznitsa.zxpspritecorrector.utils;
 
 import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 import javax.imageio.ImageIO;
 
-public enum GfxUtils {
+public final class GfxUtils {
 
-  ;
-        
-   public static Image loadImage(final String iconFile) {
+  private GfxUtils() {
+  }
+
+  public static Image loadImage(final String iconFile) {
     try {
       return ImageIO.read(ClassLoader.getSystemResourceAsStream("com/igormaznitsa/zxpspritecorrector/icons/" + iconFile));
-    }
-    catch (Exception ex) {
+    } catch (Exception ex) {
       ex.printStackTrace();
+    }
+    return null;
+  }
+
+  public static boolean doesClipboardHasImage() {
+    final Transferable transferable = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+    return transferable != null && transferable.isDataFlavorSupported(DataFlavor.imageFlavor);
+  }
+
+  public static Image getImageFromClipboard() {
+    final Transferable transferable = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+    if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.imageFlavor)) {
+      try {
+        return (Image) transferable.getTransferData(DataFlavor.imageFlavor);
+      } catch (UnsupportedFlavorException | IOException e) {
+        e.printStackTrace();
+      }
     }
     return null;
   }

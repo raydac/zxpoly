@@ -23,9 +23,7 @@ import org.picocontainer.*;
 import org.picocontainer.injectors.*;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SNA48Plugin;
 import com.igormaznitsa.zxpspritecorrector.utils.TransferableImage;
-import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -146,6 +144,7 @@ public final class MainFrame extends javax.swing.JFrame {
       });
     });
 
+    resetOptions();
   }
 
   public PicoContainer getPico() {
@@ -168,6 +167,21 @@ public final class MainFrame extends javax.swing.JFrame {
     this.menuOptionDontShowAttributes.doClick();
     this.menuOptionsColumnsAll.doClick();
     this.sliderColumns.setValue(32);
+    refreshMenuAndToolState();
+  }
+
+  private void refreshMenuAndToolState() {
+    this.menuEditSelectArea.setEnabled(this.mainEditor.hasData());
+    this.menuEditPasteImage.setEnabled(this.mainEditor.hasData());
+    this.menuEditCopySelectedBaseAsImage.setEnabled(this.mainEditor.hasSelectedArea());
+    this.menuEditCopySelectedZxPolyAsImage.setEnabled(this.mainEditor.hasSelectedArea());
+
+    final boolean m512 = this.mainEditor.isMode512();
+    this.container.getComponents(AbstractTool.class).forEach(t -> {
+      if (m512 && !t.doesSupport512x384()) {
+        t.setEnabled(false);
+      }
+    });
   }
 
   private File ensureExtension(final File file, final AbstractFilePlugin plugin) {
@@ -231,6 +245,7 @@ public final class MainFrame extends javax.swing.JFrame {
     this.scrollBarAddress.setValue(address);
 
     updateBottomBar();
+    refreshMenuAndToolState();
   }
 
   /**
@@ -276,6 +291,7 @@ public final class MainFrame extends javax.swing.JFrame {
     menuEditSelectArea = new javax.swing.JMenuItem();
     menuEditCopySelectedZxPolyAsImage = new javax.swing.JMenuItem();
     menuEditCopySelectedBaseAsImage = new javax.swing.JMenuItem();
+    menuEditPasteImage = new javax.swing.JMenuItem();
     jSeparator7 = new javax.swing.JPopupMenu.Separator();
     menuEditCopyBaseToPlans = new javax.swing.JMenuItem();
     menuEditClear = new javax.swing.JMenuItem();
@@ -338,6 +354,7 @@ public final class MainFrame extends javax.swing.JFrame {
     });
 
     panelTools.setBorder(javax.swing.BorderFactory.createTitledBorder("Tools"));
+    panelTools.setFocusable(false);
 
     colorSelector.setToolTipText("Colors for paint (Lft btn - INK, Rght btn - PAPER)");
 
@@ -431,6 +448,8 @@ public final class MainFrame extends javax.swing.JFrame {
     gridBagConstraints.gridy = 0;
     jPanel2.add(labelAddress, gridBagConstraints);
 
+    spinnerCurrentAddress.setFocusable(false);
+
     menuFile.setText("File");
 
     menuFileNew.setText("New");
@@ -488,6 +507,7 @@ public final class MainFrame extends javax.swing.JFrame {
         menuEditMenuSelected(evt);
       }
       public void menuDeselected(javax.swing.event.MenuEvent evt) {
+        menuEditMenuDeselected(evt);
       }
       public void menuCanceled(javax.swing.event.MenuEvent evt) {
       }
@@ -521,8 +541,8 @@ public final class MainFrame extends javax.swing.JFrame {
     });
     menuEdit.add(menuEditSelectArea);
 
-    menuEditCopySelectedZxPolyAsImage.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.CTRL_MASK));
-    menuEditCopySelectedZxPolyAsImage.setText("Copy area (zxpoly)");
+    menuEditCopySelectedZxPolyAsImage.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+    menuEditCopySelectedZxPolyAsImage.setText("Copy selection (zxpoly)");
     menuEditCopySelectedZxPolyAsImage.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         menuEditCopySelectedZxPolyAsImageActionPerformed(evt);
@@ -530,14 +550,22 @@ public final class MainFrame extends javax.swing.JFrame {
     });
     menuEdit.add(menuEditCopySelectedZxPolyAsImage);
 
-    menuEditCopySelectedBaseAsImage.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
-    menuEditCopySelectedBaseAsImage.setText("Copy area (base)");
+    menuEditCopySelectedBaseAsImage.setText("Copy selection (base)");
     menuEditCopySelectedBaseAsImage.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         menuEditCopySelectedBaseAsImageActionPerformed(evt);
       }
     });
     menuEdit.add(menuEditCopySelectedBaseAsImage);
+
+    menuEditPasteImage.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_V, java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+    menuEditPasteImage.setText("Paste image");
+    menuEditPasteImage.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuEditPasteImageActionPerformed(evt);
+      }
+    });
+    menuEdit.add(menuEditPasteImage);
     menuEdit.add(jSeparator7);
 
     menuEditCopyBaseToPlans.setText("Copy base to all plans");
@@ -795,6 +823,8 @@ public final class MainFrame extends javax.swing.JFrame {
 
   private void menuFileOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileOpenActionPerformed
     try {
+      this.toolsButtonGroup.clearSelection();
+
       final JFileChooser chooser = new JFileChooser(this.lastOpenedFile);
       chooser.setAcceptAllFileFilterUsed(false);
 
@@ -1098,17 +1128,15 @@ public final class MainFrame extends javax.swing.JFrame {
     }
   }//GEN-LAST:event_mainEditorPanelMouseReleased
 
-  private void deactivateCurrentTool(){
-    final AbstractTool tool = this.currentAbstractTool.get();
-    if (tool!=null){
-      tool.setSelected(false);
-    }
+  private void deactivateCurrentTool() {
+    this.toolsButtonGroup.clearSelection();
   }
-  
+
   private void menuEditSelectAreaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditSelectAreaActionPerformed
     deactivateCurrentTool();
     this.mainEditor.setDraggedImage(null);
     this.selectAreaMode = true;
+    this.mainEditor.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
     this.mainEditor.addUndo();
     this.mainEditor.resetSelectArea();
   }//GEN-LAST:event_menuEditSelectAreaActionPerformed
@@ -1116,7 +1144,6 @@ public final class MainFrame extends javax.swing.JFrame {
   private void menuEditCopySelectedBaseAsImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditCopySelectedBaseAsImageActionPerformed
     final Image selectedAreaImage = this.mainEditor.getSelectedAreaAsImage(true);
     if (selectedAreaImage != null) {
-      this.mainEditor.setDraggedImage(selectedAreaImage);
       new TransferableImage(selectedAreaImage).toClipboard();
     }
   }//GEN-LAST:event_menuEditCopySelectedBaseAsImageActionPerformed
@@ -1124,28 +1151,46 @@ public final class MainFrame extends javax.swing.JFrame {
   private void menuEditCopySelectedZxPolyAsImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditCopySelectedZxPolyAsImageActionPerformed
     final Image selectedAreaImage = this.mainEditor.getSelectedAreaAsImage(false);
     if (selectedAreaImage != null) {
-      this.mainEditor.setDraggedImage(selectedAreaImage);
       new TransferableImage(selectedAreaImage).toClipboard();
     }
   }//GEN-LAST:event_menuEditCopySelectedZxPolyAsImageActionPerformed
 
   private void menuEditMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_menuEditMenuSelected
+    this.toolsButtonGroup.clearSelection();
     this.menuEditSelectArea.setEnabled(this.mainEditor.hasData());
+    this.menuEditPasteImage.setEnabled(GfxUtils.doesClipboardHasImage());
     this.menuEditCopySelectedBaseAsImage.setEnabled(this.mainEditor.hasSelectedArea());
     this.menuEditCopySelectedZxPolyAsImage.setEnabled(this.mainEditor.hasSelectedArea());
   }//GEN-LAST:event_menuEditMenuSelected
 
   private void mainEditorPanelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseClicked
     if (this.mainEditor.hasDraggedImage()) {
-    if ( evt.getClickCount()>1 && evt.getButton() == MouseEvent.BUTTON1) {
-      this.mainEditor.doStampDraggedImage();
-      evt.consume();
-    } else if (evt.getButton() == MouseEvent.BUTTON3) {
-      this.mainEditor.setDraggedImage(null);
-      evt.consume();
-    }
+      if (evt.getClickCount() > 1 && evt.getButton() == MouseEvent.BUTTON1) {
+        this.mainEditor.doStampDraggedImage();
+        evt.consume();
+      } else if (evt.getButton() == MouseEvent.BUTTON3) {
+        this.mainEditor.setDraggedImage(null);
+        evt.consume();
+      }
     }
   }//GEN-LAST:event_mainEditorPanelMouseClicked
+
+    private void menuEditPasteImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditPasteImageActionPerformed
+      final Image image = GfxUtils.getImageFromClipboard();
+      if (image != null) {
+        this.toolsButtonGroup.clearSelection();
+        this.mainEditor.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+        this.mainEditor.setToolArea(null);
+        this.mainEditor.setDraggedImage(image);
+      }
+    }//GEN-LAST:event_menuEditPasteImageActionPerformed
+
+    private void menuEditMenuDeselected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_menuEditMenuDeselected
+      this.menuEditSelectArea.setEnabled(this.mainEditor.hasData());
+      this.menuEditPasteImage.setEnabled(this.mainEditor.hasData());
+      this.menuEditCopySelectedBaseAsImage.setEnabled(this.mainEditor.hasData());
+      this.menuEditCopySelectedZxPolyAsImage.setEnabled(this.mainEditor.hasData());
+    }//GEN-LAST:event_menuEditMenuDeselected
 
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);
@@ -1188,6 +1233,7 @@ public final class MainFrame extends javax.swing.JFrame {
   private javax.swing.JMenuItem menuEditCopyBaseToPlans;
   private javax.swing.JMenuItem menuEditCopySelectedBaseAsImage;
   private javax.swing.JMenuItem menuEditCopySelectedZxPolyAsImage;
+  private javax.swing.JMenuItem menuEditPasteImage;
   private javax.swing.JMenuItem menuEditRedo;
   private javax.swing.JMenuItem menuEditSelectArea;
   private javax.swing.JMenuItem menuEditUndo;

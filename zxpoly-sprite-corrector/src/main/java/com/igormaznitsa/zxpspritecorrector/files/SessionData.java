@@ -21,6 +21,7 @@ import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
 import java.io.IOException;
 
 public class SessionData {
+
   private final int baseAddress;
   private final boolean showGrid;
   private final boolean showColumns;
@@ -30,43 +31,43 @@ public class SessionData {
   private final boolean mode512x384;
   private final int zoom;
   private final EditorComponent.AttributeMode attributeMode;
-  
-  public int getBaseAddress(){
+
+  public int getBaseAddress() {
     return this.baseAddress;
   }
-  
-  public int getZoom(){
+
+  public int getZoom() {
     return this.zoom;
   }
-  
-  public boolean isInvertBaseShow(){
+
+  public boolean isInvertBaseShow() {
     return this.invertBase;
   }
-  
-  public boolean is512Mode(){
+
+  public boolean is512Mode() {
     return this.mode512x384;
   }
-  
-  public boolean isShowGrid(){
+
+  public boolean isShowGrid() {
     return this.showGrid;
   }
-  
-  public boolean isShowColumns(){
+
+  public boolean isShowColumns() {
     return this.showColumns;
   }
-  
-  public int getColumnNumber(){
+
+  public int getColumnNumber() {
     return this.columnNumber;
   }
-  
-  public boolean isZXAddressing(){
+
+  public boolean isZXAddressing() {
     return this.zxAddressing;
   }
-  
-  public EditorComponent.AttributeMode getAttributeMode(){
+
+  public EditorComponent.AttributeMode getAttributeMode() {
     return this.attributeMode;
   }
-  
+
   public SessionData(final JBBPBitInputStream inStream) throws IOException {
     baseAddress = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
     showGrid = inStream.readBoolean();
@@ -78,8 +79,8 @@ public class SessionData {
     attributeMode = EditorComponent.AttributeMode.values()[inStream.readInt(JBBPByteOrder.BIG_ENDIAN)];
     zoom = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
   }
-          
-  public SessionData(final EditorComponent editor){
+
+  public SessionData(final EditorComponent editor) {
     this.baseAddress = editor.getAddress();
     this.showGrid = editor.isShowGrid();
     this.showColumns = editor.isShowColumnBorders();
@@ -91,7 +92,7 @@ public class SessionData {
     this.zoom = editor.getZoom();
   }
 
-  public void fill(final EditorComponent editor){
+  public void fill(final EditorComponent editor) {
     editor.setAddress(this.baseAddress);
     editor.setShowGrid(this.showGrid);
     editor.setShowColumnBorders(this.showColumns);
@@ -100,12 +101,12 @@ public class SessionData {
     editor.setShowAttributes(this.attributeMode);
     editor.setZoom(this.zoom);
   }
-  
-  public byte [] makeArray() throws IOException {
+
+  public byte[] makeArray() throws IOException {
     return JBBPOut.BeginBin().
             Int(this.baseAddress).
-            Bool(this.showGrid, this.showColumns,this.zxAddressing, this.invertBase, this.mode512x384).
+            Bool(this.showGrid, this.showColumns, this.zxAddressing, this.invertBase, this.mode512x384).
             Int(this.columnNumber, this.attributeMode.ordinal(), this.zoom).End().toByteArray();
   }
-  
+
 }

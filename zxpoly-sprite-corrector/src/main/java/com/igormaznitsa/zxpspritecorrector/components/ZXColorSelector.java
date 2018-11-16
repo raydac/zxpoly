@@ -20,7 +20,7 @@ public final class ZXColorSelector extends JComponent implements MouseListener {
   private final List<ActionListener> actionListeners = new ArrayList<>();
 
   private final Dimension minSize;
-  
+
   public ZXColorSelector() {
     super();
 
@@ -30,12 +30,12 @@ public final class ZXColorSelector extends JComponent implements MouseListener {
     selectedInk = 0;
     selectedPaint = 15;
 
-    if (iconINK != null && iconPAINT!=null){
-      this.minSize = new Dimension((Math.max(iconINK.getWidth(null), iconPAINT.getWidth(null))+5)*8, iconINK.getHeight(null)+5+iconPAINT.getHeight(null));
-    }else{
+    if (iconINK != null && iconPAINT != null) {
+      this.minSize = new Dimension((Math.max(iconINK.getWidth(null), iconPAINT.getWidth(null)) + 5) * 8, iconINK.getHeight(null) + 5 + iconPAINT.getHeight(null));
+    } else {
       this.minSize = new Dimension(320, 40);
     }
-    
+
     addMouseListener(this);
   }
 
@@ -50,6 +50,11 @@ public final class ZXColorSelector extends JComponent implements MouseListener {
   @Override
   public Dimension getMinimumSize() {
     return this.minSize;
+  }
+
+  @Override
+  public boolean isFocusable() {
+    return false;
   }
 
   @Override
@@ -123,7 +128,7 @@ public final class ZXColorSelector extends JComponent implements MouseListener {
         repaint();
 
         actionListeners.forEach((p_listener) -> {
-            p_listener.actionPerformed(new ActionEvent(this, 0, null));
+          p_listener.actionPerformed(new ActionEvent(this, 0, null));
         });
 
       }
@@ -133,7 +138,7 @@ public final class ZXColorSelector extends JComponent implements MouseListener {
         repaint();
 
         this.actionListeners.forEach((l) -> {
-            l.actionPerformed(new ActionEvent(this, 0, null));
+          l.actionPerformed(new ActionEvent(this, 0, null));
         });
       }
       break;

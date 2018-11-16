@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
 import com.igormaznitsa.jbbp.io.*;
@@ -28,15 +27,16 @@ import org.picocontainer.PicoContainer;
 import org.picocontainer.annotations.Inject;
 
 public class SZEPlugin extends AbstractFilePlugin {
+
   @Inject
   private PicoContainer context;
-  
+
   @Override
   public String getPluginUID() {
     return "SZEP";
   }
-  
-  public SZEPlugin(){
+
+  public SZEPlugin() {
     super();
   }
 
@@ -57,7 +57,7 @@ public class SZEPlugin extends AbstractFilePlugin {
 
   @Override
   public List<Info> getImportingContainerFileList(final File file) {
-      return null;
+    return null;
   }
 
   @Override
@@ -66,21 +66,19 @@ public class SZEPlugin extends AbstractFilePlugin {
       FileInputStream in = null;
       try {
         in = new FileInputStream(file);
-        final ZXPolyData zxpoly = new ZXPolyData(in,this.context.getComponents(AbstractFilePlugin.class));
-        
+        final ZXPolyData zxpoly = new ZXPolyData(in, this.context.getComponents(AbstractFilePlugin.class));
+
         final StringBuilder result = new StringBuilder();
         result.append("  Name : ").append(zxpoly.getInfo().getName()).append('\n');
         result.append("  Type : ").append(zxpoly.getInfo().getType()).append('\n');
         result.append("Length : ").append(zxpoly.getInfo().getLength()).append('\n');
         result.append("Plugin : ").append(zxpoly.getPlugin().getPluginDescription(false));
-        
+
         return result.toString();
-      }
-      finally {
+      } finally {
         JBBPUtils.closeQuietly(in);
       }
-    }
-    catch (Exception ex) {
+    } catch (Exception ex) {
       return null;
     }
   }
@@ -89,10 +87,10 @@ public class SZEPlugin extends AbstractFilePlugin {
   public String getPluginDescription(final boolean forExport) {
     return "SZE file";
   }
-  
+
   @Override
   public ReadResult readFrom(final File file, final int index) throws IOException {
-    try(FileInputStream inStream = new FileInputStream(file)){
+    try (FileInputStream inStream = new FileInputStream(file)) {
       final ZXPolyData zxpolyData = new ZXPolyData(inStream, this.context.getComponents(AbstractFilePlugin.class));
       final JBBPBitInputStream in = new JBBPBitInputStream(inStream);
       final int length = in.readInt(JBBPByteOrder.BIG_ENDIAN);
@@ -102,17 +100,17 @@ public class SZEPlugin extends AbstractFilePlugin {
 
   @Override
   public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
-    final byte [] dataarray = data.getAsArray();
-    final byte [] sessionarray = sessionData.makeArray();
-    
-    final byte [] result = JBBPOut.BeginBin().Byte(dataarray).Int(sessionarray.length).Byte(sessionarray).End().toByteArray();
-    
+    final byte[] dataarray = data.getAsArray();
+    final byte[] sessionarray = sessionData.makeArray();
+
+    final byte[] result = JBBPOut.BeginBin().Byte(dataarray).Int(sessionarray.length).Byte(sessionarray).End().toByteArray();
+
     saveDataToFile(file, result);
   }
 
   @Override
   public boolean accept(final File pathname) {
-    return pathname!= null && (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".sze"));
+    return pathname != null && (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".sze"));
   }
 
   @Override
@@ -132,7 +130,7 @@ public class SZEPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return getToolTip(false)+" (*.SZE)";
+    return getToolTip(false) + " (*.SZE)";
   }
 
 }

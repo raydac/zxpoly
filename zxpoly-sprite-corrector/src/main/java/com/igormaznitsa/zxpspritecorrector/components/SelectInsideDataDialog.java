@@ -24,24 +24,24 @@ import javax.swing.DefaultListModel;
 import javax.swing.event.*;
 import javax.swing.table.TableModel;
 
-public class SelectInsideDataDialog extends javax.swing.JDialog implements TableModel{
+public class SelectInsideDataDialog extends javax.swing.JDialog implements TableModel {
 
   private static final long serialVersionUID = -1593974231619108719L;
 
   private int result = -1;
   private final List<Info> list;
-  
+
   public SelectInsideDataDialog(final java.awt.Frame parent, final File file, final AbstractFilePlugin plugin) throws IOException {
     super(parent, true);
     initComponents();
     this.setLocationRelativeTo(parent);
     this.setTitle(file.getName());
-    
+
     this.list = plugin.getImportingContainerFileList(file);
     if (list == null) {
       throw new IOException("Can't get list of container items");
     }
-    
+
     final DefaultListModel<String> model = new DefaultListModel<String>();
 
     for (final Info s : list) {
@@ -51,7 +51,7 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
     this.buttonOk.setEnabled(false);
 
     this.tableItems.setModel(this);
-    
+
     this.tableItems.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
       @Override
@@ -151,7 +151,6 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
     return this.result;
   }
 
-
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JButton buttonCancel;
   private javax.swing.JButton buttonOk;
@@ -171,11 +170,15 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
 
   @Override
   public String getColumnName(int columnIndex) {
-    switch(columnIndex){
-      case 0 : return "Name";
-      case 1 : return "Type";
-      case 2 : return "Size";
-      default: return null;
+    switch (columnIndex) {
+      case 0:
+        return "Name";
+      case 1:
+        return "Type";
+      case 2:
+        return "Size";
+      default:
+        return null;
     }
   }
 
@@ -192,11 +195,15 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     final Info row = this.list.get(rowIndex);
-    switch(columnIndex){
-      case 0 : return row.getName();
-      case 1 : return Character.toString(row.getType());
-      case 2 : return Integer.toString(row.getLength());
-      default : return null;
+    switch (columnIndex) {
+      case 0:
+        return row.getName();
+      case 1:
+        return Character.toString(row.getType());
+      case 2:
+        return Integer.toString(row.getLength());
+      default:
+        return null;
     }
   }
 

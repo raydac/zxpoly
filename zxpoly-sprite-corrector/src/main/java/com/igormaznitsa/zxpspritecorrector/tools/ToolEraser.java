@@ -32,7 +32,7 @@ public class ToolEraser extends AbstractTool {
     final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
 
     final boolean mode512 = editComponent.isMode512();
-    
+
     for (int x = 0; x < area.width; x++) {
       for (int y = 0; y < area.height; y++) {
         final int dx = x + area.x;

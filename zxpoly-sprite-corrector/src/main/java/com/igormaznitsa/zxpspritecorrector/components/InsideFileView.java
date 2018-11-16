@@ -37,12 +37,12 @@ public class InsideFileView extends javax.swing.JPanel implements PropertyChange
     this.chooser = chooser;
     this.chooser.addPropertyChangeListener(this);
     this.listFiles.setModel(listModel);
-    
-    final JPanel thePanel = this; 
-    
+
+    final JPanel thePanel = this;
+
     this.listFiles.setCellRenderer(new ListCellRenderer() {
       private final JTextArea renderer = new JTextArea();
-      
+
       @Override
       public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
         renderer.setFont(list.getFont());
@@ -54,10 +54,10 @@ public class InsideFileView extends javax.swing.JPanel implements PropertyChange
         renderer.setEditable(false);
         renderer.setText(value.toString());
         renderer.setBorder(null);
-        
+
         thePanel.revalidate();
         thePanel.repaint();
-        
+
         return renderer;
       }
     });
@@ -85,7 +85,6 @@ public class InsideFileView extends javax.swing.JPanel implements PropertyChange
     add(jScrollPane1, java.awt.BorderLayout.CENTER);
   }// </editor-fold>//GEN-END:initComponents
 
-
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JScrollPane jScrollPane1;
   private javax.swing.JList listFiles;
@@ -106,17 +105,16 @@ public class InsideFileView extends javax.swing.JPanel implements PropertyChange
 
           if (info == null) {
             this.listModel.addElement("   Wrong format   ");
+          } else {
+            for (final Info s : info) {
+              this.listModel.addElement(s.toString());
+            }
           }
-          else {
-              for (final Info s : info) {
-                this.listModel.addElement(s.toString());
-              }
-          }
-        }else{
+        } else {
           final String fileReference = plugin.getImportingFileInfo(file);
-          if (fileReference == null){
+          if (fileReference == null) {
             this.listModel.addElement("   Wrong format   ");
-          }else{
+          } else {
             this.listModel.addElement(fileReference);
           }
         }

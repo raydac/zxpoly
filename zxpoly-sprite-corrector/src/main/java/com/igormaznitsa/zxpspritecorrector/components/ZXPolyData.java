@@ -55,6 +55,7 @@ public class ZXPolyData {
   private final Info info;
 
   public static class UndoBlock {
+
     private final Rectangle selectedArea;
     private final byte[] mask;
     private final byte[][] zxpoly;
@@ -67,7 +68,7 @@ public class ZXPolyData {
         this.zxpoly[i] = zxpoly[i].clone();
       }
     }
-    
+
     public Rectangle getSelectedArea() {
       return this.selectedArea;
     }
@@ -197,8 +198,7 @@ public class ZXPolyData {
       final byte basedata = this.basedata[i];
       if (maskdata == 0) {
         result[i] = basedata;
-      }
-      else {
+      } else {
         result[i] = (byte) ((basedata & (~maskdata)) | (result[i] & maskdata));
       }
     }

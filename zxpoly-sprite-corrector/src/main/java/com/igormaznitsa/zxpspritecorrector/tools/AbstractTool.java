@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.igormaznitsa.zxpspritecorrector.tools;
 
 import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
@@ -23,8 +22,9 @@ import java.awt.Rectangle;
 import javax.swing.*;
 
 public abstract class AbstractTool extends JToggleButton {
+
   private static final long serialVersionUID = 5453667415344533432L;
-  
+
   public static final int BUTTON_NONE = 0;
   public static final int BUTTON_MOUSE_LEFT = 1;
   public static final int BUTTON_MOUSE_MIDDLE = 2;
@@ -34,25 +34,30 @@ public abstract class AbstractTool extends JToggleButton {
   public static final int BUTTON_ALT = 32;
 
   protected final BoundedRangeModel model = new DefaultBoundedRangeModel(1, 0, 1, 32);
-  
-  public AbstractTool(final String iconName, final String toolTip){
+
+  public AbstractTool(final String iconName, final String toolTip) {
     super();
     setModel(new ToolButtonModel(this));
     setIcon(new ImageIcon(GfxUtils.loadImage(iconName)));
     setToolTipText(toolTip);
   }
 
-  public BoundedRangeModel getScaleModel() {
-      return this.model;
+  @Override
+  public boolean isFocusable() {
+    return false;
   }
-  
-  public boolean doesSupport512x384(){
+
+  public BoundedRangeModel getScaleModel() {
+    return this.model;
+  }
+
+  public boolean doesSupport512x384() {
     return true;
   }
-  
+
   public abstract void process(final EditorComponent editComponent, final Rectangle area, final int buttons);
 
-  public static boolean isCoordValid(final int x, final int y, final boolean mode512){
+  public static boolean isCoordValid(final int x, final int y, final boolean mode512) {
     if (mode512) {
       return x >= 0 && y >= 0 && x < 512 && y < 384;
     } else {

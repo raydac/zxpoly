@@ -95,13 +95,13 @@ public class ZXEMLSnapshotFormat {
   @Bin(outOrder = 10, type = BinType.SHORT_ARRAY)
   private short[] reg_af_alt = new short[4];
   @Bin(outOrder = 11, type = BinType.SHORT_ARRAY)
-  private short[] reg_bc = new short [4];
+  private short[] reg_bc = new short[4];
   @Bin(outOrder = 12, type = BinType.SHORT_ARRAY)
-  private short[] reg_bc_alt = new short [4];
+  private short[] reg_bc_alt = new short[4];
   @Bin(outOrder = 13, type = BinType.SHORT_ARRAY)
   private short[] reg_de = new short[4];
   @Bin(outOrder = 14, type = BinType.SHORT_ARRAY)
-  private short[] reg_de_alt  = new short[4];
+  private short[] reg_de_alt = new short[4];
   @Bin(outOrder = 15, type = BinType.SHORT_ARRAY)
   private short[] reg_hl = new short[4];
   @Bin(outOrder = 16, type = BinType.SHORT_ARRAY)
@@ -137,15 +137,17 @@ public class ZXEMLSnapshotFormat {
           + "short [4] reg_pc; short [4] reg_sp;"
           + "pages [4]{ubyte number; page[number]{ubyte index; byte [16384] data;}}");
 
-  public void setPages(final int cpuIndex, final Pages pages){
-    if (pages == null) throw new NullPointerException("Value must not be null");
+  public void setPages(final int cpuIndex, final Pages pages) {
+    if (pages == null) {
+      throw new NullPointerException("Value must not be null");
+    }
     this.pages[cpuIndex] = pages;
   }
-  
-  public Pages getPages(final int cpuIndex){
-    return this.pages [cpuIndex];
+
+  public Pages getPages(final int cpuIndex) {
+    return this.pages[cpuIndex];
   }
-  
+
   public int getFlags() {
     return this.flags;
   }
@@ -157,8 +159,7 @@ public class ZXEMLSnapshotFormat {
   public void setHL(final int cpuIndex, final int value, final boolean alt) {
     if (alt) {
       reg_hl_alt[cpuIndex] = (short) value;
-    }
-    else {
+    } else {
       reg_hl[cpuIndex] = (short) value;
     }
   }
@@ -170,8 +171,7 @@ public class ZXEMLSnapshotFormat {
   public void setDE(final int cpuIndex, final int value, final boolean alt) {
     if (alt) {
       reg_de_alt[cpuIndex] = (short) value;
-    }
-    else {
+    } else {
       reg_de[cpuIndex] = (short) value;
     }
   }
@@ -183,8 +183,7 @@ public class ZXEMLSnapshotFormat {
   public void setBC(final int cpuIndex, final int value, final boolean alt) {
     if (alt) {
       reg_bc_alt[cpuIndex] = (short) value;
-    }
-    else {
+    } else {
       reg_bc[cpuIndex] = (short) value;
     }
   }
@@ -196,8 +195,7 @@ public class ZXEMLSnapshotFormat {
   public void setAF(final int cpuIndex, final int value, final boolean alt) {
     if (alt) {
       reg_af_alt[cpuIndex] = (short) value;
-    }
-    else {
+    } else {
       reg_af[cpuIndex] = (short) value;
     }
   }
@@ -327,18 +325,26 @@ public class ZXEMLSnapshotFormat {
   public ZXEMLSnapshotFormat(final byte[] data) throws IOException {
     this.pages = null;
     ZXEML_SNAPSHOT.parse(data).mapTo(this);
-    if (this.magic != MAGIC) throw new IOException("It is not ZXEML snapshot");
+    if (this.magic != MAGIC) {
+      throw new IOException("It is not ZXEML snapshot");
+    }
   }
 
   public byte[] save() throws IOException {
-    if (this.pages == null) throw new NullPointerException("Pages must not be null");
-    for(final Pages p : this.pages){
-      if (p == null) throw new NullPointerException("Item in Pages contains null");
-      for(final Page pp : p.page){
-        if (pp == null) throw new NullPointerException("Detected defined null page");
+    if (this.pages == null) {
+      throw new NullPointerException("Pages must not be null");
+    }
+    for (final Pages p : this.pages) {
+      if (p == null) {
+        throw new NullPointerException("Item in Pages contains null");
+      }
+      for (final Page pp : p.page) {
+        if (pp == null) {
+          throw new NullPointerException("Detected defined null page");
+        }
       }
     }
-    
+
     return JBBPOut.BeginBin().Bin(this).End().toByteArray();
   }
 }

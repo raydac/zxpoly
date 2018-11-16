@@ -42,7 +42,7 @@ public class ToolColorizer extends AbstractTool {
     final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
 
     final boolean mode512 = editComponent.isMode512();
-    
+
     if ((buttons & BUTTON_MOUSE_LEFT) != 0) {
       final int index = colorSelector.getSelectedInk();
       for (int x = 0; x < area.width; x++) {
@@ -59,8 +59,7 @@ public class ToolColorizer extends AbstractTool {
           }
         }
       }
-    }
-    else if ((buttons & BUTTON_MOUSE_RIGHT) != 0) {
+    } else if ((buttons & BUTTON_MOUSE_RIGHT) != 0) {
       final int index = colorSelector.getSelectedPaint();
       for (int x = 0; x < area.width; x++) {
         for (int y = 0; y < area.height; y++) {
@@ -76,8 +75,7 @@ public class ToolColorizer extends AbstractTool {
           }
         }
       }
-    }
-    else {
+    } else {
       return;
     }
 

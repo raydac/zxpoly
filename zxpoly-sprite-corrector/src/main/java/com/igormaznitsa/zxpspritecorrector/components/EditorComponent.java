@@ -120,10 +120,10 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
             gfx.drawLine(x, y, x, y);
           } else {
             if (this.mode512) {
-              if (this.zxGraphics.isBaseBitSet(sx + x, sy + y)) {
-                gfx.setColor(Color.WHITE);
-              } else {
+              if (this.zxGraphics.getPoint3012(sx + x, sy + y) == 0) {
                 gfx.setColor(Color.BLACK);
+              } else {
+                gfx.setColor(Color.WHITE);
               }
               gfx.drawLine(x, y, x, y);
             } else {
@@ -322,7 +322,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       int result = 0;
 
       if (address >= 0) {
-        final int bitmask = makeXMask(x);
+        final int bitmask = makeXMask(x >> (this.editor.mode512 ? 1 : 0));
 
         if ((this.editor.processingData.getMask(address) & bitmask) == 0) {
           result = 0;
@@ -917,19 +917,23 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       if (this.mode512) {
         for (int dy = 0; dy < h; dy++) {
           for (int dx = 0; dx < w; dx++) {
-            final int pixel = pixels[dy*w + dx];
-            if (intensity(pixel)>128){
-              this.zxGraphics.setPoint(x+ dx, y+dy, 0xF);
-            } else {
-              this.zxGraphics.setPoint(x + dx, y + dy, 0x0);
+            final int pixel = pixels[dy * w + dx];
+            if (((pixel >>> 24) & 0xFF) > 0) {
+              if (intensity(pixel) > 128) {
+                this.zxGraphics.setPoint(x + dx, y + dy, 0xF);
+              } else {
+                this.zxGraphics.setPoint(x + dx, y + dy, 0x0);
+              }
             }
           }
         }
       } else {
         for (int dy = 0; dy < h; dy++) {
           for (int dx = 0; dx < w; dx++) {
-            final int rgb = pixels[dy * w + dx];
-              this.zxGraphics.setPoint(x + dx, y + dy, ZXPalette.findNearestColorIndex(rgb));
+            final int argb = pixels[dy * w + dx];
+            if (((argb >>> 24) & 0xFF) > 0) {
+              this.zxGraphics.setPoint(x + dx, y + dy, ZXPalette.findNearestColorIndex(argb));
+            }
           }
         }
       }
@@ -939,12 +943,12 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public static double intensity(final int rgb) {
-    int r = (rgb >>> 16) &0xFF;
-    int g = (rgb >>> 8) &0xFF;
-    int b = rgb &0xFF;
+    int r = (rgb >>> 16) & 0xFF;
+    int g = (rgb >>> 8) & 0xFF;
+    int b = rgb & 0xFF;
     return 0.299 * r + 0.587 * g + 0.114 * b;
   }
-  
+
   public boolean hasDraggedImage() {
     return this.draggedImage != null;
   }

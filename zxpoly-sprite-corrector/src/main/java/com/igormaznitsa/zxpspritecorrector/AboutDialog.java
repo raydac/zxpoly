@@ -9,9 +9,9 @@ public final class AboutDialog extends javax.swing.JDialog {
   public AboutDialog(final JFrame parent) {
     super(parent, true);
     initComponents();
-    
+
     this.jTextArea1.setText(this.jTextArea1.getText().replace("${project.version}", "2.0-SNAPSHOT"));
-    
+
     this.setLocationRelativeTo(null);
   }
 

@@ -91,12 +91,10 @@ public class HOBETAPlugin extends AbstractFilePlugin {
         result.append("  Sectors:").append(hobeta.sectors).append(" sectors").append("  ");
 
         return result.toString();
-      }
-      finally {
+      } finally {
         JBBPUtils.closeQuietly(in);
       }
-    }
-    catch (Exception ex) {
+    } catch (Exception ex) {
       return null;
     }
   }
@@ -118,10 +116,10 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     final File dir = file.getParentFile();
     final char zxType = data.getInfo().getType();
     String name = file.getName();
-    if (FilenameUtils.getExtension(name).isEmpty()){
-      name = name+".$"+zxType;
+    if (FilenameUtils.getExtension(name).isEmpty()) {
+      name = name + ".$" + zxType;
     }
-    
+
     final String zxName = data.getInfo().getName();
 
     final FileNameDialog nameDialog = new FileNameDialog(
@@ -134,13 +132,15 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     nameDialog.setVisible(true);
 
     if (nameDialog.approved()) {
-      final String [] fileNames = nameDialog.getFileName();
-      final String [] zxNames = nameDialog.getZxName();
-      final Character [] types = nameDialog.getZxType();
-      
-      for(int i=0;i<4;i++){
-        final File savingfile = new File(dir,fileNames[i]);
-        if (!writeDataBlockAsHobeta(savingfile, zxNames[i], (byte)types[i].charValue(), data.getInfo().getStartAddress(), data.getDataForCPU(i))) break;
+      final String[] fileNames = nameDialog.getFileName();
+      final String[] zxNames = nameDialog.getZxName();
+      final Character[] types = nameDialog.getZxType();
+
+      for (int i = 0; i < 4; i++) {
+        final File savingfile = new File(dir, fileNames[i]);
+        if (!writeDataBlockAsHobeta(savingfile, zxNames[i], (byte) types[i].charValue(), data.getInfo().getStartAddress(), data.getDataForCPU(i))) {
+          break;
+        }
       }
     }
   }
@@ -159,7 +159,6 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   public String getExtension(final boolean forExport) {
     return null;
   }
-
 
   private int makeCRC(final byte[] array) {
     int crc = 0;

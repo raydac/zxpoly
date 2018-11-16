@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
 import com.igormaznitsa.jbbp.JBBPParser;
@@ -33,8 +32,8 @@ public class TAPPlugin extends AbstractFilePlugin {
 
   public static final JBBPParser TAP_FILE_PARSER = JBBPParser.prepare("tapblocks [_]{ <ushort len; byte flag; byte [len-2] data; byte checksum;}");
   public static final JBBPParser HEADER_PARSER = JBBPParser.prepare("byte type; byte [10] name; <ushort length; <ushort param1; <ushort param2;");
-  
-  public TAPPlugin(){
+
+  public TAPPlugin() {
     super();
   }
 
@@ -53,88 +52,93 @@ public class TAPPlugin extends AbstractFilePlugin {
     return true;
   }
 
-  private static String extractHeaderName(final byte [] headerData){
+  private static String extractHeaderName(final byte[] headerData) {
     final StringBuilder result = new StringBuilder(10);
-    
-    for(int i=0;i<10;i++){
+
+    for (int i = 0; i < 10; i++) {
       final int value = headerData[i] & 0xFF;
-      if (value<32 || value>0x7E) {
+      if (value < 32 || value > 0x7E) {
         result.append(' ');
-      }else{
-        result.append((char)value);
+      } else {
+        result.append((char) value);
       }
     }
-    
+
     return result.toString();
   }
-  
+
   private static int extractStartAddressField(final byte[] headerData) {
     return (headerData[12] & 0xFF) | ((headerData[13] & 0xFF) << 8);
   }
 
-  private static int extractDataLengthField(final byte [] headerData){
-    return (headerData[10] & 0xFF) | ((headerData[11] & 0xFF)<<8);
+  private static int extractDataLengthField(final byte[] headerData) {
+    return (headerData[10] & 0xFF) | ((headerData[11] & 0xFF) << 8);
   }
-  
+
   @Override
   public List<Info> getImportingContainerFileList(final File file) {
-    try{
+    try {
       final List<Info> result = new ArrayList<Info>();
-      
+
       JBBPBitInputStream in = null;
-      try{
+      try {
         in = new JBBPBitInputStream(new FileInputStream(file));
-        
-        while(in.hasAvailableData()){
+
+        while (in.hasAvailableData()) {
           final int length = in.readUnsignedShort(JBBPByteOrder.LITTLE_ENDIAN);
           final int flag = in.readByte();
-          
-          if (flag == 0){
+
+          if (flag == 0) {
             // standard rom
             final int standardflag = in.readByte();
-            final byte [] data = in.readByteArray(length-2);
+            final byte[] data = in.readByteArray(length - 2);
             final int datalen = extractDataLengthField(data);
             final int address = extractStartAddressField(data);
-            switch(standardflag){
-              case 0 : {
+            switch (standardflag) {
+              case 0: {
                 // program header
                 result.add(new Info(extractHeaderName(data), 'B', address, datalen, -1));
-              } break;
-              case 1 : {
+              }
+              break;
+              case 1: {
                 // numeric data array header
-                result.add(new Info(extractHeaderName(data), 'N', address,datalen, -1));
-              }break; 
-              case 2 : {
+                result.add(new Info(extractHeaderName(data), 'N', address, datalen, -1));
+              }
+              break;
+              case 2: {
                 // alphanumeric data array header
                 result.add(new Info(extractHeaderName(data), 'S', address, datalen, -1));
-              }break;
-              case 3 : {
+              }
+              break;
+              case 3: {
                 // code block
                 result.add(new Info(extractHeaderName(data), 'C', address, datalen, -1));
-              }break;
-              default : {
+              }
+              break;
+              default: {
                 // unknown
-                result.add(new Info("<Unknown>",'U', address, length, -1));
-              }break;
+                result.add(new Info("<Unknown>", 'U', address, length, -1));
+              }
+              break;
             }
           } else {
-            if (flag == 0xFF){
+            if (flag == 0xFF) {
               // data block
-              result.add(new Info("<Code>", 'D', -1, length-2, -1));
-            }else{
+              result.add(new Info("<Code>", 'D', -1, length - 2, -1));
+            } else {
               // custom
               result.add(new Info("<Unknown>", 'U', -1, length, -1));
             }
-            in.skip(length-1);
+            in.skip(length - 1);
           }
         }
-        
-      }finally{
+
+      } finally {
         JBBPUtils.closeQuietly(in);
       }
-      
+
       return result;
-    }catch(Exception ex){
+    } catch (Exception ex) {
       return null;
     }
   }
@@ -144,12 +148,12 @@ public class TAPPlugin extends AbstractFilePlugin {
     JBBPBitInputStream in = new JBBPBitInputStream(new FileInputStream(file));
     try {
       int curindex = 0;
-      
+
       while (in.hasAvailableData()) {
         final int length = in.readUnsignedShort(JBBPByteOrder.LITTLE_ENDIAN);
         final int flag = in.readByte();
 
-        final int offset = (int)in.getCounter();
+        final int offset = (int) in.getCounter();
         final Info info;
         if (flag == 0) {
           // standard rom
@@ -157,7 +161,7 @@ public class TAPPlugin extends AbstractFilePlugin {
           final byte[] data = in.readByteArray(length - 2);
           final int datalen = extractDataLengthField(data);
           final int address = extractStartAddressField(data);
-          
+
           switch (standardflag) {
             case 0: {
               // program header
@@ -185,72 +189,72 @@ public class TAPPlugin extends AbstractFilePlugin {
             }
             break;
           }
-          
-          if (curindex<index){
+
+          if (curindex < index) {
             curindex++;
-          }else{
+          } else {
             throw new IllegalArgumentException("Selected item is not a data block but a header");
           }
-        }
-        else {
+        } else {
           if (flag == 0xFF) {
             // data block
             info = new Info("<Code>", 'D', -1, length - 2, offset);
-          }
-          else {
+          } else {
             // custom
             info = new Info("<Unknown>", 'U', -1, length, offset);
           }
-          
-          if (curindex<index){
-            curindex ++;
+
+          if (curindex < index) {
+            curindex++;
             in.skip(length - 1);
-          }else{
-            return new ReadResult(new ZXPolyData(info, this, in.readByteArray(length-1)), null);
+          } else {
+            return new ReadResult(new ZXPolyData(info, this, in.readByteArray(length - 1)), null);
           }
         }
       }
-      throw new IllegalArgumentException("Can't find file for index "+index);
+      throw new IllegalArgumentException("Can't find file for index " + index);
 
-    }
-    finally {
+    } finally {
       JBBPUtils.closeQuietly(in);
     }
   }
 
   @Override
   public void writeTo(final File file, final ZXPolyData data, final SessionData session) throws IOException {
-    final int saveAsSeparateFiles = JOptionPane.showConfirmDialog(this.mainFrame, "Save each block as a separated file?","Separate files",JOptionPane.YES_NO_CANCEL_OPTION);
-    if (saveAsSeparateFiles == JOptionPane.CANCEL_OPTION) return;
-    
-    
-      final String baseName = file.getName();
-      final String baseZXName =  FilenameUtils.getBaseName(baseName);
-    if (saveAsSeparateFiles == JOptionPane.YES_OPTION){
-      
+    final int saveAsSeparateFiles = JOptionPane.showConfirmDialog(this.mainFrame, "Save each block as a separated file?", "Separate files", JOptionPane.YES_NO_CANCEL_OPTION);
+    if (saveAsSeparateFiles == JOptionPane.CANCEL_OPTION) {
+      return;
+    }
+
+    final String baseName = file.getName();
+    final String baseZXName = FilenameUtils.getBaseName(baseName);
+    if (saveAsSeparateFiles == JOptionPane.YES_OPTION) {
+
       final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "Saving as separated files", new String[]{addNumberToFileName(baseName, 0),
-        addNumberToFileName(baseName, 1),addNumberToFileName(baseName, 2),addNumberToFileName(baseName, 3)},
-              new String[]{prepareNameForTAP(baseZXName, 0),prepareNameForTAP(baseZXName, 1),prepareNameForTAP(baseZXName, 2),prepareNameForTAP(baseZXName, 3)},
-        null);
-      fileNameDialog.setVisible(true);
-      if (fileNameDialog.approved()) {
-        final String [] fileNames = fileNameDialog.getFileName();
-        final String [] zxNames = fileNameDialog.getZxName();
-        for(int i=0;i<4;i++){
-          final byte [] headerblock = makeHeaderBlock(zxNames[i], data.getInfo().getStartAddress(), data.length());
-          final byte [] datablock = makeDataBlock(data.getDataForCPU(i));
-          final byte [] dataToSave = JBBPOut.BeginBin().Byte(wellTapBlock(headerblock)).Byte(wellTapBlock(datablock)).End().toByteArray();
-          
-          final File fileToSave = new File(file.getParent(),fileNames[i]);
-          if (!saveDataToFile(fileToSave, dataToSave)) return;
-        }
-      }
-    }else{
-      final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "Save as "+baseName, null,
+        addNumberToFileName(baseName, 1), addNumberToFileName(baseName, 2), addNumberToFileName(baseName, 3)},
               new String[]{prepareNameForTAP(baseZXName, 0), prepareNameForTAP(baseZXName, 1), prepareNameForTAP(baseZXName, 2), prepareNameForTAP(baseZXName, 3)},
               null);
       fileNameDialog.setVisible(true);
-      if (fileNameDialog.approved()){
+      if (fileNameDialog.approved()) {
+        final String[] fileNames = fileNameDialog.getFileName();
+        final String[] zxNames = fileNameDialog.getZxName();
+        for (int i = 0; i < 4; i++) {
+          final byte[] headerblock = makeHeaderBlock(zxNames[i], data.getInfo().getStartAddress(), data.length());
+          final byte[] datablock = makeDataBlock(data.getDataForCPU(i));
+          final byte[] dataToSave = JBBPOut.BeginBin().Byte(wellTapBlock(headerblock)).Byte(wellTapBlock(datablock)).End().toByteArray();
+
+          final File fileToSave = new File(file.getParent(), fileNames[i]);
+          if (!saveDataToFile(fileToSave, dataToSave)) {
+            return;
+          }
+        }
+      }
+    } else {
+      final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "Save as " + baseName, null,
+              new String[]{prepareNameForTAP(baseZXName, 0), prepareNameForTAP(baseZXName, 1), prepareNameForTAP(baseZXName, 2), prepareNameForTAP(baseZXName, 3)},
+              null);
+      fileNameDialog.setVisible(true);
+      if (fileNameDialog.approved()) {
         final String[] zxNames = fileNameDialog.getZxName();
         final JBBPOut out = JBBPOut.BeginBin();
         for (int i = 0; i < 4; i++) {
@@ -261,40 +265,42 @@ public class TAPPlugin extends AbstractFilePlugin {
         saveDataToFile(file, out.End().toByteArray());
       }
     }
-    
+
   }
 
-  private byte [] wellTapBlock(final byte [] data) throws IOException {
-    return JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN).Short(data.length+1).Byte(data).Byte(doTapCRC(data)).End().toByteArray();
+  private byte[] wellTapBlock(final byte[] data) throws IOException {
+    return JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN).Short(data.length + 1).Byte(data).Byte(doTapCRC(data)).End().toByteArray();
   }
-  
-  private byte doTapCRC(byte [] array){
+
+  private byte doTapCRC(byte[] array) {
     byte result = 0;
-    for(byte b : array){
+    for (byte b : array) {
       result ^= b;
     }
     return result;
   }
-  
-  private byte [] makeHeaderBlock(final String name, final int startAddress, final int dataLength) throws IOException {
+
+  private byte[] makeHeaderBlock(final String name, final int startAddress, final int dataLength) throws IOException {
     final JBBPOut out = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
-    if (name.length()!=10) throw new IllegalArgumentException("Name must have 10 length");
-    return out.Byte(0,3).Byte(name).Short(dataLength,startAddress,32768).End().toByteArray();
+    if (name.length() != 10) {
+      throw new IllegalArgumentException("Name must have 10 length");
+    }
+    return out.Byte(0, 3).Byte(name).Short(dataLength, startAddress, 32768).End().toByteArray();
   }
-  
-  private byte [] makeDataBlock(final byte [] data) throws IOException {
+
+  private byte[] makeDataBlock(final byte[] data) throws IOException {
     final JBBPOut out = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
     return out.Byte(0xFF).Byte(data).End().toByteArray();
   }
-  
+
   @Override
   public boolean accept(final File pathname) {
-    return pathname!= null && (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".tap"));
+    return pathname != null && (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".tap"));
   }
 
   @Override
   public String getDescription() {
-    return getToolTip(false)+" (*.TAP)";
+    return getToolTip(false) + " (*.TAP)";
   }
 
   @Override
@@ -316,5 +322,5 @@ public class TAPPlugin extends AbstractFilePlugin {
   public String getPluginUID() {
     return "TAPP";
   }
-  
+
 }

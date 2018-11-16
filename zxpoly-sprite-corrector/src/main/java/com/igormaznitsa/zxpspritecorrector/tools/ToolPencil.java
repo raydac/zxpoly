@@ -39,14 +39,12 @@ public class ToolPencil extends AbstractTool {
     final int index;
 
     final boolean mode512 = editComponent.isMode512();
-    
+
     if ((buttons & BUTTON_MOUSE_LEFT) != 0) {
       index = mode512 ? 1 : colorSelector.getSelectedInk();
-    }
-    else if ((buttons & BUTTON_MOUSE_RIGHT) != 0) {
+    } else if ((buttons & BUTTON_MOUSE_RIGHT) != 0) {
       index = mode512 ? 0 : colorSelector.getSelectedPaint();
-    }
-    else {
+    } else {
       return;
     }
 

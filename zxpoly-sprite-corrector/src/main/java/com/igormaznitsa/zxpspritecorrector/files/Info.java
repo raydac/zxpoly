@@ -26,9 +26,9 @@ public class Info {
   private final int startAddress;
   private final int length;
   private final int offset;
-  private final byte [] extra;
-  
-  public Info(final String name, final char type, final int startAddress, final int length, final int offset, final byte ... extra) {
+  private final byte[] extra;
+
+  public Info(final String name, final char type, final int startAddress, final int length, final int offset, final byte... extra) {
     this.name = name;
     this.type = type;
     this.startAddress = startAddress;
@@ -39,28 +39,28 @@ public class Info {
 
   public Info(final InputStream in) throws IOException {
     final JBBPBitInputStream bitin = new JBBPBitInputStream(in);
-    this.name = new String(bitin.readByteArray(bitin.readByte()),"US-ASCII");
-    this.type = (char)bitin.readUnsignedShort(JBBPByteOrder.BIG_ENDIAN);
+    this.name = new String(bitin.readByteArray(bitin.readByte()), "US-ASCII");
+    this.type = (char) bitin.readUnsignedShort(JBBPByteOrder.BIG_ENDIAN);
     this.startAddress = bitin.readInt(JBBPByteOrder.BIG_ENDIAN);
     this.length = bitin.readInt(JBBPByteOrder.BIG_ENDIAN);
     this.offset = bitin.readInt(JBBPByteOrder.BIG_ENDIAN);
-    
+
     this.extra = bitin.readByteArray(bitin.readInt(JBBPByteOrder.BIG_ENDIAN));
   }
-  
+
   public JBBPOut save(final JBBPOut context) throws IOException {
-    context.Byte(name.length()).Byte(name).Short(this.type).Int(this.startAddress,this.length,this.offset).Int(this.extra.length).Byte(this.extra);
+    context.Byte(name.length()).Byte(name).Short(this.type).Int(this.startAddress, this.length, this.offset).Int(this.extra.length).Byte(this.extra);
     return context;
   }
-  
-  public byte [] getExtra(){
+
+  public byte[] getExtra() {
     return this.extra;
   }
-  
-  public int getOffset(){
+
+  public int getOffset() {
     return this.offset;
   }
-  
+
   public String getName() {
     return this.name;
   }
@@ -69,10 +69,10 @@ public class Info {
     return this.type;
   }
 
-  public int getStartAddress(){
+  public int getStartAddress() {
     return this.startAddress;
   }
-  
+
   public int getLength() {
     return this.length;
   }

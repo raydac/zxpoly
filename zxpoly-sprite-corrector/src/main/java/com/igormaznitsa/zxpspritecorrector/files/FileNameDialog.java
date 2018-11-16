@@ -14,42 +14,42 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.igormaznitsa.zxpspritecorrector.files;
 
 import javax.swing.*;
 import org.apache.commons.io.FilenameUtils;
 
 public final class FileNameDialog extends javax.swing.JDialog {
+
   private static final long serialVersionUID = -5397359066835236154L;
 
   private boolean approved;
-  
-  private void processFileName(final JTextField field, final String [] array, final int index){
-    if (array == null || array[index]==null){
+
+  private void processFileName(final JTextField field, final String[] array, final int index) {
+    if (array == null || array[index] == null) {
       field.setEnabled(false);
-    }else{
+    } else {
       field.setText(array[index]);
     }
   }
-  
-  private void processZxFileName(final JTextField field, final String [] array, final int index){
-    if (array == null || array[index]==null){
+
+  private void processZxFileName(final JTextField field, final String[] array, final int index) {
+    if (array == null || array[index] == null) {
       field.setEnabled(false);
-    }else{
+    } else {
       field.setText(array[index]);
     }
   }
-  
-  private void processZxFileType(final JTextField field, final char [] array, final int index){
-    if (array == null || array[index]==0){
+
+  private void processZxFileType(final JTextField field, final char[] array, final int index) {
+    if (array == null || array[index] == 0) {
       field.setEnabled(false);
-    }else{
+    } else {
       field.setText(Character.toString(array[index]));
     }
   }
-  
-  public FileNameDialog(final JFrame parent, final String title, final String [] fileName, final String [] zxName, final char [] zxType) {
+
+  public FileNameDialog(final JFrame parent, final String title, final String[] fileName, final String[] zxName, final char[] zxType) {
     super(parent, true);
     initComponents();
 
@@ -57,16 +57,13 @@ public final class FileNameDialog extends javax.swing.JDialog {
     processZxFileName(this.textZxFileName0, zxName, 0);
     processZxFileType(this.textZxFileType0, zxType, 0);
 
-
     processFileName(this.textFileName1, fileName, 1);
     processZxFileName(this.textZxFileName1, zxName, 1);
     processZxFileType(this.textZxFileType1, zxType, 1);
 
-
     processFileName(this.textFileName2, fileName, 2);
     processZxFileName(this.textZxFileName2, zxName, 2);
     processZxFileType(this.textZxFileType2, zxType, 2);
-
 
     processFileName(this.textFileName3, fileName, 3);
     processZxFileName(this.textZxFileName3, zxName, 3);
@@ -76,77 +73,77 @@ public final class FileNameDialog extends javax.swing.JDialog {
     setLocationRelativeTo(parent);
   }
 
-  public static String [] makeFileNames(final String baseName){
-    final String [] result = new String[4];
-    for(int i=0;i<4;i++){
-      result[i] = FilenameUtils.getBaseName(baseName)+'_'+i+'.'+FilenameUtils.getExtension(baseName);
+  public static String[] makeFileNames(final String baseName) {
+    final String[] result = new String[4];
+    for (int i = 0; i < 4; i++) {
+      result[i] = FilenameUtils.getBaseName(baseName) + '_' + i + '.' + FilenameUtils.getExtension(baseName);
     }
     return result;
   }
-  
-  public boolean approved(){
+
+  public boolean approved() {
     return approved;
   }
-  
-  public String [] getFileName(){
-    final String [] result = new String[4];
-    if (this.textFileName0.isEnabled()){
+
+  public String[] getFileName() {
+    final String[] result = new String[4];
+    if (this.textFileName0.isEnabled()) {
       result[0] = this.textFileName0.getText().trim();
     }
-    if (this.textFileName1.isEnabled()){
+    if (this.textFileName1.isEnabled()) {
       result[1] = this.textFileName1.getText().trim();
     }
-    if (this.textFileName2.isEnabled()){
-      result[2]=this.textFileName2.getText().trim();
+    if (this.textFileName2.isEnabled()) {
+      result[2] = this.textFileName2.getText().trim();
     }
-    if (this.textFileName3.isEnabled()){
-      result[3]=this.textFileName3.getText().trim();
+    if (this.textFileName3.isEnabled()) {
+      result[3] = this.textFileName3.getText().trim();
     }
-    
+
     return result;
   }
-  
-  public String [] getZxName(){
+
+  public String[] getZxName() {
     final String[] result = new String[4];
-    if (this.textZxFileName0.isEnabled()){
-      result[0]=this.textZxFileName0.getText().trim();
+    if (this.textZxFileName0.isEnabled()) {
+      result[0] = this.textZxFileName0.getText().trim();
     }
-    if (this.textZxFileName1.isEnabled()){
-      result[1]=this.textZxFileName1.getText().trim();
+    if (this.textZxFileName1.isEnabled()) {
+      result[1] = this.textZxFileName1.getText().trim();
     }
-    if (this.textZxFileName2.isEnabled()){
+    if (this.textZxFileName2.isEnabled()) {
       result[2] = this.textZxFileName2.getText().trim();
     }
-    if (this.textZxFileName3.isEnabled()){
+    if (this.textZxFileName3.isEnabled()) {
       result[3] = this.textZxFileName3.getText().trim();
     }
-    
+
     return result;
   }
-  
-  private Character getCharacter(final JFormattedTextField field){
+
+  private Character getCharacter(final JFormattedTextField field) {
     final String text = field.getText().trim();
     return text.isEmpty() ? null : text.charAt(0);
   }
-  
-  public Character [] getZxType(){
-    final Character [] result = new Character[4];
-    if (this.textZxFileType0.isEnabled()){
+
+  public Character[] getZxType() {
+    final Character[] result = new Character[4];
+    if (this.textZxFileType0.isEnabled()) {
       result[0] = getCharacter(this.textZxFileType0);
     }
-    if (this.textZxFileType1.isEnabled()){
+    if (this.textZxFileType1.isEnabled()) {
       result[1] = getCharacter(this.textZxFileType1);
     }
-    if (this.textZxFileType2.isEnabled()){
+    if (this.textZxFileType2.isEnabled()) {
       result[2] = getCharacter(this.textZxFileType2);
     }
-    if (this.textZxFileType3.isEnabled()){
+    if (this.textZxFileType3.isEnabled()) {
       result[3] = getCharacter(this.textZxFileType3);
     }
-    
+
     return result;
   }
-  
+
   /**
    * This method is called from within the constructor to initialize the form.
    * WARNING: Do NOT modify this code. The content of this method is always

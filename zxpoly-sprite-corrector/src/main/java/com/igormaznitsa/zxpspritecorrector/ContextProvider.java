@@ -14,13 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.igormaznitsa.zxpspritecorrector;
 
 import org.picocontainer.PicoContainer;
 import org.picocontainer.injectors.Provider;
 
 public class ContextProvider implements Provider {
+
   private final PicoContainer context;
 
   public ContextProvider(final PicoContainer context) {
@@ -30,5 +30,5 @@ public class ContextProvider implements Provider {
   public PicoContainer provide() {
     return this.context;
   }
-  
+
 }
