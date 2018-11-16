@@ -928,8 +928,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       } else {
         for (int dy = 0; dy < h; dy++) {
           for (int dx = 0; dx < w; dx++) {
-            final int pixel = pixels[dy * w + dx];
-              this.zxGraphics.setPoint(x + dx, y + dy, 0xF);
+            final int rgb = pixels[dy * w + dx];
+              this.zxGraphics.setPoint(x + dx, y + dy, ZXPalette.findNearestColorIndex(rgb));
           }
         }
       }

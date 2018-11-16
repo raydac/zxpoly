@@ -69,6 +69,29 @@ public final class ZXPalette {
     final int off = ((line>>>3)<<8) | (((line & 0x07)<<5)|column);
     return startScreenAddress+0x1800+off;
   }
+
+  public static int findNearestColorIndex(final int rgb) {
+    int index = -1;
+    double lastDistance = -1.0d;
+    
+    final double r = (rgb >> 16) & 0xFF;
+    final double g = (rgb >> 8) & 0xFF;
+    final double b = rgb & 0xFF;
+
+    int currentIndex = 0;
+    for(final Color c : COLORS) {
+      final double rr = c.getRed();
+      final double gg = c.getGreen();
+      final double bb = c.getBlue();
+      final double distance = Math.sqrt(Math.pow(rr - r, 2)+Math.pow(gg - g, 2)+Math.pow(bb - b, 2));
+      if (Double.compare(distance, lastDistance)<0) {
+        index = currentIndex;
+        lastDistance = distance;
+      }
+      currentIndex++;
+    }
+    return index;
+  }
   
   private ZXPalette(){
     
