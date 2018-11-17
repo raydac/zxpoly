@@ -23,7 +23,7 @@ import javax.swing.text.MaskFormatter;
 
 public class HexValue2Field extends AbstractHexValueField {
 
-  public HexValue2Field () {
+  public HexValue2Field() {
     super();
     final JFormattedTextField.AbstractFormatter FORMAT;
     try {
@@ -32,8 +32,7 @@ public class HexValue2Field extends AbstractHexValueField {
       formatter.setPlaceholderCharacter('0');
       formatter.setAllowsInvalid(false);
       FORMAT = formatter;
-    }
-    catch (ParseException ex) {
+    } catch (ParseException ex) {
       throw new Error("Can't prepare formatter", ex);
     }
 
@@ -42,12 +41,12 @@ public class HexValue2Field extends AbstractHexValueField {
   }
 
   @Override
-  protected int processValue (int value) {
+  protected int processValue(int value) {
     return value & 0xFF;
   }
 
   @Override
-  protected final void refreshTextValue () {
+  protected final void refreshTextValue() {
     String hex = Integer.toHexString(this.intValue).toUpperCase(Locale.ENGLISH);
     hex = hex.length() < 2 ? "0" + hex : hex.substring(0, 2);
     this.setText(hex);

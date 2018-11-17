@@ -24,6 +24,7 @@ import javax.swing.event.HyperlinkListener;
 import org.apache.commons.io.IOUtils;
 
 public class AboutDialog extends javax.swing.JDialog {
+
   private static final long serialVersionUID = 6729883219284422519L;
 
   public AboutDialog(final java.awt.Frame parent) {
@@ -34,29 +35,27 @@ public class AboutDialog extends javax.swing.JDialog {
 
       @Override
       public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED){
-          try{
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          try {
             Desktop.getDesktop().browse(e.getURL().toURI());
-          }catch(Exception ex){
+          } catch (Exception ex) {
           }
-        }else if (e.getEventType() == HyperlinkEvent.EventType.ENTERED){
+        } else if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
           editorPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        }else if (e.getEventType() == HyperlinkEvent.EventType.EXITED){
+        } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
           editorPane.setCursor(Cursor.getDefaultCursor());
         }
       }
     });
 
-    
     this.editorPane.setContentType("text/html");
-    try{
+    try {
       final String htmlText = IOUtils.toString(openAboutResource("index.html"), "UTF-8");
       this.editorPane.setText(htmlText);
-    }catch(Exception ex){
+    } catch (Exception ex) {
       ex.printStackTrace();
     }
-    
-    
+
     setLocationRelativeTo(parent);
   }
 
@@ -121,8 +120,8 @@ public class AboutDialog extends javax.swing.JDialog {
   private javax.swing.JScrollPane jScrollPane1;
   // End of variables declaration//GEN-END:variables
 
-  private InputStream openAboutResource(final String name){
-    return AboutDialog.class.getClassLoader().getResourceAsStream("com/igormaznitsa/zxpoly/about/"+name);
+  private InputStream openAboutResource(final String name) {
+    return AboutDialog.class.getClassLoader().getResourceAsStream("com/igormaznitsa/zxpoly/about/" + name);
   }
 
 }

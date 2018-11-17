@@ -23,25 +23,25 @@ import java.io.IOException;
 import javax.swing.filechooser.FileFilter;
 
 public abstract class Snapshot extends FileFilter {
-  
-  public void doMode48(final Motherboard board){
+
+  public void doMode48(final Motherboard board) {
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
     for (final ZXPolyModule m : board.getZXPolyModules()) {
       m.lockZX48Mode();
     }
     board.getCPU0().doReset();
   }
-  
-  public void doMode128(final Motherboard board){
+
+  public void doMode128(final Motherboard board) {
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
     board.getCPU0().doReset();
   }
-  
+
   public abstract String getExtension();
-  
-  public abstract void loadFromArray(File srcFile, Motherboard board, VideoController vc, byte [] array) throws IOException; 
-  
-  public abstract byte [] saveToArray(Motherboard board, VideoController vc) throws IOException;
-  
+
+  public abstract void loadFromArray(File srcFile, Motherboard board, VideoController vc, byte[] array) throws IOException;
+
+  public abstract byte[] saveToArray(Motherboard board, VideoController vc) throws IOException;
+
   public abstract String getName();
 }

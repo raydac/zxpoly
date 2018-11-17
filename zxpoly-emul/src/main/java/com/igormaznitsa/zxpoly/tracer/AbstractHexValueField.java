@@ -21,43 +21,44 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import javax.swing.JFormattedTextField;
 
-public abstract class AbstractHexValueField extends JFormattedTextField{
+public abstract class AbstractHexValueField extends JFormattedTextField {
+
   protected int intValue;
 
   protected static final String ALLOWED_CHARS = "0123456789abcdefABCDEF";
-  
-  public AbstractHexValueField(){
+
+  public AbstractHexValueField() {
     super();
 
     this.addKeyListener(new KeyAdapter() {
 
       @Override
-      public void keyTyped (final KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_DELETE || e.getKeyCode() == KeyEvent.VK_BACK_SPACE || ALLOWED_CHARS.indexOf(e.getKeyChar())<0) {
+      public void keyTyped(final KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_DELETE || e.getKeyCode() == KeyEvent.VK_BACK_SPACE || ALLOWED_CHARS.indexOf(e.getKeyChar()) < 0) {
           e.consume();
         }
       }
-      
+
     });
   }
-  
-  public void setValue (int value) {
+
+  public void setValue(int value) {
     value = processValue(value);
-    
+
     if (this.intValue != value) {
       this.intValue = value;
       this.setFont(getFont().deriveFont(Font.BOLD));
       refreshTextValue();
-    }
-    else {
+    } else {
       this.setFont(getFont().deriveFont(Font.PLAIN));
     }
   }
-  
+
   protected abstract void refreshTextValue();
+
   protected abstract int processValue(int value);
-  
-  public int getIntValue () {
+
+  public int getIntValue() {
     String text = this.getText();
     text = text.isEmpty() ? "0" : text.trim();
     return Integer.parseInt(text, 16);

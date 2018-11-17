@@ -26,10 +26,11 @@ public class AnimatedGifTunePanel extends javax.swing.JPanel {
   private static final long serialVersionUID = -5725762636857034093L;
 
   public static final class AnimGifOptions {
+
     public final String filePath;
     public final int frameRate;
     public final boolean repeat;
-    
+
     public AnimGifOptions(final String filePath, final int frameRate, final boolean repeat) {
       this.filePath = filePath;
       this.frameRate = frameRate;
@@ -45,9 +46,9 @@ public class AnimatedGifTunePanel extends javax.swing.JPanel {
   }
 
   public AnimGifOptions getValue() {
-    return new AnimGifOptions(this.textFieldFile.getText(), (Integer)this.spinnerFrameRate.getValue(), this.checkBoxRepeat.isSelected());
+    return new AnimGifOptions(this.textFieldFile.getText(), (Integer) this.spinnerFrameRate.getValue(), this.checkBoxRepeat.isSelected());
   }
-  
+
   /**
    * This method is called from within the constructor to initialize the form.
    * WARNING: Do NOT modify this code. The content of this method is always
@@ -146,7 +147,7 @@ public class AnimatedGifTunePanel extends javax.swing.JPanel {
     final JFileChooser fileChooser = new JFileChooser(this.textFieldFile.getText());
     fileChooser.setAcceptAllFileFilterUsed(true);
     fileChooser.setMultiSelectionEnabled(false);
-    
+
     fileChooser.setFileFilter(new FileFilter() {
       @Override
       public boolean accept(final File f) {
@@ -158,13 +159,12 @@ public class AnimatedGifTunePanel extends javax.swing.JPanel {
         return "Animated GIF files (*.gif)";
       }
     });
-    
+
     if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
       this.textFieldFile.setText(fileChooser.getSelectedFile().getAbsolutePath());
     }
-   
-  }//GEN-LAST:event_buttonChooseFileActionPerformed
 
+  }//GEN-LAST:event_buttonChooseFileActionPerformed
 
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JButton buttonChooseFile;

@@ -22,53 +22,55 @@ import java.util.prefs.Preferences;
 import org.apache.commons.io.FileUtils;
 
 public final class AppOptions {
-  
+
   public static final String TEST_ROM = "zxpolytest.rom";
-  
+
   private final Preferences preferences = Preferences.userNodeForPackage(AppOptions.class);
-  
+
   private static final String ROMPATH = "ROM_PATH";
   private static final String INT_BETWEEN_FRAMES = "INT_BETWEEN_FRAMES";
   private static final AppOptions INSTANCE = new AppOptions();
   private static final String APP_FOLDER_NAME = ".zxpolyemul";
-  
-  public static AppOptions getInstance(){
+
+  public static AppOptions getInstance() {
     return INSTANCE;
-  } 
-  
+  }
+
   public synchronized boolean isTestRomActive() {
     return TEST_ROM.equals(this.getActiveRom());
   }
-  
-  public synchronized String getActiveRom(){
+
+  public synchronized String getActiveRom() {
     return preferences.get(ROMPATH, AppOptions.TEST_ROM);
   }
-  
-  public synchronized int getIntBetweenFrames(){
+
+  public synchronized int getIntBetweenFrames() {
     return preferences.getInt(INT_BETWEEN_FRAMES, 3);
   }
 
-  public synchronized void setIntBetweenFrames(final int value){
+  public synchronized void setIntBetweenFrames(final int value) {
     preferences.putInt(INT_BETWEEN_FRAMES, Math.max(0, value));
   }
-  
-  public synchronized void setActiveRom(final String romPath){
+
+  public synchronized void setActiveRom(final String romPath) {
     preferences.put(ROMPATH, romPath);
   }
 
-  public synchronized void flush() throws BackingStoreException{
+  public synchronized void flush() throws BackingStoreException {
     preferences.flush();
   }
-  
-  public synchronized File getAppConfigFolder(){
+
+  public synchronized File getAppConfigFolder() {
     String folder = System.getenv("APPDATA");
-    if (folder == null){
-      folder = System.getProperty("user.home",FileUtils.getTempDirectoryPath());
+    if (folder == null) {
+      folder = System.getProperty("user.home", FileUtils.getTempDirectoryPath());
     }
-  
-    final File cfgfolder = new File(folder,APP_FOLDER_NAME);
-    if (!cfgfolder.exists()) cfgfolder.mkdirs();
+
+    final File cfgfolder = new File(folder, APP_FOLDER_NAME);
+    if (!cfgfolder.exists()) {
+      cfgfolder.mkdirs();
+    }
     return cfgfolder;
   }
-  
+
 }

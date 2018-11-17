@@ -95,14 +95,14 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus, MemoryAccessProv
     return this.cpu;
   }
 
-  public void loadModuleLocalPortValues(final byte [] fiveElementArray) {
-    fiveElementArray[0] = (byte)this.port7FFD.get(); 
-    fiveElementArray[1] = (byte)this.zxPolyRegsWritten.get(0); 
-    fiveElementArray[2] = (byte)this.zxPolyRegsWritten.get(1); 
-    fiveElementArray[3] = (byte)this.zxPolyRegsWritten.get(2); 
-    fiveElementArray[4] = (byte)this.zxPolyRegsWritten.get(3); 
+  public void loadModuleLocalPortValues(final byte[] fiveElementArray) {
+    fiveElementArray[0] = (byte) this.port7FFD.get();
+    fiveElementArray[1] = (byte) this.zxPolyRegsWritten.get(0);
+    fiveElementArray[2] = (byte) this.zxPolyRegsWritten.get(1);
+    fiveElementArray[3] = (byte) this.zxPolyRegsWritten.get(2);
+    fiveElementArray[4] = (byte) this.zxPolyRegsWritten.get(3);
   }
-  
+
   public void loadModuleLocalPortsByValues(final int port7ffd, final int reg0, final int reg1, final int reg2, final int reg3) {
     this.port7FFD.set(port7ffd & 0xFF);
     this.zxPolyRegsWritten.set(0, reg0 & 0xFF);
@@ -128,14 +128,14 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus, MemoryAccessProv
           if (!isTRDOSActive() && port == PORT_REG0) {
             final int cpuState = this.cpu.getState();
             final int addr = ((this.lastM1Address >> 1) & 0x1)
-                | ((this.lastM1Address >> 1) & 0x2)
-                | ((this.lastM1Address >> 5) & 0x4)
-                | ((this.lastM1Address >> 8) & 0x8)
-                | ((this.lastM1Address >> 10) & 0x10)
-                | ((this.lastM1Address >> 9) & 0x20);
+                    | ((this.lastM1Address >> 1) & 0x2)
+                    | ((this.lastM1Address >> 5) & 0x4)
+                    | ((this.lastM1Address >> 8) & 0x8)
+                    | ((this.lastM1Address >> 10) & 0x10)
+                    | ((this.lastM1Address >> 9) & 0x20);
 
             result = ((cpuState & Z80.SIGNAL_OUT_nHALT) == 0 ? ZXPOLY_rREG0_HALTMODE : 0)
-                | (this.waitSignal ? ZXPOLY_rREG0_WAITMODE : 0) | (addr << 2);
+                    | (this.waitSignal ? ZXPOLY_rREG0_WAITMODE : 0) | (addr << 2);
           } else {
             result = 0;
           }
@@ -349,22 +349,22 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus, MemoryAccessProv
 
     final byte result;
     if (this.board.isZXPolyMode()) {
-        final int ramAddress = ramOffset2HeapAddress(address);
-        if (address < 0x4000) {
-          if ((value7FFD & PORTw_ZX128_ROMRAM) != 0) {
-            //RAM0
-            result = (byte) this.board.readRAM(this, ramAddress);
-          } else {
-            if (this.trdosROM) {
-              result = (byte) this.board.readROM(address + 0x8000);
-            } else {
-              result = (byte) this.board.readROM(address + (activeRom128 ? 0x4000 : 0));
-            }
-          }
-        } else {
+      final int ramAddress = ramOffset2HeapAddress(address);
+      if (address < 0x4000) {
+        if ((value7FFD & PORTw_ZX128_ROMRAM) != 0) {
+          //RAM0
           result = (byte) this.board.readRAM(this, ramAddress);
+        } else {
+          if (this.trdosROM) {
+            result = (byte) this.board.readROM(address + 0x8000);
+          } else {
+            result = (byte) this.board.readROM(address + (activeRom128 ? 0x4000 : 0));
+          }
         }
-      
+      } else {
+        result = (byte) this.board.readRAM(this, ramAddress);
+      }
+
     } else {
       final int ramAddress = ramOffset2HeapAddress(address);
       if (address < 0x4000) {
@@ -496,27 +496,31 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus, MemoryAccessProv
   public String toHexStringSinceAddress(final int address, final int length) {
     final StringBuilder hex = new StringBuilder();
     final StringBuilder chars = new StringBuilder();
-    
-    for(int i=0;i<length;i++) {
-      final int b = readAddress(address+i) & 0xFF;
+
+    for (int i = 0; i < length; i++) {
+      final int b = readAddress(address + i) & 0xFF;
       final String h = Integer.toHexString(b).toUpperCase(Locale.ENGLISH);
-      if (hex.length()>0) hex.append(' ');
-      if (h.length() == 1) hex.append('0');
+      if (hex.length() > 0) {
+        hex.append(' ');
+      }
+      if (h.length() == 1) {
+        hex.append('0');
+      }
       hex.append(h);
-      
+
       if (!Character.isISOControl(b) && b <= 0x80) {
-        chars.append((char)b);
+        chars.append((char) b);
       } else {
         chars.append('.');
       }
     }
-    
-    return Utils.toHex(address)+' '+hex+"  "+chars;
+
+    return Utils.toHex(address) + ' ' + hex + "  " + chars;
   }
-  
+
   public List<DisasmLine> disasmSinceAddress(final int address, final int itemsToDecode) {
     final List<DisasmLine> result = new ArrayList<>();
-    
+
     int addr = address;
     for (final Z80Instruction i : Z80Disasm.decodeList(this, null, address, itemsToDecode)) {
       result.add(new DisasmLine(addr, i == null ? null : i.decode(this, addr, addr)));
@@ -580,7 +584,7 @@ public final class ZXPolyModule implements IODevice, Z80CPUBus, MemoryAccessProv
   public int get7FFD() {
     return this.port7FFD.get();
   }
-  
+
   public void set7FFD(final int value, final boolean enforce) {
     if (((this.port7FFD.get() & PORTw_ZX128_LOCK) == 0) || enforce) {
       this.port7FFD.set(value);

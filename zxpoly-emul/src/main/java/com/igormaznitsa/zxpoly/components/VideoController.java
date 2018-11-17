@@ -57,7 +57,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private static final long MCYCLES_PER_BORDER_LINE = CYCLES_BETWEEN_INT / BORDER_LINES;
   private final byte[] borderLineColors = new byte[BORDER_LINES];
 
-  private static final RenderedImage [] EMPTY_ARRAY = new RenderedImage[0];
+  private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
 
   public static final int[] ZXPALETTE = new int[]{
     0xFF000000,
@@ -371,9 +371,9 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
           int x = 8;
           while (x-- > 0) {
             final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
-                | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
-                | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
-                | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
+                    | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
+                    | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
+                    | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
 
             videoValue0 <<= 1;
             videoValue1 <<= 1;
@@ -452,8 +452,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
         gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
         gfx.drawImage(this.buffer, x, y, Math.round(SCREEN_WIDTH * nzoom), Math.round(SCREEN_HEIGHT * nzoom), null);
       }
-    }
-    finally {
+    } finally {
       unlockBuffer();
     }
   }
@@ -489,12 +488,11 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     lockBuffer();
     try {
       if (this.currentVideoMode != newVideoMode) {
-        log.log(Level.INFO, "mode set: {0}", decodeVideoModeCode(newVideoMode));
+        log.log(Level.INFO, "mode set: " + decodeVideoModeCode(newVideoMode));
         this.currentVideoMode = newVideoMode;
         refreshBufferData();
       }
-    }
-    finally {
+    } finally {
       unlockBuffer();
     }
   }
@@ -516,8 +514,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     lockBuffer();
     try {
       this.refreshBufferData();
-    }
-    finally {
+    } finally {
       unlockBuffer();
     }
   }
@@ -563,8 +560,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       result.add(buffImage);
 
       return result.toArray(EMPTY_ARRAY);
-    }
-    finally {
+    } finally {
       refreshBufferData();
       this.unlockBuffer();
     }
@@ -574,8 +570,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     this.lockBuffer();
     try {
       return this.dataBuffer.clone();
-    }
-    finally {
+    } finally {
       this.unlockBuffer();
     }
   }
@@ -588,8 +583,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       g.drawImage(this.buffer, 0, 0, this);
       g.dispose();
       return result;
-    }
-    finally {
+    } finally {
       this.unlockBuffer();
     }
   }
@@ -607,7 +601,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   public int getPortFE() {
     return this.portFEw;
   }
-  
+
   @Override
   public void writeIO(final ZXPolyModule module, final int port, final int value) {
     if (!module.isTRDOSActive() && (port & 0xFF) == 0xFE) {
@@ -672,7 +666,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     final int xoff = (width - this.size.width) / 2;
     return (zxX * Math.round(this.zoom * 2)) + xoff;
   }
-  
+
   @Override
   public String toString() {
     return this.getName();

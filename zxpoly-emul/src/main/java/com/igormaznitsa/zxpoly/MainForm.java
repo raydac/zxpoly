@@ -249,17 +249,17 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           RomData result = null;
           boolean load = true;
           if (cachedRom.isFile()) {
-            log.log(Level.INFO, "Load cached ROM downloaded from ''{0}'' : {1}", new Object[]{romPath, cachedRom});
+            log.log(Level.INFO, "Load cached ROM downloaded from '" + romPath + "' : " + cachedRom);
             result = new RomData(FileUtils.readFileToByteArray(cachedRom));
             load = false;
           }
 
           if (load) {
-            log.log(Level.INFO, "Load ROM from external URL: {0}", romPath);
+            log.log(Level.INFO, "Load ROM from external URL: " + romPath);
             result = ROMLoader.getROMFrom(romPath);
             if (cacheFolder.isDirectory() || cacheFolder.mkdirs()) {
               FileUtils.writeByteArrayToFile(cachedRom, result.getAsArray());
-              log.log(Level.INFO, "Loaded ROM saved in cache as file : {0}", romPath);
+              log.log(Level.INFO, "Loaded ROM saved in cache as file : " + romPath);
             }
           }
           return result;
@@ -267,7 +267,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           log.log(Level.WARNING, "Can't load ROM from '" + romPath + "\'", ex);
         }
       } else {
-        log.log(Level.INFO, "Load ROM from embedded resource ''{0}''", romPath);
+        log.log(Level.INFO, "Load ROM from embedded resource '" + romPath + "'");
         try (final InputStream in = Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romPath)) {
           return RomData.read(in);
         }
@@ -282,7 +282,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   public MainForm(final String title, final String romPath) throws IOException {
-    log.log(Level.INFO, "INT ticks between frames: {0}", INT_BETWEEN_FRAMES);
+    log.log(Level.INFO, "INT ticks between frames: " + INT_BETWEEN_FRAMES);
     initComponents();
     this.setTitle(title);
 
@@ -1042,7 +1042,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         try {
           final TRDOSDisk floppy = new TRDOSDisk(filter.get().getClass() == SCLFileFilter.class ? TRDOSDisk.Source.SCL : TRDOSDisk.Source.TRD, FileUtils.readFileToByteArray(selectedFile), false);
           this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
-          log.log(Level.INFO, "Loaded drive {0} by floppy image file {1}", new Object[]{diskName, selectedFile});
+          log.log(Level.INFO, "Loaded drive " + diskName + " by floppy image file " + selectedFile);
         } catch (IOException ex) {
           log.log(Level.WARNING, "Can't read Floppy image file [" + selectedFile + ']', ex);
           JOptionPane.showMessageDialog(this, "Can't read Floppy image file", "Error", JOptionPane.ERROR_MESSAGE);
@@ -1102,7 +1102,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         this.lastSnapshotFolder = selected.getParentFile();
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
-          log.log(Level.INFO, "Loading snapshot {0}", selectedFilter.getName());
+          log.log(Level.INFO, "Loading snapshot " + selectedFilter.getName());
           selectedFilter.loadFromArray(selected, this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
         } catch (Exception ex) {
           log.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
@@ -1186,7 +1186,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       final File fileToSave = chooseFileForSave("Select WAV file", null, null, true, new WavFileFilter());
       if (fileToSave != null) {
         FileUtils.writeByteArrayToFile(fileToSave, wav);
-        log.log(Level.INFO, "Exported current TAP file as WAV file {0} size {1} bytes", new Object[]{fileToSave, wav.length});
+        log.log(Level.INFO, "Exported current TAP file as WAV file " + fileToSave + " size " + wav.length + " bytes");
       }
     } catch (Exception ex) {
       log.log(Level.WARNING, "Can't export as WAV", ex);

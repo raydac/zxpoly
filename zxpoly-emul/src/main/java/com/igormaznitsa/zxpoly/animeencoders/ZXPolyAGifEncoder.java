@@ -145,8 +145,7 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
           this.bitsLeft = 8;
         }
 
-      }
-      while (nBits != 0);
+      } while (nBits != 0);
     }
   }
 
@@ -249,8 +248,7 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
       this.stream.write(';');
       this.stream.flush();
       this.stream.close();
-    }
-    finally {
+    } finally {
       JBBPUtils.closeQuietly(this.stream);
     }
   }

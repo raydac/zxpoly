@@ -22,53 +22,54 @@ import java.awt.image.BufferedImage;
 import javax.swing.*;
 
 public final class CPULoadIndicator extends JPanel {
+
   private static final long serialVersionUID = -8360307819233085278L;
 
   private static final Stroke STROKE_INDICATOR = new BasicStroke(1.0f);
   private static final Stroke STROKE_GRID = new BasicStroke(0.3f);
-  
+
   private Color gridColor;
   private final int gridStep;
-  
+
   private final Dimension thesize;
-  
+
   private final BufferedImage buffer;
-  
+
   private int lastY;
-  
-  public CPULoadIndicator(final int width, final int height, final int gridStep, final String text, final Color foreground,final Color background, final Color grid){
+
+  public CPULoadIndicator(final int width, final int height, final int gridStep, final String text, final Color foreground, final Color background, final Color grid) {
     super();
-    this.gridStep = Math.max(gridStep,6);
-    
+    this.gridStep = Math.max(gridStep, 6);
+
     JBBPUtils.assertNotNull(background, "Background must not be null");
     JBBPUtils.assertNotNull(foreground, "Foreground must not be null");
 
     super.setBackground(background);
     super.setForeground(foreground);
     this.gridColor = grid;
-    
+
     this.setOpaque(true);
     this.setDoubleBuffered(true);
-    
+
     this.setToolTipText(text);
-    
-    this.thesize = new Dimension(width,height);
+
+    this.thesize = new Dimension(width, height);
     super.setSize(width, height);
-    
+
     this.buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-    
+
     updateForState(0);
-    
+
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
- 
+
     clear();
   }
 
   @Override
-  public void setBackground(final Color color){
+  public void setBackground(final Color color) {
     super.setBackground(color);
-    if (this.buffer!=null){
-      synchronized(this.buffer){
+    if (this.buffer != null) {
+      synchronized (this.buffer) {
         final Graphics2D gfx = this.buffer.createGraphics();
         gfx.setColor(color);
         gfx.fillRect(0, 0, this.buffer.getWidth(), this.buffer.getHeight());
@@ -76,107 +77,106 @@ public final class CPULoadIndicator extends JPanel {
       }
     }
   }
-  
-  public Color getGridColor(){
+
+  public Color getGridColor() {
     return this.gridColor;
   }
-  
-  public void setGridColor(final Color color){
+
+  public void setGridColor(final Color color) {
     this.gridColor = color;
   }
-  
-  public void clear(){
-    synchronized(this.buffer){
+
+  public void clear() {
+    synchronized (this.buffer) {
       this.lastY = getHeight();
       final Graphics2D gfx = this.buffer.createGraphics();
       gfx.setColor(this.getBackground());
-      gfx.fillRect(0,0,this.buffer.getWidth(),this.buffer.getHeight());
+      gfx.fillRect(0, 0, this.buffer.getWidth(), this.buffer.getHeight());
       gfx.dispose();
     }
   }
-  
-  public void updateForState(final float loading){
-    final int step = this.gridStep>>1;
-    synchronized(this.buffer){
+
+  public void updateForState(final float loading) {
+    final int step = this.gridStep >> 1;
+    synchronized (this.buffer) {
       final int w = this.buffer.getWidth();
       final int h = this.buffer.getHeight();
-      
+
       final Graphics2D gfx = this.buffer.createGraphics();
       gfx.drawImage(this.buffer, -step, 0, null);
       gfx.setColor(this.getBackground());
-      gfx.fillRect(w-step, 0, step, h);
-      
+      gfx.fillRect(w - step, 0, step, h);
+
       gfx.setColor(this.getForeground());
-      
+
       final int startx = this.buffer.getWidth() - step;
       final int curx = this.buffer.getWidth();
-      final int level = h-Math.round(loading*(h-4))-2;
+      final int level = h - Math.round(loading * (h - 4)) - 2;
       gfx.setStroke(STROKE_INDICATOR);
 
       gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      
+
       gfx.drawLine(startx, this.lastY, curx, level);
       this.lastY = level;
       gfx.dispose();
     }
     repaint();
   }
-  
+
   @Override
-  public int getWidth(){
+  public int getWidth() {
     return this.thesize.width;
   }
-  
+
   @Override
-  public int getHeight(){
+  public int getHeight() {
     return this.thesize.height;
   }
-  
+
   @Override
-  public Dimension getSize(){
+  public Dimension getSize() {
     return this.thesize;
   }
-  
+
   @Override
-  public Dimension getMinimumSize(){
+  public Dimension getMinimumSize() {
     return this.thesize;
   }
-  
+
   @Override
-  public Dimension getMaximumSize(){
+  public Dimension getMaximumSize() {
     return this.thesize;
   }
-  
+
   @Override
-  public Dimension getPreferredSize(){
+  public Dimension getPreferredSize() {
     return this.thesize;
   }
-  
+
   @Override
-  public void paintComponent(final Graphics g){
-    final Graphics2D g2 = (Graphics2D)g;
-    
+  public void paintComponent(final Graphics g) {
+    final Graphics2D g2 = (Graphics2D) g;
+
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    
-    synchronized(this.buffer){
+
+    synchronized (this.buffer) {
       g2.drawImage(this.buffer, 0, 0, null);
     }
-  
+
     final int w = this.getWidth();
     final int h = this.getHeight();
-    
-    
-    if (this.gridColor!=null){
+
+    if (this.gridColor != null) {
       g2.setStroke(STROKE_GRID);
       g2.setColor(this.gridColor);
-      for(int y = this.getHeight()-this.gridStep; y>0;y-=this.gridStep){
+      for (int y = this.getHeight() - this.gridStep; y > 0; y -= this.gridStep) {
         g2.drawLine(0, y, w, y);
       }
 
-      for(int x = 0; x<w;x+=this.gridStep){
+      for (int x = 0; x < w; x += this.gridStep) {
         g2.drawLine(x, 0, x, h);
       }
     }
   }
-  
+
 }

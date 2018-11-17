@@ -32,7 +32,7 @@ public class ZXEMLSnapshotFormat extends ZXPParser {
 
   public ZXEMLSnapshotFormat() {
     super();
-    
+
     this.setMAGIC(MAGIC);
 
     this.cpu0ports = new byte[5];
@@ -58,13 +58,13 @@ public class ZXEMLSnapshotFormat extends ZXPParser {
     this.reg_sp = new short[4];
 
     this.pages = new PAGES[4];
-    for(int j=0; j<this.pages.length; j++) {
+    for (int j = 0; j < this.pages.length; j++) {
       this.pages[j] = new PAGES(this);
       this.pages[j].number = 8;
       this.pages[j].page = new PAGES.PAGE[8];
-      for(int i = 0; i<this.pages[j].page.length;i++){
+      for (int i = 0; i < this.pages[j].page.length; i++) {
         this.pages[j].page[i] = new PAGES.PAGE(this);
-        this.pages[j].page[i].index = (char)i;
+        this.pages[j].page[i].index = (char) i;
         this.pages[j].page[i].data = new byte[16384];
       }
     }

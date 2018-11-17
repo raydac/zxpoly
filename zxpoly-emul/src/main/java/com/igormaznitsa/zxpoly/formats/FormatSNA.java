@@ -152,7 +152,7 @@ public class FormatSNA extends Snapshot {
     parser.setBORDERCOLOR((char) vc.getPortFE());
 
     final int topPageIndex = module.get7FFD() & 7;
-    
+
     final int offsetpage2 = 0x8000;
     final int offsetpage5 = 0x14000;
     final int offsetpageTop = topPageIndex * 0x4000;
@@ -179,15 +179,15 @@ public class FormatSNA extends Snapshot {
     extData.setPORT7FFD((char) module.get7FFD());
     extData.setONTRDOS((byte) (module.isTRDOSActive() ? 1 : 0));
 
-    final int totalExtraBanks = (int)IntStream.of(bankIndex).filter(x->x>=0).count();
-    
-    final SNAParser.EXTENDEDDATA.EXTRABANK [] extraBank = parser.getEXTENDEDDATA().makeEXTRABANK(totalExtraBanks);
+    final int totalExtraBanks = (int) IntStream.of(bankIndex).filter(x -> x >= 0).count();
 
-    for(int i=0;i<extraBank.length;i++) {
+    final SNAParser.EXTENDEDDATA.EXTRABANK[] extraBank = parser.getEXTENDEDDATA().makeEXTRABANK(totalExtraBanks);
+
+    for (int i = 0; i < extraBank.length; i++) {
       extraBank[i] = new SNAParser.EXTENDEDDATA.EXTRABANK(parser);
       extraBank[i].setDATA(new byte[0x4000]);
     }
-    
+
     int extraBankIndex = 0;
     for (int i = 0; i < 8; i++) {
       if (bankIndex[i] < 0) {
@@ -196,12 +196,12 @@ public class FormatSNA extends Snapshot {
       final byte[] data = parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA();
       final int heapoffset = bankIndex[i] * 0x4000;
       for (int a = 0; a < data.length; a++) {
-        data[a] = (byte)module.readHeapModuleMemory(heapoffset + a);
+        data[a] = (byte) module.readHeapModuleMemory(heapoffset + a);
       }
     }
-    
+
     final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    try(JBBPBitOutputStream bitOut = new JBBPBitOutputStream(bos)){
+    try (JBBPBitOutputStream bitOut = new JBBPBitOutputStream(bos)) {
       parser.write(bitOut);
     }
     return bos.toByteArray();

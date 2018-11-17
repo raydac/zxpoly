@@ -32,7 +32,7 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
   private final Motherboard board;
 
   private final AtomicIntegerArray keyboardLines = new AtomicIntegerArray(8);
-  private final int [] bufferKeyboardLines = new int [8];
+  private final int[] bufferKeyboardLines = new int[8];
   private final AtomicInteger kempstonSignals = new AtomicInteger();
   private int kempstonBuffer = 0;
   private final AtomicReference<TapeFileReader> tap = new AtomicReference<>();
@@ -42,37 +42,37 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
   }
 
   private int getKbdValueForLines(int hiByte) {
-      int result = 0xFF;
-      for (int i = 0; i < 8; i++) {
-        if ((hiByte & 1) == 0) {
-          result &= this.bufferKeyboardLines[i];
-        }
-        hiByte >>= 1;
+    int result = 0xFF;
+    for (int i = 0; i < 8; i++) {
+      if ((hiByte & 1) == 0) {
+        result &= this.bufferKeyboardLines[i];
       }
-      return result;
+      hiByte >>= 1;
     }
+    return result;
+  }
 
   @Override
   public int readIO(final ZXPolyModule module, final int port) {
-      int result = 0;
-      if (!module.isTRDOSActive()) {
-        switch (port & 0xFF) {
-          case 0xFE: {
-            // KEYBOARD
-            final TapeFileReader thetap = getTap();
-            final int tapbit = thetap == null ? 0 : thetap.getSignal() ? TAP_BIT : 0;
-            result = (getKbdValueForLines(port >>> 8) & ~TAP_BIT) | tapbit;
-          }
-          break;
-          case 0x1F: {
-            // KEMPSTON
-            result = this.kempstonBuffer;
-          }
-          break;
+    int result = 0;
+    if (!module.isTRDOSActive()) {
+      switch (port & 0xFF) {
+        case 0xFE: {
+          // KEYBOARD
+          final TapeFileReader thetap = getTap();
+          final int tapbit = thetap == null ? 0 : thetap.getSignal() ? TAP_BIT : 0;
+          result = (getKbdValueForLines(port >>> 8) & ~TAP_BIT) | tapbit;
         }
+        break;
+        case 0x1F: {
+          // KEMPSTON
+          result = this.kempstonBuffer;
+        }
+        break;
       }
-      return result;
     }
+    return result;
+  }
 
   @Override
   public void writeIO(final ZXPolyModule module, final int port, final int value) {
@@ -85,10 +85,10 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
 
   @Override
   public void doReset() {
-      for (int i = 0; i < this.keyboardLines.length(); i++) {
-        this.keyboardLines.set(i, 0x1F);
-      }
-      this.kempstonSignals.set(0);
+    for (int i = 0; i < this.keyboardLines.length(); i++) {
+      this.keyboardLines.set(i, 0x1F);
+    }
+    this.kempstonSignals.set(0);
   }
 
   @Override
@@ -96,7 +96,7 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
     if (signalReset) {
       doReset();
     }
-    for(int i=0;i<8;i++){
+    for (int i = 0; i < 8; i++) {
       this.bufferKeyboardLines[i] = this.keyboardLines.get(i);
     }
     this.kempstonBuffer = this.kempstonSignals.get();
@@ -406,28 +406,28 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
       break;
     }
 
-      while (code != 0) {
-        final int theline = line & 0xFF;
-        final int thecode = code & 0xFF;
+    while (code != 0) {
+      final int theline = line & 0xFF;
+      final int thecode = code & 0xFF;
 
-        line >>>= 8;
-        code >>>= 8;
+      line >>>= 8;
+      code >>>= 8;
 
-        if (pressed) {
-          this.keyboardLines.set(theline, this.keyboardLines.get(theline) & thecode);
-        } else {
-          this.keyboardLines.set(theline, this.keyboardLines.get(theline) | (~thecode & 0x1F));
-        }
-      }
-
-      if (kempston != 0) {
-        if (pressed) {
-          this.kempstonSignals.set(kempston | this.kempstonSignals.get());
-        } else {
-          this.kempstonSignals.set((~kempston & this.kempstonSignals.get()) & 0xFF);
-        }
+      if (pressed) {
+        this.keyboardLines.set(theline, this.keyboardLines.get(theline) & thecode);
+      } else {
+        this.keyboardLines.set(theline, this.keyboardLines.get(theline) | (~thecode & 0x1F));
       }
     }
+
+    if (kempston != 0) {
+      if (pressed) {
+        this.kempstonSignals.set(kempston | this.kempstonSignals.get());
+      } else {
+        this.kempstonSignals.set((~kempston & this.kempstonSignals.get()) & 0xFF);
+      }
+    }
+  }
 
   @Override
   public void postStep(final long spentMachineCyclesForStep) {
@@ -441,5 +441,5 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
   public String toString() {
     return this.getName();
   }
-  
+
 }

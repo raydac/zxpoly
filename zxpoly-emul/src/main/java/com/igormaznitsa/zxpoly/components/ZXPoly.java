@@ -40,10 +40,10 @@ public interface ZXPoly {
   public static final int REG0w_LOCAL_RESET = 0x20;
   public static final int REG0w_LOCAL_NMI = 0x40;
   public static final int REG0w_LOCAL_INT = 0x80;
- 
+
   public static final int REG0r_HALT_STATUS = 0x01;
   public static final int REG0r_WAIT_STATUS = 0x02;
-  
+
   public static final int VIDEOMODE_ZX48_CPU0 = 0;
   public static final int VIDEOMODE_ZX48_CPU1 = 1;
   public static final int VIDEOMODE_ZX48_CPU2 = 2;
@@ -82,13 +82,13 @@ public interface ZXPoly {
   public static final int PORTr_KMOUSE_YCOORD = 0xffdf;
 
   public static final int PORTr_KJOYSTICK = 0x001F;
-  
+
   public static final int PORTr_ZX48_BUS = 0x00FF;
-  
+
   public static final int PORTrw_ZX48_KTB = 0x00FE;
   public static final int PORTr_ZX48_KTB_TAPE = 0x40;
   public static final int PORTw_ZX48_KTB_TAPE = 0x08;
   public static final int PORTw_ZX48_KTB_BEAPER = 0x10;
-  
+
   public static final int PORTrw_ZXPRINTER = 0x00FB;
 }

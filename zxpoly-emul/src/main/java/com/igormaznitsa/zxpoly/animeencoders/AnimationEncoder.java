@@ -19,7 +19,10 @@ package com.igormaznitsa.zxpoly.animeencoders;
 import java.io.IOException;
 
 public interface AnimationEncoder {
-  void saveFrame(int [] frameAsRgbPixelBuffer) throws IOException;
+
+  void saveFrame(int[] frameAsRgbPixelBuffer) throws IOException;
+
   int getIntsBetweenFrames();
+
   void close() throws IOException;
 }

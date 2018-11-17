@@ -38,7 +38,7 @@ public class AddressPanel extends javax.swing.JPanel {
         addr = Integer.parseInt(text.substring(1), 16);
       }
     } else if (text.startsWith("&O")) {
-      addr = Integer.parseInt(text.substring(2),8);
+      addr = Integer.parseInt(text.substring(2), 8);
     } else {
       addr = Integer.parseInt(text);
     }
@@ -73,7 +73,6 @@ public class AddressPanel extends javax.swing.JPanel {
     gridBagConstraints.insets = new java.awt.Insets(5, 0, 5, 5);
     add(textFieldAddress, gridBagConstraints);
   }// </editor-fold>//GEN-END:initComponents
-
 
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JLabel jLabel1;

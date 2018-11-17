@@ -20,10 +20,11 @@ import com.igormaznitsa.zxpoly.components.TapeFileReader;
 import javax.swing.ListSelectionModel;
 
 public class SelectTapPosDialog extends javax.swing.JDialog {
+
   private static final long serialVersionUID = 3974803548217613782L;
 
   private int selectedIndex = -1;
-  
+
   public SelectTapPosDialog(final java.awt.Frame parent, final TapeFileReader tap) {
     super(parent, true);
     this.setTitle(tap.getName());
@@ -113,10 +114,10 @@ public class SelectTapPosDialog extends javax.swing.JDialog {
     pack();
   }// </editor-fold>//GEN-END:initComponents
 
-  public int getSelectedIndex(){
+  public int getSelectedIndex() {
     return this.selectedIndex;
   }
-  
+
   private void buttonCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCancelActionPerformed
     this.selectedIndex = -1;
     setVisible(false);
@@ -128,16 +129,15 @@ public class SelectTapPosDialog extends javax.swing.JDialog {
   }//GEN-LAST:event_buttonOkActionPerformed
 
   private void tapBlockListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tapBlockListMouseClicked
-    if (evt.getClickCount()>1){
+    if (evt.getClickCount() > 1) {
       final int index = this.tapBlockList.locationToIndex(evt.getPoint());
-      if (index>=0){
+      if (index >= 0) {
         this.tapBlockList.setSelectedIndex(index);
         buttonOkActionPerformed(null);
       }
     }
   }//GEN-LAST:event_tapBlockListMouseClicked
 
-  
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JButton buttonCancel;
   private javax.swing.JButton buttonOk;

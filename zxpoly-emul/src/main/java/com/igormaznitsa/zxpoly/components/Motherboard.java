@@ -108,7 +108,7 @@ public final class Motherboard implements ZXPoly {
   public boolean set3D00(final int value, final boolean force) {
     if (is3D00NotLocked() || force) {
       this.port3D00 = value;
-      LOG.log(Level.INFO, "set #3D00 to {0}", Utils.toHex(value));
+      LOG.log(Level.INFO, "set #3D00 to " + Utils.toHex(value));
 
       if ((value & PORTw_ZXPOLY_RESET) != 0) {
         for (final ZXPolyModule m : this.modules) {
@@ -347,11 +347,11 @@ public final class Motherboard implements ZXPoly {
             }
           }
         }
-        
+
         if ((cur_triggers & TRIGGER_DIFF_EXE_CODE) != 0) {
           final int m1ExeByte = this.modules[0].getCPU().getLastM1InstructionByte();
           final int exeByte = this.modules[0].getCPU().getLastInstructionByte();
-          
+
           for (int i = 1; i < 4; i++) {
             if (m1ExeByte != this.modules[i].getCPU().getLastM1InstructionByte() || exeByte != this.modules[i].getCPU().getLastInstructionByte()) {
               result |= TRIGGER_DIFF_EXE_CODE;
@@ -376,10 +376,10 @@ public final class Motherboard implements ZXPoly {
 
     for (int i = 1; result && i < 4; i++) {
       result = pc == this.modules[i].getCPU().getRegister(Z80.REG_PC)
-          && sp == this.modules[i].getCPU().getRegister(Z80.REG_SP)
-          && im == this.modules[i].getCPU().getIM()
-          && iff1 == this.modules[0].getCPU().isIFF1()
-          && iff2 == this.modules[0].getCPU().isIFF2();
+              && sp == this.modules[i].getCPU().getRegister(Z80.REG_SP)
+              && im == this.modules[i].getCPU().getIM()
+              && iff1 == this.modules[0].getCPU().isIFF1()
+              && iff2 == this.modules[0].getCPU().isIFF2();
 
     }
     return result;
@@ -423,7 +423,7 @@ public final class Motherboard implements ZXPoly {
 
   public void setZXPolyMode(final boolean flag) {
     if (this.modeZXPoly != flag) {
-      LOG.log(Level.INFO, "Changed motherboard mode to {0}", flag ? "ZX-POLY" : "ZX128");
+      LOG.log(Level.INFO, "Changed motherboard mode to " + (flag ? "ZX-POLY" : "ZX128"));
       this.modeZXPoly = flag;
       this.reset();
     }
@@ -468,7 +468,7 @@ public final class Motherboard implements ZXPoly {
           if (prevResult == 0) {
             firstDetected = d;
           } else {
-            LOG.log(Level.WARNING, "Detected collision during IO reading: {0}, {1} port #{2}", new Object[]{firstDetected, d.getName(), Integer.toHexString(port).toUpperCase(Locale.ENGLISH)});
+            LOG.log(Level.WARNING, "Detected collision during IO reading: " + firstDetected + ", " + d.getName() + " port #" + Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
           }
         }
       }

@@ -53,12 +53,11 @@ public class ROMLoader {
         in = entity.getContent();
         final byte[] data = entity.getContentLength() < 0L ? IOUtils.toByteArray(entity.getContent()) : IOUtils.toByteArray(entity.getContent(), entity.getContentLength());
         return data;
-      }
-      finally {
+      } finally {
         IOUtils.closeQuietly(in);
       }
-    }else{
-      throw new IOException("Can't download from http '" + url + "' code ["+url+']');
+    } else {
+      throw new IOException("Can't download from http '" + url + "' code [" + url + ']');
     }
   }
 
@@ -69,56 +68,51 @@ public class ROMLoader {
 
     if (FTPReply.isPositiveCompletion(replyCode)) {
       try {
-        client.login(name == null ? "" : name, password == null ? "": password);
+        client.login(name == null ? "" : name, password == null ? "" : password);
         client.setFileType(FTP.BINARY_FILE_TYPE);
         client.enterLocalPassiveMode();
-        
+
         final ByteArrayOutputStream out = new ByteArrayOutputStream(300000);
         if (client.retrieveFile(path, out)) {
           return out.toByteArray();
+        } else {
+          throw new IOException("Can't load file 'ftp://" + host + path + "\' status=" + client.getReplyCode());
         }
-        else {
-          throw new IOException("Can't load file 'ftp://" + host + path + "\' status="+client.getReplyCode());
-        }
-      }
-      finally {
+      } finally {
         client.disconnect();
       }
-    }
-    else {
+    } else {
       client.disconnect();
       throw new IOException("Can't connect to ftp '" + host + "'");
     }
   }
 
-  public static RomData getROMFrom(final String url) throws IOException{
+  public static RomData getROMFrom(final String url) throws IOException {
     final URI uri;
-    try{
+    try {
       uri = new URI(url);
-    }catch(URISyntaxException ex){
-      throw new IOException("Error in URL '"+url+"\'",ex);
+    } catch (URISyntaxException ex) {
+      throw new IOException("Error in URL '" + url + "\'", ex);
     }
     final String scheme = uri.getScheme();
     final String userInfo = uri.getUserInfo();
     final String name;
     final String password;
-    if (userInfo!=null){
-      final String [] splitted = userInfo.split("\\:");
+    if (userInfo != null) {
+      final String[] splitted = userInfo.split("\\:");
       name = splitted[0];
       password = splitted[1];
-    }else{
+    } else {
       name = null;
       password = null;
     }
-    
+
     final byte[] loaded;
     if (scheme.startsWith("http")) {
       loaded = loadHTTPArchive(url);
-    }
-    else if (scheme.startsWith("ftp")) {
+    } else if (scheme.startsWith("ftp")) {
       loaded = loadFTPArchive(uri.getHost(), uri.getPath(), name, password);
-    }
-    else {
+    } else {
       throw new IllegalArgumentException("Unsupported scheme [" + scheme + ']');
     }
 
@@ -145,16 +139,14 @@ public class ROMLoader {
         }
         rom48 = new byte[16384];
         IOUtils.readFully(in, rom48, 0, size);
-      }
-      else if (ROM_128TR.equalsIgnoreCase(entry.getName())) {
+      } else if (ROM_128TR.equalsIgnoreCase(entry.getName())) {
         final int size = (int) entry.getSize();
         if (size > 16384) {
           throw new IOException("ROM 128TR has too big size");
         }
         rom128 = new byte[16384];
         IOUtils.readFully(in, rom128, 0, size);
-      }
-      else if (ROM_TRDOS.equalsIgnoreCase(entry.getName())) {
+      } else if (ROM_TRDOS.equalsIgnoreCase(entry.getName())) {
         final int size = (int) entry.getSize();
         if (size > 16384) {
           throw new IOException("ROM TRDOS has too big size");

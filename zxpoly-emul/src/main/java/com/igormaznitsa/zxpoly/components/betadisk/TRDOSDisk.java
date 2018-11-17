@@ -82,8 +82,7 @@ public class TRDOSDisk {
     public int readByte(final int offsetAtSector) {
       if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
         return -1;
-      }
-      else {
+      } else {
         return this.data[getOffset() + offsetAtSector] & 0xFF;
       }
     }
@@ -105,8 +104,7 @@ public class TRDOSDisk {
     public boolean writeByte(final int offsetAtSector, final int value) {
       if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
         return false;
-      }
-      else {
+      } else {
         if (this.owner.isWriteProtect()) {
           return false;
         }
@@ -152,13 +150,12 @@ public class TRDOSDisk {
         for (int i = 0; i < items; i++) {
           size += srcData[9 + 14 * i + 13] & 0xFF;
         }
-        
-        int diskPointer = SECTORS_PER_TRACK*SECTOR_SIZE; // track 1, sector 0
-        
+
+        int diskPointer = SECTORS_PER_TRACK * SECTOR_SIZE; // track 1, sector 0
+
         if (size > 2544) {
           throw new RuntimeException("The SCL image needs non-standard disk size [" + size + " blocks]");
-        }
-        else {
+        } else {
           // make catalog area
           int processedSectors = 0;
           int sclPointer = 9 + 14 * items;
@@ -171,10 +168,10 @@ public class TRDOSDisk {
 
             diskData[track00Pointer++] = (byte) decodeLogicalSectorIndex(diskPointer);
             diskData[track00Pointer++] = (byte) decodeLogicalTrackIndex(diskPointer);
-         
+
             for (int s = 0; s < lengthInSectors; s++) {
               System.arraycopy(srcData, sclPointer, diskData, diskPointer, SECTOR_SIZE);
-            
+
               diskPointer += SECTOR_SIZE;
               sclPointer += SECTOR_SIZE;
             }
@@ -192,20 +189,19 @@ public class TRDOSDisk {
           diskData[track00Pointer++] = 0x10; // disk type
           diskData[track00Pointer++] = (byte) items; // number of files
 
-          final int freeSectors = (MAX_SIDES*MAX_TRACKS_PER_SIDE*SECTORS_PER_TRACK-SECTORS_PER_TRACK) - processedSectors;
+          final int freeSectors = (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK - SECTORS_PER_TRACK) - processedSectors;
           diskData[track00Pointer++] = (byte) (freeSectors & 0xFF); // number of free sectors
           diskData[track00Pointer++] = (byte) (freeSectors >> 8);
 
           diskData[track00Pointer++] = 0x10; // ID of TRDOS
 
-          
-          track00Pointer+=2;//not used
-          
+          track00Pointer += 2;//not used
+
           //not used but filled by 32
           for (int e = 0; e < 9; e++) {
             diskData[track00Pointer++] = 32;
           }
-          
+
           track00Pointer++; // not used
 
           diskData[track00Pointer++] = 0x00; // number of deleted files
@@ -236,26 +232,26 @@ public class TRDOSDisk {
     }
   }
 
-  public static int decodePhysicalTrackIndex(final int dataOffset){
-    return dataOffset>>13;
+  public static int decodePhysicalTrackIndex(final int dataOffset) {
+    return dataOffset >> 13;
   }
-  
-  public static int decodeSide(final int dataOffset){
-    return (dataOffset>>12) & 1;
+
+  public static int decodeSide(final int dataOffset) {
+    return (dataOffset >> 12) & 1;
   }
-  
-  public static int decodeLogicalTrackIndex(final int dataOffset){
-    return dataOffset/(SECTOR_SIZE*SECTORS_PER_TRACK);
+
+  public static int decodeLogicalTrackIndex(final int dataOffset) {
+    return dataOffset / (SECTOR_SIZE * SECTORS_PER_TRACK);
   }
-  
-  public static int decodePhysicalSectorIndex(final int dataOffset){
+
+  public static int decodePhysicalSectorIndex(final int dataOffset) {
     return ((dataOffset / SECTOR_SIZE) % SECTORS_PER_TRACK) + 1;
   }
-  
-  public static int decodeLogicalSectorIndex(final int dataOffset){
+
+  public static int decodeLogicalSectorIndex(final int dataOffset) {
     return (dataOffset / SECTOR_SIZE) % SECTORS_PER_TRACK;
   }
-  
+
   public Sector findRandomSector(final int side, final int track) {
     Sector sector = findFirstSector(side, track);
     if (sector != null) {

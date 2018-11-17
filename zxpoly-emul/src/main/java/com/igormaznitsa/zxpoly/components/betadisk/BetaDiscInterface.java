@@ -28,17 +28,17 @@ public class BetaDiscInterface implements IODevice {
   public static final int DRIVE_B = 1;
   public static final int DRIVE_C = 2;
   public static final int DRIVE_D = 3;
-  
+
   private static final Logger LOGGER = Logger.getLogger("BD");
 
   private long mcycleCounter = 0L;
-  
+
   private final Motherboard board;
   private final K1818VG93 vg93;
   private int ffPort;
 
   private final AtomicReferenceArray<TRDOSDisk> diskDrives = new AtomicReferenceArray<>(4);
-  
+
   public BetaDiscInterface(final Motherboard board) {
     this.board = board;
     this.vg93 = new K1818VG93(LOGGER);
@@ -49,11 +49,11 @@ public class BetaDiscInterface implements IODevice {
     tuneControllerToDisk();
   }
 
-  private void tuneControllerToDisk(){
+  private void tuneControllerToDisk() {
     final int driveIndex = this.ffPort & 0x3;
     this.vg93.activateDisk(driveIndex, this.diskDrives.get(driveIndex));
   }
-  
+
   @Override
   public int readIO(final ZXPolyModule module, final int port) {
     if (module.isTRDOSActive()) {
@@ -72,7 +72,7 @@ public class BetaDiscInterface implements IODevice {
         }
         case 0xFF: {
           final int stat = vg93.read(K1818VG93.ADDR_COMMAND_STATE);
-          return (((stat & K1818VG93.STAT_BUSY) == 0 ? 0x80 : 0) | ((stat & K1818VG93.STAT_DRQ) == 0 ? 0: 0x40)) | 0b00111111;
+          return (((stat & K1818VG93.STAT_BUSY) == 0 ? 0x80 : 0) | ((stat & K1818VG93.STAT_DRQ) == 0 ? 0 : 0x40)) | 0b00111111;
         }
       }
     }
@@ -110,15 +110,15 @@ public class BetaDiscInterface implements IODevice {
   private void setSystemReg(final int value) {
     this.ffPort = value;
     this.vg93.setResetIn((this.ffPort & 0b00000100) != 0);
-    this.vg93.setSide((this.ffPort & 0b00010000)==0? 1 : 0);
-    this.vg93.setMFMModulation((this.ffPort & 0b00010000)==0);
+    this.vg93.setSide((this.ffPort & 0b00010000) == 0 ? 1 : 0);
+    this.vg93.setMFMModulation((this.ffPort & 0b00010000) == 0);
     tuneControllerToDisk();
   }
 
-  public boolean isActive(){
+  public boolean isActive() {
     return this.vg93.isMotorOn();
   }
-  
+
   @Override
   public Motherboard getMotherboard() {
     return this.board;
@@ -130,7 +130,7 @@ public class BetaDiscInterface implements IODevice {
       doReset();
     }
 
-    if ((this.ffPort & 0b00001000)!=0){
+    if ((this.ffPort & 0b00001000) != 0) {
       this.vg93.step(this.mcycleCounter);
     }
   }
@@ -139,10 +139,10 @@ public class BetaDiscInterface implements IODevice {
   public String getName() {
     return "BetaDiscInterface";
   }
-  
+
   @Override
   public void postStep(final long spentMachineCyclesForStep) {
-    this.mcycleCounter = Math.abs(this.mcycleCounter+spentMachineCyclesForStep);
+    this.mcycleCounter = Math.abs(this.mcycleCounter + spentMachineCyclesForStep);
   }
 
   @Override
@@ -150,7 +150,6 @@ public class BetaDiscInterface implements IODevice {
     this.mcycleCounter = 0L;
     this.vg93.reset();
   }
-
 
   @Override
   public String toString() {
