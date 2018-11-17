@@ -120,10 +120,10 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
             gfx.drawLine(x, y, x, y);
           } else {
             if (this.mode512) {
-              if (this.zxGraphics.getPoint3012(sx + x, sy + y) == 0) {
-                gfx.setColor(Color.BLACK);
-              } else {
+              if (this.zxGraphics.isPointSetIn512(sx + x, sy + y)) {
                 gfx.setColor(Color.WHITE);
+              } else {
+                gfx.setColor(Color.BLACK);
               }
               gfx.drawLine(x, y, x, y);
             } else {
@@ -314,6 +314,40 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       }
 
       return this;
+    }
+
+    public boolean isPointSetIn512(final int x, final int y) {
+      final int address = coordToAddress(x, y);
+      boolean result = false;
+      
+      final int bitmask = makeXMask(x>>1);
+
+      if ((this.editor.processingData.getMask(address) & bitmask) != 0) {
+        final int packedData3012 = this.editor.processingData.getPackedZxPolyData3012(address);
+        
+        final int xshift = (x>>1) & 7;
+        
+        int data0 = (packedData3012 >>> 16) << xshift;
+        int data1 = (packedData3012 >>> 8) << xshift;
+        int data2 = packedData3012 << xshift;
+        int data3 = (packedData3012 >>> 24) << xshift;
+
+        if ((y & 1) == 0) {
+          if ((x & 1) == 0) {
+            result = (data0 & 0x80) != 0;
+          } else {
+            result = (data1 & 0x80) != 0;
+          }
+        } else {
+          if ((x & 1) == 0) {
+            result = (data2 & 0x80) != 0;
+          } else {
+            result = (data3 & 0x80) != 0;
+          }
+        }
+      }
+      
+      return result;
     }
 
     public int getPoint3012(final int x, final int y) {

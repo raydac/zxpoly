@@ -37,7 +37,7 @@ public final class PenWidth extends JPanel {
     this.widthSlider = new JSlider();
     this.widthSlider.setMajorTickSpacing(10);
     this.widthSlider.setMinorTickSpacing(5);
-    this.widthSlider.setSnapToTicks(true);
+    this.widthSlider.setSnapToTicks(false);
 
     this.showLabel = new JLabel(new ImageIcon(showImage));
 
