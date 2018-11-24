@@ -14,21 +14,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.utils;
 
 import com.igormaznitsa.zxpoly.components.RomData;
-import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
-import org.apache.commons.compress.archivers.zip.*;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.net.ftp.*;
-import org.apache.http.*;
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPReply;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.HttpContext;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class ROMLoader {
 
@@ -47,14 +57,10 @@ public class ROMLoader {
     final HttpResponse response = client.execute(get, context);
 
     if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-      InputStream in = null;
-      try {
-        final HttpEntity entity = response.getEntity();
-        in = entity.getContent();
-        final byte[] data = entity.getContentLength() < 0L ? IOUtils.toByteArray(entity.getContent()) : IOUtils.toByteArray(entity.getContent(), entity.getContentLength());
+      final HttpEntity entity = response.getEntity();
+      try (final InputStream in = entity.getContent()) {
+        final byte[] data = entity.getContentLength() < 0L ? IOUtils.toByteArray(in) : IOUtils.toByteArray(in, entity.getContentLength());
         return data;
-      } finally {
-        IOUtils.closeQuietly(in);
       }
     } else {
       throw new IOException("Can't download from http '" + url + "' code [" + url + ']');
@@ -99,7 +105,7 @@ public class ROMLoader {
     final String name;
     final String password;
     if (userInfo != null) {
-      final String[] splitted = userInfo.split("\\:");
+      final String[] splitted = userInfo.split("\\:",-1);
       name = splitted[0];
       password = splitted[1];
     } else {
@@ -122,7 +128,7 @@ public class ROMLoader {
     byte[] rom128 = null;
     byte[] romTrDos = null;
 
-    while (true) {
+    while (!Thread.currentThread().isInterrupted()) {
       final ZipArchiveEntry entry = in.getNextZipEntry();
       if (entry == null) {
         break;

@@ -36,9 +36,7 @@ public final class Z80Instruction {
   static {
     final List<Z80Instruction> list = new ArrayList<>(1500);
     final InputStream in = Z80Instruction.class.getClassLoader().getResourceAsStream("z80opcodes.lst");
-    BufferedReader reader = null;
-    try {
-      reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+    try(final BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"))) {
       while (true) {
         final String line = reader.readLine();
         if (line == null) {
@@ -54,16 +52,6 @@ public final class Z80Instruction {
     }
     catch (IOException ex) {
       throw new Error("Can't load Z80 instruction list", ex);
-    }
-    finally {
-      try {
-        if (reader != null) {
-          reader.close();
-        }
-      }
-      catch (IOException ex) {
-        ex.printStackTrace();
-      }
     }
   }
 

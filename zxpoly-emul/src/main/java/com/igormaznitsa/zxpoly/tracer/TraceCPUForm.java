@@ -138,9 +138,11 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
     setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     setResizable(false);
     addWindowListener(new java.awt.event.WindowAdapter() {
+      @Override
       public void windowClosed(java.awt.event.WindowEvent evt) {
         formWindowClosed(evt);
       }
+      @Override
       public void windowActivated(java.awt.event.WindowEvent evt) {
         formWindowActivated(evt);
       }
@@ -157,6 +159,7 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
     checkBoxZ.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
     checkBoxZ.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
     checkBoxZ.addActionListener(new java.awt.event.ActionListener() {
+      @Override
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         checkBoxZActionPerformed(evt);
       }
@@ -566,13 +569,16 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
     disasmList.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
     disasmList.setModel(new javax.swing.AbstractListModel() {
       String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+      @Override
       public int getSize() { return strings.length; }
+      @Override
       public Object getElementAt(int i) { return strings[i]; }
     });
     jPanel3.add(disasmList, java.awt.BorderLayout.CENTER);
 
     buttonMemory.setText("Memory");
     buttonMemory.addActionListener(new java.awt.event.ActionListener() {
+      @Override
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         buttonMemoryActionPerformed(evt);
       }
