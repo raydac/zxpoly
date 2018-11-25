@@ -1,4 +1,24 @@
 #!/bin/bash
 echo it needs ZASM 4.0.11 from http://k1.spdns.de/Develop/Projects/zasm-4.0/Distributions/
 
-$PWD/bin/zasm -l0 $PWD/zxpolytest.asm -o $PWD/../zxpoly-emul/src/main/resources/com/igormaznitsa/zxpoly/rom/zxpolytest.rom
+# slicing images to zxpoly planes
+
+java -jar $PWD/bin/zxsc.jar sliceImage $PWD/images/256.png
+java -jar $PWD/bin/zxsc.jar sliceImage $PWD/images/512.png
+
+# packing zxpoly planes to lpz
+
+$PWD/bin/xlpz.sh $PWD/images/256c0.c0
+$PWD/bin/xlpz.sh $PWD/images/256c1.c1
+$PWD/bin/xlpz.sh $PWD/images/256c2.c2
+$PWD/bin/xlpz.sh $PWD/images/256c3.c3
+
+$PWD/bin/xlpz.sh $PWD/images/512c0.c0
+$PWD/bin/xlpz.sh $PWD/images/512c1.c1
+$PWD/bin/xlpz.sh $PWD/images/512c2.c2
+$PWD/bin/xlpz.sh $PWD/images/512c3.c3
+
+
+TARGETROM=$PWD/../zxpoly-emul/src/main/resources/com/igormaznitsa/zxpoly/rom/zxpolytest.rom
+
+$PWD/bin/zasm --z80 -l0 $PWD/zxpolytest.asm -o $TARGETROM

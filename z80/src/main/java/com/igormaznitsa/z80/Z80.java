@@ -2361,7 +2361,7 @@ public final class Z80 {
     setRegisterPair(REGPAIR_BC, bc);
 
     int f = this.regSet[REG_F] & FLAG_SZC;
-    f |= bc != 0 ? FLAG_PV : 0;
+    f |= bc == 0 ? 0 : FLAG_PV;
     value += this.regSet[REG_A] & 0xFF;
     f |= value & FLAG_X;
     f |= (value << (FLAG_Y_SHIFT - 1)) & FLAG_Y;

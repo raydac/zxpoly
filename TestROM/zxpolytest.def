@@ -2,126 +2,126 @@
 ;----------------------------------
 ; SET ZX 128 PAGE at 3th RAM section, the RAM PAGE number at A
 .macro mset128ram
-	exx
-	res 0,d
-	res 1,d
-	res 2,d
-	or d
-	ld d,a
-	ld bc,ZX_128
-	out (c),d
-	exx
+  exx
+  res 0,d
+  res 1,d
+  res 2,d
+  or d
+  ld d,a
+  ld bc,ZX_128
+  out (c),d
+  exx
 .endm
 
 ; PRINT STRING
 .macro  mprint address
-	ld hl,\address
-	call _PRINTSTR
+  ld hl,\address
+  call _PRINTSTR
 .endm
 
 ; SET OUT X Y
 .macro msetxy coordX, coordY
-	ld a,\coordX
-	ld (CHAR_X),A
-	ld a,\coordY
-	ld (CHAR_Y),A
+  ld a,\coordX
+  ld (CHAR_X),A
+  ld a,\coordY
+  ld (CHAR_Y),A
 .endm
 
 ; SET ATTRIBUTE FOR OUT
 .macro msetattr attribute
-	ld a,\attribute
-	ld (CHAR_ATTR),A
+  ld a,\attribute
+  ld (CHAR_ATTR),A
 .endm
 
 ; SET ZX-POLY VIDEOMODE
 .macro mvideomode mode
-	ld a,\mode
-	call SET_VIDEO
+  ld a,\mode
+  call SET_VIDEO
 .endm
 
 ; SET ZX-128 VIDEOPAGE NORMAL
 .macro mvramlow
-	ld A,0
-	call SET_ZX128VIDEO
+  ld A,0
+  call SET_ZX128VIDEO
 .endm
 
 ; SET ZX-128 VIDEOPAGE HIGH
 .macro mvramhi
-	ld A,1
-	call SET_ZX128VIDEO
+  ld A,1
+  call SET_ZX128VIDEO
 .endm
 
 ; SET ZX-128 RAM AT HIGH
 .macro msetram page
-	ld a,\page
-	call SET_ZX128RAM
+  ld a,\page
+  call SET_ZX128RAM
 .endm
 
 ; SET ZX-POLY
 .macro msetzxpoly value
-	ld a,\value
-	call SET_ZXPOLY
+  ld a,\value
+  call SET_ZXPOLY
 .endm
 
 ; SET ZX-128
 .macro msetzx128 val
-	ld A,\val
-	call SET_ZX128
+  ld A,\val
+  call SET_ZX128
 .endm
 
 ; PRINT CHAR AT POSITION
 .macro mtypechar thechar,coordx, coordy
-	ld a,\coordx
-	ld (CHAR_X),A
-	ld a,\xoordy
-	ld (CHAR_Y),A
-	ld a,\thechar
-	call _PRINTCHAR
+  ld a,\coordx
+  ld (CHAR_X),A
+  ld a,\xoordy
+  ld (CHAR_Y),A
+  ld a,\thechar
+  call _PRINTCHAR
 .endm
 
 ; ZX-POLY PORT
-ZX_POLY		EQU $3D00
-ZX_128		EQU $7FFD
+ZX_POLY    EQU $3D00
+ZX_128    EQU $7FFD
 
-VIDEORAM_L	EQU $4000
-VIDEORAM_H	EQU $C000
-VIDEOLEN	EQU $1800
-ATTRLEN		EQU $300
+VIDEORAM_L  EQU $4000
+VIDEORAM_H  EQU $C000
+VIDEOLEN  EQU $1800
+ATTRLEN    EQU $300
 
-VIDEO_CPU0	EQU 0
-VIDEO_CPU1	EQU 1
-VIDEO_CPU2	EQU 2
-VIDEO_CPU3	EQU 3
-VIDEO_POLY 	EQU 4
-VIDEO_512	EQU 5
+VIDEO_CPU0  EQU 0
+VIDEO_CPU1  EQU 1
+VIDEO_CPU2  EQU 2
+VIDEO_CPU3  EQU 3
+VIDEO_POLY   EQU 4
+VIDEO_512  EQU 5
 
-STACKSTART	EQU $8000
+STACKSTART  EQU $8000
 
-CHAR_X		EQU $5C00 ; X Coord for current char position for output (0-31)
-CHAR_Y		EQU $5C01 ; Y Coord for current char position for output (0-23)
-CHAR_ATTR	EQU $5C02 ; an attribute value for current printed char
+CHAR_X    EQU $5C00 ; X Coord for current char position for output (0-31)
+CHAR_Y    EQU $5C01 ; Y Coord for current char position for output (0-23)
+CHAR_ATTR  EQU $5C02 ; an attribute value for current printed char
 
-CPU0R0		EQU	$00FF
-CPU0R1		EQU	$01FF
-CPU0R2		EQU	$02FF
-CPU0R3		EQU	$03FF
+CPU0R0    EQU  $00FF
+CPU0R1    EQU  $01FF
+CPU0R2    EQU  $02FF
+CPU0R3    EQU  $03FF
 
-CPU1R0		EQU	$10FF
-CPU1R1		EQU	$11FF
-CPU1R2		EQU	$12FF
-CPU1R3		EQU	$13FF
+CPU1R0    EQU  $10FF
+CPU1R1    EQU  $11FF
+CPU1R2    EQU  $12FF
+CPU1R3    EQU  $13FF
 
-CPU2R0		EQU	$20FF
-CPU2R1		EQU	$21FF
-CPU2R2		EQU	$22FF
-CPU2R3		EQU	$23FF
+CPU2R0    EQU  $20FF
+CPU2R1    EQU  $21FF
+CPU2R2    EQU  $22FF
+CPU2R3    EQU  $23FF
 
-CPU3R0		EQU	$30FF
-CPU3R1		EQU	$31FF
-CPU3R2		EQU	$32FF
-CPU3R3		EQU	$33FF
+CPU3R0    EQU  $30FF
+CPU3R1    EQU  $31FF
+CPU3R2    EQU  $32FF
+CPU3R3    EQU  $33FF
 
 ; Program for test of CPU1-CPU3
-CPUTESTRSLT	EQU $8000 ; here will be placed the result of test proc work, 181 - if all ok, 213 - if error, 0 if doesn't work or processing
-CPUTESTOK	EQU 181
-CPUTESTBAD	EQU 213
+CPUTESTRSLT  EQU $8000 ; here will be placed the result of test proc work, 181 - if all ok, 213 - if error, 0 if doesn't work or processing
+CPUTESTOK  EQU 181
+CPUTESTBAD  EQU 213
