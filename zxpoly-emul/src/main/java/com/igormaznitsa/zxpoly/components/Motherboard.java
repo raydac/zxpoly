@@ -486,7 +486,7 @@ public final class Motherboard implements ZXPoly {
           set3D00(value, false);
         } else {
           if (mappedCPU > 0) {
-            final ZXPolyModule destmodule = modules[mappedCPU];
+            final ZXPolyModule destmodule = this.modules[mappedCPU];
             this.ram.set(destmodule.ramOffset2HeapAddress(port), value);
             destmodule.prepareLocalNMI();
           } else {
