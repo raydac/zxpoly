@@ -32,7 +32,7 @@ public final class ZXPalette {
     new Color(190, 190, 0),
     new Color(190, 190, 190),
     // high bright
-    new Color(0, 0, 0),
+    new Color(16, 16, 16),
     new Color(0, 0, 255),
     new Color(255, 0, 0),
     new Color(255, 0, 255),
