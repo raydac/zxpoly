@@ -17,6 +17,9 @@ then
         FILENAME="${FILENAME%.*}"
         TARGET=$(echo "$FILENAME" | tr a-z A-Z).LPZ
 
+	echo add 4 bytes to the end of $FILENAME.$EXT
+	truncate -s +4 $fullfile
+
 	echo packing $FILENAME.$EXT to $TARGET
 
 	dosbox -c "cycles max" -c "MOUNT E $xlpcdir" -c "MOUNT D $DIR" -c "d:" -c "e:\xlpz.exe $FILENAME.$EXT" -c "exit"

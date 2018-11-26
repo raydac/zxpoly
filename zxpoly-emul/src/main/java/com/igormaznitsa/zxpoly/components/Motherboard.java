@@ -489,7 +489,7 @@ public final class Motherboard implements ZXPoly {
             final ZXPolyModule destmodule = this.modules[mappedCPU];
             this.ram.set(destmodule.ramOffset2HeapAddress(port), value);
             destmodule.prepareLocalNMI();
-            System.out.println(String.format("IO->[%d] $%04X,$%02X",mappedCPU,port,value));
+//            System.out.println(String.format("IO->[%d] $%04X,$%02X",mappedCPU,port,value));
           } else {
             for (final IODevice d : this.ioDevices) {
               d.writeIO(module, port, value);
