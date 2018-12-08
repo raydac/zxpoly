@@ -19,6 +19,7 @@ package com.igormaznitsa.zxpoly;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import java.util.logging.*;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 public class main {
 
@@ -36,19 +37,22 @@ public class main {
       });
     }
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final MainForm form;
-        try {
-          form = new MainForm(NAME + ' ' + VERSION, AppOptions.getInstance().getActiveRom());
-        } catch (Exception ex) {
-          ex.printStackTrace();
-          System.exit(1);
-          return;
-        }
-        form.setVisible(true);
+    SwingUtilities.invokeLater(() -> {
+      final MainForm form;
+      try {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+      } catch (Exception ex) {
+        System.err.println("Can't select system L&F");
       }
+
+      try {
+        form = new MainForm(NAME + ' ' + VERSION, AppOptions.getInstance().getActiveRom());
+      } catch (Exception ex) {
+        ex.printStackTrace();
+        System.exit(1);
+        return;
+      }
+      form.setVisible(true);
     });
   }
 }
