@@ -1036,10 +1036,26 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           throw new Error("Unexpected drive index");
       }
       final AtomicReference<FileFilter> filter = new AtomicReference<>();
-      final File selectedFile = chooseFileForOpen("Select Disk " + diskName, this.lastFloppyFolder, filter, new SCLFileFilter(), new TRDFileFilter());
+      File selectedFile = chooseFileForOpen("Select Disk " + diskName, this.lastFloppyFolder, filter, new SCLFileFilter(), new TRDFileFilter());
       if (selectedFile != null) {
         this.lastFloppyFolder = selectedFile.getParentFile();
         try {
+          if (!selectedFile.isFile() && filter.get().getClass() == TRDFileFilter.class) {
+            String name = selectedFile.getName();
+            if (!name.endsWith(".trg")) {
+              name += ".trd";
+            }
+            selectedFile = new File(selectedFile.getParentFile(), name);
+            if (!selectedFile.isFile()) {
+              if (JOptionPane.showConfirmDialog(this, "Create TRD file: " + selectedFile.getName() + "?", "Create TRD file", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                log.log(Level.INFO, "Creating TRD disk: " + selectedFile.getAbsolutePath());
+                FileUtils.writeByteArrayToFile(selectedFile, new TRDOSDisk().getDiskData());
+              } else {
+                return;
+              }
+            }
+          }
+
           final TRDOSDisk floppy = new TRDOSDisk(filter.get().getClass() == SCLFileFilter.class ? TRDOSDisk.Source.SCL : TRDOSDisk.Source.TRD, FileUtils.readFileToByteArray(selectedFile), false);
           this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
           log.log(Level.INFO, "Loaded drive " + diskName + " by floppy image file " + selectedFile);

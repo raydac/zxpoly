@@ -17,7 +17,9 @@
 package com.igormaznitsa.zxpoly.components.betadisk;
 
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class TRDOSDisk {
@@ -141,7 +143,7 @@ public class TRDOSDisk {
 
     switch (src) {
       case SCL: {
-        if (srcData.length < 10 || !JBBPUtils.arrayStartsWith(srcData, "SINCLAIR".getBytes(Charset.forName("US-ASCII"))) || srcData.length < (9 + (0x100 + 14) * (srcData[8] & 0xFF))) {
+        if (srcData.length < 10 || !JBBPUtils.arrayStartsWith(srcData, "SINCLAIR".getBytes(StandardCharsets.US_ASCII)) || srcData.length < (9 + (0x100 + 14) * (srcData[8] & 0xFF))) {
           throw new RuntimeException("Not SCL file");
         }
         diskData = new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE];
@@ -232,6 +234,10 @@ public class TRDOSDisk {
     }
   }
 
+  public byte [] getDiskData() {
+    return this.data;
+  }
+  
   public static int decodePhysicalTrackIndex(final int dataOffset) {
     return dataOffset >> 13;
   }
