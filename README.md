@@ -7,7 +7,9 @@
 ![ZX-Poly logo](https://raw.githubusercontent.com/raydac/zxpoly/master/docs/zxpoly_logo.png)
 
 # Introduction
-It is not just a yet another ZX-Spectrum emulator, but the proof of concept of the ZX-Poly platform. The ZX-Poly platform was developed by Igor Maznitsa in Summer 1994 and it was not something absolutely new one but just a hardware modification of the old well-known ZX-Spectrum 128 platform (it even didn't  provide or require any new operating system and could use the ZX-Spectrum SOS), the main purpose of the modification was to remove the main graphic issue of ZX-Spectrum (color clashing) and save the same speed of graphic processing without injecting any extra GPU into the system with saving back-compatibility with the original platform. The Very big pros of the platform is that it could be assembled with the electronic components in the end of 80th and it shows that we could have some multi-CPU SIMD home platform in that time even in the USSR (where ZX-Spectrums were produced mainly by enthusiasts). Unfortunately the idea was born too late and already didn't meet any interest from ZX-Spectrum producers in Russia (it was time of ZX-Spectrum sunset).
+The idea of the platform was developed by me in April 1994, I had some free time to think about well-known problem of ZX-Spectrum platform - ATTRIBUTE CLASH. I found good solution to resolve the issue with saving of back compatibility with existing software (as minimum with most of them). The solution was - to rework mono-system into poly-system and add extra CPUs working in parallel to process color data. The solution provides some way not only keep back compatibility with software but also use existing OS.   
+
+I believe that ZX-Poly could be assembled with electronic components of 80th and it shows that we could have some four core CPU home platform in that time even in the USSR (where ZX-Spectrum was produced by many enthusiasts and small companies). Unfortunately the idea was born too late and couldn't meet any interest from ZX-Spectrum producers in Russia. So that the emulator can be recognized as some proof of concept.
 
 # License
 The Emulator and all its parts are published under [GNU GPL3 license](http://www.gnu.org/licenses/gpl.html). So that it is absolutely free for non-commercial use.
@@ -17,7 +19,7 @@ The Emulator and all its parts are published under [GNU GPL3 license](http://www
 
 # Theory and structure of the ZX-Poly platform
 ![ZXPoly test ROM screen](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/zxpoly_test_rom_video.gif)    
-The Base of the platform is the theory that stable synchronous systems (without any inside random processes) which are built on the same components (because different element base can be also source of random processes) by being started synchronously in the same time from the same state will have the same state in any point of time if all synchronous system get the same input signal states in the same time.
+The Base of the platform is the theory that stable synchronous systems (without any inside random processes) built on the same components (because different element base can be also source of random processes) by being started synchronously in the same time from the same state have the same state in any point of time if all synchronous system components get the same input signal states in the same time.
 ![Structure of ZXPoly](https://github.com/raydac/zxpoly/blob/master/docs/zxpolystruct.png)
 ZX-Poly platform adds several ports to manipulate work modes and the main port of the platform is #3D00. [In more details it is desribed in wiki.](https://github.com/raydac/zxpoly/wiki/Short-description-of-ZX-Poly-platform)
 
@@ -29,7 +31,11 @@ The Idea of the Platform was born in 1994 and it was too late to invest money an
 No, it doesn't. ZX-Poly uses standard ZX-Spectrum 128 OS + TR-DOS. On start ZX-Poly even starts only one Z80 and three others in sleep mode and it is no so easy to detect difference in work with regular ZX-Spectrum 128 (I didn't find).
 
 ## What is difference with Spec256?
-Both ZX-Poly and Spec256 work as [SIMD](https://en.wikipedia.org/wiki/SIMD) computers but ZX-Poly is based on 4 Z80 "real" CPUs and Spec256 has the only virtual 64 bit Z80 CPU under the hood, I tried to convert some games from Spec256 to ZX-Poly but it was impossible because Spec256 is much more tolerant for damage of execution code and desynchronization. Also ZX-Poly allows its CPUs to work separately in real hardware multi-threading mode, the platform even has some primitive semaphore mechanism (of course it doesn't make the platform very easy to be implemented). So that the main difference - ZX-Poly doesn't have magic and fantastic virtual devices under the hood and SIMD is one of possible modes for ZX-Poly but the mode is only possible for Spec256.
+Both ZX-Poly and Spec256 work as [SIMD](https://en.wikipedia.org/wiki/SIMD) computers but ZX-Poly is based on 4 Z80 "real" CPUs and Spec256 has some mix of 8 bit + 64 bit virtual Z80 CPU under the hood, I made attempt to convert some games from Spec256 to ZX-Poly but attempt failed because Spec256 is much more tolerant for damage of execution code (it executes non changed program and only changed extra-graphical data is sent through virtual 64 bit registers, changed data blocks don't affect executing flow).
+
+## Multi-threading
+ZX-Poly is a normal multi-CPU system and can work as in SIMD mode (to be compatible with existing software) as in MIMD mode and in the mode all CPUs work independently. It has some primitive synchronization mechanism called STOP-ADDRESS which allows to align common start address for all CPUs, also CPU0 can get some approximate info about current executing addresses of other CPUs and can get even some signals through interruptions what makes possible to emulate some periphery (like sound devices) in slave CPUs. Each CPU has its own memory area in common heap but it is possible to override memory areas and even map them totally each other (in the case it will be just multi CPU ZX 128).
+
 
 ## Which software can be adapted for the platform?
 The Main requirement - the software should not have optimization of graphic output and should not have check what it outputs on the screen, enough number of games work in such manner and also system utilities (ZX-Poly has 512x384 mode and it is possible to increase resolution of text utilities and editors just through their fonts and icons correction)
