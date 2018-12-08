@@ -15,7 +15,10 @@
    id="svg4459"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="zxpolyvmode.svg">
+   sodipodi:docname="zxpolyvmode.svg"
+   inkscape:export-filename="/home2/igorm/Temp/zxp.png"
+   inkscape:export-xdpi="78.662987"
+   inkscape:export-ydpi="78.662987">
   <defs
      id="defs4461" />
   <sodipodi:namedview
@@ -36,7 +39,7 @@
      fit-margin-right="0"
      fit-margin-bottom="0"
      inkscape:window-width="1920"
-     inkscape:window-height="1009"
+     inkscape:window-height="999"
      inkscape:window-x="0"
      inkscape:window-y="24"
      inkscape:window-maximized="1" />
@@ -48,7 +51,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -60,7 +63,7 @@
     <g
        id="g5510"
        style="opacity:0.30899999;fill:#ffffff;stroke:#000000"
-       transform="translate(-25.253813,42.931487)">
+       transform="translate(-88.893423,81.317283)">
       <rect
          transform="matrix(0.90687575,0.42139812,0,1,0,0)"
          y="140.61697"
@@ -326,7 +329,7 @@
     <g
        id="g5510-17"
        style="opacity:0.30899999;fill:#ffffff;stroke:#000000"
-       transform="translate(-90.408664,79.802051)">
+       transform="translate(-29.294438,44.951788)">
       <rect
          transform="matrix(0.90687575,0.42139812,0,1,0,0)"
          y="140.61697"
@@ -738,8 +741,8 @@
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="234.14626"
-       y="261.9491"
+       x="295.2605"
+       y="199.97682"
        id="text5782-6"
        sodipodi:linespacing="125%"
        transform="matrix(1,0.44379215,0,1,0,0)"
@@ -747,19 +750,19 @@
        inkscape:transform-center-y="20.203051"><tspan
          sodipodi:role="line"
          id="tspan5784-9"
-         x="234.14626"
-         y="261.9491"
-         style="font-size:15px">VRAM1</tspan><tspan
+         x="295.2605"
+         y="199.97682"
+         style="font-size:15px">VRAM2</tspan><tspan
          sodipodi:role="line"
-         x="234.14626"
-         y="280.6991"
+         x="295.2605"
+         y="218.72682"
          style="font-size:15px"
          id="tspan5840" /></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="299.30109"
-       y="195.1532"
+       x="235.66148"
+       y="261.78177"
        id="text5782-6-2"
        sodipodi:linespacing="125%"
        transform="matrix(1,0.44379215,0,1,0,0)"
@@ -767,9 +770,9 @@
        inkscape:transform-center-y="20.203051"><tspan
          sodipodi:role="line"
          id="tspan5784-9-2"
-         x="299.30109"
-         y="195.1532"
-         style="font-size:15px">VRAM2</tspan></text>
+         x="235.66148"
+         y="261.78177"
+         style="font-size:15px">VRAM1</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
