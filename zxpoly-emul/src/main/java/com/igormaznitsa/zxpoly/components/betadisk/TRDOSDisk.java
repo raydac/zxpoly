@@ -17,8 +17,6 @@
 package com.igormaznitsa.zxpoly.components.betadisk;
 
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -234,10 +232,10 @@ public class TRDOSDisk {
     }
   }
 
-  public byte [] getDiskData() {
+  public byte[] getDiskData() {
     return this.data;
   }
-  
+
   public static int decodePhysicalTrackIndex(final int dataOffset) {
     return dataOffset >> 13;
   }
