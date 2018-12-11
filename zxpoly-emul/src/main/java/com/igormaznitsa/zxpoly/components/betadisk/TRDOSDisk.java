@@ -35,7 +35,7 @@ public class TRDOSDisk {
 
   private static final Random RND = new Random();
 
-  public static class Sector {
+  public static final class Sector {
 
     private final TRDOSDisk owner;
     private int crc;
