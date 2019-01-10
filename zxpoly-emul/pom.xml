@@ -49,20 +49,138 @@
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-assembly-plugin</artifactId>
+            <artifactId>maven-shade-plugin</artifactId>
             <executions>
               <execution>
-                <id>make-linux</id>
-                <phase>install</phase>
+                <phase>package</phase>
                 <goals>
-                  <goal>single</goal>
+                  <goal>shade</goal>
                 </goals>
                 <configuration>
-                  <appendAssemblyId>false</appendAssemblyId>
-                  <finalName>${app.name}</finalName>
-                  <descriptors>
-                    <descriptor>src/assemble/zip.xml</descriptor>
-                  </descriptors>
+                  <filters>
+                    <filter>
+                      <artifact>*:*</artifact>
+                      <excludes>
+                        <exclude>META-INF/*.SF</exclude>
+                        <exclude>META-INF/*.DSA</exclude>
+                        <exclude>META-INF/*.RSA</exclude>
+                      </excludes>
+                    </filter>
+                  </filters>
+                  <minimizeJar>false</minimizeJar>
+                  <transformers>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                      <manifestEntries>
+                        <Main-Class>com.igormaznitsa.zxpoly.main</Main-Class>
+                        <Url>https://github.com/raydac/zxpoly</Url>
+                      </manifestEntries>
+                    </transformer>
+                  </transformers>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.igormaznitsa</groupId>
+            <artifactId>mvn-jlink-wrapper</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <executions>
+              <execution>
+                <id>cache-work-jdk</id>
+                <goals>
+                  <goal>cache-jdk</goal>
+                </goals>
+                <configuration>
+                  <jdkPathProperty>mvnjlink.jdk.work.path</jdkPathProperty>
+                  <provider>ADOPT</provider>
+                  <providerConfig>
+                    <release>jdk-11.0.1+13</release>
+                    <arch>x64</arch>
+                    <type>jdk</type>
+                    <impl>hotspot</impl>
+                  </providerConfig>
+                </configuration>
+              </execution>
+              <execution>
+                <id>cache-linux-jdk</id>
+                <goals>
+                  <goal>cache-jdk</goal>
+                </goals>
+                <configuration>
+                  <jdkPathProperty>mvnjlink.jdk.linux.path</jdkPathProperty>
+                  <provider>ADOPT</provider>
+                  <providerConfig>
+                    <release>jdk-11.0.1+13</release>
+                    <arch>x64</arch>
+                    <os>linux</os>
+                    <type>jdk</type>
+                    <impl>hotspot</impl>
+                  </providerConfig>
+                </configuration>
+              </execution>
+              <execution>
+                <id>cache-windows-jdk</id>
+                <goals>
+                  <goal>cache-jdk</goal>
+                </goals>
+                <configuration>
+                  <jdkPathProperty>mvnjlink.jdk.windows.path</jdkPathProperty>
+                  <provider>ADOPT</provider>
+                  <providerConfig>
+                    <release>jdk-11.0.1+13</release>
+                    <arch>x64</arch>
+                    <os>windows</os>
+                    <type>jdk</type>
+                    <impl>hotspot</impl>
+                  </providerConfig>
+                </configuration>
+              </execution>
+              <execution>
+                <id>call-jdeps</id>
+                <goals>
+                  <goal>jdeps</goal>
+                </goals>
+                <configuration>
+                  <toolJdk>${mvnjlink.jdk.work.path}</toolJdk>
+                  <output>${project.build.directory}${file.separator}jdeps.out</output>
+                  <options>
+                    <option>-s</option>
+                    <option>${project.build.directory}${file.separator}${project.build.finalName}.jar</option>
+                  </options>
+                </configuration>
+              </execution>
+              <execution>
+                <id>make-jre-linux</id>
+                <goals>
+                  <goal>jlink</goal>
+                </goals>
+                <configuration>
+                  <toolJdk>${mvnjlink.jdk.work.path}</toolJdk>
+                  <jdepsReportPath>${project.build.directory}${file.separator}jdeps.out</jdepsReportPath>
+                  <output>${project.build.directory}${file.separator}jre_linux</output>
+                  <modulePath>${mvnjlink.jdk.linux.path}${file.separator}jmods</modulePath>
+                  <options>
+                    <option>--compress=2</option>
+                    <option>--no-header-files</option>
+                    <option>--no-man-pages</option>
+                  </options>
+                </configuration>
+              </execution>
+              <execution>
+                <id>make-jre-windows</id>
+                <goals>
+                  <goal>jlink</goal>
+                </goals>
+                <configuration>
+                  <toolJdk>${mvnjlink.jdk.work.path}</toolJdk>
+                  <jdepsReportPath>${project.build.directory}${file.separator}jdeps.out</jdepsReportPath>
+                  <output>${project.build.directory}${file.separator}jre_windows</output>
+                  <modulePath>${mvnjlink.jdk.windows.path}${file.separator}jmods</modulePath>
+                  <options>
+                    <option>--compress=2</option>
+                    <option>--no-header-files</option>
+                    <option>--no-man-pages</option>
+                  </options>
                 </configuration>
               </execution>
             </executions>
@@ -96,41 +214,91 @@
           <plugin>
             <groupId>com.akathist.maven.plugins.launch4j</groupId>
             <artifactId>launch4j-maven-plugin</artifactId>
+            <configuration>
+              <headerType>gui</headerType>
+              <jar>${project.build.directory}/${artifactId}-${version}.jar</jar>
+              <downloadUrl>http://www.oracle.com/technetwork/java/javase/downloads</downloadUrl>
+              <classPath>
+                <mainClass>com.igormaznitsa.zxpoly.main</mainClass>
+              </classPath>
+              <icon>appico.ico</icon>
+              <jre>
+                <minVersion>1.8.0</minVersion>
+                <jdkPreference>preferJre</jdkPreference>
+                <initialHeapSize>256</initialHeapSize>
+                <maxHeapSize>1024</maxHeapSize>
+              </jre>
+              <versionInfo>
+                <fileVersion>1.0.0.1</fileVersion>
+                <txtFileVersion>${project.version}</txtFileVersion>
+                <fileDescription>ZX-Poly Emulator</fileDescription>
+                <copyright>2015 Igor Maznitsa</copyright>
+                <productVersion>2.0.0.0</productVersion>
+                <txtProductVersion>${project.version}</txtProductVersion>
+                <productName>${project.name}</productName>
+                <companyName>igormaznitsa.com</companyName>
+                <internalName>${project.name}</internalName>
+                <originalFilename>zxpoly_${project.version}.exe</originalFilename>
+              </versionInfo>
+            </configuration>
             <executions>
               <execution>
-                <id>l4j-clui</id>
+                <id>l4j-standalone</id>
                 <phase>install</phase>
                 <goals>
                   <goal>launch4j</goal>
                 </goals>
                 <configuration>
-                  <headerType>gui</headerType>
-                  <jar>${project.build.directory}/${artifactId}-${version}.jar</jar>
                   <outfile>${project.build.directory}/${project.build.finalName}.exe</outfile>
-                  <downloadUrl>http://www.oracle.com/technetwork/java/javase/downloads</downloadUrl>
-                  <classPath>
-                    <mainClass>com.igormaznitsa.zxpoly.main</mainClass>
-                    <preCp>anything</preCp>
-                  </classPath>
-                  <icon>appico.ico</icon>
+                </configuration>
+              </execution>
+              <execution>
+                <id>l4j-only-starter</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>launch4j</goal>
+                </goals>
+                <configuration>
+                  <outfile>${project.build.directory}${file.separator}zxpoly.exe</outfile>
+                  <dontWrapJar>true</dontWrapJar>
+                  <jar>.\zxpoly-emul.jar</jar>
                   <jre>
-                    <minVersion>1.8.0</minVersion>
-                    <jdkPreference>preferJre</jdkPreference>
-                    <initialHeapSize>256</initialHeapSize>
-                    <maxHeapSize>1024</maxHeapSize>
+                    <path>.\jre</path>
                   </jre>
-                  <versionInfo>
-                    <fileVersion>1.0.0.1</fileVersion>
-                    <txtFileVersion>${project.version}</txtFileVersion>
-                    <fileDescription>ZX-Poly Emulator</fileDescription>
-                    <copyright>2015 Igor Maznitsa</copyright>
-                    <productVersion>2.0.0.0</productVersion>
-                    <txtProductVersion>${project.version}</txtProductVersion>
-                    <productName>${project.name}</productName>
-                    <companyName>igormaznitsa.com</companyName>
-                    <internalName>${project.name}</internalName>
-                    <originalFilename>zxpoly_${project.version}.exe</originalFilename>
-                  </versionInfo>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>make-linux</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration>
+                  <appendAssemblyId>false</appendAssemblyId>
+                  <finalName>${project.build.finalName}-linux</finalName>
+                  <descriptors>
+                    <descriptor>src/assemble/zip.xml</descriptor>
+                  </descriptors>
+                </configuration>
+              </execution>
+              <execution>
+                <id>make-windows-with-jre</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration>
+                  <appendAssemblyId>false</appendAssemblyId>
+                  <finalName>${project.build.finalName}-windows-x64-withjre</finalName>
+                  <descriptors>
+                    <descriptor>src/assemble/withjre_windows.xml</descriptor>
+                  </descriptors>
                 </configuration>
               </execution>
             </executions>
@@ -142,39 +310,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <filters>
-                <filter>
-                  <artifact>*:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
-                  </excludes>
-                </filter>
-              </filters>
-              <minimizeJar>false</minimizeJar>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <manifestEntries>
-                    <Main-Class>com.igormaznitsa.zxpoly.main</Main-Class>
-                    <Url>https://github.com/raydac/zxpoly</Url>
-                  </manifestEntries>
-                </transformer>
-              </transformers>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <groupId>com.igormaznitsa</groupId>
         <artifactId>jbbp-maven-plugin</artifactId>
