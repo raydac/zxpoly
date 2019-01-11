@@ -8,24 +8,26 @@
   <includeSiteDirectory>false</includeSiteDirectory>
 
   <formats>
-    <format>zip</format>
+    <format>tar.gz</format>
   </formats>
   <files>
     <file>
-      <source>${project.build.directory}/${artifactId}-${version}.jar</source>
+      <source>${project.build.directory}${file.separator}${artifactId}-${version}.jar</source>
       <destName>zxpoly-emul.jar</destName>
-      <outputDirectory>${project.build.finalName}/</outputDirectory>
-    </file>
-    <file>
-      <source>${project.build.directory}/zxpoly.exe</source>
-      <destName>zxpoly.exe</destName>
-      <outputDirectory>${project.build.finalName}/</outputDirectory>
+      <outputDirectory>${project.build.finalName}${file.separator}</outputDirectory>
     </file>
   </files>
   <fileSets>
     <fileSet>
-      <directory>${project.build.directory}/jre_windows</directory>
-      <outputDirectory>${project.build.finalName}/jre</outputDirectory>
+      <directory>${project.basedir}${file.separator}src${file.separator}assembly${file.separator}linux</directory>
+      <outputDirectory>${project.build.finalName}</outputDirectory>
+      <includes>
+       <include>*/**</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>${project.build.directory}${file.separator}jre_linux</directory>
+      <outputDirectory>${project.build.finalName}${file.separator}jre</outputDirectory>
       <includes>
         <include>*/**</include>
       </includes>

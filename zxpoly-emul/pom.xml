@@ -198,9 +198,6 @@
               <includeApplicationsSymlink>true</includeApplicationsSymlink>
               <diskImageInternetEnable>true</diskImageInternetEnable>
               <jvmVersion>1.8+</jvmVersion>
-              <jvmOptions>
-                <opt>-Dprol.stack.depth=512m</opt>
-              </jvmOptions>
             </configuration>
             <executions>
               <execution>
@@ -229,10 +226,10 @@
                 <maxHeapSize>1024</maxHeapSize>
               </jre>
               <versionInfo>
-                <fileVersion>1.0.0.1</fileVersion>
+                <fileVersion>2.0.0.0</fileVersion>
                 <txtFileVersion>${project.version}</txtFileVersion>
                 <fileDescription>ZX-Poly Emulator</fileDescription>
-                <copyright>2015 Igor Maznitsa</copyright>
+                <copyright>2015-2019 Igor Maznitsa</copyright>
                 <productVersion>2.0.0.0</productVersion>
                 <txtProductVersion>${project.version}</txtProductVersion>
                 <productName>${project.name}</productName>
@@ -242,16 +239,6 @@
               </versionInfo>
             </configuration>
             <executions>
-              <execution>
-                <id>l4j-standalone</id>
-                <phase>install</phase>
-                <goals>
-                  <goal>launch4j</goal>
-                </goals>
-                <configuration>
-                  <outfile>${project.build.directory}/${project.build.finalName}.exe</outfile>
-                </configuration>
-              </execution>
               <execution>
                 <id>l4j-only-starter</id>
                 <phase>install</phase>
@@ -281,23 +268,23 @@
                 </goals>
                 <configuration>
                   <appendAssemblyId>false</appendAssemblyId>
-                  <finalName>${project.build.finalName}-linux</finalName>
+                  <finalName>${project.build.finalName}-linux-x64-openjdk</finalName>
                   <descriptors>
-                    <descriptor>src/assemble/zip.xml</descriptor>
+                    <descriptor>src${file.separator}assembly${file.separator}linux.xml</descriptor>
                   </descriptors>
                 </configuration>
               </execution>
               <execution>
-                <id>make-windows-with-jre</id>
+                <id>make-windows</id>
                 <phase>install</phase>
                 <goals>
                   <goal>single</goal>
                 </goals>
                 <configuration>
                   <appendAssemblyId>false</appendAssemblyId>
-                  <finalName>${project.build.finalName}-windows-x64-withjre</finalName>
+                  <finalName>${project.build.finalName}-windows-x64-openjdk</finalName>
                   <descriptors>
-                    <descriptor>src/assemble/withjre_windows.xml</descriptor>
+                    <descriptor>src${file.separator}assembly${file.separator}windows.xml</descriptor>
                   </descriptors>
                 </configuration>
               </execution>
