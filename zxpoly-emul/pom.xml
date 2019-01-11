@@ -186,29 +186,6 @@
             </executions>
           </plugin>
           <plugin>
-            <groupId>sh.tak.appbundler</groupId>
-            <artifactId>appbundle-maven-plugin</artifactId>
-            <configuration>
-              <bundleName>${app.name}</bundleName>
-              <diskImageFile>${project.build.directory}/${project.build.finalName}_OSX.dmg</diskImageFile>
-              <mainClass>com.igormaznitsa.zxpoly.main</mainClass>
-              <iconFile>appico.icns</iconFile>
-              <bundleName>ZXPoly</bundleName>
-              <generateDiskImageFile>true</generateDiskImageFile>
-              <includeApplicationsSymlink>true</includeApplicationsSymlink>
-              <diskImageInternetEnable>true</diskImageInternetEnable>
-              <jvmVersion>1.8+</jvmVersion>
-            </configuration>
-            <executions>
-              <execution>
-                <phase>package</phase>
-                <goals>
-                  <goal>bundle</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
             <groupId>com.akathist.maven.plugins.launch4j</groupId>
             <artifactId>launch4j-maven-plugin</artifactId>
             <configuration>
@@ -286,6 +263,46 @@
                   <descriptors>
                     <descriptor>src${file.separator}assembly${file.separator}windows.xml</descriptor>
                   </descriptors>
+                </configuration>
+              </execution>
+              <execution>
+                <id>make-mac</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration>
+                  <appendAssemblyId>false</appendAssemblyId>
+                  <finalName>${project.build.finalName}-mac</finalName>
+                  <descriptors>
+                    <descriptor>src${file.separator}assembly${file.separator}mac.xml</descriptor>
+                  </descriptors>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-clean-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>clean-temp</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>clean</goal>
+                </goals>
+                <configuration>
+                  <excludeDefaultDirectories>true</excludeDefaultDirectories>
+                   <filesets>
+                    <fileset>
+                      <directory>${project.build.directory}</directory>
+                      <includes>
+                        <include>original-zxpoly-emul-*.jar</include>
+                        <include>zxpoly.exe</include>
+                        <include>jdeps.out</include>
+                      </includes>
+                    </fileset>
+                  </filesets>
                 </configuration>
               </execution>
             </executions>
