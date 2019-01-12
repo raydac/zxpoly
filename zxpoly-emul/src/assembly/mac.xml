@@ -8,14 +8,14 @@
   <includeSiteDirectory>false</includeSiteDirectory>
 
   <formats>
-    <format>zip</format>
+    <format>jar</format>
   </formats>
   <fileSets>
     <fileSet>
       <directory>${project.basedir}${file.separator}src${file.separator}assembly${file.separator}mac</directory>
       <outputDirectory>${file.separator}</outputDirectory>
       <excludes>
-        <exclude>ZXPoly Emul.app${file.separator}Contents${file.separator}MacOS</exclude>
+        <exclude>ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS${file.separator}zxpoly</exclude>
       </excludes>
       <includes>
        <include>*/**</include>
@@ -25,16 +25,15 @@
   </fileSets>
   <files>
     <file>
-      <source>${project.basedir}${file.separator}src${file.separator}assembly${file.separator}mac${file.separator}ZXPoly Emul.app${file.separator}Contents${file.separator}MacOS${file.separator}zxpoly</source>
+      <source>${project.basedir}${file.separator}src${file.separator}assembly${file.separator}mac${file.separator}ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS${file.separator}zxpoly</source>
       <destName>zxpoly</destName>
-      <outputDirectory>${file.separator}ZXPoly Emul.app${file.separator}Contents${file.separator}MacOS</outputDirectory>
-      <fileMode>755</fileMode>
-      <filtered>true</filtered>
+      <outputDirectory>${file.separator}ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS</outputDirectory>
+      <fileMode>0755</fileMode>
     </file>
     <file>
       <source>${project.build.directory}${file.separator}${artifactId}-${version}.jar</source>
       <destName>${artifactId}-${version}.jar</destName>
-      <outputDirectory>${file.separator}ZXPoly Emul.app${file.separator}Contents${file.separator}MacOS</outputDirectory>
+      <outputDirectory>${file.separator}ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS</outputDirectory>
     </file>
   </files>
 </assembly>

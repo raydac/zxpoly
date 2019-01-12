@@ -6,7 +6,6 @@
   <version>2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <description>ZX-Poly set (multi-CPU ZX-Spectrum clone)</description>
   <url>https://github.com/raydac/zxpoly</url>
 
   <properties>
