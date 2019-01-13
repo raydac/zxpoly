@@ -46,6 +46,9 @@ import org.apache.commons.io.FileUtils;
 import com.igormaznitsa.zxpoly.animeencoders.ZXPolyAGifEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import org.apache.commons.io.FilenameUtils;
 
 public final class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
@@ -69,7 +72,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private static final String TEXT_START_ANIM_GIF = "Record AGIF";
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
 
-  private volatile boolean turboMode = false;
+  private final AtomicBoolean turboMode = new AtomicBoolean();
 
   private AnimatedGifTunePanel.AnimGifOptions lastAnimGifOptions = new AnimatedGifTunePanel.AnimGifOptions("./zxpoly.gif", 10, false);
 
@@ -108,7 +111,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final Runnable infobarUpdater = new Runnable() {
     @Override
     public void run() {
-      final Icon turboico = turboMode ? ICO_TURBO : ICO_TURBO_DIS;
+      final Icon turboico = turboMode.get() ? ICO_TURBO : ICO_TURBO_DIS;
       if (labelTurbo.getIcon() != turboico) {
         labelTurbo.setIcon(turboico);
       }
@@ -298,7 +301,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.board = new Motherboard(rom);
     this.board.setZXPolyMode(true);
     this.menuOptionsZX128Mode.setSelected(!this.board.isZXPolyMode());
-    this.menuOptionsTurbo.setSelected(this.turboMode);
+    this.menuOptionsTurbo.setSelected(this.turboMode.get());
 
     log.info("Main form completed");
     this.board.reset();
@@ -318,6 +321,28 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.panelIndicators.add(this.indicatorCPU2, cpuIndicatorConstraint, 2);
     this.panelIndicators.add(this.indicatorCPU3, cpuIndicatorConstraint, 3);
 
+    for(final Component item : this.menuBar.getComponents()) {
+      if (item instanceof JMenu) {
+        final JMenu menuItem = (JMenu) item;
+        menuItem.addMenuListener(new MenuListener() {
+          @Override
+          public void menuSelected(MenuEvent e) {
+            MainForm.this.stepSemaphor.lock();
+          }
+
+          @Override
+          public void menuDeselected(MenuEvent e) {
+            MainForm.this.stepSemaphor.unlock();
+          }
+
+          @Override
+          public void menuCanceled(MenuEvent e) {
+            MainForm.this.stepSemaphor.unlock();
+          }
+        });
+      }
+    }
+    
     updateTapeMenu();
 
     updateInfoPanel();
@@ -382,7 +407,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           systemIntSignal = false;
         }
 
-        final int triggers = this.board.step(systemIntSignal, this.turboMode ? true : systemIntSignal || currentMachineCycleCounter <= VideoController.CYCLES_BETWEEN_INT);
+        final int triggers = this.board.step(systemIntSignal, this.turboMode.get() ? true : systemIntSignal || currentMachineCycleCounter <= VideoController.CYCLES_BETWEEN_INT);
 
         if (triggers != Motherboard.TRIGGER_NONE) {
           final Z80[] cpuStates = new Z80[4];
@@ -540,11 +565,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   public void setTurboMode(final boolean value) {
-    this.turboMode = value;
+    this.turboMode.set(value);
   }
 
   public boolean isTurboMode() {
-    return this.turboMode;
+    return this.turboMode.get();
   }
 
   private void updateScreen() {
@@ -1140,7 +1165,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }//GEN-LAST:event_menuOptionsZX128ModeActionPerformed
 
   private void menuOptionsTurboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsTurboActionPerformed
-    this.turboMode = this.menuOptionsTurbo.isSelected();
+    this.setTurboMode(this.menuOptionsTurbo.isSelected());
   }//GEN-LAST:event_menuOptionsTurboActionPerformed
 
   private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
