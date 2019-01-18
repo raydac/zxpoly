@@ -303,9 +303,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       if (source.isSelected()) {
         MainForm.this.stepSemaphor.lock();
         source.setIcon(ICO_EMUL_PLAY);
+        log.info("Emulator is paused by PLAY/PAUSE button");
       } else {
         MainForm.this.stepSemaphor.unlock();
         source.setIcon(ICO_EMUL_PAUSE);
+        log.info("Emulator is started by PLAY/PAUSE button");
       }
     });
 
