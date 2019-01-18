@@ -66,6 +66,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private static final Icon ICO_ZX128 = new ImageIcon(Utils.loadIcon("zx128.png"));
   private static final Icon ICO_ZX128_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_ZX128);
 
+  private static final Icon ICO_EMUL_PLAY = new ImageIcon(Utils.loadIcon("emul_play.png"));
+  private static final Icon ICO_EMUL_PAUSE = new ImageIcon(Utils.loadIcon("emul_pause.png"));
+
   public static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
   private static final int INT_BETWEEN_FRAMES = AppOptions.getInstance().getIntBetweenFrames();
 
@@ -287,6 +290,27 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   public MainForm(final String title, final String romPath) throws IOException {
     log.log(Level.INFO, "INT ticks between frames: " + INT_BETWEEN_FRAMES);
     initComponents();
+
+    this.menuBar.add(Box.createHorizontalGlue());
+    final JToggleButton buttonStartPause = new JToggleButton();
+
+    buttonStartPause.setIcon(ICO_EMUL_PAUSE);
+    buttonStartPause.setRolloverEnabled(false);
+    buttonStartPause.setToolTipText("Play/Pause emulation");
+
+    buttonStartPause.addActionListener((final ActionEvent event) -> {
+      final JToggleButton source = (JToggleButton) event.getSource();
+      if (source.isSelected()) {
+        MainForm.this.stepSemaphor.lock();
+        source.setIcon(ICO_EMUL_PLAY);
+      } else {
+        MainForm.this.stepSemaphor.unlock();
+        source.setIcon(ICO_EMUL_PAUSE);
+      }
+    });
+
+    this.menuBar.add(buttonStartPause);
+
     this.setTitle(title);
 
     this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
@@ -321,7 +345,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.panelIndicators.add(this.indicatorCPU2, cpuIndicatorConstraint, 2);
     this.panelIndicators.add(this.indicatorCPU3, cpuIndicatorConstraint, 3);
 
-    for(final Component item : this.menuBar.getComponents()) {
+    for (final Component item : this.menuBar.getComponents()) {
       if (item instanceof JMenu) {
         final JMenu menuItem = (JMenu) item;
         menuItem.addMenuListener(new MenuListener() {
@@ -342,7 +366,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         });
       }
     }
-    
+
     updateTapeMenu();
 
     updateInfoPanel();
@@ -1134,7 +1158,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
 
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
-      final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, new FormatZXP(), new FormatZ80(), new FormatSNA());
+      final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, new FormatZ80(), new FormatSNA(), new FormatZXP());
 
       if (selected != null) {
         this.board.forceResetCPUs();
@@ -1199,24 +1223,29 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }//GEN-LAST:event_menuTapGotoBlockActionPerformed
 
   private void menuFileLoadTapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadTapActionPerformed
-    final File selectedTapFile = chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
-    if (selectedTapFile != null) {
-      this.lastTapFolder = selectedTapFile.getParentFile();
-      try (InputStream in = new BufferedInputStream(new FileInputStream(selectedTapFile))) {
+    this.stepSemaphor.lock();
+    try {
+      final File selectedTapFile = chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
+      if (selectedTapFile != null) {
+        this.lastTapFolder = selectedTapFile.getParentFile();
+        try ( InputStream in = new BufferedInputStream(new FileInputStream(selectedTapFile))) {
 
-        if (this.keyboardAndTapeModule.getTap() != null) {
-          this.keyboardAndTapeModule.getTap().removeActionListener(this);
+          if (this.keyboardAndTapeModule.getTap() != null) {
+            this.keyboardAndTapeModule.getTap().removeActionListener(this);
+          }
+
+          final TapeFileReader tapfile = new TapeFileReader(selectedTapFile.getAbsolutePath(), in);
+          tapfile.addActionListener(this);
+          this.keyboardAndTapeModule.setTap(tapfile);
+        } catch (Exception ex) {
+          log.log(Level.SEVERE, "Can't read " + selectedTapFile, ex);
+          JOptionPane.showMessageDialog(this, "Can't load TAP file", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+        } finally {
+          updateTapeMenu();
         }
-
-        final TapeFileReader tapfile = new TapeFileReader(selectedTapFile.getAbsolutePath(), in);
-        tapfile.addActionListener(this);
-        this.keyboardAndTapeModule.setTap(tapfile);
-      } catch (Exception ex) {
-        log.log(Level.SEVERE, "Can't read " + selectedTapFile, ex);
-        JOptionPane.showMessageDialog(this, "Can't load TAP file", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
-      } finally {
-        updateTapeMenu();
       }
+    } finally {
+      this.stepSemaphor.unlock();
     }
   }//GEN-LAST:event_menuFileLoadTapActionPerformed
 
@@ -1296,12 +1325,22 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }//GEN-LAST:event_menuResetKeyboardActionPerformed
 
   private void menuFileOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileOptionsActionPerformed
-    final OptionsDialog dialog = new OptionsDialog(this);
-    dialog.setVisible(true);
+    this.stepSemaphor.lock();
+    try {
+      final OptionsDialog dialog = new OptionsDialog(this);
+      dialog.setVisible(true);
+    } finally {
+      this.stepSemaphor.unlock();
+    }
   }//GEN-LAST:event_menuFileOptionsActionPerformed
 
   private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuHelpAboutActionPerformed
-    new AboutDialog(this).setVisible(true);
+    this.stepSemaphor.lock();
+    try {
+      new AboutDialog(this).setVisible(true);
+    } finally {
+      this.stepSemaphor.unlock();
+    }
   }//GEN-LAST:event_menuHelpAboutActionPerformed
 
   private void menuTraceCPU0ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU0ActionPerformed
