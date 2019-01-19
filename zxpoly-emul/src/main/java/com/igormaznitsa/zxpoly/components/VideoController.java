@@ -33,6 +33,8 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   public static final int SCREEN_WIDTH = 512;
   public static final int SCREEN_HEIGHT = 384;
 
+  public static final Image IMAGE_ZXKEYS = Utils.loadIcon("zxkeys.png");
+
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
 
@@ -58,6 +60,8 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private final byte[] borderLineColors = new byte[BORDER_LINES];
 
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
+
+  private volatile boolean showZxKeyboardLayout = false;
 
   public static final int[] ZXPALETTE = new int[]{
     0xFF000000,
@@ -133,6 +137,10 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       default:
         return -1;
     }
+  }
+
+  public void setShowZxKeyboardLayout(final boolean show) {
+    this.showZxKeyboardLayout = show;
   }
 
   public VideoController(final Motherboard board) {
@@ -240,6 +248,22 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
     if (this.holdMouse) {
       g2.drawImage(ESCMOUSE, 2, 2, null);
+    }
+
+    if (this.showZxKeyboardLayout) {
+      final int imgWidth = IMAGE_ZXKEYS.getWidth(null);
+      final int imgHeight = IMAGE_ZXKEYS.getHeight(null);
+
+      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
+
+      if (bounds.width >= imgWidth) {
+        g2.drawImage(IMAGE_ZXKEYS, (bounds.width - imgWidth) / 2, bounds.height - IMAGE_ZXKEYS.getHeight(null), null);
+      } else {
+        final double scale = (double)bounds.width / (double)imgWidth;
+        final int newWidth = (int)Math.round(scale * imgWidth);
+        final int newHeight = (int)Math.round(scale * imgHeight);
+        g2.drawImage(IMAGE_ZXKEYS, 0, bounds.height - newHeight, newWidth, newHeight, null);
+      }
     }
   }
 

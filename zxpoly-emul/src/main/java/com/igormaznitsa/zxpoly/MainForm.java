@@ -232,15 +232,24 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   private static class KeyboardDispatcher implements KeyEventDispatcher {
 
+    private final VideoController videoController;
     private final KeyboardKempstonAndTapeIn keyboard;
 
-    public KeyboardDispatcher(final KeyboardKempstonAndTapeIn kbd) {
+    public KeyboardDispatcher(final VideoController videoController, final KeyboardKempstonAndTapeIn kbd) {
       this.keyboard = kbd;
+      this.videoController = videoController;
     }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
-      this.keyboard.onKeyEvent(e);
+      if (!e.isConsumed()) {
+        if (e.getKeyCode() == KeyEvent.VK_F5) {
+          this.videoController.setShowZxKeyboardLayout(e.getID() == KeyEvent.KEY_PRESSED);
+          e.consume();
+        } else {
+          this.keyboard.onKeyEvent(e);
+        }
+      }
       return false;
     }
   }
@@ -337,7 +346,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.kempstonMouse = this.board.findIODevice(KempstonMouse.class);
 
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    manager.addKeyEventDispatcher(new KeyboardDispatcher(this.keyboardAndTapeModule));
+    manager.addKeyEventDispatcher(new KeyboardDispatcher(this.board.getVideoController(), this.keyboardAndTapeModule));
 
     final GridBagConstraints cpuIndicatorConstraint = new GridBagConstraints();
     cpuIndicatorConstraint.ipadx = 5;
@@ -1041,7 +1050,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuHelpAbout.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F1, 0));
     menuHelpAbout.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/info.png"))); // NOI18N
-    menuHelpAbout.setText("About");
+    menuHelpAbout.setText("Help");
     menuHelpAbout.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
         menuHelpAboutActionPerformed(evt);
