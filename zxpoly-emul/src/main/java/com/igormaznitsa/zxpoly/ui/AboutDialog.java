@@ -18,9 +18,9 @@ package com.igormaznitsa.zxpoly.ui;
 
 import java.awt.Cursor;
 import java.awt.Desktop;
+import java.io.IOException;
 import java.io.InputStream;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import org.apache.commons.io.IOUtils;
 
 public class AboutDialog extends javax.swing.JDialog {
@@ -31,20 +31,16 @@ public class AboutDialog extends javax.swing.JDialog {
     super(parent, true);
     initComponents();
 
-    this.editorPane.addHyperlinkListener(new HyperlinkListener() {
-
-      @Override
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          try {
-            Desktop.getDesktop().browse(e.getURL().toURI());
-          } catch (Exception ex) {
-          }
-        } else if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
-          editorPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-          editorPane.setCursor(Cursor.getDefaultCursor());
+    this.editorPane.addHyperlinkListener((final HyperlinkEvent e) -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        try {
+          Desktop.getDesktop().browse(e.getURL().toURI());
+        } catch (Exception ex) {
         }
+      } else if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+        editorPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+        editorPane.setCursor(Cursor.getDefaultCursor());
       }
     });
 
@@ -53,7 +49,7 @@ public class AboutDialog extends javax.swing.JDialog {
       final String htmlText = IOUtils.toString(openAboutResource("index.html"), "UTF-8");
       this.editorPane.setText(htmlText);
       this.editorPane.setCaretPosition(0);
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       ex.printStackTrace();
     }
 
