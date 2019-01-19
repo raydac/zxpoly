@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2017 Raydac Research Group Ltd.
+/* 
+ * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
