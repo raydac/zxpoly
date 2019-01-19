@@ -18,6 +18,7 @@ package com.igormaznitsa.zxpoly.ui;
 
 import java.awt.Cursor;
 import java.awt.Desktop;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.swing.event.HyperlinkEvent;
@@ -53,6 +54,8 @@ public class AboutDialog extends javax.swing.JDialog {
       ex.printStackTrace();
     }
 
+    this.getRootPane().setDefaultButton(this.buttonOk);
+    
     setLocationRelativeTo(parent);
   }
 
@@ -70,7 +73,7 @@ public class AboutDialog extends javax.swing.JDialog {
     editorPane = new javax.swing.JEditorPane();
 
     setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-    setTitle("About");
+    setTitle("Help");
 
     buttonOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/ok.png"))); // NOI18N
     buttonOk.setText("Ok");
@@ -79,8 +82,14 @@ public class AboutDialog extends javax.swing.JDialog {
         buttonOkActionPerformed(evt);
       }
     });
+    buttonOk.addKeyListener(new java.awt.event.KeyAdapter() {
+      public void keyReleased(java.awt.event.KeyEvent evt) {
+        buttonOkKeyReleased(evt);
+      }
+    });
 
     editorPane.setEditable(false);
+    editorPane.setFocusable(false);
     jScrollPane1.setViewportView(editorPane);
 
     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -110,6 +119,12 @@ public class AboutDialog extends javax.swing.JDialog {
   private void buttonOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOkActionPerformed
     setVisible(false);
   }//GEN-LAST:event_buttonOkActionPerformed
+
+  private void buttonOkKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_buttonOkKeyReleased
+    if (evt.getKeyCode() == KeyEvent.VK_ESCAPE) {
+      this.dispose();
+    }
+  }//GEN-LAST:event_buttonOkKeyReleased
 
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JButton buttonOk;
