@@ -161,6 +161,10 @@ public class AnimatedGifTunePanel extends javax.swing.JPanel {
     });
 
     if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+      File selectedFile = fileChooser.getSelectedFile();
+      if (!selectedFile.getName().contains(".")) {
+        selectedFile = new File(selectedFile.getParentFile(), selectedFile.getName() + ".gif");
+      }
       this.textFieldFile.setText(fileChooser.getSelectedFile().getAbsolutePath());
     }
 

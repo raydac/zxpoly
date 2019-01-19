@@ -1266,8 +1266,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.stepSemaphor.lock();
     try {
       final byte[] wav = this.keyboardAndTapeModule.getTap().getAsWAV();
-      final File fileToSave = chooseFileForSave("Select WAV file", null, null, true, new WavFileFilter());
+      File fileToSave = chooseFileForSave("Select WAV file", null, null, true, new WavFileFilter());
       if (fileToSave != null) {
+        final String name = fileToSave.getName();
+        if (!name.contains(".")) {
+          fileToSave = new File(fileToSave.getParentFile(), name + ".wav");
+        }
         FileUtils.writeByteArrayToFile(fileToSave, wav);
         log.log(Level.INFO, "Exported current TAP file as WAV file " + fileToSave + " size " + wav.length + " bytes");
       }
@@ -1318,10 +1322,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       final RenderedImage img = this.board.getVideoController().makeCopyOfCurrentPicture();
       final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       ImageIO.write(img, "png", buffer);
-      final File thefile = chooseFileForSave("Save screenshot", lastScreenshotFolder, null, true, new PNGFileFilter());
-      if (thefile != null) {
-        this.lastScreenshotFolder = thefile.getParentFile();
-        FileUtils.writeByteArrayToFile(thefile, buffer.toByteArray());
+      File pngFile = chooseFileForSave("Save screenshot", lastScreenshotFolder, null, true, new PNGFileFilter());
+      if (pngFile != null) {
+        final String fileName = pngFile.getName();
+        if (!fileName.contains(".")) {
+          pngFile = new File(pngFile.getParentFile(), fileName + ".png");
+        }
+        this.lastScreenshotFolder = pngFile.getParentFile();
+        FileUtils.writeByteArrayToFile(pngFile, buffer.toByteArray());
       }
     } catch (IOException ex) {
       JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error", JOptionPane.ERROR_MESSAGE);
@@ -1402,10 +1410,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
       final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       ImageIO.write(result, "png", buffer);
-      final File thefile = chooseFileForSave("Save screenshot", lastScreenshotFolder, null, true, new PNGFileFilter());
-      if (thefile != null) {
-        this.lastScreenshotFolder = thefile.getParentFile();
-        FileUtils.writeByteArrayToFile(thefile, buffer.toByteArray());
+      File pngFile = chooseFileForSave("Save screenshot", lastScreenshotFolder, null, true, new PNGFileFilter());
+      if (pngFile != null) {
+        final String fileName = pngFile.getName();
+        if (!fileName.contains(".")) {
+          pngFile = new File(pngFile.getParentFile(), fileName + ".png");
+        }
+        this.lastScreenshotFolder = pngFile.getParentFile();
+        FileUtils.writeByteArrayToFile(pngFile, buffer.toByteArray());
       }
     } catch (IOException ex) {
       JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error", JOptionPane.ERROR_MESSAGE);
