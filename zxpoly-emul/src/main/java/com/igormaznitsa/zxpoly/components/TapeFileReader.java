@@ -302,12 +302,13 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
     final int FREQ = 22050;
     final int CYCLESPERSAMPLE = (int) ((1000000000L / (long) FREQ) / 286L);
 
-    final ByteArrayOutputStream data = new ByteArrayOutputStream(1000000);
+    final ByteArrayOutputStream data = new ByteArrayOutputStream(1024*1024);
 
     rewindToStart();
     this.signalInState = false;
     this.counterMain = -1L;
     this.state = State.INBETWEEN;
+    
     while (this.state != State.STOPPED) {
       data.write(this.signalInState ? 0xFF : 0x00);
       updateForSpentMachineCycles(CYCLESPERSAMPLE);
@@ -336,34 +337,34 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
     if (block == null) {
       return "No block";
     } else if (block.isHeader() && block.data.length == 17) {
-      final StringBuilder name = new StringBuilder();
+      final StringBuilder buffer = new StringBuilder();
       switch (block.data[0] & 0xFF) {
         case 0:
-          name.append("BASIC");
+          buffer.append("BASIC");
           break;
         case 1:
-          name.append("NUM.ARRAY");
+          buffer.append("NUM.ARRAY");
           break;
         case 2:
-          name.append("CHR.ARRAY");
+          buffer.append("CHR.ARRAY");
           break;
         case 3:
-          name.append("CODE");
+          buffer.append("CODE");
           break;
         default:
-          name.append("UNKNOWN");
+          buffer.append("UNKNOWN");
           break;
       }
 
-      name.append(" \"");
+      buffer.append(" \"");
 
       for (int i = 1; i < 11; i++) {
-        name.append((char) (block.data[i] & 0xFF));
+        buffer.append((char) (block.data[i] & 0xFF));
       }
 
-      name.append("\"");
+      buffer.append("\"");
 
-      return name.toString();
+      return buffer.toString();
     } else {
       return "CODE_BLOCK len=#" + Integer.toHexString(block.data.length).toUpperCase(Locale.ENGLISH);
     }
