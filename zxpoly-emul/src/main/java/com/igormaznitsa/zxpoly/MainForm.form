@@ -227,6 +227,9 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuActionAnimatedGIF">
               <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/com/igormaznitsa/zxpoly/icons/file_gif.png"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Make Animated GIF"/>
               </Properties>
               <Events>
@@ -254,6 +257,9 @@
               <SubComponents>
                 <MenuItem class="javax.swing.JMenuItem" name="menuTapExportAsWav">
                   <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/com/igormaznitsa/zxpoly/icons/file_wav.png"/>
+                    </Property>
                     <Property name="text" type="java.lang.String" value="WAV file"/>
                   </Properties>
                   <Events>

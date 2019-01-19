@@ -904,6 +904,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     });
     menuService.add(menuServiceSaveScreenAllVRAM);
 
+    menuActionAnimatedGIF.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_gif.png"))); // NOI18N
     menuActionAnimatedGIF.setText("Make Animated GIF");
     menuActionAnimatedGIF.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -924,6 +925,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuTapExportAs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png"))); // NOI18N
     menuTapExportAs.setText("Export TAPE as..");
 
+    menuTapExportAsWav.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_wav.png"))); // NOI18N
     menuTapExportAsWav.setText("WAV file");
     menuTapExportAsWav.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
