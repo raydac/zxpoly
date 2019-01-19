@@ -52,6 +52,7 @@ public class AboutDialog extends javax.swing.JDialog {
     try {
       final String htmlText = IOUtils.toString(openAboutResource("index.html"), "UTF-8");
       this.editorPane.setText(htmlText);
+      this.editorPane.setCaretPosition(0);
     } catch (Exception ex) {
       ex.printStackTrace();
     }
