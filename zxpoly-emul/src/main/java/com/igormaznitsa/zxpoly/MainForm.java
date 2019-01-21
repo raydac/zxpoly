@@ -302,7 +302,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     this.menuBar.add(Box.createHorizontalGlue());
     final JToggleButton buttonStartPause = new JToggleButton();
-
+    buttonStartPause.setFocusable(false);
+    
     buttonStartPause.setIcon(ICO_EMUL_PAUSE);
     buttonStartPause.setRolloverEnabled(false);
     buttonStartPause.setToolTipText("Play/Pause emulation");
