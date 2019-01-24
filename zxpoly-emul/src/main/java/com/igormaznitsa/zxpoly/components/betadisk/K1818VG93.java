@@ -63,6 +63,7 @@ public final class K1818VG93 {
   private final int[] registers = new int[6];
   private int counter;
   private int extraCounter;
+  private int trackOperationCounter;
   private boolean flagWaitDataRd;
   private boolean flagWaitDataWr;
   private boolean resetIn;
@@ -982,10 +983,10 @@ public final class K1818VG93 {
               if (TRACE && TRACE_RW_RD_BYTES) {
                 logger.log(Level.INFO, ">WRTRACK #" + Integer.toHexString(this.counter).toUpperCase(Locale.ENGLISH) + "=#" + Integer.toHexString(this.registers[REG_DATA_WR] & 0xFF).toUpperCase(Locale.ENGLISH));
               }
-              if (!this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
-                onStatus(STAT_WRFAULT);
-              } else {
+              if (this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
                 this.extraCounter--;
+              } else {
+                onStatus(STAT_WRFAULT);
               }
             }
           }
