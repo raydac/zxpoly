@@ -1,0 +1,102 @@
+           Zm_Polyhedron - Speccy of the future ???
+
+                  Phoenix  Interviews Raydac
+
+<Phx> Where do you live?
+<Ray> I living in St.Petersburg city (in Russia).
+<Phx> How's the spectrum scene there nowadays?
+<Ray> ZX-Net 400. Chaos Construction'99.
+<Ray> At us many people are engaged in a Spectrum. In ZX-Net the
+      approximately   400   men. The   summer   will carry   out
+      (spent) a festival Chaos Construction'99.
+<Phx> Seems like it is still a cool scene!
+<Phx> How does zx-net work?
+<Ray> Has not understood. Set a question more correct.
+<Phx> Shite...
+<Phx> Is it BBS-driven?
+<Ray> Yes
+<Phx> Ok ...
+<Phx> There are modems available for which computers?
+<Ray> Scorpion and Pentagon.
+<Ray> Modem have type is Vicomm.
+<Phx> What is the maximum baud rate?
+<Ray> Approximate 2400-3000 bits per second.
+<Phx> Fast huh? ;)
+<Phx> Where do you plug it?
+<Phx> Does the pentagon have a comm (rs-232) port?
+<Ray> Vicomm modem is connected in tape port of the spectrum.
+<Ray> In pentagon, scorpion and polyhedron not have comm port.
+<Phx> Ok.  The  polyhedron ...  That's  your  new speccy  clone
+      project, right?
+<Ray> This project is saving for a platform a Spectrum.
+<Ray> It essentially new implementation of a platform.
+<Ray> This platform will allow  of the game on a Spectrum colour
+      without change of the code.
+<Phx> How do you do that????????????
+<Ray> It will be given  with the new concept of  construction of
+      home computers.
+<Phx> Erm... ok.
+<Ray> It is very  a pity, that I  while poorly know the  English
+      language.
+<Phx> That's ok, please continue ...
+<Ray> Now we select element base for implementation and I  think
+      that all will be ready to summer.
+<Phx> Can you estimate a price for the finished product?
+<Ray> 40$ - mother board
+<Ray> In it computer 256 kB RAM
+<Ray> In full construction it computer ~60-70$
+<Phx> That's very cheap!
+<Phx> What processor will you be using? 
+<Ray> Z80 frequency 7 meghertz.
+<Phx> Like scorpion?
+<Ray> Yes.
+<Ray> in the next models it will have a Z380.
+<Phx> That sounds interesting...
+<Phx> What sound chip? Just AY?
+<Ray> While that just AY8910.
+<Ray> It computer work in scorpion mode , 48 mode, 128 mode  and
+      in ZM_Polyhedron mode.
+<Phx> What's the difference in zm_polyhedron mode?
+<Ray> All your black-white games will become color.
+<Phx> I can't see how you can do that without re-programming the
+      game ...
+<Ray> There is a possibility, but it nobody knows.
+<Phx> Ok ... i get the picture. (nurse! ;-)
+<Ray> It  very powerful  construction of  the home  computer and
+      such yet were not.
+<Phx> Oh... i see. (not!)
+<Ray> We  now want  to open  the corporation  for manufacture of
+      this computer.
+<Ray> Our corporation will be named "Fenix computers".
+<Phx> Nice name ... ;)
+<Phx> Will polyhedron be in a tower or desktop case?
+<Ray> Mother board of the  polyhedron is very small and  it will
+      be in what the buyer wants in.
+<Phx> Cool.
+<Phx> And the keyboard? PC like?
+<Ray> It is very a pity,  that I have not the direct  channel of
+      delivery of details because of a boundary keyboard by  and
+      PC and ZX.
+<Phx> ????????
+<Ray> Keyboard will by ZX, and possible connect PC over  special
+      card.
+<Phx> Ok ... 
+<Phx> Will it be tr-dos based?
+<Ray> Yes it be tr-dos based.
+<Phx> 5 1/4" or 3 1/2"?
+<Ray> I think, that will be 5 1/4 " .
+<Phx> Will it have pentagon or scorpion timings?
+<Ray> In my computer , CPU will by work without steps of  delay,
+      so will be as Pentagon.
+<Ray> I here  recently have made  slightly colour After  the War
+      game,  and  it was  very   interesting to  play  in colour
+      variant of this game.
+<Phx> I  still  can't  figure  out  how  it's  done  without re
+      -programming the whole game ...
+<Ray> To know how it is necessary :)
+<Ray> Then everyone learn (find  out) as it easily color  on the
+      spectrum it is really.
+<Phx> Ok - thanks for everything!!!
+
+If anyone wishes to contact Raydac, here's his e-mail address:
+ Raydac@usa.net  
