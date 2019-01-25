@@ -63,7 +63,6 @@ public final class K1818VG93 {
   private final int[] registers = new int[6];
   private int counter;
   private int extraCounter;
-  private int trackOperationCounter;
   private boolean flagWaitDataRd;
   private boolean flagWaitDataWr;
   private boolean resetIn;
@@ -77,6 +76,11 @@ public final class K1818VG93 {
   private long operationTimeOutCycles;
   private volatile long lastBusyOnTime;
 
+  private static final int FM_SECTOR_AREA_DBYTE_NUMBER = 12+256;
+  private static final int FM_FULL_TRACK_DBYTE_NUMBER = 4 + FM_SECTOR_AREA_DBYTE_NUMBER * 16 ;
+  private static final int MFM_SECTOR_AREA_DBYTE_NUMBER = 14 + 256;
+  private static final int MFM_FULL_TRACK_DBYTE_NUMBER = 5 + MFM_SECTOR_AREA_DBYTE_NUMBER * 16 ;
+  
   private final AtomicReference<TRDOSDisk> trdosDisk = new AtomicReference<>();
 
   private final Logger logger;
@@ -888,7 +892,7 @@ public final class K1818VG93 {
         logger.log(Level.WARNING, "Reading track (fake implementration) [" + this.side + ":" + this.registers[REG_TRACK] + "]");
         this.counter = 0;
         this.sector = currentDisk.findFirstSector(this.side, this.registers[REG_TRACK]);
-        this.extraCounter = 6250;
+        this.extraCounter = this.mfmModulation ? MFM_FULL_TRACK_DBYTE_NUMBER : FM_FULL_TRACK_DBYTE_NUMBER;
         this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
       }
 
@@ -942,11 +946,54 @@ public final class K1818VG93 {
     }
   }
 
-  private void cmdWriteTrack(final long mcycles, final int command, final boolean start) {
-    if (start && TRACE) {
-      logger.log(Level.INFO, "cmd WRTRACK (side=" + this.side + ", track=" + this.registers[REG_TRACK] + ')');
-    }
+  private int positionToFirstSector(final int trackPositionCounter) {
+    return trackPositionCounter - (this.mfmModulation ? 5 : 4);
+  }
+  
+  private int calcOffsetInSector(final int trackPositionCounter) {
+    return trackPositionCounter % (this.mfmModulation ? MFM_SECTOR_AREA_DBYTE_NUMBER : FM_SECTOR_AREA_DBYTE_NUMBER);
+  }
+  
+  private int getTrackNumber(int trackPosition, final int data) {
+    trackPosition -= positionToFirstSector(trackPosition);
+    if (trackPosition<0) return -1;
+    final int offsetInSector = calcOffsetInSector(trackPosition);
+    return offsetInSector == 2 ? data : -1;
+  }
 
+  private int getHeadNumber(int trackPosition, final int data) {
+    trackPosition -= this.mfmModulation ? 5 : 4;
+    if (trackPosition < 0) {
+      return -1;
+    }
+    final int offsetInSector = calcOffsetInSector(trackPosition);
+    return offsetInSector == 3 ? data : -1;
+  }
+
+  private int getSectorNumber(int trackPosition, final int data) {
+    trackPosition -= this.mfmModulation ? 5 : 4;
+    if (trackPosition < 0) {
+      return -1;
+    }
+    final int offsetInSector = calcOffsetInSector(trackPosition);
+    return offsetInSector == 4 ? data : -1;
+  }
+
+  private int getSectorPosition(int trackPosition) {
+    trackPosition -= this.mfmModulation ? 5 : 4;
+    if (trackPosition < 0) {
+      return -1;
+    }
+    int offsetInSector = calcOffsetInSector(trackPosition);
+    if (this.mfmModulation) {
+      return (offsetInSector < 12 || offsetInSector > 267) ? -1 : offsetInSector - 12;
+    } else {
+      return (offsetInSector < 10 || offsetInSector > 265) ? -1 : offsetInSector - 12;
+    }
+  }
+  
+  
+  private void cmdWriteTrack(final long mcycles, final int command, final boolean start) {
     resetStatus(true);
 
     final TRDOSDisk currentDisk = this.trdosDisk.get();
@@ -954,49 +1001,53 @@ public final class K1818VG93 {
       onStatus(ST_NOTREADY);
     } else {
       if (start) {
-        logger.log(Level.WARNING, "Writing whole track (fake implementration) [" + this.side + ":" + this.registers[REG_TRACK] + ']');
+        logger.log(Level.WARNING, "Start writing whole track");
         this.counter = 0;
-        this.sector = currentDisk.findFirstSector(this.side, this.registers[REG_TRACK]);
-        this.extraCounter = 6250;
+        this.extraCounter = this.mfmModulation ? MFM_FULL_TRACK_DBYTE_NUMBER : FM_FULL_TRACK_DBYTE_NUMBER;
         this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
         this.flagWaitDataWr = true;
       }
 
-      if (this.sector == null) {
-        onStatus(STAT_TRK00_OR_LOST);
-      } else {
-        if (!this.flagWaitDataWr) {
-          this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
-          this.flagWaitDataWr = true;
-          if (this.extraCounter > 0) {
-            if (this.counter >= this.sector.size()) {
-              this.counter = 0;
-              if (!this.sector.isLastOnTrack()) {
-                this.sector = currentDisk.findSectorAfter(this.sector);
-                if (this.sector == null) {
-                  onStatus(STAT_TRK00_OR_LOST);
-                } else {
-                  onStatus(STAT_BUSY);
-                }
-              }
-            } else {
-              if (TRACE && TRACE_RW_RD_BYTES) {
-                logger.log(Level.INFO, ">WRTRACK #" + Integer.toHexString(this.counter).toUpperCase(Locale.ENGLISH) + "=#" + Integer.toHexString(this.registers[REG_DATA_WR] & 0xFF).toUpperCase(Locale.ENGLISH));
-              }
-              if (this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
-                this.extraCounter--;
-              } else {
-                onStatus(STAT_WRFAULT);
-              }
-            }
+      if (!this.flagWaitDataWr) {
+        this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
+        this.flagWaitDataWr = true;
+        
+        if (this.extraCounter >= 0) {
+          final int data = this.registers[REG_DATA_WR] & 0xFF;
+          final int trackPos = (this.mfmModulation ? MFM_FULL_TRACK_DBYTE_NUMBER : FM_FULL_TRACK_DBYTE_NUMBER) - this.extraCounter;
+          this.extraCounter --;
+          
+          final int track = getTrackNumber(trackPos, data);
+          if (track>=0) {
+            this.counter = track << 16;
           }
-        } else {
-          if (mcycles > this.operationTimeOutCycles) {
-            onStatus(STAT_TRK00_OR_LOST);
+          
+          final int head = getHeadNumber(trackPos, data);
+          if (head>=0) {
+            this.counter = head << 8;
           }
-          onStatus(STAT_DRQ);
-          onStatus(STAT_BUSY);
+          
+          final int sectorIndex = getHeadNumber(trackPos, data);
+          if (sectorIndex>=0) {
+            this.counter = sectorIndex;
+          }
+          
+          final int sectorDataPosition = getSectorPosition(trackPos);
+          
+          if (sectorDataPosition >= 0){
+            final int theTrack = (this.counter >> 16) & 0xFF;
+            final int theHead = (this.counter >> 8) & 0xFF;
+            final int theSectorIndex = this.counter & 0xFF;
+            this.sector = currentDisk.findSector(theHead, theTrack, theSectorIndex);
+            this.sector.writeByte(sectorDataPosition, data);
+          }
         }
+      } else {
+        if (mcycles > this.operationTimeOutCycles) {
+          onStatus(STAT_TRK00_OR_LOST);
+        }
+        onStatus(STAT_DRQ);
+        onStatus(STAT_BUSY);
       }
     }
   }
