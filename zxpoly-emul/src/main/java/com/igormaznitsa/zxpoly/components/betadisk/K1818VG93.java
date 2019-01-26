@@ -17,6 +17,7 @@
 package com.igormaznitsa.zxpoly.components.betadisk;
 
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk.Sector;
+import java.io.IOException;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -25,9 +26,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class K1818VG93 {
-
-  private static final boolean TRACE = false;
-  private static final boolean TRACE_RW_RD_BYTES = false;
 
   private static final long CYCLE_NANOSECOND = 286L;
 
@@ -76,11 +74,148 @@ public final class K1818VG93 {
   private long operationTimeOutCycles;
   private volatile long lastBusyOnTime;
 
-  private static final int FM_SECTOR_AREA_DBYTE_NUMBER = 12+256;
-  private static final int FM_FULL_TRACK_DBYTE_NUMBER = 4 + FM_SECTOR_AREA_DBYTE_NUMBER * 16 ;
-  private static final int MFM_SECTOR_AREA_DBYTE_NUMBER = 14 + 256;
-  private static final int MFM_FULL_TRACK_DBYTE_NUMBER = 5 + MFM_SECTOR_AREA_DBYTE_NUMBER * 16 ;
-  
+  private Object tempAuxiliaryObject;
+
+  private static abstract class TrackHelper {
+
+    enum State {
+      WAIT_ADDRESS,
+      ADDR_TRACK,
+      ADDR_HEAD,
+      ADDR_SECTOR,
+      ADDR_SIZE,
+      WAIT_DATA,
+      DATA
+    }
+
+    State state;
+
+    int trackIndex;
+    int headIndex;
+    int sectorIndex;
+    int sectorSize;
+
+    int expectedData;
+    int dataByteIndex;
+
+    int trackBytePosition = 0;
+    final int trackTotalBytes;
+    final boolean mfm;
+
+    final TRDOSDisk disk;
+
+    TrackHelper(final TRDOSDisk disk, final boolean mfm) {
+      this.disk = disk;
+      this.state = State.WAIT_ADDRESS;
+      this.mfm = mfm;
+      this.trackBytePosition = 0;
+      this.trackTotalBytes = mfm ? 6450 : 6450;
+    }
+
+    final boolean writeNextDataByte(final int dataByte) throws IOException {
+      switch (this.state) {
+        case WAIT_ADDRESS: {
+          if (dataByte == 0xFE) {
+            this.state = State.ADDR_TRACK;
+          }
+        }
+        break;
+        case ADDR_TRACK: {
+          this.trackIndex = dataByte;
+          this.state = State.ADDR_HEAD;
+        }
+        break;
+        case ADDR_HEAD: {
+          this.headIndex = dataByte;
+          this.state = State.ADDR_SECTOR;
+        }
+        break;
+        case ADDR_SECTOR: {
+          this.sectorIndex = dataByte;
+          this.state = State.ADDR_SIZE;
+        }
+        break;
+        case ADDR_SIZE: {
+          this.sectorSize = dataByte;
+          switch (this.sectorSize) {
+            case 0:
+              this.expectedData = 128;
+              break;
+            case 1:
+              this.expectedData = 256;
+              break;
+            case 2:
+              this.expectedData = 512;
+              break;
+            case 3:
+              this.expectedData = 1024;
+              break;
+          }
+          this.state = State.WAIT_DATA;
+        }
+        break;
+        case WAIT_DATA: {
+          if (dataByte == 0xFB) {
+            this.state = State.DATA;
+            this.dataByteIndex = 0;
+          }
+        }
+        break;
+        case DATA: {
+          final TRDOSDisk.Sector sector = this.disk.findSector(this.headIndex, this.trackIndex, this.sectorIndex);
+          if (sector == null) {
+            throw new IOException("Can't find sector: " + this.trackIndex + ':' + this.headIndex + ':' + this.sectorIndex);
+          }
+          if (!sector.writeByte(this.dataByteIndex, dataByte)) {
+            throw new IOException("Can't write " + this.dataByteIndex + " byte to sector: " + this.trackIndex + ':' + this.headIndex + ':' + this.sectorIndex);
+          }
+          this.expectedData--;
+          this.dataByteIndex++;
+          if (this.expectedData == 0) {
+            this.state = State.WAIT_ADDRESS;
+          }
+        }
+        break;
+      }
+
+      this.trackBytePosition++;
+      return this.trackBytePosition < this.trackTotalBytes;
+    }
+
+    abstract int readNextTrackData();
+
+    boolean isCompleted() {
+      return this.trackBytePosition >= this.trackTotalBytes;
+    }
+  }
+
+  private static class FMTracHelper extends TrackHelper {
+
+    FMTracHelper(final TRDOSDisk disk) {
+      super(disk, false);
+    }
+
+    @Override
+    int readNextTrackData() {
+      this.trackBytePosition++;
+      return this.trackBytePosition < this.trackTotalBytes ? 0 : -1;
+    }
+
+  }
+
+  private static class MFMTrackHelper extends TrackHelper {
+
+    MFMTrackHelper(final TRDOSDisk disk) {
+      super(disk, true);
+    }
+
+    @Override
+    int readNextTrackData() {
+      this.trackBytePosition++;
+      return this.trackBytePosition < this.trackTotalBytes ? 0 : -1;
+    }
+  }
+
   private final AtomicReference<TRDOSDisk> trdosDisk = new AtomicReference<>();
 
   private final Logger logger;
@@ -91,10 +226,6 @@ public final class K1818VG93 {
   }
 
   public void reset() {
-    if (TRACE) {
-      logger.info("RESET");
-    }
-
     Arrays.fill(registers, 0);
     this.flagWaitDataRd = false;
     this.flagWaitDataWr = false;
@@ -104,10 +235,6 @@ public final class K1818VG93 {
   }
 
   public void activateDisk(final int index, final TRDOSDisk disk) {
-    if (TRACE) {
-      logger.log(Level.INFO, "ACTIVATE DISK AT DRIVE '" + (char) ('A' + index) + "' : " + (disk == null ? "<NO DISK>" : disk));
-    }
-
     this.trdosDisk.set(disk);
     if (disk == null) {
       this.sector = null;
@@ -124,18 +251,18 @@ public final class K1818VG93 {
     registers[REG_STATUS] = preventDataLostFlag ? registers[REG_STATUS] & STAT_TRK00_OR_LOST : 0;
   }
 
-  private void onStatus(final int flags) {
+  private void setInternalFlag(final int flags) {
     if ((flags & STAT_BUSY) != 0) {
       this.lastBusyOnTime = System.currentTimeMillis();
     }
     registers[REG_STATUS] |= flags;
   }
 
-  private void offStatus(final int flags) {
+  private void resetInternalFlag(final int flags) {
     registers[REG_STATUS] = (registers[REG_STATUS] & ~flags) & 0xFF;
   }
 
-  private boolean isStatus(final int flags) {
+  private boolean isFlag(final int flags) {
     return (registers[REG_STATUS] & flags) != 0;
   }
 
@@ -147,9 +274,6 @@ public final class K1818VG93 {
   }
 
   public void setSide(final int side) {
-    if (TRACE) {
-      logger.log(Level.INFO, "SET SIDE : " + side);
-    }
     this.side = side;
   }
 
@@ -158,9 +282,6 @@ public final class K1818VG93 {
   }
 
   public void setMFMModulation(final boolean flag) {
-    if (TRACE) {
-      logger.log(Level.INFO, "SET MFM : " + flag);
-    }
     this.mfmModulation = flag;
   }
 
@@ -184,18 +305,18 @@ public final class K1818VG93 {
           case 0b0001: {
             // set TR00 status
             if (this.registers[REG_TRACK] == 0) {
-              onStatus(STAT_TRK00_OR_LOST);
+              setInternalFlag(STAT_TRK00_OR_LOST);
             } else {
-              offStatus(STAT_TRK00_OR_LOST);
+              resetInternalFlag(STAT_TRK00_OR_LOST);
             }
             // change index bit in status
             if (this.trdosDisk.get() == null) {
-              onStatus(STAT_INDEX);
+              setInternalFlag(STAT_INDEX);
             } else {
               if (this.indexHoleMarker) {
-                onStatus(STAT_INDEX);
+                setInternalFlag(STAT_INDEX);
               } else {
-                offStatus(STAT_INDEX);
+                resetInternalFlag(STAT_INDEX);
               }
             }
           }
@@ -211,7 +332,7 @@ public final class K1818VG93 {
       case ADDR_DATA:
         if (this.flagWaitDataRd) {
           this.flagWaitDataRd = false;
-          offStatus(STAT_DRQ);
+          resetInternalFlag(STAT_DRQ);
         }
         return registers[REG_DATA_RD] & 0xFF;
       default:
@@ -223,13 +344,13 @@ public final class K1818VG93 {
     final int normValue = value & 0xFF;
     switch (addr & 0x03) {
       case ADDR_COMMAND_STATE: { // command
-        if (isStatus(STAT_BUSY)) {
+        if (isFlag(STAT_BUSY)) {
           if ((normValue >>> 4) == 0b1101) {
             this.registers[REG_COMMAND] = normValue;
             this.firstCommandStep = true;
             this.flagWaitDataRd = false;
             this.flagWaitDataWr = false;
-            onStatus(STAT_BUSY);
+            setInternalFlag(STAT_BUSY);
           }
         } else {
           switch (normValue >>> 4) {
@@ -248,18 +369,22 @@ public final class K1818VG93 {
           this.firstCommandStep = true;
           this.flagWaitDataRd = false;
           this.flagWaitDataWr = false;
-          onStatus(STAT_BUSY);
+          setInternalFlag(STAT_BUSY);
+        }
+
+        if (this.firstCommandStep) {
+          logger.log(Level.INFO, "Written command: " + Integer.toBinaryString(normValue));
         }
       }
       break;
       case ADDR_TRACK: { // track
-        if (!isStatus(STAT_BUSY)) {
+        if (!isFlag(STAT_BUSY)) {
           registers[REG_TRACK] = normValue;
         }
       }
       break;
       case ADDR_SECTOR: { // sector
-        if (!isStatus(STAT_BUSY)) {
+        if (!isFlag(STAT_BUSY)) {
           registers[REG_SECTOR] = normValue;
         }
       }
@@ -267,7 +392,7 @@ public final class K1818VG93 {
       case ADDR_DATA: { // data
         if (this.flagWaitDataWr) {
           this.flagWaitDataWr = false;
-          offStatus(STAT_DRQ);
+          resetInternalFlag(STAT_DRQ);
         }
         registers[REG_DATA_WR] = normValue;
       }
@@ -280,13 +405,13 @@ public final class K1818VG93 {
   public void step(final long mcycleCounter) {
     final TRDOSDisk thefloppy = this.trdosDisk.get();
     if (thefloppy == null) {
-      onStatus(ST_NOTREADY);
+      setInternalFlag(ST_NOTREADY);
     } else {
-      offStatus(ST_NOTREADY);
+      resetInternalFlag(ST_NOTREADY);
     }
 
     final int command = this.registers[REG_COMMAND];
-    if (isStatus(STAT_BUSY)) {
+    if (isFlag(STAT_BUSY)) {
       final boolean first = this.firstCommandStep;
       this.firstCommandStep = false;
       switch (command >>> 4) {
@@ -358,32 +483,24 @@ public final class K1818VG93 {
   }
 
   private void cmdForceInterrupt(final long mcycles, final int command, final boolean start) {
-    if (TRACE) {
-      logger.info("cmd FORCE INTERRUPT");
-    }
-
     final TRDOSDisk thedisk = this.trdosDisk.get();
     resetStatus(false);
 
     if (thedisk == null) {
-      onStatus(ST_NOTREADY);
+      setInternalFlag(ST_NOTREADY);
     } else {
       this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
       if (this.sector == null) {
-        onStatus(STAT_NOTFOUND);
+        setInternalFlag(STAT_NOTFOUND);
       } else {
         if (!this.sector.isCrcOk()) {
-          onStatus(STAT_CRCERR);
+          setInternalFlag(STAT_CRCERR);
         }
       }
     }
   }
 
   private void cmdRestore(final long mcycles, final int command, final boolean start) {
-    if (start && TRACE) {
-      logger.info("cmd RESTORE");
-    }
-
     final TRDOSDisk thedisk = this.trdosDisk.get();
 
     resetStatus(false);
@@ -393,61 +510,57 @@ public final class K1818VG93 {
     }
 
     if (thedisk == null) {
-      onStatus(ST_NOTREADY);
+      setInternalFlag(ST_NOTREADY);
     } else {
       if ((command & 0b00001000) != 0) {
-        onStatus(STAT_HEADL);
+        setInternalFlag(STAT_HEADL);
       }
       if (thedisk.isWriteProtect()) {
-        onStatus(STAT_WRITEPROTECT);
+        setInternalFlag(STAT_WRITEPROTECT);
       }
 
       if (counter < 0xFF && this.registers[REG_TRACK] > 0) {
         this.registers[REG_TRACK]--;
         this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
         if (this.sector == null) {
-          onStatus(STAT_NOTFOUND);
+          setInternalFlag(STAT_NOTFOUND);
         } else {
           if (!this.sector.isCrcOk()) {
-            onStatus(STAT_CRCERR);
+            setInternalFlag(STAT_CRCERR);
           }
-          onStatus(STAT_BUSY);
+          setInternalFlag(STAT_BUSY);
         }
       } else {
         if (this.registers[REG_TRACK] != 0) {
           this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
-          onStatus(STAT_NOTFOUND);
+          setInternalFlag(STAT_NOTFOUND);
         }
       }
 
       if (this.sector != null && !this.sector.isCrcOk()) {
-        onStatus(STAT_CRCERR);
+        setInternalFlag(STAT_CRCERR);
       }
     }
   }
 
   private void cmdSeek(final long mcycles, final int command, final boolean start) {
-    if (TRACE && start) {
-      logger.log(Level.INFO, "cmd SEEK (side=" + this.side + ", track=" + this.registers[REG_DATA_WR] + ')');
-    }
-
     resetStatus(false);
 
-    final TRDOSDisk thedisk = this.trdosDisk.get();
+    final TRDOSDisk curDisk = this.trdosDisk.get();
 
     if ((command & 0b00001000) != 0) {
-      onStatus(STAT_HEADL);
+      setInternalFlag(STAT_HEADL);
     }
 
-    if (thedisk == null) {
-      onStatus(ST_NOTREADY);
+    if (curDisk == null) {
+      setInternalFlag(ST_NOTREADY);
     } else {
       if (start) {
         this.operationTimeOutCycles = mcycles + CYCLES_FOR_NEXT_TRACK;
       }
 
-      if (thedisk.isWriteProtect()) {
-        onStatus(STAT_WRITEPROTECT);
+      if (curDisk.isWriteProtect()) {
+        setInternalFlag(STAT_WRITEPROTECT);
       }
 
       if (this.registers[REG_TRACK] != this.registers[REG_DATA_WR]) {
@@ -463,28 +576,24 @@ public final class K1818VG93 {
 
       boolean end = this.registers[REG_TRACK] == this.registers[REG_DATA_WR];
 
-      this.sector = thedisk.findRandomSector(this.side, this.registers[REG_TRACK]);
+      this.sector = curDisk.findRandomSector(this.side, this.registers[REG_TRACK]);
 
       if (this.sector == null) {
-        onStatus(STAT_NOTFOUND);
+        setInternalFlag(STAT_NOTFOUND);
         end = true;
       } else {
         if (!this.sector.isCrcOk()) {
-          onStatus(STAT_CRCERR);
+          setInternalFlag(STAT_CRCERR);
         }
       }
 
       if (!end) {
-        onStatus(STAT_BUSY);
+        setInternalFlag(STAT_BUSY);
       }
     }
   }
 
   private void cmdReadAddress(final long mcycles, final int command, final boolean start) {
-    if (start && TRACE) {
-      logger.log(Level.INFO, "start RDADDR (side=" + this.side + ", track=" + this.registers[REG_TRACK] + ')');
-    }
-
     resetStatus(true);
 
     final TRDOSDisk thedisk = this.trdosDisk.get();
@@ -503,18 +612,18 @@ public final class K1818VG93 {
     }
 
     if (thedisk == null) {
-      onStatus(ST_NOTREADY);
+      setInternalFlag(ST_NOTREADY);
     } else {
       if (this.sector == null) {
         this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
       }
 
       if (this.sector == null) {
-        onStatus(STAT_NOTFOUND);
+        setInternalFlag(STAT_NOTFOUND);
         resetDataRegisters();
       } else {
         if (mcycles < this.sectorPositioningCycles) {
-          onStatus(STAT_BUSY);
+          setInternalFlag(STAT_BUSY);
         } else {
           if (this.sectorPositioningCycles >= 0L) {
             this.sectorPositioningCycles = -1L;
@@ -522,34 +631,25 @@ public final class K1818VG93 {
           }
 
           if (!this.sector.isCrcOk()) {
-            onStatus(STAT_CRCERR);
+            setInternalFlag(STAT_CRCERR);
           }
 
           if (!this.flagWaitDataRd) {
             this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
             switch (--this.counter) {
               case 5: {// track
-                if (TRACE) {
-                  logger.log(Level.INFO, "<RDADDR #5 track=" + this.sector.getTrackNumber());
-                }
                 provideReadData(this.sector.getTrackNumber());
-                onStatus(STAT_BUSY);
+                setInternalFlag(STAT_BUSY);
               }
               break;
               case 4: {// side
-                if (TRACE) {
-                  logger.log(Level.INFO, "<RDADDR #4 side=" + this.sector.getSide());
-                }
                 provideReadData(this.sector.getSide());
-                onStatus(STAT_BUSY);
+                setInternalFlag(STAT_BUSY);
               }
               break;
               case 3: {// sector
-                if (TRACE) {
-                  logger.log(Level.INFO, "<RDADDR #3 sector=" + this.sector.getSectorId());
-                }
                 provideReadData(this.sector.getSectorId());
-                onStatus(STAT_BUSY);
+                setInternalFlag(STAT_BUSY);
               }
               break;
               case 2: {// length
@@ -566,45 +666,31 @@ public final class K1818VG93 {
                 }
 
                 provideReadData(type);
-                if (TRACE) {
-                  logger.log(Level.INFO, "<RDADDR #2 lengthType=" + type);
-                }
-                onStatus(STAT_BUSY);
+                setInternalFlag(STAT_BUSY);
               }
               break;
               case 1: {// crc1
                 final int crc = this.sector.getCrc() >>> 8;
-                if (TRACE) {
-                  logger.log(Level.INFO, "<RDADDR #1 crcHigh=" + crc);
-                }
                 provideReadData(crc);
-                onStatus(STAT_BUSY);
+                setInternalFlag(STAT_BUSY);
               }
               break;
               case 0: {// crc2
                 final int crc = this.sector.getCrc() & 0xFF;
-                if (TRACE) {
-                  logger.log(Level.INFO, "<RDADDR #0 crcLow=" + crc);
-                }
                 provideReadData(crc);
 //              onStatus(STAT_BUSY);
               }
               break;
               default: {
-                if (TRACE) {
-                  logger.info("<RDADDR ### UNEXPECTED");
-                }
+                logger.warning("<RDADDR ### UNEXPECTED");
               }
             }
           } else {
             if (mcycles > this.operationTimeOutCycles) {
-              if (TRACE) {
-                logger.info("cmd RDADDR has lost data");
-              }
-              onStatus(STAT_TRK00_OR_LOST);
+              setInternalFlag(STAT_TRK00_OR_LOST);
             }
-            onStatus(STAT_DRQ);
-            onStatus(STAT_BUSY);
+            setInternalFlag(STAT_DRQ);
+            setInternalFlag(STAT_BUSY);
           }
         }
       }
@@ -612,34 +698,30 @@ public final class K1818VG93 {
   }
 
   private void cmdStep(final long mcycles, final int command, final boolean start) {
-    if (TRACE && start) {
-      logger.log(Level.INFO, "cmd STEP (outward=" + this.outwardStepDirection + ", side=" + this.side + ", track=" + this.registers[REG_TRACK] + ')');
-    }
-
     final TRDOSDisk thedisk = this.trdosDisk.get();
 
     resetStatus(false);
 
     if (thedisk == null) {
       resetDataRegisters();
-      onStatus(ST_NOTREADY);
+      setInternalFlag(ST_NOTREADY);
     } else {
       if (start) {
         this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
       }
 
       if ((command & 0b00001000) != 0) {
-        onStatus(STAT_HEADL);
+        setInternalFlag(STAT_HEADL);
       }
       if (thedisk.isWriteProtect()) {
-        onStatus(STAT_WRITEPROTECT);
+        setInternalFlag(STAT_WRITEPROTECT);
       }
       if (!this.sector.isCrcOk()) {
-        onStatus(STAT_CRCERR);
+        setInternalFlag(STAT_CRCERR);
       }
 
       if (mcycles < this.operationTimeOutCycles) {
-        onStatus(STAT_BUSY);
+        setInternalFlag(STAT_BUSY);
       } else {
         int curtrack = this.registers[REG_TRACK];
         if (this.outwardStepDirection) {
@@ -654,10 +736,10 @@ public final class K1818VG93 {
         }
 
         if (this.sector == null) {
-          onStatus(STAT_NOTFOUND);
+          setInternalFlag(STAT_NOTFOUND);
         } else {
           if (!this.sector.isCrcOk()) {
-            onStatus(STAT_CRCERR);
+            setInternalFlag(STAT_CRCERR);
           }
         }
       }
@@ -665,17 +747,11 @@ public final class K1818VG93 {
   }
 
   private void cmdStepIn(final long mcycles, final int command, final boolean start) {
-    if (TRACE) {
-      logger.log(Level.INFO, "cmd STEPIN (side=" + this.side + ", track=" + this.registers[REG_TRACK] + ")");
-    }
     this.outwardStepDirection = false;
     cmdStep(mcycles, command, start);
   }
 
   private void cmdStepOut(final long mcycles, final int command, final boolean start) {
-    if (TRACE) {
-      logger.log(Level.INFO, "cmd STEPOUT (side=" + this.side + ", track=" + this.registers[REG_TRACK] + ")");
-    }
     this.outwardStepDirection = true;
     cmdStep(mcycles, command, start);
   }
@@ -685,15 +761,11 @@ public final class K1818VG93 {
     final int softSide = (command >>> 3) & 1;
     final boolean doCheckSide = (command & 1) != 0;
 
-    if (start && TRACE) {
-      logger.log(Level.INFO, "cmd RDSEC (multi=" + multiOp + ", side=" + this.side + ", track=" + this.registers[REG_TRACK] + ", sector=" + this.registers[REG_SECTOR] + ")");
-    }
-
     resetStatus(true);
 
     final TRDOSDisk thedisk = this.trdosDisk.get();
     if (thedisk == null) {
-      onStatus(ST_NOTREADY);
+      setInternalFlag(ST_NOTREADY);
     }
 
     loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
@@ -704,7 +776,7 @@ public final class K1818VG93 {
 
     if (this.sector == null) {
       resetDataRegisters();
-      onStatus(STAT_NOTFOUND);
+      setInternalFlag(STAT_NOTFOUND);
     } else {
       if (start) {
         this.counter = 0;
@@ -712,7 +784,7 @@ public final class K1818VG93 {
       }
 
       if (mcycles < this.sectorPositioningCycles) {
-        onStatus(STAT_BUSY);
+        setInternalFlag(STAT_BUSY);
       } else {
         if (this.sectorPositioningCycles >= 0L) {
           // start reading of first byte
@@ -727,51 +799,31 @@ public final class K1818VG93 {
             if (multiOp) {
               if (!this.sector.isLastOnTrack()) {
                 this.counter = 0;
-                onStatus(STAT_BUSY);
-              } else {
-                if (TRACE) {
-                  logger.info("cmd RDSEC completed");
-                }
-              }
-            } else {
-              if (TRACE) {
-                logger.info("cmd RDSEC completed");
+                setInternalFlag(STAT_BUSY);
               }
             }
           } else {
             final int data = this.sector.readByte(this.counter++);
             this.sectorPositioningCycles = Math.abs(mcycles + CYCLES_SECTOR_POSITION);
-            if (TRACE && TRACE_RW_RD_BYTES) {
-              logger.log(Level.INFO, "<RDSEC #" + Integer.toHexString(this.counter - 1).toUpperCase(Locale.ENGLISH) + "=#" + Integer.toHexString(data).toUpperCase(Locale.ENGLISH));
-            }
 
             if (data < 0) {
-              if (TRACE) {
-                logger.info("cmd RDSEC has lost data");
-              }
-              onStatus(STAT_TRK00_OR_LOST);
+              setInternalFlag(STAT_TRK00_OR_LOST);
             } else {
               if (mcycles > this.operationTimeOutCycles) {
-                if (TRACE) {
-                  logger.info("cmd RDSEC has lost data");
-                }
-                onStatus(STAT_TRK00_OR_LOST);
+                setInternalFlag(STAT_TRK00_OR_LOST);
               }
               this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
               provideReadData(data);
-              onStatus(STAT_DRQ);
-              onStatus(STAT_BUSY);
+              setInternalFlag(STAT_DRQ);
+              setInternalFlag(STAT_BUSY);
             }
           }
         } else {
           if (mcycles > this.operationTimeOutCycles) {
-            if (TRACE) {
-              logger.info("cmd RDSEC has lost data");
-            }
-            onStatus(STAT_TRK00_OR_LOST);
+            setInternalFlag(STAT_TRK00_OR_LOST);
           }
-          onStatus(STAT_DRQ);
-          onStatus(STAT_BUSY);
+          setInternalFlag(STAT_DRQ);
+          setInternalFlag(STAT_BUSY);
         }
       }
     }
@@ -782,18 +834,14 @@ public final class K1818VG93 {
     final int softSide = (command >>> 3) & 1;
     final boolean doCheckSide = (command & 1) != 0;
 
-    if (start && TRACE) {
-      logger.log(Level.INFO, "cmd WRSEC (multi=" + multiOp + ", side=" + this.side + ", track=" + this.registers[REG_TRACK] + ", sector=" + this.registers[REG_SECTOR] + ")");
-    }
-
     resetStatus(true);
 
     final TRDOSDisk thedisk = this.trdosDisk.get();
     if (thedisk == null) {
-      onStatus(ST_NOTREADY);
+      setInternalFlag(ST_NOTREADY);
     } else {
       if (thedisk.isWriteProtect()) {
-        onStatus(STAT_WRITEPROTECT);
+        setInternalFlag(STAT_WRITEPROTECT);
       }
     }
 
@@ -805,7 +853,7 @@ public final class K1818VG93 {
 
     if (this.sector == null) {
       resetDataRegisters();
-      onStatus(STAT_NOTFOUND);
+      setInternalFlag(STAT_NOTFOUND);
     } else {
       if (start) {
         this.counter = 0;
@@ -814,7 +862,7 @@ public final class K1818VG93 {
       }
 
       if (mcycles < this.sectorPositioningCycles) {
-        onStatus(STAT_BUSY);
+        setInternalFlag(STAT_BUSY);
       } else {
         if (this.sectorPositioningCycles >= 0L) {
           // start reading of first byte
@@ -830,224 +878,117 @@ public final class K1818VG93 {
             if (multiOp) {
               if (!this.sector.isLastOnTrack()) {
                 this.counter = 0;
-                onStatus(STAT_BUSY);
-              } else {
-                if (TRACE) {
-                  logger.info("cmd WRSEC lost data");
-                }
+                setInternalFlag(STAT_BUSY);
               }
             }
           } else {
-            if (TRACE && TRACE_RW_RD_BYTES) {
-              logger.log(Level.INFO, ">WRSEC #" + Integer.toHexString(this.counter).toUpperCase(Locale.ENGLISH) + "=#" + Integer.toHexString(this.registers[REG_DATA_WR] & 0xFF).toUpperCase(Locale.ENGLISH));
-            }
             if (mcycles > this.operationTimeOutCycles) {
-              if (TRACE) {
-                logger.info("cmd WRSEC lost data");
-              }
               resetDataRegisters();
-              onStatus(STAT_NOTFOUND);
+              setInternalFlag(STAT_NOTFOUND);
             } else {
               this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
               if (!this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
-                onStatus(STAT_WRFAULT);
+                setInternalFlag(STAT_WRFAULT);
               } else {
                 if (this.counter < this.sector.size()) {
-                  onStatus(STAT_DRQ);
-                  onStatus(STAT_BUSY);
-                } else {
-                  if (TRACE) {
-                    logger.info("cmd WRSEC completed");
-                  }
+                  setInternalFlag(STAT_DRQ);
+                  setInternalFlag(STAT_BUSY);
                 }
               }
             }
           }
         } else {
           if (mcycles > this.operationTimeOutCycles) {
-            if (TRACE) {
-              logger.info("cmd WRSEC lost data");
-            }
-            onStatus(STAT_TRK00_OR_LOST);
+            setInternalFlag(STAT_TRK00_OR_LOST);
           }
-          onStatus(STAT_DRQ);
-          onStatus(STAT_BUSY);
+          setInternalFlag(STAT_DRQ);
+          setInternalFlag(STAT_BUSY);
         }
       }
     }
   }
 
   private void cmdReadTrack(final long mcycles, final int command, final boolean start) {
-    if (start && TRACE) {
-      logger.log(Level.INFO, "cmd READTRACK (side=" + this.side + ", track=" + this.registers[REG_TRACK] + ")");
-    }
-
     resetStatus(true);
 
     final TRDOSDisk currentDisk = this.trdosDisk.get();
     if (currentDisk == null) {
-      onStatus(ST_NOTREADY);
+      setInternalFlag(ST_NOTREADY);
     } else {
       if (start) {
-        logger.log(Level.WARNING, "Reading track (fake implementration) [" + this.side + ":" + this.registers[REG_TRACK] + "]");
         this.counter = 0;
         this.sector = currentDisk.findFirstSector(this.side, this.registers[REG_TRACK]);
-        this.extraCounter = this.mfmModulation ? MFM_FULL_TRACK_DBYTE_NUMBER : FM_FULL_TRACK_DBYTE_NUMBER;
+        this.tempAuxiliaryObject = this.mfmModulation ? new MFMTrackHelper(this.getDisk()) : new FMTracHelper(this.getDisk());
         this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
       }
 
       if (this.sector == null) {
-        onStatus(STAT_TRK00_OR_LOST);
+        setInternalFlag(STAT_TRK00_OR_LOST);
       } else {
         if (!this.flagWaitDataRd) {
           this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
 
-          if (this.extraCounter > 0) {
-            if (this.counter >= this.sector.size()) {
-              this.counter = 0;
-              if (!this.sector.isLastOnTrack()) {
-                this.sector = currentDisk.findSectorAfter(this.sector);
-                if (this.sector == null) {
-                  onStatus(STAT_TRK00_OR_LOST);
-                } else {
-                  onStatus(STAT_BUSY);
-                }
-              }
-            } else {
-              final int data = this.sector.readByte(this.counter++);
-              if (TRACE && TRACE_RW_RD_BYTES) {
-                logger.log(Level.INFO, "<RDTRACK #" + Integer.toHexString(this.counter - 1).toUpperCase(Locale.ENGLISH) + "=#" + Integer.toHexString(data).toUpperCase(Locale.ENGLISH));
-              }
+          final TrackHelper helper = (TrackHelper) this.tempAuxiliaryObject;
 
-              this.extraCounter--;
-              if (data < 0) {
-                onStatus(STAT_TRK00_OR_LOST);
-              } else {
-                provideReadData(data);
-                onStatus(STAT_BUSY);
-              }
-            }
-          } else {
-            if (TRACE) {
-              logger.info("cmd RDSEC completed");
+          if (!helper.isCompleted()) {
+            final int data = helper.readNextTrackData();
+
+            if (data < 0) {
+              setInternalFlag(STAT_TRK00_OR_LOST);
+            } else {
+              provideReadData(data);
+              setInternalFlag(STAT_BUSY);
             }
           }
         } else {
           if (mcycles > this.operationTimeOutCycles) {
-            if (TRACE) {
-              logger.info("cmd RDSEC lost data");
-            }
-            onStatus(STAT_TRK00_OR_LOST);
+            setInternalFlag(STAT_TRK00_OR_LOST);
           }
-          onStatus(STAT_DRQ);
-          onStatus(STAT_BUSY);
+          setInternalFlag(STAT_DRQ);
+          setInternalFlag(STAT_BUSY);
         }
       }
     }
   }
 
-  private int positionToFirstSector(final int trackPositionCounter) {
-    return trackPositionCounter - (this.mfmModulation ? 5 : 4);
-  }
-  
-  private int calcOffsetInSector(final int trackPositionCounter) {
-    return trackPositionCounter % (this.mfmModulation ? MFM_SECTOR_AREA_DBYTE_NUMBER : FM_SECTOR_AREA_DBYTE_NUMBER);
-  }
-  
-  private int getTrackNumber(int trackPosition, final int data) {
-    trackPosition -= positionToFirstSector(trackPosition);
-    if (trackPosition<0) return -1;
-    final int offsetInSector = calcOffsetInSector(trackPosition);
-    return offsetInSector == 2 ? data : -1;
-  }
-
-  private int getHeadNumber(int trackPosition, final int data) {
-    trackPosition -= this.mfmModulation ? 5 : 4;
-    if (trackPosition < 0) {
-      return -1;
-    }
-    final int offsetInSector = calcOffsetInSector(trackPosition);
-    return offsetInSector == 3 ? data : -1;
-  }
-
-  private int getSectorNumber(int trackPosition, final int data) {
-    trackPosition -= this.mfmModulation ? 5 : 4;
-    if (trackPosition < 0) {
-      return -1;
-    }
-    final int offsetInSector = calcOffsetInSector(trackPosition);
-    return offsetInSector == 4 ? data : -1;
-  }
-
-  private int getSectorPosition(int trackPosition) {
-    trackPosition -= this.mfmModulation ? 5 : 4;
-    if (trackPosition < 0) {
-      return -1;
-    }
-    int offsetInSector = calcOffsetInSector(trackPosition);
-    if (this.mfmModulation) {
-      return (offsetInSector < 12 || offsetInSector > 267) ? -1 : offsetInSector - 12;
-    } else {
-      return (offsetInSector < 10 || offsetInSector > 265) ? -1 : offsetInSector - 12;
-    }
-  }
-  
-  
   private void cmdWriteTrack(final long mcycles, final int command, final boolean start) {
-    resetStatus(true);
+    resetStatus(false);
 
     final TRDOSDisk currentDisk = this.trdosDisk.get();
+
     if (currentDisk == null) {
-      onStatus(ST_NOTREADY);
+      setInternalFlag(ST_NOTREADY);
     } else {
       if (start) {
-        logger.log(Level.WARNING, "Start writing whole track");
+        logger.log(Level.INFO, "Start writing whole track");
         this.counter = 0;
-        this.extraCounter = this.mfmModulation ? MFM_FULL_TRACK_DBYTE_NUMBER : FM_FULL_TRACK_DBYTE_NUMBER;
         this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
         this.flagWaitDataWr = true;
+        this.tempAuxiliaryObject = this.mfmModulation ? new MFMTrackHelper(this.getDisk()) : new FMTracHelper(this.getDisk());
       }
 
       if (!this.flagWaitDataWr) {
         this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
         this.flagWaitDataWr = true;
-        
-        if (this.extraCounter >= 0) {
-          final int data = this.registers[REG_DATA_WR] & 0xFF;
-          final int trackPos = (this.mfmModulation ? MFM_FULL_TRACK_DBYTE_NUMBER : FM_FULL_TRACK_DBYTE_NUMBER) - this.extraCounter;
-          this.extraCounter --;
-          
-          final int track = getTrackNumber(trackPos, data);
-          if (track>=0) {
-            this.counter = track << 16;
-          }
-          
-          final int head = getHeadNumber(trackPos, data);
-          if (head>=0) {
-            this.counter = head << 8;
-          }
-          
-          final int sectorIndex = getHeadNumber(trackPos, data);
-          if (sectorIndex>=0) {
-            this.counter = sectorIndex;
-          }
-          
-          final int sectorDataPosition = getSectorPosition(trackPos);
-          
-          if (sectorDataPosition >= 0){
-            final int theTrack = (this.counter >> 16) & 0xFF;
-            final int theHead = (this.counter >> 8) & 0xFF;
-            final int theSectorIndex = this.counter & 0xFF;
-            this.sector = currentDisk.findSector(theHead, theTrack, theSectorIndex);
-            this.sector.writeByte(sectorDataPosition, data);
+
+        final int data = this.registers[REG_DATA_WR] & 0xFF;
+        final TrackHelper helper = (TrackHelper) this.tempAuxiliaryObject;
+
+        if (!helper.isCompleted()) {
+          try {
+            helper.writeNextDataByte(data);
+            setInternalFlag(STAT_BUSY);
+            setInternalFlag(STAT_DRQ);
+          } catch (IOException ex) {
+            setInternalFlag(STAT_WRFAULT);
           }
         }
       } else {
         if (mcycles > this.operationTimeOutCycles) {
-          onStatus(STAT_TRK00_OR_LOST);
+          setInternalFlag(STAT_TRK00_OR_LOST);
         }
-        onStatus(STAT_DRQ);
-        onStatus(STAT_BUSY);
+        setInternalFlag(STAT_DRQ);
+        setInternalFlag(STAT_BUSY);
       }
     }
   }

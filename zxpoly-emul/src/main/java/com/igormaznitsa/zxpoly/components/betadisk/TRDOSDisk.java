@@ -45,6 +45,8 @@ public class TRDOSDisk {
     private final int sectorId;
     private final int offset;
 
+    private boolean written;
+    
     private Sector(final TRDOSDisk disk, final int side, final int track, final int sector, final int offset, final byte[] data) {
       this.side = side;
       this.track = track;
@@ -109,6 +111,7 @@ public class TRDOSDisk {
           return false;
         }
         this.data[getOffset() + offsetAtSector] = (byte) value;
+        this.written  = true;
         this.updateCrc();
         return true;
       }
@@ -232,6 +235,17 @@ public class TRDOSDisk {
     }
   }
 
+  public boolean wasWritten(){
+    boolean result = false;
+    for(final Sector s : this.sectors){
+      if (s.written) {
+        result = true;
+        break;
+      } 
+    }
+    return result;
+  }
+  
   public byte[] getDiskData() {
     return this.data;
   }
