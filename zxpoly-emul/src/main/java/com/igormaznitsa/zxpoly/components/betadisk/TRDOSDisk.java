@@ -17,6 +17,7 @@
 package com.igormaznitsa.zxpoly.components.betadisk;
 
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -46,7 +47,7 @@ public class TRDOSDisk {
     private final int offset;
 
     private boolean written;
-    
+
     private Sector(final TRDOSDisk disk, final int side, final int track, final int sector, final int offset, final byte[] data) {
       this.side = side;
       this.track = track;
@@ -56,7 +57,7 @@ public class TRDOSDisk {
       this.offset = offset;
       updateCrc();
     }
-
+    
     public boolean isWriteProtect() {
       return this.owner.isWriteProtect();
     }
@@ -111,7 +112,7 @@ public class TRDOSDisk {
           return false;
         }
         this.data[getOffset() + offsetAtSector] = (byte) value;
-        this.written  = true;
+        this.written = true;
         this.updateCrc();
         return true;
       }
@@ -133,12 +134,14 @@ public class TRDOSDisk {
   private byte[] data;
   private boolean writeProtect;
   private final Sector[] sectors;
+  private final File srcFile;
 
   public TRDOSDisk() {
-    this(Source.TRD, new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
+    this(null, Source.TRD, new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
   }
 
-  public TRDOSDisk(final Source src, final byte[] srcData, final boolean writeProtect) {
+  public TRDOSDisk(final File srcFile, final Source src, final byte[] srcData, final boolean writeProtect) {
+    this.srcFile = srcFile;
     this.sectors = new Sector[SECTORS_PER_TRACK * MAX_TRACKS_PER_SIDE * MAX_SIDES];
     final byte[] diskData;
 
@@ -157,7 +160,7 @@ public class TRDOSDisk {
         int diskPointer = SECTORS_PER_TRACK * SECTOR_SIZE; // track 1, sector 0
 
         if (size > 2544) {
-          throw new RuntimeException("The SCL image needs non-standard disk size [" + size + " blocks]");
+          throw new RuntimeException("The SCL image has non-standard number of blocks: " + size);
         } else {
           // make catalog area
           int processedSectors = 0;
@@ -235,17 +238,17 @@ public class TRDOSDisk {
     }
   }
 
-  public boolean wasWritten(){
+  public boolean isChanged() {
     boolean result = false;
-    for(final Sector s : this.sectors){
+    for (final Sector s : this.sectors) {
       if (s.written) {
         result = true;
         break;
-      } 
+      }
     }
     return result;
   }
-  
+
   public byte[] getDiskData() {
     return this.data;
   }

@@ -17,6 +17,7 @@
 package com.igormaznitsa.zxpoly.components.betadisk;
 
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk.Sector;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import java.util.Arrays;
@@ -65,7 +66,7 @@ public final class K1818VG93 {
   private boolean flagWaitDataWr;
   private boolean resetIn;
   private boolean firstCommandStep;
-  private int side;
+  private int head;
   private boolean outwardStepDirection;
   private boolean indexHoleMarker;
   private boolean mfmModulation;
@@ -99,8 +100,10 @@ public final class K1818VG93 {
     int dataByteIndex;
 
     int trackBytePosition = 0;
-    final int trackTotalBytes;
+    int trackTotalBytes;
     final boolean mfm;
+
+    byte[] trackReadBuffer;
 
     final TRDOSDisk disk;
 
@@ -182,7 +185,24 @@ public final class K1818VG93 {
       return this.trackBytePosition < this.trackTotalBytes;
     }
 
-    abstract int readNextTrackData();
+    int getSectorSizeCode(final int size) {
+      if (size <= 128) {
+        return 0;
+      }
+      if (size <= 256) {
+        return 1;
+      }
+      if (size <= 512) {
+        return 2;
+      }
+      return 3;
+    }
+
+    abstract void prepareTrackForRead(int headIndex, int trackIndex);
+
+    int readNextTrackData() {
+      return this.trackBytePosition < this.trackTotalBytes ? this.trackReadBuffer[this.trackBytePosition++] : -1;
+    }
 
     boolean isCompleted() {
       return this.trackBytePosition >= this.trackTotalBytes;
@@ -196,9 +216,67 @@ public final class K1818VG93 {
     }
 
     @Override
-    int readNextTrackData() {
-      this.trackBytePosition++;
-      return this.trackBytePosition < this.trackTotalBytes ? 0 : -1;
+    void prepareTrackForRead(final int headIndex, final int trackIndex) {
+      Sector sector = this.disk.findFirstSector(headIndex, trackIndex);
+
+      final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+      for (int i = 0; i < 40; i++) {
+        buffer.write(0xFF);
+      }
+      for (int i = 0; i < 40; i++) {
+        buffer.write(0x00);
+      }
+      buffer.write(0xFC);
+      for (int i = 0; i < 26; i++) {
+        buffer.write(0xFF);
+      }
+
+      while (sector != null) {
+        for (int i = 0; i < 6; i++) {
+          buffer.write(0x00);
+        }
+        buffer.write(0xFE);
+
+        buffer.write(sector.getTrackNumber());
+        buffer.write(sector.getSide());
+        buffer.write(sector.getSectorId());
+
+        buffer.write(getSectorSizeCode(sector.size()));
+        final int crc = sector.getCrc();
+
+        buffer.write(crc);
+        buffer.write(crc >>> 8);
+
+        for (int i = 0; i < 11; i++) {
+          buffer.write(0xFF);
+        }
+        for (int i = 0; i < 6; i++) {
+          buffer.write(0x00);
+        }
+
+        buffer.write(0xFB);
+
+        for (int i = 0; i < sector.size(); i++) {
+          buffer.write(sector.readByte(i));
+        }
+
+        buffer.write(crc);
+        buffer.write(crc >>> 8);
+
+        for (int i = 0; i < 27; i++) {
+          buffer.write(0xFF);
+        }
+
+        sector = disk.findSectorAfter(sector);
+      }
+
+      for (int i = 0; i < 247; i++) {
+        buffer.write(0xFF);
+      }
+
+      this.trackReadBuffer = buffer.toByteArray();
+      this.trackTotalBytes = this.trackReadBuffer.length;
     }
 
   }
@@ -210,10 +288,86 @@ public final class K1818VG93 {
     }
 
     @Override
-    int readNextTrackData() {
-      this.trackBytePosition++;
-      return this.trackBytePosition < this.trackTotalBytes ? 0 : -1;
+    void prepareTrackForRead(final int headIndex, final int trackIndex) {
+      Sector sector = this.disk.findFirstSector(headIndex, trackIndex);
+
+      final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+      for (int i = 0; i < 80; i++) {
+        buffer.write(0x4E);
+      }
+
+      for (int i = 0; i < 12; i++) {
+        buffer.write(0x00);
+      }
+
+      for (int i = 0; i < 3; i++) {
+        buffer.write(0xF6);
+      }
+
+      buffer.write(0xFC);
+
+      for (int i = 0; i < 50; i++) {
+        buffer.write(0x4E);
+      }
+
+      while (sector != null) {
+        for (int i = 0; i < 12; i++) {
+          buffer.write(0x00);
+        }
+
+        for (int i = 0; i < 3; i++) {
+          buffer.write(0xF5);
+        }
+
+        buffer.write(0xFE);
+
+        buffer.write(sector.getTrackNumber());
+        buffer.write(sector.getSide());
+        buffer.write(sector.getSectorId());
+        buffer.write(getSectorSizeCode(sector.size()));
+
+        final int crc = sector.getCrc();
+
+        buffer.write(crc);
+        buffer.write(crc >>> 8);
+
+        for (int i = 0; i < 22; i++) {
+          buffer.write(0x4E);
+        }
+
+        for (int i = 0; i < 12; i++) {
+          buffer.write(0x00);
+        }
+
+        for (int i = 0; i < 3; i++) {
+          buffer.write(0xF5);
+        }
+
+        buffer.write(0xFB);
+
+        for (int i = 0; i < sector.size(); i++) {
+          buffer.write(sector.readByte(i));
+        }
+
+        buffer.write(crc);
+        buffer.write(crc >>> 8);
+
+        for (int i = 0; i < 54; i++) {
+          buffer.write(0x4E);
+        }
+
+        sector = disk.findSectorAfter(sector);
+      }
+
+      for (int i = 0; i < 598; i++) {
+        buffer.write(0x4E);
+      }
+
+      this.trackReadBuffer = buffer.toByteArray();
+      this.trackTotalBytes = this.trackReadBuffer.length;
     }
+
   }
 
   private final AtomicReference<TRDOSDisk> trdosDisk = new AtomicReference<>();
@@ -239,7 +393,7 @@ public final class K1818VG93 {
     if (disk == null) {
       this.sector = null;
     } else {
-      this.sector = disk.findFirstSector(this.side, this.registers[REG_TRACK]);
+      this.sector = disk.findFirstSector(this.head, this.registers[REG_TRACK]);
     }
   }
 
@@ -273,12 +427,12 @@ public final class K1818VG93 {
     this.resetIn = signal;
   }
 
-  public void setSide(final int side) {
-    this.side = side;
+  public void setHead(final int head) {
+    this.head = head;
   }
 
-  public int getSide() {
-    return this.side;
+  public int getHead() {
+    return this.head;
   }
 
   public void setMFMModulation(final boolean flag) {
@@ -373,7 +527,7 @@ public final class K1818VG93 {
         }
 
         if (this.firstCommandStep) {
-          logger.log(Level.INFO, "Written command: " + Integer.toBinaryString(normValue));
+          logger.log(Level.INFO, "FDD cmd: " + commandAsText(normValue));
         }
       }
       break;
@@ -399,6 +553,59 @@ public final class K1818VG93 {
       break;
       default:
         throw new IllegalArgumentException("Unexpected value");
+    }
+  }
+
+  private String commandAsText(final int command) {
+    final int track = this.registers[REG_TRACK];
+    final int sector = this.registers[REG_SECTOR];
+    final int head = this.head;
+
+    final String addr = track + ":" + head + ":" + sector;
+
+    final int high = command >>> 4;
+    switch (high) {
+      case 0b0000: {
+        return "RESTORE";
+      }
+      case 0b0001: {
+        return "SEEK (track=" + track + ", head=" + this.head + ")";
+      }
+      case 0b0010:
+      case 0b0011: {
+        return "STEP";
+      }
+      case 0b0100:
+      case 0b0101: {
+        return "STEP IN";
+      }
+      case 0b0110:
+      case 0b0111: {
+        return "STEP OUT";
+      }
+      case 0b1000:
+      case 0b1001: {
+        return "RD.SECTOR" + ((high & 1) == 0 ? "" : "(MULT)") + ' ' + addr;
+      }
+      case 0b1010:
+      case 0b1011: {
+        return "WR.SECTOR" + ((high & 1) == 0 ? "" : "(MULT)") + ' ' + addr;
+      }
+      case 0b1100: {
+        return "RD.ADDR";
+      }
+      case 0b1110: {
+        return "RD.TRACK (track=" + track + ")";
+      }
+      case 0b1111: {
+        return "WR.TRACK (track=" + track + ")";
+      }
+      case 0b1101: {
+        return "FRC.INTERRUPT";
+      }
+      default: {
+        return "UNKNOWN " + Integer.toBinaryString(high);
+      }
     }
   }
 
@@ -489,7 +696,7 @@ public final class K1818VG93 {
     if (thedisk == null) {
       setInternalFlag(ST_NOTREADY);
     } else {
-      this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+      this.sector = thedisk.findFirstSector(this.head, this.registers[REG_TRACK]);
       if (this.sector == null) {
         setInternalFlag(STAT_NOTFOUND);
       } else {
@@ -521,7 +728,7 @@ public final class K1818VG93 {
 
       if (counter < 0xFF && this.registers[REG_TRACK] > 0) {
         this.registers[REG_TRACK]--;
-        this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+        this.sector = thedisk.findFirstSector(this.head, this.registers[REG_TRACK]);
         if (this.sector == null) {
           setInternalFlag(STAT_NOTFOUND);
         } else {
@@ -532,7 +739,7 @@ public final class K1818VG93 {
         }
       } else {
         if (this.registers[REG_TRACK] != 0) {
-          this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+          this.sector = thedisk.findFirstSector(this.head, this.registers[REG_TRACK]);
           setInternalFlag(STAT_NOTFOUND);
         }
       }
@@ -576,7 +783,7 @@ public final class K1818VG93 {
 
       boolean end = this.registers[REG_TRACK] == this.registers[REG_DATA_WR];
 
-      this.sector = curDisk.findRandomSector(this.side, this.registers[REG_TRACK]);
+      this.sector = curDisk.findRandomSector(this.head, this.registers[REG_TRACK]);
 
       if (this.sector == null) {
         setInternalFlag(STAT_NOTFOUND);
@@ -604,18 +811,20 @@ public final class K1818VG93 {
         this.sector = thedisk.findSectorAfter(this.sector);
       }
       if (this.sector == null) {
-        this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+        this.sector = thedisk.findFirstSector(this.head, this.registers[REG_TRACK]);
       }
 
       this.counter = 6;
       this.sectorPositioningCycles = Math.abs(mcycles + CYCLES_SECTOR_POSITION);
+
+      this.extraCounter = 0;
     }
 
     if (thedisk == null) {
       setInternalFlag(ST_NOTREADY);
     } else {
       if (this.sector == null) {
-        this.sector = thedisk.findFirstSector(this.side, this.registers[REG_TRACK]);
+        this.sector = thedisk.findFirstSector(this.head, this.registers[REG_TRACK]);
       }
 
       if (this.sector == null) {
@@ -632,65 +841,81 @@ public final class K1818VG93 {
 
           if (!this.sector.isCrcOk()) {
             setInternalFlag(STAT_CRCERR);
-          }
-
-          if (!this.flagWaitDataRd) {
-            this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
-            switch (--this.counter) {
-              case 5: {// track
-                provideReadData(this.sector.getTrackNumber());
-                setInternalFlag(STAT_BUSY);
-              }
-              break;
-              case 4: {// side
-                provideReadData(this.sector.getSide());
-                setInternalFlag(STAT_BUSY);
-              }
-              break;
-              case 3: {// sector
-                provideReadData(this.sector.getSectorId());
-                setInternalFlag(STAT_BUSY);
-              }
-              break;
-              case 2: {// length
-                final int type;
-                final int sectorLen = this.sector.size();
-                if (sectorLen <= 128) {
-                  type = 0;
-                } else if (sectorLen <= 256) {
-                  type = 1;
-                } else if (sectorLen <= 512) {
-                  type = 2;
-                } else {
-                  type = 3;
-                }
-
-                provideReadData(type);
-                setInternalFlag(STAT_BUSY);
-              }
-              break;
-              case 1: {// crc1
-                final int crc = this.sector.getCrc() >>> 8;
-                provideReadData(crc);
-                setInternalFlag(STAT_BUSY);
-              }
-              break;
-              case 0: {// crc2
-                final int crc = this.sector.getCrc() & 0xFF;
-                provideReadData(crc);
-//              onStatus(STAT_BUSY);
-              }
-              break;
-              default: {
-                logger.warning("<RDADDR ### UNEXPECTED");
-              }
-            }
           } else {
-            if (mcycles > this.operationTimeOutCycles) {
-              setInternalFlag(STAT_TRK00_OR_LOST);
+            if (!this.flagWaitDataRd) {
+              this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
+              if (this.counter > 0) {
+                switch (this.counter) {
+                  case 6: {// track
+                    final int trackNum = this.sector.getTrackNumber();
+                    provideReadData(trackNum);
+                    setInternalFlag(STAT_DRQ);
+                    this.extraCounter |= (trackNum << 16);
+                  }
+                  break;
+                  case 5: {// side
+                    final int side = this.sector.getSide();
+                    provideReadData(side);
+                    setInternalFlag(STAT_DRQ);
+                    this.extraCounter |= (side << 8);
+                  }
+                  break;
+                  case 4: {// sector
+                    final int sectorId = this.sector.getSectorId();
+                    provideReadData(sectorId);
+                    setInternalFlag(STAT_DRQ);
+                    this.extraCounter |= sectorId;
+                  }
+                  break;
+                  case 3: {// length
+                    final int type;
+                    final int sectorLen = this.sector.size();
+                    if (sectorLen <= 128) {
+                      type = 0;
+                    } else if (sectorLen <= 256) {
+                      type = 1;
+                    } else if (sectorLen <= 512) {
+                      type = 2;
+                    } else {
+                      type = 3;
+                    }
+
+                    provideReadData(type);
+                    setInternalFlag(STAT_DRQ);
+                  }
+                  break;
+                  case 2: {// crc1
+                    final int crc = this.sector.getCrc() >>> 8;
+                    provideReadData(crc);
+                    setInternalFlag(STAT_DRQ);
+                  }
+                  break;
+                  case 1: {// crc2
+                    final int crc = this.sector.getCrc() & 0xFF;
+                    provideReadData(crc);
+                    setInternalFlag(STAT_DRQ);
+                  }
+                  break;
+                  default: throw new Error("Unexpected counter state");
+                }
+                this.counter--;
+                if (this.counter > 0) {
+                  setInternalFlag(STAT_BUSY);
+                } else {
+                  final int track = (this.extraCounter >> 16) & 0xFF;
+                  final int side = (this.extraCounter >> 8) & 0xFF;
+                  final int sector = this.extraCounter & 0xFF;
+                  logger.info("FOUND.ADDR " + track + ':' + side + ':' + sector);
+                }
+              }
+            } else {
+              if (mcycles > this.operationTimeOutCycles) {
+                setInternalFlag(STAT_TRK00_OR_LOST);
+              } else {
+                setInternalFlag(STAT_DRQ);
+                setInternalFlag(STAT_BUSY);
+              }
             }
-            setInternalFlag(STAT_DRQ);
-            setInternalFlag(STAT_BUSY);
           }
         }
       }
@@ -729,7 +954,7 @@ public final class K1818VG93 {
         } else {
           curtrack = (curtrack - 1) & 0xFF;
         }
-        this.sector = thedisk.findRandomSector(this.side, curtrack);
+        this.sector = thedisk.findRandomSector(this.head, curtrack);
 
         if ((command & 0x10) != 0) {
           this.registers[REG_TRACK] = curtrack;
@@ -757,73 +982,75 @@ public final class K1818VG93 {
   }
 
   private void cmdReadSector(final long mcycles, final int command, final boolean start) {
-    final boolean multiOp = (command & 0x10) != 0;
+    final boolean multi = (command & 0x10) != 0;
     final int softSide = (command >>> 3) & 1;
-    final boolean doCheckSide = (command & 1) != 0;
+    final boolean doCheckSide = (command & 2) != 0;
 
     resetStatus(true);
 
     final TRDOSDisk thedisk = this.trdosDisk.get();
     if (thedisk == null) {
       setInternalFlag(ST_NOTREADY);
-    }
-
-    loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
-
-    if (this.sector != null && doCheckSide && this.sector.getSide() != softSide) {
-      this.sector = null;
-    }
-
-    if (this.sector == null) {
-      resetDataRegisters();
-      setInternalFlag(STAT_NOTFOUND);
     } else {
-      if (start) {
-        this.counter = 0;
-        this.sectorPositioningCycles = Math.abs(mcycles + CYCLES_SECTOR_POSITION);
+      loadSector(this.head, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
+
+      if (this.sector != null && doCheckSide && this.sector.getSide() != softSide) {
+        this.sector = null;
       }
 
-      if (mcycles < this.sectorPositioningCycles) {
-        setInternalFlag(STAT_BUSY);
+      if (this.sector == null) {
+        resetDataRegisters();
+        setInternalFlag(STAT_NOTFOUND);
       } else {
-        if (this.sectorPositioningCycles >= 0L) {
-          // start reading of first byte
-          this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
-          this.sectorPositioningCycles = -1L;
+        if (start) {
+          this.counter = 0;
+          this.sectorPositioningCycles = Math.abs(mcycles + CYCLES_SECTOR_POSITION);
         }
 
-        if (!this.flagWaitDataRd) {
-          if (this.counter >= this.sector.size()) {
-            this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
-            this.sectorPositioningCycles = Math.abs(mcycles + CYCLES_SECTOR_POSITION);
-            if (multiOp) {
-              if (!this.sector.isLastOnTrack()) {
-                this.counter = 0;
-                setInternalFlag(STAT_BUSY);
+        if (mcycles < this.sectorPositioningCycles) {
+          setInternalFlag(STAT_BUSY);
+        } else {
+          if (this.sectorPositioningCycles >= 0L) {
+            // start reading of first byte
+            this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
+            this.sectorPositioningCycles = -1L;
+          }
+
+          if (!this.flagWaitDataRd) {
+            if (this.counter >= this.sector.size()) {
+              this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
+              this.sectorPositioningCycles = Math.abs(mcycles + CYCLES_SECTOR_POSITION);
+              if (multi) {
+                if (!this.sector.isLastOnTrack()) {
+                  this.counter = 0;
+                  setInternalFlag(STAT_BUSY);
+                }
+              }
+            } else {
+              final int data = this.sector.readByte(this.counter++);
+              this.sectorPositioningCycles = Math.abs(mcycles + CYCLES_SECTOR_POSITION);
+
+              if (data < 0) {
+                setInternalFlag(STAT_TRK00_OR_LOST);
+              } else {
+                if (mcycles > this.operationTimeOutCycles) {
+                  setInternalFlag(STAT_TRK00_OR_LOST);
+                } else {
+                  this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
+                  provideReadData(data);
+                  setInternalFlag(STAT_DRQ);
+                  setInternalFlag(STAT_BUSY);
+                }
               }
             }
           } else {
-            final int data = this.sector.readByte(this.counter++);
-            this.sectorPositioningCycles = Math.abs(mcycles + CYCLES_SECTOR_POSITION);
-
-            if (data < 0) {
+            if (mcycles > this.operationTimeOutCycles) {
               setInternalFlag(STAT_TRK00_OR_LOST);
             } else {
-              if (mcycles > this.operationTimeOutCycles) {
-                setInternalFlag(STAT_TRK00_OR_LOST);
-              }
-              this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
-              provideReadData(data);
               setInternalFlag(STAT_DRQ);
               setInternalFlag(STAT_BUSY);
             }
           }
-        } else {
-          if (mcycles > this.operationTimeOutCycles) {
-            setInternalFlag(STAT_TRK00_OR_LOST);
-          }
-          setInternalFlag(STAT_DRQ);
-          setInternalFlag(STAT_BUSY);
         }
       }
     }
@@ -845,7 +1072,7 @@ public final class K1818VG93 {
       }
     }
 
-    loadSector(this.side, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
+    loadSector(this.head, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
 
     if (this.sector != null && doCheckSide && this.sector.getSide() != softSide) {
       this.sector = null;
@@ -917,36 +1144,32 @@ public final class K1818VG93 {
     } else {
       if (start) {
         this.counter = 0;
-        this.sector = currentDisk.findFirstSector(this.side, this.registers[REG_TRACK]);
-        this.tempAuxiliaryObject = this.mfmModulation ? new MFMTrackHelper(this.getDisk()) : new FMTracHelper(this.getDisk());
+        final TrackHelper helper = this.mfmModulation ? new MFMTrackHelper(this.getDisk()) : new FMTracHelper(this.getDisk());
+        helper.prepareTrackForRead(this.head, this.registers[REG_TRACK]);
+
+        this.tempAuxiliaryObject = helper;
         this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
       }
 
-      if (this.sector == null) {
-        setInternalFlag(STAT_TRK00_OR_LOST);
-      } else {
-        if (!this.flagWaitDataRd) {
-          this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
+      if (!this.flagWaitDataRd) {
+        this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
 
-          final TrackHelper helper = (TrackHelper) this.tempAuxiliaryObject;
+        final TrackHelper helper = (TrackHelper) this.tempAuxiliaryObject;
 
-          if (!helper.isCompleted()) {
-            final int data = helper.readNextTrackData();
+        if (!helper.isCompleted()) {
+          final int data = helper.readNextTrackData();
 
-            if (data < 0) {
-              setInternalFlag(STAT_TRK00_OR_LOST);
-            } else {
-              provideReadData(data);
-              setInternalFlag(STAT_BUSY);
-            }
+          if (data >= 0) {
+            provideReadData(data);
+            setInternalFlag(STAT_BUSY);
           }
-        } else {
-          if (mcycles > this.operationTimeOutCycles) {
-            setInternalFlag(STAT_TRK00_OR_LOST);
-          }
-          setInternalFlag(STAT_DRQ);
-          setInternalFlag(STAT_BUSY);
         }
+      } else {
+        if (mcycles > this.operationTimeOutCycles) {
+          setInternalFlag(STAT_TRK00_OR_LOST);
+        }
+        setInternalFlag(STAT_DRQ);
+        setInternalFlag(STAT_BUSY);
       }
     }
   }
@@ -960,7 +1183,6 @@ public final class K1818VG93 {
       setInternalFlag(ST_NOTREADY);
     } else {
       if (start) {
-        logger.log(Level.INFO, "Start writing whole track");
         this.counter = 0;
         this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_BUFFER_VALID);
         this.flagWaitDataWr = true;

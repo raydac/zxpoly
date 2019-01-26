@@ -642,6 +642,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     jMenuItem1 = new javax.swing.JMenuItem();
     jMenuItem2 = new javax.swing.JMenuItem();
     jMenuItem3 = new javax.swing.JMenuItem();
+    menuFileFlushDiskChanges = new javax.swing.JMenuItem();
     jSeparator1 = new javax.swing.JPopupMenu.Separator();
     menuFileOptions = new javax.swing.JMenuItem();
     jSeparator3 = new javax.swing.JPopupMenu.Separator();
@@ -744,6 +745,15 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     getContentPane().add(panelIndicators, java.awt.BorderLayout.SOUTH);
 
     menuFile.setText("File");
+    menuFile.addMenuListener(new javax.swing.event.MenuListener() {
+      public void menuCanceled(javax.swing.event.MenuEvent evt) {
+      }
+      public void menuDeselected(javax.swing.event.MenuEvent evt) {
+      }
+      public void menuSelected(javax.swing.event.MenuEvent evt) {
+        menuFileMenuSelected(evt);
+      }
+    });
 
     menuFileLoadSnapshot.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/snapshot.png"))); // NOI18N
     menuFileLoadSnapshot.setText("Load Snapshot");
@@ -799,6 +809,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuLoadDrive.add(jMenuItem3);
 
     menuFile.add(menuLoadDrive);
+
+    menuFileFlushDiskChanges.setText("Flush disk changes");
+    menuFile.add(menuFileFlushDiskChanges);
     menuFile.add(jSeparator1);
 
     menuFileOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/settings.png"))); // NOI18N
@@ -1119,7 +1132,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             }
           }
 
-          final TRDOSDisk floppy = new TRDOSDisk(filter.get().getClass() == SCLFileFilter.class ? TRDOSDisk.Source.SCL : TRDOSDisk.Source.TRD, FileUtils.readFileToByteArray(selectedFile), false);
+          final TRDOSDisk floppy = new TRDOSDisk(selectedFile, filter.get().getClass() == SCLFileFilter.class ? TRDOSDisk.Source.SCL : TRDOSDisk.Source.TRD, FileUtils.readFileToByteArray(selectedFile), false);
           this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
           log.log(Level.INFO, "Loaded drive " + diskName + " by floppy image file " + selectedFile);
         } catch (IOException ex) {
@@ -1564,6 +1577,15 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }//GEN-LAST:event_menuServicemakeSnapshotActionPerformed
 
+  private void menuFileMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_menuFileMenuSelected
+    boolean hasChangedDisk = false;
+    for(int i=0;i<4;i++){
+      final TRDOSDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
+      hasChangedDisk |= (disk != null && disk.isChanged());
+    }
+    this.menuFileFlushDiskChanges.setEnabled(hasChangedDisk);
+  }//GEN-LAST:event_menuFileMenuSelected
+
   private void activateTracerForCPUModule(final int index) {
     TraceCPUForm form = this.cpuTracers[index];
     if (form == null) {
@@ -1672,6 +1694,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private javax.swing.JMenu menuCatcher;
   private javax.swing.JMenu menuFile;
   private javax.swing.JMenuItem menuFileExit;
+  private javax.swing.JMenuItem menuFileFlushDiskChanges;
   private javax.swing.JMenuItem menuFileLoadSnapshot;
   private javax.swing.JMenuItem menuFileLoadTap;
   private javax.swing.JMenuItem menuFileOptions;

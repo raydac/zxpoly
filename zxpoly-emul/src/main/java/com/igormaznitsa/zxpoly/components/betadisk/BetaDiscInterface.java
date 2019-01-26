@@ -44,6 +44,10 @@ public class BetaDiscInterface implements IODevice {
     this.vg93 = new K1818VG93(LOGGER);
   }
 
+  public TRDOSDisk getDiskInDrive(final int driveIndex) {
+    return this.diskDrives.get(driveIndex);
+  }
+  
   public void insertDiskIntoDrive(final int driveIndex, final TRDOSDisk disk) {
     this.diskDrives.set(driveIndex, disk);
     tuneControllerToDisk();
@@ -109,9 +113,9 @@ public class BetaDiscInterface implements IODevice {
 
   private void setSystemReg(final int value) {
     this.ffPort = value;
-    this.vg93.setResetIn((this.ffPort & 0b00000100) != 0);
-    this.vg93.setSide((this.ffPort & 0b00010000) == 0 ? 1 : 0);
-    this.vg93.setMFMModulation((this.ffPort & 0b00010000) == 0);
+    this.vg93.setResetIn((this.ffPort & 0b0000_0100) != 0);
+    this.vg93.setHead((this.ffPort & 0b0001_0000) == 0 ? 1 : 0);
+    this.vg93.setMFMModulation((this.ffPort & 0b0100_0000) == 0);
     tuneControllerToDisk();
   }
 
