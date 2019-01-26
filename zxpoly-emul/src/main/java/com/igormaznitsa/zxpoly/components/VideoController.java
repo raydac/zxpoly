@@ -38,7 +38,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
 
-  private static final Image ESCMOUSE = Utils.loadIcon("escmouse.png");
+  private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
 
   private final Motherboard board;
   private final ReentrantLock bufferLocker = new ReentrantLock();
@@ -52,7 +52,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private volatile float zoom = 1.0f;
   private volatile int portFEw = 0;
 
-  private volatile boolean holdMouse = false;
+  private volatile boolean trapMouse = false;
 
   public static final long CYCLES_BETWEEN_INT = 20000000L / (1000000000L / Motherboard.CPU_FREQ);
   private static final int BORDER_LINES = 64;
@@ -156,7 +156,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   }
 
   public void setHoldMouse(final boolean flag) {
-    this.holdMouse = flag;
+    this.trapMouse = flag;
     if (flag) {
       setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT), new Point(0, 0), "InvisibleCursor"));
     } else {
@@ -165,7 +165,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   }
 
   public boolean isHoldMouse() {
-    return this.holdMouse;
+    return this.trapMouse;
   }
 
   @Override
@@ -246,8 +246,8 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
     this.drawBuffer(g2, xoff, yoff, this.zoom);
 
-    if (this.holdMouse) {
-      g2.drawImage(ESCMOUSE, 2, 2, null);
+    if (this.trapMouse) {
+      g2.drawImage(MOUSE_TRAPPED, 2, 2, null);
     }
 
     if (this.showZxKeyboardLayout) {
