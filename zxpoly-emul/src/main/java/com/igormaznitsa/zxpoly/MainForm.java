@@ -303,7 +303,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.menuBar.add(Box.createHorizontalGlue());
     final JToggleButton buttonStartPause = new JToggleButton();
     buttonStartPause.setFocusable(false);
-    
+
     buttonStartPause.setIcon(ICO_EMUL_PAUSE);
     buttonStartPause.setRolloverEnabled(false);
     buttonStartPause.setToolTipText("Play/Pause emulation");
@@ -678,7 +678,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuHelp = new javax.swing.JMenu();
     menuHelpAbout = new javax.swing.JMenuItem();
 
-    setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+    setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
     setLocationByPlatform(true);
     addWindowFocusListener(new java.awt.event.WindowFocusListener() {
       public void windowGainedFocus(java.awt.event.WindowEvent evt) {
@@ -691,6 +691,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     addWindowListener(new java.awt.event.WindowAdapter() {
       public void windowClosed(java.awt.event.WindowEvent evt) {
         formWindowClosed(evt);
+      }
+      public void windowClosing(java.awt.event.WindowEvent evt) {
+        formWindowClosing(evt);
       }
     });
 
@@ -810,6 +813,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuFile.add(menuLoadDrive);
 
+    menuFileFlushDiskChanges.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/diskflush.png"))); // NOI18N
     menuFileFlushDiskChanges.setText("Flush disk changes");
     menuFileFlushDiskChanges.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1584,7 +1588,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   private void menuFileMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_menuFileMenuSelected
     boolean hasChangedDisk = false;
-    for(int i=0;i<4;i++){
+    for (int i = 0; i < 4; i++) {
       final TRDOSDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
       hasChangedDisk |= (disk != null && disk.isChanged());
     }
@@ -1595,8 +1599,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     for (int i = 0; i < 4; i++) {
       final TRDOSDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
       if (disk != null && disk.isChanged()) {
-        final int result = JOptionPane.showConfirmDialog(this, "Do you want flush disk data '"+disk.getSrcFile().getName()+"' ?", "Disk changed", JOptionPane.YES_NO_CANCEL_OPTION);
-        if (result == JOptionPane.CANCEL_OPTION) break;
+        final int result = JOptionPane.showConfirmDialog(this, "Do you want flush disk data '" + disk.getSrcFile().getName() + "' ?", "Disk changed", JOptionPane.YES_NO_CANCEL_OPTION);
+        if (result == JOptionPane.CANCEL_OPTION) {
+          break;
+        }
         if (result == JOptionPane.YES_OPTION) {
           final File destFile;
           if (disk.getType() != TRDOSDisk.SourceDataType.TRD) {
@@ -1605,7 +1611,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             fileChooser.setAcceptAllFileFilterUsed(false);
             fileChooser.setDialogTitle("Save disk as TRD file");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.setSelectedFile(new File(disk.getSrcFile().getParentFile(),FilenameUtils.getBaseName(disk.getSrcFile().getName())+".trd"));
+            fileChooser.setSelectedFile(new File(disk.getSrcFile().getParentFile(), FilenameUtils.getBaseName(disk.getSrcFile().getName()) + ".trd"));
             if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
               destFile = fileChooser.getSelectedFile();
             } else {
@@ -1614,18 +1620,35 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           } else {
             destFile = disk.getSrcFile();
           }
-          if (destFile != null){
-            try{
+          if (destFile != null) {
+            try {
               FileUtils.writeByteArrayToFile(destFile, disk.getDiskData());
-            }catch(IOException ex){
-              log.warning("Can't write disk for error: "+ex.getMessage());
-              JOptionPane.showMessageDialog(this, "Can't save disk for IO error: "+ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+              disk.replaceSrcFile(destFile, TRDOSDisk.SourceDataType.TRD, true);
+              log.info("Changes for disk " + ('A' + i) + " is saved as file: " + destFile.getAbsolutePath());
+            } catch (IOException ex) {
+              log.warning("Can't write disk for error: " + ex.getMessage());
+              JOptionPane.showMessageDialog(this, "Can't save disk for IO error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
           }
         }
       }
     }
   }//GEN-LAST:event_menuFileFlushDiskChangesActionPerformed
+
+  private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+    boolean hasChangedDisk = false;
+    for (int i = 0; i < 4; i++) {
+      final TRDOSDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
+      hasChangedDisk |= (disk != null && disk.isChanged());
+    }
+    if (hasChangedDisk){
+      if (JOptionPane.showConfirmDialog(this, "Emulator has unsaved disks, do you realy want to close it?", "Detected unsaved data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION){
+        this.dispose();
+      }
+    } else {
+      this.dispose();
+    }
+  }//GEN-LAST:event_formWindowClosing
 
   private void activateTracerForCPUModule(final int index) {
     TraceCPUForm form = this.cpuTracers[index];

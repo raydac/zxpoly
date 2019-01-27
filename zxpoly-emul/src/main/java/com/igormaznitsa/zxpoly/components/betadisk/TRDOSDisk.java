@@ -138,8 +138,8 @@ public class TRDOSDisk {
   private final byte[] data;
   private boolean writeProtect;
   private final Sector[] sectors;
-  private final File srcFile;
-  private final SourceDataType type;
+  private File srcFile;
+  private SourceDataType type;
 
   public TRDOSDisk() {
     this(null, SourceDataType.TRD, new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
@@ -252,12 +252,27 @@ public class TRDOSDisk {
     return this.type;
   }
 
+  public void replaceSrcFile(final File newFile, final SourceDataType type, final boolean resetChangeFlag) {
+    this.srcFile = newFile;
+    this.type = type;
+    
+    if (resetChangeFlag) {
+      for (final Sector s : this.sectors) {
+        synchronized (s) {
+          s.written = false;
+        }
+      }
+    }
+  }
+
   public boolean isChanged() {
     boolean result = false;
     for (final Sector s : this.sectors) {
-      if (s.written) {
-        result = true;
-        break;
+      synchronized (s) {
+        if (s.written) {
+          result = true;
+          break;
+        }
       }
     }
     return result;
