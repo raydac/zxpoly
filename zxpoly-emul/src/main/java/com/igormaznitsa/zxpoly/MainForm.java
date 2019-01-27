@@ -1241,7 +1241,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }//GEN-LAST:event_jMenuItem3ActionPerformed
 
   private void menuFileExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileExitActionPerformed
-    this.dispose();
+    this.formWindowClosing(null);
   }//GEN-LAST:event_menuFileExitActionPerformed
 
   private void menuTapGotoBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapGotoBlockActionPerformed
@@ -1641,13 +1641,19 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       final TRDOSDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
       hasChangedDisk |= (disk != null && disk.isChanged());
     }
-    if (hasChangedDisk){
-      if (JOptionPane.showConfirmDialog(this, "Emulator has unsaved disks, do you realy want to close it?", "Detected unsaved data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION){
-        this.dispose();
+
+    boolean close = false;
+
+    if (hasChangedDisk) {
+      if (JOptionPane.showConfirmDialog(this, "Emulator has unsaved disks, do you realy want to close it?", "Detected unsaved data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+        close = true;
       }
     } else {
-      this.dispose();
+      close = true;
     }
+
+    if (close)
+      System.exit(0);
   }//GEN-LAST:event_formWindowClosing
 
   private void activateTracerForCPUModule(final int index) {
