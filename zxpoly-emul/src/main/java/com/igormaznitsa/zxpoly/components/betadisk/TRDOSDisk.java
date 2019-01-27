@@ -23,7 +23,7 @@ import java.util.*;
 
 public class TRDOSDisk {
 
-  public enum Source {
+  public enum SourceDataType {
 
     SCL,
     TRD
@@ -57,7 +57,7 @@ public class TRDOSDisk {
       this.offset = offset;
       updateCrc();
     }
-    
+
     public boolean isWriteProtect() {
       return this.owner.isWriteProtect();
     }
@@ -83,10 +83,12 @@ public class TRDOSDisk {
     }
 
     public int readByte(final int offsetAtSector) {
-      if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
-        return -1;
-      } else {
-        return this.data[getOffset() + offsetAtSector] & 0xFF;
+      synchronized (this.data) {
+        if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
+          return -1;
+        } else {
+          return this.data[getOffset() + offsetAtSector] & 0xFF;
+        }
       }
     }
 
@@ -111,8 +113,10 @@ public class TRDOSDisk {
         if (this.owner.isWriteProtect()) {
           return false;
         }
-        this.data[getOffset() + offsetAtSector] = (byte) value;
-        this.written = true;
+        synchronized (this.data) {
+          this.data[getOffset() + offsetAtSector] = (byte) value;
+          this.written = true;
+        }
         this.updateCrc();
         return true;
       }
@@ -131,21 +135,23 @@ public class TRDOSDisk {
     }
   }
 
-  private byte[] data;
+  private final byte[] data;
   private boolean writeProtect;
   private final Sector[] sectors;
   private final File srcFile;
+  private final SourceDataType type;
 
   public TRDOSDisk() {
-    this(null, Source.TRD, new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
+    this(null, SourceDataType.TRD, new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
   }
 
-  public TRDOSDisk(final File srcFile, final Source src, final byte[] srcData, final boolean writeProtect) {
+  public TRDOSDisk(final File srcFile, final SourceDataType type, final byte[] srcData, final boolean writeProtect) {
     this.srcFile = srcFile;
+    this.type = type;
     this.sectors = new Sector[SECTORS_PER_TRACK * MAX_TRACKS_PER_SIDE * MAX_SIDES];
     final byte[] diskData;
 
-    switch (src) {
+    switch (type) {
       case SCL: {
         if (srcData.length < 10 || !JBBPUtils.arrayStartsWith(srcData, "SINCLAIR".getBytes(StandardCharsets.US_ASCII)) || srcData.length < (9 + (0x100 + 14) * (srcData[8] & 0xFF))) {
           throw new RuntimeException("Not SCL file");
@@ -228,7 +234,7 @@ public class TRDOSDisk {
       }
       break;
       default:
-        throw new Error("Unexpected source [" + src + ']');
+        throw new Error("Unexpected source [" + type + ']');
     }
     int p = 0;
     this.writeProtect = writeProtect;
@@ -236,6 +242,14 @@ public class TRDOSDisk {
     for (int i = 0; i < diskData.length; i += SECTOR_SIZE) {
       this.sectors[p++] = new Sector(this, decodeSide(i), decodePhysicalTrackIndex(i), decodePhysicalSectorIndex(i), i, diskData);
     }
+  }
+
+  public File getSrcFile() {
+    return this.srcFile;
+  }
+
+  public SourceDataType getType() {
+    return this.type;
   }
 
   public boolean isChanged() {
@@ -250,7 +264,9 @@ public class TRDOSDisk {
   }
 
   public byte[] getDiskData() {
-    return this.data;
+    synchronized (this.data) {
+      return this.data.clone();
+    }
   }
 
   public static int decodePhysicalTrackIndex(final int dataOffset) {
@@ -323,10 +339,6 @@ public class TRDOSDisk {
         break;
       }
     }
-
-//    if (result == null) {
-//      System.out.println("Can't find side = " + side + " ph.track = " + track + " ph.sector = " + physicalSectorIndex);
-//    }
     return result;
   }
 

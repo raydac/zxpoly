@@ -811,6 +811,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuFile.add(menuLoadDrive);
 
     menuFileFlushDiskChanges.setText("Flush disk changes");
+    menuFileFlushDiskChanges.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuFileFlushDiskChangesActionPerformed(evt);
+      }
+    });
     menuFile.add(menuFileFlushDiskChanges);
     menuFile.add(jSeparator1);
 
@@ -1118,7 +1123,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         try {
           if (!selectedFile.isFile() && filter.get().getClass() == TRDFileFilter.class) {
             String name = selectedFile.getName();
-            if (!name.endsWith(".trg")) {
+            if (!name.contains(".")) {
               name += ".trd";
             }
             selectedFile = new File(selectedFile.getParentFile(), name);
@@ -1132,7 +1137,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             }
           }
 
-          final TRDOSDisk floppy = new TRDOSDisk(selectedFile, filter.get().getClass() == SCLFileFilter.class ? TRDOSDisk.Source.SCL : TRDOSDisk.Source.TRD, FileUtils.readFileToByteArray(selectedFile), false);
+          final TRDOSDisk floppy = new TRDOSDisk(selectedFile, filter.get().getClass() == SCLFileFilter.class ? TRDOSDisk.SourceDataType.SCL : TRDOSDisk.SourceDataType.TRD, FileUtils.readFileToByteArray(selectedFile), false);
           this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
           log.log(Level.INFO, "Loaded drive " + diskName + " by floppy image file " + selectedFile);
         } catch (IOException ex) {
@@ -1585,6 +1590,42 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
     this.menuFileFlushDiskChanges.setEnabled(hasChangedDisk);
   }//GEN-LAST:event_menuFileMenuSelected
+
+  private void menuFileFlushDiskChangesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileFlushDiskChangesActionPerformed
+    for (int i = 0; i < 4; i++) {
+      final TRDOSDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
+      if (disk != null && disk.isChanged()) {
+        final int result = JOptionPane.showConfirmDialog(this, "Do you want flush disk data '"+disk.getSrcFile().getName()+"' ?", "Disk changed", JOptionPane.YES_NO_CANCEL_OPTION);
+        if (result == JOptionPane.CANCEL_OPTION) break;
+        if (result == JOptionPane.YES_OPTION) {
+          final File destFile;
+          if (disk.getType() != TRDOSDisk.SourceDataType.TRD) {
+            final JFileChooser fileChooser = new JFileChooser(disk.getSrcFile().getParentFile());
+            fileChooser.setFileFilter(new TRDFileFilter());
+            fileChooser.setAcceptAllFileFilterUsed(false);
+            fileChooser.setDialogTitle("Save disk as TRD file");
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setSelectedFile(new File(disk.getSrcFile().getParentFile(),FilenameUtils.getBaseName(disk.getSrcFile().getName())+".trd"));
+            if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+              destFile = fileChooser.getSelectedFile();
+            } else {
+              destFile = null;
+            }
+          } else {
+            destFile = disk.getSrcFile();
+          }
+          if (destFile != null){
+            try{
+              FileUtils.writeByteArrayToFile(destFile, disk.getDiskData());
+            }catch(IOException ex){
+              log.warning("Can't write disk for error: "+ex.getMessage());
+              JOptionPane.showMessageDialog(this, "Can't save disk for IO error: "+ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+          }
+        }
+      }
+    }
+  }//GEN-LAST:event_menuFileFlushDiskChangesActionPerformed
 
   private void activateTracerForCPUModule(final int index) {
     TraceCPUForm form = this.cpuTracers[index];
