@@ -47,6 +47,9 @@
   <profiles>
     <profile>
       <id>publish</id>
+      <properties>
+        <openjdk.bundled>11.0.2</openjdk.bundled>
+      </properties>
       <build>
         <plugins>
           <plugin>
@@ -94,12 +97,11 @@
                 </goals>
                 <configuration>
                   <jdkPathProperty>mvnjlink.jdk.work.path</jdkPathProperty>
-                  <provider>ADOPT</provider>
+                  <provider>BELLSOFT</provider>
                   <providerConfig>
-                    <release>jdk-11.0.1+13</release>
-                    <arch>x64</arch>
                     <type>jdk</type>
-                    <impl>hotspot</impl>
+                    <version>${openjdk.bundled}</version>
+                    <arch>amd64</arch>
                   </providerConfig>
                 </configuration>
               </execution>
@@ -110,13 +112,12 @@
                 </goals>
                 <configuration>
                   <jdkPathProperty>mvnjlink.jdk.linux.path</jdkPathProperty>
-                  <provider>ADOPT</provider>
+                  <provider>BELLSOFT</provider>
                   <providerConfig>
-                    <release>jdk-11.0.1+13</release>
-                    <arch>x64</arch>
-                    <os>linux</os>
                     <type>jdk</type>
-                    <impl>hotspot</impl>
+                    <version>${openjdk.bundled}</version>
+                    <os>linux</os>
+                    <arch>amd64</arch>
                   </providerConfig>
                 </configuration>
               </execution>
@@ -127,13 +128,12 @@
                 </goals>
                 <configuration>
                   <jdkPathProperty>mvnjlink.jdk.macos.path</jdkPathProperty>
-                  <provider>ADOPT</provider>
+                  <provider>BELLSOFT</provider>
                   <providerConfig>
-                    <release>jdk-11.0.1+13</release>
-                    <arch>x64</arch>
-                    <os>mac</os>
                     <type>jdk</type>
-                    <impl>hotspot</impl>
+                    <os>macos</os>
+                    <version>${openjdk.bundled}</version>
+                    <arch>amd64</arch>
                   </providerConfig>
                 </configuration>
               </execution>
@@ -144,13 +144,12 @@
                 </goals>
                 <configuration>
                   <jdkPathProperty>mvnjlink.jdk.windows.path</jdkPathProperty>
-                  <provider>ADOPT</provider>
+                  <provider>BELLSOFT</provider>
                   <providerConfig>
-                    <release>jdk-11.0.1+13</release>
-                    <arch>x64</arch>
-                    <os>windows</os>
                     <type>jdk</type>
-                    <impl>hotspot</impl>
+                    <os>windows</os>
+                    <version>${openjdk.bundled}</version>
+                    <arch>amd64</arch>
                   </providerConfig>
                 </configuration>
               </execution>
@@ -211,7 +210,7 @@
                   <toolJdk>${mvnjlink.jdk.work.path}</toolJdk>
                   <jdepsReportPath>${project.build.directory}${file.separator}jdeps.out</jdepsReportPath>
                   <output>${project.build.directory}${file.separator}jre_macos</output>
-                  <modulePath>${mvnjlink.jdk.macos.path}${file.separator}Contents${file.separator}Home${file.separator}jmods</modulePath>
+                  <modulePath>${mvnjlink.jdk.windows.path}${file.separator}jmods</modulePath>
                   <options>
                     <option>--compress=2</option>
                     <option>--no-header-files</option>
@@ -366,7 +365,7 @@
                 </goals>
                 <configuration>
                   <excludeDefaultDirectories>true</excludeDefaultDirectories>
-                   <filesets>
+                  <filesets>
                     <fileset>
                       <directory>${project.build.directory}</directory>
                       <includes>
