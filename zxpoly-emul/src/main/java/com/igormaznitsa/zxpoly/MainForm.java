@@ -393,6 +393,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.panelIndicators.add(this.indicatorCPU2, cpuIndicatorConstraint, 2);
     this.panelIndicators.add(this.indicatorCPU3, cpuIndicatorConstraint, 3);
 
+    this.menuOptionsEnableTrapMouse.setSelected(this.board.getVideoController().isTrapMouseEnabled());
+    
     for (final Component item : this.menuBar.getComponents()) {
       if (item instanceof JMenu) {
         final JMenu menuItem = (JMenu) item;
@@ -711,6 +713,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsShowIndicators = new javax.swing.JCheckBoxMenuItem();
     menuOptionsZX128Mode = new javax.swing.JCheckBoxMenuItem();
     menuOptionsTurbo = new javax.swing.JCheckBoxMenuItem();
+    menuOptionsEnableTrapMouse = new javax.swing.JCheckBoxMenuItem();
     menuHelp = new javax.swing.JMenu();
     menuHelpAbout = new javax.swing.JMenuItem();
 
@@ -1111,6 +1114,16 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
     menuOptions.add(menuOptionsTurbo);
+
+    menuOptionsEnableTrapMouse.setText("Enable trap mouse");
+    menuOptionsEnableTrapMouse.setToolTipText("");
+    menuOptionsEnableTrapMouse.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/pointer.png"))); // NOI18N
+    menuOptionsEnableTrapMouse.addActionListener(new java.awt.event.ActionListener() {
+      public void actionPerformed(java.awt.event.ActionEvent evt) {
+        menuOptionsEnableTrapMouseActionPerformed(evt);
+      }
+    });
+    menuOptions.add(menuOptionsEnableTrapMouse);
 
     menuBar.add(menuOptions);
 
@@ -1709,6 +1722,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }//GEN-LAST:event_menuLoadDriveMenuSelected
 
+  private void menuOptionsEnableTrapMouseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsEnableTrapMouseActionPerformed
+    this.board.getVideoController().setEnableTrapMouse(this.menuOptionsEnableTrapMouse.isSelected());
+  }//GEN-LAST:event_menuOptionsEnableTrapMouseActionPerformed
+
   private void activateTracerForCPUModule(final int index) {
     TraceCPUForm form = this.cpuTracers[index];
     if (form == null) {
@@ -1827,6 +1844,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private javax.swing.JMenuItem menuHelpAbout;
   private javax.swing.JMenu menuLoadDrive;
   private javax.swing.JMenu menuOptions;
+  private javax.swing.JCheckBoxMenuItem menuOptionsEnableTrapMouse;
   private javax.swing.JCheckBoxMenuItem menuOptionsShowIndicators;
   private javax.swing.JCheckBoxMenuItem menuOptionsTurbo;
   private javax.swing.JCheckBoxMenuItem menuOptionsZX128Mode;

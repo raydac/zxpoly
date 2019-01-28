@@ -53,6 +53,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   private volatile int portFEw = 0;
 
   private volatile boolean trapMouse = false;
+  private volatile boolean enableTrapMouse = false;
 
   public static final long CYCLES_BETWEEN_INT = 20000000L / (1000000000L / Motherboard.CPU_FREQ);
   private static final int BORDER_LINES = 64;
@@ -155,12 +156,25 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     this.addMouseWheelListener(this);
   }
 
+  public void setEnableTrapMouse(final boolean flag) {
+    this.enableTrapMouse = flag;
+    if (!this.enableTrapMouse) {
+      this.setHoldMouse(false);
+    }
+  }
+
+  public boolean isTrapMouseEnabled(){
+    return this.enableTrapMouse;
+  }
+  
   public void setHoldMouse(final boolean flag) {
-    this.trapMouse = flag;
-    if (flag) {
-      setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT), new Point(0, 0), "InvisibleCursor"));
-    } else {
-      setCursor(Cursor.getDefaultCursor());
+    if (this.enableTrapMouse) {
+      this.trapMouse = flag;
+      if (flag) {
+        setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT), new Point(0, 0), "InvisibleCursor"));
+      } else {
+        setCursor(Cursor.getDefaultCursor());
+      }
     }
   }
 
@@ -259,9 +273,9 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       if (bounds.width >= imgWidth) {
         g2.drawImage(IMAGE_ZXKEYS, (bounds.width - imgWidth) / 2, bounds.height - IMAGE_ZXKEYS.getHeight(null), null);
       } else {
-        final double scale = (double)bounds.width / (double)imgWidth;
-        final int newWidth = (int)Math.round(scale * imgWidth);
-        final int newHeight = (int)Math.round(scale * imgHeight);
+        final double scale = (double) bounds.width / (double) imgWidth;
+        final int newWidth = (int) Math.round(scale * imgWidth);
+        final int newHeight = (int) Math.round(scale * imgHeight);
         g2.drawImage(IMAGE_ZXKEYS, 0, bounds.height - newHeight, newWidth, newHeight, null);
       }
     }
