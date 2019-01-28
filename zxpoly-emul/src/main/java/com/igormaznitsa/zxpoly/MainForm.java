@@ -19,36 +19,71 @@ package com.igormaznitsa.zxpoly;
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
 import com.igormaznitsa.z80.Z80;
-import com.igormaznitsa.zxpoly.utils.Utils;
-import com.igormaznitsa.zxpoly.components.*;
+import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
+import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
+import com.igormaznitsa.zxpoly.animeencoders.ZXPolyAGifEncoder;
+import com.igormaznitsa.zxpoly.components.KempstonMouse;
+import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
+import com.igormaznitsa.zxpoly.components.Motherboard;
+import com.igormaznitsa.zxpoly.components.RomData;
+import com.igormaznitsa.zxpoly.components.TapeFileReader;
+import com.igormaznitsa.zxpoly.components.VideoController;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk;
-import com.igormaznitsa.zxpoly.formats.*;
+import com.igormaznitsa.zxpoly.formats.FormatSNA;
+import com.igormaznitsa.zxpoly.formats.FormatZ80;
+import com.igormaznitsa.zxpoly.formats.FormatZXP;
+import com.igormaznitsa.zxpoly.formats.Snapshot;
 import com.igormaznitsa.zxpoly.tracer.TraceCPUForm;
-import com.igormaznitsa.zxpoly.ui.*;
-import com.igormaznitsa.zxpoly.utils.*;
-import java.awt.*;
-import java.awt.event.*;
+import com.igormaznitsa.zxpoly.ui.AboutDialog;
+import com.igormaznitsa.zxpoly.ui.AddressPanel;
+import com.igormaznitsa.zxpoly.ui.CPULoadIndicator;
+import com.igormaznitsa.zxpoly.ui.OptionsDialog;
+import com.igormaznitsa.zxpoly.ui.SelectTapPosDialog;
+import com.igormaznitsa.zxpoly.utils.AppOptions;
+import com.igormaznitsa.zxpoly.utils.ROMLoader;
+import com.igormaznitsa.zxpoly.utils.Utils;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.Image;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-import org.apache.commons.io.FileUtils;
-import com.igormaznitsa.zxpoly.animeencoders.ZXPolyAGifEncoder;
-import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
-import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
-import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.Box;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import javax.swing.filechooser.FileFilter;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 public final class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
@@ -60,6 +95,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private static final Icon ICO_AGIF_RECORD = new ImageIcon(Utils.loadIcon("record.png"));
   private static final Icon ICO_AGIF_STOP = new ImageIcon(Utils.loadIcon("tape_stop.png"));
   private static final Icon ICO_TAPE = new ImageIcon(Utils.loadIcon("cassette.png"));
+  private static final Icon ICO_MDISK = new ImageIcon(Utils.loadIcon("mdisk.png"));
   private static final Icon ICO_TAPE_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TAPE);
   private static final Icon ICO_TURBO = new ImageIcon(Utils.loadIcon("turbo.png"));
   private static final Icon ICO_TURBO_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TURBO);
@@ -639,9 +675,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuFileLoadTap = new javax.swing.JMenuItem();
     menuLoadDrive = new javax.swing.JMenu();
     menuFileSelectDiskA = new javax.swing.JMenuItem();
-    jMenuItem1 = new javax.swing.JMenuItem();
-    jMenuItem2 = new javax.swing.JMenuItem();
-    jMenuItem3 = new javax.swing.JMenuItem();
+    menuFileSelectDiskB = new javax.swing.JMenuItem();
+    menuFileSelectDiskC = new javax.swing.JMenuItem();
+    menuFileSelectDiskD = new javax.swing.JMenuItem();
     menuFileFlushDiskChanges = new javax.swing.JMenuItem();
     jSeparator1 = new javax.swing.JPopupMenu.Separator();
     menuFileOptions = new javax.swing.JMenuItem();
@@ -778,6 +814,15 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuLoadDrive.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/disk.png"))); // NOI18N
     menuLoadDrive.setText("Load Disk..");
+    menuLoadDrive.addMenuListener(new javax.swing.event.MenuListener() {
+      public void menuCanceled(javax.swing.event.MenuEvent evt) {
+      }
+      public void menuDeselected(javax.swing.event.MenuEvent evt) {
+      }
+      public void menuSelected(javax.swing.event.MenuEvent evt) {
+        menuLoadDriveMenuSelected(evt);
+      }
+    });
 
     menuFileSelectDiskA.setText("Drive A");
     menuFileSelectDiskA.addActionListener(new java.awt.event.ActionListener() {
@@ -787,29 +832,29 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     });
     menuLoadDrive.add(menuFileSelectDiskA);
 
-    jMenuItem1.setText("Drive B");
-    jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+    menuFileSelectDiskB.setText("Drive B");
+    menuFileSelectDiskB.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
-        jMenuItem1ActionPerformed(evt);
+        menuFileSelectDiskBActionPerformed(evt);
       }
     });
-    menuLoadDrive.add(jMenuItem1);
+    menuLoadDrive.add(menuFileSelectDiskB);
 
-    jMenuItem2.setText("Drive C");
-    jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+    menuFileSelectDiskC.setText("Drive C");
+    menuFileSelectDiskC.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
-        jMenuItem2ActionPerformed(evt);
+        menuFileSelectDiskCActionPerformed(evt);
       }
     });
-    menuLoadDrive.add(jMenuItem2);
+    menuLoadDrive.add(menuFileSelectDiskC);
 
-    jMenuItem3.setText("Drive D");
-    jMenuItem3.addActionListener(new java.awt.event.ActionListener() {
+    menuFileSelectDiskD.setText("Drive D");
+    menuFileSelectDiskD.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(java.awt.event.ActionEvent evt) {
-        jMenuItem3ActionPerformed(evt);
+        menuFileSelectDiskDActionPerformed(evt);
       }
     });
-    menuLoadDrive.add(jMenuItem3);
+    menuLoadDrive.add(menuFileSelectDiskD);
 
     menuFile.add(menuLoadDrive);
 
@@ -1228,17 +1273,17 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.setTurboMode(this.menuOptionsTurbo.isSelected());
   }//GEN-LAST:event_menuOptionsTurboActionPerformed
 
-  private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+  private void menuFileSelectDiskCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskCActionPerformed
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_C);
-  }//GEN-LAST:event_jMenuItem2ActionPerformed
+  }//GEN-LAST:event_menuFileSelectDiskCActionPerformed
 
-  private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+  private void menuFileSelectDiskBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskBActionPerformed
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_B);
-  }//GEN-LAST:event_jMenuItem1ActionPerformed
+  }//GEN-LAST:event_menuFileSelectDiskBActionPerformed
 
-  private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
+  private void menuFileSelectDiskDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskDActionPerformed
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_D);
-  }//GEN-LAST:event_jMenuItem3ActionPerformed
+  }//GEN-LAST:event_menuFileSelectDiskDActionPerformed
 
   private void menuFileExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileExitActionPerformed
     this.formWindowClosing(null);
@@ -1264,7 +1309,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       final File selectedTapFile = chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
       if (selectedTapFile != null) {
         this.lastTapFolder = selectedTapFile.getParentFile();
-        try ( InputStream in = new BufferedInputStream(new FileInputStream(selectedTapFile))) {
+        try (InputStream in = new BufferedInputStream(new FileInputStream(selectedTapFile))) {
 
           if (this.keyboardAndTapeModule.getTap() != null) {
             this.keyboardAndTapeModule.getTap().removeActionListener(this);
@@ -1656,6 +1701,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       System.exit(0);
   }//GEN-LAST:event_formWindowClosing
 
+  private void menuLoadDriveMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_menuLoadDriveMenuSelected
+    final JMenuItem[] disks = new JMenuItem[]{this.menuFileSelectDiskA, this.menuFileSelectDiskB, this.menuFileSelectDiskC, this.menuFileSelectDiskD};
+    for (int i = 0; i < 4; i++) {
+      final TRDOSDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
+      disks[i].setIcon(disk == null ? null : ICO_MDISK);
+    }
+  }//GEN-LAST:event_menuLoadDriveMenuSelected
+
   private void activateTracerForCPUModule(final int index) {
     TraceCPUForm form = this.cpuTracers[index];
     if (form == null) {
@@ -1748,9 +1801,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.Box.Filler filler1;
-  private javax.swing.JMenuItem jMenuItem1;
-  private javax.swing.JMenuItem jMenuItem2;
-  private javax.swing.JMenuItem jMenuItem3;
   private javax.swing.JPopupMenu.Separator jSeparator1;
   private javax.swing.JSeparator jSeparator2;
   private javax.swing.JPopupMenu.Separator jSeparator3;
@@ -1770,6 +1820,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private javax.swing.JMenuItem menuFileOptions;
   private javax.swing.JMenuItem menuFileReset;
   private javax.swing.JMenuItem menuFileSelectDiskA;
+  private javax.swing.JMenuItem menuFileSelectDiskB;
+  private javax.swing.JMenuItem menuFileSelectDiskC;
+  private javax.swing.JMenuItem menuFileSelectDiskD;
   private javax.swing.JMenu menuHelp;
   private javax.swing.JMenuItem menuHelpAbout;
   private javax.swing.JMenu menuLoadDrive;
