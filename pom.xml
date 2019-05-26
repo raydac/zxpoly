@@ -13,7 +13,7 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <netbeans.hint.license>gpl30</netbeans.hint.license>
-    <jbbp.version>1.4.2-SNAPSHOT</jbbp.version>
+    <jbbp.version>2.0.0-SNAPSHOT</jbbp.version>
   </properties>
 
   <issueManagement>
@@ -96,7 +96,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.1.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -106,12 +106,12 @@
         <plugin>
           <groupId>com.akathist.maven.plugins.launch4j</groupId>
           <artifactId>launch4j-maven-plugin</artifactId>
-          <version>1.7.24</version>
+          <version>1.7.25</version>
         </plugin>  
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.1.1</version>
         </plugin>
         <plugin>
           <groupId>sh.tak.appbundler</groupId>
@@ -125,7 +125,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>animal-sniffer-maven-plugin</artifactId>
-        <version>1.17</version>
+        <version>1.18</version>
         <configuration>
           <signature>
             <groupId>org.codehaus.mojo.signature</groupId>
@@ -151,7 +151,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.0</version>
+        <version>3.8.1</version>
         <configuration>
           <source>${maven.compiler.source}</source>
           <target>${maven.compiler.target}</target>
