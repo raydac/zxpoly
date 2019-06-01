@@ -77,5 +77,5 @@ Original look of the game
 ![Original game screen](adapted/OfficialFatherChristmas/originalgamescreen.gif)
 
 On Christmas 2017 I made some adaptation of the old game ["Official Father Christmas" (1989)](http://www.worldofspectrum.org/infoseekid.cgi?id=0003493) for ZX-Poly. Of course not all was smoothly, as you can see in the game, some elements of third level were not colorized because their colorization broke game process and made desynchronization of CPU modules, it looks like that there is some optimization in graphics processing for those elements and presented some check for empty areas to optimize speed.   
-Adapted game version can be downloaded [from here](adapted/OfficialFatherChristmas/Official Father Christmas.zxp).   
+Adapted game version can be downloaded [from here](adapted/OfficialFatherChristmas/OFCZXPOLY.zxp).   
 ![Official Father Christmas GIF](adapted/OfficialFatherChristmas/movie.gif)
