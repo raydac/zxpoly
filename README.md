@@ -81,6 +81,6 @@ Adapted game version in ZX-Poly emulator format can be downloaded [from here](ad
 ![Official Father Christmas GIF](adapted/OfficialFatherChristmas/movie.gif)
 
 ## "Adventures of Buratino" (1993) 
-I was playing with adaptation of the game for 512x384 mode, program code works well but the game and without adaptation is so colorful and detailed that big effect is not visible. Also it was impossible to adapt the main hero sprites because the same sprites are used for both right and left walk through mirroring.
+I was playing with adaptation of the game for 512x384 mode, program code works well but the game and without adaptation is so colorful and detailed that big effect is not visible. Also it was impossible to adapt the main hero sprites because the same sprites are used for both right and left walk through mirroring.   
 Adapted game version in ZX-Poly emulator format can be downloaded [from here](adapted/BuratinoAdventures/buratino_adventures.zxp).   
 ![Adventures of Buratino comparation](adapted/BuratinoAdventures/comparescr.png)
