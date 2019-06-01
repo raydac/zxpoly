@@ -4,7 +4,7 @@
 [![Yandex.Money donation](https://img.shields.io/badge/donation-Я.деньги-yellow.svg)](http://yasobe.ru/na/iamoss)
 
 
-![ZX-Poly logo](https://raw.githubusercontent.com/raydac/zxpoly/master/docs/zxpoly_logo.png)
+![ZX-Poly logo](docs/zxpoly_logo.png)
 
 # Introduction
 The idea of the platform was developed by me in April 1994, I had some free time to think about well-known problem of ZX-Spectrum platform - ATTRIBUTE CLASH. I found good solution to resolve the issue with saving of back compatibility with existing software (as minimum with most of them). The solution was - to rework mono-system into poly-system and add extra CPUs working in parallel to process color data. The solution provides some way not only keep back compatibility with software but also use existing OS.   
@@ -15,12 +15,12 @@ I believe that ZX-Poly could be assembled with electronic components of 80th and
 The Emulator and all its parts are published under [GNU GPL3 license](http://www.gnu.org/licenses/gpl.html). So that it is absolutely free for non-commercial use.
 
 # UI
-![The Main Window of the Emulator](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/tapeloading.png)
+![The Main Window of the Emulator](docs/screenshots/tapeloading.png)
 
 # Theory and structure of the ZX-Poly platform
-![ZXPoly test ROM screen](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/zxpoly_test_rom_video.gif)    
+![ZXPoly test ROM screen](docs/screenshots/zxpoly_test_rom_video.gif)    
 The Base of the platform is the theory that stable synchronous systems (without any inside random processes) built on the same components (because different element base can be also source of random processes) by being started synchronously in the same time from the same state have the same state in any point of time if all synchronous system components get the same input signal states in the same time.
-![Structure of ZXPoly](https://github.com/raydac/zxpoly/blob/master/docs/zxpolystruct.png)
+![Structure of ZXPoly](docs/zxpolystruct.png)
 ZX-Poly platform adds several ports to manipulate work modes and the main port of the platform is #3D00. [In more details it is desribed in wiki.](https://github.com/raydac/zxpoly/wiki/Short-description-of-ZX-Poly-platform)
 
 # F.A.Q.
@@ -53,19 +53,19 @@ By default it uses the embedded ZX-Poly Test ROM image for start, but you can pa
 # Supported videomodes
 ## Standard ZX-Spectrum 256x192 (2 colors per pixel in 8x8 block)
 It is just regular ZX-Spectrum movde 256x192 with 2 attributed colors for 8x8 pixel block.
-![Standard ZX screenshot](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/atw_standard.png)
+![Standard ZX screenshot](docs/screenshots/atw_standard.png)
 
 ## ZX-Poly 256x192 (16 colors per pixel)
 The Mode doesn't use attributes and each pixel can have color from 16 color palette. Also there is modification of the mode which uses attributes from CPU0 module to mask screen areas by INK color if it is the sime as PAPER color in attribute.
 
 [TRD disk with the example can be downloaded from here, the game has been partly colorized](https://raydac.github.io/downloads/zips/atw1_partly_colorized.trd)
-![ZXPoly256x192 screenshot](https://raw.githubusercontent.com/raydac/zxpoly/master/docs/screenshots/atw_zxpoly.png)   
+![ZXPoly256x192 screenshot](docs/screenshots/atw_zxpoly.png)   
 
 ## ZX-Poly 512x384 (2 colors per pixel placed in chess order)
 The Mode uses attributes but places pixels in chess order.
 
-[TRD disk with the example can be downloaded from here](https://raydac.github.io/downloads/zips/zxw26_adapted_for_zxpoly.trd)
-![ZXPoly512x384 screenshot](https://github.com/raydac/zxpoly/blob/master/docs/screenshots/zxw_zxpoly512x384.png)
+[TRD disk with the example can be downloaded from here](trds/zxw26_adapted_for_zxpoly.trd)
+![ZXPoly512x384 screenshot](docs/screenshots/zxw_zxpoly512x384.png)
 
 # Adaptation of games
 
@@ -73,6 +73,9 @@ To adapt old games, I have developed special utility called ZX-Poly Sprite corre
 ![ZXPoly Sprite Corrector screenshot](https://github.com/raydac/zxpoly/blob/master/docs/zxpoly_sprite_editor.png)
 
 ## "Official Father Christmas" (1989)
+Original look of the game   
+![Original game screen](adapted/OfficialFatherChristmas/originalgamescreen.gif)
 
-On Christmas 2017 I made some adaptation of the old game ["Official Father Christmas" (1989)](http://www.worldofspectrum.org/infoseekid.cgi?id=0003493) for ZX-Poly. Of course not all was smoothly, as you can see in the game, some elements of third level were not colorized because their colorization broke game process and made desynchronize CPU modules, it looks like that there is some optimization in graphics processing for those elements and presented some check for empty areas to optimize speed.
-![Official Father Christmas GIF](https://raw.githubusercontent.com/raydac/zxpoly/master/adapted/OfficialFatherChristmas/movie.gif)
+On Christmas 2017 I made some adaptation of the old game ["Official Father Christmas" (1989)](http://www.worldofspectrum.org/infoseekid.cgi?id=0003493) for ZX-Poly. Of course not all was smoothly, as you can see in the game, some elements of third level were not colorized because their colorization broke game process and made desynchronization of CPU modules, it looks like that there is some optimization in graphics processing for those elements and presented some check for empty areas to optimize speed.   
+Adapted game version can be downloaded [from here](adapted/OfficialFatherChristmas/Official Father Christmas.zxp).   
+![Official Father Christmas GIF](adapted/OfficialFatherChristmas/movie.gif)
