@@ -378,8 +378,8 @@ public final class Motherboard implements ZXPoly {
       result = pc == this.modules[i].getCPU().getRegister(Z80.REG_PC)
               && sp == this.modules[i].getCPU().getRegister(Z80.REG_SP)
               && im == this.modules[i].getCPU().getIM()
-              && iff1 == this.modules[0].getCPU().isIFF1()
-              && iff2 == this.modules[0].getCPU().isIFF2();
+              && iff1 == this.modules[i].getCPU().isIFF1()
+              && iff2 == this.modules[i].getCPU().isIFF2();
 
     }
     return result;
