@@ -83,7 +83,7 @@ public class SCLPlugin extends AbstractFilePlugin {
           // it's scl
           final int fileNumber = in.readByte();
           for (int i = 0; i < fileNumber; i++) {
-            final SCLCatalogItem item = CATALOG_PARSER.parse(in).mapTo(SCLCatalogItem.class);
+            final SCLCatalogItem item = CATALOG_PARSER.parse(in).mapTo(new SCLCatalogItem());
             result.add(new Info(item.name, item.type, item.start, item.length, -1));
           }
         } else {
@@ -110,7 +110,7 @@ public class SCLPlugin extends AbstractFilePlugin {
         // it's scl
         final int fileNumber = in.readByte();
         for (int i = 0; i < fileNumber; i++) {
-          final SCLCatalogItem item = CATALOG_PARSER.parse(in).mapTo(SCLCatalogItem.class);
+          final SCLCatalogItem item = CATALOG_PARSER.parse(in).mapTo(new SCLCatalogItem());
           list.add(item);
         }
 

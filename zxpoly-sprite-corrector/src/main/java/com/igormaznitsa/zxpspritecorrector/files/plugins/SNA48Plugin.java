@@ -154,7 +154,7 @@ public class SNA48Plugin extends AbstractFilePlugin {
       throw new IOException("It is not SNA 48 file, size must be 49179 bytes");
     }
 
-    SNAFileV1 snaFile = PARSER.parse(array).mapTo(SNAFileV1.class);
+    SNAFileV1 snaFile = PARSER.parse(array).mapTo(new SNAFileV1());
 
     int regsp = snaFile.regSP;
 

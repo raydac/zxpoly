@@ -499,7 +499,7 @@ public class Z80Plugin extends AbstractFilePlugin {
         throw new IOException("Detected unsupported version of Z80 snapshot");
     }
 
-    final Z80Snapshot current = parser.parse(array).mapTo(Z80Snapshot.class, new DataProcessor(version), JBBPMapper.FLAG_IGNORE_MISSING_VALUES);
+    final Z80Snapshot current = parser.parse(array).mapTo(new Z80Snapshot(), new DataProcessor(version), JBBPMapper.FLAG_IGNORE_MISSING_VALUES);
 
     // check hardware mode
     switch (version) {
@@ -638,7 +638,7 @@ public class Z80Plugin extends AbstractFilePlugin {
     final byte[] z80header = new byte[extra.length - (banksInExtra + 1)];
     System.arraycopy(extra, banksInExtra + 1, z80header, 0, z80header.length);
     final int version = getVersion(z80header);
-    final Z80MainHeader mheader = Z80_MAINPART.parse(z80header).mapTo(Z80MainHeader.class);
+    final Z80MainHeader mheader = Z80_MAINPART.parse(z80header).mapTo(new Z80MainHeader());
     final int regpc = version == VERSION_1 ? mheader.reg_pc : ((z80header[33] & 0xFF) << 8) | (z80header[32] & 0xFF);
 
     final ZXEMLSnapshotFormat block = new ZXEMLSnapshotFormat();

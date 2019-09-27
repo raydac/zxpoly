@@ -83,7 +83,7 @@ public class HOBETAPlugin extends AbstractFilePlugin {
       try {
         final StringBuilder result = new StringBuilder();
 
-        final Hobeta hobeta = HOBETA_FILE_PARSER.parse(new FileInputStream(file)).mapTo(Hobeta.class);
+        final Hobeta hobeta = HOBETA_FILE_PARSER.parse(new FileInputStream(file)).mapTo(new Hobeta());
         result.append("     Name:").append(hobeta.name).append("  ").append('\n');
         result.append("     Type:").append((char) hobeta.type).append("  ").append('\n');
         result.append("    Start:").append(hobeta.start).append("  ").append('\n');
@@ -102,7 +102,7 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   @Override
   public ReadResult readFrom(final File file, final int index) throws IOException {
     final byte[] wholeFile = FileUtils.readFileToByteArray(file);
-    final Hobeta parsed = HOBETA_FILE_PARSER.parse(wholeFile).mapTo(Hobeta.class);
+    final Hobeta parsed = HOBETA_FILE_PARSER.parse(wholeFile).mapTo(new Hobeta());
     return new ReadResult(new ZXPolyData(new Info(parsed.name, (char) (parsed.type & 0xFF), parsed.start, parsed.length, 0), this, parsed.data), null);
   }
 

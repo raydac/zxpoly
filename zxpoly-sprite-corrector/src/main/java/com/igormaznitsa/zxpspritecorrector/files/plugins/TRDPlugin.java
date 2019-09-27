@@ -79,7 +79,7 @@ public class TRDPlugin extends AbstractFilePlugin {
         in = new JBBPBitInputStream(new FileInputStream(file));
 
         for (int i = 0; i < 128; i++) {
-          final TRDosCatalogItem item = CATALOG_PARSER.parse(in).mapTo(TRDosCatalogItem.class);
+          final TRDosCatalogItem item = CATALOG_PARSER.parse(in).mapTo(new TRDosCatalogItem());
           if (item.name.charAt(0) > 1) {
             result.add(new Info(item.name, item.type, item.start, item.length, -1));
           }
@@ -101,7 +101,7 @@ public class TRDPlugin extends AbstractFilePlugin {
     try {
       final List<TRDosCatalogItem> list = new ArrayList<TRDosCatalogItem>();
       for (int i = 0; i < 128; i++) {
-        final TRDosCatalogItem item = CATALOG_PARSER.parse(inStream).mapTo(TRDosCatalogItem.class);
+        final TRDosCatalogItem item = CATALOG_PARSER.parse(inStream).mapTo(new TRDosCatalogItem());
         if (item.name.charAt(0) > 1) {
           list.add(item);
         }

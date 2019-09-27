@@ -124,7 +124,7 @@ public class ZXPolyData {
       throw new IOException("It is not a valid data block");
     }
 
-    final Parsed parsed = PARSER.parse(inStream).mapTo(Parsed.class);
+    final Parsed parsed = PARSER.parse(inStream).mapTo(new Parsed());
 
     this.info = new Info(new ByteArrayInputStream(parsed.info));
     this.basedata = parsed.array;
