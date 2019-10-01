@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,13 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.formats;
 
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
-import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 public class ZXEMLSnapshotFormat extends ZXPParser {
 
@@ -70,8 +71,15 @@ public class ZXEMLSnapshotFormat extends ZXPParser {
     }
   }
 
+  public ZXEMLSnapshotFormat(final byte[] data) throws IOException {
+    this.read(new JBBPBitInputStream(new ByteArrayInputStream(data)));
+    if (this.getMAGIC() != MAGIC) {
+      throw new IOException("It is not ZXEML snapshot");
+    }
+  }
+
   public void setModulePorts(final int cpuIndex, final int port7FFD, final int r0, final int r1, final int r2, final int r3) {
-    final byte data[] = new byte[]{(byte) port7FFD, (byte) r0, (byte) r1, (byte) r2, (byte) r3};
+    final byte[] data = new byte[] {(byte) port7FFD, (byte) r0, (byte) r1, (byte) r2, (byte) r3};
     switch (cpuIndex) {
       case INDEX_CPU0:
         this.setCPU0PORTS(data);
@@ -102,13 +110,6 @@ public class ZXEMLSnapshotFormat extends ZXPParser {
         return this.getCPU3PORTS();
       default:
         throw new IllegalArgumentException("Illegal CPU index");
-    }
-  }
-
-  public ZXEMLSnapshotFormat(final byte[] data) throws IOException {
-    this.read(new JBBPBitInputStream(new ByteArrayInputStream(data)));
-    if (this.getMAGIC() != MAGIC) {
-      throw new IOException("It is not ZXEML snapshot");
     }
   }
 

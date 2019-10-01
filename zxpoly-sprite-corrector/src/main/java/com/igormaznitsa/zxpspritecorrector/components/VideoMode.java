@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,12 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.components;
 
 import java.awt.Dimension;
 
 /**
- *
  * @author Igor Maznitsa (http://www.igormaznitsa.com)
  */
 public enum VideoMode {
@@ -39,6 +39,12 @@ public enum VideoMode {
     }
   }
 
+  private final Dimension size;
+
+  VideoMode(final int width, final int height) {
+    this.size = new Dimension(width, height);
+  }
+
   public static int zxy2y(final int y) {
     return ZX_Y_TO_LINEAR[y] & 0xFF;
   }
@@ -53,12 +59,6 @@ public enum VideoMode {
 
   public static int extractXFromAddress(final int address) {
     return address & 0x1F;
-  }
-
-  private final Dimension size;
-
-  private VideoMode(final int width, final int height) {
-    this.size = new Dimension(width, height);
   }
 
   public Dimension getSize() {

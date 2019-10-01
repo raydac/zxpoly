@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,10 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
 import com.igormaznitsa.jbbp.JBBPParser;
-import com.igormaznitsa.jbbp.io.*;
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPByteOrder;
+import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.mapper.Bin;
 import com.igormaznitsa.jbbp.mapper.BinType;
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
@@ -25,32 +28,16 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 public class HOBETAPlugin extends AbstractFilePlugin {
 
   public static final JBBPParser HOBETA_FILE_PARSER = JBBPParser.prepare("byte [8] name; byte type; <ushort start; <ushort length; skip; ubyte sectors; <ushort checksum; byte [_] data;");
-
-  private final class Hobeta {
-
-    @Bin(type = BinType.BYTE_ARRAY)
-    String name;
-    @Bin(type = BinType.BYTE)
-    byte type;
-    @Bin(type = BinType.USHORT)
-    int start;
-    @Bin(type = BinType.USHORT)
-    int length;
-    @Bin(type = BinType.UBYTE)
-    int sectors;
-    @Bin(type = BinType.USHORT)
-    int checksum;
-    @Bin
-    byte[] data;
-  }
 
   public HOBETAPlugin() {
     super();
@@ -123,11 +110,11 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     final String zxName = data.getInfo().getName();
 
     final FileNameDialog nameDialog = new FileNameDialog(
-            this.mainFrame,
-            "Base file name is " + file.getName(),
-            new String[]{addNumberToFileName(name, 0), addNumberToFileName(name, 1), addNumberToFileName(name, 2), addNumberToFileName(name, 3)},
-            new String[]{prepareNameForTRD(zxName, 0), prepareNameForTRD(zxName, 1), prepareNameForTRD(zxName, 2), prepareNameForTRD(zxName, 3)},
-            new char[]{zxType, zxType, zxType, zxType}
+        this.mainFrame,
+        "Base file name is " + file.getName(),
+        new String[] {addNumberToFileName(name, 0), addNumberToFileName(name, 1), addNumberToFileName(name, 2), addNumberToFileName(name, 3)},
+        new String[] {prepareNameForTRD(zxName, 0), prepareNameForTRD(zxName, 1), prepareNameForTRD(zxName, 2), prepareNameForTRD(zxName, 3)},
+        new char[] {zxType, zxType, zxType, zxType}
     );
     nameDialog.setVisible(true);
 
@@ -162,7 +149,8 @@ public class HOBETAPlugin extends AbstractFilePlugin {
 
   private int makeCRC(final byte[] array) {
     int crc = 0;
-    for (int i = 0; i < array.length; crc = crc + (array[i] * 257) + i, i++);
+    for (int i = 0; i < array.length; crc = crc + (array[i] * 257) + i, i++) {
+    }
     return crc;
   }
 
@@ -180,6 +168,24 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   @Override
   public String getDescription() {
     return getToolTip(false) + " (*.$?)";
+  }
+
+  private static final class Hobeta {
+
+    @Bin(type = BinType.BYTE_ARRAY)
+    String name;
+    @Bin(type = BinType.BYTE)
+    byte type;
+    @Bin(type = BinType.USHORT)
+    int start;
+    @Bin(type = BinType.USHORT)
+    int length;
+    @Bin(type = BinType.UBYTE)
+    int sectors;
+    @Bin(type = BinType.USHORT)
+    int checksum;
+    @Bin
+    byte[] data;
   }
 
 }

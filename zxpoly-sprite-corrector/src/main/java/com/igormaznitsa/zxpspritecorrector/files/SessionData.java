@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,9 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.files;
 
-import com.igormaznitsa.jbbp.io.*;
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPByteOrder;
+import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
 import java.io.IOException;
 
@@ -31,6 +34,30 @@ public class SessionData {
   private final boolean mode512x384;
   private final int zoom;
   private final EditorComponent.AttributeMode attributeMode;
+
+  public SessionData(final JBBPBitInputStream inStream) throws IOException {
+    baseAddress = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
+    showGrid = inStream.readBoolean();
+    showColumns = inStream.readBoolean();
+    zxAddressing = inStream.readBoolean();
+    invertBase = inStream.readBoolean();
+    mode512x384 = inStream.readBoolean();
+    columnNumber = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
+    attributeMode = EditorComponent.AttributeMode.values()[inStream.readInt(JBBPByteOrder.BIG_ENDIAN)];
+    zoom = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
+  }
+
+  public SessionData(final EditorComponent editor) {
+    this.baseAddress = editor.getAddress();
+    this.showGrid = editor.isShowGrid();
+    this.showColumns = editor.isShowColumnBorders();
+    this.columnNumber = editor.getColumns();
+    this.zxAddressing = editor.isZXScreenMode();
+    this.attributeMode = editor.getShowAttributes();
+    this.invertBase = editor.isInvertShowBaseData();
+    this.mode512x384 = editor.isMode512();
+    this.zoom = editor.getZoom();
+  }
 
   public int getBaseAddress() {
     return this.baseAddress;
@@ -68,30 +95,6 @@ public class SessionData {
     return this.attributeMode;
   }
 
-  public SessionData(final JBBPBitInputStream inStream) throws IOException {
-    baseAddress = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
-    showGrid = inStream.readBoolean();
-    showColumns = inStream.readBoolean();
-    zxAddressing = inStream.readBoolean();
-    invertBase = inStream.readBoolean();
-    mode512x384 = inStream.readBoolean();
-    columnNumber = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
-    attributeMode = EditorComponent.AttributeMode.values()[inStream.readInt(JBBPByteOrder.BIG_ENDIAN)];
-    zoom = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
-  }
-
-  public SessionData(final EditorComponent editor) {
-    this.baseAddress = editor.getAddress();
-    this.showGrid = editor.isShowGrid();
-    this.showColumns = editor.isShowColumnBorders();
-    this.columnNumber = editor.getColumns();
-    this.zxAddressing = editor.isZXScreenMode();
-    this.attributeMode = editor.getShowAttributes();
-    this.invertBase = editor.isInvertShowBaseData();
-    this.mode512x384 = editor.isMode512();
-    this.zoom = editor.getZoom();
-  }
-
   public void fill(final EditorComponent editor) {
     editor.setAddress(this.baseAddress);
     editor.setShowGrid(this.showGrid);
@@ -104,9 +107,9 @@ public class SessionData {
 
   public byte[] makeArray() throws IOException {
     return JBBPOut.BeginBin().
-            Int(this.baseAddress).
-            Bool(this.showGrid, this.showColumns, this.zxAddressing, this.invertBase, this.mode512x384).
-            Int(this.columnNumber, this.attributeMode.ordinal(), this.zoom).End().toByteArray();
+        Int(this.baseAddress).
+        Bool(this.showGrid, this.showColumns, this.zxAddressing, this.invertBase, this.mode512x384).
+        Int(this.columnNumber, this.attributeMode.ordinal(), this.zoom).End().toByteArray();
   }
 
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,19 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.z80;
 
 public class CompileInstructionException extends RuntimeException {
   private static final long serialVersionUID = 1861814764760862649L;
-  
+
   private final Z80Instruction source;
-  
-  public CompileInstructionException(final Z80Instruction source, final String text){
+
+  public CompileInstructionException(final Z80Instruction source, final String text) {
     super(text);
     this.source = source;
   }
-  
-  public Z80Instruction getSource(){
+
+  public Z80Instruction getSource() {
     return this.source;
   }
 }

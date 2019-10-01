@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,10 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
 import com.igormaznitsa.jbbp.JBBPParser;
-import com.igormaznitsa.jbbp.io.*;
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPByteOrder;
+import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.mapper.Bin;
 import com.igormaznitsa.jbbp.mapper.BinType;
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
@@ -25,26 +28,16 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class SCLPlugin extends AbstractFilePlugin {
 
   public static final JBBPParser CATALOG_PARSER = JBBPParser.prepare("byte [8] name; ubyte type; <ushort start; <ushort length; ubyte sectors;");
-
-  private static final class SCLCatalogItem {
-
-    @Bin(type = BinType.BYTE_ARRAY)
-    String name;
-    @Bin(type = BinType.UBYTE)
-    char type;
-    @Bin(type = BinType.USHORT)
-    int start;
-    @Bin(type = BinType.USHORT)
-    int length;
-    @Bin(type = BinType.UBYTE)
-    int sectors;
-  }
 
   public SCLPlugin() {
     super();
@@ -73,7 +66,7 @@ public class SCLPlugin extends AbstractFilePlugin {
   @Override
   public List<Info> getImportingContainerFileList(final File file) {
     try {
-      final List<Info> result = new ArrayList<Info>();
+      final List<Info> result = new ArrayList<>();
 
       JBBPBitInputStream in = null;
       try {
@@ -102,7 +95,7 @@ public class SCLPlugin extends AbstractFilePlugin {
 
   @Override
   public ReadResult readFrom(final File file, final int index) throws IOException {
-    final List<SCLCatalogItem> list = new ArrayList<SCLCatalogItem>();
+    final List<SCLCatalogItem> list = new ArrayList<>();
     final JBBPBitInputStream in = new JBBPBitInputStream(new FileInputStream(file));
     try {
       final long id = in.readLong(JBBPByteOrder.BIG_ENDIAN);
@@ -137,11 +130,11 @@ public class SCLPlugin extends AbstractFilePlugin {
   public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
 
     final String zxname = data.getInfo().getName();
-    final String[] zxFileName = new String[]{prepareNameForTRD(zxname, 0), prepareNameForTRD(zxname, 1), prepareNameForTRD(zxname, 2), prepareNameForTRD(zxname, 3)};
+    final String[] zxFileName = new String[] {prepareNameForTRD(zxname, 0), prepareNameForTRD(zxname, 1), prepareNameForTRD(zxname, 2), prepareNameForTRD(zxname, 3)};
 
     final char type = data.getInfo().getType();
 
-    final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "SCL file " + file.getName(), null, zxFileName, new char[]{type, type, type, type});
+    final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "SCL file " + file.getName(), null, zxFileName, new char[] {type, type, type, type});
     fileNameDialog.setVisible(true);
     if (fileNameDialog.approved()) {
       final JBBPOut out = JBBPOut.BeginBin();
@@ -153,7 +146,7 @@ public class SCLPlugin extends AbstractFilePlugin {
       final int sectors = (data.length() >>> 8) + ((data.length() & 0xFF) == 0 ? 0 : 1);
 
       for (int i = 0; i < 4; i++) {
-        out.Byte(fnames[i]).Byte(fchars[i].charValue()).Short(data.getInfo().getStartAddress(), data.getInfo().getLength()).Byte(sectors);
+        out.Byte(fnames[i]).Byte(fchars[i]).Short(data.getInfo().getStartAddress(), data.getInfo().getLength()).Byte(sectors);
       }
 
       out.ResetCounter();
@@ -188,6 +181,20 @@ public class SCLPlugin extends AbstractFilePlugin {
   @Override
   public String getDescription() {
     return getToolTip(false) + " (*.SCL)";
+  }
+
+  private static final class SCLCatalogItem {
+
+    @Bin(type = BinType.BYTE_ARRAY)
+    String name;
+    @Bin(type = BinType.UBYTE)
+    char type;
+    @Bin(type = BinType.USHORT)
+    int start;
+    @Bin(type = BinType.USHORT)
+    int length;
+    @Bin(type = BinType.UBYTE)
+    int sectors;
   }
 
 }

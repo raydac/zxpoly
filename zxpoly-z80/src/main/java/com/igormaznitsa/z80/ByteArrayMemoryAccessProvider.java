@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,17 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.z80;
 
 public class ByteArrayMemoryAccessProvider implements MemoryAccessProvider {
-  private final byte [] array;
-  
-  public ByteArrayMemoryAccessProvider(final byte [] array){
+  private final byte[] array;
+
+  public ByteArrayMemoryAccessProvider(final byte[] array) {
     this.array = array;
   }
 
   @Override
-  public byte readAddress (final int address) {
+  public byte readAddress(final int address) {
     return this.array[address % this.array.length];
   }
 }

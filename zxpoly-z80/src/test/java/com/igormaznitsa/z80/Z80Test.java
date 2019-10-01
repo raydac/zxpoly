@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,10 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.z80;
 
-import org.junit.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+
+import org.junit.Test;
 
 public class Z80Test extends AbstractZ80Test {
 
@@ -84,7 +89,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = executeCommand(state, 0x79);
     cpu.setIM(2);
     cpu.setIFF(false, true);
-    assertTrue(cpu.compareState(new Z80(cpu),false));
+    assertTrue(cpu.compareState(new Z80(cpu), false));
   }
 
   @Test
@@ -2677,8 +2682,8 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_RLC_r() {
-    final int[] codes = new int[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x07};
-    final int[] regs = new int[]{Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
+    final int[] codes = new int[] {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x07};
+    final int[] regs = new int[] {Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
     for (int i = 0; i < codes.length; i++) {
       final Z80State state = new Z80State();
       state.A = 0x88;
@@ -3210,8 +3215,8 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_BIT_2_reg() {
-    final int[] codes = new int[]{0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x57};
-    final int[] regs = new int[]{Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
+    final int[] codes = new int[] {0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x57};
+    final int[] regs = new int[] {Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
     for (int i = 0; i < codes.length; i++) {
       final Z80State state = new Z80State();
       state.B = (~4) & 0xFF;
@@ -4264,14 +4269,14 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_RETN() {
-    final int[][] RETN = new int[][]{
-      {0xED, 0x45},
-      {0xED, 0x55},
-      {0xED, 0x65},
-      {0xED, 0x75},
-      {0xED, 0x5D},
-      {0xED, 0x6D},
-      {0xED, 0x7D}
+    final int[][] RETN = new int[][] {
+        {0xED, 0x45},
+        {0xED, 0x55},
+        {0xED, 0x65},
+        {0xED, 0x75},
+        {0xED, 0x5D},
+        {0xED, 0x6D},
+        {0xED, 0x7D}
     };
 
     for (final int[] cmd : RETN) {
@@ -4304,8 +4309,8 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_RST_nn() {
-    final int[] codes = new int[]{0xC7, 0xCF, 0xD7, 0xDF, 0xE7, 0xEF, 0xF7, 0xFF};
-    final int[] address = new int[]{0x0000, 0x0008, 0x0010, 0x0018, 0x0020, 0x0028, 0x0030, 0x0038};
+    final int[] codes = new int[] {0xC7, 0xCF, 0xD7, 0xDF, 0xE7, 0xEF, 0xF7, 0xFF};
+    final int[] address = new int[] {0x0000, 0x0008, 0x0010, 0x0018, 0x0020, 0x0028, 0x0030, 0x0038};
     for (int i = 0; i < codes.length; i++) {
       final TestBus testbus = new TestBus(0, 0x1A47, codes[i]);
       final Z80 cpu = new Z80(testbus);
@@ -4751,8 +4756,8 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_IN_r_mC() {
-    final int[] codes = new int[]{0x78, 0x40, 0x48, 0x50, 0x58, 0x60, 0x68};
-    final int[] regs = new int[]{Z80.REG_A, Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L};
+    final int[] codes = new int[] {0x78, 0x40, 0x48, 0x50, 0x58, 0x60, 0x68};
+    final int[] regs = new int[] {Z80.REG_A, Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L};
 
     for (int i = 0; i < codes.length; i++) {
       final TestBus tb = new TestBus(0, 0, 0xED, codes[i]);
@@ -4931,8 +4936,8 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_OUT_mC_r() {
-    final int[] codes = new int[]{0x79, 0x51, 0x59, 0x61, 0x69};
-    final int[] regs = new int[]{Z80.REG_A, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L};
+    final int[] codes = new int[] {0x79, 0x51, 0x59, 0x61, 0x69};
+    final int[] regs = new int[] {Z80.REG_A, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L};
 
     for (int i = 0; i < codes.length; i++) {
       final TestBus tb = new TestBus(0, 0, 0xED, codes[i]);
@@ -5081,8 +5086,8 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_RLC_mIXd_r() {
-    final int[] codes = new int[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x07};
-    final int[] regs = new int[]{Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
+    final int[] codes = new int[] {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x07};
+    final int[] regs = new int[] {Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
 
     for (int i = 0; i < codes.length; i++) {
       final Z80State state = new Z80State();
@@ -5110,8 +5115,8 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_RLC_mIYd_r() {
-    final int[] codes = new int[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x07};
-    final int[] regs = new int[]{Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
+    final int[] codes = new int[] {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x07};
+    final int[] regs = new int[] {Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
 
     for (int i = 0; i < codes.length; i++) {
       final Z80State state = new Z80State();
@@ -5139,8 +5144,8 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_RES_4_mIXd_r() {
-    final int[] codes = new int[]{0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA7};
-    final int[] regs = new int[]{Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
+    final int[] codes = new int[] {0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA7};
+    final int[] regs = new int[] {Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
 
     for (int i = 0; i < codes.length; i++) {
       final Z80State state = new Z80State();
@@ -5168,8 +5173,8 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_RES_4_mIYd_r() {
-    final int[] codes = new int[]{0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA7};
-    final int[] regs = new int[]{Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
+    final int[] codes = new int[] {0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA7};
+    final int[] regs = new int[] {Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
 
     for (int i = 0; i < codes.length; i++) {
       final Z80State state = new Z80State();
@@ -5197,8 +5202,8 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_SET_4_mIXd_r() {
-    final int[] codes = new int[]{0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE7};
-    final int[] regs = new int[]{Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
+    final int[] codes = new int[] {0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE7};
+    final int[] regs = new int[] {Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
 
     for (int i = 0; i < codes.length; i++) {
       final Z80State state = new Z80State();
@@ -5226,8 +5231,8 @@ public class Z80Test extends AbstractZ80Test {
 
   @Test
   public void testCommand_SET_4_mIYd_r() {
-    final int[] codes = new int[]{0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE7};
-    final int[] regs = new int[]{Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
+    final int[] codes = new int[] {0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE7};
+    final int[] regs = new int[] {Z80.REG_B, Z80.REG_C, Z80.REG_D, Z80.REG_E, Z80.REG_H, Z80.REG_L, Z80.REG_A};
 
     for (int i = 0; i < codes.length; i++) {
       final Z80State state = new Z80State();

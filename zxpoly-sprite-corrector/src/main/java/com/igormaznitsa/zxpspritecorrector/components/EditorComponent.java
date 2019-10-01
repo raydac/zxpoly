@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,52 +14,63 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.components;
 
 import com.igormaznitsa.zxpspritecorrector.utils.ZXPalette;
-import java.awt.*;
-import java.awt.image.*;
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
+import java.awt.image.BufferedImage;
+import java.awt.image.PixelGrabber;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.SpinnerModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 public final class EditorComponent extends JComponent implements SpinnerModel {
 
-  public enum ColumnMode {
-    ALL,
-    ODD,
-    EVEN
-  }
-
-  public enum AttributeMode {
-
-    DONT_SHOW,
-    SHOW_BASE,
-    SHOW_512x384_ZXPOLY_PLANES
-  }
-
   private static final long serialVersionUID = -6948149982924499351L;
-
   private static final Stroke GRID_STROKE = new BasicStroke(0.3f);
   private static final Stroke COLUMN_BORDER_STROKE = new BasicStroke(0.7f);
   private static final Stroke TOOL_AREA_STROKE = new BasicStroke(2.3f);
-  private static final Stroke SELECTED_AREA_STROKE = new BasicStroke(3.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3, 3}, 0);
+  private static final Stroke SELECTED_AREA_STROKE = new BasicStroke(3.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[] {3, 3}, 0);
+  private static final RenderingHints RENDERING_IMAGE_HINTS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+  private static final RenderingHints RENDERING_LINE_HINTS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
 
+  static {
+    RENDERING_IMAGE_HINTS.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
+    RENDERING_IMAGE_HINTS.put(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
+
+    RENDERING_LINE_HINTS.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
+  }
+
+  private final ZXGraphics zxGraphics = new ZXGraphics(this);
+  private final List<ChangeListener> changeListeners = new ArrayList<>();
+  private final java.util.List<ZXPolyData.UndoBlock> listUndo = new ArrayList<>();
+  private final java.util.List<ZXPolyData.UndoBlock> listRedo = new ArrayList<>();
   private Color colorSelectedAreaBorder = Color.MAGENTA.brighter().brighter();
   private Color colorToolArea = Color.WHITE;
-
   private Color colorPixelOn = Color.GRAY.darker();
   private Color colorPixelOff = Color.DARK_GRAY.darker();
   private Color colorZX512On = Color.YELLOW;
   private Color colorZX512Off = Color.BLUE;
   private Color colorGrid = Color.ORANGE.darker();
   private Color colorColumnBorder = Color.CYAN;
-
   private BufferedImage image;
   private boolean mode512;
-
   private boolean invertShowBaseData;
   private boolean showColumnBorders;
   private boolean showGrid;
@@ -71,31 +82,23 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   private int columns = 32;
   private ZXPolyData processingData;
   private int startAddress;
-
   private Point startSelectedAreaPoint;
   private Rectangle selectedArea;
   private Rectangle toolArea;
   private Point cursorPoint = new Point(0, 0);
-
   private Image draggedImage;
-
   private int gridStep = 1;
+  public EditorComponent() {
+    super();
+    this.setBorder(BorderFactory.createEmptyBorder());
+    setMode512(false);
+  }
 
-  private final ZXGraphics zxGraphics = new ZXGraphics(this);
-
-  private final List<ChangeListener> changeListeners = new ArrayList<>();
-
-  private final java.util.List<ZXPolyData.UndoBlock> listUndo = new ArrayList<>();
-  private final java.util.List<ZXPolyData.UndoBlock> listRedo = new ArrayList<>();
-
-  private static final RenderingHints RENDERING_IMAGE_HINTS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-  private static final RenderingHints RENDERING_LINE_HINTS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-
-  static {
-    RENDERING_IMAGE_HINTS.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
-    RENDERING_IMAGE_HINTS.put(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
-
-    RENDERING_LINE_HINTS.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
+  public static double intensity(final int rgb) {
+    int r = (rgb >>> 16) & 0xFF;
+    int g = (rgb >>> 8) & 0xFF;
+    int b = rgb & 0xFF;
+    return 0.299 * r + 0.587 * g + 0.114 * b;
   }
 
   public Point mousePoint2ScreenPoint(final Point pointAtComponent) {
@@ -162,258 +165,17 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     return this.selectedArea == null ? null : new Rectangle(this.selectedArea);
   }
 
-  public static final class ZXGraphics {
-
-    private final EditorComponent editor;
-
-    private ZXGraphics(final EditorComponent editor) {
-      this.editor = editor;
-    }
-
-    public int coordToAddress(int x, final int y) {
-      final int result;
-
-      final ZXPolyData data = this.editor.processingData;
-
-      if (data == null || x < 0 || y < 0) {
-        result = -1;
-      } else {
-        final boolean m512 = this.editor.mode512;
-        final int columns = this.editor.columns;
-        final int vcolumn = m512 ? x >> 4 : x >> 3;
-
-        if (vcolumn > 31) {
-          return -1;
-        }
-
-        int startAddr = this.editor.startAddress;
-
-        switch (this.editor.columnMode) {
-          case EVEN: {
-            startAddr = startAddr + ((startAddr & 1) ^ 1);
-            x += (vcolumn << (m512 ? 4 : 3));
-          }
-          break;
-          case ODD: {
-            startAddr = startAddr + (startAddr & 1);
-            x += (vcolumn << (m512 ? 4 : 3));
-          }
-          break;
-        }
-
-        final int dx = m512 ? x >> 1 : x;
-        final int dy = m512 ? y >> 1 : y;
-
-        if (dy > 191) {
-          return -1;
-        }
-
-        final int theY = this.editor.addressingModeZXScreen ? VideoMode.zxy2y(dy) : dy;
-        final int rowAddress = theY * columns + startAddr;
-
-        if (dx >= (columns << 3) || rowAddress >= data.length()) {
-          result = -1;
-        } else {
-          result = (dx >>> 3) + rowAddress;
-        }
-      }
-
-      return result;
-    }
-
-    private static int makeXMask(final int x) {
-      return 1 << (7 - (x & 0x7));
-    }
-
-    public ZXGraphics setPoint(final int x, final int y, final int cpu3012) {
-      final int address = coordToAddress(x, y);
-      if (address >= 0) {
-        final int mask = this.editor.processingData.getMask(address);
-
-        final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
-
-        if (this.editor.mode512) {
-          final int bitmask = makeXMask(x >> 1);
-          final int invertedbitmask = ~bitmask;
-
-          final int value = (cpu3012 == 0 ? 0 : 0xFF) & bitmask;
-
-          if ((x & 1) == 0) {
-            if ((y & 1) == 0) {
-              // CPU 0
-              this.editor.processingData.setZXPolyData(address, mask | bitmask,
-                      ((packed3012 >>> 16) & invertedbitmask) | value,
-                      packed3012 >>> 8,
-                      packed3012,
-                      packed3012 >>> 24);
-            } else {
-              // CPU 2
-              this.editor.processingData.setZXPolyData(address, mask | bitmask,
-                      packed3012 >>> 16,
-                      packed3012 >>> 8,
-                      (packed3012 & invertedbitmask) | value,
-                      packed3012 >>> 24);
-            }
-          } else {
-            if ((y & 1) == 0) {
-              // CPU 1
-              this.editor.processingData.setZXPolyData(address, mask | bitmask,
-                      packed3012 >>> 16,
-                      ((packed3012 >>> 8) & invertedbitmask) | value,
-                      packed3012,
-                      packed3012 >>> 24);
-            } else {
-              // CPU 3
-              this.editor.processingData.setZXPolyData(address, mask | bitmask,
-                      packed3012 >>> 16,
-                      packed3012 >>> 8,
-                      packed3012,
-                      ((packed3012 >>> 24) & invertedbitmask) | value);
-            }
-          }
-
-        } else {
-          final int bitmask = makeXMask(x);
-          final int invertedbitmask = ~bitmask;
-          this.editor.processingData.setZXPolyData(address, mask | bitmask,
-                  ((packed3012 >>> 16) & invertedbitmask) | (((cpu3012 & 4) == 0 ? 0 : 0xFF) & bitmask),
-                  ((packed3012 >>> 8) & invertedbitmask) | (((cpu3012 & 2) == 0 ? 0 : 0xFF) & bitmask),
-                  (packed3012 & invertedbitmask) | (((cpu3012 & 1) == 0 ? 0 : 0xFF) & bitmask),
-                  ((packed3012 >>> 24) & invertedbitmask) | (((cpu3012 & 8) == 0 ? 0 : 0xFF) & bitmask)
-          );
-        }
-      }
-
-      return this;
-    }
-
-    public ZXGraphics resetPoint(final int x, final int y, final boolean copyBasePointToPlanes) {
-      final int address = coordToAddress(x, y);
-      if (address >= 0) {
-        final int mask = this.editor.processingData.getMask(address);
-
-        if (copyBasePointToPlanes) {
-          final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
-          final int bitmask = makeXMask(x >> (this.editor.mode512 ? 1 : 0));
-          final boolean reset = (this.editor.processingData.getBaseData(address) & bitmask) == 0;
-          if (reset) {
-            final int invertedmask = ~bitmask;
-            this.editor.processingData.setZXPolyData(
-                    address,
-                    bitmask | this.editor.processingData.getMask(address),
-                    (packed3012 >>> 16) & invertedmask,
-                    (packed3012 >>> 8) & invertedmask,
-                    packed3012 & invertedmask,
-                    (packed3012 >>> 24) & invertedmask
-            );
-          } else {
-            this.editor.processingData.setZXPolyData(
-                    address,
-                    bitmask | this.editor.processingData.getMask(address),
-                    (packed3012 >>> 16) | bitmask,
-                    (packed3012 >>> 8) | bitmask,
-                    packed3012 | bitmask,
-                    (packed3012 >>> 24) | bitmask
-            );
-          }
-        } else {
-          final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
-          final int bitmask = makeXMask(x >> (this.editor.mode512 ? 1 : 0));
-          final int invertedbitmask = ~bitmask;
-          this.editor.processingData.setZXPolyData(address, mask & invertedbitmask,
-                  (packed3012 >>> 16) & invertedbitmask,
-                  (packed3012 >>> 8) & invertedbitmask,
-                  packed3012 & invertedbitmask,
-                  (packed3012 >>> 24) & invertedbitmask
-          );
-        }
-      }
-
-      return this;
-    }
-
-    public boolean isPointSetIn512(final int x, final int y) {
-      final int address = coordToAddress(x, y);
-      boolean result = false;
-      
-      final int bitmask = makeXMask(x>>1);
-
-      if ((this.editor.processingData.getMask(address) & bitmask) != 0) {
-        final int packedData3012 = this.editor.processingData.getPackedZxPolyData3012(address);
-        
-        final int xshift = (x>>1) & 7;
-        
-        int data0 = (packedData3012 >>> 16) << xshift;
-        int data1 = (packedData3012 >>> 8) << xshift;
-        int data2 = packedData3012 << xshift;
-        int data3 = (packedData3012 >>> 24) << xshift;
-
-        if ((y & 1) == 0) {
-          if ((x & 1) == 0) {
-            result = (data0 & 0x80) != 0;
-          } else {
-            result = (data1 & 0x80) != 0;
-          }
-        } else {
-          if ((x & 1) == 0) {
-            result = (data2 & 0x80) != 0;
-          } else {
-            result = (data3 & 0x80) != 0;
-          }
-        }
-      }
-      
-      return result;
-    }
-
-    public int getPoint3012(final int x, final int y) {
-      final int address = coordToAddress(x, y);
-
-      int result = 0;
-
-      if (address >= 0) {
-        final int bitmask = makeXMask(x >> (this.editor.mode512 ? 1 : 0));
-
-        if ((this.editor.processingData.getMask(address) & bitmask) == 0) {
-          result = 0;
-        } else {
-          final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
-          result = ((packed3012 & bitmask) == 0 ? 0 : 1)
-                  | ((packed3012 & (bitmask << 8)) == 0 ? 0 : 2)
-                  | ((packed3012 & (bitmask << 16)) == 0 ? 0 : 4)
-                  | ((packed3012 & (bitmask << 24)) == 0 ? 0 : 8);
-        }
-      }
-
-      return result;
-    }
-
-    public boolean isBaseBitSet(final int x, final int y) {
-      final int address = coordToAddress(x, y);
-      if (address >= 0) {
-        return (this.editor.processingData.getBaseData(address) & makeXMask(x >> (this.editor.mode512 ? 1 : 0))) != 0;
-      }
-
-      return false;
-    }
-
-    public void flush() {
-      this.editor._updatePictureInBuffer();
-      this.editor.repaint();
-    }
-  }
-
   public ZXGraphics getZXGraphics() {
     return this.zxGraphics;
+  }
+
+  public Rectangle getToolArea() {
+    return this.toolArea;
   }
 
   public void setToolArea(final Rectangle rect) {
     this.toolArea = rect;
     repaint();
-  }
-
-  public Rectangle getToolArea() {
-    return this.toolArea;
   }
 
   public ZXPolyData getProcessingData() {
@@ -429,18 +191,12 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     repaint();
   }
 
-  public void setColumns(final int value) {
-    this.columns = Math.max(1, Math.min(32, value));
-    _updatePictureInBuffer();
-    repaint();
-  }
-
   public int getColumns() {
     return this.columns;
   }
 
-  public void setInvertShowBaseData(final boolean flag) {
-    this.invertShowBaseData = flag;
+  public void setColumns(final int value) {
+    this.columns = Math.max(1, Math.min(32, value));
     _updatePictureInBuffer();
     repaint();
   }
@@ -449,8 +205,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     return this.invertShowBaseData;
   }
 
-  public void setShowColumnBorders(final boolean flag) {
-    this.showColumnBorders = flag;
+  public void setInvertShowBaseData(final boolean flag) {
+    this.invertShowBaseData = flag;
+    _updatePictureInBuffer();
     repaint();
   }
 
@@ -521,6 +278,11 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     return this.showColumnBorders;
   }
 
+  public void setShowColumnBorders(final boolean flag) {
+    this.showColumnBorders = flag;
+    repaint();
+  }
+
   public boolean isShowGrid() {
     return this.showGrid;
   }
@@ -539,6 +301,10 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     repaint();
   }
 
+  public int getAddress() {
+    return this.startAddress;
+  }
+
   public void setAddress(final int address) {
     if (this.processingData == null) {
       this.startAddress = 0;
@@ -546,16 +312,10 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       this.startAddress = Math.max(0, Math.min(this.processingData.length() - 1, address));
     }
 
-    this.changeListeners.forEach((l) -> {
-      l.stateChanged(new ChangeEvent(this));
-    });
+    this.changeListeners.forEach((l) -> l.stateChanged(new ChangeEvent(this)));
 
     _updatePictureInBuffer();
     repaint();
-  }
-
-  public int getAddress() {
-    return this.startAddress;
   }
 
   @Override
@@ -563,14 +323,14 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     return false;
   }
 
+  public boolean isZXScreenMode() {
+    return this.addressingModeZXScreen;
+  }
+
   public void setZXScreenMode(final boolean flag) {
     this.addressingModeZXScreen = flag;
     _updatePictureInBuffer();
     repaint();
-  }
-
-  public boolean isZXScreenMode() {
-    return this.addressingModeZXScreen;
   }
 
   public Color getToolAreaColor() {
@@ -628,24 +388,24 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     repaint();
   }
 
+  public AttributeMode getShowAttributes() {
+    return this.attributeMode;
+  }
+
   public void setShowAttributes(final AttributeMode selected) {
     this.attributeMode = selected;
     _updatePictureInBuffer();
     repaint();
   }
 
+  public ColumnMode getColumnMode() {
+    return this.columnMode;
+  }
+
   public void setColumnMode(final ColumnMode selected) {
     this.columnMode = selected;
     _updatePictureInBuffer();
     repaint();
-  }
-
-  public AttributeMode getShowAttributes() {
-    return this.attributeMode;
-  }
-
-  public ColumnMode getColumnMode() {
-    return this.columnMode;
   }
 
   public Color getColorGrid() {
@@ -676,8 +436,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     final int width = flag ? 512 : 256;
     final int height = flag ? 384 : 192;
 
-    final BufferedImage newImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-    this.image = newImage;
+    this.image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
     _updatePictureInBuffer();
     _updatePreferredSize();
 
@@ -693,13 +452,13 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   private Point ensureInsideScreenAndEven(final Point point) {
     if (this.mode512) {
       return new Point(
-              Math.min(511, Math.max(0, point.x)),
-              Math.min(383, Math.max(0, point.y))
+          Math.min(511, Math.max(0, point.x)),
+          Math.min(383, Math.max(0, point.y))
       );
     } else {
       return new Point(
-              Math.min(255, Math.max(0, point.x)),
-              Math.min(191, Math.max(0, point.y))
+          Math.min(255, Math.max(0, point.x)),
+          Math.min(191, Math.max(0, point.y))
       );
     }
   }
@@ -748,15 +507,15 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     repaint();
   }
 
+  public int getZoom() {
+    return this.zoom;
+  }
+
   public void setZoom(final int zoom) {
     this.zoom = Math.max(1, Math.min(10, zoom));
     _updatePreferredSize();
     revalidate();
     repaint();
-  }
-
-  public int getZoom() {
-    return this.zoom;
   }
 
   public void zoomIn() {
@@ -939,14 +698,13 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     return this.image.getHeight() * this.zoom;
   }
 
-  public EditorComponent() {
-    super();
-    this.setBorder(BorderFactory.createEmptyBorder());
-    setMode512(false);
-  }
-
   public Image getDraggedImage() {
     return this.draggedImage;
+  }
+
+  public void setDraggedImage(final Image draggedImage) {
+    this.draggedImage = draggedImage;
+    repaint();
   }
 
   public void doStampDraggedImage() {
@@ -992,20 +750,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     }
   }
 
-  public static double intensity(final int rgb) {
-    int r = (rgb >>> 16) & 0xFF;
-    int g = (rgb >>> 8) & 0xFF;
-    int b = rgb & 0xFF;
-    return 0.299 * r + 0.587 * g + 0.114 * b;
-  }
-
   public boolean hasDraggedImage() {
     return this.draggedImage != null;
-  }
-
-  public void setDraggedImage(final Image draggedImage) {
-    this.draggedImage = draggedImage;
-    repaint();
   }
 
   @Override
@@ -1128,5 +874,259 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   @Override
   public void removeChangeListener(final ChangeListener l) {
     this.changeListeners.remove(l);
+  }
+
+  public enum ColumnMode {
+    ALL,
+    ODD,
+    EVEN
+  }
+
+  public enum AttributeMode {
+
+    DONT_SHOW,
+    SHOW_BASE,
+    SHOW_512x384_ZXPOLY_PLANES
+  }
+
+  public static final class ZXGraphics {
+
+    private final EditorComponent editor;
+
+    private ZXGraphics(final EditorComponent editor) {
+      this.editor = editor;
+    }
+
+    private static int makeXMask(final int x) {
+      return 1 << (7 - (x & 0x7));
+    }
+
+    public int coordToAddress(int x, final int y) {
+      final int result;
+
+      final ZXPolyData data = this.editor.processingData;
+
+      if (data == null || x < 0 || y < 0) {
+        result = -1;
+      } else {
+        final boolean m512 = this.editor.mode512;
+        final int columns = this.editor.columns;
+        final int vcolumn = m512 ? x >> 4 : x >> 3;
+
+        if (vcolumn > 31) {
+          return -1;
+        }
+
+        int startAddr = this.editor.startAddress;
+
+        switch (this.editor.columnMode) {
+          case EVEN: {
+            startAddr = startAddr + ((startAddr & 1) ^ 1);
+            x += (vcolumn << (m512 ? 4 : 3));
+          }
+          break;
+          case ODD: {
+            startAddr = startAddr + (startAddr & 1);
+            x += (vcolumn << (m512 ? 4 : 3));
+          }
+          break;
+        }
+
+        final int dx = m512 ? x >> 1 : x;
+        final int dy = m512 ? y >> 1 : y;
+
+        if (dy > 191) {
+          return -1;
+        }
+
+        final int theY = this.editor.addressingModeZXScreen ? VideoMode.zxy2y(dy) : dy;
+        final int rowAddress = theY * columns + startAddr;
+
+        if (dx >= (columns << 3) || rowAddress >= data.length()) {
+          result = -1;
+        } else {
+          result = (dx >>> 3) + rowAddress;
+        }
+      }
+
+      return result;
+    }
+
+    public ZXGraphics setPoint(final int x, final int y, final int cpu3012) {
+      final int address = coordToAddress(x, y);
+      if (address >= 0) {
+        final int mask = this.editor.processingData.getMask(address);
+
+        final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
+
+        if (this.editor.mode512) {
+          final int bitmask = makeXMask(x >> 1);
+          final int invertedbitmask = ~bitmask;
+
+          final int value = (cpu3012 == 0 ? 0 : 0xFF) & bitmask;
+
+          if ((x & 1) == 0) {
+            if ((y & 1) == 0) {
+              // CPU 0
+              this.editor.processingData.setZXPolyData(address, mask | bitmask,
+                  ((packed3012 >>> 16) & invertedbitmask) | value,
+                  packed3012 >>> 8,
+                  packed3012,
+                  packed3012 >>> 24);
+            } else {
+              // CPU 2
+              this.editor.processingData.setZXPolyData(address, mask | bitmask,
+                  packed3012 >>> 16,
+                  packed3012 >>> 8,
+                  (packed3012 & invertedbitmask) | value,
+                  packed3012 >>> 24);
+            }
+          } else {
+            if ((y & 1) == 0) {
+              // CPU 1
+              this.editor.processingData.setZXPolyData(address, mask | bitmask,
+                  packed3012 >>> 16,
+                  ((packed3012 >>> 8) & invertedbitmask) | value,
+                  packed3012,
+                  packed3012 >>> 24);
+            } else {
+              // CPU 3
+              this.editor.processingData.setZXPolyData(address, mask | bitmask,
+                  packed3012 >>> 16,
+                  packed3012 >>> 8,
+                  packed3012,
+                  ((packed3012 >>> 24) & invertedbitmask) | value);
+            }
+          }
+
+        } else {
+          final int bitmask = makeXMask(x);
+          final int invertedbitmask = ~bitmask;
+          this.editor.processingData.setZXPolyData(address, mask | bitmask,
+              ((packed3012 >>> 16) & invertedbitmask) | (((cpu3012 & 4) == 0 ? 0 : 0xFF) & bitmask),
+              ((packed3012 >>> 8) & invertedbitmask) | (((cpu3012 & 2) == 0 ? 0 : 0xFF) & bitmask),
+              (packed3012 & invertedbitmask) | (((cpu3012 & 1) == 0 ? 0 : 0xFF) & bitmask),
+              ((packed3012 >>> 24) & invertedbitmask) | (((cpu3012 & 8) == 0 ? 0 : 0xFF) & bitmask)
+          );
+        }
+      }
+
+      return this;
+    }
+
+    public ZXGraphics resetPoint(final int x, final int y, final boolean copyBasePointToPlanes) {
+      final int address = coordToAddress(x, y);
+      if (address >= 0) {
+        final int mask = this.editor.processingData.getMask(address);
+
+        if (copyBasePointToPlanes) {
+          final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
+          final int bitmask = makeXMask(x >> (this.editor.mode512 ? 1 : 0));
+          final boolean reset = (this.editor.processingData.getBaseData(address) & bitmask) == 0;
+          if (reset) {
+            final int invertedmask = ~bitmask;
+            this.editor.processingData.setZXPolyData(
+                address,
+                bitmask | this.editor.processingData.getMask(address),
+                (packed3012 >>> 16) & invertedmask,
+                (packed3012 >>> 8) & invertedmask,
+                packed3012 & invertedmask,
+                (packed3012 >>> 24) & invertedmask
+            );
+          } else {
+            this.editor.processingData.setZXPolyData(
+                address,
+                bitmask | this.editor.processingData.getMask(address),
+                (packed3012 >>> 16) | bitmask,
+                (packed3012 >>> 8) | bitmask,
+                packed3012 | bitmask,
+                (packed3012 >>> 24) | bitmask
+            );
+          }
+        } else {
+          final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
+          final int bitmask = makeXMask(x >> (this.editor.mode512 ? 1 : 0));
+          final int invertedbitmask = ~bitmask;
+          this.editor.processingData.setZXPolyData(address, mask & invertedbitmask,
+              (packed3012 >>> 16) & invertedbitmask,
+              (packed3012 >>> 8) & invertedbitmask,
+              packed3012 & invertedbitmask,
+              (packed3012 >>> 24) & invertedbitmask
+          );
+        }
+      }
+
+      return this;
+    }
+
+    public boolean isPointSetIn512(final int x, final int y) {
+      final int address = coordToAddress(x, y);
+      boolean result = false;
+
+      final int bitmask = makeXMask(x >> 1);
+
+      if ((this.editor.processingData.getMask(address) & bitmask) != 0) {
+        final int packedData3012 = this.editor.processingData.getPackedZxPolyData3012(address);
+
+        final int xshift = (x >> 1) & 7;
+
+        int data0 = (packedData3012 >>> 16) << xshift;
+        int data1 = (packedData3012 >>> 8) << xshift;
+        int data2 = packedData3012 << xshift;
+        int data3 = (packedData3012 >>> 24) << xshift;
+
+        if ((y & 1) == 0) {
+          if ((x & 1) == 0) {
+            result = (data0 & 0x80) != 0;
+          } else {
+            result = (data1 & 0x80) != 0;
+          }
+        } else {
+          if ((x & 1) == 0) {
+            result = (data2 & 0x80) != 0;
+          } else {
+            result = (data3 & 0x80) != 0;
+          }
+        }
+      }
+
+      return result;
+    }
+
+    public int getPoint3012(final int x, final int y) {
+      final int address = coordToAddress(x, y);
+
+      int result = 0;
+
+      if (address >= 0) {
+        final int bitmask = makeXMask(x >> (this.editor.mode512 ? 1 : 0));
+
+        if ((this.editor.processingData.getMask(address) & bitmask) == 0) {
+          result = 0;
+        } else {
+          final int packed3012 = this.editor.processingData.getPackedZxPolyData3012(address);
+          result = ((packed3012 & bitmask) == 0 ? 0 : 1)
+              | ((packed3012 & (bitmask << 8)) == 0 ? 0 : 2)
+              | ((packed3012 & (bitmask << 16)) == 0 ? 0 : 4)
+              | ((packed3012 & (bitmask << 24)) == 0 ? 0 : 8);
+        }
+      }
+
+      return result;
+    }
+
+    public boolean isBaseBitSet(final int x, final int y) {
+      final int address = coordToAddress(x, y);
+      if (address >= 0) {
+        return (this.editor.processingData.getBaseData(address) & makeXMask(x >> (this.editor.mode512 ? 1 : 0))) != 0;
+      }
+
+      return false;
+    }
+
+    public void flush() {
+      this.editor._updatePictureInBuffer();
+      this.editor.repaint();
+    }
   }
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.ui;
 
 import com.igormaznitsa.zxpoly.utils.AppOptions;
@@ -21,32 +22,21 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 
+@SuppressWarnings("unchecked")
 public final class OptionsDialog extends javax.swing.JDialog {
 
   private static final long serialVersionUID = -8781309696283010727L;
 
   private final Preferences preferences = Preferences.userNodeForPackage(OptionsDialog.class);
-
-  private static class RomUrl {
-
-    private final String name;
-    private final String link;
-
-    private RomUrl(final String name, final String link) {
-      this.name = name;
-      this.link = link;
-    }
-
-    public String getLink() {
-      return this.link;
-    }
-
-    @Override
-    public String toString() {
-      return this.name;
-    }
-  }
-
+  // Variables declaration - do not modify//GEN-BEGIN:variables
+  private javax.swing.JButton buttonCancel;
+  private javax.swing.JButton buttonOk;
+  private javax.swing.JComboBox comboRom;
+  private javax.swing.Box.Filler filler3;
+  private javax.swing.JLabel jLabel1;
+  private javax.swing.JLabel jLabel3;
+  private javax.swing.JPanel jPanel1;
+  private javax.swing.JSpinner spinnerScrRefreshIntTicks;
   public OptionsDialog(final java.awt.Frame parent) {
     super(parent, true);
     initComponents();
@@ -96,7 +86,7 @@ public final class OptionsDialog extends javax.swing.JDialog {
     setTitle("Options");
     getContentPane().setLayout(new java.awt.GridBagLayout());
 
-    comboRom.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+    comboRom.setModel(new javax.swing.DefaultComboBoxModel(new String[] {"Item 1", "Item 2", "Item 3", "Item 4"}));
     comboRom.setToolTipText("ROM image, it will be downoaded from remote site");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 1;
@@ -140,11 +130,7 @@ public final class OptionsDialog extends javax.swing.JDialog {
     buttonCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/cancel.png"))); // NOI18N
     buttonCancel.setText("Cancel");
     buttonCancel.setToolTipText("Reject changes");
-    buttonCancel.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        buttonCancelActionPerformed(evt);
-      }
-    });
+    buttonCancel.addActionListener(this::buttonCancelActionPerformed);
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 2;
     gridBagConstraints.gridy = 0;
@@ -155,11 +141,7 @@ public final class OptionsDialog extends javax.swing.JDialog {
     buttonOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/ok.png"))); // NOI18N
     buttonOk.setText("Ok");
     buttonOk.setToolTipText("Save changes");
-    buttonOk.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        buttonOkActionPerformed(evt);
-      }
-    });
+    buttonOk.addActionListener(this::buttonOkActionPerformed);
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 0;
@@ -204,14 +186,24 @@ public final class OptionsDialog extends javax.swing.JDialog {
     setVisible(false);
   }//GEN-LAST:event_buttonCancelActionPerformed
 
-  // Variables declaration - do not modify//GEN-BEGIN:variables
-  private javax.swing.JButton buttonCancel;
-  private javax.swing.JButton buttonOk;
-  private javax.swing.JComboBox comboRom;
-  private javax.swing.Box.Filler filler3;
-  private javax.swing.JLabel jLabel1;
-  private javax.swing.JLabel jLabel3;
-  private javax.swing.JPanel jPanel1;
-  private javax.swing.JSpinner spinnerScrRefreshIntTicks;
+  private static class RomUrl {
+
+    private final String name;
+    private final String link;
+
+    private RomUrl(final String name, final String link) {
+      this.name = name;
+      this.link = link;
+    }
+
+    public String getLink() {
+      return this.link;
+    }
+
+    @Override
+    public String toString() {
+      return this.name;
+    }
+  }
   // End of variables declaration//GEN-END:variables
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,12 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.formats;
 
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.z80.Z80;
-import com.igormaznitsa.zxpoly.components.*;
-import java.io.*;
+import com.igormaznitsa.zxpoly.components.Motherboard;
+import com.igormaznitsa.zxpoly.components.VideoController;
+import com.igormaznitsa.zxpoly.components.ZxPolyModule;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 
 public class FormatZXP extends Snapshot {
@@ -34,7 +39,7 @@ public class FormatZXP extends Snapshot {
     final ZXEMLSnapshotFormat snapshot = new ZXEMLSnapshotFormat();
 
     for (int cpu = 0; cpu < 4; cpu++) {
-      final ZXPolyModule module = board.getZXPolyModules()[cpu];
+      final ZxPolyModule module = board.getZXPolyModules()[cpu];
       final Z80 z80 = module.getCPU();
 
       snapshot.getREG_PC()[cpu] = (short) z80.getRegister(Z80.REG_PC);
@@ -88,7 +93,7 @@ public class FormatZXP extends Snapshot {
     final ZXEMLSnapshotFormat snapshot = new ZXEMLSnapshotFormat(array);
 
     for (int cpu = 0; cpu < 4; cpu++) {
-      final ZXPolyModule module = board.getZXPolyModules()[cpu];
+      final ZxPolyModule module = board.getZXPolyModules()[cpu];
       final Z80 z80 = module.getCPU();
 
       z80.setRegister(Z80.REG_PC, snapshot.getREG_PC()[cpu]);

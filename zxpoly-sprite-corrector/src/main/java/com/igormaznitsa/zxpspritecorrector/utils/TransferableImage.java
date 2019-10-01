@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.utils;
 
 import java.awt.Image;
@@ -34,7 +35,7 @@ public final class TransferableImage implements Transferable {
 
   @Override
   public Object getTransferData(DataFlavor flavor)
-          throws UnsupportedFlavorException, IOException {
+      throws UnsupportedFlavorException, IOException {
     if (flavor.equals(DataFlavor.imageFlavor) && image != null) {
       return this.image;
     } else {
@@ -44,7 +45,7 @@ public final class TransferableImage implements Transferable {
 
   @Override
   public DataFlavor[] getTransferDataFlavors() {
-    return new DataFlavor[]{DataFlavor.imageFlavor};
+    return new DataFlavor[] {DataFlavor.imageFlavor};
   }
 
   @Override

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,15 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.components;
 
-import java.awt.*;
+import java.awt.AWTException;
+import java.awt.Point;
+import java.awt.Robot;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.SwingUtilities;
 
-public final class KempstonMouse extends MouseAdapter implements IODevice {
+public final class KempstonMouse extends MouseAdapter implements IoDevice {
 
   private final int MOUSE_BUTTON_LEFT = 1;
   private final int MOUSE_BUTTON_RIGHT = 2;
@@ -60,7 +63,7 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
   }
 
   @Override
-  public int readIO(final ZXPolyModule module, final int port) {
+  public int readIO(final ZxPolyModule module, final int port) {
     int result = 0;
     if (!module.isTRDOSActive()) {
       switch (port) {
@@ -85,7 +88,7 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
   }
 
   @Override
-  public void writeIO(final ZXPolyModule module, final int port, final int value) {
+  public void writeIO(final ZxPolyModule module, final int port, final int value) {
   }
 
   @Override
@@ -134,8 +137,7 @@ public final class KempstonMouse extends MouseAdapter implements IODevice {
 
   @Override
   public void mouseEntered(final MouseEvent e) {
-    if (this.videoController.isHoldMouse()) {
-    } else {
+    if (!this.videoController.isHoldMouse()) {
       this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
     }
   }

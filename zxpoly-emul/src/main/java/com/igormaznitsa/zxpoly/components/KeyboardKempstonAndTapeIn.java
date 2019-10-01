@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,12 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.components;
 
 import java.awt.event.KeyEvent;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicReference;
 
-public final class KeyboardKempstonAndTapeIn implements IODevice {
+public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   private static final int KEMPSTON_RIGHT = 1;
   private static final int KEMPSTON_LEFT = 2;
@@ -34,8 +37,8 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
   private final AtomicIntegerArray keyboardLines = new AtomicIntegerArray(8);
   private final int[] bufferKeyboardLines = new int[8];
   private final AtomicInteger kempstonSignals = new AtomicInteger();
-  private int kempstonBuffer = 0;
   private final AtomicReference<TapeFileReader> tap = new AtomicReference<>();
+  private int kempstonBuffer = 0;
 
   public KeyboardKempstonAndTapeIn(final Motherboard board) {
     this.board = board;
@@ -53,7 +56,7 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
   }
 
   @Override
-  public int readIO(final ZXPolyModule module, final int port) {
+  public int readIO(final ZxPolyModule module, final int port) {
     int result = 0;
     if (!module.isTRDOSActive()) {
       switch (port & 0xFF) {
@@ -75,7 +78,7 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
   }
 
   @Override
-  public void writeIO(final ZXPolyModule module, final int port, final int value) {
+  public void writeIO(final ZxPolyModule module, final int port, final int value) {
   }
 
   @Override
@@ -107,12 +110,12 @@ public final class KeyboardKempstonAndTapeIn implements IODevice {
     return "Keyboard";
   }
 
-  public void setTap(final TapeFileReader tap) {
-    this.tap.set(tap);
-  }
-
   public TapeFileReader getTap() {
     return this.tap.get();
+  }
+
+  public void setTap(final TapeFileReader tap) {
+    this.tap.set(tap);
   }
 
   public void onKeyEvent(final KeyEvent evt) {

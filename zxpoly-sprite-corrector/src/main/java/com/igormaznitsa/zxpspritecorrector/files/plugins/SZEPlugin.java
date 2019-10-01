@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,15 +14,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
-import com.igormaznitsa.jbbp.io.*;
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPByteOrder;
+import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.annotations.Inject;
 
@@ -31,13 +37,13 @@ public class SZEPlugin extends AbstractFilePlugin {
   @Inject
   private PicoContainer context;
 
+  public SZEPlugin() {
+    super();
+  }
+
   @Override
   public String getPluginUID() {
     return "SZEP";
-  }
-
-  public SZEPlugin() {
-    super();
   }
 
   @Override
@@ -68,13 +74,11 @@ public class SZEPlugin extends AbstractFilePlugin {
         in = new FileInputStream(file);
         final ZXPolyData zxpoly = new ZXPolyData(in, this.context.getComponents(AbstractFilePlugin.class));
 
-        final StringBuilder result = new StringBuilder();
-        result.append("  Name : ").append(zxpoly.getInfo().getName()).append('\n');
-        result.append("  Type : ").append(zxpoly.getInfo().getType()).append('\n');
-        result.append("Length : ").append(zxpoly.getInfo().getLength()).append('\n');
-        result.append("Plugin : ").append(zxpoly.getPlugin().getPluginDescription(false));
-
-        return result.toString();
+        String result = "  Name : " + zxpoly.getInfo().getName() + '\n' +
+            "  Type : " + zxpoly.getInfo().getType() + '\n' +
+            "Length : " + zxpoly.getInfo().getLength() + '\n' +
+            "Plugin : " + zxpoly.getPlugin().getPluginDescription(false);
+        return result;
       } finally {
         JBBPUtils.closeQuietly(in);
       }

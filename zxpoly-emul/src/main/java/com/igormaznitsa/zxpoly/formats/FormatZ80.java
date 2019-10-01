@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,14 +14,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.formats;
 
-import com.igormaznitsa.z80.Z80;
-import com.igormaznitsa.zxpoly.components.*;
-import java.io.*;
-import java.util.*;
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
+import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.zxpoly.components.Motherboard;
+import com.igormaznitsa.zxpoly.components.VideoController;
+import com.igormaznitsa.zxpoly.components.ZxPolyModule;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class FormatZ80 extends Snapshot {
 
@@ -30,185 +39,19 @@ public class FormatZ80 extends Snapshot {
   private static final int VERSION_3A = 2;
   private static final int VERSION_3B = 3;
 
-  public static interface Z80EmulFlags {
-
-    byte getINTERRUPTMODE();
-
-    byte getISSUE2EMULATION();
-
-    byte getDOUBLEINTFREQ();
-
-    byte getVIDEOSYNC();
-
-    byte getINPUTDEVICE();
-  }
-
-  public static interface Z80Flags {
-
-    byte getREG_R_BIT7();
-
-    byte getBORDERCOLOR();
-
-    byte getBASIC_SAMROM();
-
-    byte getCOMPRESSED();
-
-    byte getNOMEANING();
-  }
-
-  public static abstract class AbstractZ80Snapshot {
-
-    public abstract byte getREG_A();
-
-    public abstract byte getREG_F();
-
-    public abstract short getREG_BC();
-
-    public abstract short getREG_HL();
-
-    public abstract short getREG_PC();
-
-    public abstract short getREG_SP();
-
-    public abstract byte getREG_IR();
-
-    public abstract byte getREG_R();
-
-    public abstract Z80Flags getFLAGS();
-
-    public abstract short getREG_DE();
-
-    public abstract short getREG_BC_ALT();
-
-    public abstract short getREG_DE_ALT();
-
-    public abstract short getREG_HL_ALT();
-
-    public abstract byte getREG_A_ALT();
-
-    public abstract byte getREG_F_ALT();
-
-    public abstract short getREG_IY();
-
-    public abstract short getREG_IX();
-
-    public abstract byte getIFF();
-
-    public abstract byte getIFF2();
-
-    public abstract Z80EmulFlags getEMULFLAGS();
-
-    public abstract byte[] getDATA();
-
-    public short getREG_PC2() {
-      throw new Error("Must not be called directly");
-    }
-
-    public char getMODE() {
-      throw new Error("Must not be called directly");
-    }
-
-    public char getPORT7FFD() {
-      throw new Error("Must not be called directly");
-    }
-
-    public char getPORTFF() {
-      throw new Error("Must not be called directly");
-    }
-
-    public abstract AbstractZ80Snapshot read(JBBPBitInputStream in) throws IOException;
-
-    public void fillFromArray(final byte[] array) throws IOException {
-      this.read(new JBBPBitInputStream(new ByteArrayInputStream(array)));
-    }
-  }
-
-  private static class Bank {
-
-    final int page;
-    final byte[] data;
-
-    Bank(final int page, final byte[] data) {
-      this.page = page;
-      this.data = data;
-    }
-
-    static byte[] decodeRLE(final byte[] data) {
-      final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length << 1);
-      int i = 0;
-
-      final int len = data.length - 4;
-
-      while (i < len) {
-        final int a = data[i++] & 0xFF;
-        if (a == 0xED) {
-          final int b = data[i++] & 0xFF;
-          if (b == 0xED) {
-            int num = data[i++] & 0xFF;
-            final int val = data[i++] & 0xFF;
-            while (num > 0) {
-              baos.write(val);
-              num--;
-            }
-          } else {
-            baos.write(a);
-            baos.write(b);
-          }
-        } else {
-          baos.write(a);
-        }
+  private static boolean is48k(final int version, final AbstractZ80Snapshot snapshot) {
+    switch (version) {
+      case VERSION_1:
+        return true;
+      case VERSION_2: {
+        return snapshot.getMODE() == 0 || snapshot.getMODE() == 1;
       }
-      return baos.toByteArray();
-    }
-
-    void writeNonCompressed(final OutputStream out) throws IOException {
-      out.write(0xFF);
-      out.write(0xFF);
-      out.write(this.page);
-      out.write(this.data);
-    }
-
-    static byte[] unpackBank(final byte[] src, int srcoffset, int srclen) {
-      final ByteArrayOutputStream result = new ByteArrayOutputStream(16384);
-      if (srclen == 0xFFFF) {
-        // non packed
-        int len = 0x4000;
-        while (len > 0) {
-          result.write(src[srcoffset++]);
-          len--;
-        }
-      } else {
-        while (srclen > 0) {
-          if (srclen >= 4 && src[srcoffset] == (byte) 0xED && src[srcoffset + 1] == (byte) 0xED) {
-            srcoffset += 2;
-            final int len = src[srcoffset++] & 0xFF;
-            final int value = src[srcoffset++] & 0xFF;
-            for (int i = len; i > 0; i--) {
-              result.write(value);
-            }
-            srclen -= 4;
-          } else {
-            result.write(src[srcoffset++]);
-            srclen--;
-          }
-        }
+      case VERSION_3A:
+      case VERSION_3B: {
+        return snapshot.getMODE() == 0 || snapshot.getMODE() == 1 || snapshot.getMODE() == 3;
       }
-      return result.toByteArray();
-    }
-
-    static Bank[] toBanks(final byte[] data) {
-      int pos = 0;
-      int len = data.length;
-      final List<Bank> banks = new ArrayList<>();
-      while (len > 0) {
-        final int blocklength = ((data[pos++] & 0xFF)) | ((data[pos++] & 0xFF) << 8);
-        final int page = data[pos++] & 0xFF;
-        len -= 3 + (blocklength == 0xFFFF ? 0x4000 : blocklength);
-        final byte[] uncompressed = unpackBank(data, pos, blocklength);
-        pos += (blocklength == 0xFFFF ? 0x4000 : blocklength);
-        banks.add(new Bank(page, uncompressed));
-      }
-      return banks.toArray(new Bank[banks.size()]);
+      default:
+        return false;
     }
   }
 
@@ -254,7 +97,7 @@ public class FormatZ80 extends Snapshot {
     emulflags.setVIDEOSYNC((byte) 0);
     emulflags.setINPUTDEVICE((byte) 0);
 
-    final ZXPolyModule module = board.getZXPolyModules()[0];
+    final ZxPolyModule module = board.getZXPolyModules()[0];
 
     final Z80V3AParser.FLAGS flags = parser.makeFLAGS();
 
@@ -407,7 +250,7 @@ public class FormatZ80 extends Snapshot {
     cpu.setRegister(Z80.REG_I, snapshot.getREG_IR());
     cpu.setIM(snapshot.getEMULFLAGS().getINTERRUPTMODE());
 
-    final ZXPolyModule module = board.getZXPolyModules()[0];
+    final ZxPolyModule module = board.getZXPolyModules()[0];
 
     switch (version) {
       case VERSION_1: {
@@ -476,19 +319,185 @@ public class FormatZ80 extends Snapshot {
     return "Z80 Snapshot (*.z80)";
   }
 
-  private static boolean is48k(final int version, final AbstractZ80Snapshot snapshot) {
-    switch (version) {
-      case VERSION_1:
-        return true;
-      case VERSION_2: {
-        return snapshot.getMODE() == 0 || snapshot.getMODE() == 1;
+  public interface Z80EmulFlags {
+
+    byte getINTERRUPTMODE();
+
+    byte getISSUE2EMULATION();
+
+    byte getDOUBLEINTFREQ();
+
+    byte getVIDEOSYNC();
+
+    byte getINPUTDEVICE();
+  }
+
+  public interface Z80Flags {
+
+    byte getREG_R_BIT7();
+
+    byte getBORDERCOLOR();
+
+    byte getBASIC_SAMROM();
+
+    byte getCOMPRESSED();
+
+    byte getNOMEANING();
+  }
+
+  public static abstract class AbstractZ80Snapshot {
+
+    public abstract byte getREG_A();
+
+    public abstract byte getREG_F();
+
+    public abstract short getREG_BC();
+
+    public abstract short getREG_HL();
+
+    public abstract short getREG_PC();
+
+    public abstract short getREG_SP();
+
+    public abstract byte getREG_IR();
+
+    public abstract byte getREG_R();
+
+    public abstract Z80Flags getFLAGS();
+
+    public abstract short getREG_DE();
+
+    public abstract short getREG_BC_ALT();
+
+    public abstract short getREG_DE_ALT();
+
+    public abstract short getREG_HL_ALT();
+
+    public abstract byte getREG_A_ALT();
+
+    public abstract byte getREG_F_ALT();
+
+    public abstract short getREG_IY();
+
+    public abstract short getREG_IX();
+
+    public abstract byte getIFF();
+
+    public abstract byte getIFF2();
+
+    public abstract Z80EmulFlags getEMULFLAGS();
+
+    public abstract byte[] getDATA();
+
+    public short getREG_PC2() {
+      throw new Error("Must not be called directly");
+    }
+
+    public char getMODE() {
+      throw new Error("Must not be called directly");
+    }
+
+    public char getPORT7FFD() {
+      throw new Error("Must not be called directly");
+    }
+
+    public char getPORTFF() {
+      throw new Error("Must not be called directly");
+    }
+
+    public abstract AbstractZ80Snapshot read(JBBPBitInputStream in) throws IOException;
+
+    public void fillFromArray(final byte[] array) throws IOException {
+      this.read(new JBBPBitInputStream(new ByteArrayInputStream(array)));
+    }
+  }
+
+  private static class Bank {
+
+    final int page;
+    final byte[] data;
+
+    Bank(final int page, final byte[] data) {
+      this.page = page;
+      this.data = data;
+    }
+
+    static byte[] decodeRLE(final byte[] data) {
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length << 1);
+      int i = 0;
+
+      final int len = data.length - 4;
+
+      while (i < len) {
+        final int a = data[i++] & 0xFF;
+        if (a == 0xED) {
+          final int b = data[i++] & 0xFF;
+          if (b == 0xED) {
+            int num = data[i++] & 0xFF;
+            final int val = data[i++] & 0xFF;
+            while (num > 0) {
+              baos.write(val);
+              num--;
+            }
+          } else {
+            baos.write(a);
+            baos.write(b);
+          }
+        } else {
+          baos.write(a);
+        }
       }
-      case VERSION_3A:
-      case VERSION_3B: {
-        return snapshot.getMODE() == 0 || snapshot.getMODE() == 1 || snapshot.getMODE() == 3;
+      return baos.toByteArray();
+    }
+
+    static byte[] unpackBank(final byte[] src, int srcoffset, int srclen) {
+      final ByteArrayOutputStream result = new ByteArrayOutputStream(16384);
+      if (srclen == 0xFFFF) {
+        // non packed
+        int len = 0x4000;
+        while (len > 0) {
+          result.write(src[srcoffset++]);
+          len--;
+        }
+      } else {
+        while (srclen > 0) {
+          if (srclen >= 4 && src[srcoffset] == (byte) 0xED && src[srcoffset + 1] == (byte) 0xED) {
+            srcoffset += 2;
+            final int len = src[srcoffset++] & 0xFF;
+            final int value = src[srcoffset++] & 0xFF;
+            for (int i = len; i > 0; i--) {
+              result.write(value);
+            }
+            srclen -= 4;
+          } else {
+            result.write(src[srcoffset++]);
+            srclen--;
+          }
+        }
       }
-      default:
-        return false;
+      return result.toByteArray();
+    }
+
+    static Bank[] toBanks(final byte[] data) {
+      int pos = 0;
+      int len = data.length;
+      final List<Bank> banks = new ArrayList<>();
+      while (len > 0) {
+        final int blocklength = ((data[pos++] & 0xFF)) | ((data[pos++] & 0xFF) << 8);
+        final int page = data[pos++] & 0xFF;
+        len -= 3 + (blocklength == 0xFFFF ? 0x4000 : blocklength);
+        final byte[] uncompressed = unpackBank(data, pos, blocklength);
+        pos += (blocklength == 0xFFFF ? 0x4000 : blocklength);
+        banks.add(new Bank(page, uncompressed));
+      }
+      return banks.toArray(new Bank[0]);
+    }
+
+    void writeNonCompressed(final OutputStream out) throws IOException {
+      out.write(0xFF);
+      out.write(0xFF);
+      out.write(this.page);
+      out.write(this.data);
     }
   }
 

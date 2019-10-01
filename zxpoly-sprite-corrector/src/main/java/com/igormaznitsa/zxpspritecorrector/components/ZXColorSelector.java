@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,28 +14,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.components;
 
 import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
 import com.igormaznitsa.zxpspritecorrector.utils.ZXPalette;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.*;
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class ZXColorSelector extends JComponent implements MouseListener {
 
   private static final long serialVersionUID = 4513035804817773772L;
-  private int selectedInk = 0;
-  private int selectedPaint = 15;
-
   private final Image iconINK;
   private final Image iconPAINT;
-
   private final List<ActionListener> actionListeners = new ArrayList<>();
-
   private final Dimension minSize;
+  private int selectedInk = 0;
+  private int selectedPaint = 15;
 
   public ZXColorSelector() {
     super();
@@ -143,9 +146,7 @@ public final class ZXColorSelector extends JComponent implements MouseListener {
         this.selectedInk = row * 8 + column;
         repaint();
 
-        actionListeners.forEach((p_listener) -> {
-          p_listener.actionPerformed(new ActionEvent(this, 0, null));
-        });
+        actionListeners.forEach((p_listener) -> p_listener.actionPerformed(new ActionEvent(this, 0, null)));
 
       }
       break;
@@ -153,9 +154,7 @@ public final class ZXColorSelector extends JComponent implements MouseListener {
         this.selectedPaint = row * 8 + column;
         repaint();
 
-        this.actionListeners.forEach((l) -> {
-          l.actionPerformed(new ActionEvent(this, 0, null));
-        });
+        this.actionListeners.forEach((l) -> l.actionPerformed(new ActionEvent(this, 0, null)));
       }
       break;
     }

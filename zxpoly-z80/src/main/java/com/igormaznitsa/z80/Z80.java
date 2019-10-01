@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.z80;
 
-import static com.igormaznitsa.z80.Z80.FLAG_C;
-import static com.igormaznitsa.z80.Z80.REG_F;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -55,8 +54,8 @@ public final class Z80 {
   private static final int FLAG_SZC = FLAG_SZ | FLAG_C;
   private static final int FLAG_HC = FLAG_H | FLAG_C;
 
-  private static final byte[] FTABLE_OVERFLOW = new byte[]{
-    0, (byte) FLAG_PV, (byte) FLAG_PV, 0
+  private static final byte[] FTABLE_OVERFLOW = new byte[] {
+      0, (byte) FLAG_PV, (byte) FLAG_PV, 0
   };
 
   static {
@@ -512,9 +511,9 @@ public final class Z80 {
     if (m1) {
       this.lastM1InstructionByte = result;
     }
-    
+
     this.lastInstructionByte = result;
-    
+
     return result;
   }
 
@@ -974,8 +973,8 @@ public final class Z80 {
    * instruction will be processed.
    *
    * @param signalRESET true sends the RESET signal to the CPU
-   * @param signalNMI true sends the NMI signal to the CPU
-   * @param signalNT true sends the INT signal to the CPU
+   * @param signalNMI   true sends the NMI signal to the CPU
+   * @param signalNT    true sends the INT signal to the CPU
    */
   public void nextInstruction(final boolean signalRESET, final boolean signalNMI, final boolean signalNT) {
     int flag = (signalNT ? 0 : SIGNAL_IN_nINT) | (signalNMI ? 0 : SIGNAL_IN_nNMI) | (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
@@ -989,8 +988,8 @@ public final class Z80 {
    * processed entirely.
    *
    * @param signalRESET true sends the RESET signal to the CPU
-   * @param signalNMI true sends the NMI signal to the CPU
-   * @param signalNT true sends the INT signal to the CPU
+   * @param signalNMI   true sends the NMI signal to the CPU
+   * @param signalNT    true sends the INT signal to the CPU
    */
   public void nextInstruction_SkipBlockInstructions(final boolean signalRESET, final boolean signalNMI, final boolean signalNT) {
     int flag = (signalNT ? 0 : SIGNAL_IN_nINT) | (signalNMI ? 0 : SIGNAL_IN_nNMI) | (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
@@ -1042,8 +1041,7 @@ public final class Z80 {
       }
 
       return result;
-    }
-    finally {
+    } finally {
       this.prevINSignals = inSignals;
     }
   }
@@ -2688,7 +2686,7 @@ public final class Z80 {
     if (compareExe && (this.lastM1InstructionByte != other.lastM1InstructionByte || this.lastInstructionByte != other.lastInstructionByte)) {
       return false;
     }
-    
+
     return this.regSP == other.regSP;
   }
 

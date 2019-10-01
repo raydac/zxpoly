@@ -5,3 +5,8 @@
 /gfx/
 /.idea/
 /zxpoly-z80/target/
+/zxpoly-emul/dependency-reduced-pom.xml
+/zxpoly-emul/zxpoly-emul.iml
+/zxpoly-sprite-corrector/dependency-reduced-pom.xml
+/zxpoly-sprite-corrector/zxpoly-sprite-corrector.iml
+/zxpoly-z80/zxpoly-z80.iml

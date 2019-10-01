@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,14 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
-import javax.swing.filechooser.FileFilter;
-import org.apache.commons.io.FileUtils;
 import com.igormaznitsa.jbbp.JBBPParser;
 import com.igormaznitsa.jbbp.io.JBBPBitNumber;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
@@ -31,11 +26,17 @@ import com.igormaznitsa.jbbp.mapper.BinType;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+import javax.swing.filechooser.FileFilter;
+import org.apache.commons.io.FileUtils;
 
 public class SNA48Plugin extends AbstractFilePlugin {
 
   private final JBBPParser PARSER = JBBPParser.prepare(
-          "ubyte regI;"
+      "ubyte regI;"
           + "<ushort altRegHL;"
           + "<ushort altRegDE;"
           + "<ushort altRegBC;"
@@ -52,44 +53,6 @@ public class SNA48Plugin extends AbstractFilePlugin {
           + "ubyte intMode;"
           + "ubyte borderColor;"
           + "byte [49152] ramDump;");
-
-  public class SNAFileV1 {
-
-    @Bin(type = BinType.UBYTE)
-    public byte regI;
-    @Bin(type = BinType.USHORT)
-    public char altRegHL;
-    @Bin(type = BinType.USHORT)
-    public char altRegDE;
-    @Bin(type = BinType.USHORT)
-    public char altRegBC;
-    @Bin(type = BinType.USHORT)
-    public char altRegAF;
-    @Bin(type = BinType.USHORT)
-    public char regHL;
-    @Bin(type = BinType.USHORT)
-    public char regDE;
-    @Bin(type = BinType.USHORT)
-    public char regBC;
-    @Bin(type = BinType.USHORT)
-    public char regIY;
-    @Bin(type = BinType.USHORT)
-    public char regIX;
-    @Bin(type = BinType.UBYTE)
-    public byte interrupt;
-    @Bin(type = BinType.UBYTE)
-    public byte regR;
-    @Bin(type = BinType.USHORT)
-    public char regAF;
-    @Bin(type = BinType.USHORT)
-    public char regSP;
-    @Bin(type = BinType.UBYTE)
-    public byte intMode;
-    @Bin(type = BinType.UBYTE)
-    public byte borderColor;
-    @Bin(type = BinType.BYTE_ARRAY)
-    public byte[] ramDump;
-  }
 
   @Override
   public boolean allowsExport() {
@@ -174,35 +137,35 @@ public class SNA48Plugin extends AbstractFilePlugin {
     final byte[] data = snaFile.ramDump;
 
     final byte[] extra = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN)
-            .Byte(0)
-            .Byte(snaFile.regAF >>> 8)
-            .Byte(snaFile.regAF)
-            .Short(snaFile.regBC)
-            .Short(snaFile.regHL)
-            .Short(startAddress)
-            .Short(snaFile.regSP)
-            .Byte(snaFile.regI)
-            .Byte(snaFile.regR)
-            .Bit((snaFile.regR & 0x80) != 0)
-            .Bits(JBBPBitNumber.BITS_3, snaFile.borderColor)
-            .Bit(0, 0)
-            .Bits(JBBPBitNumber.BITS_2, 0)
-            .Short(snaFile.regDE)
-            .Short(snaFile.altRegBC)
-            .Short(snaFile.altRegDE)
-            .Short(snaFile.altRegHL)
-            .Byte(snaFile.altRegAF >>> 8)
-            .Byte(snaFile.altRegAF)
-            .Short(snaFile.regIY)
-            .Short(snaFile.regIX)
-            .Byte(0xFF)
-            .Byte(snaFile.interrupt)
-            .Bits(JBBPBitNumber.BITS_2, snaFile.intMode)
-            .Bit(0)
-            .Bit(0)
-            .Bits(JBBPBitNumber.BITS_2, 0)
-            .Bits(JBBPBitNumber.BITS_2, 0)
-            .End().toByteArray();
+        .Byte(0)
+        .Byte(snaFile.regAF >>> 8)
+        .Byte(snaFile.regAF)
+        .Short(snaFile.regBC)
+        .Short(snaFile.regHL)
+        .Short(startAddress)
+        .Short(snaFile.regSP)
+        .Byte(snaFile.regI)
+        .Byte(snaFile.regR)
+        .Bit((snaFile.regR & 0x80) != 0)
+        .Bits(JBBPBitNumber.BITS_3, snaFile.borderColor)
+        .Bit(0, 0)
+        .Bits(JBBPBitNumber.BITS_2, 0)
+        .Short(snaFile.regDE)
+        .Short(snaFile.altRegBC)
+        .Short(snaFile.altRegDE)
+        .Short(snaFile.altRegHL)
+        .Byte(snaFile.altRegAF >>> 8)
+        .Byte(snaFile.altRegAF)
+        .Short(snaFile.regIY)
+        .Short(snaFile.regIX)
+        .Byte(0xFF)
+        .Byte(snaFile.interrupt)
+        .Bits(JBBPBitNumber.BITS_2, snaFile.intMode)
+        .Bit(0)
+        .Bit(0)
+        .Bits(JBBPBitNumber.BITS_2, 0)
+        .Bits(JBBPBitNumber.BITS_2, 0)
+        .End().toByteArray();
 
     System.out.println("HEADER LEN : " + extra.length);
 
@@ -224,6 +187,44 @@ public class SNA48Plugin extends AbstractFilePlugin {
   @Override
   public String getDescription() {
     return "SNA ZX48 Snapshot (*.SNA)";
+  }
+
+  public static class SNAFileV1 {
+
+    @Bin(type = BinType.UBYTE)
+    public byte regI;
+    @Bin(type = BinType.USHORT)
+    public char altRegHL;
+    @Bin(type = BinType.USHORT)
+    public char altRegDE;
+    @Bin(type = BinType.USHORT)
+    public char altRegBC;
+    @Bin(type = BinType.USHORT)
+    public char altRegAF;
+    @Bin(type = BinType.USHORT)
+    public char regHL;
+    @Bin(type = BinType.USHORT)
+    public char regDE;
+    @Bin(type = BinType.USHORT)
+    public char regBC;
+    @Bin(type = BinType.USHORT)
+    public char regIY;
+    @Bin(type = BinType.USHORT)
+    public char regIX;
+    @Bin(type = BinType.UBYTE)
+    public byte interrupt;
+    @Bin(type = BinType.UBYTE)
+    public byte regR;
+    @Bin(type = BinType.USHORT)
+    public char regAF;
+    @Bin(type = BinType.USHORT)
+    public char regSP;
+    @Bin(type = BinType.UBYTE)
+    public byte intMode;
+    @Bin(type = BinType.UBYTE)
+    public byte borderColor;
+    @Bin(type = BinType.BYTE_ARRAY)
+    public byte[] ramDump;
   }
 
 }

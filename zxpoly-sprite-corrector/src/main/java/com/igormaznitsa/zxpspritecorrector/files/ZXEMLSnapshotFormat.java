@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.files;
 
 import com.igormaznitsa.jbbp.JBBPParser;
@@ -29,51 +30,12 @@ public class ZXEMLSnapshotFormat {
   public static final int INDEX_CPU1 = 1;
   public static final int INDEX_CPU2 = 2;
   public static final int INDEX_CPU3 = 3;
-
-  public static class Page {
-
-    @Bin(outOrder = 1, type = BinType.UBYTE)
-    private int index;
-    @Bin(outOrder = 2, type = BinType.BYTE_ARRAY)
-    private byte[] data;
-
-    public Page(final int index, final byte[] data) {
-      if (index < 0 || index > 7) {
-        throw new IllegalArgumentException("Page muste be 0..7");
-      }
-      if (data == null || data.length != 0x4000) {
-        throw new IllegalArgumentException("Data must not be null and must have length 0x4000");
-      }
-      this.index = index;
-      this.data = data.clone();
-    }
-
-    public int getIndex() {
-      return this.index;
-    }
-
-    public byte[] getData() {
-      return this.data;
-    }
-  }
-
-  public static class Pages {
-
-    @Bin(outOrder = 1, type = BinType.UBYTE)
-    private int number;
-    @Bin(outOrder = 2, type = BinType.STRUCT_ARRAY)
-    private Page[] page;
-
-    public Pages(final Page[] page) {
-      this.number = page.length;
-      this.page = page;
-    }
-
-    public Page[] getPages() {
-      return this.page;
-    }
-  }
-
+  private static final JBBPParser ZXEML_SNAPSHOT = JBBPParser.prepare("int magic; int flags; ubyte port3D00; ubyte portFE;"
+      + "byte [5] cpu0ports; byte [5] cpu1ports; byte [5] cpu2ports; byte [5] cpu3ports;"
+      + "short [4] reg_af; short [4] reg_af_alt; short [4] reg_bc; short [4] reg_bc_alt; short [4] reg_de; short [4] reg_de_alt; short [4] reg_hl; short [4] reg_hl_alt; short [4] reg_ix; short [4] reg_iy; short [4] reg_ir;"
+      + "byte [4] reg_im; bool [4] iff; bool [4] iff2;"
+      + "short [4] reg_pc; short [4] reg_sp;"
+      + "pages [4]{ubyte number; page[number]{ubyte index; byte [16384] data;}}");
   @Bin(outOrder = 1, type = BinType.INT)
   private int magic = MAGIC;
   @Bin(outOrder = 2, type = BinType.INT)
@@ -123,19 +85,22 @@ public class ZXEMLSnapshotFormat {
   @Bin(outOrder = 24, type = BinType.SHORT_ARRAY)
   private short[] reg_sp = new short[4];
   @Bin(outOrder = 25, type = BinType.STRUCT_ARRAY)
-  private Pages[] pages = new Pages[]{
-    new Pages(new Page[]{new Page(0, new byte[16384])}),
-    new Pages(new Page[]{new Page(0, new byte[16384])}),
-    new Pages(new Page[]{new Page(0, new byte[16384])}),
-    new Pages(new Page[]{new Page(0, new byte[16384])})
+  private Pages[] pages = new Pages[] {
+      new Pages(new Page[] {new Page(0, new byte[16384])}),
+      new Pages(new Page[] {new Page(0, new byte[16384])}),
+      new Pages(new Page[] {new Page(0, new byte[16384])}),
+      new Pages(new Page[] {new Page(0, new byte[16384])})
   };
+  public ZXEMLSnapshotFormat() {
+  }
 
-  private static final JBBPParser ZXEML_SNAPSHOT = JBBPParser.prepare("int magic; int flags; ubyte port3D00; ubyte portFE;"
-          + "byte [5] cpu0ports; byte [5] cpu1ports; byte [5] cpu2ports; byte [5] cpu3ports;"
-          + "short [4] reg_af; short [4] reg_af_alt; short [4] reg_bc; short [4] reg_bc_alt; short [4] reg_de; short [4] reg_de_alt; short [4] reg_hl; short [4] reg_hl_alt; short [4] reg_ix; short [4] reg_iy; short [4] reg_ir;"
-          + "byte [4] reg_im; bool [4] iff; bool [4] iff2;"
-          + "short [4] reg_pc; short [4] reg_sp;"
-          + "pages [4]{ubyte number; page[number]{ubyte index; byte [16384] data;}}");
+  public ZXEMLSnapshotFormat(final byte[] data) throws IOException {
+    this.pages = null;
+    ZXEML_SNAPSHOT.parse(data).mapTo(this);
+    if (this.magic != MAGIC) {
+      throw new IOException("It is not ZXEML snapshot");
+    }
+  }
 
   public void setPages(final int cpuIndex, final Pages pages) {
     if (pages == null) {
@@ -268,24 +233,24 @@ public class ZXEMLSnapshotFormat {
     return reg_im[cpuIndex] & 0xFF;
   }
 
-  public void setPort3D00(final int value) {
-    this.port3D00 = value;
-  }
-
   public int getPort3D00() {
     return this.port3D00;
   }
 
-  public void setPortFE(final int value) {
-    this.portFE = value;
+  public void setPort3D00(final int value) {
+    this.port3D00 = value;
   }
 
   public int getPortFE() {
     return this.portFE;
   }
 
+  public void setPortFE(final int value) {
+    this.portFE = value;
+  }
+
   public void setModulePorts(final int cpuIndex, final int port7FFD, final int r0, final int r1, final int r2, final int r3) {
-    final byte data[] = new byte[]{(byte) port7FFD, (byte) r0, (byte) r1, (byte) r2, (byte) r3};
+    final byte[] data = new byte[] {(byte) port7FFD, (byte) r0, (byte) r1, (byte) r2, (byte) r3};
     switch (cpuIndex) {
       case INDEX_CPU0:
         this.cpu0ports = data;
@@ -319,17 +284,6 @@ public class ZXEMLSnapshotFormat {
     }
   }
 
-  public ZXEMLSnapshotFormat() {
-  }
-
-  public ZXEMLSnapshotFormat(final byte[] data) throws IOException {
-    this.pages = null;
-    ZXEML_SNAPSHOT.parse(data).mapTo(this);
-    if (this.magic != MAGIC) {
-      throw new IOException("It is not ZXEML snapshot");
-    }
-  }
-
   public byte[] save() throws IOException {
     if (this.pages == null) {
       throw new NullPointerException("Pages must not be null");
@@ -346,5 +300,49 @@ public class ZXEMLSnapshotFormat {
     }
 
     return JBBPOut.BeginBin().Bin(this).End().toByteArray();
+  }
+
+  public static class Page {
+
+    @Bin(outOrder = 1, type = BinType.UBYTE)
+    private int index;
+    @Bin(outOrder = 2, type = BinType.BYTE_ARRAY)
+    private byte[] data;
+
+    public Page(final int index, final byte[] data) {
+      if (index < 0 || index > 7) {
+        throw new IllegalArgumentException("Page muste be 0..7");
+      }
+      if (data == null || data.length != 0x4000) {
+        throw new IllegalArgumentException("Data must not be null and must have length 0x4000");
+      }
+      this.index = index;
+      this.data = data.clone();
+    }
+
+    public int getIndex() {
+      return this.index;
+    }
+
+    public byte[] getData() {
+      return this.data;
+    }
+  }
+
+  public static class Pages {
+
+    @Bin(outOrder = 1, type = BinType.UBYTE)
+    private int number;
+    @Bin(outOrder = 2, type = BinType.STRUCT_ARRAY)
+    private Page[] page;
+
+    public Pages(final Page[] page) {
+      this.number = page.length;
+      this.page = page;
+    }
+
+    public Page[] getPages() {
+      return this.page;
+    }
   }
 }

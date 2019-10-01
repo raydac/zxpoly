@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,40 +14,44 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.z80.disasm;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 
 import com.igormaznitsa.z80.ByteArrayMemoryAccessProvider;
 import com.igormaznitsa.z80.Z80Instruction;
 import java.util.List;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 public class Z80DisasmTest {
 
   @Test
   public void testDecodeList() {
-    final ByteArrayMemoryAccessProvider memoryProvider = new ByteArrayMemoryAccessProvider(new byte[]{
-      (byte) 0xBB, (byte) 0x6D, (byte) 0xEF, (byte) 0x40, (byte) 0x45, (byte) 0x21, (byte) 0x00, (byte) 0x00, (byte) 0x22, 
-      (byte) 0x4B, (byte) 0x84, (byte) 0x21, (byte) 0xA8, (byte) 0x9D, (byte) 0xEF, (byte) 0x0A, (byte) 0x45, (byte) 0xEF, 
-      (byte) 0x2E, (byte) 0x45, (byte) 0xC9, (byte) 0x48, (byte) 0x65, (byte) 0x6C, (byte) 0x6C, (byte) 0x6F, (byte) 0x20, 
-      (byte) 0x77, (byte) 0x6F, (byte) 0x72, (byte) 0x6C, (byte) 0x64, (byte) 0x21, (byte) 0x00});
+    final ByteArrayMemoryAccessProvider memoryProvider = new ByteArrayMemoryAccessProvider(new byte[] {
+        (byte) 0xBB, (byte) 0x6D, (byte) 0xEF, (byte) 0x40, (byte) 0x45, (byte) 0x21, (byte) 0x00, (byte) 0x00, (byte) 0x22,
+        (byte) 0x4B, (byte) 0x84, (byte) 0x21, (byte) 0xA8, (byte) 0x9D, (byte) 0xEF, (byte) 0x0A, (byte) 0x45, (byte) 0xEF,
+        (byte) 0x2E, (byte) 0x45, (byte) 0xC9, (byte) 0x48, (byte) 0x65, (byte) 0x6C, (byte) 0x6C, (byte) 0x6F, (byte) 0x20,
+        (byte) 0x77, (byte) 0x6F, (byte) 0x72, (byte) 0x6C, (byte) 0x64, (byte) 0x21, (byte) 0x00});
     final List<Z80Instruction> list = Z80Disasm.decodeList(memoryProvider, null, 0, 26);
-  
-    assertEquals(26,list.size());
+
+    assertEquals(26, list.size());
     assertNotNull(list.get(24));
-    
+
     final StringBuilder builder = new StringBuilder();
     int off = 0;
-    for(final Z80Instruction i : list){
-      if (i == null){
+    for (final Z80Instruction i : list) {
+      if (i == null) {
         builder.append("<UNKNOWN>\n");
         off++;
-      }else{
-        builder.append(i.decode(memoryProvider, off, off+0x4000)).append('\n');
+      } else {
+        builder.append(i.decode(memoryProvider, off, off + 0x4000)).append('\n');
         off += i.getLength();
       }
     }
-    
+
     assertEquals("CP E\n"
             + "LD L,L\n"
             + "RST #28\n"
@@ -74,7 +78,7 @@ public class Z80DisasmTest {
             + "LD H,H\n"
             + "LD HL,#BB00\n"
             + "LD L,L\n"
-            ,builder.toString());
+        , builder.toString());
   }
 
 }

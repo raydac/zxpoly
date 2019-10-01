@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,10 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.components;
 
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -53,20 +56,20 @@ public final class RomData {
     System.arraycopy(array, 0, this.data, 0, array.length);
   }
 
-  public int getMask() {
-    return this.addressMask;
-  }
-
-  public byte[] getAsArray() {
-    return this.data;
-  }
-
   public static RomData read(final File file) throws IOException {
     return new RomData(FileUtils.readFileToByteArray(file));
   }
 
   public static RomData read(final InputStream in) throws IOException {
     return new RomData(IOUtils.toByteArray(in));
+  }
+
+  public int getMask() {
+    return this.addressMask;
+  }
+
+  public byte[] getAsArray() {
+    return this.data;
   }
 
   public int readAdress(final int address) {

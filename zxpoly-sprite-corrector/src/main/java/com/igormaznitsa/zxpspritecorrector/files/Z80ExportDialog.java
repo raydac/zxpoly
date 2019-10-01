@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,41 +14,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.files;
 
 public class Z80ExportDialog extends javax.swing.JDialog {
 
   private static final long serialVersionUID = -6509497729159482088L;
-
+  private static final VideoMode[] VIDEO_MODES = new VideoMode[] {
+      new VideoMode("ZX 256x192 (src CPU0)", 0),
+      new VideoMode("ZX 256x192 (src CPU1)", 1),
+      new VideoMode("ZX 256x192 (src CPU2)", 2),
+      new VideoMode("ZX 256x192 (src CPU3)", 3),
+      new VideoMode("ZX-POLY 256x192", 4),
+      new VideoMode("ZX-POLY 256x192-A0", 6),
+      new VideoMode("ZX-POLY 512x384", 5),
+      new VideoMode("RESERVED", 7)
+  };
   private boolean accepted;
   private int videoMode;
-
-  private static final class VideoMode {
-
-    private final String name;
-    private final int code;
-
-    private VideoMode(final String name, final int code) {
-      this.name = name;
-      this.code = code;
-    }
-
-    @Override
-    public String toString() {
-      return this.name;
-    }
-  }
-
-  private static final VideoMode[] VIDEO_MODES = new VideoMode[]{
-    new VideoMode("ZX 256x192 (src CPU0)", 0),
-    new VideoMode("ZX 256x192 (src CPU1)", 1),
-    new VideoMode("ZX 256x192 (src CPU2)", 2),
-    new VideoMode("ZX 256x192 (src CPU3)", 3),
-    new VideoMode("ZX-POLY 256x192", 4),
-    new VideoMode("ZX-POLY 256x192-A0", 6),
-    new VideoMode("ZX-POLY 512x384", 5),
-    new VideoMode("RESERVED", 7)
-  };
+  // Variables declaration - do not modify//GEN-BEGIN:variables
+  private javax.swing.JButton buttonCancel;
+  private javax.swing.JButton buttonOk;
+  private javax.swing.JComboBox comboVideoMode;
+  private javax.swing.JLabel labelVideoMode;
 
   public Z80ExportDialog(final java.awt.Frame parent) {
     super(parent, true);
@@ -89,57 +77,49 @@ public class Z80ExportDialog extends javax.swing.JDialog {
 
     buttonCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/cross.png"))); // NOI18N
     buttonCancel.setText("Cancel");
-    buttonCancel.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        buttonCancelActionPerformed(evt);
-      }
-    });
+    buttonCancel.addActionListener(this::buttonCancelActionPerformed);
 
     buttonOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/tick.png"))); // NOI18N
     buttonOk.setText("Ok");
-    buttonOk.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        buttonOkActionPerformed(evt);
-      }
-    });
+    buttonOk.addActionListener(this::buttonOkActionPerformed);
 
     labelVideoMode.setText("Initial video mode:");
 
-    comboVideoMode.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+    comboVideoMode.setModel(new javax.swing.DefaultComboBoxModel(new String[] {"Item 1", "Item 2", "Item 3", "Item 4"}));
 
     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
     getContentPane().setLayout(layout);
     layout.setHorizontalGroup(
-      layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(layout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-            .addGap(0, 202, Short.MAX_VALUE)
-            .addComponent(buttonOk)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(buttonCancel))
-          .addGroup(layout.createSequentialGroup()
-            .addComponent(labelVideoMode)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(comboVideoMode, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-        .addContainerGap())
+        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 202, Short.MAX_VALUE)
+                        .addComponent(buttonOk)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(buttonCancel))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(labelVideoMode)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(comboVideoMode, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
     );
 
-    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {buttonCancel, buttonOk});
+    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, buttonCancel, buttonOk);
 
     layout.setVerticalGroup(
-      layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-          .addComponent(labelVideoMode)
-          .addComponent(comboVideoMode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-          .addComponent(buttonCancel)
-          .addComponent(buttonOk))
-        .addContainerGap())
+        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(labelVideoMode)
+                    .addComponent(comboVideoMode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(buttonCancel)
+                    .addComponent(buttonOk))
+                .addContainerGap())
     );
 
     pack();
@@ -156,10 +136,20 @@ public class Z80ExportDialog extends javax.swing.JDialog {
     setVisible(false);
   }//GEN-LAST:event_buttonOkActionPerformed
 
-  // Variables declaration - do not modify//GEN-BEGIN:variables
-  private javax.swing.JButton buttonCancel;
-  private javax.swing.JButton buttonOk;
-  private javax.swing.JComboBox comboVideoMode;
-  private javax.swing.JLabel labelVideoMode;
+  private static final class VideoMode {
+
+    private final String name;
+    private final int code;
+
+    private VideoMode(final String name, final int code) {
+      this.name = name;
+      this.code = code;
+    }
+
+    @Override
+    public String toString() {
+      return this.name;
+    }
+  }
   // End of variables declaration//GEN-END:variables
 }

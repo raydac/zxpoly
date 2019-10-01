@@ -67,7 +67,7 @@
             <configuration>
               <bundleName>${app.name}</bundleName>
               <diskImageFile>${project.build.directory}/${project.build.finalName}_OSX.dmg</diskImageFile>
-              <mainClass>com.igormaznitsa.zxpspritecorrector.main</mainClass>
+              <mainClass>com.igormaznitsa.zxpspritecorrector.Application</mainClass>
               <iconFile>appico.icns</iconFile>
               <bundleName>ZXPolySpr</bundleName>
               <generateDiskImageFile>true</generateDiskImageFile>
@@ -103,7 +103,7 @@
                   <outfile>${project.build.directory}/zxpoly-sprite-corrector_${project.version}.exe</outfile>
                   <downloadUrl>http://www.oracle.com/technetwork/java/javase/downloads</downloadUrl>
                   <classPath>
-                    <mainClass>com.igormaznitsa.zxpspritecorrector.main</mainClass>
+                    <mainClass>com.igormaznitsa.zxpspritecorrector.Application</mainClass>
                     <preCp>anything</preCp>
                   </classPath>
                   <icon>appico.ico</icon>
@@ -161,7 +161,7 @@
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                    
                   <manifestEntries>
-                    <Main-Class>com.igormaznitsa.zxpspritecorrector.main</Main-Class>
+                    <Main-Class>com.igormaznitsa.zxpspritecorrector.Application</Main-Class>
                     <Url>https://github.com/raydac/zxpoly</Url>
                     <X-Project-Version>${project.version}</X-Project-Version>
                   </manifestEntries>
@@ -177,7 +177,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.igormaznitsa.zxpspritecorrector.main</mainClass>
+              <mainClass>com.igormaznitsa.zxpspritecorrector.Application</mainClass>
               <packageName>com.igormaznitsa.zxpspritecorrector</packageName>
             </manifest>
             <manifestEntries>
@@ -200,7 +200,7 @@
           </execution>
         </executions>
         <configuration>
-          <mainClass>com.igormaznitsa.zxpspritecorrector.main</mainClass>
+          <mainClass>com.igormaznitsa.zxpspritecorrector.Application</mainClass>
         </configuration>
       </plugin>      
     </plugins>

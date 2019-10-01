@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.utils;
 
 import java.io.File;
@@ -24,13 +25,11 @@ import org.apache.commons.io.FileUtils;
 public final class AppOptions {
 
   public static final String TEST_ROM = "zxpolytest.rom";
-
-  private final Preferences preferences = Preferences.userNodeForPackage(AppOptions.class);
-
   private static final String ROMPATH = "ROM_PATH";
   private static final String INT_BETWEEN_FRAMES = "INT_BETWEEN_FRAMES";
   private static final AppOptions INSTANCE = new AppOptions();
   private static final String APP_FOLDER_NAME = ".zxpolyemul";
+  private final Preferences preferences = Preferences.userNodeForPackage(AppOptions.class);
 
   public static AppOptions getInstance() {
     return INSTANCE;
@@ -44,16 +43,16 @@ public final class AppOptions {
     return preferences.get(ROMPATH, AppOptions.TEST_ROM);
   }
 
+  public synchronized void setActiveRom(final String romPath) {
+    preferences.put(ROMPATH, romPath);
+  }
+
   public synchronized int getIntBetweenFrames() {
     return preferences.getInt(INT_BETWEEN_FRAMES, 3);
   }
 
   public synchronized void setIntBetweenFrames(final int value) {
     preferences.putInt(INT_BETWEEN_FRAMES, Math.max(0, value));
-  }
-
-  public synchronized void setActiveRom(final String romPath) {
-    preferences.put(ROMPATH, romPath);
   }
 
   public synchronized void flush() throws BackingStoreException {

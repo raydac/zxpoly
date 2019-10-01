@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,17 +14,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
 import com.igormaznitsa.jbbp.JBBPParser;
-import com.igormaznitsa.jbbp.io.*;
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPByteOrder;
+import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import javax.swing.JOptionPane;
 import org.apache.commons.io.FilenameUtils;
 
@@ -35,21 +42,6 @@ public class TAPPlugin extends AbstractFilePlugin {
 
   public TAPPlugin() {
     super();
-  }
-
-  @Override
-  public String getPluginDescription(final boolean forExport) {
-    return "TAP file";
-  }
-
-  @Override
-  public String getToolTip(final boolean forExport) {
-    return "A Tape image format";
-  }
-
-  @Override
-  public boolean doesImportContainInsideFileList() {
-    return true;
   }
 
   private static String extractHeaderName(final byte[] headerData) {
@@ -76,9 +68,24 @@ public class TAPPlugin extends AbstractFilePlugin {
   }
 
   @Override
+  public String getPluginDescription(final boolean forExport) {
+    return "TAP file";
+  }
+
+  @Override
+  public String getToolTip(final boolean forExport) {
+    return "A Tape image format";
+  }
+
+  @Override
+  public boolean doesImportContainInsideFileList() {
+    return true;
+  }
+
+  @Override
   public List<Info> getImportingContainerFileList(final File file) {
     try {
-      final List<Info> result = new ArrayList<Info>();
+      final List<Info> result = new ArrayList<>();
 
       JBBPBitInputStream in = null;
       try {
@@ -230,10 +237,10 @@ public class TAPPlugin extends AbstractFilePlugin {
     final String baseZXName = FilenameUtils.getBaseName(baseName);
     if (saveAsSeparateFiles == JOptionPane.YES_OPTION) {
 
-      final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "Saving as separated files", new String[]{addNumberToFileName(baseName, 0),
-        addNumberToFileName(baseName, 1), addNumberToFileName(baseName, 2), addNumberToFileName(baseName, 3)},
-              new String[]{prepareNameForTAP(baseZXName, 0), prepareNameForTAP(baseZXName, 1), prepareNameForTAP(baseZXName, 2), prepareNameForTAP(baseZXName, 3)},
-              null);
+      final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "Saving as separated files", new String[] {addNumberToFileName(baseName, 0),
+          addNumberToFileName(baseName, 1), addNumberToFileName(baseName, 2), addNumberToFileName(baseName, 3)},
+          new String[] {prepareNameForTAP(baseZXName, 0), prepareNameForTAP(baseZXName, 1), prepareNameForTAP(baseZXName, 2), prepareNameForTAP(baseZXName, 3)},
+          null);
       fileNameDialog.setVisible(true);
       if (fileNameDialog.approved()) {
         final String[] fileNames = fileNameDialog.getFileName();
@@ -251,8 +258,8 @@ public class TAPPlugin extends AbstractFilePlugin {
       }
     } else {
       final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "Save as " + baseName, null,
-              new String[]{prepareNameForTAP(baseZXName, 0), prepareNameForTAP(baseZXName, 1), prepareNameForTAP(baseZXName, 2), prepareNameForTAP(baseZXName, 3)},
-              null);
+          new String[] {prepareNameForTAP(baseZXName, 0), prepareNameForTAP(baseZXName, 1), prepareNameForTAP(baseZXName, 2), prepareNameForTAP(baseZXName, 3)},
+          null);
       fileNameDialog.setVisible(true);
       if (fileNameDialog.approved()) {
         final String[] zxNames = fileNameDialog.getZxName();

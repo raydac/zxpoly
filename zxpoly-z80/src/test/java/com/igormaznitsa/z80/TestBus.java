@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,38 +14,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.z80;
 
 import static org.junit.Assert.assertFalse;
 
 public final class TestBus implements Z80CPUBus {
 
-  private final byte [] memory  = new byte[0x10000];
-  private final byte [] ports  = new byte[0x10000];
+  private final byte[] memory = new byte[0x10000];
+  private final byte[] ports = new byte[0x10000];
   private final byte dataBuSState;
   private boolean reti;
-  
-  public TestBus(final int busState, final int address, final int... codes){
+
+  public TestBus(final int busState, final int address, final int... codes) {
     block(address, codes);
     this.dataBuSState = (byte) busState;
   }
-  
-  public void block(final int address, final int ... codes){
+
+  public void block(final int address, final int... codes) {
     int pc = address;
     for (final int c : codes) {
       this.memory[pc & 0xFFFF] = (byte) c;
       pc++;
     }
   }
-  
-  public void resetRETIFlag(){
+
+  public void resetRETIFlag() {
     this.reti = false;
   }
-  
-  public boolean isRETI(){
+
+  public boolean isRETI() {
     return this.reti;
   }
-  
+
   @Override
   public byte readMemory(final Z80 cpu, final int address, boolean m1) {
     return memory[address];
@@ -53,24 +54,24 @@ public final class TestBus implements Z80CPUBus {
 
   @Override
   public void writeMemory(final Z80 cpu, final int address, final byte data) {
-    this.memory [address] = data;
+    this.memory[address] = data;
   }
 
   @Override
-  public byte readPort(final  Z80 cpu, final int port) {
-    return this.ports [port & 0xFFFF];
+  public byte readPort(final Z80 cpu, final int port) {
+    return this.ports[port & 0xFFFF];
   }
 
   @Override
   public void writePort(final Z80 cpu, final int port, final byte data) {
-    this.ports [port & 0xFFFF] = data;
+    this.ports[port & 0xFFFF] = data;
   }
 
   @Override
   public byte onCPURequestDataLines(final Z80 cpu) {
     return this.dataBuSState;
   }
-  
+
   @Override
   public void onRETI(Z80 cpu) {
     assertFalse("RETI flag must be reset", this.reti);

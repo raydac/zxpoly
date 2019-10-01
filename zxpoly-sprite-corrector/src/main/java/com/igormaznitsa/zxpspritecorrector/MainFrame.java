@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,59 +14,131 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector;
 
+import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
+import com.igormaznitsa.zxpspritecorrector.components.InsideFileView;
+import com.igormaznitsa.zxpspritecorrector.components.SelectInsideDataDialog;
+import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
+import com.igormaznitsa.zxpspritecorrector.files.SessionData;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.TAPPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.SCRPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.SCLPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.TRDPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.HOBETAPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.SZEPlugin;
-import com.igormaznitsa.zxpspritecorrector.components.*;
-import com.igormaznitsa.zxpspritecorrector.files.*;
-import com.igormaznitsa.zxpspritecorrector.tools.*;
-import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
-import java.awt.*;
-import java.io.*;
-import java.util.Locale;
-import javax.swing.*;
-import javax.swing.event.MenuEvent;
-import javax.swing.event.MenuListener;
-import org.apache.commons.io.FilenameUtils;
-import org.picocontainer.*;
-import org.picocontainer.injectors.*;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SCLPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SCRPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SNA48Plugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SZEPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.TAPPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.TRDPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin;
+import com.igormaznitsa.zxpspritecorrector.tools.AbstractTool;
+import com.igormaznitsa.zxpspritecorrector.tools.ToolButtonModel;
+import com.igormaznitsa.zxpspritecorrector.tools.ToolColorizer;
+import com.igormaznitsa.zxpspritecorrector.tools.ToolEraser;
+import com.igormaznitsa.zxpspritecorrector.tools.ToolPencil;
+import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
 import com.igormaznitsa.zxpspritecorrector.utils.TransferableImage;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ItemEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFileChooser;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
+import org.apache.commons.io.FilenameUtils;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.PicoBuilder;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.injectors.ProviderAdapter;
 
 public final class MainFrame extends javax.swing.JFrame {
 
-  public final MutablePicoContainer container = new PicoBuilder()
-          .withAutomatic()
-          .withAnnotatedMethodInjection()
-          .withAnnotatedFieldInjection()
-          .withConstructorInjection()
-          .withCaching()
-          .build();
-
   private static final long serialVersionUID = -5031012548284731523L;
-
+  public final MutablePicoContainer container = new PicoBuilder()
+      .withAutomatic()
+      .withAnnotatedMethodInjection()
+      .withAnnotatedFieldInjection()
+      .withConstructorInjection()
+      .withCaching()
+      .build();
+  private final Cursor CURSOR_BLANK = Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB), new Point(0, 0), "blank cursor");
+  private final AtomicReference<AbstractTool> currentAbstractTool = new AtomicReference<>();
   private File lastOpenedFile;
   private File lastExportedFile;
   private File szeFile;
-
   private boolean selectAreaMode = false;
-
-  private final Cursor CURSOR_BLANK = Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB), new Point(0, 0), "blank cursor");
-
-  private final AtomicReference<AbstractTool> currentAbstractTool = new AtomicReference<>();
+  // Variables declaration - do not modify//GEN-BEGIN:variables
+  private javax.swing.ButtonGroup attributesButtonGroup;
+  private javax.swing.JToggleButton buttonLock;
+  private com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector colorSelector;
+  private javax.swing.ButtonGroup columnModeGroup;
+  private javax.swing.Box.Filler filler1;
+  private javax.swing.JPanel jPanel2;
+  private javax.swing.JScrollPane jScrollPane1;
+  private javax.swing.JSeparator jSeparator1;
+  private javax.swing.JPopupMenu.Separator jSeparator2;
+  private javax.swing.JPopupMenu.Separator jSeparator3;
+  private javax.swing.JPopupMenu.Separator jSeparator4;
+  private javax.swing.JPopupMenu.Separator jSeparator5;
+  private javax.swing.JPopupMenu.Separator jSeparator6;
+  private javax.swing.JPopupMenu.Separator jSeparator7;
+  private javax.swing.JLabel labelAddress;
+  private javax.swing.JLabel labelZoom;
+  private com.igormaznitsa.zxpspritecorrector.components.EditorComponent mainEditor;
+  private javax.swing.JPanel mainEditorPanel;
+  private javax.swing.JMenuBar menuBar;
+  private javax.swing.JMenu menuEdit;
+  private javax.swing.JMenuItem menuEditClear;
+  private javax.swing.JMenuItem menuEditCopyBaseToPlans;
+  private javax.swing.JMenuItem menuEditCopySelectedBaseAsImage;
+  private javax.swing.JMenuItem menuEditCopySelectedZxPolyAsImage;
+  private javax.swing.JMenuItem menuEditPasteImage;
+  private javax.swing.JMenuItem menuEditRedo;
+  private javax.swing.JMenuItem menuEditSelectArea;
+  private javax.swing.JMenuItem menuEditUndo;
+  private javax.swing.JMenu menuFile;
+  private javax.swing.JMenuItem menuFileExit;
+  private javax.swing.JMenu menuFileExportAs;
+  private javax.swing.JMenuItem menuFileNew;
+  private javax.swing.JMenuItem menuFileOpen;
+  private javax.swing.JMenuItem menuFileSaveAs;
+  private javax.swing.JMenu menuHelp;
+  private javax.swing.JMenuItem menuHelpAbout;
+  private javax.swing.JRadioButtonMenuItem menuOptionDontShowAttributes;
+  private javax.swing.JMenu menuOptions;
+  private javax.swing.JCheckBoxMenuItem menuOptionsColumns;
+  private javax.swing.JRadioButtonMenuItem menuOptionsColumnsAll;
+  private javax.swing.JRadioButtonMenuItem menuOptionsColumnsEven;
+  private javax.swing.JRadioButtonMenuItem menuOptionsColumnsOdd;
+  private javax.swing.JCheckBoxMenuItem menuOptionsGrid;
+  private javax.swing.JCheckBoxMenuItem menuOptionsInvertBase;
+  private javax.swing.JCheckBoxMenuItem menuOptionsMode512;
+  private javax.swing.JRadioButtonMenuItem menuOptionsShow512x384Attributes;
+  private javax.swing.JRadioButtonMenuItem menuOptionsShowBaseAttributes;
+  private javax.swing.JCheckBoxMenuItem menuOptionsZXScreen;
+  private javax.swing.JMenuItem menuSave;
+  private javax.swing.JPanel panelTools;
+  private javax.swing.JScrollBar scrollBarAddress;
+  private javax.swing.JSlider sliderColumns;
+  private com.igormaznitsa.zxpspritecorrector.components.PenWidth sliderPenWidth;
+  private javax.swing.JSpinner spinnerCurrentAddress;
+  private javax.swing.ButtonGroup toolsButtonGroup;
 
   public MainFrame() {
     initComponents();
@@ -94,33 +166,31 @@ public final class MainFrame extends javax.swing.JFrame {
     this.container.start();
 
     this.container.getComponents(AbstractTool.class).stream().forEachOrdered(tool -> {
-      this.panelTools.add(tool);
-      this.toolsButtonGroup.add(tool);
+          this.panelTools.add(tool);
+          this.toolsButtonGroup.add(tool);
 
-      tool.addItemListener((ItemEvent e) -> {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          this.selectAreaMode = false;
-          this.sliderPenWidth.setModel(((AbstractTool) e.getItem()).getScaleModel());
-          this.currentAbstractTool.set(tool);
-        } else if (e.getStateChange() == ItemEvent.DESELECTED) {
-          if (this.currentAbstractTool.compareAndSet(tool, null)) {
-            this.sliderPenWidth.setModel(null);
-          }
+          tool.addItemListener((ItemEvent e) -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+              this.selectAreaMode = false;
+              this.sliderPenWidth.setModel(((AbstractTool) e.getItem()).getScaleModel());
+              this.currentAbstractTool.set(tool);
+            } else if (e.getStateChange() == ItemEvent.DESELECTED) {
+              if (this.currentAbstractTool.compareAndSet(tool, null)) {
+                this.sliderPenWidth.setModel(null);
+              }
+            }
+          });
         }
-      });
-    }
     );
 
     this.container.getComponents(AbstractFilePlugin.class).stream()
-            .filter((p) -> !(!p.allowsExport()))
-            .forEachOrdered((p) -> {
-              final JMenuItem menuItem = new JMenuItem(p.getPluginDescription(true));
-              this.menuFileExportAs.add(menuItem);
-              menuItem.setToolTipText(p.getToolTip(true));
-              menuItem.addActionListener(e -> {
-                exportDataWithPlugin(p);
-              });
-            });
+        .filter((p) -> !(!p.allowsExport()))
+        .forEachOrdered((p) -> {
+          final JMenuItem menuItem = new JMenuItem(p.getPluginDescription(true));
+          this.menuFileExportAs.add(menuItem);
+          menuItem.setToolTipText(p.getToolTip(true));
+          menuItem.addActionListener(e -> exportDataWithPlugin(p));
+        });
 
     this.setLocationRelativeTo(null);
     updateAddressScrollBar();
@@ -155,12 +225,15 @@ public final class MainFrame extends javax.swing.JFrame {
 
     this.menuOptionsMode512.addActionListener(x -> {
       final boolean mode512 = this.menuOptionsMode512.isSelected();
-      this.container.getComponents(AbstractTool.class).forEach((t) -> {
-        t.setEnabled(!mode512 || (mode512 && t.doesSupport512x384()));
-      });
+      this.container.getComponents(AbstractTool.class).forEach((t) -> t.setEnabled(!mode512 || (mode512 && t.doesSupport512x384())));
     });
 
     resetOptions();
+  }
+
+  public static String toHex(final int value) {
+    final String h = Integer.toHexString(value).toUpperCase(Locale.ENGLISH);
+    return '#' + (h.length() < 4 ? "0000".substring(0, 4 - h.length()) + h : h);
   }
 
   public PicoContainer getPico() {
@@ -339,11 +412,7 @@ public final class MainFrame extends javax.swing.JFrame {
 
     scrollBarAddress.setToolTipText("Memory window position");
     scrollBarAddress.setFocusable(false);
-    scrollBarAddress.addAdjustmentListener(new java.awt.event.AdjustmentListener() {
-      public void adjustmentValueChanged(java.awt.event.AdjustmentEvent evt) {
-        scrollBarAddressAdjustmentValueChanged(evt);
-      }
-    });
+    scrollBarAddress.addAdjustmentListener(this::scrollBarAddressAdjustmentValueChanged);
 
     sliderColumns.setMajorTickSpacing(1);
     sliderColumns.setMinorTickSpacing(1);
@@ -354,20 +423,12 @@ public final class MainFrame extends javax.swing.JFrame {
     sliderColumns.setExtent(1);
     sliderColumns.setFocusable(false);
     sliderColumns.setValueIsAdjusting(true);
-    sliderColumns.addChangeListener(new javax.swing.event.ChangeListener() {
-      public void stateChanged(javax.swing.event.ChangeEvent evt) {
-        sliderColumnsStateChanged(evt);
-      }
-    });
+    sliderColumns.addChangeListener(this::sliderColumnsStateChanged);
 
     buttonLock.setText("LOCK");
     buttonLock.setToolTipText("To lock current memory position and cols number");
     buttonLock.setFocusable(false);
-    buttonLock.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        buttonLockActionPerformed(evt);
-      }
-    });
+    buttonLock.addActionListener(this::buttonLockActionPerformed);
 
     panelTools.setBorder(javax.swing.BorderFactory.createTitledBorder("Tools"));
     panelTools.setFocusable(false);
@@ -377,12 +438,12 @@ public final class MainFrame extends javax.swing.JFrame {
     javax.swing.GroupLayout colorSelectorLayout = new javax.swing.GroupLayout(colorSelector);
     colorSelector.setLayout(colorSelectorLayout);
     colorSelectorLayout.setHorizontalGroup(
-      colorSelectorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGap(0, 0, Short.MAX_VALUE)
+        colorSelectorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
     );
     colorSelectorLayout.setVerticalGroup(
-      colorSelectorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGap(0, 110, Short.MAX_VALUE)
+        colorSelectorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 110, Short.MAX_VALUE)
     );
 
     sliderPenWidth.setToolTipText("Width of an operation tool");
@@ -396,28 +457,29 @@ public final class MainFrame extends javax.swing.JFrame {
       public void mouseMoved(java.awt.event.MouseEvent evt) {
         mainEditorPanelMouseMoved(evt);
       }
+
       public void mouseDragged(java.awt.event.MouseEvent evt) {
         mainEditorPanelMouseDragged(evt);
       }
     });
-    mainEditorPanel.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
-      public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
-        mainEditorPanelMouseWheelMoved(evt);
-      }
-    });
+    mainEditorPanel.addMouseWheelListener(this::mainEditorPanelMouseWheelMoved);
     mainEditorPanel.addMouseListener(new java.awt.event.MouseAdapter() {
       public void mousePressed(java.awt.event.MouseEvent evt) {
         mainEditorPanelMousePressed(evt);
       }
+
       public void mouseReleased(java.awt.event.MouseEvent evt) {
         mainEditorPanelMouseReleased(evt);
       }
+
       public void mouseClicked(java.awt.event.MouseEvent evt) {
         mainEditorPanelMouseClicked(evt);
       }
+
       public void mouseExited(java.awt.event.MouseEvent evt) {
         mainEditorPanelMouseExited(evt);
       }
+
       public void mouseEntered(java.awt.event.MouseEvent evt) {
         mainEditorPanelMouseEntered(evt);
       }
@@ -426,22 +488,22 @@ public final class MainFrame extends javax.swing.JFrame {
     javax.swing.GroupLayout mainEditorPanelLayout = new javax.swing.GroupLayout(mainEditorPanel);
     mainEditorPanel.setLayout(mainEditorPanelLayout);
     mainEditorPanelLayout.setHorizontalGroup(
-      mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGap(0, 598, Short.MAX_VALUE)
-      .addGroup(mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGroup(mainEditorPanelLayout.createSequentialGroup()
-          .addGap(0, 0, Short.MAX_VALUE)
-          .addComponent(mainEditor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-          .addGap(0, 0, Short.MAX_VALUE)))
+        mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 598, Short.MAX_VALUE)
+            .addGroup(mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(mainEditorPanelLayout.createSequentialGroup()
+                    .addGap(0, 0, Short.MAX_VALUE)
+                    .addComponent(mainEditor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 0, Short.MAX_VALUE)))
     );
     mainEditorPanelLayout.setVerticalGroup(
-      mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGap(0, 394, Short.MAX_VALUE)
-      .addGroup(mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGroup(mainEditorPanelLayout.createSequentialGroup()
-          .addGap(0, 0, Short.MAX_VALUE)
-          .addComponent(mainEditor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-          .addGap(0, 0, Short.MAX_VALUE)))
+        mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 394, Short.MAX_VALUE)
+            .addGroup(mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(mainEditorPanelLayout.createSequentialGroup()
+                    .addGap(0, 0, Short.MAX_VALUE)
+                    .addComponent(mainEditor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 0, Short.MAX_VALUE)))
     );
 
     jScrollPane1.setViewportView(mainEditorPanel);
@@ -469,36 +531,20 @@ public final class MainFrame extends javax.swing.JFrame {
     menuFile.setText("File");
 
     menuFileNew.setText("New");
-    menuFileNew.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuFileNewActionPerformed(evt);
-      }
-    });
+    menuFileNew.addActionListener(this::menuFileNewActionPerformed);
     menuFile.add(menuFileNew);
 
     menuFileOpen.setText("Open");
-    menuFileOpen.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuFileOpenActionPerformed(evt);
-      }
-    });
+    menuFileOpen.addActionListener(this::menuFileOpenActionPerformed);
     menuFile.add(menuFileOpen);
 
     menuSave.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
     menuSave.setText("Save");
-    menuSave.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuSaveActionPerformed(evt);
-      }
-    });
+    menuSave.addActionListener(this::menuSaveActionPerformed);
     menuFile.add(menuSave);
 
     menuFileSaveAs.setText("Save As");
-    menuFileSaveAs.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuFileSaveAsActionPerformed(evt);
-      }
-    });
+    menuFileSaveAs.addActionListener(this::menuFileSaveAsActionPerformed);
     menuFile.add(menuFileSaveAs);
     menuFile.add(jSeparator4);
 
@@ -508,11 +554,7 @@ public final class MainFrame extends javax.swing.JFrame {
 
     menuFileExit.setText("Exit");
     menuFileExit.setToolTipText("Close application");
-    menuFileExit.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuFileExitActionPerformed(evt);
-      }
-    });
+    menuFileExit.addActionListener(this::menuFileExitActionPerformed);
     menuFile.add(menuFileExit);
 
     menuBar.add(menuFile);
@@ -522,82 +564,52 @@ public final class MainFrame extends javax.swing.JFrame {
       public void menuSelected(javax.swing.event.MenuEvent evt) {
         menuEditMenuSelected(evt);
       }
+
       public void menuDeselected(javax.swing.event.MenuEvent evt) {
         menuEditMenuDeselected(evt);
       }
+
       public void menuCanceled(javax.swing.event.MenuEvent evt) {
       }
     });
 
     menuEditUndo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, java.awt.event.InputEvent.CTRL_MASK));
     menuEditUndo.setText("Undo");
-    menuEditUndo.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditUndoActionPerformed(evt);
-      }
-    });
+    menuEditUndo.addActionListener(this::menuEditUndoActionPerformed);
     menuEdit.add(menuEditUndo);
 
     menuEditRedo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
     menuEditRedo.setText("Redo");
-    menuEditRedo.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditRedoActionPerformed(evt);
-      }
-    });
+    menuEditRedo.addActionListener(this::menuEditRedoActionPerformed);
     menuEdit.add(menuEditRedo);
     menuEdit.add(jSeparator2);
 
     menuEditSelectArea.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.CTRL_MASK));
     menuEditSelectArea.setText("Select area");
-    menuEditSelectArea.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditSelectAreaActionPerformed(evt);
-      }
-    });
+    menuEditSelectArea.addActionListener(this::menuEditSelectAreaActionPerformed);
     menuEdit.add(menuEditSelectArea);
 
     menuEditCopySelectedZxPolyAsImage.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
     menuEditCopySelectedZxPolyAsImage.setText("Copy selection (zxpoly)");
-    menuEditCopySelectedZxPolyAsImage.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditCopySelectedZxPolyAsImageActionPerformed(evt);
-      }
-    });
+    menuEditCopySelectedZxPolyAsImage.addActionListener(this::menuEditCopySelectedZxPolyAsImageActionPerformed);
     menuEdit.add(menuEditCopySelectedZxPolyAsImage);
 
     menuEditCopySelectedBaseAsImage.setText("Copy selection (base)");
-    menuEditCopySelectedBaseAsImage.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditCopySelectedBaseAsImageActionPerformed(evt);
-      }
-    });
+    menuEditCopySelectedBaseAsImage.addActionListener(this::menuEditCopySelectedBaseAsImageActionPerformed);
     menuEdit.add(menuEditCopySelectedBaseAsImage);
 
     menuEditPasteImage.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_V, java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
     menuEditPasteImage.setText("Paste image");
-    menuEditPasteImage.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditPasteImageActionPerformed(evt);
-      }
-    });
+    menuEditPasteImage.addActionListener(this::menuEditPasteImageActionPerformed);
     menuEdit.add(menuEditPasteImage);
     menuEdit.add(jSeparator7);
 
     menuEditCopyBaseToPlans.setText("Copy base to all plans");
-    menuEditCopyBaseToPlans.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditCopyBaseToPlansActionPerformed(evt);
-      }
-    });
+    menuEditCopyBaseToPlans.addActionListener(this::menuEditCopyBaseToPlansActionPerformed);
     menuEdit.add(menuEditCopyBaseToPlans);
 
     menuEditClear.setText("Clear");
-    menuEditClear.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuEditClearActionPerformed(evt);
-      }
-    });
+    menuEditClear.addActionListener(this::menuEditClearActionPerformed);
     menuEdit.add(menuEditClear);
 
     menuBar.add(menuEdit);
@@ -606,49 +618,29 @@ public final class MainFrame extends javax.swing.JFrame {
 
     menuOptionsGrid.setSelected(true);
     menuOptionsGrid.setText("Grid");
-    menuOptionsGrid.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuOptionsGridActionPerformed(evt);
-      }
-    });
+    menuOptionsGrid.addActionListener(this::menuOptionsGridActionPerformed);
     menuOptions.add(menuOptionsGrid);
 
     menuOptionsColumns.setSelected(true);
     menuOptionsColumns.setText("Columns");
-    menuOptionsColumns.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuOptionsColumnsActionPerformed(evt);
-      }
-    });
+    menuOptionsColumns.addActionListener(this::menuOptionsColumnsActionPerformed);
     menuOptions.add(menuOptionsColumns);
 
     menuOptionsInvertBase.setSelected(true);
     menuOptionsInvertBase.setText("Invert base");
-    menuOptionsInvertBase.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuOptionsInvertBaseActionPerformed(evt);
-      }
-    });
+    menuOptionsInvertBase.addActionListener(this::menuOptionsInvertBaseActionPerformed);
     menuOptions.add(menuOptionsInvertBase);
     menuOptions.add(jSeparator5);
 
     menuOptionsZXScreen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, 0));
     menuOptionsZXScreen.setSelected(true);
     menuOptionsZXScreen.setText("ZX-Screen addressing");
-    menuOptionsZXScreen.addChangeListener(new javax.swing.event.ChangeListener() {
-      public void stateChanged(javax.swing.event.ChangeEvent evt) {
-        menuOptionsZXScreenStateChanged(evt);
-      }
-    });
+    menuOptionsZXScreen.addChangeListener(this::menuOptionsZXScreenStateChanged);
     menuOptions.add(menuOptionsZXScreen);
 
     menuOptionsMode512.setSelected(true);
     menuOptionsMode512.setText("512 video mode");
-    menuOptionsMode512.addChangeListener(new javax.swing.event.ChangeListener() {
-      public void stateChanged(javax.swing.event.ChangeEvent evt) {
-        menuOptionsMode512StateChanged(evt);
-      }
-    });
+    menuOptionsMode512.addChangeListener(this::menuOptionsMode512StateChanged);
     menuOptions.add(menuOptionsMode512);
     menuOptions.add(jSeparator6);
 
@@ -656,60 +648,36 @@ public final class MainFrame extends javax.swing.JFrame {
     attributesButtonGroup.add(menuOptionDontShowAttributes);
     menuOptionDontShowAttributes.setSelected(true);
     menuOptionDontShowAttributes.setText("Don't show attribute colors");
-    menuOptionDontShowAttributes.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuOptionDontShowAttributesActionPerformed(evt);
-      }
-    });
+    menuOptionDontShowAttributes.addActionListener(this::menuOptionDontShowAttributesActionPerformed);
     menuOptions.add(menuOptionDontShowAttributes);
 
     menuOptionsShowBaseAttributes.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_MASK));
     attributesButtonGroup.add(menuOptionsShowBaseAttributes);
     menuOptionsShowBaseAttributes.setText("Show attribute colors");
-    menuOptionsShowBaseAttributes.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuOptionsShowBaseAttributesActionPerformed(evt);
-      }
-    });
+    menuOptionsShowBaseAttributes.addActionListener(this::menuOptionsShowBaseAttributesActionPerformed);
     menuOptions.add(menuOptionsShowBaseAttributes);
 
     menuOptionsShow512x384Attributes.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
     attributesButtonGroup.add(menuOptionsShow512x384Attributes);
     menuOptionsShow512x384Attributes.setText("Show 512x384 plane attributes");
-    menuOptionsShow512x384Attributes.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuOptionsShow512x384AttributesActionPerformed(evt);
-      }
-    });
+    menuOptionsShow512x384Attributes.addActionListener(this::menuOptionsShow512x384AttributesActionPerformed);
     menuOptions.add(menuOptionsShow512x384Attributes);
     menuOptions.add(jSeparator3);
 
     columnModeGroup.add(menuOptionsColumnsAll);
     menuOptionsColumnsAll.setSelected(true);
     menuOptionsColumnsAll.setText("All columns");
-    menuOptionsColumnsAll.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuOptionsColumnsAllActionPerformed(evt);
-      }
-    });
+    menuOptionsColumnsAll.addActionListener(this::menuOptionsColumnsAllActionPerformed);
     menuOptions.add(menuOptionsColumnsAll);
 
     columnModeGroup.add(menuOptionsColumnsOdd);
     menuOptionsColumnsOdd.setText("Odd columns");
-    menuOptionsColumnsOdd.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuOptionsColumnsOddActionPerformed(evt);
-      }
-    });
+    menuOptionsColumnsOdd.addActionListener(this::menuOptionsColumnsOddActionPerformed);
     menuOptions.add(menuOptionsColumnsOdd);
 
     columnModeGroup.add(menuOptionsColumnsEven);
     menuOptionsColumnsEven.setText("Even columns");
-    menuOptionsColumnsEven.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuOptionsColumnsEvenActionPerformed(evt);
-      }
-    });
+    menuOptionsColumnsEven.addActionListener(this::menuOptionsColumnsEvenActionPerformed);
     menuOptions.add(menuOptionsColumnsEven);
 
     menuBar.add(menuOptions);
@@ -717,11 +685,7 @@ public final class MainFrame extends javax.swing.JFrame {
     menuHelp.setText("Help");
 
     menuHelpAbout.setText("About");
-    menuHelpAbout.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        menuHelpAboutActionPerformed(evt);
-      }
-    });
+    menuHelpAbout.addActionListener(this::menuHelpAboutActionPerformed);
     menuHelp.add(menuHelpAbout);
 
     menuBar.add(menuHelp);
@@ -731,87 +695,88 @@ public final class MainFrame extends javax.swing.JFrame {
     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
     getContentPane().setLayout(layout);
     layout.setHorizontalGroup(
-      layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-      .addGroup(layout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-          .addGroup(layout.createSequentialGroup()
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-              .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollBarAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-              .addComponent(colorSelector, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-              .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
-              .addComponent(sliderPenWidth, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-          .addGroup(layout.createSequentialGroup()
-            .addComponent(sliderColumns, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGap(29, 29, 29)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-              .addComponent(buttonLock, javax.swing.GroupLayout.DEFAULT_SIZE, 107, Short.MAX_VALUE)
-              .addComponent(spinnerCurrentAddress))))
-        .addContainerGap())
+        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jScrollPane1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(scrollBarAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(colorSelector, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(sliderPenWidth, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(sliderColumns, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(29, 29, 29)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(buttonLock, javax.swing.GroupLayout.DEFAULT_SIZE, 107, Short.MAX_VALUE)
+                            .addComponent(spinnerCurrentAddress))))
+                .addContainerGap())
     );
     layout.setVerticalGroup(
-      layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-          .addComponent(scrollBarAddress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-          .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 399, Short.MAX_VALUE)
-          .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-          .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-            .addComponent(sliderColumns, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addComponent(spinnerCurrentAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-          .addGroup(layout.createSequentialGroup()
-            .addComponent(buttonLock)
-            .addGap(27, 27, 27)))
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-          .addComponent(colorSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-          .addComponent(sliderPenWidth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(scrollBarAddress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 399, Short.MAX_VALUE)
+                    .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(sliderColumns, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(spinnerCurrentAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(buttonLock)
+                        .addGap(27, 27, 27)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(colorSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sliderPenWidth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
     );
 
-    layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {colorSelector, sliderPenWidth});
+    layout.linkSize(javax.swing.SwingConstants.VERTICAL, colorSelector, sliderPenWidth);
 
     getAccessibleContext().setAccessibleName("ZX-Poly Sprite corrector");
 
     pack();
   }// </editor-fold>//GEN-END:initComponents
-    private void menuFileExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileExitActionPerformed
-      dispose();
-    }//GEN-LAST:event_menuFileExitActionPerformed
 
-    private void applicationClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_applicationClosing
-      if (this.mainEditor.hasData()) {
-        if (JOptionPane.showConfirmDialog(this, "Close application?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
-          return;
-        }
+  private void menuFileExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileExitActionPerformed
+    dispose();
+  }//GEN-LAST:event_menuFileExitActionPerformed
+
+  private void applicationClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_applicationClosing
+    if (this.mainEditor.hasData()) {
+      if (JOptionPane.showConfirmDialog(this, "Close application?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
+        return;
       }
-      dispose();
-    }//GEN-LAST:event_applicationClosing
+    }
+    dispose();
+  }//GEN-LAST:event_applicationClosing
 
-        private void buttonLockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLockActionPerformed
-          if (this.buttonLock.isSelected()) {
-            this.scrollBarAddress.setEnabled(false);
-            this.sliderColumns.setEnabled(false);
-          } else {
-            if (this.mainEditor.getProcessingData() != null) {
-              this.scrollBarAddress.setEnabled(true);
-            }
-            this.sliderColumns.setEnabled(true);
-          }
-}//GEN-LAST:event_buttonLockActionPerformed
+  private void buttonLockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLockActionPerformed
+    if (this.buttonLock.isSelected()) {
+      this.scrollBarAddress.setEnabled(false);
+      this.sliderColumns.setEnabled(false);
+    } else {
+      if (this.mainEditor.getProcessingData() != null) {
+        this.scrollBarAddress.setEnabled(true);
+      }
+      this.sliderColumns.setEnabled(true);
+    }
+  }//GEN-LAST:event_buttonLockActionPerformed
 
-        private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuHelpAboutActionPerformed
-          new AboutDialog(this).setVisible(true);
-        }//GEN-LAST:event_menuHelpAboutActionPerformed
+  private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuHelpAboutActionPerformed
+    new AboutDialog(this).setVisible(true);
+  }//GEN-LAST:event_menuHelpAboutActionPerformed
 
   private void mainEditorPanelMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {//GEN-FIRST:event_mainEditorPanelMouseWheelMoved
     if (this.selectAreaMode) {
@@ -844,9 +809,7 @@ public final class MainFrame extends javax.swing.JFrame {
       final JFileChooser chooser = new JFileChooser(this.lastOpenedFile);
       chooser.setAcceptAllFileFilterUsed(false);
 
-      container.getComponents(AbstractFilePlugin.class).forEach((plugin) -> {
-        chooser.addChoosableFileFilter(plugin.getImportFileFilter());
-      });
+      container.getComponents(AbstractFilePlugin.class).forEach((plugin) -> chooser.addChoosableFileFilter(plugin.getImportFileFilter()));
 
       final InsideFileView insideFileView = new InsideFileView(chooser);
       chooser.setAccessory(insideFileView);
@@ -941,11 +904,6 @@ public final class MainFrame extends javax.swing.JFrame {
     setLabelAddress(this.mainEditor.getZXGraphics().coordToAddress(rect.x, rect.y));
 
     return rect;
-  }
-
-  public static String toHex(final int value) {
-    final String h = Integer.toHexString(value).toUpperCase(Locale.ENGLISH);
-    return '#' + (h.length() < 4 ? "0000".substring(0, 4 - h.length()) + h : h);
   }
 
   private void setLabelAddress(final int address) {
@@ -1191,22 +1149,22 @@ public final class MainFrame extends javax.swing.JFrame {
     }
   }//GEN-LAST:event_mainEditorPanelMouseClicked
 
-    private void menuEditPasteImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditPasteImageActionPerformed
-      final Image image = GfxUtils.getImageFromClipboard();
-      if (image != null) {
-        this.toolsButtonGroup.clearSelection();
-        this.mainEditor.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-        this.mainEditor.setToolArea(null);
-        this.mainEditor.setDraggedImage(image);
-      }
-    }//GEN-LAST:event_menuEditPasteImageActionPerformed
+  private void menuEditPasteImageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuEditPasteImageActionPerformed
+    final Image image = GfxUtils.getImageFromClipboard();
+    if (image != null) {
+      this.toolsButtonGroup.clearSelection();
+      this.mainEditor.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+      this.mainEditor.setToolArea(null);
+      this.mainEditor.setDraggedImage(image);
+    }
+  }//GEN-LAST:event_menuEditPasteImageActionPerformed
 
-    private void menuEditMenuDeselected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_menuEditMenuDeselected
-      this.menuEditSelectArea.setEnabled(this.mainEditor.hasData());
-      this.menuEditPasteImage.setEnabled(this.mainEditor.hasData());
-      this.menuEditCopySelectedBaseAsImage.setEnabled(this.mainEditor.hasData());
-      this.menuEditCopySelectedZxPolyAsImage.setEnabled(this.mainEditor.hasData());
-    }//GEN-LAST:event_menuEditMenuDeselected
+  private void menuEditMenuDeselected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_menuEditMenuDeselected
+    this.menuEditSelectArea.setEnabled(this.mainEditor.hasData());
+    this.menuEditPasteImage.setEnabled(this.mainEditor.hasData());
+    this.menuEditCopySelectedBaseAsImage.setEnabled(this.mainEditor.hasData());
+    this.menuEditCopySelectedZxPolyAsImage.setEnabled(this.mainEditor.hasData());
+  }//GEN-LAST:event_menuEditMenuDeselected
 
   private void updateAddressScrollBar() {
     this.sliderColumns.setEnabled(true);
@@ -1223,63 +1181,6 @@ public final class MainFrame extends javax.swing.JFrame {
     }
     this.scrollBarAddress.repaint();
   }
-
-  // Variables declaration - do not modify//GEN-BEGIN:variables
-  private javax.swing.ButtonGroup attributesButtonGroup;
-  private javax.swing.JToggleButton buttonLock;
-  private com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector colorSelector;
-  private javax.swing.ButtonGroup columnModeGroup;
-  private javax.swing.Box.Filler filler1;
-  private javax.swing.JPanel jPanel2;
-  private javax.swing.JScrollPane jScrollPane1;
-  private javax.swing.JSeparator jSeparator1;
-  private javax.swing.JPopupMenu.Separator jSeparator2;
-  private javax.swing.JPopupMenu.Separator jSeparator3;
-  private javax.swing.JPopupMenu.Separator jSeparator4;
-  private javax.swing.JPopupMenu.Separator jSeparator5;
-  private javax.swing.JPopupMenu.Separator jSeparator6;
-  private javax.swing.JPopupMenu.Separator jSeparator7;
-  private javax.swing.JLabel labelAddress;
-  private javax.swing.JLabel labelZoom;
-  private com.igormaznitsa.zxpspritecorrector.components.EditorComponent mainEditor;
-  private javax.swing.JPanel mainEditorPanel;
-  private javax.swing.JMenuBar menuBar;
-  private javax.swing.JMenu menuEdit;
-  private javax.swing.JMenuItem menuEditClear;
-  private javax.swing.JMenuItem menuEditCopyBaseToPlans;
-  private javax.swing.JMenuItem menuEditCopySelectedBaseAsImage;
-  private javax.swing.JMenuItem menuEditCopySelectedZxPolyAsImage;
-  private javax.swing.JMenuItem menuEditPasteImage;
-  private javax.swing.JMenuItem menuEditRedo;
-  private javax.swing.JMenuItem menuEditSelectArea;
-  private javax.swing.JMenuItem menuEditUndo;
-  private javax.swing.JMenu menuFile;
-  private javax.swing.JMenuItem menuFileExit;
-  private javax.swing.JMenu menuFileExportAs;
-  private javax.swing.JMenuItem menuFileNew;
-  private javax.swing.JMenuItem menuFileOpen;
-  private javax.swing.JMenuItem menuFileSaveAs;
-  private javax.swing.JMenu menuHelp;
-  private javax.swing.JMenuItem menuHelpAbout;
-  private javax.swing.JRadioButtonMenuItem menuOptionDontShowAttributes;
-  private javax.swing.JMenu menuOptions;
-  private javax.swing.JCheckBoxMenuItem menuOptionsColumns;
-  private javax.swing.JRadioButtonMenuItem menuOptionsColumnsAll;
-  private javax.swing.JRadioButtonMenuItem menuOptionsColumnsEven;
-  private javax.swing.JRadioButtonMenuItem menuOptionsColumnsOdd;
-  private javax.swing.JCheckBoxMenuItem menuOptionsGrid;
-  private javax.swing.JCheckBoxMenuItem menuOptionsInvertBase;
-  private javax.swing.JCheckBoxMenuItem menuOptionsMode512;
-  private javax.swing.JRadioButtonMenuItem menuOptionsShow512x384Attributes;
-  private javax.swing.JRadioButtonMenuItem menuOptionsShowBaseAttributes;
-  private javax.swing.JCheckBoxMenuItem menuOptionsZXScreen;
-  private javax.swing.JMenuItem menuSave;
-  private javax.swing.JPanel panelTools;
-  private javax.swing.JScrollBar scrollBarAddress;
-  private javax.swing.JSlider sliderColumns;
-  private com.igormaznitsa.zxpspritecorrector.components.PenWidth sliderPenWidth;
-  private javax.swing.JSpinner spinnerCurrentAddress;
-  private javax.swing.ButtonGroup toolsButtonGroup;
   // End of variables declaration//GEN-END:variables
 
 }

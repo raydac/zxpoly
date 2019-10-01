@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,15 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector;
 
 import com.igormaznitsa.zxpspritecorrector.cmdline.SliceImageCmd;
 import java.util.Arrays;
 import java.util.Locale;
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
-public class main {
+public class Application {
 
   public static void main(final String[] args) {
     if (args.length > 0) {

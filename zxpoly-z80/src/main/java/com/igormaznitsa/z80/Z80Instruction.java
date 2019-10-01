@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,29 +14,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.z80;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class Z80Instruction {
 
-  public interface ExpressionProcessor {
-
-    int evalExpression(String expression);
-  }
-
+  public static final int SPEC_INDEX = 0x100;
+  public static final int SPEC_OFFSET = 0x101;
+  public static final int SPEC_UNSIGNED_BYTE = 0x102;
+  public static final int SPEC_UNSIGNED_WORD = 0x103;
   private static final Pattern CODE_PART_CHECKING = Pattern.compile("([0-9A-F]{2})+(\\s+(d|e|nn|n))*(\\s*[0-9A-F]{2}+)?");
   private static final Pattern CODE_PART_PARSING = Pattern.compile("[0-9A-F]{2}|\\s+(?:d|e|nn|n)");
-
   private final static List<Z80Instruction> INSTRUCTIONS;
 
   static {
     final List<Z80Instruction> list = new ArrayList<>(1500);
     final InputStream in = Z80Instruction.class.getClassLoader().getResourceAsStream("z80opcodes.lst");
-    try(final BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"))) {
+    try (final BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"))) {
       while (true) {
         final String line = reader.readLine();
         if (line == null) {
@@ -49,34 +55,21 @@ public final class Z80Instruction {
         list.add(new Z80Instruction(trimmed));
       }
       INSTRUCTIONS = Collections.unmodifiableList(list);
-    }
-    catch (IOException ex) {
+    } catch (IOException ex) {
       throw new Error("Can't load Z80 instruction list", ex);
     }
   }
-
-  public static final int SPEC_INDEX = 0x100;
-  public static final int SPEC_OFFSET = 0x101;
-  public static final int SPEC_UNSIGNED_BYTE = 0x102;
-  public static final int SPEC_UNSIGNED_WORD = 0x103;
 
   private final Pattern compilePattern;
   private final int[] compileGroupTypes;
   private final int[] instructionCodeTemplate;
   private final String instructionTextTemplate;
-
   private final int length;
   private final int fixedPartLength;
-
   private final boolean has_index;
   private final boolean has_offset;
   private final boolean has_byte;
   private final boolean has_word;
-
-  public static List<Z80Instruction> getInstructions() {
-    return INSTRUCTIONS;
-  }
-
   Z80Instruction(final String def) {
     final String codePart = def.substring(0, 11).trim();
     final String asmPart = def.substring(11).trim();
@@ -115,8 +108,7 @@ public final class Z80Instruction {
 
       if (c < SPEC_INDEX && calcFixLength) {
         fixLength++;
-      }
-      else {
+      } else {
         calcFixLength = false;
       }
     }
@@ -135,15 +127,15 @@ public final class Z80Instruction {
 
     final StringBuilder workBuffer = new StringBuilder();
 
-    for(final char c : this.instructionTextTemplate.toCharArray()){
-      if (c==' '){
+    for (final char c : this.instructionTextTemplate.toCharArray()) {
+      if (c == ' ') {
         break;
-      }else{
+      } else {
         workBuffer.append(c);
       }
     }
     workBuffer.setLength(0);
-    
+
     final String group = "(\\S.*)";
 
     builder.append('^');
@@ -189,12 +181,10 @@ public final class Z80Instruction {
               workBuffer.setLength(0);
               builder.append(group);
             }
-          }
-          else if (Character.isDigit(c)) {
+          } else if (Character.isDigit(c)) {
             asmGroups[asmGroupIndex++] = c - '0';
             builder.append(group);
-          }
-          else {
+          } else {
             builder.append(c);
           }
         }
@@ -205,6 +195,82 @@ public final class Z80Instruction {
 
     this.compilePattern = Pattern.compile(builder.toString(), Pattern.CASE_INSENSITIVE);
     this.compileGroupTypes = Arrays.copyOf(asmGroups, asmGroupIndex);
+  }
+
+  public static List<Z80Instruction> getInstructions() {
+    return INSTRUCTIONS;
+  }
+
+  private static int[] parseCode(final String codePart) {
+    if (CODE_PART_CHECKING.matcher(codePart).matches()) {
+      final int[] lst = new int[16];
+      int index = 0;
+
+      final Matcher m = CODE_PART_PARSING.matcher(codePart);
+
+      while (m.find()) {
+        final String str = m.group().trim();
+        final int value;
+        if (str.equals("d")) {
+          value = SPEC_INDEX;
+        } else if (str.equals("e")) {
+          value = SPEC_OFFSET;
+        } else if (str.equals("nn")) {
+          value = SPEC_UNSIGNED_WORD;
+        } else if (str.equals("n")) {
+          value = SPEC_UNSIGNED_BYTE;
+        } else {
+          value = Integer.parseInt(str, 16);
+        }
+        lst[index++] = value;
+      }
+      return Arrays.copyOf(lst, index);
+    } else {
+      throw new IllegalArgumentException("Can't recognize byte command description [" + codePart + ']');
+    }
+  }
+
+  private static String indexToHex(final byte index) {
+    String num = Integer.toHexString(Math.abs(index)).toUpperCase(Locale.ENGLISH);
+    if (num.length() < 2) {
+      num = '0' + num;
+    }
+
+    if (index < 0) {
+      return "-#" + num;
+    } else {
+      return "+#" + num;
+    }
+  }
+
+  private static String offsetToHex(final byte offset, final int fixPartLenghtOfCommand, final int programCounter) {
+    if (programCounter < 0) {
+      final int theoffset = fixPartLenghtOfCommand + 1 + offset;
+      String num = Integer.toHexString(Math.abs(theoffset)).toUpperCase(Locale.ENGLISH);
+      if (num.length() < 2) {
+        num = '0' + num;
+      }
+
+      if (theoffset < 0) {
+        return "PC-#" + num;
+      } else {
+        return "PC+#" + num;
+      }
+    } else {
+      final int address = programCounter + offset + fixPartLenghtOfCommand + 1;
+      String addressAsHex = Integer.toHexString(Math.abs(address)).toUpperCase(Locale.ENGLISH);
+      return '#' + (addressAsHex.length() < 4 ? "0000".substring(0, 4 - addressAsHex.length()) + addressAsHex : addressAsHex);
+    }
+  }
+
+  private static String unsignedByteToHex(final byte value) {
+    String str = Integer.toHexString(value & 0xFF).toUpperCase(Locale.ENGLISH);
+    return '#' + (str.length() < 2 ? '0' + str : str);
+  }
+
+  private static String unsignedWordToHex(final byte low, final byte hi) {
+    String str = Integer.toHexString((hi << 8 | (low & 0xFF)) & 0xFFFF).toUpperCase(Locale.ENGLISH);
+    return '#' + (str.length() < 4 ? "0000".substring(0, 4 - str.length()) + str : str);
   }
 
   public boolean matches(final String asm) {
@@ -235,8 +301,7 @@ public final class Z80Instruction {
         final int type = this.instructionCodeTemplate[i];
         if (type < SPEC_INDEX) {
           resultBuff[resultIndex++] = (byte) type;
-        }
-        else {
+        } else {
           int groupIndex = -1;
           for (int j = 0; j < this.compileGroupTypes.length; j++) {
             if (this.compileGroupTypes[j] == type) {
@@ -251,14 +316,14 @@ public final class Z80Instruction {
           switch (type) {
             case SPEC_INDEX: {
               if (result < -128 || result > 127) {
-                throw new CompileInstructionException(this,"Wrong index value [" + result + ']');
+                throw new CompileInstructionException(this, "Wrong index value [" + result + ']');
               }
               resultBuff[resultIndex++] = (byte) result;
             }
             break;
             case SPEC_OFFSET: {
               if (result < -128 || result > 127) {
-                throw new CompileInstructionException(this,"Wrong offset value [" + result + ']');
+                throw new CompileInstructionException(this, "Wrong offset value [" + result + ']');
               }
               resultBuff[resultIndex++] = (byte) result;
             }
@@ -279,8 +344,7 @@ public final class Z80Instruction {
         }
       }
       return Arrays.copyOf(resultBuff, resultIndex);
-    }
-    else {
+    } else {
       return null;
     }
   }
@@ -348,93 +412,13 @@ public final class Z80Instruction {
     return asmPart;
   }
 
-  private static int[] parseCode(final String codePart) {
-    if (CODE_PART_CHECKING.matcher(codePart).matches()) {
-      final int[] lst = new int[16];
-      int index = 0;
-
-      final Matcher m = CODE_PART_PARSING.matcher(codePart);
-
-      while (m.find()) {
-        final String str = m.group().trim();
-        final int value;
-        if (str.equals("d")) {
-          value = SPEC_INDEX;
-        }
-        else if (str.equals("e")) {
-          value = SPEC_OFFSET;
-        }
-        else if (str.equals("nn")) {
-          value = SPEC_UNSIGNED_WORD;
-        }
-        else if (str.equals("n")) {
-          value = SPEC_UNSIGNED_BYTE;
-        }
-        else {
-          value = Integer.parseInt(str, 16);
-        }
-        lst[index++] = value;
-      }
-      return Arrays.copyOf(lst, index);
-    }
-    else {
-      throw new IllegalArgumentException("Can't recognize byte command description [" + codePart + ']');
-    }
-  }
-
-  private static String indexToHex(final byte index) {
-    String num = Integer.toHexString(Math.abs(index)).toUpperCase(Locale.ENGLISH);
-    if (num.length() < 2) {
-      num = '0' + num;
-    }
-
-    if (index < 0) {
-      return "-#" + num;
-    }
-    else {
-      return "+#" + num;
-    }
-  }
-
-  private static String offsetToHex(final byte offset, final int fixPartLenghtOfCommand, final int programCounter) {
-    if (programCounter < 0) {
-      final int theoffset = fixPartLenghtOfCommand + 1 + offset;
-      String num = Integer.toHexString(Math.abs(theoffset)).toUpperCase(Locale.ENGLISH);
-      if (num.length() < 2) {
-        num = '0' + num;
-      }
-
-      if (theoffset < 0) {
-        return "PC-#" + num;
-      }
-      else {
-        return "PC+#" + num;
-      }
-    }
-    else {
-      final int address = programCounter + offset + fixPartLenghtOfCommand + 1;
-      String addressAsHex = Integer.toHexString(Math.abs(address)).toUpperCase(Locale.ENGLISH);
-      return '#' + (addressAsHex.length() < 4 ? "0000".substring(0, 4 - addressAsHex.length()) + addressAsHex : addressAsHex);
-    }
-  }
-
-  private static String unsignedByteToHex(final byte value) {
-    String str = Integer.toHexString(value & 0xFF).toUpperCase(Locale.ENGLISH);
-    return '#' + (str.length() < 2 ? '0' + str : str);
-  }
-
-  private static String unsignedWordToHex(final byte low, final byte hi) {
-    String str = Integer.toHexString((hi << 8 | (low & 0xFF)) & 0xFFFF).toUpperCase(Locale.ENGLISH);
-    return '#' + (str.length() < 4 ? "0000".substring(0, 4 - str.length()) + str : str);
-  }
-
   /**
    * Decode instruction placed in byte array for its offset.
    *
    * @param memoryAccessProvider provider of access to memory content, must not be null
-   * @param address the address of the instruction in memory
-   * @param pcCounter the current PC counter, it can be negative if its value is
-   * not known
+   * @param address              the address of the instruction in memory
+   * @param pcCounter            the current PC counter, it can be negative if its value is
+   *                             not known
    * @return the string representation of instruction or null if it was
    * impossible to decode the instruction
    */
@@ -491,6 +475,11 @@ public final class Z80Instruction {
   @Override
   public String toString() {
     return this.instructionTextTemplate;
+  }
+
+  public interface ExpressionProcessor {
+
+    int evalExpression(String expression);
   }
 
 }

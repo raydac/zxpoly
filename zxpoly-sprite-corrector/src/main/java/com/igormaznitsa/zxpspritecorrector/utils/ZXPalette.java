@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.utils;
 
 import java.awt.Color;
@@ -21,26 +22,30 @@ import java.awt.image.IndexColorModel;
 
 public final class ZXPalette {
 
-  public static final Color[] COLORS = new Color[]{
-    // normal bright
-    new Color(0, 0, 0), // Black
-    new Color(0, 0, 190), // Blue
-    new Color(190, 0, 0), // Red
-    new Color(190, 0, 190),
-    new Color(0, 190, 0), // Green
-    new Color(0, 190, 190),
-    new Color(190, 190, 0),
-    new Color(190, 190, 190),
-    // high bright
-    new Color(16, 16, 16),
-    new Color(0, 0, 255),
-    new Color(255, 0, 0),
-    new Color(255, 0, 255),
-    new Color(0, 255, 0),
-    new Color(0, 255, 255),
-    new Color(255, 255, 0),
-    new Color(255, 255, 255)
+  public static final Color[] COLORS = new Color[] {
+      // normal bright
+      new Color(0, 0, 0), // Black
+      new Color(0, 0, 190), // Blue
+      new Color(190, 0, 0), // Red
+      new Color(190, 0, 190),
+      new Color(0, 190, 0), // Green
+      new Color(0, 190, 190),
+      new Color(190, 190, 0),
+      new Color(190, 190, 190),
+      // high bright
+      new Color(16, 16, 16),
+      new Color(0, 0, 255),
+      new Color(255, 0, 0),
+      new Color(255, 0, 255),
+      new Color(0, 255, 0),
+      new Color(0, 255, 255),
+      new Color(255, 255, 0),
+      new Color(255, 255, 255)
   };
+
+  private ZXPalette() {
+
+  }
 
   public static IndexColorModel makeIndexPalette() {
     final byte[] r = new byte[COLORS.length];
@@ -99,9 +104,5 @@ public final class ZXPalette {
       currentIndex++;
     }
     return index;
-  }
-
-  private ZXPalette() {
-
   }
 }

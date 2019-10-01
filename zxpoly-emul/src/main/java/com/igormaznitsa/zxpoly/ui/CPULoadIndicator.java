@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,12 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.ui;
 
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.image.BufferedImage;
-import javax.swing.*;
+import javax.swing.JPanel;
 
 public final class CPULoadIndicator extends JPanel {
 
@@ -27,14 +35,10 @@ public final class CPULoadIndicator extends JPanel {
 
   private static final Stroke STROKE_INDICATOR = new BasicStroke(1.0f);
   private static final Stroke STROKE_GRID = new BasicStroke(0.3f);
-
-  private Color gridColor;
   private final int gridStep;
-
   private final Dimension thesize;
-
   private final BufferedImage buffer;
-
+  private Color gridColor;
   private int lastY;
 
   public CPULoadIndicator(final int width, final int height, final int gridStep, final String text, final Color foreground, final Color background, final Color grid) {

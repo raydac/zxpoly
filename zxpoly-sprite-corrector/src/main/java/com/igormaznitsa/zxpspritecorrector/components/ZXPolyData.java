@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.components;
 
 import com.igormaznitsa.jbbp.JBBPParser;
@@ -21,16 +22,23 @@ import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.mapper.Bin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
 import java.awt.Rectangle;
-import java.io.*;
-import java.util.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 
 public class ZXPolyData {
 
+  public static final int ZXPOLY_0 = 0;
+  public static final int ZXPOLY_1 = 1;
+  public static final int ZXPOLY_2 = 2;
+  public static final int ZXPOLY_3 = 3;
   private static final JBBPParser PARSER = JBBPParser.prepare(
-          "int pluginId;"
+      "int pluginId;"
           + "ushort infoLength;"
           + "byte [infoLength] info;"
           + "int length;"
@@ -41,12 +49,6 @@ public class ZXPolyData {
           + "byte [length] zxpoly2;"
           + "byte [length] zxpoly3;"
   );
-
-  public static final int ZXPOLY_0 = 0;
-  public static final int ZXPOLY_1 = 1;
-  public static final int ZXPOLY_2 = 2;
-  public static final int ZXPOLY_3 = 3;
-
   private final byte[] basedata;
   private final byte[] mask;
   private final byte[][] zxpoly;
@@ -54,55 +56,12 @@ public class ZXPolyData {
 
   private final Info info;
 
-  public static class UndoBlock {
-
-    private final Rectangle selectedArea;
-    private final byte[] mask;
-    private final byte[][] zxpoly;
-
-    private UndoBlock(final Rectangle selectedArea, final byte[] mask, final byte[][] zxpoly) {
-      this.selectedArea = selectedArea == null ? null : new Rectangle(selectedArea);
-      this.mask = mask.clone();
-      this.zxpoly = new byte[4][];
-      for (int i = 0; i < 4; i++) {
-        this.zxpoly[i] = zxpoly[i].clone();
-      }
-    }
-
-    public Rectangle getSelectedArea() {
-      return this.selectedArea;
-    }
-  }
-
-  public UndoBlock makeUndo(final Rectangle selectedArea) {
-    return new UndoBlock(selectedArea, this.mask, this.zxpoly);
-  }
-
-  public void restoreFromUndo(final UndoBlock undo) {
-    System.arraycopy(undo.mask, 0, this.mask, 0, undo.mask.length);
-    for (int i = 0; i < 4; i++) {
-      System.arraycopy(undo.zxpoly[i], 0, this.zxpoly[i], 0, undo.zxpoly[i].length);
-    }
-  }
-
   public ZXPolyData(final Info info, final AbstractFilePlugin basePlugin, final byte[] array) {
     this.basedata = array.clone();
     this.mask = new byte[this.basedata.length];
     this.zxpoly = new byte[4][this.basedata.length];
     this.info = info;
     this.basePlugin = basePlugin;
-  }
-
-  private static int uid2int(final String str) {
-    if (str.length() != 4) {
-      throw new IllegalArgumentException("Plugin UID must have 4 chars [" + str + ']');
-    }
-
-    int result = 0;
-    for (int i = 0; i < 4; i++) {
-      result = (result << 8) | (str.charAt(i) & 0xFF);
-    }
-    return result;
   }
 
   public ZXPolyData(final InputStream in, final List<AbstractFilePlugin> plugins) throws IOException {
@@ -149,21 +108,44 @@ public class ZXPolyData {
 
   }
 
+  private static int uid2int(final String str) {
+    if (str.length() != 4) {
+      throw new IllegalArgumentException("Plugin UID must have 4 chars [" + str + ']');
+    }
+
+    int result = 0;
+    for (int i = 0; i < 4; i++) {
+      result = (result << 8) | (str.charAt(i) & 0xFF);
+    }
+    return result;
+  }
+
+  public UndoBlock makeUndo(final Rectangle selectedArea) {
+    return new UndoBlock(selectedArea, this.mask, this.zxpoly);
+  }
+
+  public void restoreFromUndo(final UndoBlock undo) {
+    System.arraycopy(undo.mask, 0, this.mask, 0, undo.mask.length);
+    for (int i = 0; i < 4; i++) {
+      System.arraycopy(undo.zxpoly[i], 0, this.zxpoly[i], 0, undo.zxpoly[i].length);
+    }
+  }
+
   public byte[] getAsArray() throws IOException {
     final byte[] packedInfo = this.info.save(JBBPOut.BeginBin()).End().toByteArray();
 
     return JBBPOut.BeginBin().
-            Long(0xABBAFAFABABE0123L).
-            Int(uid2int(this.basePlugin.getPluginUID())).
-            Short(packedInfo.length).
-            Byte(packedInfo).
-            Int(this.basedata.length).
-            Byte(this.basedata).
-            Byte(this.mask).
-            Byte(this.zxpoly[0]).
-            Byte(this.zxpoly[1]).
-            Byte(this.zxpoly[2]).
-            Byte(this.zxpoly[3]).End().toByteArray();
+        Long(0xABBAFAFABABE0123L).
+        Int(uid2int(this.basePlugin.getPluginUID())).
+        Short(packedInfo.length).
+        Byte(packedInfo).
+        Int(this.basedata.length).
+        Byte(this.basedata).
+        Byte(this.mask).
+        Byte(this.zxpoly[0]).
+        Byte(this.zxpoly[1]).
+        Byte(this.zxpoly[2]).
+        Byte(this.zxpoly[3]).End().toByteArray();
   }
 
   public Info getInfo() {
@@ -226,5 +208,25 @@ public class ZXPolyData {
       System.arraycopy(this.basedata, 0, plane, 0, this.basedata.length);
     }
     Arrays.fill(this.mask, (byte) 0xFF);
+  }
+
+  public static class UndoBlock {
+
+    private final Rectangle selectedArea;
+    private final byte[] mask;
+    private final byte[][] zxpoly;
+
+    private UndoBlock(final Rectangle selectedArea, final byte[] mask, final byte[][] zxpoly) {
+      this.selectedArea = selectedArea == null ? null : new Rectangle(selectedArea);
+      this.mask = mask.clone();
+      this.zxpoly = new byte[4][];
+      for (int i = 0; i < 4; i++) {
+        this.zxpoly[i] = zxpoly[i].clone();
+      }
+    }
+
+    public Rectangle getSelectedArea() {
+      return this.selectedArea;
+    }
   }
 }

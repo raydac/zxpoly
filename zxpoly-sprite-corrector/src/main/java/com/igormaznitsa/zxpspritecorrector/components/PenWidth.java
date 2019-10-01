@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,26 +14,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.components;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.BoundedRangeModel;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 public final class PenWidth extends JPanel {
 
   private static final long serialVersionUID = -7662850701072499309L;
-
+  private static final int ICON_WIDTH = 32;
+  private static final int ICON_HEIGHT = 32;
   private final JSlider widthSlider;
   private final JLabel showLabel;
   private final BufferedImage showImage;
-
-  private static final int ICON_WIDTH = 32;
-  private static final int ICON_HEIGHT = 32;
-
   private final AtomicReference<BoundedRangeModel> currentModel = new AtomicReference<>();
 
   private final ChangeListener changeListener;
@@ -42,9 +49,7 @@ public final class PenWidth extends JPanel {
 
   public PenWidth() {
     super();
-    this.changeListener = (ChangeEvent e) -> {
-      drawImageForValue(((BoundedRangeModel) e.getSource()).getValue());
-    };
+    this.changeListener = (ChangeEvent e) -> drawImageForValue(((BoundedRangeModel) e.getSource()).getValue());
     setOpaque(false);
     setLayout(new BorderLayout(0, 0));
 

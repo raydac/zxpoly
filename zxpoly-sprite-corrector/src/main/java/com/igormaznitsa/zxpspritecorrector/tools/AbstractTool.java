@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,16 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.tools;
 
 import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
 import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
 import java.awt.Rectangle;
-import javax.swing.*;
+import javax.swing.BoundedRangeModel;
+import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.ImageIcon;
+import javax.swing.JToggleButton;
 
 public abstract class AbstractTool extends JToggleButton {
-
-  private static final long serialVersionUID = 5453667415344533432L;
 
   public static final int BUTTON_NONE = 0;
   public static final int BUTTON_MOUSE_LEFT = 1;
@@ -32,7 +34,7 @@ public abstract class AbstractTool extends JToggleButton {
   public static final int BUTTON_SHIFT = 8;
   public static final int BUTTON_CTRL = 16;
   public static final int BUTTON_ALT = 32;
-
+  private static final long serialVersionUID = 5453667415344533432L;
   protected final BoundedRangeModel model = new DefaultBoundedRangeModel(1, 0, 1, 32);
 
   public AbstractTool(final String iconName, final String toolTip) {
@@ -40,6 +42,14 @@ public abstract class AbstractTool extends JToggleButton {
     setModel(new ToolButtonModel(this));
     setIcon(new ImageIcon(GfxUtils.loadImage(iconName)));
     setToolTipText(toolTip);
+  }
+
+  public static boolean isCoordValid(final int x, final int y, final boolean mode512) {
+    if (mode512) {
+      return x >= 0 && y >= 0 && x < 512 && y < 384;
+    } else {
+      return x >= 0 && y >= 0 && x < 256 && y < 192;
+    }
   }
 
   @Override
@@ -56,12 +66,4 @@ public abstract class AbstractTool extends JToggleButton {
   }
 
   public abstract void process(final EditorComponent editComponent, final Rectangle area, final int buttons);
-
-  public static boolean isCoordValid(final int x, final int y, final boolean mode512) {
-    if (mode512) {
-      return x >= 0 && y >= 0 && x < 512 && y < 384;
-    } else {
-      return x >= 0 && y >= 0 && x < 256 && y < 192;
-    }
-  }
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.z80.disasm;
 
 import com.igormaznitsa.z80.MemoryAccessProvider;
@@ -21,11 +22,12 @@ import com.igormaznitsa.z80.Z80Instruction;
 import java.util.ArrayList;
 import java.util.List;
 
-public enum Z80Disasm {
+public final class Z80Disasm {
 
-  ;
+  private Z80Disasm() {
+  }
 
-    
+
   private static final Z80Instruction[] NO_PREFIXED;
   private static final Z80Instruction[] CB_PREFIXED;
   private static final Z80Instruction[] DD_PREFIXED;
@@ -72,16 +74,14 @@ public enum Z80Disasm {
             case 0xDD:
               if (codes[1] == 0xCB) {
                 ddcbPrefixed.add(i);
-              }
-              else {
+              } else {
                 ddPrefixed.add(i);
               }
               break;
             case 0xFD:
               if (codes[1] == 0xCB) {
                 fdcbPrefixed.add(i);
-              }
-              else {
+              } else {
                 fdPrefixed.add(i);
               }
               break;
@@ -101,7 +101,7 @@ public enum Z80Disasm {
     FDCB_PREFIXED = fdcbPrefixed.toArray(new Z80Instruction[fdcbPrefixed.size()]);
   }
 
-  public static List<Z80Instruction> decodeList (final MemoryAccessProvider memoryAccessProvider, final List<Z80Instruction> container, final int offset, final int instructionsToDecode) {
+  public static List<Z80Instruction> decodeList(final MemoryAccessProvider memoryAccessProvider, final List<Z80Instruction> container, final int offset, final int instructionsToDecode) {
     final List<Z80Instruction> result = container == null ? new ArrayList<Z80Instruction>() : container;
 
     int off = offset;
@@ -113,8 +113,7 @@ public enum Z80Disasm {
       result.add(i);
       if (i == null) {
         off++;
-      }
-      else {
+      } else {
         off += i.getLength();
       }
 
@@ -124,7 +123,7 @@ public enum Z80Disasm {
     return result;
   }
 
-  public static Z80Instruction decodeInstruction (final MemoryAccessProvider memoryAccessProvider, final int offset) {
+  public static Z80Instruction decodeInstruction(final MemoryAccessProvider memoryAccessProvider, final int offset) {
     final Z80Instruction[] arraytofind;
 
     int off = offset;

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,9 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.utils;
 
 import com.igormaznitsa.zxpoly.components.RomData;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.io.IOUtils;
@@ -32,20 +39,13 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.HttpContext;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-
-public class ROMLoader {
+public class RomLoader {
 
   private static final String ROM_48 = "48.rom";
   private static final String ROM_128TR = "128tr.rom";
   private static final String ROM_TRDOS = "trdos.rom";
 
-  public ROMLoader() {
+  public RomLoader() {
 
   }
 
@@ -104,7 +104,7 @@ public class ROMLoader {
     final String name;
     final String password;
     if (userInfo != null) {
-      final String[] splitted = userInfo.split("\\:",-1);
+      final String[] splitted = userInfo.split("\\:", -1);
       name = splitted[0];
       password = splitted[1];
     } else {

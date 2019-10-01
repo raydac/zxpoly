@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,13 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
 import com.igormaznitsa.zxpspritecorrector.MainFrame;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
@@ -30,31 +32,37 @@ import org.picocontainer.annotations.Inject;
 
 public abstract class AbstractFilePlugin extends FileFilter {
 
-  public final static class ReadResult {
-
-    private final ZXPolyData data;
-    private final SessionData session;
-
-    public ReadResult(final ZXPolyData data, final SessionData session) {
-      this.data = data;
-      this.session = session;
-    }
-
-    public ZXPolyData getData() {
-      return this.data;
-    }
-
-    public SessionData getSessionData() {
-      return this.session;
-    }
-
-  }
-
   @Inject
   protected MainFrame mainFrame;
 
   public AbstractFilePlugin() {
     super();
+  }
+
+  protected static String prepareNameForTRD(final String name, final int index) {
+    String prepared;
+    if (name.length() >= 8) {
+      prepared = name.substring(0, 7);
+    } else {
+      prepared = name + "_______".substring(0, 7 - name.length());
+    }
+    return prepared + index;
+  }
+
+  protected static String addNumberToFileName(final String name, final int number) {
+    String base = FilenameUtils.getBaseName(name);
+    final String ext = FilenameUtils.getExtension(name);
+    return base + number + '.' + ext;
+  }
+
+  protected static String prepareNameForTAP(final String name, final int index) {
+    String prepared;
+    if (name.length() >= 10) {
+      prepared = name.substring(0, 9);
+    } else {
+      prepared = name + "_________".substring(0, 9 - name.length());
+    }
+    return prepared + index;
   }
 
   public boolean allowsExport() {
@@ -85,32 +93,6 @@ public abstract class AbstractFilePlugin extends FileFilter {
 
   public abstract void writeTo(File file, ZXPolyData data, SessionData sessionData) throws IOException;
 
-  protected static String prepareNameForTRD(final String name, final int index) {
-    String prepared;
-    if (name.length() >= 8) {
-      prepared = name.substring(0, 7);
-    } else {
-      prepared = name + "_______".substring(0, 7 - name.length());
-    }
-    return prepared + index;
-  }
-
-  protected static String addNumberToFileName(final String name, final int number) {
-    String base = FilenameUtils.getBaseName(name);
-    final String ext = FilenameUtils.getExtension(name);
-    return base + Integer.toString(number) + '.' + ext;
-  }
-
-  protected static String prepareNameForTAP(final String name, final int index) {
-    String prepared;
-    if (name.length() >= 10) {
-      prepared = name.substring(0, 9);
-    } else {
-      prepared = name + "_________".substring(0, 9 - name.length());
-    }
-    return prepared + index;
-  }
-
   protected boolean saveDataToFile(final File file, final byte[] data) throws IOException {
     if (file.isFile()) {
       switch (JOptionPane.showConfirmDialog(this.mainFrame, "Overwrite file '" + file.getAbsolutePath() + "'?", "Overwrite file", JOptionPane.YES_NO_CANCEL_OPTION)) {
@@ -122,5 +104,25 @@ public abstract class AbstractFilePlugin extends FileFilter {
     }
     FileUtils.writeByteArrayToFile(file, data);
     return true;
+  }
+
+  public final static class ReadResult {
+
+    private final ZXPolyData data;
+    private final SessionData session;
+
+    public ReadResult(final ZXPolyData data, final SessionData session) {
+      this.data = data;
+      this.session = session;
+    }
+
+    public ZXPolyData getData() {
+      return this.data;
+    }
+
+    public SessionData getSessionData() {
+      return this.session;
+    }
+
   }
 }

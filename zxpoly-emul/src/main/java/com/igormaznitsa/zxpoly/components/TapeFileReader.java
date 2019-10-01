@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,21 +14,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.components;
 
-import com.igormaznitsa.jbbp.io.*;
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPByteOrder;
+import com.igormaznitsa.jbbp.io.JBBPOut;
+import com.igormaznitsa.zxpoly.components.TapFormatParser.TAPBLOCK;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataListener;
-import com.igormaznitsa.zxpoly.components.TapFormatParser.TAPBLOCK;
 
 public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> {
 
@@ -45,103 +53,8 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
   private static final long PAUSE_BETWEEN = 7000000L; // two sec
 
   private final List<ActionListener> listeners = new CopyOnWriteArrayList<>();
-
-  private enum State {
-
-    STOPPED,
-    INBETWEEN,
-    PILOT,
-    SYNC1,
-    SYNC2,
-    SYNC3,
-    FLAG,
-    DATA,
-    CHECKSUM
-  }
-
-  public static final class TapBlock {
-
-    private static final Charset USASCII = Charset.forName("US-ASCII");
-
-    byte flag;
-    byte[] data;
-    byte checksum;
-
-    transient TapBlock prev;
-    transient TapBlock next;
-    transient int index;
-    transient String name;
-
-    public TapBlock(TAPBLOCK block) {
-      this.flag = block.getFLAG();
-      this.checksum = block.getCHECKSUM();
-      this.data = block.getDATA().clone();
-    }
-
-    public boolean isFirst() {
-      return this.prev == null;
-    }
-
-    public boolean isLast() {
-      return this.next == null;
-    }
-
-    public boolean isHeader() {
-      return (this.flag & 0xFF) < 0x80;
-    }
-
-    public String getName() {
-      if (this.name == null) {
-        if (isHeader()) {
-          if (this.data.length < 11) {
-            this.name = "<NONSTANDARD HEADER LENGTH>";
-          } else {
-            this.name = new String(this.data, 1, 10, USASCII);
-          }
-          final String type;
-          switch (this.data[0]) {
-            case 0:
-              type = "BAS";
-              break;
-            case 1:
-              type = "###";
-              break;
-            case 2:
-              type = "TXT";
-              break;
-            case 3:
-              type = "COD";
-              break;
-            default:
-              type = "???";
-              break;
-          }
-          this.name = type + ": " + this.name;
-        } else {
-          this.name = "===: ..........";
-        }
-      }
-      return this.name;
-    }
-
-    public TapBlock findFirst() {
-      TapBlock result = this;
-      while (!result.isFirst()) {
-        result = result.prev;
-      }
-      return result;
-    }
-
-    public int getIndex() {
-      return this.index;
-    }
-
-    @Override
-    public String toString() {
-      return getName() + " (" + this.data.length + " bytes)";
-    }
-  }
-
+  private final String name;
+  private final List<TapBlock> tapBlockList = new ArrayList<>();
   private volatile TapBlock current;
   private volatile State state = State.STOPPED;
   private volatile boolean signalInState;
@@ -150,10 +63,6 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
   private int mask;
   private int buffered;
   private int controlChecksum;
-  private final String name;
-
-  private final List<TapBlock> tapBlockList = new ArrayList<>();
-
   public TapeFileReader(final String name, final InputStream tap) throws IOException {
     this.name = name;
     final TapFormatParser tapParser = new TapFormatParser().read(new JBBPBitInputStream(tap));
@@ -190,11 +99,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
 
   public void fireAction(final int id, final String command) {
     final ActionEvent event = new ActionEvent(this, id, command);
-    final Runnable run = () -> {
-      this.listeners.forEach((l) -> {
-        l.actionPerformed(event);
-      });
-    };
+    final Runnable run = () -> this.listeners.forEach((l) -> l.actionPerformed(event));
     if (SwingUtilities.isEventDispatchThread()) {
       run.run();
     } else {
@@ -302,13 +207,13 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
     final int FREQ = 22050;
     final int CYCLESPERSAMPLE = (int) ((1000000000L / (long) FREQ) / 286L);
 
-    final ByteArrayOutputStream data = new ByteArrayOutputStream(1024*1024);
+    final ByteArrayOutputStream data = new ByteArrayOutputStream(1024 * 1024);
 
     rewindToStart();
     this.signalInState = false;
     this.counterMain = -1L;
     this.state = State.INBETWEEN;
-    
+
     while (this.state != State.STOPPED) {
       data.write(this.signalInState ? 0xFF : 0x00);
       updateForSpentMachineCycles(CYCLESPERSAMPLE);
@@ -317,20 +222,20 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
     final JBBPOut out = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
 
     return out.
-            Byte("RIFF").
-            Int(data.size() + 40).
-            Byte("WAVE").
-            Byte("fmt ").
-            Int(16). // Size
-            Short(1). // Audio format
-            Short(1). // Num channels
-            Int(FREQ).// Sample rate
-            Int(FREQ). // Byte rate 
-            Short(1). // Block align
-            Short(8). // Bits per sample
-            Byte("data").
-            Int(data.size()).
-            Byte(data.toByteArray()).End().toByteArray();
+        Byte("RIFF").
+        Int(data.size() + 40).
+        Byte("WAVE").
+        Byte("fmt ").
+        Int(16). // Size
+        Short(1). // Audio format
+        Short(1). // Num channels
+        Int(FREQ).// Sample rate
+        Int(FREQ). // Byte rate
+        Short(1). // Block align
+        Short(8). // Bits per sample
+        Byte("data").
+        Int(data.size()).
+        Byte(data.toByteArray()).End().toByteArray();
   }
 
   private String makeDescription(final TapBlock block) {
@@ -560,6 +465,102 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
 
   @Override
   public void removeListDataListener(ListDataListener l) {
+  }
+
+  private enum State {
+
+    STOPPED,
+    INBETWEEN,
+    PILOT,
+    SYNC1,
+    SYNC2,
+    SYNC3,
+    FLAG,
+    DATA,
+    CHECKSUM
+  }
+
+  public static final class TapBlock {
+
+    private static final Charset USASCII = StandardCharsets.US_ASCII;
+
+    byte flag;
+    byte[] data;
+    byte checksum;
+
+    transient TapBlock prev;
+    transient TapBlock next;
+    transient int index;
+    transient String name;
+
+    public TapBlock(TAPBLOCK block) {
+      this.flag = block.getFLAG();
+      this.checksum = block.getCHECKSUM();
+      this.data = block.getDATA().clone();
+    }
+
+    public boolean isFirst() {
+      return this.prev == null;
+    }
+
+    public boolean isLast() {
+      return this.next == null;
+    }
+
+    public boolean isHeader() {
+      return (this.flag & 0xFF) < 0x80;
+    }
+
+    public String getName() {
+      if (this.name == null) {
+        if (isHeader()) {
+          if (this.data.length < 11) {
+            this.name = "<NONSTANDARD HEADER LENGTH>";
+          } else {
+            this.name = new String(this.data, 1, 10, USASCII);
+          }
+          final String type;
+          switch (this.data[0]) {
+            case 0:
+              type = "BAS";
+              break;
+            case 1:
+              type = "###";
+              break;
+            case 2:
+              type = "TXT";
+              break;
+            case 3:
+              type = "COD";
+              break;
+            default:
+              type = "???";
+              break;
+          }
+          this.name = type + ": " + this.name;
+        } else {
+          this.name = "===: ..........";
+        }
+      }
+      return this.name;
+    }
+
+    public TapBlock findFirst() {
+      TapBlock result = this;
+      while (!result.isFirst()) {
+        result = result.prev;
+      }
+      return result;
+    }
+
+    public int getIndex() {
+      return this.index;
+    }
+
+    @Override
+    public String toString() {
+      return getName() + " (" + this.data.length + " bytes)";
+    }
   }
 
 }

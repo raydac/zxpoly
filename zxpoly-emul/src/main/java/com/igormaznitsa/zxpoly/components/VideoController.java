@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,94 +14,108 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.components;
 
-import java.awt.*;
+import com.igormaznitsa.zxpoly.utils.Utils;
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.image.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.awt.image.RenderedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
-import com.igormaznitsa.zxpoly.utils.Utils;
-import java.util.logging.Level;
 
-public final class VideoController extends JComponent implements ZXPoly, MouseWheelListener, IODevice {
+public final class VideoController extends JComponent implements ZxPolyConstants, MouseWheelListener, IoDevice {
 
   public static final int SCREEN_WIDTH = 512;
   public static final int SCREEN_HEIGHT = 384;
 
   public static final Image IMAGE_ZXKEYS = Utils.loadIcon("zxkeys.png");
-
+  public static final long CYCLES_BETWEEN_INT = 20000000L / (1000000000L / Motherboard.CPU_FREQ);
+  public static final int[] ZXPALETTE = new int[] {
+      0xFF000000,
+      0xFF0000BE,
+      0xFFBE0000,
+      0xFFBE00BE,
+      0xFF00BE00,
+      0xFF00BEBE,
+      0xFFBEBE00,
+      0xFFBEBEBE,
+      0xFF000000,
+      0xFF0000FF,
+      0xFFFF0000,
+      0xFFFF00FF,
+      0xFF00FF00,
+      0xFF00FFFF,
+      0xFFFFFF00,
+      0xFFFFFFFF};
+  public static final Color[] ZXPALETTE_AS_COLORS = new Color[] {
+      // normal bright
+      new Color(0, 0, 0), // Black
+      new Color(0, 0, 190), // Blue
+      new Color(190, 0, 0), // Red
+      new Color(190, 0, 190),
+      new Color(0, 190, 0), // Green
+      new Color(0, 190, 190),
+      new Color(190, 190, 0),
+      new Color(190, 190, 190),
+      // high bright
+      new Color(0, 0, 0),
+      new Color(0, 0, 255),
+      new Color(255, 0, 0),
+      new Color(255, 0, 255),
+      new Color(0, 255, 0),
+      new Color(0, 255, 255),
+      new Color(255, 255, 0),
+      new Color(255, 255, 255)
+  };
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
-
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
-
+  private static final int BORDER_LINES = 64;
+  private static final long MCYCLES_PER_BORDER_LINE = CYCLES_BETWEEN_INT / BORDER_LINES;
+  private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private final Motherboard board;
   private final ReentrantLock bufferLocker = new ReentrantLock();
   private final BufferedImage buffer;
   private final int[] dataBuffer;
-
-  private final ZXPolyModule[] modules;
+  private final ZxPolyModule[] modules;
+  private final byte[] borderLineColors = new byte[BORDER_LINES];
   private volatile int currentVideoMode = VIDEOMODE_RESERVED2;
-
   private Dimension size = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
   private volatile float zoom = 1.0f;
   private volatile int portFEw = 0;
-
   private volatile boolean trapMouse = false;
   private volatile boolean enableTrapMouse = false;
-
-  public static final long CYCLES_BETWEEN_INT = 20000000L / (1000000000L / Motherboard.CPU_FREQ);
-  private static final int BORDER_LINES = 64;
-  private static final long MCYCLES_PER_BORDER_LINE = CYCLES_BETWEEN_INT / BORDER_LINES;
-  private final byte[] borderLineColors = new byte[BORDER_LINES];
-
-  private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
-
   private volatile boolean showZxKeyboardLayout = false;
 
-  public static final int[] ZXPALETTE = new int[]{
-    0xFF000000,
-    0xFF0000BE,
-    0xFFBE0000,
-    0xFFBE00BE,
-    0xFF00BE00,
-    0xFF00BEBE,
-    0xFFBEBE00,
-    0xFFBEBEBE,
-    0xFF000000,
-    0xFF0000FF,
-    0xFFFF0000,
-    0xFFFF00FF,
-    0xFF00FF00,
-    0xFF00FFFF,
-    0xFFFFFF00,
-    0xFFFFFFFF};
+  public VideoController(final Motherboard board) {
+    super();
 
-  public static final Color[] ZXPALETTE_AS_COLORS = new Color[]{
-    // normal bright
-    new Color(0, 0, 0), // Black
-    new Color(0, 0, 190), // Blue
-    new Color(190, 0, 0), // Red
-    new Color(190, 0, 190),
-    new Color(0, 190, 0), // Green
-    new Color(0, 190, 190),
-    new Color(190, 190, 0),
-    new Color(190, 190, 190),
-    // high bright  
-    new Color(0, 0, 0),
-    new Color(0, 0, 255),
-    new Color(255, 0, 0),
-    new Color(255, 0, 255),
-    new Color(0, 255, 0),
-    new Color(0, 255, 255),
-    new Color(255, 255, 0),
-    new Color(255, 255, 255)
-  };
+    this.board = board;
+    this.modules = board.getZXPolyModules();
+
+    this.buffer = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    this.dataBuffer = ((DataBufferInt) this.buffer.getRaster().getDataBuffer()).getData();
+
+    this.addMouseWheelListener(this);
+  }
 
   public static int rgbColorToIndex(final int rgbColor) {
     switch (rgbColor | 0xFF000000) {
@@ -140,20 +154,236 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
-  public void setShowZxKeyboardLayout(final boolean show) {
-    this.showZxKeyboardLayout = show;
+  public static int extractYFromAddress(final int address) {
+    return ((address & 0x1800) >> 5) | ((address & 0x700) >> 8) | ((address & 0xE0) >> 2);
   }
 
-  public VideoController(final Motherboard board) {
-    super();
+  public static int calcAttributeAddressZXMode(final int screenOffset) {
+    final int line = ((screenOffset >>> 5) & 0x07) | ((screenOffset >>> 8) & 0x18);
+    final int column = screenOffset & 0x1F;
+    final int off = ((line >>> 3) << 8) | (((line & 0x07) << 5) | column);
+    return 0x1800 + off;
+  }
 
-    this.board = board;
-    this.modules = board.getZXPolyModules();
+  private static int extractInkColor(final int attribute, final boolean flashActive) {
+    final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
+    final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
+    final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
+    final boolean flash = (attribute & 0x80) != 0;
 
-    this.buffer = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-    this.dataBuffer = ((DataBufferInt) this.buffer.getRaster().getDataBuffer()).getData();
+    final int result;
 
-    this.addMouseWheelListener(this);
+    if (flash) {
+      if (flashActive) {
+        result = paperColor;
+      } else {
+        result = inkColor;
+      }
+    } else {
+      result = inkColor;
+    }
+    return result;
+  }
+
+  private static int extractPaperColor(final int attribute, final boolean flashActive) {
+    final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
+    final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
+    final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
+    final boolean flash = (attribute & 0x80) != 0;
+
+    final int result;
+
+    if (flash) {
+      if (flashActive) {
+        result = inkColor;
+      } else {
+        result = paperColor;
+      }
+    } else {
+      result = paperColor;
+    }
+    return result;
+  }
+
+  private static void fillDataBufferForVideoMode(final int videoMode, final ZxPolyModule[] modules, final int[] buffer, final boolean flashActive) {
+    switch (videoMode) {
+      case VIDEOMODE_RESERVED2:
+      case VIDEOMODE_ZX48_CPU0:
+      case VIDEOMODE_ZX48_CPU1:
+      case VIDEOMODE_ZX48_CPU2:
+      case VIDEOMODE_ZX48_CPU3: {
+        final ZxPolyModule sourceModule = modules[videoMode & 0x3];
+
+        int offset = 0;
+        int attributeoffset = 0;
+
+        for (int i = 0; i < 0x1800; i++) {
+          if ((i & 0x1F) == 0) {
+            // the first byte in the line
+            offset = extractYFromAddress(i) << 10;
+            attributeoffset = calcAttributeAddressZXMode(i);
+          }
+
+          final int attribute = sourceModule.readVideoMemory(attributeoffset++);
+          final int inkColor = extractInkColor(attribute, flashActive);
+          final int paperColor = extractPaperColor(attribute, flashActive);
+
+          int videoValue = sourceModule.readVideoMemory(i);
+          int x = 8;
+          while (x-- > 0) {
+            final int color = (videoValue & 0x80) == 0 ? paperColor : inkColor;
+            videoValue <<= 1;
+
+            buffer[offset] = color;
+            buffer[offset + SCREEN_WIDTH] = color;
+            buffer[++offset] = color;
+            buffer[offset++ + SCREEN_WIDTH] = color;
+          }
+        }
+      }
+      break;
+      case VIDEOMODE_ZXPOLY_256x192_A0:
+      case VIDEOMODE_ZXPOLY_256x192: {
+        int offset = 0;
+        int attributeoffset = 0;
+
+        final boolean masked = videoMode == VIDEOMODE_ZXPOLY_256x192_A0;
+
+        final ZxPolyModule module0 = modules[0];
+        final ZxPolyModule module1 = modules[1];
+        final ZxPolyModule module2 = modules[2];
+        final ZxPolyModule module3 = modules[3];
+
+        for (int i = 0; i < 0x1800; i++) {
+          if ((i & 0x1F) == 0) {
+            // the first byte in the line
+            offset = extractYFromAddress(i) << 10;
+            attributeoffset = calcAttributeAddressZXMode(i);
+          }
+
+          int videoValue0 = module0.readVideoMemory(i);
+          int videoValue1 = module1.readVideoMemory(i);
+          int videoValue2 = module2.readVideoMemory(i);
+          int videoValue3 = module3.readVideoMemory(i);
+
+          if (masked) {
+            // check attribute from 0-module
+            final int attribute = module0.readVideoMemory(attributeoffset++);
+
+            final int inkColor = extractInkColor(attribute, flashActive);
+            final int paperColor = extractPaperColor(attribute, flashActive);
+
+            if (inkColor == paperColor) {
+              // mask by ink color because it is the same as paper color
+              int x = 8;
+              while (x-- > 0) {
+                buffer[offset] = inkColor;
+                buffer[offset + SCREEN_WIDTH] = inkColor;
+                buffer[++offset] = inkColor;
+                buffer[offset++ + SCREEN_WIDTH] = inkColor;
+              }
+              continue; // skip rest of the loop because pixel already processed
+            }
+          }
+
+          int x = 8;
+          while (x-- > 0) {
+            final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
+                | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
+                | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
+                | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
+
+            videoValue0 <<= 1;
+            videoValue1 <<= 1;
+            videoValue2 <<= 1;
+            videoValue3 <<= 1;
+
+            final int color = ZXPALETTE[value];
+
+            buffer[offset] = color;
+            buffer[offset + SCREEN_WIDTH] = color;
+            buffer[++offset] = color;
+            buffer[offset++ + SCREEN_WIDTH] = color;
+          }
+        }
+      }
+      break;
+      case VIDEOMODE_ZXPOLY_512x384: {
+        int offset = 0;
+        int attributeoffset = 0;
+
+        final ZxPolyModule module0 = modules[0];
+        final ZxPolyModule module1 = modules[1];
+        final ZxPolyModule module2 = modules[2];
+        final ZxPolyModule module3 = modules[3];
+
+        for (int i = 0; i < 0x1800; i++) {
+          if ((i & 0x1F) == 0) {
+            // the first byte in the line
+            offset = extractYFromAddress(i) << 10;
+            attributeoffset = calcAttributeAddressZXMode(i);
+          }
+
+          int videoValue0 = module0.readVideoMemory(i);
+          final int attribute0 = module0.readVideoMemory(attributeoffset);
+
+          int videoValue1 = module1.readVideoMemory(i);
+          final int attribute1 = module1.readVideoMemory(attributeoffset);
+
+          int videoValue2 = module2.readVideoMemory(i);
+          final int attribute2 = module2.readVideoMemory(attributeoffset);
+
+          int videoValue3 = module3.readVideoMemory(i);
+          final int attribute3 = module3.readVideoMemory(attributeoffset++);
+
+          int x = 8;
+          while (x-- > 0) {
+            buffer[offset] = (videoValue0 & 0x80) == 0 ? extractPaperColor(attribute0, flashActive) : extractInkColor(attribute0, flashActive);
+            videoValue0 <<= 1;
+
+            buffer[offset + SCREEN_WIDTH] = (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) : extractInkColor(attribute2, flashActive);
+            videoValue2 <<= 1;
+
+            buffer[++offset] = (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, flashActive) : extractInkColor(attribute1, flashActive);
+            videoValue1 <<= 1;
+
+            buffer[offset++ + SCREEN_WIDTH] = (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) : extractInkColor(attribute3, flashActive);
+            videoValue3 <<= 1;
+
+          }
+        }
+      }
+      break;
+      default:
+        throw new Error("Unexpected video mode [" + videoMode + ']');
+    }
+  }
+
+  private static String decodeVideoModeCode(final int code) {
+    switch (code) {
+      case 0:
+        return "ZX-Spectrum 0";
+      case 1:
+        return "ZX-Spectrum 1";
+      case 2:
+        return "ZX-Spectrum 2";
+      case 3:
+        return "ZX-Spectrum 3";
+      case 4:
+        return "ZX-Poly 256x192";
+      case 5:
+        return "ZX-Poly 512x384";
+      case 6:
+        return "Reserved 6";
+      case 7:
+        return "Reserved 7";
+      default:
+        return "Unknown [" + code + ']';
+    }
+  }
+
+  public void setShowZxKeyboardLayout(final boolean show) {
+    this.showZxKeyboardLayout = show;
   }
 
   public void setEnableTrapMouse(final boolean flag) {
@@ -163,10 +393,14 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
-  public boolean isTrapMouseEnabled(){
+  public boolean isTrapMouseEnabled() {
     return this.enableTrapMouse;
   }
-  
+
+  public boolean isHoldMouse() {
+    return this.trapMouse;
+  }
+
   public void setHoldMouse(final boolean flag) {
     if (this.enableTrapMouse) {
       this.trapMouse = flag;
@@ -176,10 +410,6 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
         setCursor(Cursor.getDefaultCursor());
       }
     }
-  }
-
-  public boolean isHoldMouse() {
-    return this.trapMouse;
   }
 
   @Override
@@ -213,17 +443,6 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
 
     revalidate();
     repaint();
-  }
-
-  public static int extractYFromAddress(final int address) {
-    return ((address & 0x1800) >> 5) | ((address & 0x700) >> 8) | ((address & 0xE0) >> 2);
-  }
-
-  public static int calcAttributeAddressZXMode(final int screenOffset) {
-    final int line = ((screenOffset >>> 5) & 0x07) | ((screenOffset >>> 8) & 0x18);
-    final int column = screenOffset & 0x1F;
-    final int off = ((line >>> 3) << 8) | (((line & 0x07) << 5) | column);
-    return 0x1800 + off;
   }
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
@@ -281,202 +500,8 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
     }
   }
 
-  private static int extractInkColor(final int attribute, final boolean flashActive) {
-    final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
-    final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
-    final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
-    final boolean flash = (attribute & 0x80) != 0;
-
-    final int result;
-
-    if (flash) {
-      if (flashActive) {
-        result = paperColor;
-      } else {
-        result = inkColor;
-      }
-    } else {
-      result = inkColor;
-    }
-    return result;
-  }
-
-  private static int extractPaperColor(final int attribute, final boolean flashActive) {
-    final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
-    final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
-    final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
-    final boolean flash = (attribute & 0x80) != 0;
-
-    final int result;
-
-    if (flash) {
-      if (flashActive) {
-        result = inkColor;
-      } else {
-        result = paperColor;
-      }
-    } else {
-      result = paperColor;
-    }
-    return result;
-  }
-
   private void refreshBufferData() {
     fillDataBufferForVideoMode(this.currentVideoMode, this.modules, this.dataBuffer, this.board.isFlashActive());
-  }
-
-  private static void fillDataBufferForVideoMode(final int videoMode, final ZXPolyModule[] modules, final int[] buffer, final boolean flashActive) {
-    switch (videoMode) {
-      case VIDEOMODE_RESERVED2:
-      case VIDEOMODE_ZX48_CPU0:
-      case VIDEOMODE_ZX48_CPU1:
-      case VIDEOMODE_ZX48_CPU2:
-      case VIDEOMODE_ZX48_CPU3: {
-        final ZXPolyModule sourceModule = modules[videoMode & 0x3];
-
-        int offset = 0;
-        int attributeoffset = 0;
-
-        for (int i = 0; i < 0x1800; i++) {
-          if ((i & 0x1F) == 0) {
-            // the first byte in the line
-            offset = extractYFromAddress(i) << 10;
-            attributeoffset = calcAttributeAddressZXMode(i);
-          }
-
-          final int attribute = sourceModule.readVideoMemory(attributeoffset++);
-          final int inkColor = extractInkColor(attribute, flashActive);
-          final int paperColor = extractPaperColor(attribute, flashActive);
-
-          int videoValue = sourceModule.readVideoMemory(i);
-          int x = 8;
-          while (x-- > 0) {
-            final int color = (videoValue & 0x80) == 0 ? paperColor : inkColor;
-            videoValue <<= 1;
-
-            buffer[offset] = color;
-            buffer[offset + SCREEN_WIDTH] = color;
-            buffer[++offset] = color;
-            buffer[offset++ + SCREEN_WIDTH] = color;
-          }
-        }
-      }
-      break;
-      case VIDEOMODE_ZXPOLY_256x192_A0:
-      case VIDEOMODE_ZXPOLY_256x192: {
-        int offset = 0;
-        int attributeoffset = 0;
-
-        final boolean masked = videoMode == VIDEOMODE_ZXPOLY_256x192_A0;
-
-        final ZXPolyModule module0 = modules[0];
-        final ZXPolyModule module1 = modules[1];
-        final ZXPolyModule module2 = modules[2];
-        final ZXPolyModule module3 = modules[3];
-
-        for (int i = 0; i < 0x1800; i++) {
-          if ((i & 0x1F) == 0) {
-            // the first byte in the line
-            offset = extractYFromAddress(i) << 10;
-            attributeoffset = calcAttributeAddressZXMode(i);
-          }
-
-          int videoValue0 = module0.readVideoMemory(i);
-          int videoValue1 = module1.readVideoMemory(i);
-          int videoValue2 = module2.readVideoMemory(i);
-          int videoValue3 = module3.readVideoMemory(i);
-
-          if (masked) {
-            // check attribute from 0-module
-            final int attribute = module0.readVideoMemory(attributeoffset++);
-
-            final int inkColor = extractInkColor(attribute, flashActive);
-            final int paperColor = extractPaperColor(attribute, flashActive);
-
-            if (inkColor == paperColor) {
-              // mask by ink color because it is the same as paper color
-              int x = 8;
-              while (x-- > 0) {
-                buffer[offset] = inkColor;
-                buffer[offset + SCREEN_WIDTH] = inkColor;
-                buffer[++offset] = inkColor;
-                buffer[offset++ + SCREEN_WIDTH] = inkColor;
-              }
-              continue; // skip rest of the loop because pixel already processed
-            }
-          }
-
-          int x = 8;
-          while (x-- > 0) {
-            final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
-                    | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
-                    | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
-                    | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
-
-            videoValue0 <<= 1;
-            videoValue1 <<= 1;
-            videoValue2 <<= 1;
-            videoValue3 <<= 1;
-
-            final int color = ZXPALETTE[value];
-
-            buffer[offset] = color;
-            buffer[offset + SCREEN_WIDTH] = color;
-            buffer[++offset] = color;
-            buffer[offset++ + SCREEN_WIDTH] = color;
-          }
-        }
-      }
-      break;
-      case VIDEOMODE_ZXPOLY_512x384: {
-        int offset = 0;
-        int attributeoffset = 0;
-
-        final ZXPolyModule module0 = modules[0];
-        final ZXPolyModule module1 = modules[1];
-        final ZXPolyModule module2 = modules[2];
-        final ZXPolyModule module3 = modules[3];
-
-        for (int i = 0; i < 0x1800; i++) {
-          if ((i & 0x1F) == 0) {
-            // the first byte in the line
-            offset = extractYFromAddress(i) << 10;
-            attributeoffset = calcAttributeAddressZXMode(i);
-          }
-
-          int videoValue0 = module0.readVideoMemory(i);
-          final int attribute0 = module0.readVideoMemory(attributeoffset);
-
-          int videoValue1 = module1.readVideoMemory(i);
-          final int attribute1 = module1.readVideoMemory(attributeoffset);
-
-          int videoValue2 = module2.readVideoMemory(i);
-          final int attribute2 = module2.readVideoMemory(attributeoffset);
-
-          int videoValue3 = module3.readVideoMemory(i);
-          final int attribute3 = module3.readVideoMemory(attributeoffset++);
-
-          int x = 8;
-          while (x-- > 0) {
-            buffer[offset] = (videoValue0 & 0x80) == 0 ? extractPaperColor(attribute0, flashActive) : extractInkColor(attribute0, flashActive);
-            videoValue0 <<= 1;
-
-            buffer[offset + SCREEN_WIDTH] = (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) : extractInkColor(attribute2, flashActive);
-            videoValue2 <<= 1;
-
-            buffer[++offset] = (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, flashActive) : extractInkColor(attribute1, flashActive);
-            videoValue1 <<= 1;
-
-            buffer[offset++ + SCREEN_WIDTH] = (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) : extractInkColor(attribute3, flashActive);
-            videoValue3 <<= 1;
-
-          }
-        }
-      }
-      break;
-      default:
-        throw new Error("Unexpected video mode [" + videoMode + ']');
-    }
   }
 
   public void drawBuffer(final Graphics2D gfx, final int x, final int y, final float zoom) {
@@ -492,29 +517,6 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
       }
     } finally {
       unlockBuffer();
-    }
-  }
-
-  private static String decodeVideoModeCode(final int code) {
-    switch (code) {
-      case 0:
-        return "ZX-Spectrum 0";
-      case 1:
-        return "ZX-Spectrum 1";
-      case 2:
-        return "ZX-Spectrum 2";
-      case 3:
-        return "ZX-Spectrum 3";
-      case 4:
-        return "ZX-Poly 256x192";
-      case 5:
-        return "ZX-Poly 512x384";
-      case 6:
-        return "Reserved 6";
-      case 7:
-        return "Reserved 7";
-      default:
-        return "Unknown [" + code + ']';
     }
   }
 
@@ -632,7 +634,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   }
 
   @Override
-  public int readIO(final ZXPolyModule module, final int port) {
+  public int readIO(final ZxPolyModule module, final int port) {
     return 0;
   }
 
@@ -641,7 +643,7 @@ public final class VideoController extends JComponent implements ZXPoly, MouseWh
   }
 
   @Override
-  public void writeIO(final ZXPolyModule module, final int port, final int value) {
+  public void writeIO(final ZxPolyModule module, final int port, final int value) {
     if (!module.isTRDOSActive() && (port & 0xFF) == 0xFE) {
       this.portFEw = value & 0xFF;
 

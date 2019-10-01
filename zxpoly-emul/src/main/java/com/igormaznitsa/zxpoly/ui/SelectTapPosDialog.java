@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,16 +14,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.ui;
 
 import com.igormaznitsa.zxpoly.components.TapeFileReader;
 import javax.swing.ListSelectionModel;
 
+@SuppressWarnings("unchecked")
 public class SelectTapPosDialog extends javax.swing.JDialog {
 
   private static final long serialVersionUID = 3974803548217613782L;
 
   private int selectedIndex = -1;
+  // Variables declaration - do not modify//GEN-BEGIN:variables
+  private javax.swing.JButton buttonCancel;
+  private javax.swing.JButton buttonOk;
+  private javax.swing.JScrollPane jScrollPane1;
+  private javax.swing.JList tapBlockList;
 
   public SelectTapPosDialog(final java.awt.Frame parent, final TapeFileReader tap) {
     super(parent, true);
@@ -54,25 +61,23 @@ public class SelectTapPosDialog extends javax.swing.JDialog {
 
     buttonCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/cancel.png"))); // NOI18N
     buttonCancel.setText("Cancel");
-    buttonCancel.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        buttonCancelActionPerformed(evt);
-      }
-    });
+    buttonCancel.addActionListener(this::buttonCancelActionPerformed);
 
     buttonOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/ok.png"))); // NOI18N
     buttonOk.setText("Ok");
-    buttonOk.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        buttonOkActionPerformed(evt);
-      }
-    });
+    buttonOk.addActionListener(this::buttonOkActionPerformed);
 
     tapBlockList.setFont(new java.awt.Font("Courier New", 0, 12)); // NOI18N
     tapBlockList.setModel(new javax.swing.AbstractListModel() {
-      String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-      public int getSize() { return strings.length; }
-      public Object getElementAt(int i) { return strings[i]; }
+      String[] strings = {"Item 1", "Item 2", "Item 3", "Item 4", "Item 5"};
+
+      public int getSize() {
+        return strings.length;
+      }
+
+      public Object getElementAt(int i) {
+        return strings[i];
+      }
     });
     tapBlockList.addMouseListener(new java.awt.event.MouseAdapter() {
       public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -84,31 +89,31 @@ public class SelectTapPosDialog extends javax.swing.JDialog {
     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
     getContentPane().setLayout(layout);
     layout.setHorizontalGroup(
-      layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(layout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-            .addGap(0, 202, Short.MAX_VALUE)
-            .addComponent(buttonOk)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(buttonCancel))
-          .addComponent(jScrollPane1))
-        .addContainerGap())
+        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 202, Short.MAX_VALUE)
+                        .addComponent(buttonOk)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(buttonCancel))
+                    .addComponent(jScrollPane1))
+                .addContainerGap())
     );
 
-    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {buttonCancel, buttonOk});
+    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, buttonCancel, buttonOk);
 
     layout.setVerticalGroup(
-      layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-        .addContainerGap()
-        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-          .addComponent(buttonCancel)
-          .addComponent(buttonOk))
-        .addContainerGap())
+        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(buttonCancel)
+                    .addComponent(buttonOk))
+                .addContainerGap())
     );
 
     pack();
@@ -137,11 +142,5 @@ public class SelectTapPosDialog extends javax.swing.JDialog {
       }
     }
   }//GEN-LAST:event_tapBlockListMouseClicked
-
-  // Variables declaration - do not modify//GEN-BEGIN:variables
-  private javax.swing.JButton buttonCancel;
-  private javax.swing.JButton buttonOk;
-  private javax.swing.JScrollPane jScrollPane1;
-  private javax.swing.JList tapBlockList;
   // End of variables declaration//GEN-END:variables
 }

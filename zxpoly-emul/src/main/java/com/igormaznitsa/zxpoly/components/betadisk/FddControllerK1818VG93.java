@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,38 +14,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.components.betadisk;
 
-import com.igormaznitsa.zxpoly.components.betadisk.TRDOSDisk.Sector;
+import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk.Sector;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public final class K1818VG93 {
-
-  private static final long CYCLE_NANOSECOND = 286L;
-
-  private static final long CYCLES_FOR_BUFFER_VALID = 120L; // number of cycles to read-write byte to-from disk
-  private static final long CYCLES_FOR_NEXT_TRACK = 15000000L / CYCLE_NANOSECOND; // number of cycles to move head to next track
-  private static final long CYCLES_SECTOR_POSITION = CYCLES_FOR_BUFFER_VALID;
+public final class FddControllerK1818VG93 {
 
   public static final int ADDR_COMMAND_STATE = 0;
   public static final int ADDR_TRACK = 1;
   public static final int ADDR_SECTOR = 2;
   public static final int ADDR_DATA = 3;
-
-  private static final int REG_COMMAND = 0x00;
-  private static final int REG_STATUS = 0x01;
-  private static final int REG_TRACK = 0x02;
-  private static final int REG_SECTOR = 0x03;
-  private static final int REG_DATA_WR = 0x04;
-  private static final int REG_DATA_RD = 0x05;
-
   public static final int STAT_BUSY = 0x01;
   public static final int STAT_INDEX = 0x02;
   public static final int STAT_DRQ = 0x02;
@@ -57,9 +42,20 @@ public final class K1818VG93 {
   public static final int STAT_WRFAULT = 0x20;
   public static final int STAT_WRITEPROTECT = 0x40;
   public static final int ST_NOTREADY = 0x80;
-
-  private TRDOSDisk.Sector sector;
+  private static final long CYCLE_NANOSECOND = 286L;
+  private static final long CYCLES_FOR_BUFFER_VALID = 120L; // number of cycles to read-write byte to-from disk
+  private static final long CYCLES_FOR_NEXT_TRACK = 15000000L / CYCLE_NANOSECOND; // number of cycles to move head to next track
+  private static final long CYCLES_SECTOR_POSITION = CYCLES_FOR_BUFFER_VALID;
+  private static final int REG_COMMAND = 0x00;
+  private static final int REG_STATUS = 0x01;
+  private static final int REG_TRACK = 0x02;
+  private static final int REG_SECTOR = 0x03;
+  private static final int REG_DATA_WR = 0x04;
+  private static final int REG_DATA_RD = 0x05;
   private final int[] registers = new int[6];
+  private final AtomicReference<TrDosDisk> trdosDisk = new AtomicReference<>();
+  private final Logger logger;
+  private TrDosDisk.Sector sector;
   private int counter;
   private int extraCounter;
   private boolean flagWaitDataRd;
@@ -70,311 +66,12 @@ public final class K1818VG93 {
   private boolean outwardStepDirection;
   private boolean indexHoleMarker;
   private boolean mfmModulation;
-
   private long sectorPositioningCycles;
   private long operationTimeOutCycles;
   private volatile long lastBusyOnTime;
-
   private Object tempAuxiliaryObject;
 
-  private static abstract class TrackHelper {
-
-    enum State {
-      WAIT_ADDRESS,
-      ADDR_TRACK,
-      ADDR_HEAD,
-      ADDR_SECTOR,
-      ADDR_SIZE,
-      WAIT_DATA,
-      DATA
-    }
-
-    State state;
-
-    int trackIndex;
-    int headIndex;
-    int sectorIndex;
-    int sectorSize;
-
-    int expectedData;
-    int dataByteIndex;
-
-    int trackBytePosition = 0;
-    int trackTotalBytes;
-    final boolean mfm;
-
-    byte[] trackReadBuffer;
-
-    final TRDOSDisk disk;
-
-    TrackHelper(final TRDOSDisk disk, final boolean mfm) {
-      this.disk = disk;
-      this.state = State.WAIT_ADDRESS;
-      this.mfm = mfm;
-      this.trackBytePosition = 0;
-      this.trackTotalBytes = mfm ? 6450 : 6450;
-    }
-
-    final boolean writeNextDataByte(final int dataByte) throws IOException {
-      switch (this.state) {
-        case WAIT_ADDRESS: {
-          if (dataByte == 0xFE) {
-            this.state = State.ADDR_TRACK;
-          }
-        }
-        break;
-        case ADDR_TRACK: {
-          this.trackIndex = dataByte;
-          this.state = State.ADDR_HEAD;
-        }
-        break;
-        case ADDR_HEAD: {
-          this.headIndex = dataByte;
-          this.state = State.ADDR_SECTOR;
-        }
-        break;
-        case ADDR_SECTOR: {
-          this.sectorIndex = dataByte;
-          this.state = State.ADDR_SIZE;
-        }
-        break;
-        case ADDR_SIZE: {
-          this.sectorSize = dataByte;
-          switch (this.sectorSize) {
-            case 0:
-              this.expectedData = 128;
-              break;
-            case 1:
-              this.expectedData = 256;
-              break;
-            case 2:
-              this.expectedData = 512;
-              break;
-            case 3:
-              this.expectedData = 1024;
-              break;
-          }
-          this.state = State.WAIT_DATA;
-        }
-        break;
-        case WAIT_DATA: {
-          if (dataByte == 0xFB) {
-            this.state = State.DATA;
-            this.dataByteIndex = 0;
-          }
-        }
-        break;
-        case DATA: {
-          final TRDOSDisk.Sector sector = this.disk.findSector(this.headIndex, this.trackIndex, this.sectorIndex);
-          if (sector == null) {
-            throw new IOException("Can't find sector: " + this.trackIndex + ':' + this.headIndex + ':' + this.sectorIndex);
-          }
-          if (!sector.writeByte(this.dataByteIndex, dataByte)) {
-            throw new IOException("Can't write " + this.dataByteIndex + " byte to sector: " + this.trackIndex + ':' + this.headIndex + ':' + this.sectorIndex);
-          }
-          this.expectedData--;
-          this.dataByteIndex++;
-          if (this.expectedData == 0) {
-            this.state = State.WAIT_ADDRESS;
-          }
-        }
-        break;
-      }
-
-      this.trackBytePosition++;
-      return this.trackBytePosition < this.trackTotalBytes;
-    }
-
-    int getSectorSizeCode(final int size) {
-      if (size <= 128) {
-        return 0;
-      }
-      if (size <= 256) {
-        return 1;
-      }
-      if (size <= 512) {
-        return 2;
-      }
-      return 3;
-    }
-
-    abstract void prepareTrackForRead(int headIndex, int trackIndex);
-
-    int readNextTrackData() {
-      return this.trackBytePosition < this.trackTotalBytes ? this.trackReadBuffer[this.trackBytePosition++] : -1;
-    }
-
-    boolean isCompleted() {
-      return this.trackBytePosition >= this.trackTotalBytes;
-    }
-  }
-
-  private static class FMTracHelper extends TrackHelper {
-
-    FMTracHelper(final TRDOSDisk disk) {
-      super(disk, false);
-    }
-
-    @Override
-    void prepareTrackForRead(final int headIndex, final int trackIndex) {
-      Sector sector = this.disk.findFirstSector(headIndex, trackIndex);
-
-      final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-      for (int i = 0; i < 40; i++) {
-        buffer.write(0xFF);
-      }
-      for (int i = 0; i < 40; i++) {
-        buffer.write(0x00);
-      }
-      buffer.write(0xFC);
-      for (int i = 0; i < 26; i++) {
-        buffer.write(0xFF);
-      }
-
-      while (sector != null) {
-        for (int i = 0; i < 6; i++) {
-          buffer.write(0x00);
-        }
-        buffer.write(0xFE);
-
-        buffer.write(sector.getTrackNumber());
-        buffer.write(sector.getSide());
-        buffer.write(sector.getSectorId());
-
-        buffer.write(getSectorSizeCode(sector.size()));
-        final int crc = sector.getCrc();
-
-        buffer.write(crc);
-        buffer.write(crc >>> 8);
-
-        for (int i = 0; i < 11; i++) {
-          buffer.write(0xFF);
-        }
-        for (int i = 0; i < 6; i++) {
-          buffer.write(0x00);
-        }
-
-        buffer.write(0xFB);
-
-        for (int i = 0; i < sector.size(); i++) {
-          buffer.write(sector.readByte(i));
-        }
-
-        buffer.write(crc);
-        buffer.write(crc >>> 8);
-
-        for (int i = 0; i < 27; i++) {
-          buffer.write(0xFF);
-        }
-
-        sector = disk.findSectorAfter(sector);
-      }
-
-      for (int i = 0; i < 247; i++) {
-        buffer.write(0xFF);
-      }
-
-      this.trackReadBuffer = buffer.toByteArray();
-      this.trackTotalBytes = this.trackReadBuffer.length;
-    }
-
-  }
-
-  private static class MFMTrackHelper extends TrackHelper {
-
-    MFMTrackHelper(final TRDOSDisk disk) {
-      super(disk, true);
-    }
-
-    @Override
-    void prepareTrackForRead(final int headIndex, final int trackIndex) {
-      Sector sector = this.disk.findFirstSector(headIndex, trackIndex);
-
-      final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-      for (int i = 0; i < 80; i++) {
-        buffer.write(0x4E);
-      }
-
-      for (int i = 0; i < 12; i++) {
-        buffer.write(0x00);
-      }
-
-      for (int i = 0; i < 3; i++) {
-        buffer.write(0xF6);
-      }
-
-      buffer.write(0xFC);
-
-      for (int i = 0; i < 50; i++) {
-        buffer.write(0x4E);
-      }
-
-      while (sector != null) {
-        for (int i = 0; i < 12; i++) {
-          buffer.write(0x00);
-        }
-
-        for (int i = 0; i < 3; i++) {
-          buffer.write(0xF5);
-        }
-
-        buffer.write(0xFE);
-
-        buffer.write(sector.getTrackNumber());
-        buffer.write(sector.getSide());
-        buffer.write(sector.getSectorId());
-        buffer.write(getSectorSizeCode(sector.size()));
-
-        final int crc = sector.getCrc();
-
-        buffer.write(crc);
-        buffer.write(crc >>> 8);
-
-        for (int i = 0; i < 22; i++) {
-          buffer.write(0x4E);
-        }
-
-        for (int i = 0; i < 12; i++) {
-          buffer.write(0x00);
-        }
-
-        for (int i = 0; i < 3; i++) {
-          buffer.write(0xF5);
-        }
-
-        buffer.write(0xFB);
-
-        for (int i = 0; i < sector.size(); i++) {
-          buffer.write(sector.readByte(i));
-        }
-
-        buffer.write(crc);
-        buffer.write(crc >>> 8);
-
-        for (int i = 0; i < 54; i++) {
-          buffer.write(0x4E);
-        }
-
-        sector = disk.findSectorAfter(sector);
-      }
-
-      for (int i = 0; i < 598; i++) {
-        buffer.write(0x4E);
-      }
-
-      this.trackReadBuffer = buffer.toByteArray();
-      this.trackTotalBytes = this.trackReadBuffer.length;
-    }
-
-  }
-
-  private final AtomicReference<TRDOSDisk> trdosDisk = new AtomicReference<>();
-
-  private final Logger logger;
-
-  public K1818VG93(final Logger logger) {
+  public FddControllerK1818VG93(final Logger logger) {
     this.logger = logger;
     reset();
   }
@@ -388,7 +85,7 @@ public final class K1818VG93 {
     this.counter = 0;
   }
 
-  public void activateDisk(final int index, final TRDOSDisk disk) {
+  public void activateDisk(final int index, final TrDosDisk disk) {
     this.trdosDisk.set(disk);
     if (disk == null) {
       this.sector = null;
@@ -397,7 +94,7 @@ public final class K1818VG93 {
     }
   }
 
-  public TRDOSDisk getDisk() {
+  public TrDosDisk getDisk() {
     return this.trdosDisk.get();
   }
 
@@ -427,20 +124,20 @@ public final class K1818VG93 {
     this.resetIn = signal;
   }
 
-  public void setHead(final int head) {
-    this.head = head;
-  }
-
   public int getHead() {
     return this.head;
   }
 
-  public void setMFMModulation(final boolean flag) {
-    this.mfmModulation = flag;
+  public void setHead(final int head) {
+    this.head = head;
   }
 
   public boolean isMFMModulation() {
     return this.mfmModulation;
+  }
+
+  public void setMFMModulation(final boolean flag) {
+    this.mfmModulation = flag;
   }
 
   public int read(final int addr) {
@@ -610,7 +307,7 @@ public final class K1818VG93 {
   }
 
   public void step(final long mcycleCounter) {
-    final TRDOSDisk thefloppy = this.trdosDisk.get();
+    final TrDosDisk thefloppy = this.trdosDisk.get();
     if (thefloppy == null) {
       setInternalFlag(ST_NOTREADY);
     } else {
@@ -667,7 +364,7 @@ public final class K1818VG93 {
   }
 
   private void loadSector(final int side, final int track, final int sector) {
-    final TRDOSDisk floppy = this.trdosDisk.get();
+    final TrDosDisk floppy = this.trdosDisk.get();
     final Sector thesector;
     if (floppy == null) {
       thesector = null;
@@ -690,7 +387,7 @@ public final class K1818VG93 {
   }
 
   private void cmdForceInterrupt(final long mcycles, final int command, final boolean start) {
-    final TRDOSDisk thedisk = this.trdosDisk.get();
+    final TrDosDisk thedisk = this.trdosDisk.get();
     resetStatus(false);
 
     if (thedisk == null) {
@@ -708,7 +405,7 @@ public final class K1818VG93 {
   }
 
   private void cmdRestore(final long mcycles, final int command, final boolean start) {
-    final TRDOSDisk thedisk = this.trdosDisk.get();
+    final TrDosDisk thedisk = this.trdosDisk.get();
 
     resetStatus(false);
 
@@ -753,7 +450,7 @@ public final class K1818VG93 {
   private void cmdSeek(final long mcycles, final int command, final boolean start) {
     resetStatus(false);
 
-    final TRDOSDisk curDisk = this.trdosDisk.get();
+    final TrDosDisk curDisk = this.trdosDisk.get();
 
     if ((command & 0b00001000) != 0) {
       setInternalFlag(STAT_HEADL);
@@ -803,7 +500,7 @@ public final class K1818VG93 {
   private void cmdReadAddress(final long mcycles, final int command, final boolean start) {
     resetStatus(true);
 
-    final TRDOSDisk thedisk = this.trdosDisk.get();
+    final TrDosDisk thedisk = this.trdosDisk.get();
 
     if (start) {
       // turn sector
@@ -896,7 +593,8 @@ public final class K1818VG93 {
                     setInternalFlag(STAT_DRQ);
                   }
                   break;
-                  default: throw new Error("Unexpected counter state");
+                  default:
+                    throw new Error("Unexpected counter state");
                 }
                 this.counter--;
                 if (this.counter > 0) {
@@ -923,7 +621,7 @@ public final class K1818VG93 {
   }
 
   private void cmdStep(final long mcycles, final int command, final boolean start) {
-    final TRDOSDisk thedisk = this.trdosDisk.get();
+    final TrDosDisk thedisk = this.trdosDisk.get();
 
     resetStatus(false);
 
@@ -988,7 +686,7 @@ public final class K1818VG93 {
 
     resetStatus(true);
 
-    final TRDOSDisk thedisk = this.trdosDisk.get();
+    final TrDosDisk thedisk = this.trdosDisk.get();
     if (thedisk == null) {
       setInternalFlag(ST_NOTREADY);
     } else {
@@ -1063,7 +761,7 @@ public final class K1818VG93 {
 
     resetStatus(true);
 
-    final TRDOSDisk thedisk = this.trdosDisk.get();
+    final TrDosDisk thedisk = this.trdosDisk.get();
     if (thedisk == null) {
       setInternalFlag(ST_NOTREADY);
     } else {
@@ -1138,7 +836,7 @@ public final class K1818VG93 {
   private void cmdReadTrack(final long mcycles, final int command, final boolean start) {
     resetStatus(true);
 
-    final TRDOSDisk currentDisk = this.trdosDisk.get();
+    final TrDosDisk currentDisk = this.trdosDisk.get();
     if (currentDisk == null) {
       setInternalFlag(ST_NOTREADY);
     } else {
@@ -1177,7 +875,7 @@ public final class K1818VG93 {
   private void cmdWriteTrack(final long mcycles, final int command, final boolean start) {
     resetStatus(false);
 
-    final TRDOSDisk currentDisk = this.trdosDisk.get();
+    final TrDosDisk currentDisk = this.trdosDisk.get();
 
     if (currentDisk == null) {
       setInternalFlag(ST_NOTREADY);
@@ -1217,6 +915,294 @@ public final class K1818VG93 {
 
   public boolean isMotorOn() {
     return (System.currentTimeMillis() - this.lastBusyOnTime) < 200L;
+  }
+
+  private static abstract class TrackHelper {
+
+    final boolean mfm;
+    final TrDosDisk disk;
+    State state;
+    int trackIndex;
+    int headIndex;
+    int sectorIndex;
+    int sectorSize;
+    int expectedData;
+    int dataByteIndex;
+    int trackBytePosition;
+    int trackTotalBytes;
+    byte[] trackReadBuffer;
+
+    TrackHelper(final TrDosDisk disk, final boolean mfm) {
+      this.disk = disk;
+      this.state = State.WAIT_ADDRESS;
+      this.mfm = mfm;
+      this.trackBytePosition = 0;
+      this.trackTotalBytes = mfm ? 6450 : 6450;
+    }
+
+    final boolean writeNextDataByte(final int dataByte) throws IOException {
+      switch (this.state) {
+        case WAIT_ADDRESS: {
+          if (dataByte == 0xFE) {
+            this.state = State.ADDR_TRACK;
+          }
+        }
+        break;
+        case ADDR_TRACK: {
+          this.trackIndex = dataByte;
+          this.state = State.ADDR_HEAD;
+        }
+        break;
+        case ADDR_HEAD: {
+          this.headIndex = dataByte;
+          this.state = State.ADDR_SECTOR;
+        }
+        break;
+        case ADDR_SECTOR: {
+          this.sectorIndex = dataByte;
+          this.state = State.ADDR_SIZE;
+        }
+        break;
+        case ADDR_SIZE: {
+          this.sectorSize = dataByte;
+          switch (this.sectorSize) {
+            case 0:
+              this.expectedData = 128;
+              break;
+            case 1:
+              this.expectedData = 256;
+              break;
+            case 2:
+              this.expectedData = 512;
+              break;
+            case 3:
+              this.expectedData = 1024;
+              break;
+          }
+          this.state = State.WAIT_DATA;
+        }
+        break;
+        case WAIT_DATA: {
+          if (dataByte == 0xFB) {
+            this.state = State.DATA;
+            this.dataByteIndex = 0;
+          }
+        }
+        break;
+        case DATA: {
+          final TrDosDisk.Sector sector = this.disk.findSector(this.headIndex, this.trackIndex, this.sectorIndex);
+          if (sector == null) {
+            throw new IOException("Can't find sector: " + this.trackIndex + ':' + this.headIndex + ':' + this.sectorIndex);
+          }
+          if (!sector.writeByte(this.dataByteIndex, dataByte)) {
+            throw new IOException("Can't write " + this.dataByteIndex + " byte to sector: " + this.trackIndex + ':' + this.headIndex + ':' + this.sectorIndex);
+          }
+          this.expectedData--;
+          this.dataByteIndex++;
+          if (this.expectedData == 0) {
+            this.state = State.WAIT_ADDRESS;
+          }
+        }
+        break;
+      }
+
+      this.trackBytePosition++;
+      return this.trackBytePosition < this.trackTotalBytes;
+    }
+
+    int getSectorSizeCode(final int size) {
+      if (size <= 128) {
+        return 0;
+      }
+      if (size <= 256) {
+        return 1;
+      }
+      if (size <= 512) {
+        return 2;
+      }
+      return 3;
+    }
+
+    abstract void prepareTrackForRead(int headIndex, int trackIndex);
+
+    int readNextTrackData() {
+      return this.trackBytePosition < this.trackTotalBytes ? this.trackReadBuffer[this.trackBytePosition++] : -1;
+    }
+
+    boolean isCompleted() {
+      return this.trackBytePosition >= this.trackTotalBytes;
+    }
+
+    enum State {
+      WAIT_ADDRESS,
+      ADDR_TRACK,
+      ADDR_HEAD,
+      ADDR_SECTOR,
+      ADDR_SIZE,
+      WAIT_DATA,
+      DATA
+    }
+  }
+
+  private static class FMTracHelper extends TrackHelper {
+
+    FMTracHelper(final TrDosDisk disk) {
+      super(disk, false);
+    }
+
+    @Override
+    void prepareTrackForRead(final int headIndex, final int trackIndex) {
+      Sector sector = this.disk.findFirstSector(headIndex, trackIndex);
+
+      final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+      for (int i = 0; i < 40; i++) {
+        buffer.write(0xFF);
+      }
+      for (int i = 0; i < 40; i++) {
+        buffer.write(0x00);
+      }
+      buffer.write(0xFC);
+      for (int i = 0; i < 26; i++) {
+        buffer.write(0xFF);
+      }
+
+      while (sector != null) {
+        for (int i = 0; i < 6; i++) {
+          buffer.write(0x00);
+        }
+        buffer.write(0xFE);
+
+        buffer.write(sector.getTrackNumber());
+        buffer.write(sector.getSide());
+        buffer.write(sector.getSectorId());
+
+        buffer.write(getSectorSizeCode(sector.size()));
+        final int crc = sector.getCrc();
+
+        buffer.write(crc);
+        buffer.write(crc >>> 8);
+
+        for (int i = 0; i < 11; i++) {
+          buffer.write(0xFF);
+        }
+        for (int i = 0; i < 6; i++) {
+          buffer.write(0x00);
+        }
+
+        buffer.write(0xFB);
+
+        for (int i = 0; i < sector.size(); i++) {
+          buffer.write(sector.readByte(i));
+        }
+
+        buffer.write(crc);
+        buffer.write(crc >>> 8);
+
+        for (int i = 0; i < 27; i++) {
+          buffer.write(0xFF);
+        }
+
+        sector = disk.findSectorAfter(sector);
+      }
+
+      for (int i = 0; i < 247; i++) {
+        buffer.write(0xFF);
+      }
+
+      this.trackReadBuffer = buffer.toByteArray();
+      this.trackTotalBytes = this.trackReadBuffer.length;
+    }
+
+  }
+
+  private static class MFMTrackHelper extends TrackHelper {
+
+    MFMTrackHelper(final TrDosDisk disk) {
+      super(disk, true);
+    }
+
+    @Override
+    void prepareTrackForRead(final int headIndex, final int trackIndex) {
+      Sector sector = this.disk.findFirstSector(headIndex, trackIndex);
+
+      final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+      for (int i = 0; i < 80; i++) {
+        buffer.write(0x4E);
+      }
+
+      for (int i = 0; i < 12; i++) {
+        buffer.write(0x00);
+      }
+
+      for (int i = 0; i < 3; i++) {
+        buffer.write(0xF6);
+      }
+
+      buffer.write(0xFC);
+
+      for (int i = 0; i < 50; i++) {
+        buffer.write(0x4E);
+      }
+
+      while (sector != null) {
+        for (int i = 0; i < 12; i++) {
+          buffer.write(0x00);
+        }
+
+        for (int i = 0; i < 3; i++) {
+          buffer.write(0xF5);
+        }
+
+        buffer.write(0xFE);
+
+        buffer.write(sector.getTrackNumber());
+        buffer.write(sector.getSide());
+        buffer.write(sector.getSectorId());
+        buffer.write(getSectorSizeCode(sector.size()));
+
+        final int crc = sector.getCrc();
+
+        buffer.write(crc);
+        buffer.write(crc >>> 8);
+
+        for (int i = 0; i < 22; i++) {
+          buffer.write(0x4E);
+        }
+
+        for (int i = 0; i < 12; i++) {
+          buffer.write(0x00);
+        }
+
+        for (int i = 0; i < 3; i++) {
+          buffer.write(0xF5);
+        }
+
+        buffer.write(0xFB);
+
+        for (int i = 0; i < sector.size(); i++) {
+          buffer.write(sector.readByte(i));
+        }
+
+        buffer.write(crc);
+        buffer.write(crc >>> 8);
+
+        for (int i = 0; i < 54; i++) {
+          buffer.write(0x4E);
+        }
+
+        sector = disk.findSectorAfter(sector);
+      }
+
+      for (int i = 0; i < 598; i++) {
+        buffer.write(0x4E);
+      }
+
+      this.trackReadBuffer = buffer.toByteArray();
+      this.trackTotalBytes = this.trackReadBuffer.length;
+    }
+
   }
 
 }

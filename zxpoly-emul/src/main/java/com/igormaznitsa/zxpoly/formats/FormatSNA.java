@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,17 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpoly.formats;
 
-import java.io.ByteArrayInputStream;
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.z80.Z80;
-import com.igormaznitsa.zxpoly.components.*;
+import com.igormaznitsa.zxpoly.components.Motherboard;
+import com.igormaznitsa.zxpoly.components.VideoController;
+import com.igormaznitsa.zxpoly.components.ZxPolyModule;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
-import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
-import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.stream.IntStream;
 
 public class FormatSNA extends Snapshot {
@@ -47,7 +50,7 @@ public class FormatSNA extends Snapshot {
       doMode48(board);
     }
 
-    final ZXPolyModule module = board.getZXPolyModules()[0];
+    final ZxPolyModule module = board.getZXPolyModules()[0];
     final Z80 cpu = board.getCPU0();
 
     cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getREGAF());
@@ -77,7 +80,7 @@ public class FormatSNA extends Snapshot {
       final int offsetpage5 = 0x14000;
       final int offsetpageTop = (parser.getEXTENDEDDATA().getPORT7FFD() & 7) * 0x4000;
 
-      final int[] bankIndex = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
+      final int[] bankIndex = new int[] {0, 1, 2, 3, 4, 5, 6, 7};
       bankIndex[2] = -1;
       bankIndex[5] = -1;
       bankIndex[parser.getEXTENDEDDATA().getPORT7FFD() & 7] = -1;
@@ -127,7 +130,7 @@ public class FormatSNA extends Snapshot {
   public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
     final SNAParser parser = new SNAParser();
 
-    final ZXPolyModule module = board.getZXPolyModules()[0];
+    final ZxPolyModule module = board.getZXPolyModules()[0];
     final Z80 cpu = board.getCPU0();
 
     parser.setREGAF((char) cpu.getRegisterPair(Z80.REGPAIR_AF));
@@ -159,7 +162,7 @@ public class FormatSNA extends Snapshot {
 
     final byte[] lowram = new byte[49179];
 
-    final int[] bankIndex = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
+    final int[] bankIndex = new int[] {0, 1, 2, 3, 4, 5, 6, 7};
     bankIndex[2] = -1;
     bankIndex[5] = -1;
     bankIndex[topPageIndex] = -1;

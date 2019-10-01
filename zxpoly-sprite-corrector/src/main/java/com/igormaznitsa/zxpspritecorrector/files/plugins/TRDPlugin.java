@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,10 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
 import com.igormaznitsa.jbbp.JBBPParser;
-import com.igormaznitsa.jbbp.io.*;
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.jbbp.io.JBBPBitOrder;
+import com.igormaznitsa.jbbp.io.JBBPByteOrder;
+import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.mapper.Bin;
 import com.igormaznitsa.jbbp.mapper.BinType;
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
@@ -25,30 +29,16 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class TRDPlugin extends AbstractFilePlugin {
 
   public static final JBBPParser CATALOG_PARSER = JBBPParser.prepare("byte [8] name; ubyte type; <ushort start; <ushort length; ubyte sectors; ubyte firstSector; ubyte track;");
-
-  private static final class TRDosCatalogItem {
-
-    @Bin(type = BinType.BYTE_ARRAY)
-    String name;
-    @Bin(type = BinType.UBYTE)
-    char type;
-    @Bin(type = BinType.USHORT)
-    int start;
-    @Bin(type = BinType.USHORT)
-    int length;
-    @Bin(type = BinType.UBYTE)
-    int sectors;
-    @Bin(type = BinType.UBYTE)
-    int firstSector;
-    @Bin(type = BinType.UBYTE)
-    int track;
-  }
 
   public TRDPlugin() {
     super();
@@ -72,7 +62,7 @@ public class TRDPlugin extends AbstractFilePlugin {
   @Override
   public List<Info> getImportingContainerFileList(final File file) {
     try {
-      final List<Info> result = new ArrayList<Info>();
+      final List<Info> result = new ArrayList<>();
 
       JBBPBitInputStream in = null;
       try {
@@ -99,7 +89,7 @@ public class TRDPlugin extends AbstractFilePlugin {
   public ReadResult readFrom(final File file, final int index) throws IOException {
     final JBBPBitInputStream inStream = new JBBPBitInputStream(new FileInputStream(file), JBBPBitOrder.LSB0);
     try {
-      final List<TRDosCatalogItem> list = new ArrayList<TRDosCatalogItem>();
+      final List<TRDosCatalogItem> list = new ArrayList<>();
       for (int i = 0; i < 128; i++) {
         final TRDosCatalogItem item = CATALOG_PARSER.parse(inStream).mapTo(new TRDosCatalogItem());
         if (item.name.charAt(0) > 1) {
@@ -126,11 +116,11 @@ public class TRDPlugin extends AbstractFilePlugin {
   public void writeTo(final File file, final ZXPolyData data, final SessionData session) throws IOException {
 
     final String zxname = data.getInfo().getName();
-    final String[] zxFileName = new String[]{prepareNameForTRD(zxname, 0), prepareNameForTRD(zxname, 1), prepareNameForTRD(zxname, 2), prepareNameForTRD(zxname, 3)};
+    final String[] zxFileName = new String[] {prepareNameForTRD(zxname, 0), prepareNameForTRD(zxname, 1), prepareNameForTRD(zxname, 2), prepareNameForTRD(zxname, 3)};
 
     final char type = data.getInfo().getType();
 
-    final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "TRD file " + file.getName(), null, zxFileName, new char[]{type, type, type, type});
+    final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "TRD file " + file.getName(), null, zxFileName, new char[] {type, type, type, type});
     fileNameDialog.setVisible(true);
     if (fileNameDialog.approved()) {
       final JBBPOut out = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
@@ -143,7 +133,7 @@ public class TRDPlugin extends AbstractFilePlugin {
       int csector = 16;
 
       for (int i = 0; i < 4; i++) {
-        out.Byte(fnames[i]).Byte(fchars[i].charValue()).Short(data.getInfo().getStartAddress(), data.getInfo().getLength()).Byte(sectorslen).Byte(csector & 0xF).Byte(csector >>> 4);
+        out.Byte(fnames[i]).Byte(fchars[i]).Short(data.getInfo().getStartAddress(), data.getInfo().getLength()).Byte(sectorslen).Byte(csector & 0xF).Byte(csector >>> 4);
         csector += sectorslen;
       }
 
@@ -190,6 +180,24 @@ public class TRDPlugin extends AbstractFilePlugin {
   @Override
   public String getPluginUID() {
     return "TRDP";
+  }
+
+  private static final class TRDosCatalogItem {
+
+    @Bin(type = BinType.BYTE_ARRAY)
+    String name;
+    @Bin(type = BinType.UBYTE)
+    char type;
+    @Bin(type = BinType.USHORT)
+    int start;
+    @Bin(type = BinType.USHORT)
+    int length;
+    @Bin(type = BinType.UBYTE)
+    int sectors;
+    @Bin(type = BinType.UBYTE)
+    int firstSector;
+    @Bin(type = BinType.UBYTE)
+    int track;
   }
 
 }

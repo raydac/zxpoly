@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014-2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.igormaznitsa.z80;
 
 import java.util.Locale;
@@ -21,6 +22,7 @@ import java.util.Locale;
 public enum Utils {
 
   ;
+
   public static String toHex(final int value) {
     final String h = Integer.toHexString(value).toUpperCase(Locale.ENGLISH);
     return '#' + (h.length() < 4 ? "0000".substring(0, 4 - h.length()) + h : h);
