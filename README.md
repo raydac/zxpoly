@@ -1,5 +1,5 @@
 [![License GNU GPL3](https://img.shields.io/badge/license-GNU%20GPL%203-yellow.svg)](http://www.gnu.org/licenses/gpl.html)
-[![Java 7.0+](https://img.shields.io/badge/java-7.0%2b-green.svg)](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+[![Java 8.0+](https://img.shields.io/badge/java-8.0%2b-green.svg)](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 [![PayPal donation](https://img.shields.io/badge/donation-PayPal-red.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AHWJHJFBAWGL2)
 [![Yandex.Money donation](https://img.shields.io/badge/donation-Я.деньги-yellow.svg)](http://yasobe.ru/na/iamoss)
 
@@ -7,12 +7,12 @@
 ![ZX-Poly logo](docs/zxpoly_logo.png)
 
 # Introduction
-The idea of the platform was developed by me in April 1994, I had some free time to think about well-known problem of ZX-Spectrum platform - ATTRIBUTE CLASH. I found good solution to resolve the issue with saving of back compatibility with existing software (as minimum with most of them). The solution was - to rework mono-system into poly-system and add extra CPUs working in parallel to process color data. The solution provides some way not only keep back compatibility with software but also use existing OS.   
+I got the idea of the platform in April 1994. I had some free time to think about well-known problem of ZX-Spectrum platform - [ATTRIBUTE CLASH](https://en.wikipedia.org/wiki/Attribute_clash). The idea was to rework a mono-system into a poly-system and add extra CPUs working in parallel to process its own color data. The solution provided some way not only keep back compatibility with existing software but also some way to use existing OS without changes.   
 
-I believe that ZX-Poly could be assembled with electronic components of 80th and it shows that we could have some four core CPU home platform in that time even in the USSR (where ZX-Spectrum was produced by many enthusiasts and small companies). Unfortunately the idea was born too late and couldn't meet any interest from ZX-Spectrum producers in Russia. So that the emulator can be recognized as some proof of concept.
+I am sure that ZX-Poly could be assembled even with electronic components produced in the USSR in middle of 80th and I guess we could have some four-core CPU home platform in that time. Unfortunately the idea was born too late and couldn't meet any interest from ZX-Spectrum producers in Russia. So that the emulator can be recognized as some proof of concept.
 
 # License
-The Emulator and all its parts are published under [GNU GPL3 license](http://www.gnu.org/licenses/gpl.html). So that it is absolutely free for non-commercial use.
+The Emulator and all its parts are published under [GNU GPL3 license](http://www.gnu.org/licenses/gpl.html). So that it is absolutely free for any non-commercial and open-source use.
 
 # UI
 ![The Main Window of the Emulator](docs/screenshots/tapeloading.png)
