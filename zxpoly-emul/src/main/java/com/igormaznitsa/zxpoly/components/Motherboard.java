@@ -17,6 +17,10 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import static java.lang.Math.min;
+import static java.util.Arrays.stream;
+
+
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
@@ -37,7 +41,7 @@ public final class Motherboard implements ZxPolyConstants {
   public static final int TRIGGER_DIFF_MEM_ADDR = 2;
   public static final int TRIGGER_DIFF_EXE_CODE = 4;
   private static final int NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE = 4;
-  private static final Logger LOG = Logger.getLogger("MB");
+  private static final Logger LOGGER = Logger.getLogger("MB");
 
   private final ZxPolyModule[] modules;
   private final IoDevice[] ioDevices;
@@ -88,14 +92,14 @@ public final class Motherboard implements ZxPolyConstants {
     }
   }
 
-  public synchronized void forceResetCPUs() {
+  public synchronized void forceResetAllCpu() {
     for (final ZxPolyModule p : this.modules) {
       p.getCPU().doReset();
     }
   }
 
   public void reset() {
-    LOG.info("Full system reset");
+    LOGGER.info("Full system reset");
     this.totalReset = true;
     this.resetCounter = 3;
   }
@@ -103,7 +107,7 @@ public final class Motherboard implements ZxPolyConstants {
   public boolean set3D00(final int value, final boolean force) {
     if (is3D00NotLocked() || force) {
       this.port3D00 = value;
-      LOG.log(Level.INFO, "set #3D00 to " + Utils.toHex(value));
+      LOGGER.log(Level.INFO, "set #3D00 to " + Utils.toHex(value));
 
       if ((value & PORTw_ZXPOLY_RESET) != 0) {
         for (final ZxPolyModule m : this.modules) {
@@ -115,22 +119,26 @@ public final class Motherboard implements ZxPolyConstants {
       this.video.setVideoMode((this.port3D00 >> 2) & 0x7);
       return true;
     } else {
-      LOG.info("Rejected new value for #3D00 because it is locked");
+      LOGGER.info("Rejected new value for #3D00 because it is locked");
       return false;
     }
   }
 
-  public int findFirstModuleMemoryDiffOffset() {
+  public int findFirstDiffAddrInModuleMemory() {
+    int addr = -1;
     for (int i = 0; i < 0x20000; i++) {
       final int m0 = this.modules[0].readHeapModuleMemory(i);
       final int m1 = this.modules[1].readHeapModuleMemory(i);
       final int m2 = this.modules[2].readHeapModuleMemory(i);
       final int m3 = this.modules[3].readHeapModuleMemory(i);
-      if (!(m0 == m1 && m0 == m2 && m0 == m3)) {
-        return i;
+
+      final int summ = m0 + m1 + m2 + m3;
+      if ((m0 << 2) != summ) {
+        addr = i;
+        break;
       }
     }
-    return -1;
+    return addr;
   }
 
   public float getActivityCPU0() {
@@ -157,7 +165,7 @@ public final class Motherboard implements ZxPolyConstants {
     return this.port3D00;
   }
 
-  public int getMappedCPUIndex() {
+  public int getMappedCpuIndex() {
     return (this.port3D00 >>> 5) & 3;
   }
 
@@ -165,7 +173,7 @@ public final class Motherboard implements ZxPolyConstants {
     return (this.port3D00 & PORTw_ZXPOLY_BLOCK) == 0;
   }
 
-  public boolean isCPUModules123InWaitMode() {
+  public boolean isSlaveModulesInWaitMode() {
     return (this.port3D00 & PORTw_ZXPOLY_nWAIT) == 0;
   }
 
@@ -212,7 +220,7 @@ public final class Motherboard implements ZxPolyConstants {
       this.statisticCounter--;
       if (this.statisticCounter <= 0) {
         for (int i = 0; i < 4; i++) {
-          this.cpuLoad[i] = Math.min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweeInt() / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (VideoController.CYCLES_BETWEEN_INT));
+          this.cpuLoad[i] = min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweenInt() / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (VideoController.CYCLES_BETWEEN_INT));
         }
         this.statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
         resetStatisticsAtModules = true;
@@ -246,7 +254,7 @@ public final class Motherboard implements ZxPolyConstants {
 
       final long initialMachineCycleCounter = this.modules[0].getCPU().getMachineCycles();
 
-      if (isZXPolyMode()) {
+      if (isZxPolyMode()) {
 
         final boolean zx0halt;
         final boolean zx1halt;
@@ -295,22 +303,22 @@ public final class Motherboard implements ZxPolyConstants {
           }
           break;
           default:
-            throw new Error("Unexpected combination number");
+            throw new Error("Unexpected value");
         }
 
         if (is3D00NotLocked() && (zx0halt || zx1halt || zx2halt || zx3halt)) {
           // a cpu has met halt and we need process notification
           if (zx0halt) {
-            processHaltNotificationForModule(0);
+            doModuleHaltNotification(0);
           }
           if (zx1halt) {
-            processHaltNotificationForModule(1);
+            doModuleHaltNotification(1);
           }
           if (zx2halt) {
-            processHaltNotificationForModule(2);
+            doModuleHaltNotification(2);
           }
           if (zx3halt) {
-            processHaltNotificationForModule(3);
+            doModuleHaltNotification(3);
           }
         }
       } else {
@@ -327,7 +335,7 @@ public final class Motherboard implements ZxPolyConstants {
       final int cur_triggers = this.triggers;
 
       if (cur_triggers != TRIGGER_NONE) {
-        if ((cur_triggers & TRIGGER_DIFF_MODULESTATES) != 0 && !areZXPolyModuleStateEquals()) {
+        if ((cur_triggers & TRIGGER_DIFF_MODULESTATES) != 0 && !isModuleStatesSame()) {
           this.triggers = this.triggers & ~TRIGGER_DIFF_MODULESTATES;
           result |= TRIGGER_DIFF_MODULESTATES;
         }
@@ -359,7 +367,7 @@ public final class Motherboard implements ZxPolyConstants {
     return result;
   }
 
-  private boolean areZXPolyModuleStateEquals() {
+  private boolean isModuleStatesSame() {
     final int pc = this.modules[0].getCPU().getRegister(Z80.REG_PC);
     final int sp = this.modules[0].getCPU().getRegister(Z80.REG_SP);
     final int im = this.modules[0].getCPU().getIM();
@@ -379,8 +387,8 @@ public final class Motherboard implements ZxPolyConstants {
     return result;
   }
 
-  private void processHaltNotificationForModule(final int index) {
-    final ZxPolyModule module = this.modules[index];
+  private void doModuleHaltNotification(final int moduleIndex) {
+    final ZxPolyModule module = this.modules[moduleIndex];
     final int reg1 = module.getReg1WrittenData();
     final boolean sendInt = (reg1 & ZXPOLY_wREG1_HALT_NOTIFY_INT) != 0;
     final boolean sendNmi = (reg1 & ZXPOLY_wREG1_HALT_NOTIFY_NMI) != 0;
@@ -415,19 +423,19 @@ public final class Motherboard implements ZxPolyConstants {
     }
   }
 
-  public boolean isZXPolyMode() {
+  public boolean isZxPolyMode() {
     return this.modeZXPoly;
   }
 
-  public void setZXPolyMode(final boolean flag) {
+  public void setZxPolyMode(final boolean flag) {
     if (this.modeZXPoly != flag) {
-      LOG.log(Level.INFO, "Changed motherboard mode to " + (flag ? "ZX-POLY" : "ZX128"));
+      LOGGER.log(Level.INFO, "Motherboard mode changed to " + (flag ? "ZX-POLY" : "ZX128"));
       this.modeZXPoly = flag;
       this.reset();
     }
   }
 
-  public ZxPolyModule[] getZXPolyModules() {
+  public ZxPolyModule[] getModules() {
     return this.modules;
   }
 
@@ -435,19 +443,19 @@ public final class Motherboard implements ZxPolyConstants {
     return this.video;
   }
 
-  public int readRAM(final ZxPolyModule module, final int address) {
+  public int readRam(final ZxPolyModule module, final int address) {
     return this.ram.get(address);
   }
 
-  public void writeRAM(final ZxPolyModule module, final int heapAddress, final int value) {
+  public void writeRam(final ZxPolyModule module, final int heapAddress, final int value) {
     this.ram.set(heapAddress, value);
   }
 
-  public int readBusIO(final ZxPolyModule module, final int port) {
-    final int mappedCPU = getMappedCPUIndex();
+  public int readBusIo(final ZxPolyModule module, final int port) {
+    final int mappedCPU = getMappedCpuIndex();
     int result = 0;
 
-    if (isZXPolyMode() && (module.getModuleIndex() == 0 && mappedCPU > 0)) {
+    if (isZxPolyMode() && (module.getModuleIndex() == 0 && mappedCPU > 0)) {
       final ZxPolyModule destmodule = modules[mappedCPU];
       result = this.ram.get(destmodule.ramOffset2HeapAddress(port));
       destmodule.prepareLocalInt();
@@ -456,13 +464,13 @@ public final class Motherboard implements ZxPolyConstants {
 
       for (final IoDevice d : this.ioDevices) {
         final int prevResult = result;
-        result |= d.readIO(module, port);
+        result |= d.readIo(module, port);
         if (prevResult != result) {
           // changed
           if (prevResult == 0) {
             firstDetected = d;
           } else {
-            LOG.log(Level.WARNING, "Detected collision during IO reading: " + firstDetected + ", " + d.getName() + " port #" + Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
+            LOGGER.log(Level.WARNING, "Detected collision during IO reading: " + firstDetected + ", " + d.getName() + " port #" + Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
           }
         }
       }
@@ -470,11 +478,11 @@ public final class Motherboard implements ZxPolyConstants {
     return result;
   }
 
-  public void writeBusIO(final ZxPolyModule module, final int port, final int value) {
-    final int mappedCPU = getMappedCPUIndex();
+  public void writeBusIo(final ZxPolyModule module, final int port, final int value) {
+    final int mappedCPU = getMappedCpuIndex();
     final int moduleIndex = module.getModuleIndex();
 
-    if (isZXPolyMode()) {
+    if (isZxPolyMode()) {
       if (moduleIndex == 0) {
         if (port == PORTrw_ZXPOLY) {
           set3D00(value, false);
@@ -485,35 +493,34 @@ public final class Motherboard implements ZxPolyConstants {
             destmodule.prepareLocalNMI();
           } else {
             for (final IoDevice d : this.ioDevices) {
-              d.writeIO(module, port, value);
+              d.writeIo(module, port, value);
             }
           }
         }
       } else {
         for (final IoDevice d : this.ioDevices) {
-          d.writeIO(module, port, value);
+          d.writeIo(module, port, value);
         }
       }
     } else {
       for (final IoDevice d : this.ioDevices) {
-        d.writeIO(module, port, value);
+        d.writeIo(module, port, value);
       }
     }
   }
 
-  public <T> T findIODevice(final Class<T> klazz) {
+  public <T> T findIoDevice(final Class<T> klazz) {
     T result = null;
     for (final IoDevice d : this.ioDevices) {
       if (klazz.isInstance(d)) {
         result = klazz.cast(d);
+        break;
       }
     }
     return result;
   }
 
-  public synchronized void resetIODevices() {
-    for (final IoDevice d : this.ioDevices) {
-      d.doReset();
-    }
+  public synchronized void resetIoDevices() {
+    stream(this.ioDevices).forEach(IoDevice::doReset);
   }
 }

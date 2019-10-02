@@ -40,7 +40,7 @@ import com.igormaznitsa.zxpoly.formats.Snapshot;
 import com.igormaznitsa.zxpoly.tracer.TraceCPUForm;
 import com.igormaznitsa.zxpoly.ui.AboutDialog;
 import com.igormaznitsa.zxpoly.ui.AddressPanel;
-import com.igormaznitsa.zxpoly.ui.CPULoadIndicator;
+import com.igormaznitsa.zxpoly.ui.CpuLoadIndicator;
 import com.igormaznitsa.zxpoly.ui.OptionsDialog;
 import com.igormaznitsa.zxpoly.ui.SelectTapPosDialog;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
@@ -114,10 +114,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
   private static final long serialVersionUID = 7309959798344327441L;
   private final AtomicBoolean turboMode = new AtomicBoolean();
-  private final CPULoadIndicator indicatorCPU0 = new CPULoadIndicator(48, 14, 4, "CPU0", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
-  private final CPULoadIndicator indicatorCPU1 = new CPULoadIndicator(48, 14, 4, "CPU1", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
-  private final CPULoadIndicator indicatorCPU2 = new CPULoadIndicator(48, 14, 4, "CPU2", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
-  private final CPULoadIndicator indicatorCPU3 = new CPULoadIndicator(48, 14, 4, "CPU3", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+  private final CpuLoadIndicator indicatorCPU0 = new CpuLoadIndicator(48, 14, 4, "CPU0", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+  private final CpuLoadIndicator indicatorCPU1 = new CpuLoadIndicator(48, 14, 4, "CPU1", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+  private final CpuLoadIndicator indicatorCPU2 = new CpuLoadIndicator(48, 14, 4, "CPU2", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+  private final CpuLoadIndicator indicatorCPU3 = new CpuLoadIndicator(48, 14, 4, "CPU3", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final TraceCPUForm[] cpuTracers = new TraceCPUForm[4];
   private final AtomicInteger activeTracerWindowCounter = new AtomicInteger();
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
@@ -129,7 +129,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       int index = 0;
       for (final TraceCPUForm form : cpuTracers) {
         if (form != null) {
-          final Z80 cpu = board.getZXPolyModules()[index++].getCPU();
+          final Z80 cpu = board.getModules()[index++].getCPU();
           if (cpu.getPrefixInProcessing() == 0 && !cpu.isInsideBlockLoop()) {
             form.refreshViewState();
           }
@@ -223,7 +223,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         labelDiskUsage.setIcon(diskIcon);
       }
 
-      final Icon zx128Icon = board.isZXPolyMode() ? ICO_ZX128_DIS : ICO_ZX128;
+      final Icon zx128Icon = board.isZxPolyMode() ? ICO_ZX128_DIS : ICO_ZX128;
       if (labelZX128.getIcon() != zx128Icon) {
         labelZX128.setIcon(zx128Icon);
       }
@@ -279,16 +279,16 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     final RomData rom = loadRom(romPath);
 
     this.board = new Motherboard(rom);
-    this.board.setZXPolyMode(true);
-    this.menuOptionsZX128Mode.setSelected(!this.board.isZXPolyMode());
+    this.board.setZxPolyMode(true);
+    this.menuOptionsZX128Mode.setSelected(!this.board.isZxPolyMode());
     this.menuOptionsTurbo.setSelected(this.turboMode.get());
 
     log.info("Main form completed");
     this.board.reset();
 
     this.scrollPanel.getViewport().add(this.board.getVideoController());
-    this.keyboardAndTapeModule = this.board.findIODevice(KeyboardKempstonAndTapeIn.class);
-    this.kempstonMouse = this.board.findIODevice(KempstonMouse.class);
+    this.keyboardAndTapeModule = this.board.findIoDevice(KeyboardKempstonAndTapeIn.class);
+    this.kempstonMouse = this.board.findIoDevice(KempstonMouse.class);
 
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     manager.addKeyEventDispatcher(new KeyboardDispatcher(this.board.getVideoController(), this.keyboardAndTapeModule));
@@ -435,9 +435,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
         if (triggers != Motherboard.TRIGGER_NONE) {
           final Z80[] cpuStates = new Z80[4];
-          final int lastM1Address = this.board.getZXPolyModules()[0].getLastM1Address();
+          final int lastM1Address = this.board.getModules()[0].getLastM1Address();
           for (int i = 0; i < 4; i++) {
-            cpuStates[i] = new Z80(this.board.getZXPolyModules()[i].getCPU());
+            cpuStates[i] = new Z80(this.board.getModules()[i].getCPU());
           }
           SwingUtilities.invokeLater(() -> onTrigger(triggers, lastM1Address, cpuStates));
         }
@@ -492,7 +492,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       if (result.length() > 0) {
         result.append("  ");
       }
-      result.append(toHexByte(this.board.getZXPolyModules()[i].readAddress(address)));
+      result.append(toHexByte(this.board.getModules()[i].readAddress(address)));
       result.append(" (").append(i).append(')');
     }
 
@@ -518,9 +518,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     buffer.append("\n\nDisasm since last executed address in CPU0 memory: ").append(toHex(lastAddress)).append('\n');
 
-    buffer.append(this.board.getZXPolyModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
+    buffer.append(this.board.getModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
 
-    this.board.getZXPolyModules()[0].disasmSinceAddress(lastAddress, 5).forEach((l) -> buffer.append(l.toString()).append('\n'));
+    this.board.getModules()[0].disasmSinceAddress(lastAddress, 5).forEach((l) -> buffer.append(l.toString()).append('\n'));
 
     buffer.append('\n');
 
@@ -548,9 +548,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
 
     result.append("\n\nLast executed address : ").append(toHex(lastAddress)).append("\n--------------\n\n");
-    result.append(this.board.getZXPolyModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
+    result.append(this.board.getModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
 
-    this.board.getZXPolyModules()[0].disasmSinceAddress(lastAddress, 5).forEach((l) -> result.append(l.toString()).append('\n'));
+    this.board.getModules()[0].disasmSinceAddress(lastAddress, 5).forEach((l) -> result.append(l.toString()).append('\n'));
 
     return result.toString();
   }
@@ -1069,8 +1069,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, new FormatZ80(), new FormatSNA(), new FormatZXP());
 
       if (selected != null) {
-        this.board.forceResetCPUs();
-        this.board.resetIODevices();
+        this.board.forceResetAllCpu();
+        this.board.resetIoDevices();
 
         this.lastSnapshotFolder = selected.getParentFile();
         try {
@@ -1090,7 +1090,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuOptionsZX128ModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsZX128ModeActionPerformed
     this.stepSemaphor.lock();
     try {
-      this.board.setZXPolyMode(!this.menuOptionsZX128Mode.isSelected());
+      this.board.setZxPolyMode(!this.menuOptionsZX128Mode.isSelected());
     } finally {
       this.stepSemaphor.unlock();
     }

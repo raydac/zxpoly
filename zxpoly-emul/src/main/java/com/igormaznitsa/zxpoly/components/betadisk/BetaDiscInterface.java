@@ -57,7 +57,7 @@ public class BetaDiscInterface implements IoDevice {
   }
 
   @Override
-  public int readIO(final ZxPolyModule module, final int port) {
+  public int readIo(final ZxPolyModule module, final int port) {
     if (module.isTRDOSActive()) {
       switch (port & 0xFF) {
         case 0x1F: {
@@ -82,7 +82,7 @@ public class BetaDiscInterface implements IoDevice {
   }
 
   @Override
-  public void writeIO(final ZxPolyModule module, final int port, final int value) {
+  public void writeIo(final ZxPolyModule module, final int port, final int value) {
     if (module.isTRDOSActive()) {
       switch (port & 0xFF) {
         case 0x1F: {

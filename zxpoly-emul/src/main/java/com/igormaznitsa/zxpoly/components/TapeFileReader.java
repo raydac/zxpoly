@@ -17,6 +17,10 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import static com.igormaznitsa.jbbp.io.JBBPOut.BeginBin;
+import static java.lang.Integer.toHexString;
+
+
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
@@ -63,6 +67,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
   private int mask;
   private int buffered;
   private int controlChecksum;
+
   public TapeFileReader(final String name, final InputStream tap) throws IOException {
     this.name = name;
     final TapFormatParser tapParser = new TapFormatParser().read(new JBBPBitInputStream(tap));
@@ -99,7 +104,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
 
   public void fireAction(final int id, final String command) {
     final ActionEvent event = new ActionEvent(this, id, command);
-    final Runnable run = () -> this.listeners.forEach((l) -> l.actionPerformed(event));
+    final Runnable run = () -> this.listeners.forEach(l -> l.actionPerformed(event));
     if (SwingUtilities.isEventDispatchThread()) {
       run.run();
     } else {
@@ -128,13 +133,12 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
   }
 
   public synchronized boolean startPlay() {
-    if (this.state != State.STOPPED) {
-      if (this.current == null) {
-        this.state = State.STOPPED;
-        fireStop();
-        return false;
-      }
+    if (this.state != State.STOPPED && this.current == null) {
+      this.state = State.STOPPED;
+      fireStop();
+      return false;
     }
+
     this.state = State.INBETWEEN;
     this.counterMain = -1L;
     firePlay();
@@ -219,7 +223,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
       updateForSpentMachineCycles(CYCLESPERSAMPLE);
     }
 
-    final JBBPOut out = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
+    final JBBPOut out = BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
 
     return out.
         Byte("RIFF").
@@ -271,7 +275,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
 
       return buffer.toString();
     } else {
-      return "CODE_BLOCK len=#" + Integer.toHexString(block.data.length).toUpperCase(Locale.ENGLISH);
+      return "CODE_BLOCK len=#" + toHexString(block.data.length).toUpperCase(Locale.ENGLISH);
     }
   }
 
@@ -379,7 +383,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
         break;
         case FLAG: {
           if (this.counterMain < 0L) {
-            LOGGER.log(Level.INFO, "FLAG (#" + Integer.toHexString(block.flag & 0xFF).toUpperCase(Locale.ENGLISH) + ')');
+            LOGGER.log(Level.INFO, "FLAG (#" + toHexString(block.flag & 0xFF).toUpperCase(Locale.ENGLISH) + ')');
             this.controlChecksum = 0;
             this.counterMain = 0L;
             loadDataByteToRead(block.flag & 0xFF);
@@ -393,7 +397,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
         break;
         case DATA: {
           if (this.counterMain < 0L) {
-            LOGGER.log(Level.INFO, "DATA (len=#" + Integer.toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH) + ')');
+            LOGGER.log(Level.INFO, "DATA (len=#" + toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH) + ')');
             this.counterMain = 0L;
             loadDataByteToRead(block.data[(int) this.counterMain++]);
           } else {
@@ -410,9 +414,9 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
         break;
         case CHECKSUM: {
           if (this.counterMain < 0L) {
-            LOGGER.log(Level.INFO, "CHK (xor=#" + Integer.toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH) + ')');
+            LOGGER.log(Level.INFO, "CHK (xor=#" + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH) + ')');
             if ((block.checksum & 0xFF) != (this.controlChecksum & 0xFF)) {
-              LOGGER.log(Level.WARNING, "Different XOR sum : at file #" + Integer.toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH) + ", calculated #" + Integer.toHexString(this.controlChecksum & 0xFF).toUpperCase(Locale.ENGLISH));
+              LOGGER.log(Level.WARNING, "Different XOR sum : at file #" + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH) + ", calculated #" + toHexString(this.controlChecksum & 0xFF).toUpperCase(Locale.ENGLISH));
             }
             this.counterMain = 0L;
             loadDataByteToRead(block.checksum & 0xFF);

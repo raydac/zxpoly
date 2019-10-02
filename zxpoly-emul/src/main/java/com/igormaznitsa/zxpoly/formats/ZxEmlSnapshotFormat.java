@@ -23,7 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class ZXEMLSnapshotFormat extends ZXPParser {
+public class ZxEmlSnapshotFormat extends ZXPParser {
 
   public static final int MAGIC = 0xC0BA0100;
   public static final int INDEX_CPU0 = 0;
@@ -31,7 +31,7 @@ public class ZXEMLSnapshotFormat extends ZXPParser {
   public static final int INDEX_CPU2 = 2;
   public static final int INDEX_CPU3 = 3;
 
-  public ZXEMLSnapshotFormat() {
+  public ZxEmlSnapshotFormat() {
     super();
 
     this.setMAGIC(MAGIC);
@@ -71,7 +71,7 @@ public class ZXEMLSnapshotFormat extends ZXPParser {
     }
   }
 
-  public ZXEMLSnapshotFormat(final byte[] data) throws IOException {
+  public ZxEmlSnapshotFormat(final byte[] data) throws IOException {
     this.read(new JBBPBitInputStream(new ByteArrayInputStream(data)));
     if (this.getMAGIC() != MAGIC) {
       throw new IOException("It is not ZXEML snapshot");

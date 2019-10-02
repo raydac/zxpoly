@@ -63,7 +63,7 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
   }
 
   @Override
-  public int readIO(final ZxPolyModule module, final int port) {
+  public int readIo(final ZxPolyModule module, final int port) {
     int result = 0;
     if (!module.isTRDOSActive()) {
       switch (port) {
@@ -88,7 +88,7 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
   }
 
   @Override
-  public void writeIO(final ZxPolyModule module, final int port, final int value) {
+  public void writeIo(final ZxPolyModule module, final int port, final int value) {
   }
 
   @Override

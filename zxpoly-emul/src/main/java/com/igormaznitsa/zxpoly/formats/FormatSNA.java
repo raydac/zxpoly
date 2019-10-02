@@ -50,7 +50,7 @@ public class FormatSNA extends Snapshot {
       doMode48(board);
     }
 
-    final ZxPolyModule module = board.getZXPolyModules()[0];
+    final ZxPolyModule module = board.getModules()[0];
     final Z80 cpu = board.getCPU0();
 
     cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getREGAF());
@@ -72,7 +72,7 @@ public class FormatSNA extends Snapshot {
     cpu.setIM(parser.getINTMODE());
     cpu.setIFF(true, (parser.getINTERRUPT() & 2) != 0);
 
-    vc.writeIO(module, 0xFE, parser.getBORDERCOLOR());
+    vc.writeIo(module, 0xFE, parser.getBORDERCOLOR());
     vc.setBorderColor(parser.getBORDERCOLOR());
 
     if (sna128) {
@@ -93,7 +93,7 @@ public class FormatSNA extends Snapshot {
 
       cpu.setRegister(Z80.REG_PC, parser.getEXTENDEDDATA().getREGPC());
       cpu.setRegister(Z80.REG_SP, parser.getREGSP());
-      module.set7FFD(parser.getEXTENDEDDATA().getPORT7FFD(), true);
+      module.write7FFD(parser.getEXTENDEDDATA().getPORT7FFD(), true);
       module.setTRDOSActive(parser.getEXTENDEDDATA().getONTRDOS() != 0);
 
       int extraBankIndex = 0;
@@ -130,7 +130,7 @@ public class FormatSNA extends Snapshot {
   public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
     final SNAParser parser = new SNAParser();
 
-    final ZxPolyModule module = board.getZXPolyModules()[0];
+    final ZxPolyModule module = board.getModules()[0];
     final Z80 cpu = board.getCPU0();
 
     parser.setREGAF((char) cpu.getRegisterPair(Z80.REGPAIR_AF));
@@ -154,7 +154,7 @@ public class FormatSNA extends Snapshot {
 
     parser.setBORDERCOLOR((char) vc.getPortFE());
 
-    final int topPageIndex = module.get7FFD() & 7;
+    final int topPageIndex = module.read7FFD() & 7;
 
     final int offsetpage2 = 0x8000;
     final int offsetpage5 = 0x14000;
@@ -179,7 +179,7 @@ public class FormatSNA extends Snapshot {
     SNAParser.EXTENDEDDATA extData = parser.makeEXTENDEDDATA();
 
     extData.setREGPC((char) cpu.getRegister(Z80.REG_PC));
-    extData.setPORT7FFD((char) module.get7FFD());
+    extData.setPORT7FFD((char) module.read7FFD());
     extData.setONTRDOS((byte) (module.isTRDOSActive() ? 1 : 0));
 
     final int totalExtraBanks = (int) IntStream.of(bankIndex).filter(x -> x >= 0).count();

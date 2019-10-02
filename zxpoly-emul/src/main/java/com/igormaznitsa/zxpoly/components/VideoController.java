@@ -109,7 +109,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     super();
 
     this.board = board;
-    this.modules = board.getZXPolyModules();
+    this.modules = board.getModules();
 
     this.buffer = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_ARGB);
     this.dataBuffer = ((DataBufferInt) this.buffer.getRaster().getDataBuffer()).getData();
@@ -634,7 +634,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   }
 
   @Override
-  public int readIO(final ZxPolyModule module, final int port) {
+  public int readIo(final ZxPolyModule module, final int port) {
     return 0;
   }
 
@@ -643,7 +643,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   }
 
   @Override
-  public void writeIO(final ZxPolyModule module, final int port, final int value) {
+  public void writeIo(final ZxPolyModule module, final int port, final int value) {
     if (!module.isTRDOSActive() && (port & 0xFF) == 0xFE) {
       this.portFEw = value & 0xFF;
 

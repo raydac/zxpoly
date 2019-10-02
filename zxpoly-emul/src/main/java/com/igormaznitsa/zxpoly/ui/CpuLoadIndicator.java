@@ -29,19 +29,19 @@ import java.awt.Stroke;
 import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
 
-public final class CPULoadIndicator extends JPanel {
+public final class CpuLoadIndicator extends JPanel {
 
   private static final long serialVersionUID = -8360307819233085278L;
 
   private static final Stroke STROKE_INDICATOR = new BasicStroke(1.0f);
   private static final Stroke STROKE_GRID = new BasicStroke(0.3f);
   private final int gridStep;
-  private final Dimension thesize;
+  private final Dimension indicatorSize;
   private final BufferedImage buffer;
   private Color gridColor;
   private int lastY;
 
-  public CPULoadIndicator(final int width, final int height, final int gridStep, final String text, final Color foreground, final Color background, final Color grid) {
+  public CpuLoadIndicator(final int width, final int height, final int gridStep, final String text, final Color foreground, final Color background, final Color grid) {
     super();
     this.gridStep = Math.max(gridStep, 6);
 
@@ -57,7 +57,7 @@ public final class CPULoadIndicator extends JPanel {
 
     this.setToolTipText(text);
 
-    this.thesize = new Dimension(width, height);
+    this.indicatorSize = new Dimension(width, height);
     super.setSize(width, height);
 
     this.buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -129,32 +129,32 @@ public final class CPULoadIndicator extends JPanel {
 
   @Override
   public int getWidth() {
-    return this.thesize.width;
+    return this.indicatorSize.width;
   }
 
   @Override
   public int getHeight() {
-    return this.thesize.height;
+    return this.indicatorSize.height;
   }
 
   @Override
   public Dimension getSize() {
-    return this.thesize;
+    return this.indicatorSize;
   }
 
   @Override
   public Dimension getMinimumSize() {
-    return this.thesize;
+    return this.indicatorSize;
   }
 
   @Override
   public Dimension getMaximumSize() {
-    return this.thesize;
+    return this.indicatorSize;
   }
 
   @Override
   public Dimension getPreferredSize() {
-    return this.thesize;
+    return this.indicatorSize;
   }
 
   @Override

@@ -97,7 +97,7 @@ public class FormatZ80 extends Snapshot {
     emulflags.setVIDEOSYNC((byte) 0);
     emulflags.setINPUTDEVICE((byte) 0);
 
-    final ZxPolyModule module = board.getZXPolyModules()[0];
+    final ZxPolyModule module = board.getModules()[0];
 
     final Z80V3AParser.FLAGS flags = parser.makeFLAGS();
 
@@ -107,8 +107,8 @@ public class FormatZ80 extends Snapshot {
     flags.setCOMPRESSED((byte) 0);
     flags.setNOMEANING((byte) 0);
 
-    parser.setPORT7FFD((char) module.get7FFD());
-    parser.setPORTFF((char) module.readIO(module, 0xFF));
+    parser.setPORT7FFD((char) module.read7FFD());
+    parser.setPORTFF((char) module.readIo(module, 0xFF));
 
     parser.setHEADERLEN((char) 54);
     parser.setMODE((char) 4);
@@ -250,7 +250,7 @@ public class FormatZ80 extends Snapshot {
     cpu.setRegister(Z80.REG_I, snapshot.getREG_IR());
     cpu.setIM(snapshot.getEMULFLAGS().getINTERRUPTMODE());
 
-    final ZxPolyModule module = board.getZXPolyModules()[0];
+    final ZxPolyModule module = board.getModules()[0];
 
     switch (version) {
       case VERSION_1: {
@@ -287,7 +287,7 @@ public class FormatZ80 extends Snapshot {
             }
           }
         } else {
-          module.set7FFD(snapshot.getPORT7FFD(), true);
+          module.write7FFD(snapshot.getPORT7FFD(), true);
           for (final Bank b : banks) {
             if (b.page >= 3 && b.page < 10) {
               final int offset = (b.page - 3) * 0x4000;

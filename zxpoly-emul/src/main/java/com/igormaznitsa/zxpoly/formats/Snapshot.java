@@ -18,6 +18,7 @@
 package com.igormaznitsa.zxpoly.formats;
 
 import static com.igormaznitsa.zxpoly.components.ZxPolyConstants.PORTw_ZXPOLY_BLOCK;
+import static java.util.Arrays.stream;
 
 
 import com.igormaznitsa.zxpoly.components.Motherboard;
@@ -31,9 +32,7 @@ public abstract class Snapshot extends FileFilter {
 
   public void doMode48(final Motherboard board) {
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
-    for (final ZxPolyModule m : board.getZXPolyModules()) {
-      m.lockZX48Mode();
-    }
+    stream(board.getModules()).forEach(ZxPolyModule::lockZx48Mode);
     board.getCPU0().doReset();
   }
 

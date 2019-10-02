@@ -21,9 +21,9 @@ public interface IoDevice extends ZxPolyConstants {
 
   Motherboard getMotherboard();
 
-  int readIO(ZxPolyModule module, int port);
+  int readIo(ZxPolyModule module, int port);
 
-  void writeIO(ZxPolyModule module, int port, int value);
+  void writeIo(ZxPolyModule module, int port, int value);
 
   void preStep(boolean signalReset, boolean signalInt);
 

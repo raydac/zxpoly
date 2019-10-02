@@ -17,7 +17,11 @@
 
 package com.igormaznitsa.zxpoly.components;
 
-import com.igormaznitsa.jbbp.utils.JBBPUtils;
+import static com.igormaznitsa.jbbp.utils.JBBPUtils.makeMask;
+import static java.lang.System.arraycopy;
+import static java.util.stream.Stream.of;
+
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,19 +34,16 @@ public final class RomData {
   private final int addressMask;
 
   public RomData(final byte[]... args) {
-    int size = 0;
-    for (final byte[] a : args) {
-      size += a.length;
-    }
+    final int size = of(args).mapToInt(x -> x.length).sum();
 
     final byte[] result = new byte[size];
     int pos = 0;
     for (final byte[] a : args) {
-      System.arraycopy(a, 0, result, pos, a.length);
+      arraycopy(a, 0, result, pos, a.length);
       pos += a.length;
     }
     this.data = result;
-    this.addressMask = JBBPUtils.makeMask(((size / 0x4000) * 0x4000) == size ? size - 1 : size);
+    this.addressMask = makeMask(((size / 0x4000) * 0x4000) == size ? size - 1 : size);
   }
 
   public RomData(final byte[] array) {
@@ -52,8 +53,8 @@ public final class RomData {
 
     final int size = ((array.length + 0x3FFF) / 0x4000) * 0x4000;
     this.data = new byte[size];
-    this.addressMask = JBBPUtils.makeMask(size - 1);
-    System.arraycopy(array, 0, this.data, 0, array.length);
+    this.addressMask = makeMask(size - 1);
+    arraycopy(array, 0, this.data, 0, array.length);
   }
 
   public static RomData read(final File file) throws IOException {

@@ -36,10 +36,10 @@ public class FormatZXP extends Snapshot {
 
   @Override
   public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
-    final ZXEMLSnapshotFormat snapshot = new ZXEMLSnapshotFormat();
+    final ZxEmlSnapshotFormat snapshot = new ZxEmlSnapshotFormat();
 
     for (int cpu = 0; cpu < 4; cpu++) {
-      final ZxPolyModule module = board.getZXPolyModules()[cpu];
+      final ZxPolyModule module = board.getModules()[cpu];
       final Z80 z80 = module.getCPU();
 
       snapshot.getREG_PC()[cpu] = (short) z80.getRegister(Z80.REG_PC);
@@ -66,7 +66,7 @@ public class FormatZXP extends Snapshot {
       snapshot.getIFF2()[cpu] = z80.isIFF2();
       snapshot.getREG_IM()[cpu] = (byte) z80.getIM();
 
-      module.loadModuleLocalPortValues(snapshot.getModulePorts(cpu));
+      module.fillArrayByPortValues(snapshot.getModulePorts(cpu));
 
       final ZXPParser.PAGES memory = snapshot.getPAGES()[cpu];
 
@@ -90,10 +90,10 @@ public class FormatZXP extends Snapshot {
 
   @Override
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
-    final ZXEMLSnapshotFormat snapshot = new ZXEMLSnapshotFormat(array);
+    final ZxEmlSnapshotFormat snapshot = new ZxEmlSnapshotFormat(array);
 
     for (int cpu = 0; cpu < 4; cpu++) {
-      final ZxPolyModule module = board.getZXPolyModules()[cpu];
+      final ZxPolyModule module = board.getModules()[cpu];
       final Z80 z80 = module.getCPU();
 
       z80.setRegister(Z80.REG_PC, snapshot.getREG_PC()[cpu]);
@@ -120,7 +120,7 @@ public class FormatZXP extends Snapshot {
       z80.setIFF(snapshot.getIFF()[cpu], snapshot.getIFF2()[cpu]);
       z80.setIM(snapshot.getREG_IM()[cpu]);
 
-      module.loadModuleLocalPortsByValues(snapshot.getModulePorts(cpu)[0], snapshot.getModulePorts(cpu)[1], snapshot.getModulePorts(cpu)[2], snapshot.getModulePorts(cpu)[3], snapshot.getModulePorts(cpu)[4]);
+      module.fillPortByValues(snapshot.getModulePorts(cpu)[0], snapshot.getModulePorts(cpu)[1], snapshot.getModulePorts(cpu)[2], snapshot.getModulePorts(cpu)[3], snapshot.getModulePorts(cpu)[4]);
 
       final ZXPParser.PAGES memory = snapshot.getPAGES()[cpu];
 

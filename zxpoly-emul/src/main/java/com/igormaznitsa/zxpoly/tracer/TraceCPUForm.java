@@ -109,7 +109,7 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
     this.moduleIndex = moduleIndex;
     this.mainForm = mainForm;
     this.motherboard = motherboard;
-    this.module = this.motherboard.getZXPolyModules()[moduleIndex];
+    this.module = this.motherboard.getModules()[moduleIndex];
     this.setTitle("Tracing module #" + moduleIndex);
 
     this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
