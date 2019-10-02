@@ -224,11 +224,11 @@ public final class VideoController extends JComponent implements ZxPolyConstants
             attributeoffset = calcAttributeAddressZXMode(i);
           }
 
-          final int attribute = sourceModule.readVideoMemory(attributeoffset++);
+          final int attribute = sourceModule.readVideo(attributeoffset++);
           final int inkColor = extractInkColor(attribute, flashActive);
           final int paperColor = extractPaperColor(attribute, flashActive);
 
-          int videoValue = sourceModule.readVideoMemory(i);
+          int videoValue = sourceModule.readVideo(i);
           int x = 8;
           while (x-- > 0) {
             final int color = (videoValue & 0x80) == 0 ? paperColor : inkColor;
@@ -261,14 +261,14 @@ public final class VideoController extends JComponent implements ZxPolyConstants
             attributeoffset = calcAttributeAddressZXMode(i);
           }
 
-          int videoValue0 = module0.readVideoMemory(i);
-          int videoValue1 = module1.readVideoMemory(i);
-          int videoValue2 = module2.readVideoMemory(i);
-          int videoValue3 = module3.readVideoMemory(i);
+          int videoValue0 = module0.readVideo(i);
+          int videoValue1 = module1.readVideo(i);
+          int videoValue2 = module2.readVideo(i);
+          int videoValue3 = module3.readVideo(i);
 
           if (masked) {
             // check attribute from 0-module
-            final int attribute = module0.readVideoMemory(attributeoffset++);
+            final int attribute = module0.readVideo(attributeoffset++);
 
             final int inkColor = extractInkColor(attribute, flashActive);
             final int paperColor = extractPaperColor(attribute, flashActive);
@@ -324,17 +324,17 @@ public final class VideoController extends JComponent implements ZxPolyConstants
             attributeoffset = calcAttributeAddressZXMode(i);
           }
 
-          int videoValue0 = module0.readVideoMemory(i);
-          final int attribute0 = module0.readVideoMemory(attributeoffset);
+          int videoValue0 = module0.readVideo(i);
+          final int attribute0 = module0.readVideo(attributeoffset);
 
-          int videoValue1 = module1.readVideoMemory(i);
-          final int attribute1 = module1.readVideoMemory(attributeoffset);
+          int videoValue1 = module1.readVideo(i);
+          final int attribute1 = module1.readVideo(attributeoffset);
 
-          int videoValue2 = module2.readVideoMemory(i);
-          final int attribute2 = module2.readVideoMemory(attributeoffset);
+          int videoValue2 = module2.readVideo(i);
+          final int attribute2 = module2.readVideo(attributeoffset);
 
-          int videoValue3 = module3.readVideoMemory(i);
-          final int attribute3 = module3.readVideoMemory(attributeoffset++);
+          int videoValue3 = module3.readVideo(i);
+          final int attribute3 = module3.readVideo(attributeoffset++);
 
           int x = 8;
           while (x-- > 0) {
@@ -644,11 +644,11 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
   @Override
   public void writeIo(final ZxPolyModule module, final int port, final int value) {
-    if (!module.isTRDOSActive() && (port & 0xFF) == 0xFE) {
+    if (!module.isTrdosActive() && (port & 0xFF) == 0xFE) {
       this.portFEw = value & 0xFF;
 
       int borderLineIndex;
-      final long machineCycles = module.getCPU().getMachineCycles();
+      final long machineCycles = module.getCpu().getMachineCycles();
       if (module.isMaster()) {
         borderLineIndex = (int) (((machineCycles << 8) / MCYCLES_PER_BORDER_LINE) >> 8);
       } else {

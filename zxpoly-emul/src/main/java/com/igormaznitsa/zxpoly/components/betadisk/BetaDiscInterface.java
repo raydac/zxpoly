@@ -58,7 +58,7 @@ public class BetaDiscInterface implements IoDevice {
 
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
-    if (module.isTRDOSActive()) {
+    if (module.isTrdosActive()) {
       switch (port & 0xFF) {
         case 0x1F: {
           return vg93.read(FddControllerK1818VG93.ADDR_COMMAND_STATE);
@@ -83,7 +83,7 @@ public class BetaDiscInterface implements IoDevice {
 
   @Override
   public void writeIo(final ZxPolyModule module, final int port, final int value) {
-    if (module.isTRDOSActive()) {
+    if (module.isTrdosActive()) {
       switch (port & 0xFF) {
         case 0x1F: {
           vg93.write(FddControllerK1818VG93.ADDR_COMMAND_STATE, value);

@@ -120,7 +120,7 @@ public class FormatZ80 extends Snapshot {
       int addr = i * 0x4000;
       final byte[] data = new byte[0x4000];
       for (int x = 0; x < 0x4000; x++) {
-        data[x] = (byte) module.readHeapModuleMemory(addr++);
+        data[x] = (byte) module.readHeap(addr++);
       }
       new Bank(i + 3, data).writeNonCompressed(bos);
     }
@@ -292,7 +292,7 @@ public class FormatZ80 extends Snapshot {
             if (b.page >= 3 && b.page < 10) {
               final int offset = (b.page - 3) * 0x4000;
               for (int i = 0; i < 16384; i++) {
-                module.writeHeapModuleMemory(offset + i, b.data[i]);
+                module.writeHeap(offset + i, b.data[i]);
               }
             }
           }

@@ -58,7 +58,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
     int result = 0;
-    if (!module.isTRDOSActive()) {
+    if (!module.isTrdosActive()) {
       switch (port & 0xFF) {
         case 0xFE: {
           // KEYBOARD

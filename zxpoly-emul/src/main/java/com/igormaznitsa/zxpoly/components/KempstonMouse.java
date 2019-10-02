@@ -65,7 +65,7 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
     int result = 0;
-    if (!module.isTRDOSActive()) {
+    if (!module.isTrdosActive()) {
       switch (port) {
         case 0xFBDF: {
           // coord X

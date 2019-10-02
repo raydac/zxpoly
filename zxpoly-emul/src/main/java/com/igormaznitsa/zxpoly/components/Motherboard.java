@@ -94,7 +94,7 @@ public final class Motherboard implements ZxPolyConstants {
 
   public synchronized void forceResetAllCpu() {
     for (final ZxPolyModule p : this.modules) {
-      p.getCPU().doReset();
+      p.getCpu().doReset();
     }
   }
 
@@ -127,10 +127,10 @@ public final class Motherboard implements ZxPolyConstants {
   public int findFirstDiffAddrInModuleMemory() {
     int addr = -1;
     for (int i = 0; i < 0x20000; i++) {
-      final int m0 = this.modules[0].readHeapModuleMemory(i);
-      final int m1 = this.modules[1].readHeapModuleMemory(i);
-      final int m2 = this.modules[2].readHeapModuleMemory(i);
-      final int m3 = this.modules[3].readHeapModuleMemory(i);
+      final int m0 = this.modules[0].readHeap(i);
+      final int m1 = this.modules[1].readHeap(i);
+      final int m2 = this.modules[2].readHeap(i);
+      final int m3 = this.modules[3].readHeap(i);
 
       final int summ = m0 + m1 + m2 + m3;
       if ((m0 << 2) != summ) {
@@ -186,7 +186,7 @@ public final class Motherboard implements ZxPolyConstants {
   }
 
   public Z80 getCPU0() {
-    return this.modules[0].getCPU();
+    return this.modules[0].getCpu();
   }
 
   public int getTriggers() {
@@ -252,7 +252,7 @@ public final class Motherboard implements ZxPolyConstants {
         d.preStep(signalReset, signalInt);
       }
 
-      final long initialMachineCycleCounter = this.modules[0].getCPU().getMachineCycles();
+      final long initialMachineCycleCounter = this.modules[0].getCpu().getMachineCycles();
 
       if (isZxPolyMode()) {
 
@@ -326,7 +326,7 @@ public final class Motherboard implements ZxPolyConstants {
         this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
       }
 
-      final long spentMachineCycles = this.modules[0].getCPU().getMachineCycles() - initialMachineCycleCounter;
+      final long spentMachineCycles = this.modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
 
       for (final IoDevice d : this.ioDevices) {
         d.postStep(spentMachineCycles);
@@ -351,11 +351,11 @@ public final class Motherboard implements ZxPolyConstants {
         }
 
         if ((cur_triggers & TRIGGER_DIFF_EXE_CODE) != 0) {
-          final int m1ExeByte = this.modules[0].getCPU().getLastM1InstructionByte();
-          final int exeByte = this.modules[0].getCPU().getLastInstructionByte();
+          final int m1ExeByte = this.modules[0].getCpu().getLastM1InstructionByte();
+          final int exeByte = this.modules[0].getCpu().getLastInstructionByte();
 
           for (int i = 1; i < 4; i++) {
-            if (m1ExeByte != this.modules[i].getCPU().getLastM1InstructionByte() || exeByte != this.modules[i].getCPU().getLastInstructionByte()) {
+            if (m1ExeByte != this.modules[i].getCpu().getLastM1InstructionByte() || exeByte != this.modules[i].getCpu().getLastInstructionByte()) {
               result |= TRIGGER_DIFF_EXE_CODE;
               this.triggers = this.triggers & ~TRIGGER_DIFF_EXE_CODE;
               break;
@@ -368,20 +368,20 @@ public final class Motherboard implements ZxPolyConstants {
   }
 
   private boolean isModuleStatesSame() {
-    final int pc = this.modules[0].getCPU().getRegister(Z80.REG_PC);
-    final int sp = this.modules[0].getCPU().getRegister(Z80.REG_SP);
-    final int im = this.modules[0].getCPU().getIM();
-    final boolean iff1 = this.modules[0].getCPU().isIFF1();
-    final boolean iff2 = this.modules[0].getCPU().isIFF2();
+    final int pc = this.modules[0].getCpu().getRegister(Z80.REG_PC);
+    final int sp = this.modules[0].getCpu().getRegister(Z80.REG_SP);
+    final int im = this.modules[0].getCpu().getIM();
+    final boolean iff1 = this.modules[0].getCpu().isIFF1();
+    final boolean iff2 = this.modules[0].getCpu().isIFF2();
 
     boolean result = true;
 
     for (int i = 1; result && i < 4; i++) {
-      result = pc == this.modules[i].getCPU().getRegister(Z80.REG_PC)
-          && sp == this.modules[i].getCPU().getRegister(Z80.REG_SP)
-          && im == this.modules[i].getCPU().getIM()
-          && iff1 == this.modules[i].getCPU().isIFF1()
-          && iff2 == this.modules[i].getCPU().isIFF2();
+      result = pc == this.modules[i].getCpu().getRegister(Z80.REG_PC)
+          && sp == this.modules[i].getCpu().getRegister(Z80.REG_SP)
+          && im == this.modules[i].getCpu().getIM()
+          && iff1 == this.modules[i].getCpu().isIFF1()
+          && iff2 == this.modules[i].getCpu().isIFF2();
 
     }
     return result;
@@ -409,16 +409,16 @@ public final class Motherboard implements ZxPolyConstants {
 
     if (sendNmi) {
       if ((reg1 & ZXPOLY_wREG1_CPU0) != 0) {
-        this.modules[0].prepareLocalNMI();
+        this.modules[0].prepareLocalNmi();
       }
       if ((reg1 & ZXPOLY_wREG1_CPU1) != 0) {
-        this.modules[1].prepareLocalNMI();
+        this.modules[1].prepareLocalNmi();
       }
       if ((reg1 & ZXPOLY_wREG1_CPU2) != 0) {
-        this.modules[2].prepareLocalNMI();
+        this.modules[2].prepareLocalNmi();
       }
       if ((reg1 & ZXPOLY_wREG1_CPU3) != 0) {
-        this.modules[3].prepareLocalNMI();
+        this.modules[3].prepareLocalNmi();
       }
     }
   }
@@ -490,7 +490,7 @@ public final class Motherboard implements ZxPolyConstants {
           if (mappedCPU > 0) {
             final ZxPolyModule destmodule = this.modules[mappedCPU];
             this.ram.set(destmodule.ramOffset2HeapAddress(port), value);
-            destmodule.prepareLocalNMI();
+            destmodule.prepareLocalNmi();
           } else {
             for (final IoDevice d : this.ioDevices) {
               d.writeIo(module, port, value);

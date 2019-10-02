@@ -129,7 +129,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       int index = 0;
       for (final TraceCPUForm form : cpuTracers) {
         if (form != null) {
-          final Z80 cpu = board.getModules()[index++].getCPU();
+          final Z80 cpu = board.getModules()[index++].getCpu();
           if (cpu.getPrefixInProcessing() == 0 && !cpu.isInsideBlockLoop()) {
             form.refreshViewState();
           }
@@ -437,7 +437,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           final Z80[] cpuStates = new Z80[4];
           final int lastM1Address = this.board.getModules()[0].getLastM1Address();
           for (int i = 0; i < 4; i++) {
-            cpuStates[i] = new Z80(this.board.getModules()[i].getCPU());
+            cpuStates[i] = new Z80(this.board.getModules()[i].getCpu());
           }
           SwingUtilities.invokeLater(() -> onTrigger(triggers, lastM1Address, cpuStates));
         }

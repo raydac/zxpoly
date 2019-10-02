@@ -722,7 +722,7 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
   }
 
   public void refreshViewState() {
-    final int pc = this.module.getCPU().getPC();
+    final int pc = this.module.getCpu().getPC();
 
     if (this.module.isActiveRegistersAsMemorySource()) {
       final DefaultListModel model = new DefaultListModel();
@@ -766,7 +766,7 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
       setEnableForComponentsOfPanel(this.panelRegSet, this.changeEnabled);
     }
 
-    final Z80 cpu = this.module.getCPU();
+    final Z80 cpu = this.module.getCpu();
     this.fieldPC.setValue(cpu.getPC());
     this.fieldSP.setValue(cpu.getSP());
     this.fieldIX.setValue(cpu.getRegister(Z80.REG_IX));
@@ -825,6 +825,6 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
 
   @Override
   public byte readAddress(final int address) {
-    return this.module.readMemory(this.module.getCPU(), address & 0xFFFF, false);
+    return this.module.readMemory(this.module.getCpu(), address & 0xFFFF, false);
   }
 }

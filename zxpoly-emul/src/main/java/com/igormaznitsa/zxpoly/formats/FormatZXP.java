@@ -40,7 +40,7 @@ public class FormatZXP extends Snapshot {
 
     for (int cpu = 0; cpu < 4; cpu++) {
       final ZxPolyModule module = board.getModules()[cpu];
-      final Z80 z80 = module.getCPU();
+      final Z80 z80 = module.getCpu();
 
       snapshot.getREG_PC()[cpu] = (short) z80.getRegister(Z80.REG_PC);
       snapshot.getREG_SP()[cpu] = (short) z80.getRegister(Z80.REG_SP);
@@ -73,7 +73,7 @@ public class FormatZXP extends Snapshot {
       for (final ZXPParser.PAGES.PAGE p : memory.getPAGE()) {
         final int pageOffset = p.getINDEX() * 0x4000;
         for (int addr = 0; addr < 0x4000; addr++) {
-          p.getDATA()[addr] = (byte) module.readHeapModuleMemory(pageOffset + addr);
+          p.getDATA()[addr] = (byte) module.readHeap(pageOffset + addr);
         }
       }
     }
@@ -94,7 +94,7 @@ public class FormatZXP extends Snapshot {
 
     for (int cpu = 0; cpu < 4; cpu++) {
       final ZxPolyModule module = board.getModules()[cpu];
-      final Z80 z80 = module.getCPU();
+      final Z80 z80 = module.getCpu();
 
       z80.setRegister(Z80.REG_PC, snapshot.getREG_PC()[cpu]);
       z80.setRegister(Z80.REG_SP, snapshot.getREG_SP()[cpu]);
@@ -127,7 +127,7 @@ public class FormatZXP extends Snapshot {
       for (final ZXPParser.PAGES.PAGE p : memory.getPAGE()) {
         final int pageOffset = p.getINDEX() * 0x4000;
         for (int addr = 0; addr < 0x4000; addr++) {
-          module.writeHeapModuleMemory(pageOffset + addr, p.getDATA()[addr] & 0xFF);
+          module.writeHeap(pageOffset + addr, p.getDATA()[addr] & 0xFF);
         }
       }
     }

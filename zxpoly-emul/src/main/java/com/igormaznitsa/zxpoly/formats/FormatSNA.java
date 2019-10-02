@@ -86,15 +86,15 @@ public class FormatSNA extends Snapshot {
       bankIndex[parser.getEXTENDEDDATA().getPORT7FFD() & 7] = -1;
 
       for (int i = 0; i < 0x4000; i++) {
-        module.writeHeapModuleMemory(offsetpage5 + i, parser.getRAMDUMP()[i]);
-        module.writeHeapModuleMemory(offsetpage2 + i, parser.getRAMDUMP()[i + 0x4000]);
-        module.writeHeapModuleMemory(offsetpageTop + i, parser.getRAMDUMP()[i + 0x8000]);
+        module.writeHeap(offsetpage5 + i, parser.getRAMDUMP()[i]);
+        module.writeHeap(offsetpage2 + i, parser.getRAMDUMP()[i + 0x4000]);
+        module.writeHeap(offsetpageTop + i, parser.getRAMDUMP()[i + 0x8000]);
       }
 
       cpu.setRegister(Z80.REG_PC, parser.getEXTENDEDDATA().getREGPC());
       cpu.setRegister(Z80.REG_SP, parser.getREGSP());
       module.write7FFD(parser.getEXTENDEDDATA().getPORT7FFD(), true);
-      module.setTRDOSActive(parser.getEXTENDEDDATA().getONTRDOS() != 0);
+      module.setTrdosActive(parser.getEXTENDEDDATA().getONTRDOS() != 0);
 
       int extraBankIndex = 0;
       for (int i = 0; i < 8 && extraBankIndex < parser.getEXTENDEDDATA().getEXTRABANK().length; i++) {
@@ -104,7 +104,7 @@ public class FormatSNA extends Snapshot {
         final byte[] data = parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA();
         final int heapoffset = bankIndex[i] * 0x4000;
         for (int a = 0; a < data.length; a++) {
-          module.writeHeapModuleMemory(heapoffset + a, data[a]);
+          module.writeHeap(heapoffset + a, data[a]);
         }
       }
 
@@ -168,9 +168,9 @@ public class FormatSNA extends Snapshot {
     bankIndex[topPageIndex] = -1;
 
     for (int i = 0; i < 0x4000; i++) {
-      lowram[i] = (byte) module.readHeapModuleMemory(offsetpage5 + i);
-      lowram[i + 0x4000] = (byte) module.readHeapModuleMemory(offsetpage2 + i);
-      lowram[i + 0x8000] = (byte) module.readHeapModuleMemory(offsetpageTop + i);
+      lowram[i] = (byte) module.readHeap(offsetpage5 + i);
+      lowram[i + 0x4000] = (byte) module.readHeap(offsetpage2 + i);
+      lowram[i + 0x8000] = (byte) module.readHeap(offsetpageTop + i);
     }
 
     parser.setREGSP((char) cpu.getRegister(Z80.REG_SP));
@@ -180,7 +180,7 @@ public class FormatSNA extends Snapshot {
 
     extData.setREGPC((char) cpu.getRegister(Z80.REG_PC));
     extData.setPORT7FFD((char) module.read7FFD());
-    extData.setONTRDOS((byte) (module.isTRDOSActive() ? 1 : 0));
+    extData.setONTRDOS((byte) (module.isTrdosActive() ? 1 : 0));
 
     final int totalExtraBanks = (int) IntStream.of(bankIndex).filter(x -> x >= 0).count();
 
@@ -199,7 +199,7 @@ public class FormatSNA extends Snapshot {
       final byte[] data = parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA();
       final int heapoffset = bankIndex[i] * 0x4000;
       for (int a = 0; a < data.length; a++) {
-        data[a] = (byte) module.readHeapModuleMemory(heapoffset + a);
+        data[a] = (byte) module.readHeap(heapoffset + a);
       }
     }
 
