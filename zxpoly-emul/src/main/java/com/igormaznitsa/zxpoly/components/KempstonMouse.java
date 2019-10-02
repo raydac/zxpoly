@@ -27,10 +27,10 @@ import javax.swing.SwingUtilities;
 
 public final class KempstonMouse extends MouseAdapter implements IoDevice {
 
-  private final int MOUSE_BUTTON_LEFT = 1;
-  private final int MOUSE_BUTTON_RIGHT = 2;
-  private final int MOUSE_BUTTON_CENTRAL = 4;
-  private final int MOUSE_BUTTONS_NON_ACTIVE = MOUSE_BUTTON_LEFT | MOUSE_BUTTON_RIGHT | MOUSE_BUTTON_CENTRAL;
+  private static final int MOUSE_BUTTON_LEFT = 1;
+  private static final int MOUSE_BUTTON_RIGHT = 2;
+  private static final int MOUSE_BUTTON_CENTRAL = 4;
+  private static final int MOUSE_BUTTONS_NON_ACTIVE = MOUSE_BUTTON_LEFT | MOUSE_BUTTON_RIGHT | MOUSE_BUTTON_CENTRAL;
 
   private final Motherboard board;
   private final AtomicInteger coordX = new AtomicInteger(38);
