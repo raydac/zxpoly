@@ -33,7 +33,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 @SuppressWarnings("unchecked")
-public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProvider {
+public class TraceCpuForm extends javax.swing.JFrame implements MemoryAccessProvider {
 
   private final MainForm mainForm;
   private final Motherboard motherboard;
@@ -104,7 +104,8 @@ public class TraceCPUForm extends javax.swing.JFrame implements MemoryAccessProv
   private javax.swing.JPanel panelCommonRegisters;
   private javax.swing.JPanel panelFlags;
   private javax.swing.JPanel panelRegSet;
-  public TraceCPUForm(final MainForm mainForm, final Motherboard motherboard, final int moduleIndex) {
+
+  public TraceCpuForm(final MainForm mainForm, final Motherboard motherboard, final int moduleIndex) {
     initComponents();
     this.moduleIndex = moduleIndex;
     this.mainForm = mainForm;

@@ -93,8 +93,8 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private final Motherboard board;
   private final ReentrantLock bufferLocker = new ReentrantLock();
-  private final BufferedImage buffer;
-  private final int[] dataBuffer;
+  private final BufferedImage bufferImage;
+  private final int[] bufferImageRgbData;
   private final ZxPolyModule[] modules;
   private final byte[] borderLineColors = new byte[BORDER_LINES];
   private volatile int currentVideoMode = VIDEOMODE_RESERVED2;
@@ -111,8 +111,8 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     this.board = board;
     this.modules = board.getModules();
 
-    this.buffer = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-    this.dataBuffer = ((DataBufferInt) this.buffer.getRaster().getDataBuffer()).getData();
+    this.bufferImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
+    this.bufferImageRgbData = ((DataBufferInt) this.bufferImage.getRaster().getDataBuffer()).getData();
 
     this.addMouseWheelListener(this);
   }
@@ -158,7 +158,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     return ((address & 0x1800) >> 5) | ((address & 0x700) >> 8) | ((address & 0xE0) >> 2);
   }
 
-  public static int calcAttributeAddressZXMode(final int screenOffset) {
+  public static int calcAttributeAddressZxMode(final int screenOffset) {
     final int line = ((screenOffset >>> 5) & 0x07) | ((screenOffset >>> 8) & 0x18);
     final int column = screenOffset & 0x1F;
     final int off = ((line >>> 3) << 8) | (((line & 0x07) << 5) | column);
@@ -221,7 +221,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
           if ((i & 0x1F) == 0) {
             // the first byte in the line
             offset = extractYFromAddress(i) << 10;
-            attributeoffset = calcAttributeAddressZXMode(i);
+            attributeoffset = calcAttributeAddressZxMode(i);
           }
 
           final int attribute = sourceModule.readVideo(attributeoffset++);
@@ -258,7 +258,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
           if ((i & 0x1F) == 0) {
             // the first byte in the line
             offset = extractYFromAddress(i) << 10;
-            attributeoffset = calcAttributeAddressZXMode(i);
+            attributeoffset = calcAttributeAddressZxMode(i);
           }
 
           int videoValue0 = module0.readVideo(i);
@@ -321,7 +321,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
           if ((i & 0x1F) == 0) {
             // the first byte in the line
             offset = extractYFromAddress(i) << 10;
-            attributeoffset = calcAttributeAddressZXMode(i);
+            attributeoffset = calcAttributeAddressZxMode(i);
           }
 
           int videoValue0 = module0.readVideo(i);
@@ -501,19 +501,19 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   }
 
   private void refreshBufferData() {
-    fillDataBufferForVideoMode(this.currentVideoMode, this.modules, this.dataBuffer, this.board.isFlashActive());
+    fillDataBufferForVideoMode(this.currentVideoMode, this.modules, this.bufferImageRgbData, this.board.isFlashActive());
   }
 
   public void drawBuffer(final Graphics2D gfx, final int x, final int y, final float zoom) {
     lockBuffer();
     try {
       if (zoom == 1.0f) {
-        gfx.drawImage(this.buffer, null, x, y);
+        gfx.drawImage(this.bufferImage, null, x, y);
       } else {
         final float nzoom = Math.max(1.0f, zoom);
         gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-        gfx.drawImage(this.buffer, x, y, Math.round(SCREEN_WIDTH * nzoom), Math.round(SCREEN_HEIGHT * nzoom), null);
+        gfx.drawImage(this.bufferImage, x, y, Math.round(SCREEN_WIDTH * nzoom), Math.round(SCREEN_HEIGHT * nzoom), null);
       }
     } finally {
       unlockBuffer();
@@ -559,43 +559,43 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     }
   }
 
-  public RenderedImage[] renderAllModuleVideoMemoryInZX48Mode() {
+  public RenderedImage[] renderAllModuleVideoMemoryInZx48Mode() {
     this.lockBuffer();
     try {
       final java.util.List<RenderedImage> result = new ArrayList<>();
 
-      BufferedImage buffImage = new BufferedImage(this.buffer.getWidth(), this.buffer.getHeight(), BufferedImage.TYPE_INT_RGB);
+      BufferedImage buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_RGB);
       Graphics g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(this.currentVideoMode, this.modules, this.dataBuffer, this.board.isFlashActive());
-      g.drawImage(this.buffer, 0, 0, this);
+      fillDataBufferForVideoMode(this.currentVideoMode, this.modules, this.bufferImageRgbData, this.board.isFlashActive());
+      g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
       result.add(buffImage);
 
-      buffImage = new BufferedImage(this.buffer.getWidth(), this.buffer.getHeight(), BufferedImage.TYPE_INT_RGB);
+      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_RGB);
       g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU0, this.modules, this.dataBuffer, this.board.isFlashActive());
-      g.drawImage(this.buffer, 0, 0, this);
+      fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU0, this.modules, this.bufferImageRgbData, this.board.isFlashActive());
+      g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
       result.add(buffImage);
 
-      buffImage = new BufferedImage(this.buffer.getWidth(), this.buffer.getHeight(), BufferedImage.TYPE_INT_RGB);
+      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_RGB);
       g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU1, this.modules, this.dataBuffer, this.board.isFlashActive());
-      g.drawImage(this.buffer, 0, 0, this);
+      fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU1, this.modules, this.bufferImageRgbData, this.board.isFlashActive());
+      g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
       result.add(buffImage);
 
-      buffImage = new BufferedImage(this.buffer.getWidth(), this.buffer.getHeight(), BufferedImage.TYPE_INT_RGB);
+      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_RGB);
       g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU2, this.modules, this.dataBuffer, this.board.isFlashActive());
-      g.drawImage(this.buffer, 0, 0, this);
+      fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU2, this.modules, this.bufferImageRgbData, this.board.isFlashActive());
+      g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
       result.add(buffImage);
 
-      buffImage = new BufferedImage(this.buffer.getWidth(), this.buffer.getHeight(), BufferedImage.TYPE_INT_RGB);
+      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_RGB);
       g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU3, this.modules, this.dataBuffer, this.board.isFlashActive());
-      g.drawImage(this.buffer, 0, 0, this);
+      fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU3, this.modules, this.bufferImageRgbData, this.board.isFlashActive());
+      g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
       result.add(buffImage);
 
@@ -609,7 +609,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   public int[] makeCopyOfVideoBuffer() {
     this.lockBuffer();
     try {
-      return this.dataBuffer.clone();
+      return this.bufferImageRgbData.clone();
     } finally {
       this.unlockBuffer();
     }
@@ -618,9 +618,9 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   public RenderedImage makeCopyOfCurrentPicture() {
     this.lockBuffer();
     try {
-      final BufferedImage result = new BufferedImage(this.buffer.getWidth(), this.buffer.getHeight(), BufferedImage.TYPE_INT_RGB);
+      final BufferedImage result = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_RGB);
       final Graphics g = result.getGraphics();
-      g.drawImage(this.buffer, 0, 0, this);
+      g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
       return result;
     } finally {

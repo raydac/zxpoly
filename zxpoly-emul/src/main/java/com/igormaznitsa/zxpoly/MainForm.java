@@ -37,7 +37,7 @@ import com.igormaznitsa.zxpoly.formats.FormatSNA;
 import com.igormaznitsa.zxpoly.formats.FormatZ80;
 import com.igormaznitsa.zxpoly.formats.FormatZXP;
 import com.igormaznitsa.zxpoly.formats.Snapshot;
-import com.igormaznitsa.zxpoly.tracer.TraceCPUForm;
+import com.igormaznitsa.zxpoly.tracer.TraceCpuForm;
 import com.igormaznitsa.zxpoly.ui.AboutDialog;
 import com.igormaznitsa.zxpoly.ui.AddressPanel;
 import com.igormaznitsa.zxpoly.ui.CpuLoadIndicator;
@@ -120,7 +120,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final CpuLoadIndicator indicatorCPU1 = new CpuLoadIndicator(48, 14, 4, "CPU1", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final CpuLoadIndicator indicatorCPU2 = new CpuLoadIndicator(48, 14, 4, "CPU2", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final CpuLoadIndicator indicatorCPU3 = new CpuLoadIndicator(48, 14, 4, "CPU3", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
-  private final TraceCPUForm[] cpuTracers = new TraceCPUForm[4];
+  private final TraceCpuForm[] cpuTracers = new TraceCpuForm[4];
   private final AtomicInteger activeTracerWindowCounter = new AtomicInteger();
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
   private final Motherboard board;
@@ -129,7 +129,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     @Override
     public void run() {
       int index = 0;
-      for (final TraceCPUForm form : cpuTracers) {
+      for (final TraceCpuForm form : cpuTracers) {
         if (form != null) {
           final Z80 cpu = board.getModules()[index++].getCpu();
           if (cpu.getPrefixInProcessing() == 0 && !cpu.isInsideBlockLoop()) {
@@ -1304,7 +1304,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuServiceSaveScreenAllVRAMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuServiceSaveScreenAllVRAMActionPerformed
     this.stepSemaphor.lock();
     try {
-      final RenderedImage[] images = this.board.getVideoController().renderAllModuleVideoMemoryInZX48Mode();
+      final RenderedImage[] images = this.board.getVideoController().renderAllModuleVideoMemoryInZx48Mode();
 
       final BufferedImage result = new BufferedImage(images[0].getWidth() * images.length, images[0].getHeight(), BufferedImage.TYPE_INT_RGB);
       final Graphics g = result.getGraphics();
@@ -1552,9 +1552,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }//GEN-LAST:event_menuOptionsEnableTrapMouseActionPerformed
 
   private void activateTracerForCPUModule(final int index) {
-    TraceCPUForm form = this.cpuTracers[index];
+    TraceCpuForm form = this.cpuTracers[index];
     if (form == null) {
-      form = new TraceCPUForm(this, this.board, index);
+      form = new TraceCpuForm(this, this.board, index);
       form.setVisible(true);
     }
     form.toFront();
@@ -1562,7 +1562,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void deactivateTracerForCPUModule(final int index) {
-    TraceCPUForm form = this.cpuTracers[index];
+    TraceCpuForm form = this.cpuTracers[index];
     if (form != null) {
       form.dispose();
     }
@@ -1575,14 +1575,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.menuTraceCPU3.setSelected(this.cpuTracers[3] != null);
   }
 
-  public void onTracerActivated(final TraceCPUForm tracer) {
+  public void onTracerActivated(final TraceCpuForm tracer) {
     final int index = tracer.getModuleIndex();
     this.cpuTracers[index] = tracer;
     updateTracerCheckBoxes();
     this.activeTracerWindowCounter.incrementAndGet();
   }
 
-  public void onTracerDeactivated(final TraceCPUForm tracer) {
+  public void onTracerDeactivated(final TraceCpuForm tracer) {
     final int index = tracer.getModuleIndex();
     this.cpuTracers[index] = null;
     updateTracerCheckBoxes();
