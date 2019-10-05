@@ -113,7 +113,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     this.board = board;
     this.modules = board.getModules();
 
-    this.bufferImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
+    this.bufferImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_ARGB);
     this.bufferImageRgbData = ((DataBufferInt) this.bufferImage.getRaster().getDataBuffer()).getData();
 
     this.addMouseWheelListener(this);
@@ -212,7 +212,8 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       final ZxPolyModule[] modules,
       final int[] pixelRgbBuffer,
       final byte[] lastRenderedGfxData,
-      final boolean flashActive
+      final boolean flashActive,
+      final boolean allowAlreadyRenderedCheck
   ) {
     switch (videoMode) {
       case VIDEOMODE_RESERVED2:
@@ -244,7 +245,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
           final int presentedPixelData = lastRenderedGfxData[i] & 0xFF;
           int pixelData = sourceModule.readVideo(i);
 
-          if (presentedPixelData == pixelData && presentedAttribute == inkPaperColor) {
+          if (allowAlreadyRenderedCheck && presentedPixelData == pixelData && presentedAttribute == inkPaperColor) {
             offset += 16;
           } else {
             lastRenderedGfxData[i] = (byte) pixelData;
@@ -528,7 +529,8 @@ public final class VideoController extends JComponent implements ZxPolyConstants
         this.modules,
         this.bufferImageRgbData,
         this.lastRenderedZxData,
-        this.board.isFlashActive()
+        this.board.isFlashActive(),
+        true
     );
   }
 
@@ -610,37 +612,72 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     try {
       final java.util.List<RenderedImage> result = new ArrayList<>();
 
-      BufferedImage buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+      BufferedImage buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(this.currentVideoMode, this.modules, this.bufferImageRgbData, this.lastRenderedZxData, this.board.isFlashActive());
+      fillDataBufferForVideoMode(
+          this.currentVideoMode,
+          this.modules,
+          this.bufferImageRgbData,
+          this.lastRenderedZxData,
+          this.board.isFlashActive(),
+          false
+      );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
       result.add(buffImage);
 
-      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU0, this.modules, this.bufferImageRgbData, this.lastRenderedZxData, this.board.isFlashActive());
+      fillDataBufferForVideoMode(
+          VIDEOMODE_ZX48_CPU0,
+          this.modules,
+          this.bufferImageRgbData,
+          this.lastRenderedZxData,
+          this.board.isFlashActive(),
+          false
+      );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
       result.add(buffImage);
 
-      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU1, this.modules, this.bufferImageRgbData, this.lastRenderedZxData, this.board.isFlashActive());
+      fillDataBufferForVideoMode(
+          VIDEOMODE_ZX48_CPU1,
+          this.modules,
+          this.bufferImageRgbData,
+          this.lastRenderedZxData,
+          this.board.isFlashActive(),
+          false
+      );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
       result.add(buffImage);
 
-      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU2, this.modules, this.bufferImageRgbData, this.lastRenderedZxData, this.board.isFlashActive());
+      fillDataBufferForVideoMode(
+          VIDEOMODE_ZX48_CPU2,
+          this.modules,
+          this.bufferImageRgbData,
+          this.lastRenderedZxData,
+          this.board.isFlashActive(),
+          false
+      );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
       result.add(buffImage);
 
-      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(VIDEOMODE_ZX48_CPU3, this.modules, this.bufferImageRgbData, this.lastRenderedZxData, this.board.isFlashActive());
+      fillDataBufferForVideoMode(
+          VIDEOMODE_ZX48_CPU3,
+          this.modules,
+          this.bufferImageRgbData,
+          this.lastRenderedZxData,
+          this.board.isFlashActive(),
+          false
+      );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
       result.add(buffImage);
