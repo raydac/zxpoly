@@ -1,6 +1,8 @@
 #!/bin/bash
 
-mkdir target
+rm -rf ./target
+
+mkdir ./target
 
 tools/sjasmplus --lst=target/lst.lst multiloader.asm
 
