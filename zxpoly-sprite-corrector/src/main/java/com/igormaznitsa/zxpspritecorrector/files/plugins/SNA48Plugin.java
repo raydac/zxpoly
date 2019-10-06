@@ -96,7 +96,7 @@ public class SNA48Plugin extends AbstractFilePlugin {
 
   @Override
   public String getPluginUID() {
-    return "SNAZX48";
+    return "SNAS";
   }
 
   @Override
