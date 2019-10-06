@@ -71,7 +71,7 @@ public abstract class AbstractFilePlugin extends FileFilter {
 
   public abstract String getToolTip(boolean forExport);
 
-  public abstract boolean doesImportContainInsideFileList();
+  public abstract boolean doesContainInternalFileItems();
 
   public abstract FileFilter getImportFileFilter();
 

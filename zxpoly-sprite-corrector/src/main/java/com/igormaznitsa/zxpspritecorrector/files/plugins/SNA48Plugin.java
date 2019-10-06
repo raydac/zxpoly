@@ -65,7 +65,7 @@ public class SNA48Plugin extends AbstractFilePlugin {
   }
 
   @Override
-  public boolean doesImportContainInsideFileList() {
+  public boolean doesContainInternalFileItems() {
     return false;
   }
 

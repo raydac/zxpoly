@@ -56,12 +56,25 @@ public class ZXPolyData {
 
   private final Info info;
 
-  public ZXPolyData(final Info info, final AbstractFilePlugin basePlugin, final byte[] array) {
-    this.basedata = array.clone();
-    this.mask = new byte[this.basedata.length];
-    this.zxpoly = new byte[4][this.basedata.length];
+  public ZXPolyData(final Info info, final AbstractFilePlugin basePlugin, final byte[] data, final byte[] mask, byte[][] zxpolyPlanes) {
+    if (data.length != mask.length) {
+      throw new IllegalArgumentException("Mask array must have same size as data array: " + data.length + "!=" + mask.length);
+    }
+    this.basedata = data.clone();
+    this.mask = mask.clone();
+    this.zxpoly = new byte[4][];
+    for (int i = 0; i < this.zxpoly.length; i++) {
+      if (this.basedata.length != zxpolyPlanes[i].length) {
+        throw new IllegalArgumentException("Detected illegal size of ZXPoly plane: " + i + ", expected size " + this.basedata.length + " bytes");
+      }
+      this.zxpoly[i] = zxpolyPlanes[i].clone();
+    }
     this.info = info;
     this.basePlugin = basePlugin;
+  }
+
+  public ZXPolyData(final Info info, final AbstractFilePlugin basePlugin, final byte[] array) {
+    this(info, basePlugin, array, new byte[array.length], new byte[4][array.length]);
   }
 
   public ZXPolyData(final InputStream in, final List<AbstractFilePlugin> plugins) throws IOException {

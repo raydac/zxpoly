@@ -221,7 +221,7 @@ public class Z80Plugin extends AbstractFilePlugin {
   }
 
   @Override
-  public boolean doesImportContainInsideFileList() {
+  public boolean doesContainInternalFileItems() {
     return false;
   }
 

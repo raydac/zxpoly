@@ -54,7 +54,7 @@ public class SCLPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public boolean doesImportContainInsideFileList() {
+  public boolean doesContainInternalFileItems() {
     return true;
   }
 

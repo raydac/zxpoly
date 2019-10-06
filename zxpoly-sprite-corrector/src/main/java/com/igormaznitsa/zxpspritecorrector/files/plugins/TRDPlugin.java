@@ -55,7 +55,7 @@ public class TRDPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public boolean doesImportContainInsideFileList() {
+  public boolean doesContainInternalFileItems() {
     return true;
   }
 

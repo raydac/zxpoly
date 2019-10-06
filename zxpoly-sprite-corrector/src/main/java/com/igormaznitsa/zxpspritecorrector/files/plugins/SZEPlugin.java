@@ -57,7 +57,7 @@ public class SZEPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public boolean doesImportContainInsideFileList() {
+  public boolean doesContainInternalFileItems() {
     return false;
   }
 

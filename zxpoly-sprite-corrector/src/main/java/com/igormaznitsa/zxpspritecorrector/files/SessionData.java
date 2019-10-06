@@ -35,6 +35,27 @@ public class SessionData {
   private final int zoom;
   private final EditorComponent.AttributeMode attributeMode;
 
+  public SessionData(final int baseAddress,
+                     final boolean showGrid,
+                     final boolean showColumns,
+                     final boolean zxAddressing,
+                     final boolean invertBase,
+                     final boolean mode512x384,
+                     final int columnNumber,
+                     final EditorComponent.AttributeMode attributeMode,
+                     final int zoom
+  ) {
+    this.baseAddress = baseAddress;
+    this.showGrid = showGrid;
+    this.showColumns = showColumns;
+    this.zxAddressing = zxAddressing;
+    this.invertBase = invertBase;
+    this.mode512x384 = mode512x384;
+    this.columnNumber = columnNumber;
+    this.attributeMode = attributeMode;
+    this.zoom = zoom;
+  }
+
   public SessionData(final JBBPBitInputStream inStream) throws IOException {
     baseAddress = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
     showGrid = inStream.readBoolean();

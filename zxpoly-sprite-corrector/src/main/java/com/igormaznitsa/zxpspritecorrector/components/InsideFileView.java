@@ -104,7 +104,7 @@ public class InsideFileView extends javax.swing.JPanel implements PropertyChange
       if (file != null) {
         final AbstractFilePlugin plugin = (AbstractFilePlugin) this.chooser.getFileFilter();
 
-        if (plugin.doesImportContainInsideFileList()) {
+        if (plugin.doesContainInternalFileItems()) {
 
           final List<Info> info = plugin.getImportingContainerFileList(file);
 

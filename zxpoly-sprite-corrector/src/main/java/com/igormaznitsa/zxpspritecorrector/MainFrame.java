@@ -24,6 +24,7 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.HOBETAPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.LegacySZEPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SCLPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SCRPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SNA48Plugin;
@@ -158,6 +159,7 @@ public final class MainFrame extends javax.swing.JFrame {
     this.container.addComponent(SCRPlugin.class);
     this.container.addComponent(Z80Plugin.class);
     this.container.addComponent(SNA48Plugin.class);
+    this.container.addComponent(LegacySZEPlugin.class);
 
     this.container.addComponent(ToolPencil.class);
     this.container.addComponent(ToolEraser.class);
@@ -821,7 +823,7 @@ public final class MainFrame extends javax.swing.JFrame {
 
         try {
           int selected = -1;
-          if (plugin.doesImportContainInsideFileList()) {
+          if (plugin.doesContainInternalFileItems()) {
             final SelectInsideDataDialog itemSelector = new SelectInsideDataDialog(this, selectedFile, plugin);
             itemSelector.setVisible(true);
             selected = itemSelector.getSelectedIndex();

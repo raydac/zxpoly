@@ -44,7 +44,7 @@ public class SCRPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public boolean doesImportContainInsideFileList() {
+  public boolean doesContainInternalFileItems() {
     return false;
   }
 
