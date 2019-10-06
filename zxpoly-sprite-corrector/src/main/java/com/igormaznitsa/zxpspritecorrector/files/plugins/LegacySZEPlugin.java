@@ -42,7 +42,7 @@ public class LegacySZEPlugin extends AbstractFilePlugin {
 
   @Override
   public String getPluginUID() {
-    return "LEGACYSZE";
+    return "LSZE";
   }
 
   @Override
