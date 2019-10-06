@@ -41,6 +41,7 @@ import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
 import com.igormaznitsa.zxpspritecorrector.utils.TransferableImage;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Font;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -51,11 +52,15 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.BoundedRangeModel;
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -141,10 +146,35 @@ public final class MainFrame extends javax.swing.JFrame {
   private javax.swing.JSpinner spinnerCurrentAddress;
   private javax.swing.ButtonGroup toolsButtonGroup;
 
+  final BoundedRangeModel SLIDER_ALL_MODEL = new DefaultBoundedRangeModel(32, 0, 1, 32);
+  final BoundedRangeModel SLIDER_ODD_OR_EVEN_MODEL = new DefaultBoundedRangeModel(16, 0, 1, 16);
+  final Dictionary<Integer, JLabel> SLIDER_ALL_LABELS;
+  final Dictionary<Integer, JLabel> SLIDER_ODD_LABELS;
+  final Dictionary<Integer, JLabel> SLIDER_EVEN_LABELS;
+
   public MainFrame() {
+    SLIDER_ALL_LABELS = new Hashtable<>();
+    SLIDER_ODD_LABELS = new Hashtable<>();
+    SLIDER_EVEN_LABELS = new Hashtable<>();
+
+    int even = 1;
+    int odd = 1;
+    for (int i = 1; i <= 32; i++) {
+      final JLabel label = new JLabel(Integer.toString(i));
+      label.setFont(label.getFont().deriveFont(Font.BOLD));
+      SLIDER_ALL_LABELS.put(i, label);
+      if ((i & 1) == 0) {
+        SLIDER_EVEN_LABELS.put(even++, label);
+      } else {
+        SLIDER_ODD_LABELS.put(odd++, label);
+      }
+    }
+
     initComponents();
 
-    this.sliderColumns.setModel(new DefaultBoundedRangeModel(32, 0, 1, 32));
+    this.sliderColumns.setModel(SLIDER_ALL_MODEL);
+    this.sliderColumns.setLabelTable(SLIDER_ALL_LABELS);
+
     this.sliderColumns.setValue(this.mainEditor.getColumns());
 
     this.container.addAdapter(new ProviderAdapter(new ContextProvider(container)));
@@ -789,8 +819,24 @@ public final class MainFrame extends javax.swing.JFrame {
   }
 
   private void sliderColumnsStateChanged(javax.swing.event.ChangeEvent evt) {
-    this.mainEditor.setColumns(this.sliderColumns.getValue());
-    updateAddressScrollBar();
+    if (!this.sliderColumns.getValueIsAdjusting()) {
+      final int columnIndex = this.sliderColumns.getValue();
+      final int columns;
+      switch (this.mainEditor.getColumnMode()) {
+        case ALL:
+          columns = columnIndex;
+          break;
+        case EVEN:
+        case ODD:
+          columns = columnIndex * 2;
+          break;
+        default:
+          columns = columnIndex;
+          break;
+      }
+      this.mainEditor.setColumns(columns);
+      updateAddressScrollBar();
+    }
   }
 
   private void setCurrentSZEFile(final File file) {
@@ -1080,14 +1126,20 @@ public final class MainFrame extends javax.swing.JFrame {
 
   private void menuOptionsColumnsAllActionPerformed(java.awt.event.ActionEvent evt) {
     this.mainEditor.setColumnMode(EditorComponent.ColumnMode.ALL);
+    this.sliderColumns.setModel(SLIDER_ALL_MODEL);
+    this.sliderColumns.setLabelTable(SLIDER_ALL_LABELS);
   }
 
   private void menuOptionsColumnsOddActionPerformed(java.awt.event.ActionEvent evt) {
     this.mainEditor.setColumnMode(EditorComponent.ColumnMode.ODD);
+    this.sliderColumns.setModel(SLIDER_ODD_OR_EVEN_MODEL);
+    this.sliderColumns.setLabelTable(SLIDER_ODD_LABELS);
   }
 
   private void menuOptionsColumnsEvenActionPerformed(java.awt.event.ActionEvent evt) {
     this.mainEditor.setColumnMode(EditorComponent.ColumnMode.EVEN);
+    this.sliderColumns.setModel(SLIDER_ODD_OR_EVEN_MODEL);
+    this.sliderColumns.setLabelTable(SLIDER_EVEN_LABELS);
   }
 
   private void mainEditorPanelMouseReleased(java.awt.event.MouseEvent evt) {
