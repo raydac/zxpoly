@@ -1,5 +1,0 @@
-; set a border color
-	.macro BORDER color
-		ld a,color
-		out ($FE),a
-	.endm
