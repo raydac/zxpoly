@@ -1,0 +1,4 @@
+	MACRO BORDER color
+		LD A,color
+		OUT (#FE),A
+	ENDM
