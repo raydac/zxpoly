@@ -162,7 +162,8 @@ public class HOBETAPlugin extends AbstractFilePlugin {
 
   private int makeCRC(final byte[] array) {
     int crc = 0;
-    for (int i = 0; i < array.length; crc = crc + (array[i] * 257) + i, i++) {
+    for (int i = 0; i < array.length; i++) {
+      crc = crc + ((array[i] & 0xFF) * 257) + i;
     }
     return crc;
   }
