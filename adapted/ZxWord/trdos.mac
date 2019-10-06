@@ -1,0 +1,45 @@
+; TR-DOS macroses
+	MACRO DOS_RESET
+			LD C,0
+			CALL 15635
+	ENDM
+
+	MACRO DOS_DISK
+			LD C,#18
+			CALL #3D13 ; tune disk
+	ENDM
+
+	MACRO DOS_DRIVE drv
+			LD A,drv
+			LD C,1
+			CALL 15635
+	ENDM
+
+	MACRO DOS_LOAD str,addr
+			LD HL,str ; create descriptor
+			LD C,#13
+			CALL #3D13
+
+			LD C,#0A; file search
+			CALL #3D13
+			LD A,C
+			INC C
+			JR Z,.nofile
+
+			LD C,#08
+			CALL #3D13
+
+			XOR A
+			LD (#5CF9),A
+			LD HL,addr
+			LD A,#FF
+
+			LD C,#0E ; reade specified address
+			CALL #3D13
+			JR .end
+.nofile
+			LD BC,#0FFE
+			LD A,2
+			OUT (C),A
+.end
+	ENDM
