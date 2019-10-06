@@ -31,13 +31,22 @@ import com.igormaznitsa.zxpspritecorrector.files.SessionData;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 public class HOBETAPlugin extends AbstractFilePlugin {
 
-  public static final JBBPParser HOBETA_FILE_PARSER = JBBPParser.prepare("byte [8] name; byte type; <ushort start; <ushort length; skip; ubyte sectors; <ushort checksum; byte [_] data;");
+  public static final JBBPParser HOBETA_FILE_PARSER = JBBPParser.prepare(
+      "byte [8] name; "
+          + "byte type; <ushort start; "
+          + "<ushort length; "
+          + "skip; "
+          + "ubyte sectors; "
+          + "<ushort checksum; "
+          + "byte [_] data;"
+  );
 
   public HOBETAPlugin() {
     super();
@@ -53,9 +62,13 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     return "A Hobeta file format";
   }
 
-  @Override
-  public boolean doesImportContainInsideFileList() {
-    return false;
+  private static byte[] ensureHobetaName(final String name) {
+    final byte[] result = new byte[8];
+    Arrays.fill(result, (byte) ' ');
+    for (int i = 0; i < Math.min(8, name.length()); i++) {
+      result[i] = (byte) name.charAt(i);
+    }
+    return result;
   }
 
   @Override
@@ -154,9 +167,30 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     return crc;
   }
 
+  @Override
+  public boolean doesContainInternalFileItems() {
+    return false;
+  }
+
   private boolean writeDataBlockAsHobeta(final File file, final String name, final byte type, final int start, final byte[] data) throws IOException {
-    final byte[] header = JBBPOut.BeginBin().ByteOrder(JBBPByteOrder.LITTLE_ENDIAN).Byte(name).Byte(type).Short(start, data.length).Byte((data.length >>> 8) + 1, 0).End().toByteArray();
-    final byte[] full = JBBPOut.BeginBin().ByteOrder(JBBPByteOrder.LITTLE_ENDIAN).Byte(header).Short(makeCRC(header)).Byte(data).End().toByteArray();
+    final byte[] header = JBBPOut.BeginBin()
+        .ByteOrder(JBBPByteOrder.LITTLE_ENDIAN)
+        .Byte(ensureHobetaName(name))
+        .Byte(type)
+        .Short(start)
+        .Short(data.length)
+        .ByteOrder(JBBPByteOrder.BIG_ENDIAN)
+        .Short(Math.max(1, (data.length / 256) + ((data.length & 0xFF) == 0 ? 0 : 1)))
+        .End()
+        .toByteArray();
+
+    final byte[] full = JBBPOut.BeginBin()
+        .ByteOrder(JBBPByteOrder.LITTLE_ENDIAN)
+        .Byte(header)
+        .Short(makeCRC(header))
+        .Byte(data)
+        .End()
+        .toByteArray();
     return saveDataToFile(file, full);
   }
 
