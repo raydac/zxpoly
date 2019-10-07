@@ -266,9 +266,9 @@
                 <configuration>
                   <outfile>${project.build.directory}${file.separator}zxpoly.exe</outfile>
                   <dontWrapJar>true</dontWrapJar>
-                  <jar>.\zxpoly-emul.jar</jar>
+                  <jar>zxpoly-emul.jar</jar>
                   <jre>
-                    <path>.\jre</path>
+                    <path>jre</path>
                   </jre>
                 </configuration>
               </execution>
