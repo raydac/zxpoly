@@ -351,7 +351,7 @@ public final class MainFrame extends javax.swing.JFrame {
     this.menuOptionsGrid.setSelected(sessionData.isShowGrid());
     this.menuOptionsInvertBase.setSelected(sessionData.isInvertBaseShow());
     this.menuOptionsMode512.setSelected(sessionData.is512Mode());
-    this.sliderColumns.setValue(sessionData.getColumnNumber());
+
     switch (sessionData.getAttributeMode()) {
       case DONT_SHOW:
         this.menuOptionDontShowAttributes.setSelected(true);
@@ -364,7 +364,14 @@ public final class MainFrame extends javax.swing.JFrame {
         break;
     }
 
+    updateAddressScrollBar();
     this.scrollBarAddress.setValue(address);
+
+    this.menuOptionsColumnsAll.setSelected(true);
+    this.mainEditor.setColumnMode(EditorComponent.ColumnMode.ALL);
+    this.sliderColumns.setModel(SLIDER_ALL_MODEL);
+    this.sliderColumns.setLabelTable(SLIDER_ALL_LABELS);
+    this.sliderColumns.setValue(this.mainEditor.getColumns());
 
     updateBottomBar();
     refreshMenuAndToolState();
