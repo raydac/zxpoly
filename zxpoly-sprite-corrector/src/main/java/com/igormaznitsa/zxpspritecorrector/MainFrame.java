@@ -172,6 +172,7 @@ public final class MainFrame extends javax.swing.JFrame {
 
     initComponents();
 
+    this.sliderColumns.setSnapToTicks(true);
     this.sliderColumns.setModel(SLIDER_ALL_MODEL);
     this.sliderColumns.setLabelTable(SLIDER_ALL_LABELS);
 
@@ -819,24 +820,22 @@ public final class MainFrame extends javax.swing.JFrame {
   }
 
   private void sliderColumnsStateChanged(javax.swing.event.ChangeEvent evt) {
-    if (!this.sliderColumns.getValueIsAdjusting()) {
-      final int columnIndex = this.sliderColumns.getValue();
-      final int columns;
-      switch (this.mainEditor.getColumnMode()) {
-        case ALL:
-          columns = columnIndex;
-          break;
-        case EVEN:
-        case ODD:
-          columns = columnIndex * 2;
-          break;
-        default:
-          columns = columnIndex;
-          break;
-      }
-      this.mainEditor.setColumns(columns);
-      updateAddressScrollBar();
+    final int columnIndex = this.sliderColumns.getValue();
+    final int columns;
+    switch (this.mainEditor.getColumnMode()) {
+      case ALL:
+        columns = columnIndex;
+        break;
+      case EVEN:
+      case ODD:
+        columns = columnIndex * 2;
+        break;
+      default:
+        columns = columnIndex;
+        break;
     }
+    this.mainEditor.setColumns(columns);
+    updateAddressScrollBar();
   }
 
   private void setCurrentSZEFile(final File file) {
@@ -1128,18 +1127,21 @@ public final class MainFrame extends javax.swing.JFrame {
     this.mainEditor.setColumnMode(EditorComponent.ColumnMode.ALL);
     this.sliderColumns.setModel(SLIDER_ALL_MODEL);
     this.sliderColumns.setLabelTable(SLIDER_ALL_LABELS);
+    this.sliderColumns.setValue(this.mainEditor.getColumns());
   }
 
   private void menuOptionsColumnsOddActionPerformed(java.awt.event.ActionEvent evt) {
     this.mainEditor.setColumnMode(EditorComponent.ColumnMode.ODD);
     this.sliderColumns.setModel(SLIDER_ODD_OR_EVEN_MODEL);
     this.sliderColumns.setLabelTable(SLIDER_ODD_LABELS);
+    this.sliderColumns.setValue(this.mainEditor.getColumns() / 2);
   }
 
   private void menuOptionsColumnsEvenActionPerformed(java.awt.event.ActionEvent evt) {
     this.mainEditor.setColumnMode(EditorComponent.ColumnMode.EVEN);
     this.sliderColumns.setModel(SLIDER_ODD_OR_EVEN_MODEL);
     this.sliderColumns.setLabelTable(SLIDER_EVEN_LABELS);
+    this.sliderColumns.setValue(this.mainEditor.getColumns() / 2);
   }
 
   private void mainEditorPanelMouseReleased(java.awt.event.MouseEvent evt) {
