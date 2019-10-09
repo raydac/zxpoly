@@ -17,9 +17,16 @@
 
 package com.igormaznitsa.zxpspritecorrector;
 
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static javax.swing.JOptionPane.showConfirmDialog;
+
+
 import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
 import com.igormaznitsa.zxpspritecorrector.components.InsideFileView;
+import com.igormaznitsa.zxpspritecorrector.components.PenWidth;
 import com.igormaznitsa.zxpspritecorrector.components.SelectInsideDataDialog;
+import com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
@@ -41,6 +48,7 @@ import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
 import com.igormaznitsa.zxpspritecorrector.utils.TransferableImage;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.Point;
@@ -52,18 +60,33 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.prefs.Preferences;
 import javax.swing.BoundedRangeModel;
+import javax.swing.Box.Filler;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu.Separator;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JScrollBar;
+import javax.swing.JSeparator;
+import javax.swing.JSlider;
+import javax.swing.JSpinner;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
@@ -90,61 +113,62 @@ public final class MainFrame extends javax.swing.JFrame {
   private File szeFile;
   private boolean selectAreaMode = false;
 
-  private javax.swing.ButtonGroup attributesButtonGroup;
-  private javax.swing.JToggleButton buttonLock;
-  private com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector colorSelector;
-  private javax.swing.ButtonGroup columnModeGroup;
-  private javax.swing.Box.Filler filler1;
-  private javax.swing.JPanel jPanel2;
+  private ButtonGroup attributesButtonGroup;
+  private JToggleButton buttonLock;
+  private ZXColorSelector colorSelector;
+  private ButtonGroup columnModeGroup;
+  private Filler filler1;
+  private JPanel jPanel2;
   private javax.swing.JScrollPane jScrollPane1;
-  private javax.swing.JSeparator jSeparator1;
-  private javax.swing.JPopupMenu.Separator jSeparator2;
-  private javax.swing.JPopupMenu.Separator jSeparator3;
-  private javax.swing.JPopupMenu.Separator jSeparator4;
-  private javax.swing.JPopupMenu.Separator jSeparator5;
-  private javax.swing.JPopupMenu.Separator jSeparator6;
-  private javax.swing.JPopupMenu.Separator jSeparator7;
-  private javax.swing.JLabel labelAddress;
-  private javax.swing.JLabel labelZoom;
-  private com.igormaznitsa.zxpspritecorrector.components.EditorComponent mainEditor;
-  private javax.swing.JPanel mainEditorPanel;
-  private javax.swing.JMenuBar menuBar;
-  private javax.swing.JMenu menuEdit;
-  private javax.swing.JMenuItem menuEditClear;
-  private javax.swing.JMenuItem menuEditCopyBaseToPlans;
-  private javax.swing.JMenuItem menuEditCopySelectedBaseAsImage;
-  private javax.swing.JMenuItem menuEditCopySelectedZxPolyAsImage;
-  private javax.swing.JMenuItem menuEditPasteImage;
-  private javax.swing.JMenuItem menuEditRedo;
-  private javax.swing.JMenuItem menuEditSelectArea;
-  private javax.swing.JMenuItem menuEditUndo;
-  private javax.swing.JMenu menuFile;
-  private javax.swing.JMenuItem menuFileExit;
-  private javax.swing.JMenu menuFileExportAs;
-  private javax.swing.JMenuItem menuFileNew;
-  private javax.swing.JMenuItem menuFileOpen;
-  private javax.swing.JMenuItem menuFileSaveAs;
-  private javax.swing.JMenu menuHelp;
-  private javax.swing.JMenuItem menuHelpAbout;
-  private javax.swing.JRadioButtonMenuItem menuOptionDontShowAttributes;
-  private javax.swing.JMenu menuOptions;
-  private javax.swing.JCheckBoxMenuItem menuOptionsColumns;
-  private javax.swing.JRadioButtonMenuItem menuOptionsColumnsAll;
-  private javax.swing.JRadioButtonMenuItem menuOptionsColumnsEven;
-  private javax.swing.JRadioButtonMenuItem menuOptionsColumnsOdd;
-  private javax.swing.JCheckBoxMenuItem menuOptionsGrid;
-  private javax.swing.JCheckBoxMenuItem menuOptionsInvertBase;
-  private javax.swing.JCheckBoxMenuItem menuOptionsMode512;
-  private javax.swing.JRadioButtonMenuItem menuOptionsShow512x384Attributes;
-  private javax.swing.JRadioButtonMenuItem menuOptionsShowBaseAttributes;
-  private javax.swing.JCheckBoxMenuItem menuOptionsZXScreen;
-  private javax.swing.JMenuItem menuSave;
-  private javax.swing.JPanel panelTools;
-  private javax.swing.JScrollBar scrollBarAddress;
-  private javax.swing.JSlider sliderColumns;
-  private com.igormaznitsa.zxpspritecorrector.components.PenWidth sliderPenWidth;
-  private javax.swing.JSpinner spinnerCurrentAddress;
-  private javax.swing.ButtonGroup toolsButtonGroup;
+  private JSeparator jSeparator1;
+  private Separator jSeparator2;
+  private Separator jSeparator3;
+  private Separator jSeparator4;
+  private Separator jSeparator5;
+  private Separator jSeparator6;
+  private Separator jSeparator7;
+  private JLabel labelAddress;
+  private JLabel labelZoom;
+  private EditorComponent mainEditor;
+  private JPanel mainEditorPanel;
+  private JMenuBar menuBar;
+  private JMenu menuEdit;
+  private JMenuItem menuEditClear;
+  private JMenuItem menuEditCopyBaseToPlans;
+  private JMenuItem menuEditCopySelectedBaseAsImage;
+  private JMenuItem menuEditCopySelectedZxPolyAsImage;
+  private JMenuItem menuEditPasteImage;
+  private JMenuItem menuEditRedo;
+  private JMenuItem menuEditSelectArea;
+  private JMenuItem menuEditUndo;
+  private JMenu menuFile;
+  private JMenuItem menuFileExit;
+  private JMenu menuFileExportAs;
+  private JMenu menuFileRecentFiles;
+  private JMenuItem menuFileNew;
+  private JMenuItem menuFileOpen;
+  private JMenuItem menuFileSaveAs;
+  private JMenu menuHelp;
+  private JMenuItem menuHelpAbout;
+  private JRadioButtonMenuItem menuOptionDontShowAttributes;
+  private JMenu menuOptions;
+  private JCheckBoxMenuItem menuOptionsColumns;
+  private JRadioButtonMenuItem menuOptionsColumnsAll;
+  private JRadioButtonMenuItem menuOptionsColumnsEven;
+  private JRadioButtonMenuItem menuOptionsColumnsOdd;
+  private JCheckBoxMenuItem menuOptionsGrid;
+  private JCheckBoxMenuItem menuOptionsInvertBase;
+  private JCheckBoxMenuItem menuOptionsMode512;
+  private JRadioButtonMenuItem menuOptionsShow512x384Attributes;
+  private JRadioButtonMenuItem menuOptionsShowBaseAttributes;
+  private JCheckBoxMenuItem menuOptionsZXScreen;
+  private JMenuItem menuSave;
+  private JPanel panelTools;
+  private JScrollBar scrollBarAddress;
+  private JSlider sliderColumns;
+  private PenWidth sliderPenWidth;
+  private JSpinner spinnerCurrentAddress;
+  private ButtonGroup toolsButtonGroup;
 
   final BoundedRangeModel SLIDER_ALL_MODEL = new DefaultBoundedRangeModel(32, 0, 1, 32);
   final BoundedRangeModel SLIDER_ODD_OR_EVEN_MODEL = new DefaultBoundedRangeModel(16, 0, 1, 16);
@@ -380,61 +404,62 @@ public final class MainFrame extends javax.swing.JFrame {
   private void initComponents() {
     java.awt.GridBagConstraints gridBagConstraints;
 
-    toolsButtonGroup = new javax.swing.ButtonGroup();
-    attributesButtonGroup = new javax.swing.ButtonGroup();
-    columnModeGroup = new javax.swing.ButtonGroup();
-    scrollBarAddress = new javax.swing.JScrollBar();
-    sliderColumns = new javax.swing.JSlider();
-    buttonLock = new javax.swing.JToggleButton();
-    panelTools = new javax.swing.JPanel();
-    colorSelector = new com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector();
-    sliderPenWidth = new com.igormaznitsa.zxpspritecorrector.components.PenWidth();
+    toolsButtonGroup = new ButtonGroup();
+    attributesButtonGroup = new ButtonGroup();
+    columnModeGroup = new ButtonGroup();
+    scrollBarAddress = new JScrollBar();
+    sliderColumns = new JSlider();
+    buttonLock = new JToggleButton();
+    panelTools = new JPanel();
+    colorSelector = new ZXColorSelector();
+    sliderPenWidth = new PenWidth();
     jScrollPane1 = new javax.swing.JScrollPane();
-    mainEditorPanel = new javax.swing.JPanel();
-    mainEditor = new com.igormaznitsa.zxpspritecorrector.components.EditorComponent();
-    jPanel2 = new javax.swing.JPanel();
-    labelZoom = new javax.swing.JLabel();
-    filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
-    labelAddress = new javax.swing.JLabel();
-    spinnerCurrentAddress = new javax.swing.JSpinner();
-    menuBar = new javax.swing.JMenuBar();
-    menuFile = new javax.swing.JMenu();
-    menuFileNew = new javax.swing.JMenuItem();
-    menuFileOpen = new javax.swing.JMenuItem();
-    menuSave = new javax.swing.JMenuItem();
-    menuFileSaveAs = new javax.swing.JMenuItem();
-    jSeparator4 = new javax.swing.JPopupMenu.Separator();
-    menuFileExportAs = new javax.swing.JMenu();
-    jSeparator1 = new javax.swing.JSeparator();
-    menuFileExit = new javax.swing.JMenuItem();
-    menuEdit = new javax.swing.JMenu();
-    menuEditUndo = new javax.swing.JMenuItem();
-    menuEditRedo = new javax.swing.JMenuItem();
-    jSeparator2 = new javax.swing.JPopupMenu.Separator();
-    menuEditSelectArea = new javax.swing.JMenuItem();
-    menuEditCopySelectedZxPolyAsImage = new javax.swing.JMenuItem();
-    menuEditCopySelectedBaseAsImage = new javax.swing.JMenuItem();
-    menuEditPasteImage = new javax.swing.JMenuItem();
-    jSeparator7 = new javax.swing.JPopupMenu.Separator();
-    menuEditCopyBaseToPlans = new javax.swing.JMenuItem();
-    menuEditClear = new javax.swing.JMenuItem();
-    menuOptions = new javax.swing.JMenu();
-    menuOptionsGrid = new javax.swing.JCheckBoxMenuItem();
-    menuOptionsColumns = new javax.swing.JCheckBoxMenuItem();
-    menuOptionsInvertBase = new javax.swing.JCheckBoxMenuItem();
-    jSeparator5 = new javax.swing.JPopupMenu.Separator();
-    menuOptionsZXScreen = new javax.swing.JCheckBoxMenuItem();
-    menuOptionsMode512 = new javax.swing.JCheckBoxMenuItem();
-    jSeparator6 = new javax.swing.JPopupMenu.Separator();
-    menuOptionDontShowAttributes = new javax.swing.JRadioButtonMenuItem();
-    menuOptionsShowBaseAttributes = new javax.swing.JRadioButtonMenuItem();
-    menuOptionsShow512x384Attributes = new javax.swing.JRadioButtonMenuItem();
-    jSeparator3 = new javax.swing.JPopupMenu.Separator();
-    menuOptionsColumnsAll = new javax.swing.JRadioButtonMenuItem();
-    menuOptionsColumnsOdd = new javax.swing.JRadioButtonMenuItem();
-    menuOptionsColumnsEven = new javax.swing.JRadioButtonMenuItem();
-    menuHelp = new javax.swing.JMenu();
-    menuHelpAbout = new javax.swing.JMenuItem();
+    mainEditorPanel = new JPanel();
+    mainEditor = new EditorComponent();
+    jPanel2 = new JPanel();
+    labelZoom = new JLabel();
+    filler1 = new Filler(new Dimension(0, 0), new Dimension(0, 0), new Dimension(32767, 0));
+    labelAddress = new JLabel();
+    spinnerCurrentAddress = new JSpinner();
+    menuBar = new JMenuBar();
+    menuFile = new JMenu();
+    menuFileNew = new JMenuItem();
+    menuFileOpen = new JMenuItem();
+    menuSave = new JMenuItem();
+    menuFileSaveAs = new JMenuItem();
+    jSeparator4 = new Separator();
+    menuFileExportAs = new JMenu();
+    menuFileRecentFiles = new JMenu();
+    jSeparator1 = new JSeparator();
+    menuFileExit = new JMenuItem();
+    menuEdit = new JMenu();
+    menuEditUndo = new JMenuItem();
+    menuEditRedo = new JMenuItem();
+    jSeparator2 = new Separator();
+    menuEditSelectArea = new JMenuItem();
+    menuEditCopySelectedZxPolyAsImage = new JMenuItem();
+    menuEditCopySelectedBaseAsImage = new JMenuItem();
+    menuEditPasteImage = new JMenuItem();
+    jSeparator7 = new Separator();
+    menuEditCopyBaseToPlans = new JMenuItem();
+    menuEditClear = new JMenuItem();
+    menuOptions = new JMenu();
+    menuOptionsGrid = new JCheckBoxMenuItem();
+    menuOptionsColumns = new JCheckBoxMenuItem();
+    menuOptionsInvertBase = new JCheckBoxMenuItem();
+    jSeparator5 = new Separator();
+    menuOptionsZXScreen = new JCheckBoxMenuItem();
+    menuOptionsMode512 = new JCheckBoxMenuItem();
+    jSeparator6 = new Separator();
+    menuOptionDontShowAttributes = new JRadioButtonMenuItem();
+    menuOptionsShowBaseAttributes = new JRadioButtonMenuItem();
+    menuOptionsShow512x384Attributes = new JRadioButtonMenuItem();
+    jSeparator3 = new Separator();
+    menuOptionsColumnsAll = new JRadioButtonMenuItem();
+    menuOptionsColumnsOdd = new JRadioButtonMenuItem();
+    menuOptionsColumnsEven = new JRadioButtonMenuItem();
+    menuHelp = new JMenu();
+    menuHelpAbout = new JMenuItem();
 
     setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
     setTitle("ZX-Poly Sprite Corrector");
@@ -482,9 +507,9 @@ public final class MainFrame extends javax.swing.JFrame {
 
     sliderPenWidth.setToolTipText("Width of an operation tool");
     sliderPenWidth.setDoubleBuffered(false);
-    sliderPenWidth.setMaximumSize(new java.awt.Dimension(96, 84));
-    sliderPenWidth.setMinimumSize(new java.awt.Dimension(96, 84));
-    sliderPenWidth.setPreferredSize(new java.awt.Dimension(96, 84));
+    sliderPenWidth.setMaximumSize(new Dimension(96, 84));
+    sliderPenWidth.setMinimumSize(new Dimension(96, 84));
+    sliderPenWidth.setPreferredSize(new Dimension(96, 84));
 
     mainEditorPanel.setCursor(new java.awt.Cursor(java.awt.Cursor.CROSSHAIR_CURSOR));
     mainEditorPanel.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
@@ -581,6 +606,32 @@ public final class MainFrame extends javax.swing.JFrame {
     menuFileSaveAs.addActionListener(this::menuFileSaveAsActionPerformed);
     menuFile.add(menuFileSaveAs);
     menuFile.add(jSeparator4);
+
+    menuFileRecentFiles.setText("Recent projects");
+    menuFile.add(menuFileRecentFiles);
+    menuFileRecentFiles.addMenuListener(new MenuListener() {
+      @Override
+      public void menuSelected(MenuEvent e) {
+        final List<String> recentProjects = getRecentProjects();
+        menuFileRecentFiles.removeAll();
+        for (final String path : recentProjects) {
+          final JMenuItem projectItem = new JMenuItem(path);
+          projectItem.addActionListener(x -> MainFrame.this.openSzeFileForPath(path));
+          menuFileRecentFiles.add(projectItem);
+        }
+      }
+
+      @Override
+      public void menuDeselected(MenuEvent e) {
+
+      }
+
+      @Override
+      public void menuCanceled(MenuEvent e) {
+
+      }
+    });
+    menuFile.add(new JSeparator());
 
     menuFileExportAs.setText("Export as..");
     menuFile.add(menuFileExportAs);
@@ -783,13 +834,58 @@ public final class MainFrame extends javax.swing.JFrame {
     pack();
   }
 
+  private void openSzeFileForPath(final String path) {
+    final File file = new File(path);
+    if (file.isFile()) {
+      if (this.mainEditor.isChanged()) {
+        if (showConfirmDialog(this, "Open file '" + file.getName() + "'?", "Confirmation", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+          return;
+        }
+      }
+
+      final SZEPlugin szePlugin = container.getComponent(SZEPlugin.class);
+
+      try {
+        loadFileWithPlugin(szePlugin, file, -1);
+      } catch (IOException ex) {
+        JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+      }
+    } else {
+      JOptionPane.showMessageDialog(this, "Can't find file '" + path + '\'', "Error", JOptionPane.ERROR_MESSAGE);
+    }
+  }
+
+  private List<String> getRecentProjects() {
+    final Preferences preferences = Preferences.userNodeForPackage(MainFrame.class);
+    final String list = preferences.get("recent-projects", "");
+    return Arrays.stream(list.split("\\n"))
+        .map(String::trim)
+        .filter(x -> !x.isEmpty())
+        .collect(toList());
+  }
+
+  private synchronized void addSzeProjectToRecentProjects(final File file) {
+    try {
+      List<String> recentProjects = new ArrayList<>(getRecentProjects());
+      recentProjects.remove(file.getAbsolutePath());
+      recentProjects.add(0, file.getAbsolutePath());
+      final String newValue = recentProjects.stream().limit(10).collect(joining("\n"));
+
+      final Preferences preferences = Preferences.userNodeForPackage(MainFrame.class);
+      preferences.put("recent-projects", newValue);
+      preferences.flush();
+    } catch (Exception ex) {
+      System.err.println("Can't save recent project info: " + ex.getMessage());
+    }
+  }
+
   private void menuFileExitActionPerformed(java.awt.event.ActionEvent evt) {
     dispose();
   }
 
   private void applicationClosing(java.awt.event.WindowEvent evt) {
     if (this.mainEditor.hasData()) {
-      if (JOptionPane.showConfirmDialog(this, "Close application?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
+      if (showConfirmDialog(this, "Close application?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
         return;
       }
     }
@@ -850,6 +946,24 @@ public final class MainFrame extends javax.swing.JFrame {
     this.menuSave.setEnabled(file != null);
   }
 
+  private void loadFileWithPlugin(final AbstractFilePlugin plugin, final File selectedFile, final int selected) throws IOException {
+    final AbstractFilePlugin.ReadResult result = plugin.readFrom(selectedFile, selected);
+    this.setTitle(selectedFile.getAbsolutePath());
+    this.mainEditor.setProcessingData(result.getData());
+    if (result.getSessionData() != null) {
+      loadStateFromSession(result.getSessionData());
+    } else {
+      resetOptions();
+    }
+    this.mainEditor.setChanged(false);
+
+    setCurrentSZEFile(plugin instanceof SZEPlugin ? selectedFile : null);
+
+    if ((plugin instanceof SCRPlugin) && !this.menuOptionsZXScreen.isSelected()) {
+      this.menuOptionsZXScreen.setSelected(true);
+    }
+  }
+
   private void menuFileOpenActionPerformed(java.awt.event.ActionEvent evt) {
     try {
       this.toolsButtonGroup.clearSelection();
@@ -857,7 +971,8 @@ public final class MainFrame extends javax.swing.JFrame {
       final JFileChooser chooser = new JFileChooser(this.lastOpenedFile);
       chooser.setAcceptAllFileFilterUsed(false);
 
-      container.getComponents(AbstractFilePlugin.class).forEach((plugin) -> chooser.addChoosableFileFilter(plugin.getImportFileFilter()));
+      container.getComponents(AbstractFilePlugin.class)
+          .forEach((plugin) -> chooser.addChoosableFileFilter(plugin.getImportFileFilter()));
 
       final InsideFileView insideFileView = new InsideFileView(chooser);
       chooser.setAccessory(insideFileView);
@@ -877,19 +992,9 @@ public final class MainFrame extends javax.swing.JFrame {
               return;
             }
           }
-          final AbstractFilePlugin.ReadResult result = plugin.readFrom(selectedFile, selected);
-          this.setTitle(selectedFile.getAbsolutePath());
-          this.mainEditor.setProcessingData(result.getData());
-          if (result.getSessionData() != null) {
-            loadStateFromSession(result.getSessionData());
-          } else {
-            resetOptions();
-          }
-
-          setCurrentSZEFile(plugin instanceof SZEPlugin ? selectedFile : null);
-
-          if ((plugin instanceof SCRPlugin) && !this.menuOptionsZXScreen.isSelected()) {
-            this.menuOptionsZXScreen.setSelected(true);
+          loadFileWithPlugin(plugin, selectedFile, selected);
+          if (plugin instanceof SZEPlugin) {
+            this.addSzeProjectToRecentProjects(selectedFile);
           }
         } catch (IllegalArgumentException ex) {
           ex.printStackTrace();
@@ -1055,7 +1160,7 @@ public final class MainFrame extends javax.swing.JFrame {
   }
 
   private void menuEditClearActionPerformed(java.awt.event.ActionEvent evt) {
-    if (JOptionPane.showConfirmDialog(this, "Clear ZX-Poly data?", "Confirmation", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+    if (showConfirmDialog(this, "Clear ZX-Poly data?", "Confirmation", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
       this.mainEditor.clear();
     }
   }
@@ -1079,7 +1184,7 @@ public final class MainFrame extends javax.swing.JFrame {
         try {
           final File thefile = ensureExtension(fileChoolser.getSelectedFile(), container.getComponent(SZEPlugin.class));
           container.getComponent(SZEPlugin.class).writeTo(thefile, zxpolydata, new SessionData(this.mainEditor));
-
+          this.mainEditor.setChanged(false);
           this.setTitle(thefile.getAbsolutePath());
           setCurrentSZEFile(thefile);
         } catch (Exception ex) {
@@ -1095,7 +1200,7 @@ public final class MainFrame extends javax.swing.JFrame {
   }
 
   private void menuEditCopyBaseToPlansActionPerformed(java.awt.event.ActionEvent evt) {
-    if (JOptionPane.showConfirmDialog(this, "Do you really want to copy base data to all ZX-Poly planes?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
+    if (showConfirmDialog(this, "Do you really want to copy base data to all ZX-Poly planes?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
       this.mainEditor.copyPlansFromBase();
     }
   }
@@ -1103,6 +1208,7 @@ public final class MainFrame extends javax.swing.JFrame {
   private void menuSaveActionPerformed(java.awt.event.ActionEvent evt) {
     try {
       container.getComponent(SZEPlugin.class).writeTo(this.szeFile, this.mainEditor.getProcessingData(), new SessionData(this.mainEditor));
+      this.mainEditor.setChanged(false);
     } catch (Exception ex) {
       ex.printStackTrace();
       JOptionPane.showMessageDialog(this, "Can't save file for exception [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
@@ -1112,7 +1218,7 @@ public final class MainFrame extends javax.swing.JFrame {
   private void menuFileNewActionPerformed(java.awt.event.ActionEvent evt) {
     try {
       if (this.mainEditor.hasData()) {
-        if (JOptionPane.showConfirmDialog(this, "Do you really want to create new data?", "Confirmation", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+        if (showConfirmDialog(this, "Do you really want to create new data?", "Confirmation", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
           return;
         }
       }

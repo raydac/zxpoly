@@ -57,6 +57,7 @@ public class ToolColorizer extends AbstractTool {
 
           if (gfx.isBaseBitSet(dx, dy)) {
             gfx.setPoint(dx, dy, index);
+            editComponent.setChanged(true);
           }
         }
       }
@@ -73,6 +74,7 @@ public class ToolColorizer extends AbstractTool {
 
           if (!gfx.isBaseBitSet(dx, dy)) {
             gfx.setPoint(dx, dy, index);
+            editComponent.setChanged(true);
           }
         }
       }

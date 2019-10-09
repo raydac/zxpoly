@@ -57,6 +57,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     RENDERING_LINE_HINTS.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
   }
 
+  private volatile boolean changed;
+
   private final ZXGraphics zxGraphics = new ZXGraphics(this);
   private final List<ChangeListener> changeListeners = new ArrayList<>();
   private final java.util.List<ZXPolyData.UndoBlock> listUndo = new ArrayList<>();
@@ -88,10 +90,19 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   private Point cursorPoint = new Point(0, 0);
   private Image draggedImage;
   private int gridStep = 1;
+
   public EditorComponent() {
     super();
     this.setBorder(BorderFactory.createEmptyBorder());
     setMode512(false);
+  }
+
+  public boolean isChanged() {
+    return this.processingData != null && this.changed;
+  }
+
+  public void setChanged(final boolean flag) {
+    this.changed = flag;
   }
 
   public static double intensity(final int rgb) {
@@ -196,6 +207,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setColumns(final int value) {
+    this.changed = true;
     this.columns = Math.max(1, Math.min(32, value));
     _updatePictureInBuffer();
     repaint();
@@ -206,6 +218,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setInvertShowBaseData(final boolean flag) {
+    this.changed = true;
     this.invertShowBaseData = flag;
     _updatePictureInBuffer();
     repaint();
@@ -288,6 +301,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setShowGrid(final boolean flag) {
+    this.changed = true;
     this.showGrid = flag;
     repaint();
   }
@@ -309,6 +323,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     if (this.processingData == null) {
       this.startAddress = 0;
     } else {
+      this.changed = true;
       this.startAddress = Math.max(0, Math.min(this.processingData.length() - 1, address));
     }
 
@@ -338,6 +353,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setToolAreaColor(final Color color) {
+    this.changed = true;
     this.colorToolArea = color;
     repaint();
   }
@@ -347,6 +363,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setColorPixelOn(final Color colorPixelOn) {
+    this.changed = true;
     this.colorPixelOn = colorPixelOn;
     repaint();
   }
@@ -356,6 +373,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setColorPixelOff(final Color colorPixelOff) {
+    this.changed = true;
     this.colorPixelOff = colorPixelOff;
     repaint();
   }
@@ -365,6 +383,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setColorSelectedAreaBorder(final Color color) {
+    this.changed = true;
     this.colorSelectedAreaBorder = color;
   }
 
@@ -373,6 +392,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setColorZX512On(Color colorZX512On) {
+    this.changed = true;
     this.colorZX512On = colorZX512On;
     _updatePictureInBuffer();
     repaint();
@@ -383,6 +403,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setColorZX512Off(Color colorZX512Off) {
+    this.changed = true;
     this.colorZX512Off = colorZX512Off;
     _updatePictureInBuffer();
     repaint();
@@ -393,6 +414,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setShowAttributes(final AttributeMode selected) {
+    this.changed = true;
     this.attributeMode = selected;
     _updatePictureInBuffer();
     repaint();
@@ -403,6 +425,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setColumnMode(final ColumnMode selected) {
+    this.changed = true;
     this.columnMode = selected;
     _updatePictureInBuffer();
     repaint();
@@ -413,6 +436,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setColorGrid(Color colorGrid) {
+    this.changed = true;
     this.colorGrid = colorGrid;
     repaint();
   }
@@ -422,6 +446,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setColorColumnBorder(Color colorColumnBorder) {
+    this.changed = true;
     this.colorColumnBorder = colorColumnBorder;
     repaint();
   }
@@ -431,6 +456,7 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void setMode512(final boolean flag) {
+    this.changed = true;
     this.mode512 = flag;
 
     final int width = flag ? 512 : 256;
@@ -470,6 +496,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   }
 
   public void updateSelectArea(final Point editorPoint) {
+    this.changed = true;
+
     final Point point = ensureInsideScreenAndEven(editorPoint);
 
     final int dx = this.startSelectedAreaPoint.x - point.x;
@@ -709,6 +737,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
   public void doStampDraggedImage() {
     if (this.draggedImage != null) {
+      this.changed = true;
+
       final int w = this.draggedImage.getWidth(null);
       final int h = this.draggedImage.getHeight(null);
       final int[] pixels = new int[w * h];

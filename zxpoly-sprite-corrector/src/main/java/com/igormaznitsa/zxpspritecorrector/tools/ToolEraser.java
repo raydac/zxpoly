@@ -44,6 +44,7 @@ public class ToolEraser extends AbstractTool {
         }
 
         gfx.resetPoint(dx, dy, (buttons & BUTTON_CTRL) != 0);
+        editComponent.setChanged(true);
       }
     }
 
