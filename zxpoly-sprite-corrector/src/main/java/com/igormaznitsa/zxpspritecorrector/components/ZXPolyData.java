@@ -182,7 +182,7 @@ public class ZXPolyData {
   }
 
   public int getBaseData(final int address) {
-    return this.basedata[address];
+    return this.basedata[address] & 0xFF;
   }
 
   public byte[] getDataForCPU(final int cpuIndex) {
