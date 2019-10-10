@@ -346,7 +346,7 @@ public final class MainFrame extends javax.swing.JFrame {
       return;
     }
 
-    final JFileChooser fileChooser = new JFileChooser(this.lastExportedFile);
+    final JFileChooser fileChooser = new JFileChooser(this.lastExportedFile == null ? null : this.lastExportedFile.getParentFile());
     fileChooser.setAcceptAllFileFilterUsed(false);
     fileChooser.addChoosableFileFilter(plugin.getExportFileFilter());
     if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
