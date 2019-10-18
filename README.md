@@ -60,6 +60,7 @@ The Mode doesn't use attributes and each pixel can have color from 16 color pale
 
 [TRD disk with the example can be downloaded from here, the game has been partly colorized](adapted/Atw2/target/atw2.trd)
 ![ZXPoly256x192 screenshot](docs/screenshots/atw_zxpoly.png)   
+![ZXPoly256x192 animation](docs/screenshots/zxpoly_atw2.gif)   
 
 ## ZX-Poly 512x384 (2 colors per pixel placed in chess order)
 The Mode uses attributes but places pixels in chess order.
