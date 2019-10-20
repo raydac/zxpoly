@@ -183,18 +183,18 @@ public class SCLPlugin extends AbstractFilePlugin {
     return getToolTip(false) + " (*.SCL)";
   }
 
-  private static final class SCLCatalogItem {
+  public static final class SCLCatalogItem {
 
     @Bin(type = BinType.BYTE_ARRAY)
-    String name;
+    public String name;
     @Bin(type = BinType.UBYTE)
-    char type;
+    public char type;
     @Bin(type = BinType.USHORT)
-    int start;
+    public int start;
     @Bin(type = BinType.USHORT)
-    int length;
+    public int length;
     @Bin(type = BinType.UBYTE)
-    int sectors;
+    public int sectors;
   }
 
 }

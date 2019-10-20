@@ -205,22 +205,22 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     return getToolTip(false) + " (*.$?)";
   }
 
-  private static final class Hobeta {
+  public static final class Hobeta {
 
     @Bin(type = BinType.BYTE_ARRAY)
-    String name;
+    public String name;
     @Bin(type = BinType.BYTE)
-    byte type;
+    public byte type;
     @Bin(type = BinType.USHORT)
-    int start;
+    public int start;
     @Bin(type = BinType.USHORT)
-    int length;
+    public int length;
     @Bin(type = BinType.UBYTE)
-    int sectors;
+    public int sectors;
     @Bin(type = BinType.USHORT)
-    int checksum;
+    public int checksum;
     @Bin
-    byte[] data;
+    public byte[] data;
   }
 
 }
