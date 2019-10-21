@@ -21,6 +21,13 @@ public interface IoDevice extends ZxPolyConstants {
 
   Motherboard getMotherboard();
 
+  /**
+   * Read IO port byte
+   *
+   * @param module module index
+   * @param port   port address
+   * @return value of its port, or -1 if device has not data for such port
+   */
   int readIo(ZxPolyModule module, int port);
 
   void writeIo(ZxPolyModule module, int port, int value);

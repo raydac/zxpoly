@@ -127,7 +127,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       final int mappedModuleIndex = this.board.getMappedCpuIndex();
 
       if (module.isTrdosActive()) {
-        result = 0;
+        result = -1;
       } else {
         if (module != this && this.moduleIndex > 0 && this.moduleIndex == mappedModuleIndex) {
           // reading memory for IO offset and make notification through INT
@@ -141,12 +141,12 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
             result = ((cpuState & Z80.SIGNAL_OUT_nHALT) == 0 ? ZXPOLY_rREG0_HALTMODE : 0)
                 | (this.waitSignal ? ZXPOLY_rREG0_WAITMODE : 0) | (addr << 2);
           } else {
-            result = 0;
+            result = -1;
           }
         }
       }
     } else {
-      result = 0;
+      result = -1;
     }
     return result;
   }

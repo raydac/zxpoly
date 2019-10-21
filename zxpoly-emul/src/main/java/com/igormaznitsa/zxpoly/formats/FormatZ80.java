@@ -108,7 +108,7 @@ public class FormatZ80 extends Snapshot {
     flags.setNOMEANING((byte) 0);
 
     parser.setPORT7FFD((char) module.read7FFD());
-    parser.setPORTFF((char) module.readIo(module, 0xFF));
+    parser.setPORTFF((char) module.getMotherboard().readBusIo(module, 0xFF));
 
     parser.setHEADERLEN((char) 54);
     parser.setMODE((char) 4);

@@ -78,7 +78,7 @@ public class BetaDiscInterface implements IoDevice {
         }
       }
     }
-    return 0;
+    return -1;
   }
 
   @Override

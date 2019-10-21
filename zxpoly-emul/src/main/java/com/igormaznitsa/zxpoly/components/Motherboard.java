@@ -316,18 +316,16 @@ public final class Motherboard implements ZxPolyConstants {
 
       final long spentMachineCycles = this.modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
 
-      for (final IoDevice d : this.ioDevices) {
-        d.postStep(spentMachineCycles);
-      }
+      stream(this.ioDevices).forEach(d -> d.postStep(spentMachineCycles));
 
-      final int cur_triggers = this.triggers;
+      final int curTriggers = this.triggers;
 
-      if (cur_triggers != TRIGGER_NONE) {
-        if ((cur_triggers & TRIGGER_DIFF_MODULESTATES) != 0 && !isModuleStatesSame()) {
+      if (curTriggers != TRIGGER_NONE) {
+        if ((curTriggers & TRIGGER_DIFF_MODULESTATES) != 0 && !haveModulesSamePositionAndMode()) {
           this.triggers = this.triggers & ~TRIGGER_DIFF_MODULESTATES;
           result |= TRIGGER_DIFF_MODULESTATES;
         }
-        if ((cur_triggers & TRIGGER_DIFF_MEM_ADDR) != 0) {
+        if ((curTriggers & TRIGGER_DIFF_MEM_ADDR) != 0) {
           int val = this.modules[0].readAddress(this.triggerMemAddress);
           for (int i = 1; i < 4; i++) {
             if (val != this.modules[i].readAddress(this.triggerMemAddress)) {
@@ -338,7 +336,7 @@ public final class Motherboard implements ZxPolyConstants {
           }
         }
 
-        if ((cur_triggers & TRIGGER_DIFF_EXE_CODE) != 0) {
+        if ((curTriggers & TRIGGER_DIFF_EXE_CODE) != 0) {
           final int m1ExeByte = this.modules[0].getCpu().getLastM1InstructionByte();
           final int exeByte = this.modules[0].getCpu().getLastInstructionByte();
 
@@ -355,7 +353,7 @@ public final class Motherboard implements ZxPolyConstants {
     return result;
   }
 
-  private boolean isModuleStatesSame() {
+  private boolean haveModulesSamePositionAndMode() {
     final int pc = this.modules[0].getCpu().getRegister(Z80.REG_PC);
     final int sp = this.modules[0].getCpu().getRegister(Z80.REG_SP);
     final int im = this.modules[0].getCpu().getIM();
@@ -441,26 +439,35 @@ public final class Motherboard implements ZxPolyConstants {
 
   public int readBusIo(final ZxPolyModule module, final int port) {
     final int mappedCPU = getMappedCpuIndex();
-    int result = 0;
+    int result = -1;
 
     if (isZxPolyMode() && (module.getModuleIndex() == 0 && mappedCPU > 0)) {
       final ZxPolyModule destmodule = modules[mappedCPU];
       result = this.ram.get(destmodule.ramOffset2HeapAddress(port));
       destmodule.prepareLocalInt();
     } else {
-      IoDevice firstDetected = null;
+      IoDevice firstDetectedActiveDevice = null;
+      for (final IoDevice device : this.ioDevices) {
+        final int data = device.readIo(module, port);
+        if (data < 0) {
+          continue;
+        }
 
-      for (final IoDevice d : this.ioDevices) {
-        final int prevResult = result;
-        result |= d.readIo(module, port);
-        if (prevResult != result) {
-          // changed
-          if (prevResult == 0) {
-            firstDetected = d;
-          } else {
-            LOGGER.log(Level.WARNING, "Detected collision during IO reading: " + firstDetected + ", " + d.getName() + " port #" + Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
+        if (result < 0) {
+          result = data;
+          firstDetectedActiveDevice = device;
+        } else {
+          final int prevResult = result;
+          result |= data;
+          if (prevResult != result) {
+            LOGGER.log(Level.WARNING, "Detected IO collision during read: " + firstDetectedActiveDevice + ", " + device.getName() + " port #" + Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
           }
         }
+      }
+
+      if (result < 0) {
+        // all IO devices in Z state
+        result = 0xFF;
       }
     }
     return result;

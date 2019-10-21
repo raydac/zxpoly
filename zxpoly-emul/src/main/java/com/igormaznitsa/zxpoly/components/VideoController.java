@@ -718,7 +718,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
-    return 0;
+    return -1;
   }
 
   public int getPortFE() {
