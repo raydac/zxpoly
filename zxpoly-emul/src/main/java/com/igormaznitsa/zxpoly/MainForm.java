@@ -231,10 +231,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
 
       if (panelIndicators.isVisible()) {
-        indicatorCPU0.updateForState(board.getActivityCPU0());
-        indicatorCPU1.updateForState(board.getActivityCPU1());
-        indicatorCPU2.updateForState(board.getActivityCPU2());
-        indicatorCPU3.updateForState(board.getActivityCPU3());
+        indicatorCPU0.updateForState(board.getCpuActivity(0));
+        indicatorCPU1.updateForState(board.getCpuActivity(1));
+        indicatorCPU2.updateForState(board.getCpuActivity(2));
+        indicatorCPU3.updateForState(board.getCpuActivity(3));
       }
 
       updateTracerCheckBoxes();
@@ -415,7 +415,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     int countToUpdatePanel = INT_TO_UPDATE_INFOPANEL;
 
     while (!Thread.currentThread().isInterrupted()) {
-      final long currentMachineCycleCounter = this.board.getCPU0().getMachineCycles();
+      final long currentMachineCycleCounter = this.board.getMasterCpu().getMachineCycles();
       long currentTime = System.currentTimeMillis();
 
       stepSemaphor.lock();
@@ -425,7 +425,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         if (nextSystemInt <= currentTime) {
           systemIntSignal = currentMachineCycleCounter >= VideoController.CYCLES_BETWEEN_INT;
           nextSystemInt = currentTime + TIMER_INT_DELAY_MILLISECONDS;
-          this.board.getCPU0().resetMCycleCounter();
+          this.board.getMasterCpu().resetMCycleCounter();
           countdownToPaint--;
           countToUpdatePanel--;
           countdownToAnimationSave--;

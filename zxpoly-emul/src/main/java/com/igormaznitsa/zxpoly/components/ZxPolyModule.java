@@ -320,41 +320,21 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     final boolean activeRom128 = (value7FFD & PORTw_ZX128_ROM) == 0;
 
     final byte result;
-    if (this.board.isZxPolyMode()) {
-      final int ramAddress = ramOffset2HeapAddress(address);
-      if (address < 0x4000) {
-        if ((value7FFD & PORTw_ZX128_ROMRAM) != 0) {
-          //RAM0
-          result = (byte) this.board.readRam(this, ramAddress);
-        } else {
-          if (this.trdosRomActive) {
-            result = (byte) this.board.readROM(address + 0x8000);
-          } else {
-            result = (byte) this.board.readROM(address + (activeRom128 ? 0x4000 : 0));
-          }
-        }
-      } else {
+    final int ramAddress = ramOffset2HeapAddress(address);
+    if (address < 0x4000) {
+      if ((value7FFD & PORTw_ZX128_ROMRAM) != 0) {
+        //RAM0
         result = (byte) this.board.readRam(this, ramAddress);
+      } else {
+        if (this.trdosRomActive) {
+          result = (byte) this.board.readRom(address + 0x8000);
+        } else {
+          result = (byte) this.board.readRom(address + (activeRom128 ? 0x4000 : 0));
+        }
       }
-
     } else {
-      final int ramAddress = ramOffset2HeapAddress(address);
-      if (address < 0x4000) {
-        if ((value7FFD & PORTw_ZX128_ROMRAM) != 0) {
-          //RAM0
-          result = (byte) this.board.readRam(this, ramAddress);
-        } else {
-          if (this.trdosRomActive) {
-            result = (byte) this.board.readROM(address + 0x8000);
-          } else {
-            result = (byte) this.board.readROM(address + (activeRom128 ? 0x4000 : 0));
-          }
-        }
-      } else {
-        result = (byte) this.board.readRam(this, ramAddress);
-      }
+      result = (byte) this.board.readRam(this, ramAddress);
     }
-
     return result;
   }
 
@@ -407,9 +387,9 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
             result = (byte) this.board.readRam(this, ramAddress);
           } else {
             if (this.trdosRomActive) {
-              result = (byte) this.board.readROM(address + 0x8000);
+              result = (byte) this.board.readRom(address + 0x8000);
             } else {
-              result = (byte) this.board.readROM(address + (activeRom128 ? 0x4000 : 0));
+              result = (byte) this.board.readRom(address + (activeRom128 ? 0x4000 : 0));
             }
           }
         } else {
@@ -424,9 +404,9 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
           result = (byte) this.board.readRam(this, ramAddress);
         } else {
           if (this.trdosRomActive) {
-            result = (byte) this.board.readROM(address + 0x8000);
+            result = (byte) this.board.readRom(address + 0x8000);
           } else {
-            result = (byte) this.board.readROM(address + (activeRom128 ? 0x4000 : 0));
+            result = (byte) this.board.readRom(address + (activeRom128 ? 0x4000 : 0));
           }
         }
       } else {
@@ -439,7 +419,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   public int ramOffset2HeapAddress(final int address) {
     final int page = (address >>> 14) & 3;
     final int offset = address & 0x3FFF;
-    int result = 0;
+    final int result;
     switch (page) {
       case 0: {
         //RAM0
@@ -572,7 +552,6 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     if (this.board.isZxPolyMode()) {
       final int reg0 = this.zxPolyRegsWritten.get(0);
-
       if ((reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 || port == PORTw_ZX128) {
         if (port == PORTw_ZX128) {
           if (this.moduleIndex == 0) {

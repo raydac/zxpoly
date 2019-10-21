@@ -33,12 +33,12 @@ public abstract class Snapshot extends FileFilter {
   public void doMode48(final Motherboard board) {
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
     stream(board.getModules()).forEach(ZxPolyModule::lockZx48Mode);
-    board.getCPU0().doReset();
+    board.getMasterCpu().doReset();
   }
 
   public void doMode128(final Motherboard board) {
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
-    board.getCPU0().doReset();
+    board.getMasterCpu().doReset();
   }
 
   public abstract String getExtension();

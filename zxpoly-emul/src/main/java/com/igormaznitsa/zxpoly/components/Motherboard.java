@@ -59,7 +59,7 @@ public final class Motherboard implements ZxPolyConstants {
   private int intCounter;
   private volatile boolean videoFlashState;
   private boolean localResetForAllModules;
-  private volatile boolean modeZXPoly = true;
+  private volatile boolean modeZxPoly = true;
   private int statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
 
   public Motherboard(final RomData rom) {
@@ -141,20 +141,8 @@ public final class Motherboard implements ZxPolyConstants {
     return addr;
   }
 
-  public float getActivityCPU0() {
-    return this.cpuLoad[0];
-  }
-
-  public float getActivityCPU1() {
-    return this.cpuLoad[1];
-  }
-
-  public float getActivityCPU2() {
-    return this.cpuLoad[2];
-  }
-
-  public float getActivityCPU3() {
-    return this.cpuLoad[3];
+  public float getCpuActivity(final int cpuIndex) {
+    return this.cpuLoad[cpuIndex];
   }
 
   public BetaDiscInterface getBetaDiskInterface() {
@@ -181,11 +169,11 @@ public final class Motherboard implements ZxPolyConstants {
     return this.videoFlashState;
   }
 
-  public int readROM(final int address) {
+  public int readRom(final int address) {
     return rom.readAdress(address);
   }
 
-  public Z80 getCPU0() {
+  public Z80 getMasterCpu() {
     return this.modules[0].getCpu();
   }
 
@@ -424,13 +412,13 @@ public final class Motherboard implements ZxPolyConstants {
   }
 
   public boolean isZxPolyMode() {
-    return this.modeZXPoly;
+    return this.modeZxPoly;
   }
 
   public void setZxPolyMode(final boolean flag) {
-    if (this.modeZXPoly != flag) {
+    if (this.modeZxPoly != flag) {
       LOGGER.log(Level.INFO, "Motherboard mode changed to " + (flag ? "ZX-POLY" : "ZX128"));
-      this.modeZXPoly = flag;
+      this.modeZxPoly = flag;
       this.reset();
     }
   }
@@ -479,7 +467,7 @@ public final class Motherboard implements ZxPolyConstants {
   }
 
   public void writeBusIo(final ZxPolyModule module, final int port, final int value) {
-    final int mappedCPU = getMappedCpuIndex();
+    final int mappedCpu = getMappedCpuIndex();
     final int moduleIndex = module.getModuleIndex();
 
     if (isZxPolyMode()) {
@@ -487,8 +475,8 @@ public final class Motherboard implements ZxPolyConstants {
         if (port == PORTrw_ZXPOLY) {
           set3D00(value, false);
         } else {
-          if (mappedCPU > 0) {
-            final ZxPolyModule destmodule = this.modules[mappedCPU];
+          if (mappedCpu > 0) {
+            final ZxPolyModule destmodule = this.modules[mappedCpu];
             this.ram.set(destmodule.ramOffset2HeapAddress(port), value);
             destmodule.prepareLocalNmi();
           } else {

@@ -58,7 +58,7 @@ public class FormatZ80 extends Snapshot {
   @Override
   public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
     final Z80V3AParser parser = new Z80V3AParser();
-    final Z80 cpu = board.getCPU0();
+    final Z80 cpu = board.getMasterCpu();
 
     parser.setREG_A((byte) cpu.getRegister(Z80.REG_A));
     parser.setREG_F((byte) cpu.getRegister(Z80.REG_F));
@@ -220,7 +220,7 @@ public class FormatZ80 extends Snapshot {
       doMode128(board);
     }
 
-    final Z80 cpu = board.getCPU0();
+    final Z80 cpu = board.getMasterCpu();
 
     cpu.setRegister(Z80.REG_A, snapshot.getREG_A());
     cpu.setRegister(Z80.REG_F, snapshot.getREG_F());

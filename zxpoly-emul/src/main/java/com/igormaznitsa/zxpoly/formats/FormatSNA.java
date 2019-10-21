@@ -51,7 +51,7 @@ public class FormatSNA extends Snapshot {
     }
 
     final ZxPolyModule module = board.getModules()[0];
-    final Z80 cpu = board.getCPU0();
+    final Z80 cpu = board.getMasterCpu();
 
     cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getREGAF());
     cpu.setRegisterPair(Z80.REGPAIR_BC, parser.getREGBC());
@@ -131,7 +131,7 @@ public class FormatSNA extends Snapshot {
     final SNAParser parser = new SNAParser();
 
     final ZxPolyModule module = board.getModules()[0];
-    final Z80 cpu = board.getCPU0();
+    final Z80 cpu = board.getMasterCpu();
 
     parser.setREGAF((char) cpu.getRegisterPair(Z80.REGPAIR_AF));
     parser.setREGBC((char) cpu.getRegisterPair(Z80.REGPAIR_BC));
