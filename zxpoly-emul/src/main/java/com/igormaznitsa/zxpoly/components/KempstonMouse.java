@@ -145,47 +145,35 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
   @Override
   public void mouseReleased(final MouseEvent e) {
     if (this.videoController.isHoldMouse()) {
-      int button = 0;
-      switch (e.getButton()) {
-        case MouseEvent.BUTTON1: {
-          button = MOUSE_BUTTON_LEFT;
-        }
-        break;
-        case MouseEvent.BUTTON2: {
-          button = MOUSE_BUTTON_CENTRAL;
-        }
-        break;
-        case MouseEvent.BUTTON3: {
-          button = MOUSE_BUTTON_RIGHT;
-        }
-        break;
-      }
-      this.buttons.set(this.buttons.get() | button);
+      this.buttons.set(this.buttons.get() | extractButton(e));
     } else {
       this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
     }
   }
 
+  private int extractButton(final MouseEvent e) {
+    int button = 0;
+    switch (e.getButton()) {
+      case MouseEvent.BUTTON1: {
+        button = MOUSE_BUTTON_LEFT;
+      }
+      break;
+      case MouseEvent.BUTTON2: {
+        button = MOUSE_BUTTON_CENTRAL;
+      }
+      break;
+      case MouseEvent.BUTTON3: {
+        button = MOUSE_BUTTON_RIGHT;
+      }
+      break;
+    }
+    return button;
+  }
+
   @Override
   public void mousePressed(final MouseEvent e) {
     if (this.videoController.isHoldMouse()) {
-
-      int button = 0;
-      switch (e.getButton()) {
-        case MouseEvent.BUTTON1: {
-          button = MOUSE_BUTTON_LEFT;
-        }
-        break;
-        case MouseEvent.BUTTON2: {
-          button = MOUSE_BUTTON_CENTRAL;
-        }
-        break;
-        case MouseEvent.BUTTON3: {
-          button = MOUSE_BUTTON_RIGHT;
-        }
-        break;
-      }
-      this.buttons.set(this.buttons.get() & (button ^ MOUSE_BUTTONS_NON_ACTIVE));
+      this.buttons.set(this.buttons.get() & (extractButton(e) ^ MOUSE_BUTTONS_NON_ACTIVE));
     } else {
       this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
       this.videoController.setHoldMouse(true);

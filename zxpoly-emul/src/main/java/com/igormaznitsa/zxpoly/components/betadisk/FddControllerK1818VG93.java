@@ -27,21 +27,21 @@ import java.util.logging.Logger;
 
 public final class FddControllerK1818VG93 {
 
-  public static final int ADDR_COMMAND_STATE = 0;
-  public static final int ADDR_TRACK = 1;
-  public static final int ADDR_SECTOR = 2;
-  public static final int ADDR_DATA = 3;
-  public static final int STAT_BUSY = 0x01;
-  public static final int STAT_INDEX = 0x02;
-  public static final int STAT_DRQ = 0x02;
-  public static final int STAT_TRK00_OR_LOST = 0x04;
-  public static final int STAT_CRCERR = 0x08;
-  public static final int STAT_NOTFOUND = 0x10;
+  static final int ADDR_COMMAND_STATE = 0;
+  static final int ADDR_TRACK = 1;
+  static final int ADDR_SECTOR = 2;
+  static final int ADDR_DATA = 3;
+  static final int STAT_BUSY = 0x01;
+  static final int STAT_DRQ = 0x02;
+  private static final int STAT_INDEX = 0x02;
+  private static final int STAT_TRK00_OR_LOST = 0x04;
+  private static final int STAT_CRCERR = 0x08;
+  private static final int STAT_NOTFOUND = 0x10;
   public static final int STAT_RECORDT = 0x20;
-  public static final int STAT_HEADL = 0x20;
-  public static final int STAT_WRFAULT = 0x20;
-  public static final int STAT_WRITEPROTECT = 0x40;
-  public static final int ST_NOTREADY = 0x80;
+  private static final int STAT_HEADL = 0x20;
+  private static final int STAT_WRFAULT = 0x20;
+  private static final int STAT_WRITEPROTECT = 0x40;
+  private static final int ST_NOTREADY = 0x80;
   private static final long CYCLE_NANOSECOND = 286L;
   private static final long CYCLES_FOR_BUFFER_VALID = 120L; // number of cycles to read-write byte to-from disk
   private static final long CYCLES_FOR_NEXT_TRACK = 15000000L / CYCLE_NANOSECOND; // number of cycles to move head to next track
@@ -94,7 +94,7 @@ public final class FddControllerK1818VG93 {
     }
   }
 
-  public TrDosDisk getDisk() {
+  private TrDosDisk getDisk() {
     return this.trdosDisk.get();
   }
 
@@ -940,6 +940,21 @@ public final class FddControllerK1818VG93 {
       this.trackTotalBytes = mfm ? 6450 : 6450;
     }
 
+    protected int writeCrc(final Sector sector, final ByteArrayOutputStream buffer) {
+      buffer.write(0xFE);
+
+      buffer.write(sector.getTrackNumber());
+      buffer.write(sector.getSide());
+      buffer.write(sector.getSectorId());
+
+      buffer.write(getSectorSizeCode(sector.size()));
+      final int crc = sector.getCrc();
+
+      buffer.write(crc);
+      buffer.write(crc >>> 8);
+      return crc;
+    }
+
     final boolean writeNextDataByte(final int dataByte) throws IOException {
       switch (this.state) {
         case WAIT_ADDRESS: {
@@ -1071,17 +1086,7 @@ public final class FddControllerK1818VG93 {
         for (int i = 0; i < 6; i++) {
           buffer.write(0x00);
         }
-        buffer.write(0xFE);
-
-        buffer.write(sector.getTrackNumber());
-        buffer.write(sector.getSide());
-        buffer.write(sector.getSectorId());
-
-        buffer.write(getSectorSizeCode(sector.size()));
-        final int crc = sector.getCrc();
-
-        buffer.write(crc);
-        buffer.write(crc >>> 8);
+        final int crc = writeCrc(sector, buffer);
 
         for (int i = 0; i < 11; i++) {
           buffer.write(0xFF);
@@ -1155,17 +1160,7 @@ public final class FddControllerK1818VG93 {
           buffer.write(0xF5);
         }
 
-        buffer.write(0xFE);
-
-        buffer.write(sector.getTrackNumber());
-        buffer.write(sector.getSide());
-        buffer.write(sector.getSectorId());
-        buffer.write(getSectorSizeCode(sector.size()));
-
-        final int crc = sector.getCrc();
-
-        buffer.write(crc);
-        buffer.write(crc >>> 8);
+        final int crc = writeCrc(sector, buffer);
 
         for (int i = 0; i < 22; i++) {
           buffer.write(0x4E);

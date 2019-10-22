@@ -18,6 +18,7 @@
 package com.igormaznitsa.zxpoly.ui;
 
 import com.igormaznitsa.zxpoly.components.TapeFileReader;
+import java.awt.Font;
 import javax.swing.ListSelectionModel;
 
 @SuppressWarnings("unchecked")
@@ -67,7 +68,7 @@ public class SelectTapPosDialog extends javax.swing.JDialog {
     buttonOk.setText("Ok");
     buttonOk.addActionListener(this::buttonOkActionPerformed);
 
-    tapBlockList.setFont(new java.awt.Font("Courier New", 0, 12)); // NOI18N
+    tapBlockList.setFont(new java.awt.Font("Courier New", Font.PLAIN, 12)); // NOI18N
     tapBlockList.setModel(new javax.swing.AbstractListModel() {
       String[] strings = {"Item 1", "Item 2", "Item 3", "Item 4", "Item 5"};
 

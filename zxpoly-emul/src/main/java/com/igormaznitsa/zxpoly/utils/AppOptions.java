@@ -18,11 +18,14 @@
 package com.igormaznitsa.zxpoly.utils;
 
 import java.io.File;
+import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import org.apache.commons.io.FileUtils;
 
 public final class AppOptions {
+
+  private final Logger LOGGER = Logger.getLogger(AppOptions.class.getName());
 
   public static final String TEST_ROM = "zxpolytest.rom";
   private static final String ROMPATH = "ROM_PATH";
@@ -65,11 +68,15 @@ public final class AppOptions {
       folder = System.getProperty("user.home", FileUtils.getTempDirectoryPath());
     }
 
-    final File cfgfolder = new File(folder, APP_FOLDER_NAME);
-    if (!cfgfolder.exists()) {
-      cfgfolder.mkdirs();
+    final File configFolder = new File(folder, APP_FOLDER_NAME);
+    if (!configFolder.exists()) {
+      if (configFolder.mkdirs()) {
+        LOGGER.info("Created config folder: " + configFolder);
+      } else {
+        LOGGER.warning("Can't create config folder: " + configFolder);
+      }
     }
-    return cfgfolder;
+    return configFolder;
   }
 
 }
