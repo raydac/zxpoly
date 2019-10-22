@@ -145,7 +145,7 @@ public final class FddControllerK1818VG93 {
       case ADDR_COMMAND_STATE: {
         this.indexHoleMarker = !this.indexHoleMarker;
         switch (registers[REG_COMMAND] >>> 4) {
-          case 0b0000:// Auxuliary commands which shows Index marker
+          case 0b0000:
           case 0b1101:
           case 0b0100:
           case 0b0101:
@@ -224,7 +224,7 @@ public final class FddControllerK1818VG93 {
         }
 
         if (this.firstCommandStep) {
-          logger.log(Level.INFO, "FDD cmd: " + commandAsText(normValue));
+          logger.log(Level.INFO, "FDD cmd (" + toBinByte(normValue) + "): " + commandAsText(normValue));
         }
       }
       break;
@@ -253,12 +253,21 @@ public final class FddControllerK1818VG93 {
     }
   }
 
+  private String toBinByte(int value) {
+    final StringBuilder buffer = new StringBuilder(8);
+    for (int i = 0; i < 8; i++) {
+      buffer.append((value & 0x80) == 0 ? '0' : '1');
+      value <<= 1;
+    }
+    return buffer.toString();
+  }
+
   private String commandAsText(final int command) {
     final int track = this.registers[REG_TRACK];
-    final int sector = this.registers[REG_SECTOR];
-    final int head = this.head;
+    final int theSector = this.registers[REG_SECTOR];
+    final int theHead = this.head;
 
-    final String addr = track + ":" + head + ":" + sector;
+    final String addr = track + ":" + theHead + ":" + theSector;
 
     final int high = command >>> 4;
     switch (high) {
@@ -471,7 +480,7 @@ public final class FddControllerK1818VG93 {
         if (mcycles > this.operationTimeOutCycles) {
           if (this.registers[REG_TRACK] < this.registers[REG_DATA_WR]) {
             this.registers[REG_TRACK]++;
-          } else if (this.registers[REG_TRACK] > this.registers[REG_DATA_WR]) {
+          } else {
             this.registers[REG_TRACK]--;
           }
           this.operationTimeOutCycles = Math.abs(mcycles + CYCLES_FOR_NEXT_TRACK);
@@ -680,8 +689,8 @@ public final class FddControllerK1818VG93 {
   }
 
   private void cmdReadSector(final long mcycles, final int command, final boolean start) {
-    final boolean multi = (command & 0x10) != 0;
-    final int softSide = (command >>> 3) & 1;
+    final boolean multiSectors = (command & 0b100000) != 0;
+    final int sideNumber = (command >>> 3) & 1;
     final boolean doCheckSide = (command & 2) != 0;
 
     resetStatus(true);
@@ -692,7 +701,7 @@ public final class FddControllerK1818VG93 {
     } else {
       loadSector(this.head, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
 
-      if (this.sector != null && doCheckSide && this.sector.getSide() != softSide) {
+      if (this.sector != null && doCheckSide && this.sector.getSide() != sideNumber) {
         this.sector = null;
       }
 
@@ -718,7 +727,7 @@ public final class FddControllerK1818VG93 {
             if (this.counter >= this.sector.size()) {
               this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
               this.sectorPositioningCycles = Math.abs(mcycles + CYCLES_SECTOR_POSITION);
-              if (multi) {
+              if (multiSectors) {
                 if (!this.sector.isLastOnTrack()) {
                   this.counter = 0;
                   setInternalFlag(STAT_BUSY);
