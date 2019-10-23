@@ -343,7 +343,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     final byte result;
     if (this.board.isZxPolyMode()) {
       if (m1 && this.board.is3D00NotLocked() && this.registerReadingCounter == 0) {
-        this.stopAddressWait = address != 0 && address == (this.zxPolyRegsWritten.get(2) | (this.zxPolyRegsWritten.get(3) << 8));
+        final int moduleStopAddress = this.zxPolyRegsWritten.get(2) | (this.zxPolyRegsWritten.get(3) << 8);
+        this.stopAddressWait = address != 0 && address == moduleStopAddress;
       }
 
       if (this.registerReadingCounter > 0 && !this.activeRegisterReading && m1 && address == 0) {
