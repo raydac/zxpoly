@@ -18,7 +18,6 @@
 package com.igormaznitsa.zxpoly.components;
 
 import static java.lang.Math.min;
-import static java.util.Arrays.stream;
 
 
 import com.igormaznitsa.z80.Utils;
@@ -226,6 +225,8 @@ public final class Motherboard implements ZxPolyConstants {
     }
 
     if (processStep) {
+      final ZxPolyModule[] modules = this.modules;
+
       final boolean signalReset = this.totalReset;
       this.totalReset = false;
 
@@ -236,11 +237,13 @@ public final class Motherboard implements ZxPolyConstants {
         }
       }
 
-      for (final IoDevice d : this.ioDevices) {
-        d.preStep(signalReset, signalInt);
+      final IoDevice[] devices = this.ioDevices;
+      final int initDeviceindex = devices.length - 1;
+      for (int i = initDeviceindex; i >= 0; i--) {
+        devices[i].preStep(signalReset, signalInt);
       }
 
-      final long initialMachineCycleCounter = this.modules[0].getCpu().getMachineCycles();
+      final long initialMachineCycleCounter = modules[0].getCpu().getMachineCycles();
 
       if (isZxPolyMode()) {
 
@@ -251,40 +254,40 @@ public final class Motherboard implements ZxPolyConstants {
 
         switch ((int) System.nanoTime() & 0x3) {
           case 0: {
-            zx0halt = this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx0halt = modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
             if (localResetForAllModules) {
               return result;
             }
-            zx3halt = this.modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx2halt = this.modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx1halt = this.modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx3halt = modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx2halt = modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx1halt = modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
           }
           break;
           case 1: {
-            zx1halt = this.modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx2halt = this.modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx0halt = this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx1halt = modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx2halt = modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx0halt = modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
             if (this.localResetForAllModules) {
               return result;
             }
-            zx3halt = this.modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx3halt = modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
           }
           break;
           case 2: {
-            zx3halt = this.modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx0halt = this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx3halt = modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx0halt = modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
             if (this.localResetForAllModules) {
               return result;
             }
-            zx1halt = this.modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx2halt = this.modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx1halt = modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx2halt = modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
           }
           break;
           case 3: {
-            zx2halt = this.modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx3halt = this.modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx1halt = this.modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx0halt = this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx2halt = modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx3halt = modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx1halt = modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx0halt = modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
             if (this.localResetForAllModules) {
               return result;
             }
@@ -311,12 +314,14 @@ public final class Motherboard implements ZxPolyConstants {
         }
       } else {
         // ZX 128 mode
-        this.modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+        modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
       }
 
-      final long spentMachineCycles = this.modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
+      final long spentMachineCycles = modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
 
-      stream(this.ioDevices).forEach(d -> d.postStep(spentMachineCycles));
+      for (int i = initDeviceindex; i >= 0; i--) {
+        devices[i].postStep(spentMachineCycles);
+      }
 
       final int curTriggers = this.triggers;
 
@@ -326,9 +331,9 @@ public final class Motherboard implements ZxPolyConstants {
           result |= TRIGGER_DIFF_MODULESTATES;
         }
         if ((curTriggers & TRIGGER_DIFF_MEM_ADDR) != 0) {
-          int val = this.modules[0].readAddress(this.triggerMemAddress);
+          int val = modules[0].readAddress(this.triggerMemAddress);
           for (int i = 1; i < 4; i++) {
-            if (val != this.modules[i].readAddress(this.triggerMemAddress)) {
+            if (val != modules[i].readAddress(this.triggerMemAddress)) {
               result |= TRIGGER_DIFF_MEM_ADDR;
               this.triggers = this.triggers & ~TRIGGER_DIFF_MEM_ADDR;
               break;
@@ -337,11 +342,11 @@ public final class Motherboard implements ZxPolyConstants {
         }
 
         if ((curTriggers & TRIGGER_DIFF_EXE_CODE) != 0) {
-          final int m1ExeByte = this.modules[0].getCpu().getLastM1InstructionByte();
-          final int exeByte = this.modules[0].getCpu().getLastInstructionByte();
+          final int m1ExeByte = modules[0].getCpu().getLastM1InstructionByte();
+          final int exeByte = modules[0].getCpu().getLastInstructionByte();
 
           for (int i = 1; i < 4; i++) {
-            if (m1ExeByte != this.modules[i].getCpu().getLastM1InstructionByte() || exeByte != this.modules[i].getCpu().getLastInstructionByte()) {
+            if (m1ExeByte != modules[i].getCpu().getLastM1InstructionByte() || exeByte != modules[i].getCpu().getLastInstructionByte()) {
               result |= TRIGGER_DIFF_EXE_CODE;
               this.triggers = this.triggers & ~TRIGGER_DIFF_EXE_CODE;
               break;
@@ -516,6 +521,10 @@ public final class Motherboard implements ZxPolyConstants {
   }
 
   public synchronized void resetIoDevices() {
-    stream(this.ioDevices).forEach(IoDevice::doReset);
+    final IoDevice[] devices = this.ioDevices;
+    final int devicesNum = devices.length;
+    for (int i = 0; i < devicesNum; i++) {
+      devices[i].doReset();
+    }
   }
 }
