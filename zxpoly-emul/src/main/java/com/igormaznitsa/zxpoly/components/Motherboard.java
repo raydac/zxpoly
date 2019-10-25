@@ -238,8 +238,8 @@ public final class Motherboard implements ZxPolyConstants {
       }
 
       final IoDevice[] devices = this.ioDevices;
-      final int initDeviceindex = devices.length - 1;
-      for (int i = initDeviceindex; i >= 0; i--) {
+      final int numOfIoDevices = devices.length;
+      for (int i = 0; i < numOfIoDevices; i++) {
         devices[i].preStep(signalReset, signalInt);
       }
 
@@ -319,7 +319,7 @@ public final class Motherboard implements ZxPolyConstants {
 
       final long spentMachineCycles = modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
 
-      for (int i = initDeviceindex; i >= 0; i--) {
+      for (int i = 0; i < numOfIoDevices; i++) {
         devices[i].postStep(spentMachineCycles);
       }
 
