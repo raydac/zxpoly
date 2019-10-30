@@ -153,6 +153,8 @@ public final class Z80 {
    * @param cpu source CPU which state should be copied, must not be null
    */
   public Z80(final Z80 cpu) {
+    this.prefix = cpu.prefix;
+    this.resetCycle = cpu.resetCycle;
     this.iff1 = cpu.iff1;
     this.iff2 = cpu.iff2;
     this.im = cpu.im;
@@ -2023,8 +2025,8 @@ public final class Z80 {
 
   private int doRollShift(final int op, final int reg) {
     int x = readReg8(reg);
-    final int origc = this.regSet[REG_F] & FLAG_C;
-    int c = origc;
+    final int prevC = this.regSet[REG_F] & FLAG_C;
+    final int c;
     switch (op) {
       case 0: { // RLC
         c = (x >>> 7) & FLAG_C;
@@ -2038,12 +2040,12 @@ public final class Z80 {
       break;
       case 2: { // RL
         c = x >>> 7;
-        x = (x << 1) | origc;
+        x = (x << 1) | prevC;
       }
       break;
       case 3: { // RR
         c = x & 0x01;
-        x = (x >>> 1) | (origc << 7);
+        x = (x >>> 1) | (prevC << 7);
       }
       break;
       case 4: { // SLA
@@ -2151,9 +2153,7 @@ public final class Z80 {
   }
 
   private void doNEG() {
-    final int A = this.regSet[REG_A] & 0xFF;
-
-    int a = A;
+    int a = this.regSet[REG_A] & 0xFF;
     int z = -a;
     int c = a ^ z;
     int f = FLAG_N | (c & FLAG_H);
