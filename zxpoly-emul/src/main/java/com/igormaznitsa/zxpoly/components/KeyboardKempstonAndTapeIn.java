@@ -19,7 +19,6 @@ package com.igormaznitsa.zxpoly.components;
 
 import java.awt.event.KeyEvent;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class KeyboardKempstonAndTapeIn implements IoDevice {
@@ -34,7 +33,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   private final Motherboard board;
 
-  private final AtomicIntegerArray keyboardLines = new AtomicIntegerArray(8);
+  private final int[] keyboardLines = new int[8];
   private final int[] bufferKeyboardLines = new int[8];
   private final AtomicInteger kempstonSignals = new AtomicInteger();
   private final AtomicReference<TapeFileReader> tap = new AtomicReference<>();
@@ -88,8 +87,10 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   @Override
   public void doReset() {
-    for (int i = 0; i < this.keyboardLines.length(); i++) {
-      this.keyboardLines.set(i, 0x1F);
+    synchronized (this.keyboardLines) {
+      for (int i = 0; i < this.keyboardLines.length; i++) {
+        this.keyboardLines[i] = 0x1F;
+      }
     }
     this.kempstonSignals.set(0);
   }
@@ -99,8 +100,10 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     if (signalReset) {
       doReset();
     }
-    for (int i = 0; i < 8; i++) {
-      this.bufferKeyboardLines[i] = this.keyboardLines.get(i);
+    synchronized (this.keyboardLines) {
+      for (int i = 0; i < 8; i++) {
+        this.bufferKeyboardLines[i] = this.keyboardLines[i];
+      }
     }
     this.kempstonBuffer = this.kempstonSignals.get();
   }
@@ -416,10 +419,12 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
       line >>>= 8;
       code >>>= 8;
 
-      if (pressed) {
-        this.keyboardLines.set(theline, this.keyboardLines.get(theline) & thecode);
-      } else {
-        this.keyboardLines.set(theline, this.keyboardLines.get(theline) | (~thecode & 0x1F));
+      synchronized (this.keyboardLines) {
+        if (pressed) {
+          this.keyboardLines[theline] &= thecode;
+        } else {
+          this.keyboardLines[theline] |= (~thecode & 0x1F);
+        }
       }
     }
 

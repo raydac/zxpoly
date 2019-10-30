@@ -41,6 +41,7 @@ import com.igormaznitsa.zxpoly.tracer.TraceCpuForm;
 import com.igormaznitsa.zxpoly.ui.AboutDialog;
 import com.igormaznitsa.zxpoly.ui.AddressPanel;
 import com.igormaznitsa.zxpoly.ui.CpuLoadIndicator;
+import com.igormaznitsa.zxpoly.ui.JIndicatorLabel;
 import com.igormaznitsa.zxpoly.ui.OptionsDialog;
 import com.igormaznitsa.zxpoly.ui.SelectTapPosDialog;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
@@ -152,11 +153,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private javax.swing.JPopupMenu.Separator jSeparator1;
   private javax.swing.JSeparator jSeparator2;
   private javax.swing.JPopupMenu.Separator jSeparator3;
-  private javax.swing.JLabel labelDiskUsage;
-  private javax.swing.JLabel labelMouseUsage;
-  private javax.swing.JLabel labelTapeUsage;
-  private javax.swing.JLabel labelTurbo;
-  private javax.swing.JLabel labelZX128;
+  private JIndicatorLabel labelDiskUsage;
+  private JIndicatorLabel labelMouseUsage;
+  private JIndicatorLabel labelTapeUsage;
+  private JIndicatorLabel labelTurbo;
+  private JIndicatorLabel labelZX128;
   private javax.swing.JMenuItem menuActionAnimatedGIF;
   private javax.swing.JMenuBar menuBar;
   private javax.swing.JMenu menuCatcher;
@@ -204,33 +205,15 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final Runnable infobarUpdater = new Runnable() {
     @Override
     public void run() {
-      final Icon turboico = turboMode.get() ? ICO_TURBO : ICO_TURBO_DIS;
-      if (labelTurbo.getIcon() != turboico) {
-        labelTurbo.setIcon(turboico);
-      }
-
-      final TapeFileReader reader = keyboardAndTapeModule.getTap();
-      final Icon tapico = reader != null && reader.isPlaying() ? ICO_TAPE : ICO_TAPE_DIS;
-      if (labelTapeUsage.getIcon() != tapico) {
-        labelTapeUsage.setIcon(tapico);
-      }
-
-      final Icon mouseIcon = board.getVideoController().isHoldMouse() ? ICO_MOUSE : ICO_MOUSE_DIS;
-      if (labelMouseUsage.getIcon() != mouseIcon) {
-        labelMouseUsage.setIcon(mouseIcon);
-      }
-
-      final Icon diskIcon = board.getBetaDiskInterface().isActive() ? ICO_DISK : ICO_DISK_DIS;
-      if (labelDiskUsage.getIcon() != diskIcon) {
-        labelDiskUsage.setIcon(diskIcon);
-      }
-
-      final Icon zx128Icon = board.isZxPolyMode() ? ICO_ZX128_DIS : ICO_ZX128;
-      if (labelZX128.getIcon() != zx128Icon) {
-        labelZX128.setIcon(zx128Icon);
-      }
-
       if (panelIndicators.isVisible()) {
+        labelTurbo.setStatus(turboMode.get());
+
+        final TapeFileReader tapeFileReader = keyboardAndTapeModule.getTap();
+        labelTapeUsage.setStatus(tapeFileReader != null && tapeFileReader.isPlaying());
+        labelMouseUsage.setStatus(board.getVideoController().isHoldMouse());
+        labelDiskUsage.setStatus(board.getBetaDiskInterface().isActive());
+        labelZX128.setStatus(!board.isZxPolyMode());
+
         indicatorCPU0.updateForState(board.getCpuActivity(0));
         indicatorCPU1.updateForState(board.getCpuActivity(1));
         indicatorCPU2.updateForState(board.getCpuActivity(2));
@@ -281,7 +264,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     final RomData rom = loadRom(romPath);
 
     this.board = new Motherboard(rom);
-    this.board.setZxPolyMode(true);
+    this.board.setZxPolyMode(true, true);
     this.menuOptionsZX128Mode.setSelected(!this.board.isZxPolyMode());
     this.menuOptionsTurbo.setSelected(this.turboMode.get());
 
@@ -328,8 +311,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
 
     updateTapeMenu();
-
-    updateInfoPanel();
 
     pack();
 
@@ -608,11 +589,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     jSeparator2 = new javax.swing.JSeparator();
     panelIndicators = new javax.swing.JPanel();
     filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
-    labelTurbo = new javax.swing.JLabel();
-    labelMouseUsage = new javax.swing.JLabel();
-    labelZX128 = new javax.swing.JLabel();
-    labelTapeUsage = new javax.swing.JLabel();
-    labelDiskUsage = new javax.swing.JLabel();
+    labelTurbo = new JIndicatorLabel(ICO_TURBO, ICO_TURBO_DIS, "Turbo-mode is ON", "Turbo-mode is OFF");
+    labelMouseUsage = new JIndicatorLabel(ICO_MOUSE, ICO_MOUSE_DIS, "Mouse is catched", "Mouse is not active");
+    labelZX128 = new JIndicatorLabel(ICO_ZX128, ICO_ZX128_DIS, "ZX-Poly mode is OFF", "ZX-Poly mode is ON");
+    labelTapeUsage = new JIndicatorLabel(ICO_TAPE, ICO_TAPE_DIS, "Reading tape", "No IO tape operations");
+    labelDiskUsage = new JIndicatorLabel(ICO_DISK, ICO_DISK_DIS, "Some disk operation is active", "No IO disk operations");
     menuBar = new javax.swing.JMenuBar();
     menuFile = new javax.swing.JMenu();
     menuFileLoadSnapshot = new javax.swing.JMenuItem();
@@ -701,36 +682,26 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     gridBagConstraints.weightx = 1000.0;
     panelIndicators.add(filler1, gridBagConstraints);
 
-    labelTurbo.setText(" ");
-    labelTurbo.setToolTipText("Shows turbo mode on");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 5;
     gridBagConstraints.gridy = 0;
     panelIndicators.add(labelTurbo, gridBagConstraints);
 
-    labelMouseUsage.setText(" ");
-    labelMouseUsage.setToolTipText("Indicates kempston mouse activation, ESC - deactivate mouse");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 6;
     gridBagConstraints.gridy = 0;
     panelIndicators.add(labelMouseUsage, gridBagConstraints);
 
-    labelZX128.setText(" ");
-    labelZX128.setToolTipText("Shows that active ZX128 emulation mode");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 7;
     gridBagConstraints.gridy = 0;
     panelIndicators.add(labelZX128, gridBagConstraints);
 
-    labelTapeUsage.setText(" ");
-    labelTapeUsage.setToolTipText("Shows tape activity");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 8;
     gridBagConstraints.gridy = 0;
     panelIndicators.add(labelTapeUsage, gridBagConstraints);
 
-    labelDiskUsage.setText(" ");
-    labelDiskUsage.setToolTipText("Shows disk activity");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 9;
     gridBagConstraints.gridy = 0;
@@ -970,17 +941,17 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     pack();
   }// </editor-fold>//GEN-END:initComponents
 
-  private void menuFileResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileResetActionPerformed
+  private void menuFileResetActionPerformed(java.awt.event.ActionEvent evt) {
     this.board.reset();
-  }//GEN-LAST:event_menuFileResetActionPerformed
+  }
 
-  private void menuOptionsShowIndicatorsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsShowIndicatorsActionPerformed
+  private void menuOptionsShowIndicatorsActionPerformed(java.awt.event.ActionEvent evt) {
     this.indicatorCPU0.clear();
     this.indicatorCPU1.clear();
     this.indicatorCPU2.clear();
     this.indicatorCPU3.clear();
     this.panelIndicators.setVisible(this.menuOptionsShowIndicators.isSelected());
-  }//GEN-LAST:event_menuOptionsShowIndicatorsActionPerformed
+  }
 
   private void loadDiskIntoDrive(final int drive) {
     this.stepSemaphor.lock();
@@ -1044,20 +1015,20 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuFileSelectDiskAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskAActionPerformed
+  private void menuFileSelectDiskAActionPerformed(java.awt.event.ActionEvent evt) {
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_A);
-  }//GEN-LAST:event_menuFileSelectDiskAActionPerformed
+  }
 
-  private void formWindowLostFocus(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowLostFocus
+  private void formWindowLostFocus(java.awt.event.WindowEvent evt) {
     this.stepSemaphor.lock();
     try {
       this.keyboardAndTapeModule.doReset();
     } finally {
       this.stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_formWindowLostFocus
+  }
 
-  private void formWindowGainedFocus(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowGainedFocus
+  private void formWindowGainedFocus(java.awt.event.WindowEvent evt) {
     this.stepSemaphor.lock();
     try {
       this.getInputContext().selectInputMethod(Locale.ENGLISH);
@@ -1065,9 +1036,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_formWindowGainedFocus
+  }
 
-  private void menuFileLoadSnapshotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadSnapshotActionPerformed
+  private void menuFileLoadSnapshotActionPerformed(java.awt.event.ActionEvent evt) {
     stepSemaphor.lock();
     try {
       if (AppOptions.getInstance().isTestRomActive()) {
@@ -1087,6 +1058,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
           log.log(Level.INFO, "Loading snapshot " + selectedFilter.getName());
           selectedFilter.loadFromArray(selected, this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
+          this.menuOptionsZX128Mode.setState(!this.board.isZxPolyMode());
         } catch (Exception ex) {
           log.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
           JOptionPane.showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
@@ -1095,38 +1067,38 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuFileLoadSnapshotActionPerformed
+  }
 
-  private void menuOptionsZX128ModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsZX128ModeActionPerformed
+  private void menuOptionsZX128ModeActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
-      this.board.setZxPolyMode(!this.menuOptionsZX128Mode.isSelected());
+      this.board.setZxPolyMode(!this.menuOptionsZX128Mode.isSelected(), true);
     } finally {
       this.stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuOptionsZX128ModeActionPerformed
+  }
 
-  private void menuOptionsTurboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsTurboActionPerformed
+  private void menuOptionsTurboActionPerformed(java.awt.event.ActionEvent evt) {
     this.setTurboMode(this.menuOptionsTurbo.isSelected());
-  }//GEN-LAST:event_menuOptionsTurboActionPerformed
+  }
 
-  private void menuFileSelectDiskCActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskCActionPerformed
+  private void menuFileSelectDiskCActionPerformed(java.awt.event.ActionEvent evt) {
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_C);
-  }//GEN-LAST:event_menuFileSelectDiskCActionPerformed
+  }
 
-  private void menuFileSelectDiskBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskBActionPerformed
+  private void menuFileSelectDiskBActionPerformed(java.awt.event.ActionEvent evt) {
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_B);
-  }//GEN-LAST:event_menuFileSelectDiskBActionPerformed
+  }
 
-  private void menuFileSelectDiskDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileSelectDiskDActionPerformed
+  private void menuFileSelectDiskDActionPerformed(java.awt.event.ActionEvent evt) {
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_D);
-  }//GEN-LAST:event_menuFileSelectDiskDActionPerformed
+  }
 
-  private void menuFileExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileExitActionPerformed
+  private void menuFileExitActionPerformed(java.awt.event.ActionEvent evt) {
     this.formWindowClosing(null);
-  }//GEN-LAST:event_menuFileExitActionPerformed
+  }
 
-  private void menuTapGotoBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapGotoBlockActionPerformed
+  private void menuTapGotoBlockActionPerformed(java.awt.event.ActionEvent evt) {
     final TapeFileReader currentReader = this.keyboardAndTapeModule.getTap();
     if (currentReader != null) {
       currentReader.stopPlay();
@@ -1138,9 +1110,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         currentReader.setCurrent(selected);
       }
     }
-  }//GEN-LAST:event_menuTapGotoBlockActionPerformed
+  }
 
-  private void menuFileLoadTapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileLoadTapActionPerformed
+  private void menuFileLoadTapActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       final File selectedTapFile = chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
@@ -1165,9 +1137,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuFileLoadTapActionPerformed
+  }
 
-  private void menuTapExportAsWavActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapExportAsWavActionPerformed
+  private void menuTapExportAsWavActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       final byte[] wav = this.keyboardAndTapeModule.getTap().getAsWAV();
@@ -1186,42 +1158,42 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuTapExportAsWavActionPerformed
+  }
 
-  private void menuTapPlayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapPlayActionPerformed
+  private void menuTapPlayActionPerformed(java.awt.event.ActionEvent evt) {
     if (this.menuTapPlay.isSelected()) {
       this.keyboardAndTapeModule.getTap().startPlay();
     } else {
       this.keyboardAndTapeModule.getTap().stopPlay();
     }
     updateTapeMenu();
-  }//GEN-LAST:event_menuTapPlayActionPerformed
+  }
 
-  private void menuTapPrevBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapPrevBlockActionPerformed
+  private void menuTapPrevBlockActionPerformed(java.awt.event.ActionEvent evt) {
     final TapeFileReader tap = this.keyboardAndTapeModule.getTap();
     if (tap != null) {
       tap.rewindToPrevBlock();
     }
     updateTapeMenu();
-  }//GEN-LAST:event_menuTapPrevBlockActionPerformed
+  }
 
-  private void menuTapNextBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapNextBlockActionPerformed
+  private void menuTapNextBlockActionPerformed(java.awt.event.ActionEvent evt) {
     final TapeFileReader tap = this.keyboardAndTapeModule.getTap();
     if (tap != null) {
       tap.rewindToNextBlock();
     }
     updateTapeMenu();
-  }//GEN-LAST:event_menuTapNextBlockActionPerformed
+  }
 
-  private void menuTapeRewindToStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTapeRewindToStartActionPerformed
+  private void menuTapeRewindToStartActionPerformed(java.awt.event.ActionEvent evt) {
     final TapeFileReader tap = this.keyboardAndTapeModule.getTap();
     if (tap != null) {
       tap.rewindToStart();
     }
     updateTapeMenu();
-  }//GEN-LAST:event_menuTapeRewindToStartActionPerformed
+  }
 
-  private void menuServiceSaveScreenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuServiceSaveScreenActionPerformed
+  private void menuServiceSaveScreenActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       final RenderedImage img = this.board.getVideoController().makeCopyOfCurrentPicture();
@@ -1244,13 +1216,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       this.stepSemaphor.unlock();
     }
 
-  }//GEN-LAST:event_menuServiceSaveScreenActionPerformed
+  }
 
-  private void menuResetKeyboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuResetKeyboardActionPerformed
+  private void menuResetKeyboardActionPerformed(java.awt.event.ActionEvent evt) {
     this.keyboardAndTapeModule.doReset();
-  }//GEN-LAST:event_menuResetKeyboardActionPerformed
+  }
 
-  private void menuFileOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileOptionsActionPerformed
+  private void menuFileOptionsActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       final OptionsDialog dialog = new OptionsDialog(this);
@@ -1258,50 +1230,50 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuFileOptionsActionPerformed
+  }
 
-  private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuHelpAboutActionPerformed
+  private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       new AboutDialog(this).setVisible(true);
     } finally {
       this.stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuHelpAboutActionPerformed
+  }
 
-  private void menuTraceCPU0ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU0ActionPerformed
+  private void menuTraceCPU0ActionPerformed(java.awt.event.ActionEvent evt) {
     if (this.menuTraceCPU0.isSelected()) {
       activateTracerForCPUModule(0);
     } else {
       deactivateTracerForCPUModule(0);
     }
-  }//GEN-LAST:event_menuTraceCPU0ActionPerformed
+  }
 
-  private void menuTraceCPU1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU1ActionPerformed
+  private void menuTraceCPU1ActionPerformed(java.awt.event.ActionEvent evt) {
     if (this.menuTraceCPU1.isSelected()) {
       activateTracerForCPUModule(1);
     } else {
       deactivateTracerForCPUModule(1);
     }
-  }//GEN-LAST:event_menuTraceCPU1ActionPerformed
+  }
 
-  private void menuTraceCPU2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU2ActionPerformed
+  private void menuTraceCPU2ActionPerformed(java.awt.event.ActionEvent evt) {
     if (this.menuTraceCPU2.isSelected()) {
       activateTracerForCPUModule(2);
     } else {
       deactivateTracerForCPUModule(2);
     }
-  }//GEN-LAST:event_menuTraceCPU2ActionPerformed
+  }
 
-  private void menuTraceCPU3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTraceCPU3ActionPerformed
+  private void menuTraceCPU3ActionPerformed(java.awt.event.ActionEvent evt) {
     if (this.menuTraceCPU3.isSelected()) {
       activateTracerForCPUModule(3);
     } else {
       deactivateTracerForCPUModule(3);
     }
-  }//GEN-LAST:event_menuTraceCPU3ActionPerformed
+  }
 
-  private void menuServiceSaveScreenAllVRAMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuServiceSaveScreenAllVRAMActionPerformed
+  private void menuServiceSaveScreenAllVRAMActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       final RenderedImage[] images = this.board.getVideoController().renderAllModuleVideoMemoryInZx48Mode();
@@ -1331,9 +1303,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       this.keyboardAndTapeModule.doReset();
       this.stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuServiceSaveScreenAllVRAMActionPerformed
+  }
 
-  private void menuActionAnimatedGIFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuActionAnimatedGIFActionPerformed
+  private void menuActionAnimatedGIFActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       AnimationEncoder encoder = this.currentAnimationEncoder.get();
@@ -1366,7 +1338,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuActionAnimatedGIFActionPerformed
+  }
 
   private void closeAnimationSave() {
     AnimationEncoder encoder = this.currentAnimationEncoder.get();
@@ -1379,11 +1351,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+  private void formWindowClosed(java.awt.event.WindowEvent evt) {
     closeAnimationSave();
-  }//GEN-LAST:event_formWindowClosed
+  }
 
-  private void menuTriggerModuleCPUDesyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTriggerModuleCPUDesyncActionPerformed
+  private void menuTriggerModuleCPUDesyncActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       if (this.menuTriggerModuleCPUDesync.isSelected()) {
@@ -1394,9 +1366,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuTriggerModuleCPUDesyncActionPerformed
+  }
 
-  private void menuTriggerDiffMemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTriggerDiffMemActionPerformed
+  private void menuTriggerDiffMemActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       if (this.menuTriggerDiffMem.isSelected()) {
@@ -1420,9 +1392,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuTriggerDiffMemActionPerformed
+  }
 
-  private void menuTriggerExeCodeDiffActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuTriggerExeCodeDiffActionPerformed
+  private void menuTriggerExeCodeDiffActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       if (this.menuTriggerExeCodeDiff.isSelected()) {
@@ -1433,9 +1405,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuTriggerExeCodeDiffActionPerformed
+  }
 
-  private void menuServicemakeSnapshotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuServicemakeSnapshotActionPerformed
+  private void menuServicemakeSnapshotActionPerformed(java.awt.event.ActionEvent evt) {
     stepSemaphor.lock();
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
@@ -1466,18 +1438,18 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       stepSemaphor.unlock();
     }
-  }//GEN-LAST:event_menuServicemakeSnapshotActionPerformed
+  }
 
-  private void menuFileMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_menuFileMenuSelected
+  private void menuFileMenuSelected(javax.swing.event.MenuEvent evt) {
     boolean hasChangedDisk = false;
     for (int i = 0; i < 4; i++) {
       final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
       hasChangedDisk |= (disk != null && disk.isChanged());
     }
     this.menuFileFlushDiskChanges.setEnabled(hasChangedDisk);
-  }//GEN-LAST:event_menuFileMenuSelected
+  }
 
-  private void menuFileFlushDiskChangesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuFileFlushDiskChangesActionPerformed
+  private void menuFileFlushDiskChangesActionPerformed(java.awt.event.ActionEvent evt) {
     for (int i = 0; i < 4; i++) {
       final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
       if (disk != null && disk.isChanged()) {
@@ -1515,9 +1487,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         }
       }
     }
-  }//GEN-LAST:event_menuFileFlushDiskChangesActionPerformed
+  }
 
-  private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+  private void formWindowClosing(java.awt.event.WindowEvent evt) {
     boolean hasChangedDisk = false;
     for (int i = 0; i < 4; i++) {
       final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
@@ -1537,19 +1509,19 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     if (close) {
       System.exit(0);
     }
-  }//GEN-LAST:event_formWindowClosing
+  }
 
-  private void menuLoadDriveMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_menuLoadDriveMenuSelected
+  private void menuLoadDriveMenuSelected(javax.swing.event.MenuEvent evt) {
     final JMenuItem[] disks = new JMenuItem[] {this.menuFileSelectDiskA, this.menuFileSelectDiskB, this.menuFileSelectDiskC, this.menuFileSelectDiskD};
     for (int i = 0; i < 4; i++) {
       final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
       disks[i].setIcon(disk == null ? null : ICO_MDISK);
     }
-  }//GEN-LAST:event_menuLoadDriveMenuSelected
+  }
 
-  private void menuOptionsEnableTrapMouseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuOptionsEnableTrapMouseActionPerformed
+  private void menuOptionsEnableTrapMouseActionPerformed(java.awt.event.ActionEvent evt) {
     this.board.getVideoController().setEnableTrapMouse(this.menuOptionsEnableTrapMouse.isSelected());
-  }//GEN-LAST:event_menuOptionsEnableTrapMouseActionPerformed
+  }
 
   private void activateTracerForCPUModule(final int index) {
     TraceCpuForm form = this.cpuTracers[index];

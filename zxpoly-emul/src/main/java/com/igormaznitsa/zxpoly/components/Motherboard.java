@@ -418,11 +418,13 @@ public final class Motherboard implements ZxPolyConstants {
     return this.modeZxPoly;
   }
 
-  public void setZxPolyMode(final boolean flag) {
+  public void setZxPolyMode(final boolean flag, final boolean doReset) {
     if (this.modeZxPoly != flag) {
       LOGGER.log(Level.INFO, "Motherboard mode changed to " + (flag ? "ZX-POLY" : "ZX128"));
       this.modeZxPoly = flag;
-      this.reset();
+      if (doReset) {
+        this.reset();
+      }
     }
   }
 

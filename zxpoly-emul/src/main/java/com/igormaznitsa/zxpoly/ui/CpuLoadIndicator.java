@@ -17,10 +17,11 @@
 
 package com.igormaznitsa.zxpoly.ui;
 
-import com.igormaznitsa.jbbp.utils.JBBPUtils;
+import static com.igormaznitsa.jbbp.utils.JBBPUtils.assertNotNull;
+
+
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -38,6 +39,7 @@ public final class CpuLoadIndicator extends JPanel {
   private final int gridStep;
   private final Dimension indicatorSize;
   private final BufferedImage buffer;
+  private final Graphics2D bufferGraphics;
   private Color gridColor;
   private int lastY;
 
@@ -45,8 +47,8 @@ public final class CpuLoadIndicator extends JPanel {
     super();
     this.gridStep = Math.max(gridStep, 6);
 
-    JBBPUtils.assertNotNull(background, "Background must not be null");
-    JBBPUtils.assertNotNull(foreground, "Foreground must not be null");
+    assertNotNull(background, "Background must not be null");
+    assertNotNull(foreground, "Foreground must not be null");
 
     super.setBackground(background);
     super.setForeground(foreground);
@@ -61,10 +63,11 @@ public final class CpuLoadIndicator extends JPanel {
     super.setSize(width, height);
 
     this.buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    this.bufferGraphics = buffer.createGraphics();
+    this.bufferGraphics.setStroke(STROKE_INDICATOR);
+    this.bufferGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
     updateForState(0);
-
-    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     clear();
   }
@@ -73,11 +76,9 @@ public final class CpuLoadIndicator extends JPanel {
   public void setBackground(final Color color) {
     super.setBackground(color);
     if (this.buffer != null) {
-      synchronized (this.buffer) {
-        final Graphics2D gfx = this.buffer.createGraphics();
-        gfx.setColor(color);
-        gfx.fillRect(0, 0, this.buffer.getWidth(), this.buffer.getHeight());
-        gfx.dispose();
+      synchronized (this.bufferGraphics) {
+        this.bufferGraphics.setColor(color);
+        this.bufferGraphics.fillRect(0, 0, this.buffer.getWidth(), this.buffer.getHeight());
       }
     }
   }
@@ -91,38 +92,31 @@ public final class CpuLoadIndicator extends JPanel {
   }
 
   public void clear() {
-    synchronized (this.buffer) {
+    synchronized (this.bufferGraphics) {
       this.lastY = getHeight();
-      final Graphics2D gfx = this.buffer.createGraphics();
-      gfx.setColor(this.getBackground());
-      gfx.fillRect(0, 0, this.buffer.getWidth(), this.buffer.getHeight());
-      gfx.dispose();
+      this.bufferGraphics.setColor(this.getBackground());
+      this.bufferGraphics.fillRect(0, 0, this.buffer.getWidth(), this.buffer.getHeight());
     }
   }
 
   public void updateForState(final float loading) {
     final int step = this.gridStep >> 1;
-    synchronized (this.buffer) {
+    synchronized (this.bufferGraphics) {
       final int w = this.buffer.getWidth();
       final int h = this.buffer.getHeight();
 
-      final Graphics2D gfx = this.buffer.createGraphics();
-      gfx.drawImage(this.buffer, -step, 0, null);
-      gfx.setColor(this.getBackground());
-      gfx.fillRect(w - step, 0, step, h);
+      this.bufferGraphics.drawImage(this.buffer, -step, 0, null);
+      this.bufferGraphics.setColor(this.getBackground());
+      this.bufferGraphics.fillRect(w - step, 0, step, h);
 
-      gfx.setColor(this.getForeground());
+      this.bufferGraphics.setColor(this.getForeground());
 
       final int startx = this.buffer.getWidth() - step;
       final int curx = this.buffer.getWidth();
       final int level = h - Math.round(loading * (h - 4)) - 2;
-      gfx.setStroke(STROKE_INDICATOR);
 
-      gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-      gfx.drawLine(startx, this.lastY, curx, level);
+      this.bufferGraphics.drawLine(startx, this.lastY, curx, level);
       this.lastY = level;
-      gfx.dispose();
     }
     repaint();
   }
