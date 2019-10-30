@@ -591,7 +591,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
     labelTurbo = new JIndicatorLabel(ICO_TURBO, ICO_TURBO_DIS, "Turbo-mode is ON", "Turbo-mode is OFF");
     labelMouseUsage = new JIndicatorLabel(ICO_MOUSE, ICO_MOUSE_DIS, "Mouse is catched", "Mouse is not active");
-    labelZX128 = new JIndicatorLabel(ICO_ZX128, ICO_ZX128_DIS, "ZX-Poly mode is OFF", "ZX-Poly mode is ON");
+    labelZX128 = new JIndicatorLabel(ICO_ZX128, ICO_ZX128_DIS, "ZX mode is ON", "ZX mode is OFF");
     labelTapeUsage = new JIndicatorLabel(ICO_TAPE, ICO_TAPE_DIS, "Reading tape", "No IO tape operations");
     labelDiskUsage = new JIndicatorLabel(ICO_DISK, ICO_DISK_DIS, "Some disk operation is active", "No IO disk operations");
     menuBar = new javax.swing.JMenuBar();
@@ -906,7 +906,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptions.add(menuOptionsShowIndicators);
 
     menuOptionsZX128Mode.setSelected(true);
-    menuOptionsZX128Mode.setText("ZX 128 Mode");
+    menuOptionsZX128Mode.setText("ZX Mode");
     menuOptionsZX128Mode.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/zx128.png"))); // NOI18N
     menuOptionsZX128Mode.addActionListener(this::menuOptionsZX128ModeActionPerformed);
     menuOptions.add(menuOptionsZX128Mode);
