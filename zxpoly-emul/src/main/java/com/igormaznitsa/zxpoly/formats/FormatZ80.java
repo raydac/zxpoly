@@ -34,6 +34,8 @@ import java.util.Locale;
 
 public class FormatZ80 extends Snapshot {
 
+  private static final int PAGE_SIZE = 0x4000;
+
   private static final int VERSION_1 = 0;
   private static final int VERSION_2 = 1;
   private static final int VERSION_3A = 2;
@@ -117,9 +119,9 @@ public class FormatZ80 extends Snapshot {
     // save non compressed data blocks
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     for (int i = 0; i < 8; i++) {
-      int addr = i * 0x4000;
-      final byte[] data = new byte[0x4000];
-      for (int x = 0; x < 0x4000; x++) {
+      int addr = i * PAGE_SIZE;
+      final byte[] data = new byte[PAGE_SIZE];
+      for (int x = 0; x < PAGE_SIZE; x++) {
         data[x] = (byte) module.readHeap(addr++);
       }
       new Bank(i + 3, data).writeNonCompressed(bos);
@@ -256,7 +258,7 @@ public class FormatZ80 extends Snapshot {
       case VERSION_1: {
         ((Z80V1Parser) snapshot).setDATA(Bank.decodeRLE(snapshot.getDATA()));
         for (int i = 0; i < snapshot.getDATA().length; i++) {
-          module.writeMemory(cpu, i + 16384, snapshot.getDATA()[i]);
+          module.writeMemory(cpu, i + PAGE_SIZE, snapshot.getDATA()[i]);
         }
       }
       break;
@@ -268,20 +270,20 @@ public class FormatZ80 extends Snapshot {
             int offset = -1;
             switch (b.page) {
               case 4: {
-                offset = 0x8000;
+                offset = PAGE_SIZE * 2;
               }
               break;
               case 5: {
-                offset = 0xC000;
+                offset = PAGE_SIZE * 3;
               }
               break;
               case 8: {
-                offset = 0x4000;
+                offset = PAGE_SIZE;
               }
               break;
             }
             if (offset >= 0) {
-              for (int i = 0; i < 16384; i++) {
+              for (int i = 0; i < PAGE_SIZE; i++) {
                 module.writeMemory(cpu, offset + i, b.data[i]);
               }
             }
@@ -290,8 +292,8 @@ public class FormatZ80 extends Snapshot {
           module.write7FFD(snapshot.getPORT7FFD(), true);
           for (final Bank b : banks) {
             if (b.page >= 3 && b.page <= 10) {
-              final int offset = (b.page - 3) * 0x4000;
-              for (int i = 0; i < 16384; i++) {
+              final int offset = (b.page - 3) * PAGE_SIZE;
+              for (int i = 0; i < PAGE_SIZE; i++) {
                 module.writeHeap(offset + i, b.data[i]);
               }
             }
@@ -454,7 +456,7 @@ public class FormatZ80 extends Snapshot {
       final ByteArrayOutputStream result = new ByteArrayOutputStream(16384);
       if (srclen == 0xFFFF) {
         // non packed
-        int len = 0x4000;
+        int len = PAGE_SIZE;
         while (len > 0) {
           result.write(src[srcoffset++]);
           len--;
@@ -485,9 +487,9 @@ public class FormatZ80 extends Snapshot {
       while (len > 0) {
         final int blocklength = ((data[pos++] & 0xFF)) | ((data[pos++] & 0xFF) << 8);
         final int page = data[pos++] & 0xFF;
-        len -= 3 + (blocklength == 0xFFFF ? 0x4000 : blocklength);
+        len -= 3 + (blocklength == 0xFFFF ? PAGE_SIZE : blocklength);
         final byte[] uncompressed = unpackBank(data, pos, blocklength);
-        pos += (blocklength == 0xFFFF ? 0x4000 : blocklength);
+        pos += (blocklength == 0xFFFF ? PAGE_SIZE : blocklength);
         banks.add(new Bank(page, uncompressed));
       }
       return banks.toArray(new Bank[0]);
