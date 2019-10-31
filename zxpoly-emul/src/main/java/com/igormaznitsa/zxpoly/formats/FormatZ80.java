@@ -289,7 +289,7 @@ public class FormatZ80 extends Snapshot {
         } else {
           module.write7FFD(snapshot.getPORT7FFD(), true);
           for (final Bank b : banks) {
-            if (b.page >= 3 && b.page < 10) {
+            if (b.page >= 3 && b.page <= 10) {
               final int offset = (b.page - 3) * 0x4000;
               for (int i = 0; i < 16384; i++) {
                 module.writeHeap(offset + i, b.data[i]);
