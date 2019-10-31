@@ -462,15 +462,31 @@ public class FormatZ80 extends Snapshot {
           len--;
         }
       } else {
+        // RLE packed
+        // 0xED 0xED repeat value
+        // 0x00 0xED 0xED 0x00 - END marker
         while (srclen > 0) {
-          if (srclen >= 4 && src[srcoffset] == (byte) 0xED && src[srcoffset + 1] == (byte) 0xED) {
-            srcoffset += 2;
-            final int len = src[srcoffset++] & 0xFF;
-            final int value = src[srcoffset++] & 0xFF;
-            for (int i = len; i > 0; i--) {
-              result.write(value);
+          if (src[srcoffset] == (byte) 0x00
+              && src[srcoffset + 1] == (byte) 0xED
+              && src[srcoffset + 2] == (byte) 0xED
+              && src[srcoffset + 3] == (byte) 0x00) {
+            break;
+          }
+
+          if (srclen >= 4) {
+            if (src[srcoffset] == (byte) 0xED && src[srcoffset + 1] == (byte) 0xED) {
+              srcoffset += 2;
+              int repeat = src[srcoffset++] & 0xFF;
+              final int value = src[srcoffset++] & 0xFF;
+              srclen -= 4;
+              while (repeat > 0) {
+                result.write(value);
+                repeat--;
+              }
+            } else {
+              result.write(src[srcoffset++]);
+              srclen--;
             }
-            srclen -= 4;
           } else {
             result.write(src[srcoffset++]);
             srclen--;
