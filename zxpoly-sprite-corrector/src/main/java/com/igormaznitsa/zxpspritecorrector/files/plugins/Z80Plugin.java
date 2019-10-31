@@ -372,7 +372,7 @@ public class Z80Plugin extends AbstractFilePlugin {
         } else {
           data = new byte[0x4000 * 8];
           for (final Bank b : current.banks) {
-            if (b.page >= 3 && b.page < 10) {
+            if (b.page >= 3 && b.page <= 10) {
               final int offset = (b.page - 3) * 0x4000;
               for (int i = 0; i < 16384; i++) {
                 data[offset + i] = b.data[i];
