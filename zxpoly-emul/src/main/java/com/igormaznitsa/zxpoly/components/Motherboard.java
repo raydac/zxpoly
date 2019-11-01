@@ -24,6 +24,7 @@ import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -44,6 +45,8 @@ public final class Motherboard implements ZxPolyConstants {
 
   private final ZxPolyModule[] modules;
   private final IoDevice[] ioDevices;
+  private final IoDevice[] ioDevicesPreStep;
+  private final IoDevice[] ioDevicesPostStep;
   private final AtomicIntegerArray ram = new AtomicIntegerArray(512 * 1024);
   private final VideoController video;
   private final KeyboardKempstonAndTapeIn keyboard;
@@ -83,6 +86,8 @@ public final class Motherboard implements ZxPolyConstants {
     iodevices.add(video);
     iodevices.add(new KempstonMouse(this));
     this.ioDevices = iodevices.toArray(new IoDevice[0]);
+    this.ioDevicesPreStep = Arrays.stream(this.ioDevices).filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_PRESTEP) != 0).toArray(IoDevice[]::new);
+    this.ioDevicesPostStep = Arrays.stream(this.ioDevices).filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_POSTSTEP) != 0).toArray(IoDevice[]::new);
 
     // simulation of garbage in memory after power on
     final Random rnd = new Random();
@@ -237,10 +242,8 @@ public final class Motherboard implements ZxPolyConstants {
         }
       }
 
-      final IoDevice[] devices = this.ioDevices;
-      final int numOfIoDevices = devices.length;
-      for (int i = 0; i < numOfIoDevices; i++) {
-        devices[i].preStep(signalReset, signalInt);
+      for (final IoDevice device : this.ioDevicesPreStep) {
+        device.preStep(signalReset, signalInt);
       }
 
       final long initialMachineCycleCounter = modules[0].getCpu().getMachineCycles();
@@ -319,8 +322,9 @@ public final class Motherboard implements ZxPolyConstants {
 
       final long spentMachineCycles = modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
 
-      for (int i = 0; i < numOfIoDevices; i++) {
-        devices[i].postStep(spentMachineCycles);
+
+      for (final IoDevice device : this.ioDevicesPostStep) {
+        device.postStep(spentMachineCycles);
       }
 
       final int curTriggers = this.triggers;

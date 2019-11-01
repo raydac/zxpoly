@@ -243,7 +243,7 @@ public class FormatZ80 extends Snapshot {
     cpu.setRegister(Z80.REG_IX, snapshot.getREG_IX());
     cpu.setRegister(Z80.REG_IY, snapshot.getREG_IY());
 
-    cpu.setRegister(Z80.REG_R, snapshot.getREG_R());
+    cpu.setRegister(Z80.REG_R, snapshot.getREG_R() | (snapshot.getFLAGS().getREG_R_BIT7() << 7));
     cpu.setRegister(Z80.REG_SP, snapshot.getREG_SP());
 
     if (version == VERSION_1) {
@@ -269,7 +269,7 @@ public class FormatZ80 extends Snapshot {
 
       if (mode48) {
         for (final Bank b : banks) {
-          int offset = -1;
+          final int offset;
           switch (b.page) {
             case 4: {
               offset = PAGE_SIZE * 2;

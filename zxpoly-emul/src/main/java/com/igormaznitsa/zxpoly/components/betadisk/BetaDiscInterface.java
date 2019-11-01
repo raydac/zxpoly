@@ -127,6 +127,11 @@ public class BetaDiscInterface implements IoDevice {
   }
 
   @Override
+  public int getNotificationFlags() {
+    return NOTIFICATION_POSTSTEP | NOTIFICATION_PRESTEP;
+  }
+
+  @Override
   public void preStep(final boolean signalReset, final boolean signalInt) {
     if (signalReset) {
       doReset();

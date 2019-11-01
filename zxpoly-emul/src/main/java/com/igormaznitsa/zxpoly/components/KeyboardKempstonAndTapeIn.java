@@ -96,6 +96,11 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   @Override
+  public int getNotificationFlags() {
+    return NOTIFICATION_PRESTEP | NOTIFICATION_POSTSTEP;
+  }
+
+  @Override
   public void preStep(final boolean signalReset, final boolean signalInt) {
     if (signalReset) {
       doReset();

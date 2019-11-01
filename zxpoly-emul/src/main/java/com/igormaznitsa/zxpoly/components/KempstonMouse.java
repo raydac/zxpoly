@@ -208,6 +208,11 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
   }
 
   @Override
+  public int getNotificationFlags() {
+    return NOTIFICATION_PRESTEP;
+  }
+
+  @Override
   public void doReset() {
     this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
     this.coordX.set(0x80);

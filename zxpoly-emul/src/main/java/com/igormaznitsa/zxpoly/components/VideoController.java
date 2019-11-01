@@ -744,6 +744,11 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   }
 
   @Override
+  public int getNotificationFlags() {
+    return NOTIFICATION_PRESTEP;
+  }
+
+  @Override
   public void preStep(final boolean signalReset, final boolean signalInt) {
     if (signalReset) {
       this.portFEw = 0x00;

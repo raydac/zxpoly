@@ -19,6 +19,10 @@ package com.igormaznitsa.zxpoly.components;
 
 public interface IoDevice extends ZxPolyConstants {
 
+  int NOTIFICATION_NONE = 0;
+  int NOTIFICATION_PRESTEP = 1;
+  int NOTIFICATION_POSTSTEP = 2;
+
   Motherboard getMotherboard();
 
   /**
@@ -39,4 +43,6 @@ public interface IoDevice extends ZxPolyConstants {
   String getName();
 
   void doReset();
+
+  int getNotificationFlags();
 }

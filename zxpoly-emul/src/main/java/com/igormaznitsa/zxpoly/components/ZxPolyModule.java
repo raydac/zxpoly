@@ -561,6 +561,11 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
+  public int getNotificationFlags() {
+    return NOTIFICATION_PRESTEP;
+  }
+
+  @Override
   public void preStep(final boolean signalReset, final boolean signalInt) {
     if (signalReset) {
       setStateForSystemReset();
