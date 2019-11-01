@@ -256,7 +256,7 @@ public class FormatZ80 extends Snapshot {
 
     switch (version) {
       case VERSION_1: {
-        ((Z80V1Parser) snapshot).setDATA(Bank.decodeRLE(snapshot.getDATA()));
+        ((Z80V1Parser) snapshot).setDATA(Bank.decodeRLE(snapshot.getDATA(), 0, snapshot.getDATA().length));
         for (int i = 0; i < snapshot.getDATA().length; i++) {
           module.writeMemory(cpu, i + PAGE_SIZE, snapshot.getDATA()[i]);
         }
@@ -424,76 +424,50 @@ public class FormatZ80 extends Snapshot {
       this.data = data;
     }
 
-    static byte[] decodeRLE(final byte[] data) {
-      final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length << 1);
-      int i = 0;
-
-      final int len = data.length - 4;
-
-      while (i < len) {
-        final int a = data[i++] & 0xFF;
-        if (a == 0xED) {
-          final int b = data[i++] & 0xFF;
-          if (b == 0xED) {
-            int num = data[i++] & 0xFF;
-            final int val = data[i++] & 0xFF;
-            while (num > 0) {
-              baos.write(val);
-              num--;
-            }
-          } else {
-            baos.write(a);
-            baos.write(b);
-          }
-        } else {
-          baos.write(a);
-        }
-      }
-      return baos.toByteArray();
-    }
-
-    static byte[] unpackBank(final byte[] src, int srcoffset, int srclen) {
-      final ByteArrayOutputStream result = new ByteArrayOutputStream(16384);
-      if (srclen == 0xFFFF) {
-        // non packed
-        int len = PAGE_SIZE;
-        while (len > 0) {
-          result.write(src[srcoffset++]);
-          len--;
-        }
-      } else {
-        // RLE packed
-        // 0xED 0xED repeat value
-        // 0x00 0xED 0xED 0x00 - END marker
-        while (srclen > 0) {
-          if (src[srcoffset] == (byte) 0x00
-              && src[srcoffset + 1] == (byte) 0xED
-              && src[srcoffset + 2] == (byte) 0xED
-              && src[srcoffset + 3] == (byte) 0x00) {
+    static byte[] decodeRLE(final byte[] source, int offset, int length) {
+      // RLE packed
+      // 0xED 0xED repeat value
+      // 0x00 0xED 0xED 0x00 - END marker
+      final ByteArrayOutputStream result = new ByteArrayOutputStream(PAGE_SIZE);
+      while (length > 0) {
+        if (length >= 4) {
+          if (source[offset] == (byte) 0x00
+              && source[offset + 1] == (byte) 0xED
+              && source[offset + 2] == (byte) 0xED
+              && source[offset + 3] == (byte) 0x00) {
             break;
           }
 
-          if (srclen >= 4) {
-            if (src[srcoffset] == (byte) 0xED && src[srcoffset + 1] == (byte) 0xED) {
-              srcoffset += 2;
-              int repeat = src[srcoffset++] & 0xFF;
-              final int value = src[srcoffset++] & 0xFF;
-              srclen -= 4;
-              while (repeat > 0) {
-                result.write(value);
-                repeat--;
-              }
-            } else {
-              result.write(src[srcoffset++]);
-              srclen--;
+          if (source[offset] == (byte) 0xED && source[offset + 1] == (byte) 0xED) {
+            offset += 2;
+            int repeat = source[offset++] & 0xFF;
+            final int value = source[offset++] & 0xFF;
+            length -= 4;
+            while (repeat > 0) {
+              result.write(value);
+              repeat--;
             }
           } else {
-            result.write(src[srcoffset++]);
-            srclen--;
+            result.write(source[offset++]);
+            length--;
           }
+        } else {
+          result.write(source[offset++]);
+          length--;
         }
       }
       return result.toByteArray();
+    }
+
+    static byte[] unpackBank(final byte[] src, int offset, int length) {
+      final byte[] result;
+      if (length == 0xFFFF) {
+        result = new byte[PAGE_SIZE];
+        System.arraycopy(src, offset, result, 0, PAGE_SIZE);
+      } else {
+        result = decodeRLE(src, offset, length);
+      }
+      return result;
     }
 
     static Bank[] toBanks(final byte[] data) {
