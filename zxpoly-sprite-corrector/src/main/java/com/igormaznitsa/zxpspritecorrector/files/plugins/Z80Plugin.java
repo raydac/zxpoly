@@ -166,38 +166,34 @@ public class Z80Plugin extends AbstractFilePlugin {
 
   private static byte[] convertZ80BankIndexesToPages(final byte[] bankIndexes, final boolean mode48, final int version) {
     final byte[] result;
-    switch (version) {
-      case VERSION_1: {
-        result = new byte[] {5, 2, 0};
-      }
-      break;
-      default: {
-        if (mode48) {
-          result = new byte[bankIndexes.length];
-          for (int i = 0; i < bankIndexes.length; i++) {
-            final int pageIndex;
-            switch (bankIndexes[i] & 0xFF) {
-              case 8:
-                pageIndex = 5;
-                break;
-              case 4:
-                pageIndex = 2;
-                break;
-              case 5:
-                pageIndex = 0;
-                break;
-              default:
-                throw new IllegalArgumentException("Unexpected bank index for Z80 48K mode: " + bankIndexes[i]);
-            }
-            result[i] = (byte) pageIndex;
+    if (version == VERSION_1) {
+      result = new byte[] {5, 2, 0};
+    } else {
+      if (mode48) {
+        result = new byte[bankIndexes.length];
+        for (int i = 0; i < bankIndexes.length; i++) {
+          final int pageIndex;
+          switch (bankIndexes[i] & 0xFF) {
+            case 8:
+              pageIndex = 0;
+              break;
+            case 4:
+              pageIndex = 5;
+              break;
+            case 5:
+              pageIndex = 2;
+              break;
+            default:
+              throw new IllegalArgumentException("Unexpected bank index for Z80 48K mode: " + bankIndexes[i]);
           }
-        } else {
-          result = new byte[bankIndexes.length];
-          for (int i = 0; i < bankIndexes.length; i++) {
-            final int page = (bankIndexes[i] & 0xFF) - 3;
-            if (page >= 0 && page < 8) {
-              result[i] = (byte) page;
-            }
+          result[i] = (byte) pageIndex;
+        }
+      } else {
+        result = new byte[bankIndexes.length];
+        for (int i = 0; i < bankIndexes.length; i++) {
+          final int page = (bankIndexes[i] & 0xFF) - 3;
+          if (page >= 0 && page < 8) {
+            result[i] = (byte) page;
           }
         }
       }
