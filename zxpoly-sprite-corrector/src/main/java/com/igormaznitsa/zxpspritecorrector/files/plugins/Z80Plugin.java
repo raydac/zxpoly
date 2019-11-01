@@ -44,6 +44,8 @@ import org.apache.commons.io.FileUtils;
 
 public class Z80Plugin extends AbstractFilePlugin {
 
+  private static final int PAGE_SIZE = 0x4000;
+
   private static final int VERSION_1 = 0;
   private static final int VERSION_2 = 1;
   private static final int VERSION_3A = 2;
@@ -173,17 +175,21 @@ public class Z80Plugin extends AbstractFilePlugin {
         if (mode48) {
           result = new byte[bankIndexes.length];
           for (int i = 0; i < bankIndexes.length; i++) {
+            final int pageIndex;
             switch (bankIndexes[i] & 0xFF) {
               case 8:
-                result[i] = 5;
+                pageIndex = 5;
                 break;
               case 4:
-                result[i] = 2;
+                pageIndex = 2;
+                break;
+              case 5:
+                pageIndex = 0;
                 break;
               default:
-                result[i] = 0;
-                break;
+                throw new IllegalArgumentException("Unexpected bank index for Z80 48K mode: " + bankIndexes[i]);
             }
+            result[i] = (byte) pageIndex;
           }
         } else {
           result = new byte[bankIndexes.length];
@@ -200,8 +206,8 @@ public class Z80Plugin extends AbstractFilePlugin {
   }
 
   private static Page makePage(final int cpu, final int page, final ZXPolyData data, final int offset) throws IOException {
-    final byte[] bankData = new byte[0x4000];
-    System.arraycopy(data.getDataForCPU(cpu), offset, bankData, 0, 0x4000);
+    final byte[] bankData = new byte[PAGE_SIZE];
+    System.arraycopy(data.getDataForCPU(cpu), offset, bankData, 0, PAGE_SIZE);
     return new Page(page, bankData);
   }
 
@@ -346,16 +352,16 @@ public class Z80Plugin extends AbstractFilePlugin {
         headerLength = 30 + current.extrahdrlen;
         startAddress = current.reg_pc2;
         if (mode48) {
-          data = new byte[0x4000 * 3];
+          data = new byte[PAGE_SIZE * 3];
           for (final Bank b : current.banks) {
             int offset = -1;
             switch (b.page) {
               case 4: {
-                offset = 0x4000;
+                offset = PAGE_SIZE;
               }
               break;
               case 5: {
-                offset = 0x8000;
+                offset = PAGE_SIZE * 2;
               }
               break;
               case 8: {
@@ -364,17 +370,17 @@ public class Z80Plugin extends AbstractFilePlugin {
               break;
             }
             if (offset >= 0) {
-              for (int i = 0; i < 16384; i++) {
+              for (int i = 0; i < PAGE_SIZE; i++) {
                 data[offset + i] = b.data[i];
               }
             }
           }
         } else {
-          data = new byte[0x4000 * 8];
+          data = new byte[PAGE_SIZE * 8];
           for (final Bank b : current.banks) {
             if (b.page >= 3 && b.page <= 10) {
-              final int offset = (b.page - 3) * 0x4000;
-              for (int i = 0; i < 16384; i++) {
+              final int offset = (b.page - 3) * PAGE_SIZE;
+              for (int i = 0; i < PAGE_SIZE; i++) {
                 data[offset + i] = b.data[i];
               }
             }
@@ -393,7 +399,7 @@ public class Z80Plugin extends AbstractFilePlugin {
       }
     }
     System.arraycopy(array, 0, extra, bankIndex, headerLength);
-    return new ReadResult(new ZXPolyData(new Info(file.getName(), 'C', startAddress, data.length, 0x4000, extra), this, data), null);
+    return new ReadResult(new ZXPolyData(new Info(file.getName(), 'C', startAddress, data.length, PAGE_SIZE, extra), this, data), null);
   }
 
   @Override
@@ -495,7 +501,7 @@ public class Z80Plugin extends AbstractFilePlugin {
       final List<Page> pages = new ArrayList<>();
       int offsetIndex = 0;
       for (final byte page : pageIndexes) {
-        pages.add(makePage(cpu, page & 0xFF, data, offsetIndex * 0x4000));
+        pages.add(makePage(cpu, page & 0xFF, data, offsetIndex * PAGE_SIZE));
         offsetIndex++;
       }
       block.setPages(cpu, new Pages(pages.toArray(new Page[0])));
@@ -522,6 +528,52 @@ public class Z80Plugin extends AbstractFilePlugin {
       this.version = version;
     }
 
+    static byte[] decodeRLE(final byte[] source, int offset, int length) {
+      // RLE packed
+      // 0xED 0xED repeat value
+      // 0x00 0xED 0xED 0x00 - END marker
+      final ByteArrayOutputStream result = new ByteArrayOutputStream(PAGE_SIZE);
+      while (length > 0) {
+        if (length >= 4) {
+          if (source[offset] == (byte) 0x00
+              && source[offset + 1] == (byte) 0xED
+              && source[offset + 2] == (byte) 0xED
+              && source[offset + 3] == (byte) 0x00) {
+            break;
+          }
+
+          if (source[offset] == (byte) 0xED && source[offset + 1] == (byte) 0xED) {
+            offset += 2;
+            int repeat = source[offset++] & 0xFF;
+            final int value = source[offset++] & 0xFF;
+            length -= 4;
+            while (repeat > 0) {
+              result.write(value);
+              repeat--;
+            }
+          } else {
+            result.write(source[offset++]);
+            length--;
+          }
+        } else {
+          result.write(source[offset++]);
+          length--;
+        }
+      }
+      return result.toByteArray();
+    }
+
+    static byte[] unpackBank(final byte[] src, int offset, int length) {
+      final byte[] result;
+      if (length == 0xFFFF) {
+        result = new byte[PAGE_SIZE];
+        System.arraycopy(src, offset, result, 0, PAGE_SIZE);
+      } else {
+        result = decodeRLE(src, offset, length);
+      }
+      return result;
+    }
+
     @Override
     public Object prepareObjectForMapping(JBBPFieldStruct parsedBlock, Bin annotation, Field field) {
       if (this.version == VERSION_1) {
@@ -529,32 +581,7 @@ public class Z80Plugin extends AbstractFilePlugin {
           final byte[] data = parsedBlock.findFieldForNameAndType("data", JBBPFieldArrayByte.class).getArray();
 
           if (parsedBlock.findFieldForPathAndType("flags.compressed", JBBPFieldBit.class).getAsBool()) {
-            // RLE compressed
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length << 1);
-            int i = 0;
-
-            final int len = data.length - 4;
-
-            while (i < len) {
-              final int a = data[i++] & 0xFF;
-              if (a == 0xED) {
-                final int b = data[i++] & 0xFF;
-                if (b == 0xED) {
-                  int num = data[i++] & 0xFF;
-                  final int val = data[i++] & 0xFF;
-                  while (num > 0) {
-                    baos.write(val);
-                    num--;
-                  }
-                } else {
-                  baos.write(a);
-                  baos.write(b);
-                }
-              } else {
-                baos.write(a);
-              }
-            }
-            return baos.toByteArray();
+            return decodeRLE(data, 0, data.length);
           } else {
             // uncompressed
             return data;
@@ -573,9 +600,9 @@ public class Z80Plugin extends AbstractFilePlugin {
           while (len > 0) {
             final int blocklength = ((rawdata[pos++] & 0xFF)) | ((rawdata[pos++] & 0xFF) << 8);
             final int page = rawdata[pos++] & 0xFF;
-            len -= 3 + (blocklength == 0xFFFF ? 0x4000 : blocklength);
-            final byte[] uncompressed = unpack(rawdata, pos, blocklength);
-            pos += blocklength == 0xFFFF ? 0x4000 : blocklength;
+            len -= 3 + (blocklength == 0xFFFF ? PAGE_SIZE : blocklength);
+            final byte[] uncompressed = unpackBank(rawdata, pos, blocklength);
+            pos += blocklength == 0xFFFF ? PAGE_SIZE : blocklength;
             banks.add(new Bank(page, uncompressed));
           }
           return banks.toArray(new Bank[0]);
@@ -585,33 +612,6 @@ public class Z80Plugin extends AbstractFilePlugin {
       }
     }
 
-    private byte[] unpack(final byte[] src, int srcoffset, int srclen) {
-      final ByteArrayOutputStream result = new ByteArrayOutputStream(0x4000);
-      if (srclen == 0xFFFF) {
-        // non packed
-        int len = 0x4000;
-        while (len > 0) {
-          result.write(src[srcoffset++]);
-          len--;
-        }
-      } else {
-        while (srclen > 0) {
-          if (srclen >= 4 && src[srcoffset] == (byte) 0xED && src[srcoffset + 1] == (byte) 0xED) {
-            srcoffset += 2;
-            final int len = src[srcoffset++] & 0xFF;
-            final int value = src[srcoffset++] & 0xFF;
-            for (int i = len; i > 0; i--) {
-              result.write(value);
-            }
-            srclen -= 4;
-          } else {
-            result.write(src[srcoffset++]);
-            srclen--;
-          }
-        }
-      }
-      return result.toByteArray();
-    }
   }
 
   public static class EmulFlags {

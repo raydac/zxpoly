@@ -37,55 +37,55 @@ public class ZXEMLSnapshotFormat {
       + "short [4] reg_pc; short [4] reg_sp;"
       + "pages [4]{ubyte number; page[number]{ubyte index; byte [16384] data;}}");
   @Bin(outOrder = 1, type = BinType.INT)
-  private int magic = MAGIC;
+  public int magic = MAGIC;
   @Bin(outOrder = 2, type = BinType.INT)
-  private int flags;
+  public int flags;
   @Bin(outOrder = 3, type = BinType.UBYTE)
-  private int port3D00;
+  public int port3D00;
   @Bin(outOrder = 4, type = BinType.UBYTE)
-  private int portFE;
+  public int portFE;
   @Bin(outOrder = 5, type = BinType.BYTE_ARRAY)
-  private byte[] cpu0ports = new byte[5];
+  public byte[] cpu0ports = new byte[5];
   @Bin(outOrder = 6, type = BinType.BYTE_ARRAY)
-  private byte[] cpu1ports = new byte[5];
+  public byte[] cpu1ports = new byte[5];
   @Bin(outOrder = 7, type = BinType.BYTE_ARRAY)
-  private byte[] cpu2ports = new byte[5];
+  public byte[] cpu2ports = new byte[5];
   @Bin(outOrder = 8, type = BinType.BYTE_ARRAY)
-  private byte[] cpu3ports = new byte[5];
+  public byte[] cpu3ports = new byte[5];
   @Bin(outOrder = 9, type = BinType.SHORT_ARRAY)
-  private short[] reg_af = new short[4];
+  public short[] reg_af = new short[4];
   @Bin(outOrder = 10, type = BinType.SHORT_ARRAY)
-  private short[] reg_af_alt = new short[4];
+  public short[] reg_af_alt = new short[4];
   @Bin(outOrder = 11, type = BinType.SHORT_ARRAY)
-  private short[] reg_bc = new short[4];
+  public short[] reg_bc = new short[4];
   @Bin(outOrder = 12, type = BinType.SHORT_ARRAY)
-  private short[] reg_bc_alt = new short[4];
+  public short[] reg_bc_alt = new short[4];
   @Bin(outOrder = 13, type = BinType.SHORT_ARRAY)
-  private short[] reg_de = new short[4];
+  public short[] reg_de = new short[4];
   @Bin(outOrder = 14, type = BinType.SHORT_ARRAY)
-  private short[] reg_de_alt = new short[4];
+  public short[] reg_de_alt = new short[4];
   @Bin(outOrder = 15, type = BinType.SHORT_ARRAY)
-  private short[] reg_hl = new short[4];
+  public short[] reg_hl = new short[4];
   @Bin(outOrder = 16, type = BinType.SHORT_ARRAY)
-  private short[] reg_hl_alt = new short[4];
+  public short[] reg_hl_alt = new short[4];
   @Bin(outOrder = 17, type = BinType.SHORT_ARRAY)
-  private short[] reg_ix = new short[4];
+  public short[] reg_ix = new short[4];
   @Bin(outOrder = 18, type = BinType.SHORT_ARRAY)
-  private short[] reg_iy = new short[4];
+  public short[] reg_iy = new short[4];
   @Bin(outOrder = 19, type = BinType.SHORT_ARRAY)
-  private short[] reg_ir = new short[4];
+  public short[] reg_ir = new short[4];
   @Bin(outOrder = 20, type = BinType.BYTE_ARRAY)
-  private byte[] reg_im = new byte[4];
+  public byte[] reg_im = new byte[4];
   @Bin(outOrder = 21, type = BinType.BOOL_ARRAY)
-  private boolean[] iff = new boolean[4];
+  public boolean[] iff = new boolean[4];
   @Bin(outOrder = 22, type = BinType.BOOL_ARRAY)
-  private boolean[] iff2 = new boolean[4];
+  public boolean[] iff2 = new boolean[4];
   @Bin(outOrder = 23, type = BinType.SHORT_ARRAY)
-  private short[] reg_pc = new short[4];
+  public short[] reg_pc = new short[4];
   @Bin(outOrder = 24, type = BinType.SHORT_ARRAY)
-  private short[] reg_sp = new short[4];
+  public short[] reg_sp = new short[4];
   @Bin(outOrder = 25, type = BinType.STRUCT_ARRAY)
-  private Pages[] pages = new Pages[] {
+  public Pages[] pages = new Pages[] {
       new Pages(new Page[] {new Page(0, new byte[16384])}),
       new Pages(new Page[] {new Page(0, new byte[16384])}),
       new Pages(new Page[] {new Page(0, new byte[16384])}),
@@ -305,9 +305,9 @@ public class ZXEMLSnapshotFormat {
   public static class Page {
 
     @Bin(outOrder = 1, type = BinType.UBYTE)
-    private int index;
+    public int index;
     @Bin(outOrder = 2, type = BinType.BYTE_ARRAY)
-    private byte[] data;
+    public byte[] data;
 
     public Page(final int index, final byte[] data) {
       if (index < 0 || index > 7) {
@@ -332,9 +332,9 @@ public class ZXEMLSnapshotFormat {
   public static class Pages {
 
     @Bin(outOrder = 1, type = BinType.UBYTE)
-    private int number;
+    public int number;
     @Bin(outOrder = 2, type = BinType.STRUCT_ARRAY)
-    private Page[] page;
+    public Page[] page;
 
     public Pages(final Page[] page) {
       this.number = page.length;
