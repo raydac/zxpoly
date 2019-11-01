@@ -26,11 +26,15 @@ import com.igormaznitsa.zxpoly.components.VideoController;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Logger;
 import javax.swing.filechooser.FileFilter;
 
 public abstract class Snapshot extends FileFilter {
 
+  protected static final Logger LOGGER = Logger.getLogger("SNPSHT");
+
   public void doMode48(final Motherboard board) {
+    LOGGER.info("Mode ZX-48");
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
     stream(board.getModules()).forEach(ZxPolyModule::lockZx48Mode);
     board.setZxPolyMode(false, false);
@@ -38,6 +42,7 @@ public abstract class Snapshot extends FileFilter {
   }
 
   public void doMode128(final Motherboard board) {
+    LOGGER.info("Mode ZX-128");
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
     board.setZxPolyMode(false, false);
     board.getMasterCpu().doReset();

@@ -183,9 +183,11 @@ public class FormatZ80 extends Snapshot {
     // check hardware mode
     switch (version) {
       case VERSION_1: {
+        LOGGER.info("Z80 snapshot v1 " + (snapshot.getFLAGS().getCOMPRESSED() == 0 ? "" : "(compressed)"));
       }
       break;
       case VERSION_2: {
+        LOGGER.info("Z80 snapshot v2" + (snapshot.getFLAGS().getCOMPRESSED() == 0 ? "" : "(compressed)"));
         switch (snapshot.getMODE()) {
           case 0:
           case 1:
@@ -199,6 +201,7 @@ public class FormatZ80 extends Snapshot {
       break;
       case VERSION_3A:
       case VERSION_3B: {
+        LOGGER.info("Z80 snapshot v3" + (version == VERSION_3A ? "A" : "B") + (snapshot.getFLAGS().getCOMPRESSED() == 0 ? "" : "(compressed)"));
         switch (snapshot.getMODE()) {
           case 0:
           case 1:
@@ -212,6 +215,8 @@ public class FormatZ80 extends Snapshot {
         }
       }
       break;
+      default:
+        throw new IllegalArgumentException("Unexpected Z80 snaphshot version: " + version);
     }
 
     final boolean mode48 = is48k(version, snapshot);
@@ -254,53 +259,48 @@ public class FormatZ80 extends Snapshot {
 
     final ZxPolyModule module = board.getModules()[0];
 
-    switch (version) {
-      case VERSION_1: {
-        ((Z80V1Parser) snapshot).setDATA(Bank.decodeRLE(snapshot.getDATA(), 0, snapshot.getDATA().length));
-        for (int i = 0; i < snapshot.getDATA().length; i++) {
-          module.writeMemory(cpu, i + PAGE_SIZE, snapshot.getDATA()[i]);
-        }
+    if (version == VERSION_1) {
+      ((Z80V1Parser) snapshot).setDATA(snapshot.getFLAGS().getCOMPRESSED() == 0 ? snapshot.getDATA() : Bank.decodeRLE(snapshot.getDATA(), 0, snapshot.getDATA().length));
+      for (int i = 0; i < snapshot.getDATA().length; i++) {
+        module.writeMemory(cpu, i + PAGE_SIZE, snapshot.getDATA()[i]);
       }
-      break;
-      default: {
-        final Bank[] banks = Bank.toBanks(snapshot.getDATA());
+    } else {
+      final Bank[] banks = Bank.toBanks(snapshot.getDATA());
 
-        if (mode48) {
-          for (final Bank b : banks) {
-            int offset = -1;
-            switch (b.page) {
-              case 4: {
-                offset = PAGE_SIZE * 2;
-              }
-              break;
-              case 5: {
-                offset = PAGE_SIZE * 3;
-              }
-              break;
-              case 8: {
-                offset = PAGE_SIZE;
-              }
-              break;
+      if (mode48) {
+        for (final Bank b : banks) {
+          int offset = -1;
+          switch (b.page) {
+            case 4: {
+              offset = PAGE_SIZE * 2;
             }
-            if (offset >= 0) {
-              for (int i = 0; i < PAGE_SIZE; i++) {
-                module.writeMemory(cpu, offset + i, b.data[i]);
-              }
+            break;
+            case 5: {
+              offset = PAGE_SIZE * 3;
             }
+            break;
+            case 8: {
+              offset = PAGE_SIZE;
+            }
+            break;
+            default:
+              throw new IllegalArgumentException("Detected unexpected bank page index: " + b.page);
           }
-        } else {
-          module.write7FFD(snapshot.getPORT7FFD(), true);
-          for (final Bank b : banks) {
-            if (b.page >= 3 && b.page <= 10) {
-              final int offset = (b.page - 3) * PAGE_SIZE;
-              for (int i = 0; i < PAGE_SIZE; i++) {
-                module.writeHeap(offset + i, b.data[i]);
-              }
+          for (int i = 0; i < PAGE_SIZE; i++) {
+            module.writeMemory(cpu, offset + i, b.data[i]);
+          }
+        }
+      } else {
+        module.write7FFD(snapshot.getPORT7FFD(), true);
+        for (final Bank b : banks) {
+          if (b.page >= 3 && b.page <= 10) {
+            final int offset = (b.page - 3) * PAGE_SIZE;
+            for (int i = 0; i < PAGE_SIZE; i++) {
+              module.writeHeap(offset + i, b.data[i]);
             }
           }
         }
       }
-      break;
     }
 
     vc.setBorderColor(snapshot.getFLAGS().getBORDERCOLOR());
@@ -435,10 +435,8 @@ public class FormatZ80 extends Snapshot {
               && source[offset + 1] == (byte) 0xED
               && source[offset + 2] == (byte) 0xED
               && source[offset + 3] == (byte) 0x00) {
-            break;
-          }
-
-          if (source[offset] == (byte) 0xED && source[offset + 1] == (byte) 0xED) {
+            length = 0;
+          } else if (source[offset] == (byte) 0xED && source[offset + 1] == (byte) 0xED) {
             offset += 2;
             int repeat = source[offset++] & 0xFF;
             final int value = source[offset++] & 0xFF;
