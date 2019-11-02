@@ -17,7 +17,11 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import static java.lang.System.arraycopy;
+
+
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -54,23 +58,29 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     return result;
   }
 
+  private int readKeyboardAndTap(final int port, final TapeFileReader tapeFileReader) {
+    final int tapbit = tapeFileReader == null ? 0 : tapeFileReader.getSignal() ? TAP_BIT : 0;
+    return (getKbdValueForLines(port >>> 8) & ~TAP_BIT) | tapbit;
+  }
+
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
     int result = -1;
     if (!module.isTrdosActive()) {
-      switch (port & 0xFF) {
-        case 0xFE: {
-          // KEYBOARD
-          final TapeFileReader thetap = getTap();
-          final int tapbit = thetap == null ? 0 : thetap.getSignal() ? TAP_BIT : 0;
-          result = (getKbdValueForLines(port >>> 8) & ~TAP_BIT) | tapbit;
+      final int normalizedPort = port & 0xFF;
+
+      if ((normalizedPort & 1) == 0) {
+        if (module.getMotherboard().isZxPolyMode()) {
+          if (normalizedPort == 0xFE) {
+            result = readKeyboardAndTap(port, this.getTap());
+          }
+        } else {
+          result = readKeyboardAndTap(port, this.getTap());
         }
-        break;
-        case 0x1F: {
-          // KEMPSTON
+      } else {
+        if (normalizedPort == 0x1F) {// KEMPSTON
           result = this.kempstonBuffer;
         }
-        break;
       }
     }
     return result;
@@ -88,9 +98,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   @Override
   public void doReset() {
     synchronized (this.keyboardLines) {
-      for (int i = 0; i < this.keyboardLines.length; i++) {
-        this.keyboardLines[i] = 0x1F;
-      }
+      Arrays.fill(this.keyboardLines, 0x1F);
     }
     this.kempstonSignals.set(0);
   }
@@ -106,9 +114,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
       doReset();
     }
     synchronized (this.keyboardLines) {
-      for (int i = 0; i < 8; i++) {
-        this.bufferKeyboardLines[i] = this.keyboardLines[i];
-      }
+      arraycopy(this.keyboardLines, 0, this.bufferKeyboardLines, 0, 8);
     }
     this.kempstonBuffer = this.kempstonSignals.get();
   }
