@@ -67,18 +67,18 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   public int readIo(final ZxPolyModule module, final int port) {
     int result = -1;
     if (!module.isTrdosActive()) {
-      final int normalizedPort = port & 0xFF;
+      final int lowerPortByte = port & 0xFF;
 
-      if ((normalizedPort & 1) == 0) {
+      if ((lowerPortByte & 1) == 0) {
         if (module.getMotherboard().isZxPolyMode()) {
-          if (normalizedPort == 0xFE) {
+          if (lowerPortByte == 0xFE) {
             result = readKeyboardAndTap(port, this.getTap());
           }
         } else {
           result = readKeyboardAndTap(port, this.getTap());
         }
       } else {
-        if (normalizedPort == 0x1F) {// KEMPSTON
+        if (lowerPortByte == 0x1F) {// KEMPSTON
           result = this.kempstonBuffer;
         }
       }
