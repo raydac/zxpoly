@@ -369,6 +369,15 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         LOGGER.log(Level.INFO, "Load ROM from embedded resource '" + romPath + "'");
         try (final InputStream in = Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romPath)) {
           return RomData.read(in);
+        } catch (IllegalArgumentException ex) {
+          final File file = new File(romPath);
+          if (file.isFile()) {
+            try (final InputStream in = new FileInputStream(file)) {
+              return RomData.read(in);
+            }
+          } else {
+            throw new IllegalArgumentException("Can't find ROM: " + romPath);
+          }
         }
       }
     }
