@@ -18,17 +18,31 @@
 package com.igormaznitsa.zxpoly;
 
 import com.igormaznitsa.zxpoly.utils.AppOptions;
+import java.awt.Toolkit;
+import java.lang.reflect.Field;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import org.apache.commons.lang3.SystemUtils;
 
 public class Application {
 
-  public static final String NAME = "ZX-Poly emulator";
-  public static final String VERSION = "v 2.0.0";
+  public static final String APP_TITLE = "ZX-Poly emulator";
+  public static final String APP_VERSION = "v 2.0.0";
+
+  private static void setGnomeAppTitle() {
+    try {
+      final Toolkit toolkit = Toolkit.getDefaultToolkit();
+      final Field awtAppClassNameField = toolkit.getClass().getDeclaredField("awtAppClassName");
+      awtAppClassNameField.setAccessible(true);
+      awtAppClassNameField.set(toolkit, Application.APP_TITLE);
+    } catch (Exception ex) {
+      //Do nothing
+    }
+  }
 
   public static void main(final String... args) {
     for (final Handler h : Logger.getLogger("").getHandlers()) {
@@ -41,6 +55,10 @@ public class Application {
       });
     }
 
+    if (SystemUtils.IS_OS_LINUX) {
+      setGnomeAppTitle();
+    }
+
     SwingUtilities.invokeLater(() -> {
       final MainForm form;
       try {
@@ -50,7 +68,7 @@ public class Application {
       }
 
       try {
-        form = new MainForm(NAME + ' ' + VERSION, AppOptions.getInstance().getActiveRom());
+        form = new MainForm(APP_TITLE + ' ' + APP_VERSION, AppOptions.getInstance().getActiveRom());
       } catch (Exception ex) {
         ex.printStackTrace();
         System.exit(1);

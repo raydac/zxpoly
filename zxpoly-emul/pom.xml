@@ -33,9 +33,14 @@
       <version>3.6</version>
     </dependency>
     <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.9</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-        <version>4.5.10</version>
+      <version>4.5.10</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -464,6 +469,7 @@
               <packageName>com.igormaznitsa.zxpoly</packageName>
             </manifest>
             <manifestEntries>
+              <Application-Name>ZX-Poly emulator</Application-Name>
               <mode>development</mode>
               <url>https://github.com/raydac/zxpoly</url>
               <license>http://www.gnu.org/licenses/gpl.html</license>

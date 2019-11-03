@@ -16,11 +16,22 @@
       <outputDirectory>${file.separator}</outputDirectory>
       <excludes>
         <exclude>ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS${file.separator}zxpoly</exclude>
+        <exclude>
+          ZXPolyEmul.app${file.separator}Contents${file.separator}Resources${file.separator}**${file.separator}*
+        </exclude>
       </excludes>
       <includes>
        <include>*/**</include>
       </includes>
       <filtered>true</filtered>
+    </fileSet>
+    <fileSet>
+      <directory>${project.basedir}${file.separator}src${file.separator}assembly${file.separator}mac</directory>
+      <outputDirectory>${file.separator}</outputDirectory>
+      <includes>
+        <include>ZXPolyEmul.app${file.separator}Contents${file.separator}Resources${file.separator}*</include>
+      </includes>
+      <filtered>false</filtered>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}${file.separator}jre_macos</directory>
