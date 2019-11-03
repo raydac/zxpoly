@@ -25,11 +25,8 @@ import org.apache.commons.io.FileUtils;
 
 public final class AppOptions {
 
-  private final Logger LOGGER = Logger.getLogger(AppOptions.class.getName());
-
   public static final String TEST_ROM = "zxpolytest.rom";
-  private static final String ROMPATH = "ROM_PATH";
-  private static final String INT_BETWEEN_FRAMES = "INT_BETWEEN_FRAMES";
+  private static final Logger LOGGER = Logger.getLogger(AppOptions.class.getName());
   private static final AppOptions INSTANCE = new AppOptions();
   private static final String APP_FOLDER_NAME = ".zxpolyemul";
   private final Preferences preferences = Preferences.userNodeForPackage(AppOptions.class);
@@ -43,19 +40,19 @@ public final class AppOptions {
   }
 
   public synchronized String getActiveRom() {
-    return preferences.get(ROMPATH, AppOptions.TEST_ROM);
+    return preferences.get(Option.ROMPATH.name(), AppOptions.TEST_ROM);
   }
 
   public synchronized void setActiveRom(final String romPath) {
-    preferences.put(ROMPATH, romPath);
+    preferences.put(Option.ROMPATH.name(), romPath);
   }
 
   public synchronized int getIntBetweenFrames() {
-    return preferences.getInt(INT_BETWEEN_FRAMES, 7);
+    return preferences.getInt(Option.INTBETWEENFRAMES.name(), 5);
   }
 
   public synchronized void setIntBetweenFrames(final int value) {
-    preferences.putInt(INT_BETWEEN_FRAMES, Math.max(0, value));
+    preferences.putInt(Option.INTBETWEENFRAMES.name(), Math.max(0, value));
   }
 
   public synchronized void flush() throws BackingStoreException {
@@ -77,6 +74,11 @@ public final class AppOptions {
       }
     }
     return configFolder;
+  }
+
+  public enum Option {
+    ROMPATH,
+    INTBETWEENFRAMES
   }
 
 }
