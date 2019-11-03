@@ -220,7 +220,7 @@
                   <jdepsReportPath>${project.build.directory}${file.separator}jdeps.out</jdepsReportPath>
                   <output>${project.build.directory}${file.separator}jre_macos</output>
                   <modulePaths>
-                    <path>${mvnjlink.jdk.windows.path}${file.separator}jmods</path>
+                    <path>${mvnjlink.jdk.macos.path}${file.separator}jmods</path>
                   </modulePaths>
                   <options>
                     <option>--compress=2</option>
