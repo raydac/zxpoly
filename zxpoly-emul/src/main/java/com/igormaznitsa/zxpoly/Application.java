@@ -68,7 +68,7 @@ public class Application {
       }
 
       try {
-        form = new MainForm(APP_TITLE + ' ' + APP_VERSION, AppOptions.getInstance().getActiveRom());
+        form = new MainForm(APP_TITLE + ' ' + APP_VERSION, System.getProperty("zxpoly.rom.path", AppOptions.getInstance().getActiveRom()));
       } catch (Exception ex) {
         ex.printStackTrace();
         System.exit(1);

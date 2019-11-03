@@ -96,7 +96,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   public static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
   public static final AtomicReference<MainForm> theInstance = new AtomicReference<>();
-  public static final Logger log = Logger.getLogger("UI");
+  public static final Logger LOGGER = Logger.getLogger("UI");
   private static final Icon ICO_MOUSE = new ImageIcon(Utils.loadIcon("mouse.png"));
   private static final Icon ICO_MOUSE_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_MOUSE);
   private static final Icon ICO_DISK = new ImageIcon(Utils.loadIcon("disk.png"));
@@ -112,10 +112,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private static final Icon ICO_ZX128_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_ZX128);
   private static final Icon ICO_EMUL_PLAY = new ImageIcon(Utils.loadIcon("emul_play.png"));
   private static final Icon ICO_EMUL_PAUSE = new ImageIcon(Utils.loadIcon("emul_pause.png"));
-  private static final int INT_BETWEEN_FRAMES = AppOptions.getInstance().getIntBetweenFrames();
   private static final String TEXT_START_ANIM_GIF = "Record AGIF";
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
   private static final long serialVersionUID = 7309959798344327441L;
+  private final int INT_BETWEEN_FRAMES;
   private final AtomicBoolean turboMode = new AtomicBoolean();
   private final CpuLoadIndicator indicatorCPU0 = new CpuLoadIndicator(48, 14, 4, "CPU0", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final CpuLoadIndicator indicatorCPU1 = new CpuLoadIndicator(48, 14, 4, "CPU1", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
@@ -226,7 +226,16 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private javax.swing.JScrollPane scrollPanel;
 
   public MainForm(final String title, final String romPath) throws IOException {
-    log.log(Level.INFO, "INT ticks between frames: " + INT_BETWEEN_FRAMES);
+    final String ticks = System.getProperty("zxpoly.int.ticks", "");
+    int intBetweenFrames = AppOptions.getInstance().getIntBetweenFrames();
+    try {
+      intBetweenFrames = ticks.isEmpty() ? intBetweenFrames : Integer.parseInt(ticks);
+    } catch (NumberFormatException ex) {
+      LOGGER.warning("Can't parse ticks: " + ticks);
+    }
+    INT_BETWEEN_FRAMES = intBetweenFrames;
+
+    LOGGER.log(Level.INFO, "INT ticks between frames: " + INT_BETWEEN_FRAMES);
     initComponents();
 
     this.menuBar.add(Box.createHorizontalGlue());
@@ -242,11 +251,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       if (source.isSelected()) {
         MainForm.this.stepSemaphor.lock();
         source.setIcon(ICO_EMUL_PLAY);
-        log.info("Emulator is paused by PLAY/PAUSE button");
+        LOGGER.info("Emulator is paused by PLAY/PAUSE button");
       } else {
         MainForm.this.stepSemaphor.unlock();
         source.setIcon(ICO_EMUL_PAUSE);
-        log.info("Emulator is started by PLAY/PAUSE button");
+        LOGGER.info("Emulator is started by PLAY/PAUSE button");
       }
     });
 
@@ -268,7 +277,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.menuOptionsZX128Mode.setSelected(!this.board.isZxPolyMode());
     this.menuOptionsTurbo.setSelected(this.turboMode.get());
 
-    log.info("Main form completed");
+    LOGGER.info("Main form completed");
     this.board.reset();
 
     this.scrollPanel.getViewport().add(this.board.getVideoController());
@@ -339,25 +348,25 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           RomData result = null;
           boolean load = true;
           if (cachedRom.isFile()) {
-            log.log(Level.INFO, "Load cached ROM downloaded from '" + romPath + "' : " + cachedRom);
+            LOGGER.log(Level.INFO, "Load cached ROM downloaded from '" + romPath + "' : " + cachedRom);
             result = new RomData(FileUtils.readFileToByteArray(cachedRom));
             load = false;
           }
 
           if (load) {
-            log.log(Level.INFO, "Load ROM from external URL: " + romPath);
+            LOGGER.log(Level.INFO, "Load ROM from external URL: " + romPath);
             result = RomLoader.getROMFrom(romPath);
             if (cacheFolder.isDirectory() || cacheFolder.mkdirs()) {
               FileUtils.writeByteArrayToFile(cachedRom, result.getAsArray());
-              log.log(Level.INFO, "Loaded ROM saved in cache as file : " + romPath);
+              LOGGER.log(Level.INFO, "Loaded ROM saved in cache as file : " + romPath);
             }
           }
           return result;
         } catch (Exception ex) {
-          log.log(Level.WARNING, "Can't load ROM from '" + romPath + "\'", ex);
+          LOGGER.log(Level.WARNING, "Can't load ROM from '" + romPath + "\'", ex);
         }
       } else {
-        log.log(Level.INFO, "Load ROM from embedded resource '" + romPath + "'");
+        LOGGER.log(Level.INFO, "Load ROM from embedded resource '" + romPath + "'");
         try (final InputStream in = Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romPath)) {
           return RomData.read(in);
         }
@@ -365,7 +374,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
 
     final String testRom = AppOptions.TEST_ROM;
-    log.info("Load ROM from embedded resource '" + testRom + "'");
+    LOGGER.info("Load ROM from embedded resource '" + testRom + "'");
     try (final InputStream in = Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + testRom)) {
       return RomData.read(in);
     }
@@ -439,7 +448,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             try {
               theAnimationEncoder.saveFrame(board.getVideoController().makeCopyOfVideoBuffer());
             } catch (IOException ex) {
-              log.warning("Can't write animation frame");
+              LOGGER.warning("Can't write animation frame");
             }
           }
         }
@@ -462,9 +471,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     try {
       SwingUtilities.invokeAndWait(this.traceWindowsUpdater);
     } catch (InterruptedException ex) {
-      log.log(Level.INFO, "Interrupted trace window updater");
+      LOGGER.log(Level.INFO, "Interrupted trace window updater");
     } catch (InvocationTargetException ex) {
-      log.log(Level.SEVERE, "Error in trace window updater", ex);
+      LOGGER.log(Level.SEVERE, "Error in trace window updater", ex);
     }
   }
 
@@ -513,7 +522,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       buffer.append("\n\n");
     }
     buffer.append('\n');
-    log.info(buffer.toString());
+    LOGGER.info(buffer.toString());
   }
 
   private String makeInfoStringForRegister(final Z80[] cpuModuleStates, final int lastAddress, final String extraString, final int register, final boolean alt) {
@@ -986,7 +995,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             selectedFile = new File(selectedFile.getParentFile(), name);
             if (!selectedFile.isFile()) {
               if (JOptionPane.showConfirmDialog(this, "Create TRD file: " + selectedFile.getName() + "?", "Create TRD file", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-                log.log(Level.INFO, "Creating TRD disk: " + selectedFile.getAbsolutePath());
+                LOGGER.log(Level.INFO, "Creating TRD disk: " + selectedFile.getAbsolutePath());
                 FileUtils.writeByteArrayToFile(selectedFile, new TrDosDisk().getDiskData());
               } else {
                 return;
@@ -996,9 +1005,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
           final TrDosDisk floppy = new TrDosDisk(selectedFile, filter.get().getClass() == SCLFileFilter.class ? TrDosDisk.SourceDataType.SCL : TrDosDisk.SourceDataType.TRD, FileUtils.readFileToByteArray(selectedFile), false);
           this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
-          log.log(Level.INFO, "Loaded drive " + diskName + " by floppy image file " + selectedFile);
+          LOGGER.log(Level.INFO, "Loaded drive " + diskName + " by floppy image file " + selectedFile);
         } catch (IOException ex) {
-          log.log(Level.WARNING, "Can't read Floppy image file [" + selectedFile + ']', ex);
+          LOGGER.log(Level.WARNING, "Can't read Floppy image file [" + selectedFile + ']', ex);
           JOptionPane.showMessageDialog(this, "Can't read Floppy image file", "Error", JOptionPane.ERROR_MESSAGE);
         }
       }
@@ -1056,11 +1065,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         this.lastSnapshotFolder = selected.getParentFile();
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
-          log.log(Level.INFO, "Loading snapshot " + selectedFilter.getName());
+          LOGGER.log(Level.INFO, "Loading snapshot " + selectedFilter.getName());
           selectedFilter.loadFromArray(selected, this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
           this.menuOptionsZX128Mode.setState(!this.board.isZxPolyMode());
         } catch (Exception ex) {
-          log.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
+          LOGGER.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
           JOptionPane.showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
         }
       }
@@ -1128,7 +1137,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           tapfile.addActionListener(this);
           this.keyboardAndTapeModule.setTap(tapfile);
         } catch (Exception ex) {
-          log.log(Level.SEVERE, "Can't read " + selectedTapFile, ex);
+          LOGGER.log(Level.SEVERE, "Can't read " + selectedTapFile, ex);
           JOptionPane.showMessageDialog(this, "Can't load TAP file", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
         } finally {
           updateTapeMenu();
@@ -1150,10 +1159,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           fileToSave = new File(fileToSave.getParentFile(), name + ".wav");
         }
         FileUtils.writeByteArrayToFile(fileToSave, wav);
-        log.log(Level.INFO, "Exported current TAP file as WAV file " + fileToSave + " size " + wav.length + " bytes");
+        LOGGER.log(Level.INFO, "Exported current TAP file as WAV file " + fileToSave + " size " + wav.length + " bytes");
       }
     } catch (Exception ex) {
-      log.log(Level.WARNING, "Can't export as WAV", ex);
+      LOGGER.log(Level.WARNING, "Can't export as WAV", ex);
       JOptionPane.showMessageDialog(this, "Can't export as WAV", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
     } finally {
       this.stepSemaphor.unlock();
@@ -1210,7 +1219,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     } catch (IOException ex) {
       JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error", JOptionPane.ERROR_MESSAGE);
-      log.log(Level.SEVERE, "Can't make screenshot", ex);
+      LOGGER.log(Level.SEVERE, "Can't make screenshot", ex);
     } finally {
       this.keyboardAndTapeModule.doReset();
       this.stepSemaphor.unlock();
@@ -1298,7 +1307,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     } catch (IOException ex) {
       JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error", JOptionPane.ERROR_MESSAGE);
-      log.log(Level.SEVERE, "Can't make screenshot", ex);
+      LOGGER.log(Level.SEVERE, "Can't make screenshot", ex);
     } finally {
       this.keyboardAndTapeModule.doReset();
       this.stepSemaphor.unlock();
@@ -1318,21 +1327,21 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         try {
           encoder = new ZXPolyAGifEncoder(new File(this.lastAnimGifOptions.filePath), this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
         } catch (IOException ex) {
-          log.log(Level.SEVERE, "Can't create GIF encoder", ex);
+          LOGGER.log(Level.SEVERE, "Can't create GIF encoder", ex);
           return;
         }
 
         if (this.currentAnimationEncoder.compareAndSet(null, encoder)) {
           this.menuActionAnimatedGIF.setIcon(ICO_AGIF_STOP);
           this.menuActionAnimatedGIF.setText(TEXT_STOP_ANIM_GIF);
-          log.info("Animated GIF recording has been started");
+          LOGGER.info("Animated GIF recording has been started");
         }
       } else {
         closeAnimationSave();
         if (this.currentAnimationEncoder.compareAndSet(encoder, null)) {
           this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
           this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
-          log.info("Animated GIF recording has been stopped");
+          LOGGER.info("Animated GIF recording has been stopped");
         }
       }
     } finally {
@@ -1346,7 +1355,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       try {
         encoder.close();
       } catch (IOException ex) {
-        log.warning("Error during animation file close");
+        LOGGER.warning("Error during animation file close");
       }
     }
   }
@@ -1425,13 +1434,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             return;
           }
 
-          log.info("Saving snapshot " + selectedFilter.getName() + " as file " + selected.getName());
+          LOGGER.info("Saving snapshot " + selectedFilter.getName() + " as file " + selected.getName());
           final byte[] preparedSnapshotData = selectedFilter.saveToArray(this.board, this.board.getVideoController());
-          log.info("Prepared snapshot data, size " + preparedSnapshotData.length + " bytes");
+          LOGGER.info("Prepared snapshot data, size " + preparedSnapshotData.length + " bytes");
           FileUtils.writeByteArrayToFile(selected, preparedSnapshotData);
         } catch (Exception ex) {
           ex.printStackTrace();
-          log.log(Level.WARNING, "Can't save snapshot file [" + ex.getMessage() + ']', ex);
+          LOGGER.log(Level.WARNING, "Can't save snapshot file [" + ex.getMessage() + ']', ex);
           JOptionPane.showMessageDialog(this, "Can't save snapshot file [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
         }
       }
@@ -1478,9 +1487,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             try {
               FileUtils.writeByteArrayToFile(destFile, disk.getDiskData());
               disk.replaceSrcFile(destFile, TrDosDisk.SourceDataType.TRD, true);
-              log.info("Changes for disk " + ('A' + i) + " is saved as file: " + destFile.getAbsolutePath());
+              LOGGER.info("Changes for disk " + ('A' + i) + " is saved as file: " + destFile.getAbsolutePath());
             } catch (IOException ex) {
-              log.warning("Can't write disk for error: " + ex.getMessage());
+              LOGGER.warning("Can't write disk for error: " + ex.getMessage());
               JOptionPane.showMessageDialog(this, "Can't save disk for IO error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
           }
