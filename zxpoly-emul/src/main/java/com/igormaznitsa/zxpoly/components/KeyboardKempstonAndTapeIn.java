@@ -17,15 +17,60 @@
 
 package com.igormaznitsa.zxpoly.components;
 
-import static java.lang.System.arraycopy;
-
-
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class KeyboardKempstonAndTapeIn implements IoDevice {
+
+  private static final long ZXKEY_CS = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000001L;
+  private static final long ZXKEY_Z = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000010L;
+  private static final long ZXKEY_X = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000100L;
+  private static final long ZXKEY_C = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00001000L;
+  private static final long ZXKEY_V = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00010000L;
+
+  private static final long ZXKEY_A = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000001_00000000L;
+  private static final long ZXKEY_S = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000010_00000000L;
+  private static final long ZXKEY_D = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000100_00000000L;
+  private static final long ZXKEY_F = 0b00000000_00000000_00000000_00000000_00000000_00000000_00001000_00000000L;
+  private static final long ZXKEY_G = 0b00000000_00000000_00000000_00000000_00000000_00000000_00010000_00000000L;
+
+  private static final long ZXKEY_Q = 0b00000000_00000000_00000000_00000000_00000000_00000001_00000000_00000000L;
+  private static final long ZXKEY_W = 0b00000000_00000000_00000000_00000000_00000000_00000010_00000000_00000000L;
+  private static final long ZXKEY_E = 0b00000000_00000000_00000000_00000000_00000000_00000100_00000000_00000000L;
+  private static final long ZXKEY_R = 0b00000000_00000000_00000000_00000000_00000000_00001000_00000000_00000000L;
+  private static final long ZXKEY_T = 0b00000000_00000000_00000000_00000000_00000000_00010000_00000000_00000000L;
+
+  private static final long ZXKEY_1 = 0b00000000_00000000_00000000_00000000_00000001_00000000_00000000_00000000L;
+  private static final long ZXKEY_2 = 0b00000000_00000000_00000000_00000000_00000010_00000000_00000000_00000000L;
+  private static final long ZXKEY_3 = 0b00000000_00000000_00000000_00000000_00000100_00000000_00000000_00000000L;
+  private static final long ZXKEY_4 = 0b00000000_00000000_00000000_00000000_00001000_00000000_00000000_00000000L;
+  private static final long ZXKEY_5 = 0b00000000_00000000_00000000_00000000_00010000_00000000_00000000_00000000L;
+
+  private static final long ZXKEY_0 = 0b00000000_00000000_00000000_00000001_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_9 = 0b00000000_00000000_00000000_00000010_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_8 = 0b00000000_00000000_00000000_00000100_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_7 = 0b00000000_00000000_00000000_00001000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_6 = 0b00000000_00000000_00000000_00010000_00000000_00000000_00000000_00000000L;
+
+  private static final long ZXKEY_P = 0b00000000_00000000_00000001_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_O = 0b00000000_00000000_00000010_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_I = 0b00000000_00000000_00000100_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_U = 0b00000000_00000000_00001000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_Y = 0b00000000_00000000_00010000_00000000_00000000_00000000_00000000_00000000L;
+
+  private static final long ZXKEY_EN = 0b00000000_00000001_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_L = 0b00000000_00000010_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_K = 0b00000000_00000100_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_J = 0b00000000_00001000_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_H = 0b00000000_00010000_00000000_00000000_00000000_00000000_00000000_00000000L;
+
+  private static final long ZXKEY_SP = 0b00000001_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_SS = 0b00000010_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_M = 0b00000100_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_N = 0b00001000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_B = 0b00010000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+
+  private static final long ZXKEY_NONE = 0b00011111_00011111_00011111_00011111_00011111_00011111_00011111_00011111L;
 
   private static final int KEMPSTON_RIGHT = 1;
   private static final int KEMPSTON_LEFT = 2;
@@ -37,30 +82,31 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   private final Motherboard board;
 
-  private final int[] keyboardLines = new int[8];
-  private final int[] bufferKeyboardLines = new int[8];
-  private final AtomicInteger kempstonSignals = new AtomicInteger();
+  private volatile long keyboardLines = 0L;
+  private volatile long bufferKeyboardLines = 0L;
+  private volatile int kempstonSignals = 0;
+  private volatile int kempstonBuffer = 0;
   private final AtomicReference<TapeFileReader> tap = new AtomicReference<>();
-  private int kempstonBuffer = 0;
 
   public KeyboardKempstonAndTapeIn(final Motherboard board) {
     this.board = board;
   }
 
-  private int getKbdValueForLines(int hiByte) {
+  private int getKbdValueForLines(int highPortByte) {
+    final long state = this.bufferKeyboardLines;
     int result = 0xFF;
     for (int i = 0; i < 8; i++) {
-      if ((hiByte & 1) == 0) {
-        result &= this.bufferKeyboardLines[i];
+      if ((highPortByte & 1) == 0) {
+        result &= (int) (state >>> (i * 8));
       }
-      hiByte >>= 1;
+      highPortByte >>= 1;
     }
     return result;
   }
 
   private int readKeyboardAndTap(final int port, final TapeFileReader tapeFileReader) {
     final int tapbit = tapeFileReader == null ? 0 : tapeFileReader.getSignal() ? TAP_BIT : 0;
-    return (getKbdValueForLines(port >>> 8) & ~TAP_BIT) | tapbit;
+    return getKbdValueForLines(port >>> 8) | tapbit;
   }
 
   @Override
@@ -97,10 +143,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   @Override
   public void doReset() {
-    synchronized (this.keyboardLines) {
-      Arrays.fill(this.keyboardLines, 0x1F);
-    }
-    this.kempstonSignals.set(0);
+    this.keyboardLines = ZXKEY_NONE;
+    this.kempstonSignals = 0;
   }
 
   @Override
@@ -113,10 +157,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     if (signalReset) {
       doReset();
     }
-    synchronized (this.keyboardLines) {
-      arraycopy(this.keyboardLines, 0, this.bufferKeyboardLines, 0, 8);
-    }
-    this.kempstonBuffer = this.kempstonSignals.get();
+    this.bufferKeyboardLines = this.keyboardLines;
+    this.kempstonBuffer = this.kempstonSignals;
   }
 
   @Override
@@ -145,9 +187,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
         return;
     }
 
-    int line = 0;
-    int code = 0;
-    int kempston = 0;
+    long zxKeyCode = 0L;
+    int kempstonCode = 0;
 
     switch (evt.getKeyCode()) {
       case KeyEvent.VK_ESCAPE: {
@@ -158,293 +199,241 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
       break;
       case KeyEvent.VK_KP_LEFT:
       case KeyEvent.VK_NUMPAD4: {
-        kempston = KEMPSTON_LEFT;
+        kempstonCode = KEMPSTON_LEFT;
       }
       break;
       case KeyEvent.VK_KP_UP:
       case KeyEvent.VK_NUMPAD8: {
-        kempston = KEMPSTON_UP;
+        kempstonCode = KEMPSTON_UP;
       }
       break;
       case KeyEvent.VK_KP_RIGHT:
       case KeyEvent.VK_NUMPAD6: {
-        kempston = KEMPSTON_RIGHT;
+        kempstonCode = KEMPSTON_RIGHT;
       }
       break;
       case KeyEvent.VK_KP_DOWN:
       case KeyEvent.VK_NUMPAD2: {
-        kempston = KEMPSTON_DOWN;
+        kempstonCode = KEMPSTON_DOWN;
       }
       break;
       case 65368: // NUMPAD 5 
       case KeyEvent.VK_NUMPAD5: {
-        kempston = KEMPSTON_FIRE;
+        kempstonCode = KEMPSTON_FIRE;
       }
       break;
       case KeyEvent.VK_1: {
-        line = 3;
-        code = 0x1E;
+        zxKeyCode = ZXKEY_1;
       }
       break;
       case KeyEvent.VK_2: {
-        line = 3;
-        code = 0x1D;
+        zxKeyCode = ZXKEY_2;
       }
       break;
       case KeyEvent.VK_3: {
-        line = 3;
-        code = 0x1B;
+        zxKeyCode = ZXKEY_3;
       }
       break;
       case KeyEvent.VK_4: {
-        line = 3;
-        code = 0x17;
+        zxKeyCode = ZXKEY_4;
       }
       break;
       case KeyEvent.VK_5: {
-        line = 3;
-        code = 0x0F;
+        zxKeyCode = ZXKEY_5;
       }
       break;
       case KeyEvent.VK_6: {
-        line = 4;
-        code = 0x0F;
+        zxKeyCode = ZXKEY_6;
       }
       break;
       case KeyEvent.VK_7: {
-        line = 4;
-        code = 0x17;
+        zxKeyCode = ZXKEY_7;
       }
       break;
       case KeyEvent.VK_8: {
-        line = 4;
-        code = 0x1B;
+        zxKeyCode = ZXKEY_8;
       }
       break;
       case KeyEvent.VK_9: {
-        line = 4;
-        code = 0x1D;
+        zxKeyCode = ZXKEY_9;
       }
       break;
       case KeyEvent.VK_0: {
-        line = 4;
-        code = 0x1E;
+        zxKeyCode = ZXKEY_0;
       }
       break;
       case KeyEvent.VK_Q: {
-        line = 2;
-        code = 0x1E;
+        zxKeyCode = ZXKEY_Q;
       }
       break;
       case KeyEvent.VK_W: {
-        line = 2;
-        code = 0x1D;
+        zxKeyCode = ZXKEY_W;
       }
       break;
       case KeyEvent.VK_E: {
-        line = 2;
-        code = 0x1B;
+        zxKeyCode = ZXKEY_E;
       }
       break;
       case KeyEvent.VK_R: {
-        line = 2;
-        code = 0x17;
+        zxKeyCode = ZXKEY_R;
       }
       break;
       case KeyEvent.VK_T: {
-        line = 2;
-        code = 0x0F;
+        zxKeyCode = ZXKEY_T;
       }
       break;
       case KeyEvent.VK_Y: {
-        line = 5;
-        code = 0x0F;
+        zxKeyCode = ZXKEY_Y;
       }
       break;
       case KeyEvent.VK_U: {
-        line = 5;
-        code = 0x17;
+        zxKeyCode = ZXKEY_U;
       }
       break;
       case KeyEvent.VK_I: {
-        line = 5;
-        code = 0x1B;
+        zxKeyCode = ZXKEY_I;
       }
       break;
       case KeyEvent.VK_O: {
-        line = 5;
-        code = 0x1D;
+        zxKeyCode = ZXKEY_O;
       }
       break;
       case KeyEvent.VK_P: {
-        line = 5;
-        code = 0x1E;
+        zxKeyCode = ZXKEY_P;
       }
       break;
       case KeyEvent.VK_A: {
-        line = 1;
-        code = 0x1E;
+        zxKeyCode = ZXKEY_A;
       }
       break;
       case KeyEvent.VK_S: {
-        line = 1;
-        code = 0x1D;
+        zxKeyCode = ZXKEY_S;
       }
       break;
       case KeyEvent.VK_D: {
-        line = 1;
-        code = 0x1B;
+        zxKeyCode = ZXKEY_D;
       }
       break;
       case KeyEvent.VK_F: {
-        line = 1;
-        code = 0x17;
+        zxKeyCode = ZXKEY_F;
       }
       break;
       case KeyEvent.VK_G: {
-        line = 1;
-        code = 0x0F;
+        zxKeyCode = ZXKEY_G;
       }
       break;
       case KeyEvent.VK_H: {
-        line = 6;
-        code = 0x0F;
+        zxKeyCode = ZXKEY_H;
       }
       break;
       case KeyEvent.VK_J: {
-        line = 6;
-        code = 0x17;
+        zxKeyCode = ZXKEY_J;
       }
       break;
       case KeyEvent.VK_K: {
-        line = 6;
-        code = 0x1B;
+        zxKeyCode = ZXKEY_K;
       }
       break;
       case KeyEvent.VK_L: {
-        line = 6;
-        code = 0x1D;
+        zxKeyCode = ZXKEY_L;
       }
       break;
       case KeyEvent.VK_ENTER: {
-        line = 6;
-        code = 0x1E;
+        zxKeyCode = ZXKEY_EN;
       }
       break;
       case KeyEvent.VK_Z: {
-        line = 0;
-        code = 0x1D;
+        zxKeyCode = ZXKEY_Z;
       }
       break;
       case KeyEvent.VK_X: {
-        line = 0;
-        code = 0x1B;
+        zxKeyCode = ZXKEY_X;
       }
       break;
       case KeyEvent.VK_C: {
-        line = 0;
-        code = 0x17;
+        zxKeyCode = ZXKEY_C;
       }
       break;
       case KeyEvent.VK_V: {
-        line = 0;
-        code = 0x0F;
+        zxKeyCode = ZXKEY_V;
       }
       break;
       case KeyEvent.VK_B: {
-        line = 7;
-        code = 0x0F;
+        zxKeyCode = ZXKEY_B;
       }
       break;
       case KeyEvent.VK_N: {
-        line = 7;
-        code = 0x17;
+        zxKeyCode = ZXKEY_N;
       }
       break;
       case KeyEvent.VK_M: {
-        line = 7;
-        code = 0x1B;
+        zxKeyCode = ZXKEY_M;
       }
       break;
       case KeyEvent.VK_SPACE: {
-        line = 7;
-        code = 0x1E;
+        zxKeyCode = ZXKEY_SP;
       }
       break;
       case KeyEvent.VK_SHIFT: {
-        line = 0;
-        code = 0x1E;
+        zxKeyCode = ZXKEY_CS;
       }
       break;
       case KeyEvent.VK_ALT: {
-        line = 7;
-        code = 0x1D;
+        zxKeyCode = ZXKEY_SS;
       }
       break;
       case KeyEvent.VK_BACK_SPACE: {
-        line = 0x0004;
-        code = 0x1E1E;
+        zxKeyCode = ZXKEY_CS | ZXKEY_0;
       }
       break;
       case KeyEvent.VK_LEFT: {
-        line = 0x0003;
-        code = 0x1E0F;
+        zxKeyCode = ZXKEY_CS | ZXKEY_5;
       }
       break;
       case KeyEvent.VK_RIGHT: {
-        line = 0x0004;
-        code = 0x1E1B;
+        zxKeyCode = ZXKEY_CS | ZXKEY_8;
       }
       break;
       case KeyEvent.VK_UP: {
-        line = 0x0004;
-        code = 0x1E17;
+        zxKeyCode = ZXKEY_CS | ZXKEY_7;
       }
       break;
       case KeyEvent.VK_DOWN: {
-        line = 0x0004;
-        code = 0x1E0F;
+        zxKeyCode = ZXKEY_CS | ZXKEY_6;
       }
       break;
       case KeyEvent.VK_COMMA: {
-        line = 0x0707;
-        code = 0x1D17;
+        zxKeyCode = ZXKEY_SS | ZXKEY_N;
       }
       break;
       case KeyEvent.VK_PERIOD: {
-        line = 0x0707;
-        code = 0x1D1B;
+        zxKeyCode = ZXKEY_SS | ZXKEY_M;
       }
       break;
       case KeyEvent.VK_EQUALS: {
-        line = 0x0706;
-        code = 0x1D1D;
+        zxKeyCode = ZXKEY_SS | ZXKEY_L;
       }
       break;
     }
 
-    while (code != 0) {
-      final int theline = line & 0xFF;
-      final int thecode = code & 0xFF;
-
-      line >>>= 8;
-      code >>>= 8;
-
-      synchronized (this.keyboardLines) {
-        if (pressed) {
-          this.keyboardLines[theline] &= thecode;
-        } else {
-          this.keyboardLines[theline] |= (~thecode & 0x1F);
-        }
+    if (zxKeyCode != 0L) {
+      long theLinesState = this.keyboardLines;
+      if (pressed) {
+        theLinesState &= ZXKEY_NONE ^ zxKeyCode;
+      } else {
+        theLinesState |= ZXKEY_NONE & zxKeyCode;
       }
+      this.keyboardLines = theLinesState;
     }
 
-    if (kempston != 0) {
+    if (kempstonCode != 0) {
+      int theSignal = this.kempstonSignals;
       if (pressed) {
-        this.kempstonSignals.set(kempston | this.kempstonSignals.get());
+        theSignal |= kempstonCode;
       } else {
-        this.kempstonSignals.set((~kempston & this.kempstonSignals.get()) & 0xFF);
+        theSignal = (~kempstonCode & theSignal) & 0xFF;
       }
+      this.kempstonSignals = theSignal;
     }
   }
 
