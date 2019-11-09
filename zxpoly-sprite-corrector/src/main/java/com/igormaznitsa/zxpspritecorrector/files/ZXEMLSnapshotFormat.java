@@ -91,6 +91,7 @@ public class ZXEMLSnapshotFormat {
       new Pages(new Page[] {new Page(0, new byte[16384])}),
       new Pages(new Page[] {new Page(0, new byte[16384])})
   };
+
   public ZXEMLSnapshotFormat() {
   }
 

@@ -26,9 +26,9 @@ public class Z80ExportDialog extends javax.swing.JDialog {
       new VideoMode("ZX 256x192 (src CPU2)", 2),
       new VideoMode("ZX 256x192 (src CPU3)", 3),
       new VideoMode("ZX-POLY 256x192", 4),
-      new VideoMode("ZX-POLY 256x192-A0", 6),
+      new VideoMode("ZX-POLY 256x192-INKPAPER-MASK", 6),
       new VideoMode("ZX-POLY 512x384", 5),
-      new VideoMode("RESERVED", 7)
+      new VideoMode("ZX-POLY 256x192-FLASH-MASK", 7)
   };
   private boolean accepted;
   private int videoMode;
