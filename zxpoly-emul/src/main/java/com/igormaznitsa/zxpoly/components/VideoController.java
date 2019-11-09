@@ -789,18 +789,21 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
   @Override
   public void writeIo(final ZxPolyModule module, final int port, final int value) {
-    if (!module.isTrdosActive() && (port & 0xFF) == 0xFE) {
-      this.portFEw = value & 0xFF;
+    if (!module.isTrdosActive()) {
+      final boolean zxPolyMode = module.getMotherboard().isZxPolyMode();
+      if ((zxPolyMode && (port & 0xFF) == 0xFE) || (!zxPolyMode && (port & 1) == 0)) {
+        this.portFEw = value & 0xFF;
 
-      int borderLineIndex;
-      final long machineCycles = module.getCpu().getMachineCycles();
-      if (module.isMaster()) {
-        borderLineIndex = (int) (((machineCycles << 8) / MCYCLES_PER_BORDER_LINE) >> 8);
-      } else {
-        borderLineIndex = (int) (machineCycles % BORDER_LINES);
-      }
-      if (borderLineIndex >= 0 && borderLineIndex < BORDER_LINES) {
-        this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
+        int borderLineIndex;
+        final long machineCycles = module.getCpu().getMachineCycles();
+        if (module.isMaster()) {
+          borderLineIndex = (int) (((machineCycles << 8) / MCYCLES_PER_BORDER_LINE) >> 8);
+        } else {
+          borderLineIndex = (int) (machineCycles % BORDER_LINES);
+        }
+        if (borderLineIndex >= 0 && borderLineIndex < BORDER_LINES) {
+          this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
+        }
       }
     }
   }
