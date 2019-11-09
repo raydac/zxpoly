@@ -97,7 +97,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   private final int[] bufferImageRgbData;
   private final ZxPolyModule[] modules;
   private final byte[] borderLineColors = new byte[BORDER_LINES];
-  private volatile int currentVideoMode = VIDEOMODE_RESERVED2;
+  private volatile int currentVideoMode = VIDEOMODE_ZXPOLY_256x192_FLASH_MASK;
   private Dimension size = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
   private volatile float zoom = 1.0f;
   private volatile int portFEw = 0;
@@ -216,7 +216,6 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       final boolean allowAlreadyRenderedCheck
   ) {
     switch (videoMode) {
-      case VIDEOMODE_RESERVED2:
       case VIDEOMODE_ZX48_CPU0:
       case VIDEOMODE_ZX48_CPU1:
       case VIDEOMODE_ZX48_CPU2:
@@ -265,12 +264,11 @@ public final class VideoController extends JComponent implements ZxPolyConstants
         }
       }
       break;
-      case VIDEOMODE_ZXPOLY_256x192_A0:
+      case VIDEOMODE_ZXPOLY_256x192_INKPAPER_MASK:
+      case VIDEOMODE_ZXPOLY_256x192_FLASH_MASK:
       case VIDEOMODE_ZXPOLY_256x192: {
         int offset = 0;
         int attributeoffset = 0;
-
-        final boolean masked = videoMode == VIDEOMODE_ZXPOLY_256x192_A0;
 
         final ZxPolyModule module0 = modules[0];
         final ZxPolyModule module1 = modules[1];
@@ -289,44 +287,108 @@ public final class VideoController extends JComponent implements ZxPolyConstants
           int videoValue2 = module2.readVideo(i);
           int videoValue3 = module3.readVideo(i);
 
-          if (masked) {
-            // check attribute from 0-module
-            final int attribute = module0.readVideo(attributeoffset++);
+          switch (videoMode) {
+            case VIDEOMODE_ZXPOLY_256x192_INKPAPER_MASK: {
+              final int attrModule0 = module0.readVideo(attributeoffset++);
 
-            final int inkColor = extractInkColor(attribute, flashActive);
-            final int paperColor = extractPaperColor(attribute, flashActive);
+              final int inkColor = extractInkColor(attrModule0, flashActive);
+              final int paperColor = extractPaperColor(attrModule0, flashActive);
 
-            if (inkColor == paperColor) {
-              // mask by ink color because it is the same as paper color
+              int x = 8;
+              if (inkColor == paperColor) {
+                while (x-- > 0) {
+                  pixelRgbBuffer[offset] = inkColor;
+                  pixelRgbBuffer[offset + SCREEN_WIDTH] = inkColor;
+                  pixelRgbBuffer[++offset] = inkColor;
+                  pixelRgbBuffer[offset++ + SCREEN_WIDTH] = inkColor;
+                }
+              } else {
+                while (x-- > 0) {
+                  final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
+                      | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
+                      | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
+                      | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
+
+                  videoValue0 <<= 1;
+                  videoValue1 <<= 1;
+                  videoValue2 <<= 1;
+                  videoValue3 <<= 1;
+
+                  final int color = ZXPALETTE[value];
+
+                  pixelRgbBuffer[offset] = color;
+                  pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
+                  pixelRgbBuffer[++offset] = color;
+                  pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+                }
+              }
+            }
+            break;
+            case VIDEOMODE_ZXPOLY_256x192_FLASH_MASK: {
+              final int attrModule0 = module0.readVideo(attributeoffset++);
+
+              final int inkColorMod0 = extractInkColor(attrModule0, false);
+              final int paperColorMod0 = extractPaperColor(attrModule0, false);
+
+              int x = 8;
+              if ((attrModule0 & 0b1000_0000) == 0) {
+                while (x-- > 0) {
+                  final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
+                      | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
+                      | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
+                      | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
+
+                  videoValue0 <<= 1;
+                  videoValue1 <<= 1;
+                  videoValue2 <<= 1;
+                  videoValue3 <<= 1;
+
+                  final int color = ZXPALETTE[value];
+
+                  pixelRgbBuffer[offset] = color;
+                  pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
+                  pixelRgbBuffer[++offset] = color;
+                  pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+                }
+              } else {
+                while (x-- > 0) {
+                  pixelRgbBuffer[offset] = (videoValue0 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                  videoValue0 <<= 1;
+
+                  pixelRgbBuffer[offset + SCREEN_WIDTH] = (videoValue2 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                  videoValue2 <<= 1;
+
+                  pixelRgbBuffer[++offset] = (videoValue1 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                  videoValue1 <<= 1;
+
+                  pixelRgbBuffer[offset++ + SCREEN_WIDTH] = (videoValue3 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                  videoValue3 <<= 1;
+                }
+              }
+            }
+            break;
+            default: {
               int x = 8;
               while (x-- > 0) {
-                pixelRgbBuffer[offset] = inkColor;
-                pixelRgbBuffer[offset + SCREEN_WIDTH] = inkColor;
-                pixelRgbBuffer[++offset] = inkColor;
-                pixelRgbBuffer[offset++ + SCREEN_WIDTH] = inkColor;
+                final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
+                    | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
+                    | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
+                    | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
+
+                videoValue0 <<= 1;
+                videoValue1 <<= 1;
+                videoValue2 <<= 1;
+                videoValue3 <<= 1;
+
+                final int color = ZXPALETTE[value];
+
+                pixelRgbBuffer[offset] = color;
+                pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
+                pixelRgbBuffer[++offset] = color;
+                pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
               }
-              continue; // skip rest of the loop because pixel already processed
             }
-          }
-
-          int x = 8;
-          while (x-- > 0) {
-            final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
-                | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
-                | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
-                | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
-
-            videoValue0 <<= 1;
-            videoValue1 <<= 1;
-            videoValue2 <<= 1;
-            videoValue3 <<= 1;
-
-            final int color = ZXPALETTE[value];
-
-            pixelRgbBuffer[offset] = color;
-            pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
-            pixelRgbBuffer[++offset] = color;
-            pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+            break;
           }
         }
       }
