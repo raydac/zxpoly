@@ -414,6 +414,18 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
         zxKeyCode = ZXKEY_SS | ZXKEY_L;
       }
       break;
+      case KeyEvent.VK_SLASH: {
+        zxKeyCode = ZXKEY_SS | ZXKEY_V;
+      }
+      break;
+      case KeyEvent.VK_QUOTE: {
+        zxKeyCode = ZXKEY_SS | ZXKEY_7;
+      }
+      break;
+      case KeyEvent.VK_MINUS: {
+        zxKeyCode = ZXKEY_SS | ZXKEY_J;
+      }
+      break;
     }
 
     if (zxKeyCode != 0L) {
