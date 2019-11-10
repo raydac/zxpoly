@@ -459,9 +459,9 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       case 5:
         return "ZX-Poly 512x384";
       case 6:
-        return "Reserved 6";
+        return "ZX-Poly 256x192M0";
       case 7:
-        return "Reserved 7";
+        return "ZX-Poly 256x192M1";
       default:
         return "Unknown [" + code + ']';
     }
