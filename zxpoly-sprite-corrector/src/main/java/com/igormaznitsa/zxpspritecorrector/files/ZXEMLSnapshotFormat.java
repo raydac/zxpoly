@@ -36,55 +36,55 @@ public class ZXEMLSnapshotFormat {
       + "byte [4] reg_im; bool [4] iff; bool [4] iff2;"
       + "short [4] reg_pc; short [4] reg_sp;"
       + "pages [4]{ubyte number; page[number]{ubyte index; byte [16384] data;}}");
-  @Bin(outOrder = 1, type = BinType.INT)
+  @Bin(order = 1, type = BinType.INT)
   public int magic = MAGIC;
-  @Bin(outOrder = 2, type = BinType.INT)
+  @Bin(order = 2, type = BinType.INT)
   public int flags;
-  @Bin(outOrder = 3, type = BinType.UBYTE)
+  @Bin(order = 3, type = BinType.UBYTE)
   public int port3D00;
-  @Bin(outOrder = 4, type = BinType.UBYTE)
+  @Bin(order = 4, type = BinType.UBYTE)
   public int portFE;
-  @Bin(outOrder = 5, type = BinType.BYTE_ARRAY)
+  @Bin(order = 5, type = BinType.BYTE_ARRAY)
   public byte[] cpu0ports = new byte[5];
-  @Bin(outOrder = 6, type = BinType.BYTE_ARRAY)
+  @Bin(order = 6, type = BinType.BYTE_ARRAY)
   public byte[] cpu1ports = new byte[5];
-  @Bin(outOrder = 7, type = BinType.BYTE_ARRAY)
+  @Bin(order = 7, type = BinType.BYTE_ARRAY)
   public byte[] cpu2ports = new byte[5];
-  @Bin(outOrder = 8, type = BinType.BYTE_ARRAY)
+  @Bin(order = 8, type = BinType.BYTE_ARRAY)
   public byte[] cpu3ports = new byte[5];
-  @Bin(outOrder = 9, type = BinType.SHORT_ARRAY)
+  @Bin(order = 9, type = BinType.SHORT_ARRAY)
   public short[] reg_af = new short[4];
-  @Bin(outOrder = 10, type = BinType.SHORT_ARRAY)
+  @Bin(order = 10, type = BinType.SHORT_ARRAY)
   public short[] reg_af_alt = new short[4];
-  @Bin(outOrder = 11, type = BinType.SHORT_ARRAY)
+  @Bin(order = 11, type = BinType.SHORT_ARRAY)
   public short[] reg_bc = new short[4];
-  @Bin(outOrder = 12, type = BinType.SHORT_ARRAY)
+  @Bin(order = 12, type = BinType.SHORT_ARRAY)
   public short[] reg_bc_alt = new short[4];
-  @Bin(outOrder = 13, type = BinType.SHORT_ARRAY)
+  @Bin(order = 13, type = BinType.SHORT_ARRAY)
   public short[] reg_de = new short[4];
-  @Bin(outOrder = 14, type = BinType.SHORT_ARRAY)
+  @Bin(order = 14, type = BinType.SHORT_ARRAY)
   public short[] reg_de_alt = new short[4];
-  @Bin(outOrder = 15, type = BinType.SHORT_ARRAY)
+  @Bin(order = 15, type = BinType.SHORT_ARRAY)
   public short[] reg_hl = new short[4];
-  @Bin(outOrder = 16, type = BinType.SHORT_ARRAY)
+  @Bin(order = 16, type = BinType.SHORT_ARRAY)
   public short[] reg_hl_alt = new short[4];
-  @Bin(outOrder = 17, type = BinType.SHORT_ARRAY)
+  @Bin(order = 17, type = BinType.SHORT_ARRAY)
   public short[] reg_ix = new short[4];
-  @Bin(outOrder = 18, type = BinType.SHORT_ARRAY)
+  @Bin(order = 18, type = BinType.SHORT_ARRAY)
   public short[] reg_iy = new short[4];
-  @Bin(outOrder = 19, type = BinType.SHORT_ARRAY)
+  @Bin(order = 19, type = BinType.SHORT_ARRAY)
   public short[] reg_ir = new short[4];
-  @Bin(outOrder = 20, type = BinType.BYTE_ARRAY)
+  @Bin(order = 20, type = BinType.BYTE_ARRAY)
   public byte[] reg_im = new byte[4];
-  @Bin(outOrder = 21, type = BinType.BOOL_ARRAY)
+  @Bin(order = 21, type = BinType.BOOL_ARRAY)
   public boolean[] iff = new boolean[4];
-  @Bin(outOrder = 22, type = BinType.BOOL_ARRAY)
+  @Bin(order = 22, type = BinType.BOOL_ARRAY)
   public boolean[] iff2 = new boolean[4];
-  @Bin(outOrder = 23, type = BinType.SHORT_ARRAY)
+  @Bin(order = 23, type = BinType.SHORT_ARRAY)
   public short[] reg_pc = new short[4];
-  @Bin(outOrder = 24, type = BinType.SHORT_ARRAY)
+  @Bin(order = 24, type = BinType.SHORT_ARRAY)
   public short[] reg_sp = new short[4];
-  @Bin(outOrder = 25, type = BinType.STRUCT_ARRAY)
+  @Bin(order = 25, type = BinType.STRUCT_ARRAY)
   public Pages[] pages = new Pages[] {
       new Pages(new Page[] {new Page(0, new byte[16384])}),
       new Pages(new Page[] {new Page(0, new byte[16384])}),
@@ -305,9 +305,9 @@ public class ZXEMLSnapshotFormat {
 
   public static class Page {
 
-    @Bin(outOrder = 1, type = BinType.UBYTE)
+    @Bin(order = 1, type = BinType.UBYTE)
     public int index;
-    @Bin(outOrder = 2, type = BinType.BYTE_ARRAY)
+    @Bin(order = 2, type = BinType.BYTE_ARRAY)
     public byte[] data;
 
     public Page(final int index, final byte[] data) {
@@ -332,9 +332,9 @@ public class ZXEMLSnapshotFormat {
 
   public static class Pages {
 
-    @Bin(outOrder = 1, type = BinType.UBYTE)
+    @Bin(order = 1, type = BinType.UBYTE)
     public int number;
-    @Bin(outOrder = 2, type = BinType.STRUCT_ARRAY)
+    @Bin(order = 2, type = BinType.STRUCT_ARRAY)
     public Page[] page;
 
     public Pages(final Page[] page) {

@@ -612,80 +612,76 @@ public class Z80Plugin extends AbstractFilePlugin {
 
   public static class EmulFlags {
 
-    @Bin(outOrder = 1, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_2)
+    @Bin(order = 1, type = BinType.BIT, bitNumber = JBBPBitNumber.BITS_2)
     public byte interruptmode;
-    @Bin(outOrder = 2, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_1)
+    @Bin(order = 2, type = BinType.BIT, bitNumber = JBBPBitNumber.BITS_1)
     public byte issue2emulation;
-    @Bin(outOrder = 3, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_1)
+    @Bin(order = 3, type = BinType.BIT, bitNumber = JBBPBitNumber.BITS_1)
     public byte doubleintfreq;
-    @Bin(outOrder = 4, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_2)
+    @Bin(order = 4, type = BinType.BIT, bitNumber = JBBPBitNumber.BITS_2)
     public byte videosync;
-    @Bin(outOrder = 5, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_2)
+    @Bin(order = 5, type = BinType.BIT, bitNumber = JBBPBitNumber.BITS_2)
     public byte inputdevice;
   }
 
   public static class Flags {
 
-    @Bin(outOrder = 1, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_1)
+    @Bin(order = 1, type = BinType.BIT, bitNumber = JBBPBitNumber.BITS_1)
     public byte reg_r_bit7;
-    @Bin(outOrder = 2, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_3)
+    @Bin(order = 2, type = BinType.BIT, bitNumber = JBBPBitNumber.BITS_3)
     public byte bordercolor;
-    @Bin(outOrder = 3, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_1)
+    @Bin(order = 3, type = BinType.BIT, bitNumber = JBBPBitNumber.BITS_1)
     public byte basic_samrom;
-    @Bin(outOrder = 4, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_1)
+    @Bin(order = 4, type = BinType.BIT, bitNumber = JBBPBitNumber.BITS_1)
     public byte compressed;
-    @Bin(outOrder = 5, type = BinType.BIT, outBitNumber = JBBPBitNumber.BITS_2)
+    @Bin(order = 5, type = BinType.BIT, bitNumber = JBBPBitNumber.BITS_2)
     public byte nomeaning;
   }
 
   public static class Z80Snapshot {
 
-    @Bin(outOrder = 1)
+    @Bin(order = 1)
     public byte reg_a;
-    @Bin(outOrder = 2)
+    @Bin(order = 2)
     public byte reg_f;
-    @Bin(outOrder = 3)
+    @Bin(order = 3)
     public short reg_bc;
-    @Bin(outOrder = 4)
+    @Bin(order = 4)
     public short reg_hl;
-    @Bin(outOrder = 5)
+    @Bin(order = 5)
     public short reg_pc;
-    @Bin(outOrder = 6)
+    @Bin(order = 6)
     public short reg_sp;
-    @Bin(outOrder = 7)
+    @Bin(order = 7)
     public byte reg_ir;
-    @Bin(outOrder = 8)
+    @Bin(order = 8)
     public byte reg_r;
-
-    @Bin(outOrder = 9)
-    Flags flags;
-
-    @Bin(outOrder = 10)
+    @Bin(order = 10)
     public short reg_de;
-    @Bin(outOrder = 11)
+    @Bin(order = 11)
     public short reg_bc_alt;
-    @Bin(outOrder = 12)
+    @Bin(order = 12)
     public short reg_de_alt;
-    @Bin(outOrder = 13)
+    @Bin(order = 13)
     public short reg_hl_alt;
-    @Bin(outOrder = 14)
+    @Bin(order = 14)
     public byte reg_a_alt;
-    @Bin(outOrder = 15)
+    @Bin(order = 15)
     public byte reg_f_alt;
-    @Bin(outOrder = 16)
+    @Bin(order = 16)
     public short reg_iy;
-    @Bin(outOrder = 17)
+    @Bin(order = 17)
     public short reg_ix;
-    @Bin(outOrder = 18)
+    @Bin(order = 18)
     public byte iff;
-    @Bin(outOrder = 19)
+    @Bin(order = 19)
     public byte iff2;
-
-    @Bin(outOrder = 20)
+    @Bin(order = 20)
     public EmulFlags emulFlags;
-
-    @Bin(outOrder = 21, custom = true)
+    @Bin(order = 21, custom = true)
     public byte[] data;
+    @Bin(order = 9)
+    Flags flags;
 
     // version 2,3A
     @Bin(type = BinType.USHORT)
@@ -722,48 +718,48 @@ public class Z80Plugin extends AbstractFilePlugin {
 
   public static class Z80MainHeader {
 
-    @Bin(outOrder = 1)
+    @Bin(order = 1)
     public byte reg_a;
-    @Bin(outOrder = 2)
+    @Bin(order = 2)
     public byte reg_f;
-    @Bin(outOrder = 3)
+    @Bin(order = 3)
     public short reg_bc;
-    @Bin(outOrder = 4)
+    @Bin(order = 4)
     public short reg_hl;
-    @Bin(outOrder = 5)
+    @Bin(order = 5)
     public short reg_pc;
-    @Bin(outOrder = 6)
+    @Bin(order = 6)
     public short reg_sp;
-    @Bin(outOrder = 7)
+    @Bin(order = 7)
     public byte reg_ir;
-    @Bin(outOrder = 8)
+    @Bin(order = 8)
     public byte reg_r;
 
-    @Bin(outOrder = 9)
+    @Bin(order = 9)
     public Flags flags;
 
-    @Bin(outOrder = 10)
+    @Bin(order = 10)
     public short reg_de;
-    @Bin(outOrder = 11)
+    @Bin(order = 11)
     public short reg_bc_alt;
-    @Bin(outOrder = 12)
+    @Bin(order = 12)
     public short reg_de_alt;
-    @Bin(outOrder = 13)
+    @Bin(order = 13)
     public short reg_hl_alt;
-    @Bin(outOrder = 14)
+    @Bin(order = 14)
     public byte reg_a_alt;
-    @Bin(outOrder = 15)
+    @Bin(order = 15)
     public byte reg_f_alt;
-    @Bin(outOrder = 16)
+    @Bin(order = 16)
     public short reg_iy;
-    @Bin(outOrder = 17)
+    @Bin(order = 17)
     public short reg_ix;
-    @Bin(outOrder = 18)
+    @Bin(order = 18)
     public byte iff;
-    @Bin(outOrder = 19)
+    @Bin(order = 19)
     public byte iff2;
 
-    @Bin(outOrder = 20)
+    @Bin(order = 20)
     public EmulFlags emulFlags;
 
     public static Object newInstance(Class<?> klazz) {
