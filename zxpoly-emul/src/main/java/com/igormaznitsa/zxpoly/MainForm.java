@@ -1713,16 +1713,17 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
+      boolean consumed = false;
       if (!e.isConsumed()) {
         if (e.getKeyCode() == KeyEvent.VK_F5) {
           this.videoController.setShowZxKeyboardLayout(e.getID() == KeyEvent.KEY_PRESSED);
           e.consume();
+          consumed = true;
         } else {
-          this.keyboard.onKeyEvent(e);
+          consumed = this.keyboard.onKeyEvent(e);
         }
       }
-      return false;
+      return consumed;
     }
   }
-  // End of variables declaration//GEN-END:variables
 }

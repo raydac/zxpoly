@@ -177,7 +177,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     this.tap.set(tap);
   }
 
-  public void onKeyEvent(final KeyEvent evt) {
+  public boolean onKeyEvent(final KeyEvent evt) {
     final boolean pressed;
     switch (evt.getID()) {
       case KeyEvent.KEY_PRESSED:
@@ -187,7 +187,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
         pressed = false;
         break;
       default:
-        return;
+        return false;
     }
 
     long zxKeyCode = 0L;
@@ -431,6 +431,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
       break;
     }
 
+    boolean consumed = false;
+
     if (zxKeyCode != 0L) {
       long theLinesState = this.keyboardLines;
       if (pressed) {
@@ -439,6 +441,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
         theLinesState |= ZXKEY_NONE & zxKeyCode;
       }
       this.keyboardLines = theLinesState;
+      consumed = true;
     }
 
     if (kempstonCode != 0) {
@@ -449,7 +452,9 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
         theSignal = (~kempstonCode & theSignal) & 0xFF;
       }
       this.kempstonSignals = theSignal;
+      consumed = true;
     }
+    return consumed;
   }
 
   @Override
