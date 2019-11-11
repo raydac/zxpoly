@@ -95,7 +95,6 @@ import org.apache.commons.io.FilenameUtils;
 public final class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
 
   public static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
-  public static final AtomicReference<MainForm> theInstance = new AtomicReference<>();
   public static final Logger LOGGER = Logger.getLogger("UI");
   private static final Icon ICO_MOUSE = new ImageIcon(Utils.loadIcon("mouse.png"));
   private static final Icon ICO_MOUSE_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_MOUSE);
@@ -180,7 +179,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private javax.swing.JCheckBoxMenuItem menuOptionsShowIndicators;
   private javax.swing.JCheckBoxMenuItem menuOptionsTurbo;
   private javax.swing.JCheckBoxMenuItem menuOptionsZX128Mode;
-  private javax.swing.JMenuItem menuResetKeyboard;
   private javax.swing.JMenu menuService;
   private javax.swing.JMenuItem menuServiceSaveScreen;
   private javax.swing.JMenuItem menuServiceSaveScreenAllVRAM;
@@ -304,6 +302,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           @Override
           public void menuSelected(MenuEvent e) {
             MainForm.this.stepSemaphor.lock();
+            MainForm.this.keyboardAndTapeModule.doReset();
           }
 
           @Override
@@ -325,17 +324,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     this.setLocationRelativeTo(null);
 
-    theInstance.set(this);
-
     SwingUtilities.invokeLater(() -> {
       final Thread daemon = new Thread(this, "ZXPolyThread");
       daemon.setDaemon(true);
       daemon.start();
     });
-  }
-
-  public static MainForm getInstance() {
-    return theInstance.get();
   }
 
   private RomData loadRom(final String romPath) throws IOException {
@@ -563,17 +556,17 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
       if ((triggered & Motherboard.TRIGGER_DIFF_MODULESTATES) != 0) {
         this.menuTriggerModuleCPUDesync.setSelected(false);
-        JOptionPane.showMessageDialog(theInstance.get(), "Detected desync of module CPUs\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(MainForm.this, "Detected desync of module CPUs\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
 
       if ((triggered & Motherboard.TRIGGER_DIFF_MEM_ADDR) != 0) {
         this.menuTriggerDiffMem.setSelected(false);
-        JOptionPane.showMessageDialog(theInstance.get(), "Detected memory cell difference " + toHex(this.board.getMemTriggerAddress()) + "\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, getCellContentForAddress(this.board.getMemTriggerAddress()), Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(MainForm.this, "Detected memory cell difference " + toHex(this.board.getMemTriggerAddress()) + "\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, getCellContentForAddress(this.board.getMemTriggerAddress()), Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
 
       if ((triggered & Motherboard.TRIGGER_DIFF_EXE_CODE) != 0) {
         this.menuTriggerExeCodeDiff.setSelected(false);
-        JOptionPane.showMessageDialog(theInstance.get(), "Detected EXE code difference\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(MainForm.this, "Detected EXE code difference\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
     } finally {
       this.stepSemaphor.unlock();
@@ -634,7 +627,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuTapGotoBlock = new javax.swing.JMenuItem();
     menuService = new javax.swing.JMenu();
     menuFileReset = new javax.swing.JMenuItem();
-    menuResetKeyboard = new javax.swing.JMenuItem();
     menuServiceSaveScreen = new javax.swing.JMenuItem();
     menuServiceSaveScreenAllVRAM = new javax.swing.JMenuItem();
     menuActionAnimatedGIF = new javax.swing.JMenuItem();
@@ -840,11 +832,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuFileReset.setText("Reset");
     menuFileReset.addActionListener(this::menuFileResetActionPerformed);
     menuService.add(menuFileReset);
-
-    menuResetKeyboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/keyboard.png"))); // NOI18N
-    menuResetKeyboard.setText("Reset keyboard");
-    menuResetKeyboard.addActionListener(this::menuResetKeyboardActionPerformed);
-    menuService.add(menuResetKeyboard);
 
     menuServiceSaveScreen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F8, 0));
     menuServiceSaveScreen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/photo.png"))); // NOI18N
@@ -1060,7 +1047,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     stepSemaphor.lock();
     try {
       if (AppOptions.getInstance().isTestRomActive()) {
-        JOptionPane.showMessageDialog(theInstance.get(), "<html><body><b>Test ROM is active!</b><br><br>ROM 128 is needed for snapshot loading.<br>Go to menu <b><i>File->Options</i></b> and choose ROM 128.</body></html>", "Test ROM detected", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(MainForm.this, "<html><body><b>Test ROM is active!</b><br><br>ROM 128 is needed for snapshot loading.<br>Go to menu <b><i>File->Options</i></b> and choose ROM 128.</body></html>", "Test ROM detected", JOptionPane.ERROR_MESSAGE);
         return;
       }
 
@@ -1236,10 +1223,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   }
 
-  private void menuResetKeyboardActionPerformed(java.awt.event.ActionEvent evt) {
-    this.keyboardAndTapeModule.doReset();
-  }
-
   private void menuFileOptionsActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
@@ -1391,17 +1374,17 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     try {
       if (this.menuTriggerDiffMem.isSelected()) {
         final AddressPanel panel = new AddressPanel(this.board.getMemTriggerAddress());
-        if (JOptionPane.showConfirmDialog(theInstance.get(), panel, "Triggering address", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
+        if (JOptionPane.showConfirmDialog(MainForm.this, panel, "Triggering address", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
           try {
             final int addr = panel.extractAddressFromText();
             if (addr < 0 || addr > 0xFFFF) {
-              JOptionPane.showMessageDialog(theInstance.get(), "Error address must be in #0000...#FFFF", "Error address", JOptionPane.ERROR_MESSAGE);
+              JOptionPane.showMessageDialog(MainForm.this, "Error address must be in #0000...#FFFF", "Error address", JOptionPane.ERROR_MESSAGE);
             } else {
               this.board.setMemTriggerAddress(addr);
               this.board.setTrigger(Motherboard.TRIGGER_DIFF_MEM_ADDR);
             }
           } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(theInstance.get(), "Error address format, use # for hexadecimal address (example #AA00)", "Error address", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(MainForm.this, "Error address format, use # for hexadecimal address (example #AA00)", "Error address", JOptionPane.ERROR_MESSAGE);
           }
         }
       } else {
