@@ -333,6 +333,20 @@ public final class VideoController extends JComponent implements ZxPolyConstants
               int x = 8;
               if ((attrModule0 & 0b1000_0000) == 0) {
                 while (x-- > 0) {
+                  pixelRgbBuffer[offset] = (videoValue0 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                  videoValue0 <<= 1;
+
+                  pixelRgbBuffer[offset + SCREEN_WIDTH] = (videoValue2 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                  videoValue2 <<= 1;
+
+                  pixelRgbBuffer[++offset] = (videoValue1 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                  videoValue1 <<= 1;
+
+                  pixelRgbBuffer[offset++ + SCREEN_WIDTH] = (videoValue3 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                  videoValue3 <<= 1;
+                }
+              } else {
+                while (x-- > 0) {
                   final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
                       | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
                       | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
@@ -349,20 +363,6 @@ public final class VideoController extends JComponent implements ZxPolyConstants
                   pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
                   pixelRgbBuffer[++offset] = color;
                   pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
-                }
-              } else {
-                while (x-- > 0) {
-                  pixelRgbBuffer[offset] = (videoValue0 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
-                  videoValue0 <<= 1;
-
-                  pixelRgbBuffer[offset + SCREEN_WIDTH] = (videoValue2 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
-                  videoValue2 <<= 1;
-
-                  pixelRgbBuffer[++offset] = (videoValue1 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
-                  videoValue1 <<= 1;
-
-                  pixelRgbBuffer[offset++ + SCREEN_WIDTH] = (videoValue3 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
-                  videoValue3 <<= 1;
                 }
               }
             }
