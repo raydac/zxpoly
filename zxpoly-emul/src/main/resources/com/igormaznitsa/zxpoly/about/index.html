@@ -4,33 +4,35 @@
     <meta charset="UTF-8">
   </head>
   <body>
-    <h3>ZX-Poly platform emulator</h3>
-    <p>
+  <h2>ZX-Poly platform emulator</h2>
       <b>Version: </b>2.0.0<br>
       <b>Author: </b><a href="http://www.igormaznitsa.com">Igor Maznitsa</a><br>
       <b>Project page: </b> <a href="https://github.com/raydac/zxpoly">https://github.com/raydac/zxpoly</a><br>
-    </p>
     <p>
         ZX-Poly is an attempt to jump over ZX-Spectrum limits and get way to have graphics without atribute clash. The
         idea of the platform was developed by Igor Maznitsa in april 1994, the first emulator was developed in 1998 and
         the current emulator was developed in 2014 to prove the idea.
-    </p>
-    <p>
+        <br><br>
         By default the emulator emulates ZX-Poly platform but it is possible to turn on ZX-128 mode through item in <b>Options</b>
         menu.
     </p>
+  <h3>Supported formats</h3>
+  <ol>
+      <li>Snapshots: Z80, ZXP, SNA</li>
+      <li>Disk format: TRD, SCL</li>
+      <li>Tape format: TAP</li>
+  </ol>
+  <h3>Emulated components</h3>
     <p>
-        The emulator has components:
       <ol>
-        <li>ZX-Spectrum keyboard</li>
+          <li>ZX-Spectrum keyboard (<b>SHIFT = CAPS SHIFT</b>, <b>ALT = SYMBOL SHIFT</b>)</li>
         <li>Beta-disk interface</li>
         <li>Kempston mouse (one click by mouse on the emulator form - trap mouse, ESC - free mouse)</li>
           <li>Kempston joystick (emulated by cursor keys of keypad!)</li>
         <li>Tape (only reading)</li>
       </ol>
     </p>
-    <p>
-      Keyboard shortcuts
+  <h3>Keyboard shortcuts</h3>
       <ul>
         <li>F1 - this info</li>
         <li>F3 - turbo mode</li>
@@ -38,20 +40,15 @@
         <li>F5 - show keyboard layout</li>
         <li>F8 - make screenshot</li>
         <li>F12- reset</li>
+          <li>CTRL+mouse wheel - screen scale</li>
       </ul>
-    </p>
-    <p>
-        Screen can be scaled by <b>CTRL+mouse wheel</b>.
-    </p>
     <h3>System properties</h3>
-    <p>
-        Emulator uses two system properties:
+  Emulator supports two system properties:
     <ul>
       <li><b>zxpoly.rom.path</b> contains ROM file path</li>
       <li><b>zxpoly.int.ticks</b> number of INT ticks between screen refresh request</li>
     </ul>
-    </p>
     <h3>License</h3>
-    <p>The emulator is published under <a href="http://www.gnu.org/licenses/gpl.html">GNU GPL3 license</a></p>
+  The emulator is published under <a href="http://www.gnu.org/licenses/gpl.html">GNU GPL3 license</a>
   </body>
 </html>
