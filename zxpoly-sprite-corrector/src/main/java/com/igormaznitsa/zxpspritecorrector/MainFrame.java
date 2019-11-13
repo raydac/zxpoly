@@ -241,8 +241,8 @@ public final class MainFrame extends javax.swing.JFrame {
     );
 
     this.container.getComponents(AbstractFilePlugin.class).stream()
-        .filter((p) -> !(!p.allowsExport()))
-        .forEachOrdered((p) -> {
+        .filter(AbstractFilePlugin::allowsExport)
+        .forEachOrdered(p -> {
           final JMenuItem menuItem = new JMenuItem(p.getPluginDescription(true));
           this.menuFileExportAs.add(menuItem);
           menuItem.setToolTipText(p.getToolTip(true));

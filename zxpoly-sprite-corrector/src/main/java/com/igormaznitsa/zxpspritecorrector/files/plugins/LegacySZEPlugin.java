@@ -175,6 +175,11 @@ public class LegacySZEPlugin extends AbstractFilePlugin {
   }
 
   @Override
+  public boolean allowsExport() {
+    return false;
+  }
+
+  @Override
   public String getDescription() {
     return getToolTip(false) + " (*.ZXP)";
   }
