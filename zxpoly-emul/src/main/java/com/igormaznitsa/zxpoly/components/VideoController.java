@@ -346,23 +346,32 @@ public final class VideoController extends JComponent implements ZxPolyConstants
                   videoValue3 <<= 1;
                 }
               } else {
-                while (x-- > 0) {
-                  final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
-                      | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
-                      | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
-                      | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
+                if (inkColorMod0 == paperColorMod0) {
+                  while (x-- > 0) {
+                    pixelRgbBuffer[offset] = inkColorMod0;
+                    pixelRgbBuffer[offset + SCREEN_WIDTH] = inkColorMod0;
+                    pixelRgbBuffer[++offset] = inkColorMod0;
+                    pixelRgbBuffer[offset++ + SCREEN_WIDTH] = inkColorMod0;
+                  }
+                } else {
+                  while (x-- > 0) {
+                    final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
+                        | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
+                        | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
+                        | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
 
-                  videoValue0 <<= 1;
-                  videoValue1 <<= 1;
-                  videoValue2 <<= 1;
-                  videoValue3 <<= 1;
+                    videoValue0 <<= 1;
+                    videoValue1 <<= 1;
+                    videoValue2 <<= 1;
+                    videoValue3 <<= 1;
 
-                  final int color = ZXPALETTE[value];
+                    final int color = ZXPALETTE[value];
 
-                  pixelRgbBuffer[offset] = color;
-                  pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
-                  pixelRgbBuffer[++offset] = color;
-                  pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+                    pixelRgbBuffer[offset] = color;
+                    pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
+                    pixelRgbBuffer[++offset] = color;
+                    pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+                  }
                 }
               }
             }
