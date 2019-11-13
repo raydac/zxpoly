@@ -1,0 +1,17 @@
+Found three addresses which play role in filling of the game screen by attributes:
+
+50914 LD A,(40025)
+  .
+  .
+50945 LD A,(40025)
+  .
+  .
+51046 LD A,(40025)
+
+The attribute value is saved in cell 40025.
+
+Set new attributes through poke codes to replace by LD A,134 NOP
+
+50914 62 134 0
+50945 62 134 0
+51046 62 134 0
