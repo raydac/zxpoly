@@ -56,11 +56,22 @@ It is just regular ZX-Spectrum movde 256x192 with 2 attributed colors for 8x8 pi
 ![Standard ZX screenshot](docs/screenshots/atw_standard.png)
 
 ## ZX-Poly 256x192 (16 colors per pixel)
-The Mode doesn't use attributes and each pixel can have color from 16 color palette. Also there is modification of the mode which uses attributes from CPU0 module to mask screen areas by INK color if it is the sime as PAPER color in attribute.
+It is a family of video-modes and contain three sub-mode. All modes provide way for each pixel to get a color from standard ZX-Spectrum 16 color palette.
 
+### ZX-Poly 256x192 STANDARD
+
+It is just regular video mode without any masking. It just integrates pixel info from video-ram of all CPU modules and form 4 bit index in ZX-Spectrum palette.
 [TRD disk with the example can be downloaded from here, the game has been partly colorized](adapted/Atw2/target/atw2.trd)
 ![ZXPoly256x192 screenshot](docs/screenshots/atw_zxpoly.png)   
 ![ZXPoly256x192 animation](docs/zxpoly_atw2.gif)   
+
+### ZX-Poly 256x192 EXTENSION MASK_INK+PAPER
+
+It works as previous one and provide way to for 4 bit index for pixel, but also it analyses INK and PAPER colors from CPU0 video-ram and if INK = PAPER then whole block is filled by the INK color. It is made to provide way to make compatibility with games hidding some visual elements in areas with same INK and PAPER colors.
+
+### ZX-Poly 256x192 EXTENSION MASK_FLUSH+INK+PAPER
+
+It is the most complex from the video-mode family. It analyses FLASH bit of each attribute from CPU0 video-memory and turn on ZX-Poly mode only for blocks where FLASH bit is ON. In the same time it analyses INK and PAPER attribute values and if they the same then whole block is filled by INK else form pixel colors as in standard ZX-Poly mode. All blocks where FLASH is OFF are processed as in standard ZX-Spectrum video-mode. FLASH is not working in the mode (but it is no so often feature in games). The video-mode provides way to colorize games with color dynamic indicators and duotone game-play areas. 
 
 ## ZX-Poly 512x384 (2 colors per pixel placed in chess order)
 The Mode uses attributes but places pixels in chess order.
