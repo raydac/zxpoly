@@ -48,6 +48,13 @@ public abstract class Snapshot extends FileFilter {
     board.getMasterCpu().doReset();
   }
 
+  public void doZxPoly(final Motherboard board) {
+    LOGGER.info("Mode ZX-Poly");
+    board.set3D00(0, true);
+    board.setZxPolyMode(true, false);
+    board.getMasterCpu().doReset();
+  }
+
   public abstract String getExtension();
 
   public abstract void loadFromArray(File srcFile, Motherboard board, VideoController vc, byte[] array) throws IOException;

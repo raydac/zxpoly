@@ -92,6 +92,8 @@ public class FormatZXP extends Snapshot {
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
     final ZxEmlSnapshotFormat snapshot = new ZxEmlSnapshotFormat(array);
 
+    this.doZxPoly(board);
+
     for (int cpu = 0; cpu < 4; cpu++) {
       final ZxPolyModule module = board.getModules()[cpu];
       final Z80 z80 = module.getCpu();
