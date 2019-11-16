@@ -9,17 +9,17 @@
 # Introduction
 I am a ZX-Spectrum fun since 1989. The ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash]((https://en.wikipedia.org/wiki/Attribute_clash)) through moving the platform from mono-system to poly-system. (https://en.wikipedia.org/wiki/Attribute_clash). The idea was to start four ZX-Spectrums in parallel with small modifications of graphics data in their RAM.   
 
-I think it was possible to get some hardware variant of the platform even in 80th but in 90th it was too late to make such movments so that I developed some emulator as a proof of concept.
+I think it was possible to get some hardware variant of the platform even in 80th but in 90th it was too late to make such movements so that I developed an emulator as a proof of concept.
 
 # License
-The Emulator and all its parts are published under [GNU GPL3 license](http://www.gnu.org/licenses/gpl.html). So that it is absolutely free for any non-commercial and open-source use.
+Both the concept and emulator and all its parts are published under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 
 # UI
 ![The Main Window of the Emulator](docs/screenshots/tapeloading.png)
 
 # Theory and structure of the ZX-Poly platform
 ![ZXPoly test ROM screen](docs/screenshots/zxpoly_test_rom_video.gif)    
-The Base of the platform is the theory that stable synchronous systems (without any inside random processes) built on the same components (because different element base can be also source of random processes) by being started synchronously in the same time from the same state have the same state in any point of time if all synchronous system components get the same input signal states in the same time.
+The base of the platform is the theory that stable synchronous systems (without any inside random processes) built on the same components (because different element base can be also source of random processes) by being started synchronously in the same time from the same state have the same state in any point of time if all synchronous system components get the same input signal states in the same time.
 ![Structure of ZXPoly](docs/zxpolystruct.png)
 ZX-Poly platform adds several ports to manipulate work modes and the main port of the platform is #3D00. [In more details it is desribed in wiki.](https://github.com/raydac/zxpoly/wiki/Short-description-of-ZX-Poly-platform)
 
@@ -46,13 +46,13 @@ The Main requirement - the software should not have optimization of graphic outp
  - Disks .TRD, .SCL
 
 # Prebuilt versions
-The prebuilt versions of the emulator and sprite editor can be downloaded from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.0).   
+The pre-built versions of the emulator and sprite editor can be downloaded from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.0).   
 The emulator is written in Java and its JAR file can be started just through command line `java -jar zxpoly-emul-2.0-SNAPSHOT.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in **File->Options->Active ROM**, the ROM will be downloaded from one of remote network resources.
 
 # Supported videomodes
 ## Standard ZX-Spectrum 256x192 (2 colors per pixel in 8x8 block)
-It is just regular ZX-Spectrum movde 256x192 with 2 attributed colors for 8x8 pixel block.
+It is just regular ZX-Spectrum mode 256x192 with 2 attributed colors for 8x8 pixel block.
 ![Standard ZX screenshot](docs/screenshots/atw_standard.png)
 
 ## ZX-Poly 256x192 (16 colors per pixel)
