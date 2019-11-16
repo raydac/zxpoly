@@ -7,7 +7,8 @@
 ![ZX-Poly logo](docs/zxpoly_logo.png)
 
 # Introduction
-I am a ZX-Spectrum fun since 1989. The ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from mono-system to poly-system.   The idea was to start four ZX-Spectrums in parallel with small modifications of graphics data in their RAM.   
+I am a ZX-Spectrum fun since 1989. The ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from mono-system to poly-system.   
+The idea was to start four ZX-Spectrums in parallel with small modifications of graphics data in their RAM.   
 I can'not say that the idea is too original one because it was based on my reading of the book "COMPUTER IMAGES" (of "Understanding computer" Time-Life books). There I found several strings about the Pixar platform (developed by Lucasfilm team) which processes each color component by dedicated CPU. In ZX-Poly I also added four CPUs which dedicated to its color component (R,G,B,Y). Software no so often trying to check what is written into VRAM so that big part of games and utilities could be adapted just through edition of their graphic data.   
 
 # License
