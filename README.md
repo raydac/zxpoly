@@ -7,7 +7,7 @@
 ![ZX-Poly logo](docs/zxpoly_logo.png)
 
 # Introduction
-I am a ZX-Spectrum fun since 1989. The ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash]((https://en.wikipedia.org/wiki/Attribute_clash)) through moving the platform from mono-system to poly-system. (https://en.wikipedia.org/wiki/Attribute_clash). The idea was to start four ZX-Spectrums in parallel with small modifications of graphics data in their RAM.   
+I am a ZX-Spectrum fun since 1989. The ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from mono-system to poly-system. (https://en.wikipedia.org/wiki/Attribute_clash). The idea was to start four ZX-Spectrums in parallel with small modifications of graphics data in their RAM.   
 
 I think it was possible to get some hardware variant of the platform even in 80th but in 90th it was too late to make such movements so that I developed an emulator as a proof of concept.
 
