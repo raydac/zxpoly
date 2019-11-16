@@ -71,8 +71,9 @@ It works as previous one and provide way to for 4 bit index for pixel, but also 
 
 ### ZX-Poly 256x192 EXTENSION MASK_FLUSH+INK+PAPER
 
-It is the most complex from the video-mode family. It analyses FLASH bit of each attribute from CPU0 video-memory and turn on ZX-Poly mode only for blocks where FLASH bit is ON. In the same time it analyses INK and PAPER attribute values and if they the same then whole block is filled by INK else form pixel colors as in standard ZX-Poly mode. All blocks where FLASH is OFF are processed as in standard ZX-Spectrum video-mode. FLASH is not working in the mode (but it is no so often feature in games). The video-mode provides way to colorize games with color dynamic indicators and duotone game-play areas. 
+It is the most complex from the video-mode family. It analyses FLASH bit of each attribute from CPU0 video-memory and turn on ZX-Poly mode only for blocks where FLASH bit is ON. In the same time it analyses INK and PAPER attribute values and if they the same then whole block is filled by INK else form pixel colors as in standard ZX-Poly mode. All blocks where FLASH is OFF are processed as in standard ZX-Spectrum video-mode. FLASH is not working in the mode (but it is no so often feature in games). The video-mode provides way to colorize games with color dynamic indicators and duotone game-play areas.   
 ![ZXPoly256x192Mode7_screenshot](adapted/FlyShark/flyshark_zxpoly_mode7.png)
+![ZXPoly256x192Mode7_animation](adapted/FlyShark/flyshark_video.gif)
 
 ## ZX-Poly 512x384 (2 colors per pixel placed in chess order)
 The Mode uses attributes but places pixels in chess order.
