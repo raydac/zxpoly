@@ -7,9 +7,9 @@
 ![ZX-Poly logo](docs/zxpoly_logo.png)
 
 # Introduction
-I got the idea of the platform in April 1994. I had some free time to think about well-known problem of ZX-Spectrum platform - [ATTRIBUTE CLASH](https://en.wikipedia.org/wiki/Attribute_clash). The idea was to rework a mono-system into a poly-system and add extra CPUs working in parallel to process its own color data. The solution provided some way not only keep back compatibility with existing software but also some way to use existing OS without changes.   
+I am a ZX-Spectrum fun since 1989. The ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash]((https://en.wikipedia.org/wiki/Attribute_clash)) through moving the platform from mono-system to poly-system. (https://en.wikipedia.org/wiki/Attribute_clash). The idea was to start four ZX-Spectrums in parallel with small modifications of graphics data in their RAM.   
 
-I am sure that ZX-Poly could be assembled even with electronic components produced in the USSR in middle of 80th and I guess we could have some four-core CPU home platform in that time. Unfortunately the idea was born too late and couldn't meet any interest from ZX-Spectrum producers in Russia. So that the emulator can be recognized as some proof of concept.
+I think it was possible to get some hardware variant of the platform even in 80th but in 90th it was too late to make such movments so that I developed some emulator as a proof of concept.
 
 # License
 The Emulator and all its parts are published under [GNU GPL3 license](http://www.gnu.org/licenses/gpl.html). So that it is absolutely free for any non-commercial and open-source use.
@@ -25,7 +25,7 @@ ZX-Poly platform adds several ports to manipulate work modes and the main port o
 
 # F.A.Q.
 ## Is there a hardware implementation?
-The Idea of the Platform was born in 1994 and it was too late to invest money and resources into hardware implementation because in Russia the sunset of ZX-Spectrum was in 1992-1993. I had some discussions with management of the Peters Plus company (the main developer of the Sprinter platform, the first world FPGA based ZX-Spectrum clone) but their platform was single-CPU one and the on-board FPGA was too weak to emulate a multi-Z80 platform.
+No, I had some negotiations with ZX-Spectrum clone manufacturers in Russia in the middle of 90th but I agreed with them that it was too late for market.
 
 ## Does the platform need a custom OS?
 No, it doesn't. ZX-Poly uses standard ZX-Spectrum 128 OS + TR-DOS. On start ZX-Poly even starts only one Z80 and three others in sleep mode and it is no so easy to detect difference in work with regular ZX-Spectrum 128 (I didn't find).
@@ -46,9 +46,9 @@ The Main requirement - the software should not have optimization of graphic outp
  - Disks .TRD, .SCL
 
 # Prebuilt versions
-The Latest prebuilt versions of the emulator and sprite editor can be downloaded from [the release page](https://github.com/raydac/zxpoly/releases).   
-The Emulator is written in Java and its pure JAR file can be started in command line with just `java -jar zxpoly-emul-2.0-SNAPSHOT.jar`   
-By default it uses the embedded ZX-Poly Test ROM image for start, but you can pass through **File->Options->Active ROM** and select another SOS+TR-DOS 128 ROM source (from list of links) and after that reload the emulator, keep in mind that WorldOfSpectrum FTP works not very stable so I recommend prefer VirtualTRDOS as ROM source. After loading, the ROM will be cached on your machine for future usage.
+The prebuilt versions of the emulator and sprite editor can be downloaded from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.0).   
+The emulator is written in Java and its JAR file can be started just through command line `java -jar zxpoly-emul-2.0-SNAPSHOT.jar`   
+By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in **File->Options->Active ROM**, the ROM will be downloaded from one of remote network resources.
 
 # Supported videomodes
 ## Standard ZX-Spectrum 256x192 (2 colors per pixel in 8x8 block)
