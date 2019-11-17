@@ -11,7 +11,7 @@ I am a ZX-Spectrum fun since 1989. The ZX-Spectrum platform was very popular in 
 
 The idea is to start four ZX-Spectrums in parallel with small modifications of graphics data. It adds three more Z80 CPU and 384Kb RAM, it doesn't need any changes in ROM and SOS but full synchronization between CPUs and sharing of all control signals.
 
-I can'not say that the idea is too original one because it was based on my reading of the book ["COMPUTER IMAGES" ("Understanding computer" Time-Life books)](https://youtu.be/rCkGOmcLSa0). There I found several strings about the Pixar platform (developed by the Lucasfilm team) which processes each color component by dedicated CPU. In Zx-Poly each CPU also processes dedicated color component (R,G,B,Y). Software no so often checks information written into VRAM so that big part of games and utilities could be adapted just through edition of their graphic data.   
+I can't say that the idea is too original one because it was based on my reading of the book ["COMPUTER IMAGES" ("Understanding computer" Time-Life books)](https://youtu.be/rCkGOmcLSa0). There I found several strings about the Pixar platform (developed by the Lucasfilm team) which processes each color component by dedicated CPU. In Zx-Poly each CPU also processes dedicated color component (R,G,B,Y). Software no so often checks information written into VRAM so that big part of games and utilities could be adapted just through edition of their graphic data.   
 
 # License
 Both the concept and emulator and all its parts are published under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
@@ -20,7 +20,7 @@ Both the concept and emulator and all its parts are published under [GNU GPL3 li
 ![The Main Window of the Emulator](docs/screenshots/tapeloading.png)
 
 # Theory and structure of the ZX-Poly platform
-![ZXPoly test ROM screen](docs/screenshots/zxpoly_test_rom_video.gif)    
+![ZXPoly test ROM screen](docs/block_scheme.png)    
 The base of the platform is the theory that stable synchronous systems (without any inside random processes) built on the same components (because different element base can be also source of random processes) by being started synchronously in the same time from the same state have the same state in any point of time if all synchronous system components get the same input signal states in the same time.
 ![Structure of ZXPoly](docs/zxpolystruct.png)
 ZX-Poly platform adds several ports to manipulate work modes and the main port of the platform is #3D00. [In more details it is desribed in wiki.](https://github.com/raydac/zxpoly/wiki/Short-description-of-ZX-Poly-platform)
