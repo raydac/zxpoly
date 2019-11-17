@@ -50,7 +50,8 @@ The Main requirement - the software should not have optimization of graphic outp
 # Prebuilt versions
 The pre-built versions of the emulator and sprite editor can be downloaded from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.0).   
 The emulator is written in Java and its JAR file can be started just through command line `java -jar zxpoly-emul-2.0-SNAPSHOT.jar`   
-By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in **File->Options->Active ROM**, the ROM will be downloaded from one of remote network resources.
+By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in **File->Options->Active ROM**, the ROM will be downloaded from one of remote network resources.   
+![Test-ROM](/docs/screenshots/zxpoly_test_rom_video.gif)
 
 # Supported videomodes
 ## Standard ZX-Spectrum 256x192 (2 colors per pixel in 8x8 block)
