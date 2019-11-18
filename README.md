@@ -101,5 +101,5 @@ Adapted game version in ZX-Poly emulator format can be downloaded [from here](ad
 ![Adventures of Buratino comparation](adapted/BuratinoAdventures/comparescr.png)
 
 ## "Flying Shark" (1987)
-In november 2019, I made some adaptation of "Flying Shark" game for ZX-Poly 256x192 (mode 7). It shows possibility of combination of standard ZX-Spectrum colorization (for game panels) and ZX-Poly colorization (for game field).    
+In november 2019, I made some adaptation of "Flying Shark" game for ZX-Poly 256x192 (mode 7). It shows possibility of combination of standard ZX-Spectrum colorization (for game panels) and ZX-Poly colorization (for game field). Snapshot for ZX-Poly emulator can be downloaded [from here](/adapted/FlyShark/flyshark.zxp). 
 ![Flying Shark animation](adapted/FlyShark/flyshark_video.gif)
