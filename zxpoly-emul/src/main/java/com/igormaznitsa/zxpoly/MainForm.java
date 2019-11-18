@@ -986,7 +986,23 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           throw new Error("Unexpected drive index");
       }
       final AtomicReference<FileFilter> filter = new AtomicReference<>();
-      File selectedFile = chooseFileForOpen("Select Disk " + diskName, this.lastFloppyFolder, filter, new SCLFileFilter(), new TRDFileFilter());
+
+      final SCLFileFilter sclFileFilter = new SCLFileFilter();
+      final TRDFileFilter trdFileFilter = new TRDFileFilter();
+
+      final FileFilter allSupportedFilters = new FileFilter() {
+        @Override
+        public boolean accept(File f) {
+          return sclFileFilter.accept(f) || trdFileFilter.accept(f);
+        }
+
+        @Override
+        public String getDescription() {
+          return "All supported disk images(*.scl,*.trd)";
+        }
+      };
+
+      File selectedFile = chooseFileForOpen("Select Disk " + diskName, this.lastFloppyFolder, filter, allSupportedFilters, sclFileFilter, trdFileFilter);
       if (selectedFile != null) {
         this.lastFloppyFolder = selectedFile.getParentFile();
         try {
@@ -1060,8 +1076,24 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         return;
       }
 
+      final FileFilter formatZ80 = new FormatZ80();
+      final FileFilter formatSNA = new FormatSNA();
+      final FileFilter formatZXP = new FormatZXP();
+
+      final FileFilter formatAll = new FileFilter() {
+        @Override
+        public boolean accept(File f) {
+          return formatZ80.accept(f) || formatSNA.accept(f) || formatZXP.accept(f);
+        }
+
+        @Override
+        public String getDescription() {
+          return "All snapshots (*.z80, *.sna, *.zxp)";
+        }
+      };
+
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
-      final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, new FormatZ80(), new FormatSNA(), new FormatZXP());
+      final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, formatAll, formatZ80, formatSNA, formatZXP);
 
       if (selected != null) {
         this.board.forceResetAllCpu();
