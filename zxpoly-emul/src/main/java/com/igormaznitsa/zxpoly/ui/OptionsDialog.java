@@ -178,7 +178,7 @@ public final class OptionsDialog extends javax.swing.JDialog {
       AppOptions.getInstance().setActiveRom(selectedRom);
       AppOptions.getInstance().setIntBetweenFrames((Integer) this.spinnerScrRefreshIntTicks.getValue());
       AppOptions.getInstance().flush();
-      JOptionPane.showMessageDialog(this, "Changes need reloading!", "Warning!", JOptionPane.WARNING_MESSAGE);
+      JOptionPane.showMessageDialog(this, "Restart required to replace ROM image.", "Restart emulator", JOptionPane.WARNING_MESSAGE);
     } catch (BackingStoreException ee) {
       JOptionPane.showMessageDialog(this, "Can't save options!", "Error", JOptionPane.ERROR_MESSAGE);
     }
