@@ -129,6 +129,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final AtomicInteger activeTracerWindowCounter = new AtomicInteger();
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
   private final Motherboard board;
+  private volatile boolean zxKeyboardProcessingAllowed = true;
   private final Runnable traceWindowsUpdater = new Runnable() {
 
     @Override
@@ -966,6 +967,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void loadDiskIntoDrive(final int drive) {
     this.stepSemaphor.lock();
     try {
+      this.turnZxKeyboardOff();
       final char diskName;
       switch (drive) {
         case BetaDiscInterface.DRIVE_A:
@@ -1013,6 +1015,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         }
       }
     } finally {
+      this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
     }
   }
@@ -1051,6 +1054,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuFileLoadSnapshotActionPerformed(java.awt.event.ActionEvent evt) {
     stepSemaphor.lock();
     try {
+      this.turnZxKeyboardOff();
       if (AppOptions.getInstance().isTestRomActive()) {
         JOptionPane.showMessageDialog(MainForm.this, "<html><body><b>Test ROM is active!</b><br><br>ROM 128 is needed for snapshot loading.<br>Go to menu <b><i>File->Options</i></b> and choose ROM 128.</body></html>", "Test ROM detected", JOptionPane.ERROR_MESSAGE);
         return;
@@ -1075,6 +1079,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         }
       }
     } finally {
+      this.turnZxKeyboardOn();
       stepSemaphor.unlock();
     }
   }
@@ -1125,6 +1130,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuFileLoadTapActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
+      this.turnZxKeyboardOff();
       final File selectedTapFile = chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
       if (selectedTapFile != null) {
         this.lastTapFolder = selectedTapFile.getParentFile();
@@ -1145,6 +1151,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         }
       }
     } finally {
+      this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
     }
   }
@@ -1152,6 +1159,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuTapExportAsWavActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
+      this.turnZxKeyboardOff();
       final byte[] wav = this.keyboardAndTapeModule.getTap().getAsWAV();
       File fileToSave = chooseFileForSave("Select WAV file", null, null, true, new WavFileFilter());
       if (fileToSave != null) {
@@ -1166,6 +1174,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       LOGGER.log(Level.WARNING, "Can't export as WAV", ex);
       JOptionPane.showMessageDialog(this, "Can't export as WAV", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
     } finally {
+      this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
     }
   }
@@ -1206,6 +1215,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuServiceSaveScreenActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
+      this.turnZxKeyboardOff();
       final RenderedImage img = this.board.getVideoController().makeCopyOfCurrentPicture();
       final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       ImageIO.write(img, "png", buffer);
@@ -1222,7 +1232,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error", JOptionPane.ERROR_MESSAGE);
       LOGGER.log(Level.SEVERE, "Can't make screenshot", ex);
     } finally {
-      this.keyboardAndTapeModule.doReset();
+      this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
     }
 
@@ -1231,9 +1241,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuFileOptionsActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
+      this.turnZxKeyboardOff();
       final OptionsDialog dialog = new OptionsDialog(this);
       dialog.setVisible(true);
     } finally {
+      this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
     }
   }
@@ -1241,8 +1253,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
+      this.turnZxKeyboardOff();
       new AboutDialog(this).setVisible(true);
     } finally {
+      this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
     }
   }
@@ -1282,6 +1296,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuServiceSaveScreenAllVRAMActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
+      this.turnZxKeyboardOff();
       final RenderedImage[] images = this.board.getVideoController().renderAllModuleVideoMemoryInZx48Mode();
 
       final BufferedImage result = new BufferedImage(images[0].getWidth() * images.length, images[0].getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -1306,18 +1321,29 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error", JOptionPane.ERROR_MESSAGE);
       LOGGER.log(Level.SEVERE, "Can't make screenshot", ex);
     } finally {
-      this.keyboardAndTapeModule.doReset();
+      this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
     }
+  }
+
+  private void turnZxKeyboardOff() {
+    this.zxKeyboardProcessingAllowed = false;
+  }
+
+  private void turnZxKeyboardOn() {
+    this.keyboardAndTapeModule.doReset();
+    this.zxKeyboardProcessingAllowed = true;
   }
 
   private void menuActionAnimatedGIFActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
+      this.turnZxKeyboardOff();
       AnimationEncoder encoder = this.currentAnimationEncoder.get();
       if (encoder == null) {
         final AnimatedGifTunePanel panel = new AnimatedGifTunePanel(this.lastAnimGifOptions);
-        if (JOptionPane.showConfirmDialog(this, panel, "Options for Animated GIF", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+        final int result = JOptionPane.showConfirmDialog(this, panel, "Options for Animated GIF", JOptionPane.OK_CANCEL_OPTION);
+        if (result != JOptionPane.OK_OPTION) {
           return;
         }
         this.lastAnimGifOptions = panel.getValue();
@@ -1342,6 +1368,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         }
       }
     } finally {
+      this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
     }
   }
@@ -1689,12 +1716,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   }
 
-  private static class KeyboardDispatcher implements KeyEventDispatcher {
+  private final class KeyboardDispatcher implements KeyEventDispatcher {
 
     private final VideoController videoController;
     private final KeyboardKempstonAndTapeIn keyboard;
 
-    public KeyboardDispatcher(final VideoController videoController, final KeyboardKempstonAndTapeIn kbd) {
+    KeyboardDispatcher(final VideoController videoController, final KeyboardKempstonAndTapeIn kbd) {
       this.keyboard = kbd;
       this.videoController = videoController;
     }
@@ -1702,7 +1729,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
       boolean consumed = false;
-      if (!e.isConsumed()) {
+      if (!e.isConsumed() && MainForm.this.zxKeyboardProcessingAllowed) {
         if (e.getKeyCode() == KeyEvent.VK_F5) {
           this.videoController.setShowZxKeyboardLayout(e.getID() == KeyEvent.KEY_PRESSED);
           e.consume();
