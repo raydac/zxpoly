@@ -77,10 +77,9 @@ It is the most complex from the video-mode family. It analyses FLASH bit of each
 ![ZXPoly256x192Mode7_screenshot](adapted/FlyShark/flyshark_zxpoly_mode7.png)
 
 ## ZX-Poly 512x384 (2 colors per pixel placed in chess order) (mode 5)
-The Mode uses attributes but places pixels in chess order.
-
+The Mode uses attributes but places pixels in chess order.   
 [TRD disk with the example can be downloaded from here](adapted/ZxWord/target/zxword.trd)
-![ZXPoly512x384 screenshot](docs/screenshots/zxw_zxpoly512x384.png)
+![ZXPoly512x384 animation](/adapted/ZxWord/screenshots/zxpoly_zxword_mode5.gif)
 
 # Adaptation of games
 
