@@ -1006,6 +1006,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       if (selectedFile != null) {
         this.lastFloppyFolder = selectedFile.getParentFile();
         try {
+          if (filter.get() == allSupportedFilters) {
+            if (trdFileFilter.accept(selectedFile)) {
+              filter.set(trdFileFilter);
+            } else {
+              filter.set(sclFileFilter);
+            }
+          }
+
           if (!selectedFile.isFile() && filter.get().getClass() == TRDFileFilter.class) {
             String name = selectedFile.getName();
             if (!name.contains(".")) {
@@ -1101,6 +1109,16 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
         this.lastSnapshotFolder = selected.getParentFile();
         try {
+          if (theFilter.get() == formatAll) {
+            if (formatZ80.accept(selected)) {
+              theFilter.set(formatZ80);
+            } else if (formatSNA.accept(selected)) {
+              theFilter.set(formatSNA);
+            } else {
+              theFilter.set(formatZXP);
+            }
+          }
+
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
           LOGGER.log(Level.INFO, "Loading snapshot " + selectedFilter.getName());
           selectedFilter.loadFromArray(selected, this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
