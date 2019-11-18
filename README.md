@@ -54,31 +54,29 @@ By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by 
 ![Test-ROM](/docs/screenshots/zxpoly_test_rom_video.gif)
 
 # Supported videomodes
-## Standard ZX-Spectrum 256x192 (2 colors per pixel in 8x8 block)
+## Standard ZX-Spectrum 256x192 (2 colors per pixel in 8x8 block) (mode 0,1,2,3)
 It is just regular ZX-Spectrum mode 256x192 with 2 attributed colors for 8x8 pixel block.
 ![Standard ZX screenshot](docs/screenshots/atw_standard.png)
 
 ## ZX-Poly 256x192 (16 colors per pixel)
 It is a family of video-modes and contain three sub-mode. All modes provide way for each pixel to get a color from standard ZX-Spectrum 16 color palette.
 
-### ZX-Poly 256x192 STANDARD
+### ZX-Poly 256x192 STANDARD (mode 4)
 
 It is just regular video mode without any masking. It just integrates pixel info from video-ram of all CPU modules and form 4 bit index in ZX-Spectrum palette.
 [TRD disk with the example can be downloaded from here, the game has been partly colorized](adapted/Atw2/target/atw2.trd)
 ![ZXPoly256x192 screenshot](docs/screenshots/atw_zxpoly.png)   
-![ZXPoly256x192 animation](docs/zxpoly_atw2.gif)   
 
-### ZX-Poly 256x192 EXTENSION MASK_INK+PAPER
+### ZX-Poly 256x192 EXTENSION MASK_INK+PAPER (6)
 
 It works as previous one and provide way to for 4 bit index for pixel, but also it analyses INK and PAPER colors from CPU0 video-ram and if INK = PAPER then whole block is filled by the INK color. It is made to provide way to make compatibility with games hidding some visual elements in areas with same INK and PAPER colors.
 
-### ZX-Poly 256x192 EXTENSION MASK_FLUSH+INK+PAPER
+### ZX-Poly 256x192 EXTENSION MASK_FLUSH+INK+PAPER (mode 7)
 
 It is the most complex from the video-mode family. It analyses FLASH bit of each attribute from CPU0 video-memory and turn on ZX-Poly mode only for blocks where FLASH bit is ON. In the same time it analyses INK and PAPER attribute values and if they the same then whole block is filled by INK else form pixel colors as in standard ZX-Poly mode. All blocks where FLASH is OFF are processed as in standard ZX-Spectrum video-mode. FLASH is not working in the mode (but it is no so often feature in games). The video-mode provides way to colorize games with color dynamic indicators and duotone game-play areas.   
 ![ZXPoly256x192Mode7_screenshot](adapted/FlyShark/flyshark_zxpoly_mode7.png)
-![ZXPoly256x192Mode7_animation](adapted/FlyShark/flyshark_video.gif)
 
-## ZX-Poly 512x384 (2 colors per pixel placed in chess order)
+## ZX-Poly 512x384 (2 colors per pixel placed in chess order) (mode 5)
 The Mode uses attributes but places pixels in chess order.
 
 [TRD disk with the example can be downloaded from here](adapted/ZxWord/target/zxword.trd)
@@ -93,11 +91,15 @@ To adapt old games, I have developed special utility called ZX-Poly Sprite corre
 Original look of the game   
 ![Original game screen](adapted/OfficialFatherChristmas/originalgamescreen.gif)
 
-On Christmas 2017 I made some adaptation of the old game ["Official Father Christmas" (1989)](http://www.worldofspectrum.org/infoseekid.cgi?id=0003493) for ZX-Poly. Of course not all was smoothly, some elements of third level could not be colorized because their colorization broke game process and made CPU modules out of sync, it looks like that the level contains some optimization in graphics processing for those elements and presented some check for empty areas to optimize speed.   
+On Christmas 2017 I made some adaptation of the old game ["Official Father Christmas" (1989)](http://www.worldofspectrum.org/infoseekid.cgi?id=0003493) for ZX-Poly (mode 6). Of course not all was smoothly, some elements of third level could not be colorized because their colorization broke game process and made CPU modules out of sync, it looks like that the level contains some optimization in graphics processing for those elements and presented some check for empty areas to optimize speed.   
 Adapted game version in ZX-Poly emulator format can be downloaded [from here](adapted/OfficialFatherChristmas/OFCZXPOLY.zxp).   
 ![Official Father Christmas GIF](adapted/OfficialFatherChristmas/movie.gif)
 
 ## "Adventures of Buratino" (1993) 
-I was playing with adaptation of the game for 512x384 mode, program code works well but the game and without adaptation is so colorful and detailed that big effect is not visible. Also it was impossible to adapt the main hero sprites because the same sprites are used for both right and left walk through mirroring.   
+I was playing with adaptation of the game for 512x384 (mode 5), program code works well but the game and without adaptation is so colorful and detailed that big effect is not visible. Also it was impossible to adapt the main hero sprites because the same sprites are used for both right and left walk through mirroring.   
 Adapted game version in ZX-Poly emulator format can be downloaded [from here](adapted/BuratinoAdventures/buratino_adventures.zxp).   
 ![Adventures of Buratino comparation](adapted/BuratinoAdventures/comparescr.png)
+
+## "Flying Shark" (1987)
+In november 2019, I made some adaptation of "Flying Shark" game for ZX-Poly 256x192 (mode 7). It shows possibility of combination of standard ZX-Spectrum colorization (for game panels) and ZX-Poly colorization (for game field).    
+![Flying Shark animation](adapted/FlyShark/flyshark_video.gif)
