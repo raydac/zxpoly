@@ -34,7 +34,7 @@ import com.igormaznitsa.zxpspritecorrector.files.plugins.HOBETAPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.LegacySZEPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SCLPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SCRPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.SNA48Plugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SNAPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SZEPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.TAPPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.TRDPlugin;
@@ -213,7 +213,7 @@ public final class MainFrame extends javax.swing.JFrame {
     this.container.addComponent(SCLPlugin.class);
     this.container.addComponent(SCRPlugin.class);
     this.container.addComponent(Z80Plugin.class);
-    this.container.addComponent(SNA48Plugin.class);
+    this.container.addComponent(SNAPlugin.class);
     this.container.addComponent(LegacySZEPlugin.class);
 
     this.container.addComponent(ToolPencil.class);
