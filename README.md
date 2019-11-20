@@ -21,7 +21,7 @@ Keyboard plays role of ZX-Keyboard (ALT = SS, SHIFT = CS), F5 shows ZX-keys on t
 ![The Main Window of the Emulator](docs/screenshots/tapeloading.png)
 
 # Supported snapshot formats
- - Snapshots: .Z80, .SNA, .ZXP (ZX-Poly snapshot format produced by the Sprite Editor from .Z80 snapshots and included into the project)
+ - Snapshots: .Z80, .SNA, .ZXP (ZX-Poly snapshot format)
  - Tape: .TAP (allows export to WAV file)
  - Disks: .TRD, .SCL
 
