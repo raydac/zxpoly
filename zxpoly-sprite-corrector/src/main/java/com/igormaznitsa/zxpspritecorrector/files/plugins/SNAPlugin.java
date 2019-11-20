@@ -176,8 +176,10 @@ public class SNAPlugin extends AbstractFilePlugin {
       }
 
       final byte[] extra = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN)
+          // indexes of ram banks
           .Byte(data.length / 0x4000)
           .Byte(IntStream.range(0, data.length / 0x4000).map(x -> x + 3).toArray())
+
           .Byte(snaFile.regAF >>> 8)
           .Byte(snaFile.regAF)
           .Short(snaFile.regBC)
@@ -235,7 +237,9 @@ public class SNAPlugin extends AbstractFilePlugin {
       final byte[] data = snaFile.ramDump;
 
       final byte[] extra = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN)
+          // No information about RAM banks in ZX48
           .Byte(0)
+
           .Byte(snaFile.regAF >>> 8)
           .Byte(snaFile.regAF)
           .Short(snaFile.regBC)
