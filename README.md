@@ -11,7 +11,7 @@ I am a ZX-Spectrum fun since 1989. The ZX-Spectrum platform was very popular in 
 
 The idea is to start four ZX-Spectrums in parallel with small modifications of graphics data. It adds three more Z80 CPU and 384Kb RAM, it doesn't need any changes in ROM and SOS but full synchronization between CPUs and sharing of all control signals.
 
-I can't say that the idea is too original one because it was based on my reading of the book ["COMPUTER IMAGES" ("Understanding computer" Time-Life books)](https://youtu.be/rCkGOmcLSa0). There I found several strings about the Pixar platform (developed by the Lucasfilm team) which processes each color component by dedicated CPU. In Zx-Poly each CPU also processes dedicated color component (R,G,B,Y). Software no so often checks information written into VRAM so that big part of games and utilities could be adapted just through edition of their graphic data.   
+I can't say that the idea is too original one because it was inspired by the book ["COMPUTER IMAGES" ("Understanding computer" Time-Life books)](https://youtu.be/rCkGOmcLSa0). There I found several strings about the Pixar platform (developed by the Lucasfilm team) which processes each color component by dedicated CPU. In Zx-Poly each CPU also processes dedicated color component (R,G,B,Y). Software no so often checks information written into VRAM so that big part of games and utilities could be adapted just through edition of their graphic data.   
 
 # License
 Both the concept and emulator and all its parts are published under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
