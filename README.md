@@ -31,8 +31,6 @@ The emulator is written in Java and its JAR file can be started just through com
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in **File->Options->Active ROM**, the ROM will be downloaded from one of remote network resources.   
 ![Test-ROM](/docs/screenshots/testromscr1.png)
 
-
-
 # Theory and structure of the ZX-Poly platform
 ![ZXPoly test ROM screen](docs/block_scheme.png)    
 The base of the platform is the theory that stable synchronous systems (without any inside random processes) built on the same components (because different element base can be also source of random processes) by being started synchronously in the same time from the same state have the same state in any point of time if all synchronous system components get the same input signal states in the same time.
@@ -104,4 +102,4 @@ ZX-Poly is a normal multi-CPU system and can work as in SIMD mode (to be compati
 
 
 ## Which software can be adapted for the platform?
-The Main requirement - the software should not have optimization of graphic output and should not have check what it outputs on the screen, enough number of games work in such manner and also system utilities (ZX-Poly has 512x384 mode and it is possible to increase resolution of text utilities and editors just through their fonts and icons correction)
+Any software can be adapted but adpatation of games which don't have too complex sprite output and packed sprites, can be adpated just through edit of their graphics elements.
