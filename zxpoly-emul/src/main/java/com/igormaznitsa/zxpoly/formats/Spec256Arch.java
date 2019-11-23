@@ -81,7 +81,7 @@ public class Spec256Arch {
           if (matcher.find()) {
             final byte[] read = readData(zipFile, entry);
             if (read.length > 0) {
-              packedGfxRoms.put(Integer.parseInt(matcher.group(1)), read);
+              packedGfxRoms.putIfAbsent(Integer.parseInt(matcher.group(1)), read);
             }
           } else {
             matcher = GFn_PATTERN.matcher(name);
