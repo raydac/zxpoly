@@ -37,6 +37,7 @@ public class Spec256Arch {
   private final List<Spec256Bkg> backgrounds;
   private final List<Spec256Palette> palettes;
   private final Properties properties;
+  private final boolean mode128;
 
   public Spec256Arch(final File file) throws IOException {
     this(FileUtils.readFileToByteArray(file));
@@ -108,11 +109,16 @@ public class Spec256Arch {
       }
     }
 
+    if (parsedSna == null) {
+      throw new IOException("Can't find SNA file in archive");
+    }
+
     this.parsedSna = parsedSna;
     this.properties = properties;
     this.palettes = Collections.unmodifiableList(listPalettes);
     this.backgrounds = Collections.unmodifiableList(listBackgrounds);
     this.xorData = xorData;
+    this.mode128 = this.parsedSna.extendeddata != null;
 
     final int topRamPageIndex;
     if (this.parsedSna.extendeddata != null) {
@@ -216,6 +222,10 @@ public class Spec256Arch {
 
   public Properties getProperties() {
     return this.properties;
+  }
+
+  public boolean isMode128() {
+    return this.mode128;
   }
 
   public static class Spec256RomBank {
