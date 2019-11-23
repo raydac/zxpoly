@@ -26,7 +26,8 @@ import org.apache.commons.io.FileUtils;
 public class Spec256Arch {
 
   private static final Pattern GFn_PATTERN = Pattern.compile("^.*\\.gf(x|[0-7])$");
-  private static final Pattern ROM_PATTERN = Pattern.compile("^.*\\.gf([ab])$");
+  private static final Pattern ROM_ABC_PATTERN = Pattern.compile("^.*\\.gf([ab])$");
+  private static final Pattern ROM_ROMNUM_PATTERN = Pattern.compile("^(?:.*/)?rom([01])\\.gfx$");
   private static final Pattern BKG_PATTERN = Pattern.compile("^.*\\.b([0-9]{2})$");
   private static final Pattern PALETTE_PATTERN = Pattern.compile("^.*\\.p(al|[0-9]{2})$");
   private static final int PAGE_SIZE = 0x4000;
@@ -49,7 +50,7 @@ public class Spec256Arch {
 
     final List<Spec256Bkg> listBackgrounds = new ArrayList<>();
     final List<Spec256Palette> listPalettes = new ArrayList<>();
-    final Map<String, byte[]> packedGfxRoms = new HashMap<>();
+    final Map<Integer, byte[]> packedGfxRoms = new HashMap<>();
     final Map<Integer, byte[]> packedGfxRamPages = new HashMap<>();
     final Properties properties = new Properties();
     SNAParser parsedSna = null;
@@ -68,39 +69,47 @@ public class Spec256Arch {
       } else if (name.endsWith(".cfg")) {
         properties.load(new ByteArrayInputStream(readData(zipFile, entry)));
       } else {
-        Matcher matcher = GFn_PATTERN.matcher(name);
+        Matcher matcher = ROM_ABC_PATTERN.matcher(name);
         if (matcher.find()) {
-          final String suffix = matcher.group(1);
+          final int romBankId = matcher.group(1).charAt(0) - 'a';
           final byte[] read = readData(zipFile, entry);
-          if ("x".equals(suffix)) {
-            packedGfxRamPages.put(-1, read);
-          } else {
-            packedGfxRamPages.put(Integer.parseInt(suffix), read);
+          if (read.length > 0) {
+            packedGfxRoms.put(romBankId, read);
           }
         } else {
-          matcher = ROM_PATTERN.matcher(name);
+          matcher = ROM_ROMNUM_PATTERN.matcher(name);
           if (matcher.find()) {
-            final String romBank = matcher.group(1);
             final byte[] read = readData(zipFile, entry);
             if (read.length > 0) {
-              packedGfxRoms.put(romBank, read);
+              packedGfxRoms.put(Integer.parseInt(matcher.group(1)), read);
             }
           } else {
-            matcher = BKG_PATTERN.matcher(name);
+            matcher = GFn_PATTERN.matcher(name);
             if (matcher.find()) {
-              final int index = Integer.parseInt(matcher.group(1));
-              final byte[] data = readData(zipFile, entry);
-              listBackgrounds.add(new Spec256Bkg(index, data, 320, 200));
+              final String suffix = matcher.group(1);
+              final byte[] read = readData(zipFile, entry);
+              if ("x".equals(suffix)) {
+                packedGfxRamPages.put(-1, read);
+              } else {
+                packedGfxRamPages.put(Integer.parseInt(suffix), read);
+              }
             } else {
-              matcher = PALETTE_PATTERN.matcher(name);
+              matcher = BKG_PATTERN.matcher(name);
               if (matcher.find()) {
-                final String suffix = matcher.group(1);
+                final int index = Integer.parseInt(matcher.group(1));
                 final byte[] data = readData(zipFile, entry);
-                if ("al".equals(suffix)) {
-                  listPalettes.add(-1, new Spec256Palette(-1, data));
-                } else {
-                  final int index = Integer.parseInt(suffix);
-                  listPalettes.add(index, new Spec256Palette(index, data));
+                listBackgrounds.add(new Spec256Bkg(index, data, 320, 200));
+              } else {
+                matcher = PALETTE_PATTERN.matcher(name);
+                if (matcher.find()) {
+                  final String suffix = matcher.group(1);
+                  final byte[] data = readData(zipFile, entry);
+                  if ("al".equals(suffix)) {
+                    listPalettes.add(-1, new Spec256Palette(-1, data));
+                  } else {
+                    final int index = Integer.parseInt(suffix);
+                    listPalettes.add(index, new Spec256Palette(index, data));
+                  }
                 }
               }
             }
@@ -153,8 +162,8 @@ public class Spec256Arch {
     }
 
     final List<Spec256RomBank> gfxRomBanks = new ArrayList<>();
-    for (final Map.Entry<String, byte[]> e : packedGfxRoms.entrySet()) {
-      gfxRomBanks.addAll(parseRomBanks(e.getKey().charAt(0), e.getValue()));
+    for (final Map.Entry<Integer, byte[]> e : packedGfxRoms.entrySet()) {
+      gfxRomBanks.addAll(parseRomBanks(e.getKey(), e.getValue()));
     }
 
     this.gfxRoms = Collections.unmodifiableList(gfxRomBanks);
@@ -170,7 +179,7 @@ public class Spec256Arch {
     return result;
   }
 
-  private List<Spec256RomBank> parseRomBanks(final char bankId, final byte[] data) {
+  private List<Spec256RomBank> parseRomBanks(final int bankId, final byte[] data) {
     final List<Spec256RomBank> result = new ArrayList<>();
 
     final int pages = data.length / 0x4000;
@@ -229,17 +238,17 @@ public class Spec256Arch {
   }
 
   public static class Spec256RomBank {
-    final char bankId;
+    final int bankId;
     final int cpuIndex;
     final byte[] data;
 
-    private Spec256RomBank(final char bankId, final int cpuIndex, final byte[] data) {
+    private Spec256RomBank(final int bankId, final int cpuIndex, final byte[] data) {
       this.bankId = bankId;
       this.cpuIndex = cpuIndex;
       this.data = data;
     }
 
-    public char getBankId() {
+    public int getBankId() {
       return this.bankId;
     }
 
