@@ -123,7 +123,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
     final int result;
-    if (this.board.isZxPolyMode()) {
+    if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       final int mappedModuleIndex = this.board.getMappedCpuIndex();
 
       if (module.isTrdosActive()) {
@@ -165,7 +165,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   @Override
   public void writeIo(final ZxPolyModule module, final int port, final int value) {
-    if (this.board.isZxPolyMode()) {
+    if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       if (this.board.is3D00NotLocked()
           && module.moduleIndex <= this.moduleIndex
           && !module.isTrdosActive()
@@ -341,7 +341,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     }
 
     final byte result;
-    if (this.board.isZxPolyMode()) {
+    if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       if (m1 && this.board.is3D00NotLocked() && this.registerReadingCounter == 0) {
         final int moduleStopAddress = this.zxPolyRegsWritten.get(2) | (this.zxPolyRegsWritten.get(3) << 8);
         this.stopAddressWait = address != 0 && address == moduleStopAddress;
@@ -464,7 +464,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   @Override
   public void writeMemory(final Z80 cpu, final int address, final byte data) {
     final int val = data & 0xFF;
-    if (this.board.isZxPolyMode()) {
+    if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       final int reg0 = this.zxPolyRegsWritten.get(0);
 
       if ((reg0 & REG0w_MEMORY_WRITING_DISABLED) == 0) {
@@ -491,7 +491,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   @Override
   public byte readPort(final Z80 cpu, final int port) {
     final byte result;
-    if (this.board.isZxPolyMode()) {
+    if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       if (port == PORTrw_ZXPOLY) {
         if (this.moduleIndex == 0 && this.board.getMappedCpuIndex() > 0) {
           result = (byte) this.board.readBusIo(this, port);
@@ -525,7 +525,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   public void writePort(final Z80 cpu, final int port, final byte data) {
     final int val = data & 0xFF;
 
-    if (this.board.isZxPolyMode()) {
+    if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       final int reg0 = this.zxPolyRegsWritten.get(0);
       if ((reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 || port == PORTw_ZX128) {
         if (port == PORTw_ZX128) {
@@ -578,7 +578,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   private void prepareWaitSignal() {
-    if (this.board.isZxPolyMode()) {
+    if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       this.waitSignal = this.stopAddressWait || (this.moduleIndex > 0 && this.board.isSlaveModulesInWaitMode());
     } else {
       this.waitSignal = false;

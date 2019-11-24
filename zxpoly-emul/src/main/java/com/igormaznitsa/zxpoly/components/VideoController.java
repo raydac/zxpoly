@@ -799,7 +799,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   @Override
   public void writeIo(final ZxPolyModule module, final int port, final int value) {
     if (!module.isTrdosActive()) {
-      final boolean zxPolyMode = module.getMotherboard().isZxPolyMode();
+      final boolean zxPolyMode = module.getMotherboard().getBoardMode() == BoardMode.ZXPOLY;
       if ((zxPolyMode && (port & 0xFF) == 0xFE) || (!zxPolyMode && (port & 1) == 0)) {
         this.portFEw = value & 0xFF;
 

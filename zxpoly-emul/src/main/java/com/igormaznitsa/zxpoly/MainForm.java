@@ -25,6 +25,7 @@ import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.ZXPolyAGifEncoder;
+import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.KempstonMouse;
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
 import com.igormaznitsa.zxpoly.components.Motherboard;
@@ -217,7 +218,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         labelTapeUsage.setStatus(tapeFileReader != null && tapeFileReader.isPlaying());
         labelMouseUsage.setStatus(board.getVideoController().isHoldMouse());
         labelDiskUsage.setStatus(board.getBetaDiskInterface().isActive());
-        labelZX128.setStatus(!board.isZxPolyMode());
+        labelZX128.setStatus(board.getBoardMode() == BoardMode.ZX128);
 
         indicatorCPU0.updateForState(board.getCpuActivity(0));
         indicatorCPU1.updateForState(board.getCpuActivity(1));
@@ -278,8 +279,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     final RomData rom = loadRom(romPath);
 
     this.board = new Motherboard(rom);
-    this.board.setZxPolyMode(true, true);
-    this.menuOptionsZX128Mode.setSelected(!this.board.isZxPolyMode());
+    this.board.setBoardMode(BoardMode.ZXPOLY, true);
+    this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() == BoardMode.ZX128);
     this.menuOptionsTurbo.setSelected(this.turboMode.get());
 
     LOGGER.info("Main form completed");
@@ -1129,7 +1130,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
           LOGGER.log(Level.INFO, "Loading snapshot " + selectedFilter.getName());
           selectedFilter.loadFromArray(selected, this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
-          this.menuOptionsZX128Mode.setState(!this.board.isZxPolyMode());
+          this.menuOptionsZX128Mode.setState(this.board.getBoardMode() == BoardMode.ZX128);
         } catch (Exception ex) {
           LOGGER.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
           JOptionPane.showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
@@ -1144,7 +1145,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuOptionsZX128ModeActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
-      this.board.setZxPolyMode(!this.menuOptionsZX128Mode.isSelected(), true);
+      this.board.setBoardMode(this.menuOptionsZX128Mode.isSelected() ? BoardMode.ZX128 : BoardMode.ZXPOLY, true);
     } finally {
       this.stepSemaphor.unlock();
     }
