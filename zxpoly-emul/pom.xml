@@ -454,6 +454,17 @@
               </includes>
             </configuration>
           </execution>
+          <execution>
+            <id>ezx-jbbp</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>snapshots/ezx/**/*.jbbp</include>
+              </includes>
+            </configuration>
+          </execution>
         </executions>
         <configuration>
           <addGettersSetters>true</addGettersSetters>
