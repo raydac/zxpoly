@@ -51,7 +51,6 @@ public final class Motherboard implements ZxPolyConstants {
   private final VideoController video;
   private final KeyboardKempstonAndTapeIn keyboard;
   private final BetaDiscInterface betaDisk;
-  private final RomData rom;
   private final float[] cpuLoad = new float[4];
   private volatile int port3D00 = (int) System.nanoTime() & 0xFF; // simulate noise after turning on
   private volatile boolean totalReset;
@@ -68,11 +67,10 @@ public final class Motherboard implements ZxPolyConstants {
     if (rom == null) {
       throw new NullPointerException("ROM must not be null");
     }
-    this.rom = rom;
     this.modules = new ZxPolyModule[4];
     final List<IoDevice> iodevices = new ArrayList<>();
     for (int i = 0; i < this.modules.length; i++) {
-      this.modules[i] = new ZxPolyModule(this, i);
+      this.modules[i] = new ZxPolyModule(this, rom, i);
       iodevices.add(this.modules[i]);
     }
 
@@ -171,10 +169,6 @@ public final class Motherboard implements ZxPolyConstants {
 
   public boolean isFlashActive() {
     return this.videoFlashState;
-  }
-
-  public int readRom(final int address) {
-    return rom.readAdress(address);
   }
 
   public Z80 getMasterCpu() {

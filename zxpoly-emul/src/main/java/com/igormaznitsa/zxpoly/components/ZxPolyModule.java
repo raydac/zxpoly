@@ -26,8 +26,10 @@ import com.igormaznitsa.z80.disasm.Z80Disasm;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 @SuppressWarnings("WeakerAccess")
@@ -49,6 +51,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   private int nmiCounter;
   private int lastM1Address;
 
+  private final AtomicReference<RomData> romData = new AtomicReference<>();
   private boolean activeRegisterReading;
   private int registerReadingCounter = 0;
 
@@ -63,8 +66,9 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   private volatile boolean trdosRomActive;
 
-  public ZxPolyModule(final Motherboard board, final int index) {
-    this.board = board;
+  public ZxPolyModule(final Motherboard board, final RomData romData, final int index) {
+    this.romData.set(Objects.requireNonNull(romData));
+    this.board = Objects.requireNonNull(board);
     this.moduleIndex = index;
 
     this.PORT_REG0 = calcPortForRegister(index, 0);
@@ -77,6 +81,14 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     this.logger = Logger.getLogger("ZX#" + index);
 
     logger.info("Inited");
+  }
+
+  public RomData getRomData() {
+    return this.romData.get();
+  }
+
+  public void setRomData(final RomData romData) {
+    this.romData.set(Objects.requireNonNull(romData));
   }
 
   private static int calcPortForRegister(final int moduleIndex, final int registerIndex) {
@@ -380,10 +392,10 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         result = (byte) this.board.readRam(this, ramAddress);
       } else {
         if (this.trdosRomActive) {
-          result = (byte) this.board.readRom(address + 0x8000);
+          result = (byte) this.romData.get().readAdress(address + 0x8000);
         } else {
           final boolean activeRom128 = (valueAt7FFD & PORTw_ZX128_ROM) == 0;
-          result = (byte) this.board.readRom(address + (activeRom128 ? 0x4000 : 0));
+          result = (byte) this.romData.get().readAdress(address + (activeRom128 ? 0x4000 : 0));
         }
       }
     } else {

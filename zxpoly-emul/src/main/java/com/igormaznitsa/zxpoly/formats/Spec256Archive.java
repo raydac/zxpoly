@@ -23,7 +23,7 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.FileUtils;
 
-public class Spec256Arch {
+public class Spec256Archive {
 
   private static final Pattern GFn_PATTERN = Pattern.compile("^.*\\.gf(x|[0-7])$");
   private static final Pattern ROM_ABC_PATTERN = Pattern.compile("^.*\\.gf([ab])$");
@@ -40,11 +40,11 @@ public class Spec256Arch {
   private final Properties properties;
   private final boolean mode128;
 
-  public Spec256Arch(final File file) throws IOException {
+  public Spec256Archive(final File file) throws IOException {
     this(FileUtils.readFileToByteArray(file));
   }
 
-  public Spec256Arch(final byte[] zipArchive) throws IOException {
+  public Spec256Archive(final byte[] zipArchive) throws IOException {
     final ZipFile zipFile = new ZipFile(new SeekableInMemoryByteChannel(zipArchive));
     final Enumeration<ZipArchiveEntry> iterator = zipFile.getEntries();
 

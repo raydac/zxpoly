@@ -36,6 +36,7 @@ import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk;
 import com.igormaznitsa.zxpoly.formats.FormatEZX;
 import com.igormaznitsa.zxpoly.formats.FormatSNA;
+import com.igormaznitsa.zxpoly.formats.FormatSpec256;
 import com.igormaznitsa.zxpoly.formats.FormatZ80;
 import com.igormaznitsa.zxpoly.formats.FormatZXP;
 import com.igormaznitsa.zxpoly.formats.Snapshot;
@@ -1090,24 +1091,26 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       final FileFilter formatSNA = new FormatSNA();
       final FileFilter formatEZX = new FormatEZX();
       final FileFilter formatZXP = new FormatZXP();
+      final FileFilter formatSpec256 = new FormatSpec256();
 
       final FileFilter formatAll = new FileFilter() {
         @Override
         public boolean accept(File f) {
           return formatZ80.accept(f)
+              || formatSpec256.accept(f)
               || formatSNA.accept(f)
-              || formatZXP.accept(f)
-              || formatEZX.accept(f);
+//              || formatEZX.accept(f)
+              || formatZXP.accept(f);
         }
 
         @Override
         public String getDescription() {
-          return "All snapshots (*.z80, *.sna, *.zxp, *.ezx)";
+          return "All snapshots (*.z80, *.sna, *.zip, *.zxp)";
         }
       };
 
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
-      final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, formatAll, formatZ80, formatSNA, formatZXP, formatEZX);
+      final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, formatAll, formatZ80, formatSpec256, formatSNA, formatZXP);
 
       if (selected != null) {
         this.board.forceResetAllCpu();
@@ -1123,7 +1126,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             } else if (formatZXP.accept(selected)) {
               theFilter.set(formatZXP);
             } else {
-              theFilter.set(formatEZX);
+              theFilter.set(formatSpec256);
+//              theFilter.set(formatEZX);
             }
           }
 
