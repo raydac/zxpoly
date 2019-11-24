@@ -106,6 +106,17 @@ public final class Motherboard implements ZxPolyConstants {
     this.resetCounter = 3;
   }
 
+  public void resetAndRestoreRom(final RomData rom) {
+    LOGGER.info("Restoring ROM");
+    for (int i = 0; i < this.modules.length; i++) {
+      this.modules[i].setRomData(rom);
+    }
+    LOGGER.info("Full system reset");
+    this.totalReset = true;
+    this.resetCounter = 3;
+  }
+
+
   public boolean set3D00(final int value, final boolean force) {
     if (is3D00NotLocked() || force) {
       this.port3D00 = value;

@@ -133,6 +133,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
   private final Motherboard board;
   private volatile boolean zxKeyboardProcessingAllowed = true;
+  public static RomData BASE_ROM;
+
   private final Runnable traceWindowsUpdater = new Runnable() {
 
     @Override
@@ -277,9 +279,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     setIconImage(Utils.loadIcon("appico.png"));
 
-    final RomData rom = loadRom(romPath);
+    BASE_ROM = loadRom(romPath);
 
-    this.board = new Motherboard(rom);
+    this.board = new Motherboard(BASE_ROM);
     this.board.setBoardMode(BoardMode.ZXPOLY, true);
     this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() == BoardMode.ZX128);
     this.menuOptionsTurbo.setSelected(this.turboMode.get());
@@ -953,10 +955,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     setJMenuBar(menuBar);
 
     pack();
-  }// </editor-fold>//GEN-END:initComponents
+  }
 
   private void menuFileResetActionPerformed(java.awt.event.ActionEvent evt) {
-    this.board.reset();
+    this.board.resetAndRestoreRom(BASE_ROM);
   }
 
   private void menuOptionsShowIndicatorsActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1149,6 +1151,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuOptionsZX128ModeActionPerformed(java.awt.event.ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
+      this.board.resetAndRestoreRom(BASE_ROM);
       this.board.setBoardMode(this.menuOptionsZX128Mode.isSelected() ? BoardMode.ZX128 : BoardMode.ZXPOLY, true);
     } finally {
       this.stepSemaphor.unlock();
