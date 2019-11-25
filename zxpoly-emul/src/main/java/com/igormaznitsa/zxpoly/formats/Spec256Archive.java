@@ -8,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -21,6 +22,8 @@ import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.FileUtils;
 
 public class Spec256Archive {
+
+  private static final int GFX_PAGE_SIZE = 0x4000 * 8;
 
   private static final Pattern GFn_PATTERN = Pattern.compile("^.*\\.gf(x|[0-7])$");
   private static final Pattern ROM_ABC_PATTERN = Pattern.compile("^.*\\.gf([ab])$");
@@ -71,20 +74,14 @@ public class Spec256Archive {
           final int romBankId = matcher.group(1).charAt(0) - 'a';
           final byte[] read = readData(zipFile, entry);
           if (read.length > 0) {
-            if (read.length != 8 * 0x4000) {
-              throw new IOException("Unexpected GfxROM page size");
-            }
-            foundGfxRoms.add(new Spec256GfxPage(romBankId, read));
+            foundGfxRoms.add(new Spec256GfxPage(romBankId, Arrays.copyOf(read, GFX_PAGE_SIZE)));
           }
         } else {
           matcher = ROM_ROMNUM_PATTERN.matcher(name);
           if (matcher.find()) {
             final byte[] read = readData(zipFile, entry);
             if (read.length > 0) {
-              if (read.length != 8 * 0x4000) {
-                throw new IOException("Unexpected GfxROM page size");
-              }
-              foundGfxRoms.add(new Spec256GfxPage(Integer.parseInt(matcher.group(1)), read));
+              foundGfxRoms.add(new Spec256GfxPage(Integer.parseInt(matcher.group(1)), Arrays.copyOf(read, GFX_PAGE_SIZE)));
             }
           } else {
             matcher = GFn_PATTERN.matcher(name);
@@ -92,10 +89,13 @@ public class Spec256Archive {
               final String suffix = matcher.group(1);
               final byte[] read = readData(zipFile, entry);
               if ("x".equals(suffix)) {
+                if (read.length != GFX_PAGE_SIZE * 3) {
+                  throw new IOException("Unexpected size of GFX block: " + read.length);
+                }
                 foundGfx48Snapshot = read;
               } else {
-                if (read.length != 8 * 0x4000) {
-                  throw new IOException("Unexpected GfxRam page size");
+                if (read.length != GFX_PAGE_SIZE) {
+                  throw new IOException("Unexpected size of GFn block: " + read.length);
                 }
                 foundGfxRams.add(new Spec256GfxPage(Integer.parseInt(suffix), read));
               }
@@ -132,7 +132,7 @@ public class Spec256Archive {
       throw new IOException(("Can't find GFX file in Spec256 archive"));
     }
 
-    if (foundGfx48Snapshot.length != 0x4000 * 8 * 3) {
+    if (foundGfx48Snapshot.length != GFX_PAGE_SIZE * 3) {
       throw new IOException("Found GFX file has wrong size: " + foundGfx48Snapshot.length);
     }
 
@@ -150,9 +150,9 @@ public class Spec256Archive {
       topRamPageIndex = 0;
     }
 
-    final byte[] ram5 = new byte[0x4000 * 8];
-    final byte[] ram2 = new byte[0x4000 * 8];
-    final byte[] ramTop = new byte[0x4000 * 8];
+    final byte[] ram5 = new byte[GFX_PAGE_SIZE];
+    final byte[] ram2 = new byte[GFX_PAGE_SIZE];
+    final byte[] ramTop = new byte[GFX_PAGE_SIZE];
 
     System.arraycopy(foundGfx48Snapshot, 0, ram5, 0, ram5.length);
     System.arraycopy(foundGfx48Snapshot, ram5.length, ram2, 0, ram2.length);
@@ -219,7 +219,7 @@ public class Spec256Archive {
 
     private Spec256GfxPage(final int pageIndex, final byte[] data) {
       this.pageIndex = pageIndex;
-      this.data = data;
+      this.data = data.clone();
     }
 
     public byte[] getData() {
