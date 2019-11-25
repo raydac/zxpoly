@@ -23,8 +23,8 @@ public class Spec256ArchiveTest {
     assertNull(arch.getParsedSna().extendeddata);
     assertFalse(arch.isMode128());
     assertEquals(16, arch.getProperties().size());
-    assertEquals(8, arch.getGfxRoms().size());
-    assertEquals(24, arch.getGfxRamPages().size());
+    assertEquals(1, arch.getGfxRoms().size());
+    assertEquals(3, arch.getGfxRamPages().size());
     assertEquals(4, arch.getBackgrounds().size());
     assertTrue(arch.getPalettes().isEmpty());
   }
@@ -34,8 +34,8 @@ public class Spec256ArchiveTest {
     final Spec256Archive arch = new Spec256Archive(readSnapshot("Jetpac_spec256.zip"));
     assertFalse(arch.isMode128());
     assertTrue(arch.getProperties().isEmpty());
-    assertEquals(8, arch.getGfxRoms().size());
-    assertEquals(24, arch.getGfxRamPages().size());
+    assertEquals(1, arch.getGfxRoms().size());
+    assertEquals(3, arch.getGfxRamPages().size());
     assertEquals(1, arch.getBackgrounds().size());
     assertTrue(arch.getPalettes().isEmpty());
   }
@@ -47,7 +47,7 @@ public class Spec256ArchiveTest {
     assertTrue(arch.isMode128());
     assertTrue(arch.getGfxRoms().isEmpty());
     assertEquals(15, arch.getProperties().size());
-    assertEquals(72, arch.getGfxRamPages().size());
+    assertEquals(8, arch.getGfxRamPages().size());
     assertTrue(arch.getBackgrounds().isEmpty());
   }
 }
