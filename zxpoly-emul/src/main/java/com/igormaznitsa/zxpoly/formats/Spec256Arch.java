@@ -21,7 +21,7 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.FileUtils;
 
-public class Spec256Archive {
+public class Spec256Arch {
 
   private static final int GFX_PAGE_SIZE = 0x4000 * 8;
 
@@ -39,11 +39,11 @@ public class Spec256Archive {
   private final Properties properties;
   private final boolean mode128;
 
-  public Spec256Archive(final File file) throws IOException {
+  public Spec256Arch(final File file) throws IOException {
     this(FileUtils.readFileToByteArray(file));
   }
 
-  public Spec256Archive(final byte[] zipArchive) throws IOException {
+  public Spec256Arch(final byte[] zipArchive) throws IOException {
     final ZipFile zipFile = new ZipFile(new SeekableInMemoryByteChannel(zipArchive));
     final Enumeration<ZipArchiveEntry> iterator = zipFile.getEntries();
 

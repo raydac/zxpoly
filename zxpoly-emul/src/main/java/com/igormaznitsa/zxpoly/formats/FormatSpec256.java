@@ -39,7 +39,7 @@ public class FormatSpec256 extends Snapshot {
 
   @Override
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
-    final Spec256Archive archive = new Spec256Archive(array);
+    final Spec256Arch archive = new Spec256Arch(array);
     final SNAParser parser = archive.getParsedSna();
 
     final boolean sna128 = parser.extendeddata != null;
