@@ -36,14 +36,14 @@ public class Z80RandomCodeBlockTest {
       while (code == (byte) 0x76) {
         code = (byte) rnd.nextInt(0xFFFFFF);
       }
-      testbus.writeMemory(null, i, code);
+      testbus.writeMemory(null, 111, i, code);
     }
 
     final Z80 cpu = new Z80(testbus);
     int steps = 0;
     final long starttime = System.currentTimeMillis();
     for (int i = 0; i < 400000000; i++) {
-      cpu.step(0xFFFFFFFF);
+      cpu.step(111, 0xFFFFFFFF);
       steps++;
     }
     final long milliseconds = System.currentTimeMillis() - starttime;

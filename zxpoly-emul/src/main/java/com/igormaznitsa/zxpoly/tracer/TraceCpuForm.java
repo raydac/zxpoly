@@ -826,6 +826,6 @@ public class TraceCpuForm extends javax.swing.JFrame implements MemoryAccessProv
 
   @Override
   public byte readAddress(final int address) {
-    return this.module.readMemory(this.module.getCpu(), address & 0xFFFF, false);
+    return this.module.readMemory(this.module.getCpu(), 0, address & 0xFFFF, false, false);
   }
 }

@@ -111,7 +111,7 @@ public class FormatSNA extends Snapshot {
 
     } else {
       for (int i = 0; i < parser.getRAMDUMP().length; i++) {
-        module.writeMemory(cpu, 0x4000 + i, parser.getRAMDUMP()[i]);
+        module.writeMemory(cpu, 0, 0x4000 + i, parser.getRAMDUMP()[i]);
       }
 
       int regsp = parser.getREGSP();

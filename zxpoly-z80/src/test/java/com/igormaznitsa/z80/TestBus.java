@@ -48,32 +48,32 @@ public final class TestBus implements Z80CPUBus {
   }
 
   @Override
-  public byte readMemory(final Z80 cpu, final int address, boolean m1) {
+  public byte readMemory(final Z80 cpu, final int ctx, final int address, boolean m1, boolean instr) {
     return memory[address];
   }
 
   @Override
-  public void writeMemory(final Z80 cpu, final int address, final byte data) {
+  public void writeMemory(final Z80 cpu, final int ctx, final int address, final byte data) {
     this.memory[address] = data;
   }
 
   @Override
-  public byte readPort(final Z80 cpu, final int port) {
+  public byte readPort(final Z80 cpu, final int ctx, final int port) {
     return this.ports[port & 0xFFFF];
   }
 
   @Override
-  public void writePort(final Z80 cpu, final int port, final byte data) {
+  public void writePort(final Z80 cpu, final int ctx, final int port, final byte data) {
     this.ports[port & 0xFFFF] = data;
   }
 
   @Override
-  public byte onCPURequestDataLines(final Z80 cpu) {
+  public byte onCPURequestDataLines(final Z80 cpu, final int ctx) {
     return this.dataBuSState;
   }
 
   @Override
-  public void onRETI(Z80 cpu) {
+  public void onRETI(Z80 cpu, int ctx) {
     assertFalse("RETI flag must be reset", this.reti);
     this.reti = true;
   }

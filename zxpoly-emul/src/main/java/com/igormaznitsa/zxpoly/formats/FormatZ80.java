@@ -262,7 +262,7 @@ public class FormatZ80 extends Snapshot {
     if (version == VERSION_1) {
       ((Z80V1Parser) snapshot).setDATA(snapshot.getFLAGS().getCOMPRESSED() == 0 ? snapshot.getDATA() : Bank.decodeRLE(snapshot.getDATA(), 0, snapshot.getDATA().length));
       for (int i = 0; i < snapshot.getDATA().length; i++) {
-        module.writeMemory(cpu, i + PAGE_SIZE, snapshot.getDATA()[i]);
+        module.writeMemory(cpu, 0, i + PAGE_SIZE, snapshot.getDATA()[i]);
       }
     } else {
       final Bank[] banks = Bank.toBanks(snapshot.getDATA());
@@ -287,7 +287,7 @@ public class FormatZ80 extends Snapshot {
               throw new IllegalArgumentException("Detected unexpected bank page index: " + b.page);
           }
           for (int i = 0; i < PAGE_SIZE; i++) {
-            module.writeMemory(cpu, offset + i, b.data[i]);
+            module.writeMemory(cpu, 0, offset + i, b.data[i]);
           }
         }
       } else {

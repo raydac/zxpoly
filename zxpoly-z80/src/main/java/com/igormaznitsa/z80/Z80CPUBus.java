@@ -18,15 +18,15 @@
 package com.igormaznitsa.z80;
 
 public interface Z80CPUBus {
-  byte readMemory(Z80 cpu, int address, boolean m1);
+  byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean instructionByte);
 
-  void writeMemory(Z80 cpu, int address, byte data);
+  void writeMemory(Z80 cpu, int ctx, int address, byte data);
 
-  byte readPort(Z80 cpu, int port);
+  byte readPort(Z80 cpu, int ctx, int port);
 
-  void writePort(Z80 cpu, int port, byte data);
+  void writePort(Z80 cpu, int ctx, int port, byte data);
 
-  byte onCPURequestDataLines(Z80 cpu);
+  byte onCPURequestDataLines(Z80 cpu, int ctx);
 
-  void onRETI(Z80 cpu);
+  void onRETI(Z80 cpu, int ctx);
 }

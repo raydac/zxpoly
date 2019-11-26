@@ -62,11 +62,11 @@ public class MemoryDialog extends javax.swing.JDialog {
   private void writeValue() {
     final int address = this.fieldAddress.getIntValue();
     final int value = this.fieldValue.getIntValue();
-    this.module.writeMemory(this.module.getCpu(), address, (byte) value);
+    this.module.writeMemory(this.module.getCpu(), 0, address, (byte) value);
   }
 
   private void updateAddress() {
-    this.fieldValue.setValue(this.module.readMemory(this.module.getCpu(), this.fieldAddress.getIntValue(), false));
+    this.fieldValue.setValue(this.module.readMemory(this.module.getCpu(), 0, this.fieldAddress.getIntValue(), false, false));
   }
 
   /**

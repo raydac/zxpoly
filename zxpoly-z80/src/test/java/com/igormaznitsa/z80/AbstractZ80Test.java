@@ -78,7 +78,7 @@ public abstract class AbstractZ80Test {
 
   public Z80 executeRepeatingBlockCommand(final Z80State state, final TestBus testBus, final int... code) {
     for (int i = 0; i < code.length; i++) {
-      testBus.writeMemory(null, i, (byte) code[i]);
+      testBus.writeMemory(null, 111, i, (byte) code[i]);
     }
 
     final Z80 cpu = new Z80(testBus);
@@ -89,7 +89,7 @@ public abstract class AbstractZ80Test {
     final int pc = cpu.getRegister(Z80.REG_PC);
 
     do {
-      cpu.nextInstruction(false, false, false);
+      cpu.nextInstruction(111, false, false, false);
     }
     while (cpu.getRegister(Z80.REG_PC) == pc);
 
@@ -106,34 +106,34 @@ public abstract class AbstractZ80Test {
     final Z80CPUBus bus = new Z80CPUBus() {
 
       @Override
-      public byte readMemory(final Z80 cpu, final int address, boolean m1) {
+      public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean instr) {
         return memory[address];
       }
 
       @Override
-      public void writeMemory(final Z80 cpu, final int address, final byte data) {
+      public void writeMemory(Z80 cpu, int ctx, int address, byte data) {
         memory[address] = data;
       }
 
       @Override
-      public byte readPort(final Z80 cpu, final int port) {
+      public byte readPort(Z80 cpu, int ctx, int port) {
         fail("Unexpected port reading");
         return -1;
       }
 
       @Override
-      public void writePort(final Z80 cpu, final int port, final byte data) {
+      public void writePort(Z80 cpu, int ctx, int port, byte data) {
         fail("Unexpected port writing");
       }
 
       @Override
-      public byte onCPURequestDataLines(Z80 cpu) {
+      public byte onCPURequestDataLines(Z80 cpu, int ctx) {
         fail("Unsupported here");
         return 0;
       }
 
       @Override
-      public void onRETI(Z80 cpu) {
+      public void onRETI(Z80 cpu, int ctx) {
         fail("Unsupported here");
       }
     };
@@ -146,7 +146,7 @@ public abstract class AbstractZ80Test {
     final int pc = cpu.getRegister(Z80.REG_PC);
 
     do {
-      cpu.nextInstruction(false, false, false);
+      cpu.nextInstruction(111, false, false, false);
     }
     while (cpu.getRegister(Z80.REG_PC) == pc);
 
@@ -168,34 +168,34 @@ public abstract class AbstractZ80Test {
     final Z80CPUBus bus = new Z80CPUBus() {
 
       @Override
-      public byte readMemory(final Z80 cpu, final int address, boolean m1) {
+      public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean instr) {
         return memory[address];
       }
 
       @Override
-      public void writeMemory(final Z80 cpu, final int address, final byte data) {
+      public void writeMemory(Z80 cpu, int ctx, int address, byte data) {
         memory[address] = data;
       }
 
       @Override
-      public byte readPort(final Z80 cpu, final int port) {
+      public byte readPort(Z80 cpu, int ctx, int port) {
         fail("Unexpected port reading");
         return -1;
       }
 
       @Override
-      public void writePort(final Z80 cpu, final int port, final byte data) {
+      public void writePort(Z80 cpu, int ctx, int port, byte data) {
         fail("Unexpected port writing");
       }
 
       @Override
-      public byte onCPURequestDataLines(Z80 cpu) {
+      public byte onCPURequestDataLines(Z80 cpu, int ctx) {
         fail("Unsupported here");
         return 0;
       }
 
       @Override
-      public void onRETI(Z80 cpu) {
+      public void onRETI(Z80 cpu, int ctx) {
         fail("Unsupported here");
       }
 
@@ -206,7 +206,7 @@ public abstract class AbstractZ80Test {
       state.set(cpu);
     }
 
-    cpu.nextInstruction(false, false, false);
+    cpu.nextInstruction(111, false, false, false);
 
     if (checkPC) {
       assertEquals("PC must be at " + code.length, code.length, cpu.getRegister(Z80.REG_PC));

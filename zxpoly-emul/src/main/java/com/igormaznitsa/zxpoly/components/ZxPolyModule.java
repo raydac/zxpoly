@@ -281,7 +281,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     final long curMcyclesNumber = this.cpu.getMachineCycles();
 
     final int oldCpuState = this.cpu.getState();
-    this.cpu.step(Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.intCounter > 0 ? Z80.SIGNAL_IN_nINT : 0) ^ sigWait ^ (this.nmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
+    this.cpu.step(0, Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.intCounter > 0 ? Z80.SIGNAL_IN_nINT : 0) ^ sigWait ^ (this.nmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
     final int newCpuState = this.cpu.getState();
 
     final boolean isHaltDetected = (newCpuState & Z80.SIGNAL_OUT_nHALT) == 0 && (oldCpuState & Z80.SIGNAL_OUT_nHALT) != 0;
@@ -332,7 +332,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public byte readMemory(final Z80 cpu, final int address, final boolean m1) {
+  public byte readMemory(final Z80 cpu, final int ctx, final int address, final boolean m1, final boolean instr) {
 
     final int value7FFD = this.port7FFD.get();
 
@@ -474,7 +474,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public void writeMemory(final Z80 cpu, final int address, final byte data) {
+  public void writeMemory(final Z80 cpu, final int ctx, final int address, final byte data) {
     final int val = data & 0xFF;
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       final int reg0 = this.zxPolyRegsWritten.get(0);
@@ -501,7 +501,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public byte readPort(final Z80 cpu, final int port) {
+  public byte readPort(final Z80 cpu, final int ctx, final int port) {
     final byte result;
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       if (port == PORTrw_ZXPOLY) {
@@ -534,7 +534,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public void writePort(final Z80 cpu, final int port, final byte data) {
+  public void writePort(final Z80 cpu, final int ctx, final int port, final byte data) {
     final int val = data & 0xFF;
 
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
@@ -564,12 +564,12 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public byte onCPURequestDataLines(final Z80 cpu) {
+  public byte onCPURequestDataLines(final Z80 cpu, final int ctx) {
     return (byte) 0xFF;
   }
 
   @Override
-  public void onRETI(final Z80 cpu) {
+  public void onRETI(final Z80 cpu, final int ctx) {
   }
 
   @Override
