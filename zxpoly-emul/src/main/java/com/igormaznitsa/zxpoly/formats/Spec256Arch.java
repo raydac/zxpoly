@@ -44,77 +44,78 @@ public class Spec256Arch {
   }
 
   public Spec256Arch(final byte[] zipArchive) throws IOException {
-    final ZipFile zipFile = new ZipFile(new SeekableInMemoryByteChannel(zipArchive));
-    final Enumeration<ZipArchiveEntry> iterator = zipFile.getEntries();
+    try (ZipFile zipFile = new ZipFile(new SeekableInMemoryByteChannel(zipArchive))) {
+      final Enumeration<ZipArchiveEntry> iterator = zipFile.getEntries();
 
-    final List<Spec256Bkg> listBackgrounds = new ArrayList<>();
-    final List<Spec256Palette> listPalettes = new ArrayList<>();
-    final List<Spec256GfxPage> foundGfxRoms = new ArrayList<>();
-    final List<Spec256GfxPage> foundGfxRams = new ArrayList<>();
-    final Properties properties = new Properties();
-    SNAParser parsedSna = null;
-    byte[] xorData = null;
-    byte[] foundGfx48Snapshot = null;
+      final List<Spec256Bkg> listBackgrounds = new ArrayList<>();
+      final List<Spec256Palette> listPalettes = new ArrayList<>();
+      final List<Spec256GfxPage> foundGfxRoms = new ArrayList<>();
+      final List<Spec256GfxPage> foundGfxRams = new ArrayList<>();
+      final Properties properties = new Properties();
+      SNAParser parsedSna = null;
+      byte[] xorData = null;
+      byte[] foundGfx48Snapshot = null;
 
-    while (iterator.hasMoreElements()) {
-      final ZipArchiveEntry entry = iterator.nextElement();
-      if (entry.isDirectory()) {
-        continue;
-      }
-      final String name = entry.getName().replace('\\', '/').toLowerCase(Locale.ENGLISH);
-      if (name.endsWith(".sna")) {
-        parsedSna = new SNAParser().read(new JBBPBitInputStream(new ByteArrayInputStream(readData(zipFile, entry))));
-      } else if (name.endsWith(".xor")) {
-        xorData = readData(zipFile, entry);
-      } else if (name.endsWith(".cfg")) {
-        properties.load(new ByteArrayInputStream(readData(zipFile, entry)));
-      } else {
-        Matcher matcher = ROM_ABC_PATTERN.matcher(name);
-        if (matcher.find()) {
-          final int romBankId = matcher.group(1).charAt(0) - 'a';
-          final byte[] read = readData(zipFile, entry);
-          if (read.length > 0) {
-            foundGfxRoms.add(new Spec256GfxPage(romBankId, Arrays.copyOf(read, GFX_PAGE_SIZE)));
-          }
+      while (iterator.hasMoreElements()) {
+        final ZipArchiveEntry entry = iterator.nextElement();
+        if (entry.isDirectory()) {
+          continue;
+        }
+        final String name = entry.getName().replace('\\', '/').toLowerCase(Locale.ENGLISH);
+        if (name.endsWith(".sna")) {
+          parsedSna = new SNAParser().read(new JBBPBitInputStream(new ByteArrayInputStream(readData(zipFile, entry))));
+        } else if (name.endsWith(".xor")) {
+          xorData = readData(zipFile, entry);
+        } else if (name.endsWith(".cfg")) {
+          properties.load(new ByteArrayInputStream(readData(zipFile, entry)));
         } else {
-          matcher = ROM_ROMNUM_PATTERN.matcher(name);
+          Matcher matcher = ROM_ABC_PATTERN.matcher(name);
           if (matcher.find()) {
+            final int romBankId = matcher.group(1).charAt(0) - 'a';
             final byte[] read = readData(zipFile, entry);
             if (read.length > 0) {
-              foundGfxRoms.add(new Spec256GfxPage(Integer.parseInt(matcher.group(1)), Arrays.copyOf(read, GFX_PAGE_SIZE)));
+              foundGfxRoms.add(new Spec256GfxPage(romBankId, Arrays.copyOf(read, GFX_PAGE_SIZE)));
             }
           } else {
-            matcher = GFn_PATTERN.matcher(name);
+            matcher = ROM_ROMNUM_PATTERN.matcher(name);
             if (matcher.find()) {
-              final String suffix = matcher.group(1);
               final byte[] read = readData(zipFile, entry);
-              if ("x".equals(suffix)) {
-                if (read.length != GFX_PAGE_SIZE * 3) {
-                  throw new IOException("Unexpected size of GFX block: " + read.length);
-                }
-                foundGfx48Snapshot = read;
-              } else {
-                if (read.length != GFX_PAGE_SIZE) {
-                  throw new IOException("Unexpected size of GFn block: " + read.length);
-                }
-                foundGfxRams.add(new Spec256GfxPage(Integer.parseInt(suffix), read));
+              if (read.length > 0) {
+                foundGfxRoms.add(new Spec256GfxPage(Integer.parseInt(matcher.group(1)), Arrays.copyOf(read, GFX_PAGE_SIZE)));
               }
             } else {
-              matcher = BKG_PATTERN.matcher(name);
+              matcher = GFn_PATTERN.matcher(name);
               if (matcher.find()) {
-                final int index = Integer.parseInt(matcher.group(1));
-                final byte[] data = readData(zipFile, entry);
-                listBackgrounds.add(new Spec256Bkg(index, data, 320, 200));
+                final String suffix = matcher.group(1);
+                final byte[] read = readData(zipFile, entry);
+                if ("x".equals(suffix)) {
+                  if (read.length != GFX_PAGE_SIZE * 3) {
+                    throw new IOException("Unexpected size of GFX block: " + read.length);
+                  }
+                  foundGfx48Snapshot = read;
+                } else {
+                  if (read.length != GFX_PAGE_SIZE) {
+                    throw new IOException("Unexpected size of GFn block: " + read.length);
+                  }
+                  foundGfxRams.add(new Spec256GfxPage(Integer.parseInt(suffix), read));
+                }
               } else {
-                matcher = PALETTE_PATTERN.matcher(name);
+                matcher = BKG_PATTERN.matcher(name);
                 if (matcher.find()) {
-                  final String suffix = matcher.group(1);
+                  final int index = Integer.parseInt(matcher.group(1));
                   final byte[] data = readData(zipFile, entry);
-                  if ("al".equals(suffix)) {
-                    listPalettes.add(-1, new Spec256Palette(-1, data));
-                  } else {
-                    final int index = Integer.parseInt(suffix);
-                    listPalettes.add(index, new Spec256Palette(index, data));
+                  listBackgrounds.add(new Spec256Bkg(index, data, 320, 200));
+                } else {
+                  matcher = PALETTE_PATTERN.matcher(name);
+                  if (matcher.find()) {
+                    final String suffix = matcher.group(1);
+                    final byte[] data = readData(zipFile, entry);
+                    if ("al".equals(suffix)) {
+                      listPalettes.add(-1, new Spec256Palette(-1, data));
+                    } else {
+                      final int index = Integer.parseInt(suffix);
+                      listPalettes.add(index, new Spec256Palette(index, data));
+                    }
                   }
                 }
               }
@@ -122,54 +123,54 @@ public class Spec256Arch {
           }
         }
       }
+
+      if (parsedSna == null) {
+        throw new IOException("Can't find SNA file in Spec256 archive");
+      }
+
+      if (foundGfx48Snapshot == null) {
+        throw new IOException(("Can't find GFX file in Spec256 archive"));
+      }
+
+      if (foundGfx48Snapshot.length != GFX_PAGE_SIZE * 3) {
+        throw new IOException("Found GFX file has wrong size: " + foundGfx48Snapshot.length);
+      }
+
+      this.parsedSna = parsedSna;
+      this.properties = properties;
+      this.palettes = Collections.unmodifiableList(listPalettes);
+      this.backgrounds = Collections.unmodifiableList(listBackgrounds);
+      this.xorData = xorData;
+      this.mode128 = this.parsedSna.extendeddata != null;
+
+      final int topRamPageIndex;
+      if (this.parsedSna.extendeddata != null) {
+        topRamPageIndex = this.parsedSna.extendeddata.port7ffd & 7;
+      } else {
+        topRamPageIndex = 0;
+      }
+
+      final byte[] ram5 = new byte[GFX_PAGE_SIZE];
+      final byte[] ram2 = new byte[GFX_PAGE_SIZE];
+      final byte[] ramTop = new byte[GFX_PAGE_SIZE];
+
+      System.arraycopy(foundGfx48Snapshot, 0, ram5, 0, ram5.length);
+      System.arraycopy(foundGfx48Snapshot, ram5.length, ram2, 0, ram2.length);
+      System.arraycopy(foundGfx48Snapshot, ram5.length + ram2.length, ramTop, 0, ramTop.length);
+
+      if (foundGfxRams.stream().noneMatch(x -> x.pageIndex == 5)) {
+        foundGfxRams.add(new Spec256GfxPage(5, ram5));
+      }
+      if (foundGfxRams.stream().noneMatch(x -> x.pageIndex == 2)) {
+        foundGfxRams.add(new Spec256GfxPage(2, ram2));
+      }
+      if (foundGfxRams.stream().noneMatch(x -> x.pageIndex == topRamPageIndex)) {
+        foundGfxRams.add(new Spec256GfxPage(topRamPageIndex, ramTop));
+      }
+
+      this.gfxRamPages = Collections.unmodifiableList(foundGfxRams);
+      this.gfxRoms = Collections.unmodifiableList(foundGfxRoms);
     }
-
-    if (parsedSna == null) {
-      throw new IOException("Can't find SNA file in Spec256 archive");
-    }
-
-    if (foundGfx48Snapshot == null) {
-      throw new IOException(("Can't find GFX file in Spec256 archive"));
-    }
-
-    if (foundGfx48Snapshot.length != GFX_PAGE_SIZE * 3) {
-      throw new IOException("Found GFX file has wrong size: " + foundGfx48Snapshot.length);
-    }
-
-    this.parsedSna = parsedSna;
-    this.properties = properties;
-    this.palettes = Collections.unmodifiableList(listPalettes);
-    this.backgrounds = Collections.unmodifiableList(listBackgrounds);
-    this.xorData = xorData;
-    this.mode128 = this.parsedSna.extendeddata != null;
-
-    final int topRamPageIndex;
-    if (this.parsedSna.extendeddata != null) {
-      topRamPageIndex = this.parsedSna.extendeddata.port7ffd & 7;
-    } else {
-      topRamPageIndex = 0;
-    }
-
-    final byte[] ram5 = new byte[GFX_PAGE_SIZE];
-    final byte[] ram2 = new byte[GFX_PAGE_SIZE];
-    final byte[] ramTop = new byte[GFX_PAGE_SIZE];
-
-    System.arraycopy(foundGfx48Snapshot, 0, ram5, 0, ram5.length);
-    System.arraycopy(foundGfx48Snapshot, ram5.length, ram2, 0, ram2.length);
-    System.arraycopy(foundGfx48Snapshot, ram5.length + ram2.length, ramTop, 0, ramTop.length);
-
-    if (foundGfxRams.stream().noneMatch(x -> x.pageIndex == 5)) {
-      foundGfxRams.add(new Spec256GfxPage(5, ram5));
-    }
-    if (foundGfxRams.stream().noneMatch(x -> x.pageIndex == 2)) {
-      foundGfxRams.add(new Spec256GfxPage(2, ram5));
-    }
-    if (foundGfxRams.stream().noneMatch(x -> x.pageIndex == topRamPageIndex)) {
-      foundGfxRams.add(new Spec256GfxPage(topRamPageIndex, ramTop));
-    }
-
-    this.gfxRamPages = Collections.unmodifiableList(foundGfxRams);
-    this.gfxRoms = Collections.unmodifiableList(foundGfxRoms);
   }
 
   private static byte[] readData(final ZipFile file, final ZipArchiveEntry entry) throws IOException {

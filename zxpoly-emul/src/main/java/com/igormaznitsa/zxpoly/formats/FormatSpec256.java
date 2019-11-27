@@ -20,6 +20,7 @@ package com.igormaznitsa.zxpoly.formats;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.VideoController;
+import com.igormaznitsa.zxpoly.components.ZxPolyConstants;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +45,11 @@ public class FormatSpec256 extends Snapshot {
 
     final boolean sna128 = parser.extendeddata != null;
 
-    doZxPoly(board);
+    if (sna128) {
+      doModeSpec256_128(board);
+    } else {
+      doModeSpec256_48(board);
+    }
 
     for (int m = 0; m < 4; m++) {
       final ZxPolyModule module = board.getModules()[m];
@@ -118,8 +123,9 @@ public class FormatSpec256 extends Snapshot {
       }
     }
 
-    board.set3D00(0b1_00_101_0_1, true);
+    board.set3D00(0b1_00_000_0_1, true);
     vc.setBorderColor(parser.getBORDERCOLOR() & 7);
+    vc.setVideoMode(ZxPolyConstants.VIDEOMODE_SPEC256);
   }
 
   @Override

@@ -85,6 +85,8 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       new Color(255, 255, 0),
       new Color(255, 255, 255)
   };
+
+  private static final int[] SPEC256PAL = Utils.readPal(VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/sp256.pal"), true);
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
@@ -216,6 +218,35 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       final boolean allowAlreadyRenderedCheck
   ) {
     switch (videoMode) {
+      case VIDEOMODE_SPEC256: {
+        final ZxPolyModule sourceModule = modules[0];
+
+        int offset = 0;
+
+        final int inkColor = 0xFFFFFFFF;
+        final int paperColor = 0xFF000000;
+
+        for (int i = 0; i < 0x1800; i++) {
+          if ((i & 0x1F) == 0) {
+            // the first byte in the line
+            offset = extractYFromAddress(i) << 10;
+          }
+
+          int pixelData = sourceModule.readVideo(i);
+
+          int x = 8;
+          while (x-- > 0) {
+            final int color = (pixelData & 0x80) == 0 ? paperColor : inkColor;
+            pixelData <<= 1;
+
+            pixelRgbBuffer[offset] = color;
+            pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
+            pixelRgbBuffer[++offset] = color;
+            pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+          }
+        }
+      }
+      break;
       case VIDEOMODE_ZX48_CPU0:
       case VIDEOMODE_ZX48_CPU1:
       case VIDEOMODE_ZX48_CPU2:
@@ -471,6 +502,8 @@ public final class VideoController extends JComponent implements ZxPolyConstants
         return "ZX-Poly 256x192M0";
       case 7:
         return "ZX-Poly 256x192M1";
+      case VIDEOMODE_SPEC256:
+        return "SPEC256 256x192";
       default:
         return "Unknown [" + code + ']';
     }
@@ -644,8 +677,10 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     lockBuffer();
     try {
       if (this.currentVideoMode != newVideoMode) {
-        if ((newVideoMode & 0b11) == 0 || newVideoMode == 7) {
-          this.resetInternalAlreadyRenderedBuffer(this.modules[newVideoMode & 0x3]);
+        if (newVideoMode != VIDEOMODE_SPEC256) {
+          if ((newVideoMode & 0b11) == 0 || newVideoMode == 7) {
+            this.resetInternalAlreadyRenderedBuffer(this.modules[newVideoMode & 0x3]);
+          }
         }
         this.currentVideoMode = newVideoMode;
         log.log(Level.INFO, "mode set: " + decodeVideoModeCode(newVideoMode));

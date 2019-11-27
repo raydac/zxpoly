@@ -49,6 +49,21 @@ public abstract class Snapshot extends FileFilter {
     board.getMasterCpu().doReset();
   }
 
+  public void doModeSpec256_128(final Motherboard board) {
+    LOGGER.info("Mode Spec256.128");
+    board.set3D00(PORTw_ZXPOLY_BLOCK, true);
+    board.setBoardMode(BoardMode.SPEC256, false);
+    board.getMasterCpu().doReset();
+  }
+
+  public void doModeSpec256_48(final Motherboard board) {
+    LOGGER.info("Mode Spec256.48");
+    board.set3D00(PORTw_ZXPOLY_BLOCK, true);
+    stream(board.getModules()).forEach(ZxPolyModule::lockZx48Mode);
+    board.setBoardMode(BoardMode.SPEC256, false);
+    board.getMasterCpu().doReset();
+  }
+
   public void doZxPoly(final Motherboard board) {
     LOGGER.info("Mode ZX-Poly");
     board.set3D00(0, true);
