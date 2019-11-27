@@ -27,9 +27,34 @@ import java.util.Locale;
  */
 public final class Z80 {
 
+  public static final int REG_A = 0;
+  public static final int REG_F = 1;
+  public static final int REG_B = 2;
+  public static final int REG_C = 3;
+  public static final int REG_D = 4;
+  public static final int REG_E = 5;
+  public static final int REG_H = 6;
+  public static final int REG_L = 7;
+  public static final int REG_IX = 8;
+  public static final int REG_IY = 9;
+  public static final int REG_SP = 10;
+  public static final int REG_PC = 11;
+  public static final int REG_I = 12;
+  public static final int REG_R = 13;
+  public static final int REGPAIR_AF = REG_A;
+  public static final int REGPAIR_BC = REG_B;
+  public static final int REGPAIR_DE = REG_D;
+  public static final int REGPAIR_HL = REG_H;
+  public static final int SIGNAL_IN_nINT = 1;
+  public static final int SIGNAL_IN_nNMI = 2;
+  public static final int SIGNAL_IN_nRESET = 4;
+  public static final int SIGNAL_IN_nWAIT = 8;
+  public static final int SIGNAL_IN_ALL_INACTIVE = SIGNAL_IN_nINT | SIGNAL_IN_nNMI | SIGNAL_IN_nRESET | SIGNAL_IN_nWAIT;
+  public static final int SIGNAL_OUT_nM1 = 1;
+  public static final int SIGNAL_OUT_nHALT = 2;
+  public static final int SIGNAL_OUT_ALL_INACTIVE = SIGNAL_OUT_nHALT | SIGNAL_OUT_nM1;
   private static final byte[] FTABLE_SZYX;
   private static final byte[] FTABLE_SZYXP;
-
   private static final int FLAG_S_SHIFT = 7;
   public static final int FLAG_S = 1 << FLAG_S_SHIFT;
   private static final int FLAG_Z_SHIFT = 6;
@@ -46,14 +71,12 @@ public final class Z80 {
   public static final int FLAG_N = 1 << FLAG_N_SHIFT;
   private static final int FLAG_C_SHIFT = 0;
   public static final int FLAG_C = 1 << FLAG_C_SHIFT;
-
   private static final int FLAG_XY = FLAG_X | FLAG_Y;
   private static final int FLAG_SZPV = FLAG_S | FLAG_Z | FLAG_PV;
   private static final int FLAG_SYX = FLAG_S | FLAG_X | FLAG_Y;
   private static final int FLAG_SZ = FLAG_S | FLAG_Z;
   private static final int FLAG_SZC = FLAG_SZ | FLAG_C;
   private static final int FLAG_HC = FLAG_H | FLAG_C;
-
   private static final byte[] FTABLE_OVERFLOW = new byte[] {
       0, (byte) FLAG_PV, (byte) FLAG_PV, 0
   };
@@ -77,41 +100,11 @@ public final class Z80 {
     }
   }
 
-  public static final int REG_A = 0;
-  public static final int REG_F = 1;
-  public static final int REG_B = 2;
-  public static final int REG_C = 3;
-  public static final int REG_D = 4;
-  public static final int REG_E = 5;
-  public static final int REG_H = 6;
-  public static final int REG_L = 7;
-  public static final int REG_IX = 8;
-  public static final int REG_IY = 9;
-  public static final int REG_SP = 10;
-  public static final int REG_PC = 11;
-  public static final int REG_I = 12;
-  public static final int REG_R = 13;
-
-  public static final int REGPAIR_AF = REG_A;
-  public static final int REGPAIR_BC = REG_B;
-  public static final int REGPAIR_DE = REG_D;
-  public static final int REGPAIR_HL = REG_H;
-
-  public static final int SIGNAL_IN_nINT = 1;
-  public static final int SIGNAL_IN_nNMI = 2;
-  public static final int SIGNAL_IN_nRESET = 4;
-  public static final int SIGNAL_IN_nWAIT = 8;
-  public static final int SIGNAL_IN_ALL_INACTIVE = SIGNAL_IN_nINT | SIGNAL_IN_nNMI | SIGNAL_IN_nRESET | SIGNAL_IN_nWAIT;
-
-  public static final int SIGNAL_OUT_nM1 = 1;
-  public static final int SIGNAL_OUT_nHALT = 2;
-  public static final int SIGNAL_OUT_ALL_INACTIVE = SIGNAL_OUT_nHALT | SIGNAL_OUT_nM1;
-
+  private final Z80CPUBus bus;
+  private final byte[] regSet = new byte[8];
+  private final byte[] altRegSet = new byte[8];
   private boolean iff1, iff2;
   private int im;
-
-  private final Z80CPUBus bus;
-
   private int regIX;
   private int regIY;
   private int regSP;
@@ -122,28 +115,18 @@ public final class Z80 {
   private int regZ;
   private int regWalt;
   private int regZalt;
-
   private long machineCycles;
-
-  private final byte[] regSet = new byte[8];
-  private final byte[] altRegSet = new byte[8];
-
   private int lastM1InstructionByte = -1;
   private int lastInstructionByte = -1;
-
   private int cbDisplacementByte = -1;
-
   private int prefix;
-
   private int outSignals = 0xFFFFFFFF;
   private int prevINSignals = 0xFFFFFFFF;
-
   private boolean interruptAllowedForStep;
   private boolean detectedNMI;
   private boolean detectedINT;
   private boolean insideBlockInstructionPrev;
   private boolean insideBlockInstruction;
-
   private int resetCycle = 0;
 
   /**
@@ -193,6 +176,64 @@ public final class Z80 {
     _reset(1);
     _reset(2);
     this.machineCycles = 3L;
+  }
+
+  private static int extractX(final int cmndByte) {
+    return cmndByte >>> 6;
+  }
+
+  private static int extractY(final int cmndByte) {
+    return (cmndByte >>> 3) & 7;
+  }
+
+  private static int extractZ(final int cmndByte) {
+    return cmndByte & 7;
+  }
+
+  private static int extractP(final int cmndByte) {
+    return (cmndByte >>> 4) & 3;
+  }
+
+  private static int extractQ(final int cmndByte) {
+    return (cmndByte >>> 3) & 1;
+  }
+
+  /**
+   * Fill the CPu by internal state of some another CPU.
+   *
+   * @param src source CPU, must not be null
+   * @return this instance
+   */
+  public Z80 fillByState(final Z80 src) {
+    this.prefix = src.prefix;
+    this.resetCycle = src.resetCycle;
+    this.iff1 = src.iff1;
+    this.iff2 = src.iff2;
+    this.im = src.im;
+    this.regI = src.regI;
+    this.regIX = src.regIX;
+    this.regIY = src.regIY;
+    this.regPC = src.regPC;
+    this.regR = src.regR;
+    this.regSP = src.regSP;
+    this.regW = src.regW;
+    this.regZ = src.regZ;
+    this.regWalt = src.regWalt;
+    this.regZalt = src.regZalt;
+    System.arraycopy(src.regSet, 0, this.regSet, 0, src.regSet.length);
+    System.arraycopy(src.altRegSet, 0, this.altRegSet, 0, src.altRegSet.length);
+    this.lastM1InstructionByte = src.lastM1InstructionByte;
+    this.lastInstructionByte = src.lastInstructionByte;
+    this.machineCycles = src.machineCycles;
+    this.cbDisplacementByte = src.cbDisplacementByte;
+    this.outSignals = src.outSignals;
+    this.prevINSignals = src.prevINSignals;
+    this.interruptAllowedForStep = src.interruptAllowedForStep;
+    this.detectedINT = src.detectedINT;
+    this.detectedNMI = src.detectedNMI;
+    this.insideBlockInstruction = src.insideBlockInstruction;
+    this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
+    return this;
   }
 
   public int getWZ(final boolean alt) {
@@ -517,26 +558,6 @@ public final class Z80 {
     this.lastInstructionByte = result;
 
     return result;
-  }
-
-  private static int extractX(final int cmndByte) {
-    return cmndByte >>> 6;
-  }
-
-  private static int extractY(final int cmndByte) {
-    return (cmndByte >>> 3) & 7;
-  }
-
-  private static int extractZ(final int cmndByte) {
-    return cmndByte & 7;
-  }
-
-  private static int extractP(final int cmndByte) {
-    return (cmndByte >>> 4) & 3;
-  }
-
-  private static int extractQ(final int cmndByte) {
-    return (cmndByte >>> 3) & 1;
   }
 
   private int normalizedPrefix() {
@@ -974,6 +995,7 @@ public final class Z80 {
    * Process whole instruction or send signals but only step of a block
    * instruction will be processed.
    *
+   * @param ctx         context of method call, will be propagated to all sub-calls
    * @param signalRESET true sends the RESET signal to the CPU
    * @param signalNMI   true sends the NMI signal to the CPU
    * @param signalNT    true sends the INT signal to the CPU
@@ -989,12 +1011,16 @@ public final class Z80 {
    * Process whole instruction or send signals and block operations will be
    * processed entirely.
    *
+   * @param ctx         context of method call, will be propagated to all sub-calls
    * @param signalRESET true sends the RESET signal to the CPU
    * @param signalNMI   true sends the NMI signal to the CPU
    * @param signalNT    true sends the INT signal to the CPU
    */
   public void nextInstruction_SkipBlockInstructions(final int ctx, final boolean signalRESET, final boolean signalNMI, final boolean signalNT) {
-    int flag = (signalNT ? 0 : SIGNAL_IN_nINT) | (signalNMI ? 0 : SIGNAL_IN_nNMI) | (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
+    int flag = (signalNT ? 0 : SIGNAL_IN_nINT)
+        | (signalNMI ? 0 : SIGNAL_IN_nNMI)
+        | (signalRESET ? 0 : SIGNAL_IN_nRESET)
+        | SIGNAL_IN_nWAIT;
     while (step(ctx, flag) || this.insideBlockInstruction) {
       flag = SIGNAL_IN_ALL_INACTIVE;
     }
@@ -1003,6 +1029,7 @@ public final class Z80 {
   /**
    * Process one step.
    *
+   * @param ctx       context of method call, will be propagated to all sub-calls
    * @param inSignals external signal states to be processes during the step.
    * @return false if there is not any instruction under processing, true
    * otherwise
