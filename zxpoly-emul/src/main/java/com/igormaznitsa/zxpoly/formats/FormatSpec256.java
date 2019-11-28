@@ -121,18 +121,34 @@ public class FormatSpec256 extends Snapshot {
       cpu.setRegister(Z80.REG_PC, (highPc << 8) | lowPc);
     }
 
-    archive.getGfxRamPages().stream().forEach(x -> {
-      module.writeGfxRamPage(x.getPageIndex(), x.getData());
+    archive.getGfxRamPages().forEach(x -> {
+      module.writeGfxRamPage(x.getPageIndex(), testGfxConvert(x.getData()));
     });
 
     module.makeCopyOfRomToGfxRom();
-    archive.getGfxRoms().stream().forEach(x -> {
+    archive.getGfxRoms().forEach(x -> {
       module.writeGfxRomPage(x.getPageIndex(), x.getData());
     });
 
     board.set3D00(0b1_00_000_0_1, true);
     vc.setBorderColor(parser.getBORDERCOLOR() & 7);
     vc.setVideoMode(ZxPolyConstants.VIDEOMODE_SPEC256);
+  }
+
+  private byte[] testGfxConvert(final byte[] data) {
+    final byte[] result = new byte[data.length];
+
+    for (int i = 0; i < data.length; i += 8) {
+      for (int v = 0; v < 8; v++) {
+        int b = 0;
+        for (int w = 0; w < 8; w++) {
+          b |= (data[i + w] & (1 << v)) == 0 ? 0 : 1 << w;
+        }
+        result[i + v] = (byte) b;
+      }
+    }
+
+    return result;
   }
 
   @Override

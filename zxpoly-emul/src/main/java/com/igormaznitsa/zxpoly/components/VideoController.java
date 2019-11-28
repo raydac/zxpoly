@@ -220,23 +220,32 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     switch (videoMode) {
       case VIDEOMODE_SPEC256: {
         final ZxPolyModule sourceModule = modules[0];
-
         int offset = 0;
-
-        final int inkColor = 0xFFFFFFFF;
-        final int paperColor = 0xFF000000;
-
         for (int i = 0; i < 0x1800; i++) {
           if ((i & 0x1F) == 0) {
             // the first byte in the line
             offset = extractYFromAddress(i) << 10;
           }
 
-          int pixelData = sourceModule.readVideo(i);
+          long mask = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001L;
+
+          long pixelData = sourceModule.readGfxVideo(i);
 
           int x = 8;
           while (x-- > 0) {
-            final int color = (pixelData & 0x80) == 0 ? paperColor : inkColor;
+            final long masked = pixelData & mask;
+            mask <<= 1;
+
+            int paletteIndex = (masked & 0xFF00000000000000L) == 0 ? 0 : 0x01;
+            paletteIndex |= (masked & 0x00FF000000000000L) == 0 ? 0 : 0x02;
+            paletteIndex |= (masked & 0x0000FF0000000000L) == 0 ? 0 : 0x04;
+            paletteIndex |= (masked & 0x000000FF00000000L) == 0 ? 0 : 0x08;
+            paletteIndex |= (masked & 0x00000000FF000000L) == 0 ? 0 : 0x10;
+            paletteIndex |= (masked & 0x0000000000FF0000L) == 0 ? 0 : 0x20;
+            paletteIndex |= (masked & 0x000000000000FF00L) == 0 ? 0 : 0x40;
+            paletteIndex |= (masked & 0x00000000000000FFL) == 0 ? 0 : 0x80;
+
+            final int color = SPEC256PAL[paletteIndex];
             pixelData <<= 1;
 
             pixelRgbBuffer[offset] = color;
