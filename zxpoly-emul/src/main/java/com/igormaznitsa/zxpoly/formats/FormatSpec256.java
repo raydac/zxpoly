@@ -51,77 +51,84 @@ public class FormatSpec256 extends Snapshot {
       doModeSpec256_48(board);
     }
 
-    for (int m = 0; m < 4; m++) {
-      final ZxPolyModule module = board.getModules()[m];
-      final Z80 cpu = module.getCpu();
+    final ZxPolyModule module = board.getModules()[0];
+    final Z80 cpu = module.getCpu();
 
-      module.write7FFD(0b00_1_1_0_000, true);
+    module.write7FFD(0b00_1_1_0_000, true);
 
-      cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getREGAF());
-      cpu.setRegisterPair(Z80.REGPAIR_BC, parser.getREGBC());
-      cpu.setRegisterPair(Z80.REGPAIR_DE, parser.getREGDE());
-      cpu.setRegisterPair(Z80.REGPAIR_HL, parser.getREGHL());
+    cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getREGAF());
+    cpu.setRegisterPair(Z80.REGPAIR_BC, parser.getREGBC());
+    cpu.setRegisterPair(Z80.REGPAIR_DE, parser.getREGDE());
+    cpu.setRegisterPair(Z80.REGPAIR_HL, parser.getREGHL());
 
-      cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getALTREGAF(), true);
-      cpu.setRegisterPair(Z80.REGPAIR_BC, parser.getALTREGBC(), true);
-      cpu.setRegisterPair(Z80.REGPAIR_DE, parser.getALTREGDE(), true);
-      cpu.setRegisterPair(Z80.REGPAIR_HL, parser.getALTREGHL(), true);
+    cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getALTREGAF(), true);
+    cpu.setRegisterPair(Z80.REGPAIR_BC, parser.getALTREGBC(), true);
+    cpu.setRegisterPair(Z80.REGPAIR_DE, parser.getALTREGDE(), true);
+    cpu.setRegisterPair(Z80.REGPAIR_HL, parser.getALTREGHL(), true);
 
-      cpu.setRegister(Z80.REG_IX, parser.getREGIX());
-      cpu.setRegister(Z80.REG_IY, parser.getREGIY());
+    cpu.setRegister(Z80.REG_IX, parser.getREGIX());
+    cpu.setRegister(Z80.REG_IY, parser.getREGIY());
 
-      cpu.setRegister(Z80.REG_I, parser.getREGI());
-      cpu.setRegister(Z80.REG_R, parser.getREGR());
+    cpu.setRegister(Z80.REG_I, parser.getREGI());
+    cpu.setRegister(Z80.REG_R, parser.getREGR());
 
-      cpu.setIM(parser.getINTMODE());
-      cpu.setIFF(true, (parser.getINTERRUPT() & 2) != 0);
+    cpu.setIM(parser.getINTMODE());
+    cpu.setIFF(true, (parser.getINTERRUPT() & 2) != 0);
 
-      final int offsetpage2 = 0x8000;
-      final int offsetpage5 = 0x14000;
-      final int offsetpageTop = sna128 ? (parser.getEXTENDEDDATA().getPORT7FFD() & 7) * 0x4000 : 0x0000;
+    final int offsetpage2 = 0x8000;
+    final int offsetpage5 = 0x14000;
+    final int offsetpageTop = sna128 ? (parser.getEXTENDEDDATA().getPORT7FFD() & 7) * 0x4000 : 0x0000;
 
-      int[] extraBankPages = new int[0];
-      if (sna128) {
-        extraBankPages = new int[] {0, 1, 2, 3, 4, 5, 6, 7};
-        extraBankPages[2] = -1;
-        extraBankPages[5] = -1;
-        extraBankPages[parser.getEXTENDEDDATA().getPORT7FFD() & 7] = -1;
-      }
-
-      for (int i = 0; i < 0x4000; i++) {
-        module.writeHeap(offsetpage5 + i, parser.getRAMDUMP()[i]);
-        module.writeHeap(offsetpage2 + i, parser.getRAMDUMP()[i + 0x4000]);
-        module.writeHeap(offsetpageTop + i, parser.getRAMDUMP()[i + 0x8000]);
-      }
-
-      if (sna128) {
-        cpu.setRegister(Z80.REG_PC, parser.getEXTENDEDDATA().getREGPC());
-        cpu.setRegister(Z80.REG_SP, parser.getREGSP());
-        module.write7FFD(parser.getEXTENDEDDATA().getPORT7FFD(), true);
-        module.setTrdosActive(parser.getEXTENDEDDATA().getONTRDOS() != 0);
-
-        int extraBankIndex = 0;
-        for (int i = 0; i < 8 && extraBankIndex < parser.getEXTENDEDDATA().getEXTRABANK().length; i++) {
-          if (extraBankPages[i] < 0) {
-            continue;
-          }
-          final byte[] data = parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA();
-          final int heapoffset = extraBankPages[i] * 0x4000;
-          for (int a = 0; a < data.length; a++) {
-            module.writeHeap(heapoffset + a, data[a]);
-          }
-        }
-      } else {
-        int spValue = parser.getREGSP();
-        final int lowPc = parser.getRAMDUMP()[spValue - 0x4000] & 0xFF;
-        spValue = (spValue + 1) & 0xFFFF;
-        final int highPc = parser.getRAMDUMP()[spValue - 0x4000] & 0xFF;
-        spValue = (spValue + 1) & 0xFFFF;
-
-        cpu.setRegister(Z80.REG_SP, spValue);
-        cpu.setRegister(Z80.REG_PC, (highPc << 8) | lowPc);
-      }
+    int[] extraBankPages = new int[0];
+    if (sna128) {
+      extraBankPages = new int[] {0, 1, 2, 3, 4, 5, 6, 7};
+      extraBankPages[2] = -1;
+      extraBankPages[5] = -1;
+      extraBankPages[parser.getEXTENDEDDATA().getPORT7FFD() & 7] = -1;
     }
+
+    for (int i = 0; i < 0x4000; i++) {
+      module.writeHeap(offsetpage5 + i, parser.getRAMDUMP()[i]);
+      module.writeHeap(offsetpage2 + i, parser.getRAMDUMP()[i + 0x4000]);
+      module.writeHeap(offsetpageTop + i, parser.getRAMDUMP()[i + 0x8000]);
+    }
+
+    if (sna128) {
+      cpu.setRegister(Z80.REG_PC, parser.getEXTENDEDDATA().getREGPC());
+      cpu.setRegister(Z80.REG_SP, parser.getREGSP());
+      module.write7FFD(parser.getEXTENDEDDATA().getPORT7FFD(), true);
+      module.setTrdosActive(parser.getEXTENDEDDATA().getONTRDOS() != 0);
+
+      int extraBankIndex = 0;
+      for (int i = 0; i < 8 && extraBankIndex < parser.getEXTENDEDDATA().getEXTRABANK().length; i++) {
+        if (extraBankPages[i] < 0) {
+          continue;
+        }
+        final byte[] data = parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA();
+        final int heapoffset = extraBankPages[i] * 0x4000;
+        for (int a = 0; a < data.length; a++) {
+          module.writeHeap(heapoffset + a, data[a]);
+        }
+      }
+    } else {
+      int spValue = parser.getREGSP();
+      final int lowPc = parser.getRAMDUMP()[spValue - 0x4000] & 0xFF;
+      spValue = (spValue + 1) & 0xFFFF;
+      final int highPc = parser.getRAMDUMP()[spValue - 0x4000] & 0xFF;
+      spValue = (spValue + 1) & 0xFFFF;
+
+      cpu.setRegister(Z80.REG_SP, spValue);
+      cpu.setRegister(Z80.REG_PC, (highPc << 8) | lowPc);
+    }
+
+    archive.getGfxRamPages().stream().forEach(x -> {
+      module.writeGfxRamPage(x.getPageIndex(), x.getData());
+    });
+
+    module.makeCopyOfRomToGfxRom();
+    archive.getGfxRoms().stream().forEach(x -> {
+      module.writeGfxRomPage(x.getPageIndex(), x.getData());
+    });
 
     board.set3D00(0b1_00_000_0_1, true);
     vc.setBorderColor(parser.getBORDERCOLOR() & 7);

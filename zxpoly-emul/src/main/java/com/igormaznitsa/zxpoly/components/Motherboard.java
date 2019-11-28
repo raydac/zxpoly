@@ -43,7 +43,10 @@ public final class Motherboard implements ZxPolyConstants {
   private static final int NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE = 4;
   private static final Logger LOGGER = Logger.getLogger("MB");
 
+  private static final int SPEC256_GFX_CORES = 8;
+
   private final ZxPolyModule[] modules;
+  private final Z80[] spec256GfxCores;
   private final IoDevice[] ioDevices;
   private final IoDevice[] ioDevicesPreStep;
   private final IoDevice[] ioDevicesPostStep;
@@ -91,6 +94,11 @@ public final class Motherboard implements ZxPolyConstants {
     final Random rnd = new Random();
     for (int i = 0; i < this.ram.length(); i++) {
       this.ram.set(i, rnd.nextInt());
+    }
+
+    this.spec256GfxCores = new Z80[SPEC256_GFX_CORES];
+    for (int i = 0; i < SPEC256_GFX_CORES; i++) {
+      this.spec256GfxCores[i] = new Z80(this.modules[0].getCpu());
     }
   }
 
@@ -253,7 +261,9 @@ public final class Motherboard implements ZxPolyConstants {
 
       final long initialMachineCycleCounter = modules[0].getCpu().getMachineCycles();
 
-      if (this.getBoardMode() == BoardMode.ZXPOLY) {
+      final BoardMode mode = this.getBoardMode();
+
+      if (mode == BoardMode.ZXPOLY) {
 
         final boolean zx0halt;
         final boolean zx1halt;
@@ -321,12 +331,26 @@ public final class Motherboard implements ZxPolyConstants {
           }
         }
       } else {
-        // ZX 128 mode
-        modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+        final ZxPolyModule master = modules[0];
+        final boolean spec256 = boardMode == BoardMode.SPEC256;
+        if (spec256) {
+          final Z80 mainCpu = modules[0].getCpu();
+          for (int i = 0; i < SPEC256_GFX_CORES; i++) {
+            spec256GfxCores[i].fillByState(mainCpu);
+          }
+          master.saveInternalCopyForGfx();
+        }
+
+        master.step(signalReset, signalInt, resetStatisticsAtModules);
+
+        if (spec256) {
+          for (int i = 0; i < SPEC256_GFX_CORES; i++) {
+            master.stepWithGfxCpu(i + 1, this.spec256GfxCores[i], signalInt);
+          }
+        }
       }
 
       final long spentMachineCycles = modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
-
 
       for (final IoDevice device : this.ioDevicesPostStep) {
         device.postStep(spentMachineCycles);
