@@ -34,7 +34,6 @@ import com.igormaznitsa.zxpoly.components.TapeFileReader;
 import com.igormaznitsa.zxpoly.components.VideoController;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk;
-import com.igormaznitsa.zxpoly.formats.FormatEZX;
 import com.igormaznitsa.zxpoly.formats.FormatSNA;
 import com.igormaznitsa.zxpoly.formats.FormatSpec256;
 import com.igormaznitsa.zxpoly.formats.FormatZ80;
@@ -1091,7 +1090,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
       final FileFilter formatZ80 = new FormatZ80();
       final FileFilter formatSNA = new FormatSNA();
-      final FileFilter formatEZX = new FormatEZX();
       final FileFilter formatZXP = new FormatZXP();
       final FileFilter formatSpec256 = new FormatSpec256();
 
@@ -1101,7 +1099,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           return formatZ80.accept(f)
               || formatSpec256.accept(f)
               || formatSNA.accept(f)
-//              || formatEZX.accept(f)
               || formatZXP.accept(f);
         }
 
@@ -1129,7 +1126,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
               theFilter.set(formatZXP);
             } else {
               theFilter.set(formatSpec256);
-//              theFilter.set(formatEZX);
             }
           }
 

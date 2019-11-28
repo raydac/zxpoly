@@ -135,7 +135,7 @@ public class FormatSpec256 extends Snapshot {
     vc.setVideoMode(ZxPolyConstants.VIDEOMODE_SPEC256);
   }
 
-  private byte[] testGfxConvert(final byte[] data) {
+  private static byte[] testGfxConvert(final byte[] data) {
     final byte[] result = new byte[data.length];
 
     for (int i = 0; i < data.length; i += 8) {

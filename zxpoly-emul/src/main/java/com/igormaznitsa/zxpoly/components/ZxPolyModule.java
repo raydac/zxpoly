@@ -365,8 +365,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     long result = 0;
     int i = 8;
     while (i > 0) {
-      result <<= 8;
-      result = result | (this.gfxRam.get(offset++) & 0xFF);
+      result |= (this.gfxRam.get(offset + i) & 0xFFL) << (8 * i);
       i--;
     }
     return result;

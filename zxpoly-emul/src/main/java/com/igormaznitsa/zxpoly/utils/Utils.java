@@ -17,55 +17,38 @@
 
 package com.igormaznitsa.zxpoly.utils;
 
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import java.awt.Image;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
-import org.apache.commons.io.IOUtils;
 
 public final class Utils {
 
   private Utils() {
   }
 
-  public static int[] readPal(final InputStream in, final boolean close) {
-    final Pattern pattern = Pattern.compile("^\\s*(\\d+)\\s*(\\d+)\\s+(\\d+)\\s*$");
+  public static int[] readRawPalette(final InputStream in, final boolean close) {
+    final int[] result = new int[256];
 
-    final int[] result = new int[768];
-    int index = 0;
-
-    final List<String> lines;
     try {
-      lines = IOUtils.readLines(in, StandardCharsets.US_ASCII);
-    } catch (Exception ex) {
+      final JBBPBitInputStream bitInput = new JBBPBitInputStream(in);
+      for (int i = 0; i < 256; i++) {
+        final int red = bitInput.readByte();
+        final int green = bitInput.readByte();
+        final int blue = bitInput.readByte();
+
+        result[i] = 0xFF000000 | (red << 24) | (green << 16) | blue;
+      }
+    } catch (IOException ex) {
       throw new RuntimeException(ex);
-    }
-
-    for (final String line : lines) {
-      if (index >= result.length) {
-        break;
-      }
-      if (line.trim().isEmpty()) {
-        continue;
-      }
-      final Matcher matcher = pattern.matcher(line);
-      if (matcher.find()) {
-        final int r = Integer.parseInt(matcher.group(1));
-        final int g = Integer.parseInt(matcher.group(2));
-        final int b = Integer.parseInt(matcher.group(3));
-        result[index++] = 0xFF000000 | (r << 24) | (g << 16) | b;
-      }
-    }
-
-    if (close) {
-      try {
-        in.close();
-      } catch (Exception ex) {
-        //NOTHING
+    } finally {
+      if (close) {
+        try {
+          in.close();
+        } catch (Exception ex) {
+          //NOTHING
+        }
       }
     }
 

@@ -86,7 +86,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       new Color(255, 255, 255)
   };
 
-  private static final int[] SPEC256PAL = Utils.readPal(VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/sp256.pal"), true);
+  private static final int[] SPEC256PAL = Utils.readRawPalette(VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/spec256.raw.pal"), true);
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
@@ -227,23 +227,23 @@ public final class VideoController extends JComponent implements ZxPolyConstants
             offset = extractYFromAddress(i) << 10;
           }
 
-          long mask = 0b00000001_00000001_00000001_00000001_00000001_00000001_00000001_00000001L;
+          long mask = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000L;
 
           long pixelData = sourceModule.readGfxVideo(i);
 
           int x = 8;
           while (x-- > 0) {
             final long masked = pixelData & mask;
-            mask <<= 1;
+            mask >>>= 1;
 
-            int paletteIndex = (masked & 0xFF00000000000000L) == 0 ? 0 : 0x01;
-            paletteIndex |= (masked & 0x00FF000000000000L) == 0 ? 0 : 0x02;
-            paletteIndex |= (masked & 0x0000FF0000000000L) == 0 ? 0 : 0x04;
-            paletteIndex |= (masked & 0x000000FF00000000L) == 0 ? 0 : 0x08;
-            paletteIndex |= (masked & 0x00000000FF000000L) == 0 ? 0 : 0x10;
-            paletteIndex |= (masked & 0x0000000000FF0000L) == 0 ? 0 : 0x20;
-            paletteIndex |= (masked & 0x000000000000FF00L) == 0 ? 0 : 0x40;
-            paletteIndex |= (masked & 0x00000000000000FFL) == 0 ? 0 : 0x80;
+            int paletteIndex = (masked & 0xFF00000000000000L) == 0 ? 0 : 0x80;
+            paletteIndex |= (masked & 0x00FF000000000000L) == 0 ? 0 : 0x40;
+            paletteIndex |= (masked & 0x0000FF0000000000L) == 0 ? 0 : 0x20;
+            paletteIndex |= (masked & 0x000000FF00000000L) == 0 ? 0 : 0x10;
+            paletteIndex |= (masked & 0x00000000FF000000L) == 0 ? 0 : 0x08;
+            paletteIndex |= (masked & 0x0000000000FF0000L) == 0 ? 0 : 0x04;
+            paletteIndex |= (masked & 0x000000000000FF00L) == 0 ? 0 : 0x02;
+            paletteIndex |= (masked & 0x00000000000000FFL) == 0 ? 0 : 0x01;
 
             final int color = SPEC256PAL[paletteIndex];
             pixelData <<= 1;
