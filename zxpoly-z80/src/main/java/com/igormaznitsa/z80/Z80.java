@@ -618,11 +618,12 @@ public final class Z80 {
 
     this.detectedINT = src.detectedINT;
     this.detectedNMI = src.detectedNMI;
+
     this.interruptAllowedForStep = src.interruptAllowedForStep;
     this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
     this.insideBlockInstruction = src.insideBlockInstruction;
 
-//    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
+    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
 
     return this;
   }
