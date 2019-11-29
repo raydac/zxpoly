@@ -604,25 +604,25 @@ public final class Z80 {
     this.bus = cpu.bus;
   }
 
-  public Z80 fillBySytateAs256Gpu(final Z80 src) {
+  public Z80 fillByGfxState(final Z80 src) {
     this.regPC = src.regPC;
     this.regSP = src.regSP;
     this.regI = src.regI;
     this.regR = src.regR;
     this.iff1 = src.iff1;
     this.iff2 = src.iff2;
-    this.regW = src.regW;
-    this.regZ = src.regZ;
     this.im = src.im;
+
     this.prefix = src.prefix;
     this.cbDisplacementByte = src.cbDisplacementByte;
-//    this.detectedINT = src.detectedINT;
-//    this.detectedNMI = src.detectedNMI;
-//    this.interruptAllowedForStep = src.interruptAllowedForStep;
-//    this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
-//    this.insideBlockInstruction = src.insideBlockInstruction;
 
-    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
+    this.detectedINT = src.detectedINT;
+    this.detectedNMI = src.detectedNMI;
+    this.interruptAllowedForStep = src.interruptAllowedForStep;
+    this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
+    this.insideBlockInstruction = src.insideBlockInstruction;
+
+//    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
 
     return this;
   }
@@ -2176,15 +2176,12 @@ public final class Z80 {
   }
 
   private void doIN_C(final int ctx) {
-    final int port = ((this.regSet[REG_B] & 0xFF) << 8) | (this.regSet[REG_C] & 0xFF);
-    final int value = _readport(ctx, port) & 0xFF;
-
+    final int value = _readport(ctx, this.getRegisterPair(REGPAIR_BC)) & 0xFF;
     this.regSet[REG_F] = (byte) (FTABLE_SZYXP[value] | (this.regSet[REG_F] & FLAG_C));
   }
 
   private void doIN_C(final int ctx, final int y) {
-    final int port = getRegisterPair(REGPAIR_BC);
-    final int value = _readport(ctx, port) & 0xFF;
+    final int value = _readport(ctx, getRegisterPair(REGPAIR_BC)) & 0xFF;
     writeReg8(ctx, y, value);
 
     this.regSet[REG_F] = (byte) (FTABLE_SZYXP[value] | (this.regSet[REG_F] & FLAG_C));
@@ -2197,7 +2194,7 @@ public final class Z80 {
   }
 
   private void doOUT_C(final int ctx, final int y) {
-    final int port = ((this.regSet[REG_B] & 0xFF) << 8) | (this.regSet[REG_C] & 0xFF);
+    final int port = this.getRegisterPair(REGPAIR_BC);
     _writeport(ctx, port, readReg8(ctx, y));
     if (y == 7) { // reg A
       this.setWZ(port + 1, false);
@@ -2297,13 +2294,13 @@ public final class Z80 {
   }
 
   private void doRRD(final int ctx) {
-    final int HL = getRegisterPair(REGPAIR_HL);
-    this.setWZ(HL + 1, false);
+    final int hl = HLasAddr(ctx);
+    this.setWZ(hl + 1, false);
     final int A = this.regSet[REG_A] & 0xFF;
-    int x = _readmem8(ctx, HL);
+    int x = _readmem8(ctx, hl);
     int y = (A & 0xf0) << 8;
     y |= ((x & 0x0f) << 8) | ((A & 0x0f) << 4) | (x >> 4);
-    _writemem8(ctx, HL, (byte) y);
+    _writemem8(ctx, hl, (byte) y);
     y >>>= 8;
     this.regSet[REG_A] = (byte) y;
     this.regSet[REG_F] = (byte) (FTABLE_SZYXP[y] | (this.regSet[REG_F] & FLAG_C));
@@ -2312,13 +2309,13 @@ public final class Z80 {
   }
 
   private void doRLD(final int ctx) {
-    final int HL = getRegisterPair(REGPAIR_HL);
-    this.setWZ(HL + 1, false);
+    final int hl = HLasAddr(ctx);
+    this.setWZ(hl + 1, false);
     final int A = this.regSet[REG_A] & 0xFF;
-    int x = _readmem8(ctx, HL);
+    int x = _readmem8(ctx, hl);
     int y = (A & 0xf0) << 8;
     y |= (x << 4) | (A & 0x0f);
-    _writemem8(ctx, HL, (byte) y);
+    _writemem8(ctx, hl, (byte) y);
     y >>>= 8;
     this.regSet[REG_A] = (byte) y;
     this.regSet[REG_F] = (byte) (FTABLE_SZYXP[y] | (this.regSet[REG_F] & FLAG_C));
@@ -2451,7 +2448,7 @@ public final class Z80 {
   private void doINI(final int ctx) {
     final int bc = getRegisterPair(REGPAIR_BC);
     this.setWZ(bc + 1, false);
-    int hl = getRegisterPair(REGPAIR_HL);
+    int hl = HLasAddr(ctx);
     int x = _readport(ctx, bc);
     _writemem8(ctx, hl++, (byte) x);
     final int b = ((bc >>> 8) - 1) & 0xFF;
@@ -2481,7 +2478,7 @@ public final class Z80 {
 
   private void doIND(final int ctx) {
     final int bc = getRegisterPair(REGPAIR_BC);
-    int hl = getRegisterPair(REGPAIR_HL);
+    int hl = HLasAddr(ctx);
     int x = _readport(ctx, bc);
     _writemem8(ctx, hl--, (byte) x);
     this.setWZ(bc - 1, false);
