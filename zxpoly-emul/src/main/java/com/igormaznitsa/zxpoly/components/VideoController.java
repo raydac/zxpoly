@@ -231,8 +231,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
           int x = 8;
           while (x-- > 0) {
-            int paletteIndex = (int) ((pixelData >>> 56) & 0xFF);
-            final int color = SPEC256PAL[paletteIndex];
+            final int color = SPEC256PAL[(int) ((pixelData >>> 56) & 0xFF)];
             pixelData <<= 8;
 
             pixelRgbBuffer[offset] = color;
