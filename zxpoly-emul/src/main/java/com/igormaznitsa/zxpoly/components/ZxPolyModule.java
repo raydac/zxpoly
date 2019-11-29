@@ -393,6 +393,24 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
+  public int getValueForGpu(Z80 cpu, int ctx, int reg) {
+    switch (reg) {
+      case Z80.REGPAIR_BC:
+        return this.cpu.getRegisterPair(Z80.REGPAIR_BC, false);
+      case Z80.REGPAIR_DE:
+        return this.cpu.getRegisterPair(Z80.REGPAIR_DE, false);
+      case Z80.REGPAIR_HL:
+        return this.cpu.getRegisterPair(Z80.REGPAIR_HL, false);
+      case Z80.REG_IX:
+        return this.cpu.getRegister(Z80.REG_IX, false);
+      case Z80.REG_IY:
+        return this.cpu.getRegister(Z80.REG_IY, false);
+      default:
+        throw new Error("Unexpected register or register pair in request:" + reg);
+    }
+  }
+
+  @Override
   public byte readMemory(final Z80 cpu, final int ctx, final int address, final boolean m1, final boolean cmdOrPrefix) {
     final byte result;
 
@@ -689,30 +707,31 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   @Override
   public void writePort(final Z80 cpu, final int ctx, final int port, final byte data) {
-    final int val = data & 0xFF;
-
-    if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
-      final int reg0 = this.zxPolyRegsWritten.get(0);
-      if ((reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 || port == PORTw_ZX128) {
-        if (port == PORTw_ZX128) {
-          if (this.moduleIndex == 0) {
-            if (this.board.getMappedCpuIndex() > 0 && (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_WRITE_MAPPED_IO_7FFD) != 0) {
-              this.board.writeBusIo(this, port, val);
+    if (ctx == 0) {
+      final int val = data & 0xFF;
+      if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
+        final int reg0 = this.zxPolyRegsWritten.get(0);
+        if ((reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 || port == PORTw_ZX128) {
+          if (port == PORTw_ZX128) {
+            if (this.moduleIndex == 0) {
+              if (this.board.getMappedCpuIndex() > 0 && (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_WRITE_MAPPED_IO_7FFD) != 0) {
+                this.board.writeBusIo(this, port, val);
+              } else {
+                write7FFD(val, false);
+              }
             } else {
               write7FFD(val, false);
             }
           } else {
-            write7FFD(val, false);
+            this.board.writeBusIo(this, port, val);
           }
+        }
+      } else {
+        if (port == PORTw_ZX128) {
+          write7FFD(val, false);
         } else {
           this.board.writeBusIo(this, port, val);
         }
-      }
-    } else {
-      if (port == PORTw_ZX128) {
-        write7FFD(val, false);
-      } else {
-        this.board.writeBusIo(this, port, val);
       }
     }
   }

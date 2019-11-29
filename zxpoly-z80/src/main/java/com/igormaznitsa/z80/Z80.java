@@ -103,6 +103,7 @@ public final class Z80 {
   private final Z80CPUBus bus;
   private final byte[] regSet = new byte[8];
   private final byte[] altRegSet = new byte[8];
+  private final boolean gfxCore;
   private boolean iff1;
   private boolean iff2;
   private int im;
@@ -130,48 +131,15 @@ public final class Z80 {
   private boolean insideBlockInstruction;
   private int resetCycle = 0;
 
-  /**
-   * Make full copy of state of the source CPU. NB! pointer to bus will be
-   * copied!
-   *
-   * @param cpu source CPU which state should be copied, must not be null
-   */
-  public Z80(final Z80 cpu) {
-    this.prefix = cpu.prefix;
-    this.resetCycle = cpu.resetCycle;
-    this.iff1 = cpu.iff1;
-    this.iff2 = cpu.iff2;
-    this.im = cpu.im;
-    this.regI = cpu.regI;
-    this.regIX = cpu.regIX;
-    this.regIY = cpu.regIY;
-    this.regPC = cpu.regPC;
-    this.regR = cpu.regR;
-    this.regSP = cpu.regSP;
-    this.regW = cpu.regW;
-    this.regZ = cpu.regZ;
-    this.regWalt = cpu.regWalt;
-    this.regZalt = cpu.regZalt;
-    System.arraycopy(cpu.regSet, 0, this.regSet, 0, cpu.regSet.length);
-    System.arraycopy(cpu.altRegSet, 0, this.altRegSet, 0, cpu.altRegSet.length);
-    this.lastM1InstructionByte = cpu.lastM1InstructionByte;
-    this.lastInstructionByte = cpu.lastInstructionByte;
-    this.machineCycles = cpu.machineCycles;
-    this.cbDisplacementByte = cpu.cbDisplacementByte;
-    this.outSignals = cpu.outSignals;
-    this.prevINSignals = cpu.prevINSignals;
-    this.interruptAllowedForStep = cpu.interruptAllowedForStep;
-    this.detectedINT = cpu.detectedINT;
-    this.detectedNMI = cpu.detectedNMI;
-    this.insideBlockInstruction = cpu.insideBlockInstruction;
-    this.insideBlockInstructionPrev = cpu.insideBlockInstructionPrev;
-    this.bus = cpu.bus;
+  public Z80(final Z80CPUBus bus) {
+    this(bus, false);
   }
 
-  public Z80(final Z80CPUBus bus) {
+  public Z80(final Z80CPUBus bus, final boolean gfxCore) {
     if (bus == null) {
       throw new NullPointerException("The CPU BUS must not be null");
     }
+    this.gfxCore = gfxCore;
     this.bus = bus;
     _reset(0);
     _reset(1);
@@ -231,26 +199,8 @@ public final class Z80 {
     return this;
   }
 
-  public Z80 fillBySytateAs256Gpu(final Z80 src) {
-    this.regPC = src.regPC;
-    this.regSP = src.regSP;
-    this.regI = src.regI;
-    this.regR = src.regR;
-    this.iff1 = src.iff1;
-    this.iff2 = src.iff2;
-    this.im = src.im;
-    this.prefix = src.prefix;
-    this.cbDisplacementByte = src.cbDisplacementByte;
-
-    this.detectedINT = src.detectedINT;
-    this.detectedNMI = src.detectedNMI;
-    this.interruptAllowedForStep = src.interruptAllowedForStep;
-    this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
-    this.insideBlockInstruction = src.insideBlockInstruction;
-
-    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
-
-    return this;
+  public Z80(final Z80 cpu) {
+    this(cpu, false);
   }
 
   public int getWZ(final boolean alt) {
@@ -615,6 +565,68 @@ public final class Z80 {
     return result;
   }
 
+  /**
+   * Make full copy of state of the source CPU. NB! pointer to bus will be
+   * copied!
+   *
+   * @param cpu source CPU which state should be copied, must not be null
+   */
+  public Z80(final Z80 cpu, final boolean gfxCore) {
+    this.gfxCore = gfxCore;
+    this.prefix = cpu.prefix;
+    this.resetCycle = cpu.resetCycle;
+    this.iff1 = cpu.iff1;
+    this.iff2 = cpu.iff2;
+    this.im = cpu.im;
+    this.regI = cpu.regI;
+    this.regIX = cpu.regIX;
+    this.regIY = cpu.regIY;
+    this.regPC = cpu.regPC;
+    this.regR = cpu.regR;
+    this.regSP = cpu.regSP;
+    this.regW = cpu.regW;
+    this.regZ = cpu.regZ;
+    this.regWalt = cpu.regWalt;
+    this.regZalt = cpu.regZalt;
+    System.arraycopy(cpu.regSet, 0, this.regSet, 0, cpu.regSet.length);
+    System.arraycopy(cpu.altRegSet, 0, this.altRegSet, 0, cpu.altRegSet.length);
+    this.lastM1InstructionByte = cpu.lastM1InstructionByte;
+    this.lastInstructionByte = cpu.lastInstructionByte;
+    this.machineCycles = cpu.machineCycles;
+    this.cbDisplacementByte = cpu.cbDisplacementByte;
+    this.outSignals = cpu.outSignals;
+    this.prevINSignals = cpu.prevINSignals;
+    this.interruptAllowedForStep = cpu.interruptAllowedForStep;
+    this.detectedINT = cpu.detectedINT;
+    this.detectedNMI = cpu.detectedNMI;
+    this.insideBlockInstruction = cpu.insideBlockInstruction;
+    this.insideBlockInstructionPrev = cpu.insideBlockInstructionPrev;
+    this.bus = cpu.bus;
+  }
+
+  public Z80 fillBySytateAs256Gpu(final Z80 src) {
+    this.regPC = src.regPC;
+    this.regSP = src.regSP;
+    this.regI = src.regI;
+    this.regR = src.regR;
+    this.iff1 = src.iff1;
+    this.iff2 = src.iff2;
+    this.regW = src.regW;
+    this.regZ = src.regZ;
+    this.im = src.im;
+    this.prefix = src.prefix;
+    this.cbDisplacementByte = src.cbDisplacementByte;
+//    this.detectedINT = src.detectedINT;
+//    this.detectedNMI = src.detectedNMI;
+//    this.interruptAllowedForStep = src.interruptAllowedForStep;
+//    this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
+//    this.insideBlockInstruction = src.insideBlockInstruction;
+
+    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
+
+    return this;
+  }
+
   private int readReg8(final int ctx, final int r) {
     switch (r) {
       case 0:
@@ -650,17 +662,17 @@ public final class Z80 {
       case 6: { // (HL)
         switch (normalizedPrefix()) {
           case 0x00: {
-            return _readmem8(ctx, getRegisterPair(REGPAIR_HL));
+            return _readmem8(ctx, HLasAddr(ctx));
           }
           case 0xDD: {
             this.machineCycles += 5;
-            final int address = this.regIX + (byte) _read_ixiy_d(ctx);
+            final int address = IXasAddr(ctx) + (byte) _read_ixiy_d(ctx);
             this.setWZ(address, false);
             return _readmem8(ctx, address);
           }
           case 0xFD: {
             this.machineCycles += 5;
-            final int address = this.regIY + (byte) _read_ixiy_d(ctx);
+            final int address = IYasAddr(ctx) + (byte) _read_ixiy_d(ctx);
             this.setWZ(address, false);
             return _readmem8(ctx, address);
           }
@@ -671,6 +683,18 @@ public final class Z80 {
         return getRegister(REG_A);
     }
     throw new Error("Unexpected prefix or R index [" + this.prefix + ':' + r + ']');
+  }
+
+  private int HLasAddr(final int ctx) {
+    return this.gfxCore ? this.bus.getValueForGpu(this, ctx, REGPAIR_HL) : getRegisterPair(REGPAIR_HL);
+  }
+
+  private int BCasAddr(final int ctx) {
+    return this.gfxCore ? this.bus.getValueForGpu(this, ctx, REGPAIR_BC) : getRegisterPair(REGPAIR_BC);
+  }
+
+  private int DEasAddr(final int ctx) {
+    return this.gfxCore ? this.bus.getValueForGpu(this, ctx, REGPAIR_DE) : getRegisterPair(REGPAIR_DE);
   }
 
   private void writeReg16(final int p, final int value) {
@@ -777,6 +801,14 @@ public final class Z80 {
     throw new Error("Unexpected P index or prefix [" + this.prefix + ':' + p + ']');
   }
 
+  private int IXasAddr(final int ctx) {
+    return this.gfxCore ? this.bus.getValueForGpu(this, ctx, REG_IX) : this.regIX;
+  }
+
+  private int IYasAddr(final int ctx) {
+    return this.gfxCore ? this.bus.getValueForGpu(this, ctx, REG_IY) : this.regIY;
+  }
+
   private void writeReg8(final int ctx, final int r, final int value) {
     switch (r) {
       case 0:
@@ -832,160 +864,23 @@ public final class Z80 {
       case 6: { // (HL)
         switch (normalizedPrefix()) {
           case 0x00: {
-            _writemem8(ctx, getRegisterPair(REGPAIR_HL), (byte) value);
+            _writemem8(ctx, HLasAddr(ctx), (byte) value);
             return;
           }
           case 0xDD: {
-            final int address = this.regIX + (byte) value;
+            final int address = IXasAddr(ctx) + (byte) value;
             _writemem8(ctx, address, (byte) readInstrOrPrefix(ctx, false));
             this.setWZ(address, false);
             this.machineCycles += 2;
             return;
           }
           case 0xFD: {
-            final int address = this.regIY + (byte) value;
+            final int address = IYasAddr(ctx) + (byte) value;
             _writemem8(ctx, address, (byte) readInstrOrPrefix(ctx, false));
             this.setWZ(address, false);
             this.machineCycles += 2;
             return;
           }
-        }
-      }
-      break;
-      case 7:
-        setRegister(REG_A, value);
-        return;
-    }
-    throw new Error("unexpected P index or prefix [" + this.prefix + ':' + r + ']');
-  }
-
-  private void writeReg8_forLdReg8Instruction(final int ctx, final int r, final int value) {
-    switch (r) {
-      case 0:
-        setRegister(REG_B, value);
-        return;
-      case 1:
-        setRegister(REG_C, value);
-        return;
-      case 2:
-        setRegister(REG_D, value);
-        return;
-      case 3:
-        setRegister(REG_E, value);
-        return;
-      case 4:
-        switch (normalizedPrefix()) {
-          case 0x00:
-            setRegister(REG_H, value);
-            return;
-          case 0xDD:
-            setRegister(REG_IX, (value << 8) | (getRegister(REG_IX) & 0x00FF));
-            return;
-          case 0xFD:
-            setRegister(REG_IY, (value << 8) | (getRegister(REG_IY) & 0x00FF));
-            return;
-        }
-        break;
-      case 5:
-        switch (normalizedPrefix()) {
-          case 0x00:
-            setRegister(REG_L, value);
-            return;
-          case 0xDD:
-            setRegister(REG_IX, (getRegister(REG_IX) & 0xFF00) | (value & 0xFF));
-            return;
-          case 0xFD:
-            setRegister(REG_IY, (getRegister(REG_IY) & 0xFF00) | (value & 0xFF));
-            return;
-        }
-        break;
-      case 6: { // (HL)
-        switch (normalizedPrefix()) {
-          case 0x00:
-            _writemem8(ctx, getRegisterPair(REGPAIR_HL), (byte) value);
-            return;
-          case 0xDD:
-            _writemem8(ctx, this.regIX + (byte) readInstrOrPrefix(ctx, false), (byte) value);
-            this.machineCycles += 5;
-            return;
-          case 0xFD:
-            _writemem8(ctx, this.regIY + (byte) readInstrOrPrefix(ctx, false), (byte) value);
-            this.machineCycles += 5;
-            return;
-        }
-      }
-      break;
-      case 7:
-        setRegister(REG_A, value);
-        return;
-    }
-    throw new Error("unexpected P index or prefix [" + this.prefix + ':' + r + ']');
-  }
-
-  private void writeReg8_UseCachedInstructionByte(final int ctx, final int r, final int value) {
-    switch (r) {
-      case 0:
-        setRegister(REG_B, value);
-        return;
-      case 1:
-        setRegister(REG_C, value);
-        return;
-      case 2:
-        setRegister(REG_D, value);
-        return;
-      case 3:
-        setRegister(REG_E, value);
-        return;
-      case 4:
-        if (this.cbDisplacementByte < 0) {
-          switch (normalizedPrefix()) {
-            case 0x00:
-              setRegister(REG_H, value);
-              break;
-            case 0xDD: {
-              this.regIX = (this.regIX & 0xFF) | ((value & 0xFF) << 8);
-            }
-            break;
-            case 0xFD: {
-              this.regIY = (this.regIY & 0xFF) | ((value & 0xFF) << 8);
-            }
-            break;
-          }
-        } else {
-          setRegister(REG_H, value);
-        }
-        return;
-      case 5:
-        if (this.cbDisplacementByte < 0) {
-          switch (normalizedPrefix()) {
-            case 0x00:
-              setRegister(REG_L, value);
-              break;
-            case 0xDD: {
-              this.regIX = (this.regIX & 0xFF00) | (value & 0xFF);
-            }
-            break;
-            case 0xFD: {
-              this.regIY = (this.regIY & 0xFF00) | (value & 0xFF);
-            }
-            break;
-          }
-        } else {
-          setRegister(REG_L, value);
-        }
-        return;
-      case 6: { // (HL)
-        this.machineCycles += 1;
-        switch (normalizedPrefix()) {
-          case 0x00:
-            _writemem8(ctx, getRegisterPair(REGPAIR_HL), (byte) value);
-            return;
-          case 0xDD:
-            _writemem8(ctx, this.regIX + (byte) (this.cbDisplacementByte < 0 ? this.lastInstructionByte : this.cbDisplacementByte), (byte) value);
-            return;
-          case 0xFD:
-            _writemem8(ctx, this.regIY + (byte) (this.cbDisplacementByte < 0 ? this.lastInstructionByte : this.cbDisplacementByte), (byte) value);
-            return;
         }
       }
       break;
@@ -1631,20 +1526,141 @@ public final class Z80 {
     this.machineCycles += 7;
   }
 
-  private void doLD_mBC_A(final int ctx) {
-    final int address = getRegisterPair(REGPAIR_BC);
-    final byte a = this.regSet[REG_A];
-    this.regW = a & 0xFF;
-    this.regZ = (address + 1) & 0xFF;
-    this._writemem8(ctx, address, a);
+  private void writeReg8_forLdReg8Instruction(final int ctx, final int r, final int value) {
+    switch (r) {
+      case 0:
+        setRegister(REG_B, value);
+        return;
+      case 1:
+        setRegister(REG_C, value);
+        return;
+      case 2:
+        setRegister(REG_D, value);
+        return;
+      case 3:
+        setRegister(REG_E, value);
+        return;
+      case 4:
+        switch (normalizedPrefix()) {
+          case 0x00:
+            setRegister(REG_H, value);
+            return;
+          case 0xDD:
+            setRegister(REG_IX, (value << 8) | (getRegister(REG_IX) & 0x00FF));
+            return;
+          case 0xFD:
+            setRegister(REG_IY, (value << 8) | (getRegister(REG_IY) & 0x00FF));
+            return;
+        }
+        break;
+      case 5:
+        switch (normalizedPrefix()) {
+          case 0x00:
+            setRegister(REG_L, value);
+            return;
+          case 0xDD:
+            setRegister(REG_IX, (getRegister(REG_IX) & 0xFF00) | (value & 0xFF));
+            return;
+          case 0xFD:
+            setRegister(REG_IY, (getRegister(REG_IY) & 0xFF00) | (value & 0xFF));
+            return;
+        }
+        break;
+      case 6: { // (HL)
+        switch (normalizedPrefix()) {
+          case 0x00:
+            _writemem8(ctx, HLasAddr(ctx), (byte) value);
+            return;
+          case 0xDD:
+            _writemem8(ctx, IXasAddr(ctx) + (byte) readInstrOrPrefix(ctx, false), (byte) value);
+            this.machineCycles += 5;
+            return;
+          case 0xFD:
+            _writemem8(ctx, IYasAddr(ctx) + (byte) readInstrOrPrefix(ctx, false), (byte) value);
+            this.machineCycles += 5;
+            return;
+        }
+      }
+      break;
+      case 7:
+        setRegister(REG_A, value);
+        return;
+    }
+    throw new Error("unexpected P index or prefix [" + this.prefix + ':' + r + ']');
   }
 
-  private void doLD_mDE_A(final int ctx) {
-    final int address = getRegisterPair(REGPAIR_DE);
-    final byte a = this.regSet[REG_A];
-    this.regW = a & 0xFF;
-    this.regZ = (address + 1) & 0xFF;
-    this._writemem8(ctx, address, a);
+  private void writeReg8_UseCachedInstructionByte(final int ctx, final int r, final int value) {
+    switch (r) {
+      case 0:
+        setRegister(REG_B, value);
+        return;
+      case 1:
+        setRegister(REG_C, value);
+        return;
+      case 2:
+        setRegister(REG_D, value);
+        return;
+      case 3:
+        setRegister(REG_E, value);
+        return;
+      case 4:
+        if (this.cbDisplacementByte < 0) {
+          switch (normalizedPrefix()) {
+            case 0x00:
+              setRegister(REG_H, value);
+              break;
+            case 0xDD: {
+              this.regIX = (this.regIX & 0xFF) | ((value & 0xFF) << 8);
+            }
+            break;
+            case 0xFD: {
+              this.regIY = (this.regIY & 0xFF) | ((value & 0xFF) << 8);
+            }
+            break;
+          }
+        } else {
+          setRegister(REG_H, value);
+        }
+        return;
+      case 5:
+        if (this.cbDisplacementByte < 0) {
+          switch (normalizedPrefix()) {
+            case 0x00:
+              setRegister(REG_L, value);
+              break;
+            case 0xDD: {
+              this.regIX = (this.regIX & 0xFF00) | (value & 0xFF);
+            }
+            break;
+            case 0xFD: {
+              this.regIY = (this.regIY & 0xFF00) | (value & 0xFF);
+            }
+            break;
+          }
+        } else {
+          setRegister(REG_L, value);
+        }
+        return;
+      case 6: { // (HL)
+        this.machineCycles += 1;
+        switch (normalizedPrefix()) {
+          case 0x00:
+            _writemem8(ctx, HLasAddr(ctx), (byte) value);
+            return;
+          case 0xDD:
+            _writemem8(ctx, IXasAddr(ctx) + (byte) (this.cbDisplacementByte < 0 ? this.lastInstructionByte : this.cbDisplacementByte), (byte) value);
+            return;
+          case 0xFD:
+            _writemem8(ctx, IYasAddr(ctx) + (byte) (this.cbDisplacementByte < 0 ? this.lastInstructionByte : this.cbDisplacementByte), (byte) value);
+            return;
+        }
+      }
+      break;
+      case 7:
+        setRegister(REG_A, value);
+        return;
+    }
+    throw new Error("unexpected P index or prefix [" + this.prefix + ':' + r + ']');
   }
 
   private void doLD_mNN_HL(final int ctx) {
@@ -1661,16 +1677,20 @@ public final class Z80 {
     this._writemem8(ctx, address, a);
   }
 
-  private void doLD_A_mBC(final int ctx) {
-    final int addr = getRegisterPair(REGPAIR_BC);
-    setRegister(REG_A, _readmem8(ctx, addr));
-    this.setWZ(addr + 1, false);
+  private void doLD_mBC_A(final int ctx) {
+    final int address = BCasAddr(ctx);
+    final byte a = this.regSet[REG_A];
+    this.regW = a & 0xFF;
+    this.regZ = (address + 1) & 0xFF;
+    this._writemem8(ctx, address, a);
   }
 
-  private void doLD_A_mDE(final int ctx) {
-    final int addr = getRegisterPair(REGPAIR_DE);
-    setRegister(REG_A, _readmem8(ctx, getRegisterPair(REGPAIR_DE)));
-    this.setWZ(addr + 1, false);
+  private void doLD_mDE_A(final int ctx) {
+    final int address = DEasAddr(ctx);
+    final byte a = this.regSet[REG_A];
+    this.regW = a & 0xFF;
+    this.regZ = (address + 1) & 0xFF;
+    this._writemem8(ctx, address, a);
   }
 
   private void doLD_HL_mem(final int ctx) {
@@ -2389,28 +2409,10 @@ public final class Z80 {
     return insideLoop;
   }
 
-  private void doLDI(final int ctx) {
-    int hl = getRegisterPair(REGPAIR_HL);
-    int de = getRegisterPair(REGPAIR_DE);
-
-    int value = _readmem8(ctx, hl++);
-
-    _writemem8(ctx, de++, (byte) value);
-    setRegisterPair(REGPAIR_HL, hl);
-    setRegisterPair(REGPAIR_DE, de);
-
-    final int bc = (getRegisterPair(REGPAIR_BC) - 1) & 0xFFFF;
-    setRegisterPair(REGPAIR_BC, bc);
-
-    int f = this.regSet[REG_F] & FLAG_SZC;
-    f |= bc == 0 ? 0 : FLAG_PV;
-    value += this.regSet[REG_A] & 0xFF;
-    f |= value & FLAG_X;
-    f |= (value << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
-
-    this.regSet[REG_F] = (byte) f;
-
-    this.machineCycles += 2;
+  private void doLD_A_mBC(final int ctx) {
+    final int addr = BCasAddr(ctx);
+    setRegister(REG_A, _readmem8(ctx, addr));
+    this.setWZ(addr + 1, false);
   }
 
   private boolean doLDIR(final int ctx) {
@@ -2426,26 +2428,10 @@ public final class Z80 {
     return loopNonCompleted;
   }
 
-  private void doCPI(final int ctx) {
-    int hl = getRegisterPair(REGPAIR_HL);
-    int n = _readmem8(ctx, hl++);
-
-    final int a = getRegister(REG_A);
-    final int z = a - n;
-    setRegisterPair(REGPAIR_HL, hl);
-    final int bc = getRegisterPair(REGPAIR_BC) - 1;
-    setRegisterPair(REGPAIR_BC, bc);
-    this.setWZ(this.getWZ(false) + 1, false);
-
-    int f = (a ^ n ^ z) & FLAG_H;
-    n = z - (f >>> FLAG_H_SHIFT);
-    f |= (n << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
-    f |= n & FLAG_X;
-    f |= FTABLE_SZYX[z & 0xff] & FLAG_SZ;
-    f |= bc != 0 ? FLAG_PV : 0;
-    this.regSet[REG_F] = (byte) (f | FLAG_N | (this.regSet[REG_F] & FLAG_C));
-
-    this.machineCycles += 5;
+  private void doLD_A_mDE(final int ctx) {
+    final int addr = DEasAddr(ctx);
+    setRegister(REG_A, _readmem8(ctx, addr));
+    this.setWZ(addr + 1, false);
   }
 
   private boolean doCPIR(final int ctx) {
@@ -2524,9 +2510,79 @@ public final class Z80 {
     return loopNonCompleted;
   }
 
+  private void doLDI(final int ctx) {
+    int hl = HLasAddr(ctx);
+    int de = DEasAddr(ctx);
+
+    int value = _readmem8(ctx, hl++);
+
+    _writemem8(ctx, de++, (byte) value);
+    setRegisterPair(REGPAIR_HL, hl);
+    setRegisterPair(REGPAIR_DE, de);
+
+    final int bc = (getRegisterPair(REGPAIR_BC) - 1) & 0xFFFF;
+    setRegisterPair(REGPAIR_BC, bc);
+
+    int f = this.regSet[REG_F] & FLAG_SZC;
+    f |= bc == 0 ? 0 : FLAG_PV;
+    value += this.regSet[REG_A] & 0xFF;
+    f |= value & FLAG_X;
+    f |= (value << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
+
+    this.regSet[REG_F] = (byte) f;
+
+    this.machineCycles += 2;
+  }
+
+  private boolean doOTIR(final int ctx) {
+    doOUTI(ctx);
+    boolean loopNonCompleted = true;
+    if ((this.regSet[REG_F] & FLAG_Z) == 0) {
+      this.regPC = (this.regPC - 2) & 0xFFFF;
+      this.machineCycles += 5;
+    } else {
+      loopNonCompleted = false;
+    }
+    return loopNonCompleted;
+  }
+
+  private void doCPI(final int ctx) {
+    int hl = HLasAddr(ctx);
+    int n = _readmem8(ctx, hl++);
+
+    final int a = getRegister(REG_A);
+    final int z = a - n;
+    setRegisterPair(REGPAIR_HL, hl);
+    final int bc = getRegisterPair(REGPAIR_BC) - 1;
+    setRegisterPair(REGPAIR_BC, bc);
+    this.setWZ(this.getWZ(false) + 1, false);
+
+    int f = (a ^ n ^ z) & FLAG_H;
+    n = z - (f >>> FLAG_H_SHIFT);
+    f |= (n << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
+    f |= n & FLAG_X;
+    f |= FTABLE_SZYX[z & 0xff] & FLAG_SZ;
+    f |= bc != 0 ? FLAG_PV : 0;
+    this.regSet[REG_F] = (byte) (f | FLAG_N | (this.regSet[REG_F] & FLAG_C));
+
+    this.machineCycles += 5;
+  }
+
+  private boolean doOTDR(final int ctx) {
+    doOUTD(ctx);
+    boolean loopNonCompleted = true;
+    if ((this.regSet[REG_F] & FLAG_Z) == 0) {
+      this.regPC = (this.regPC - 2) & 0xFFFF;
+      this.machineCycles += 5;
+    } else {
+      loopNonCompleted = false;
+    }
+    return loopNonCompleted;
+  }
+
   private void doOUTI(final int ctx) {
     final int bc = getRegisterPair(REGPAIR_BC);
-    int hl = getRegisterPair(REGPAIR_HL);
+    int hl = HLasAddr(ctx);
     int x = _readmem8(ctx, hl++);
     _writeport(ctx, bc, x);
     final int b = ((bc >>> 8) - 1) & 0xFF;
@@ -2543,11 +2599,12 @@ public final class Z80 {
     this.machineCycles++;
   }
 
-  private boolean doOTIR(final int ctx) {
-    doOUTI(ctx);
+  private boolean doLDDR(final int ctx) {
+    doLDD(ctx);
     boolean loopNonCompleted = true;
-    if ((this.regSet[REG_F] & FLAG_Z) == 0) {
+    if (this.getRegisterPair(REGPAIR_BC) != 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
+      this.setWZ(this.regPC + 1, false);
       this.machineCycles += 5;
     } else {
       loopNonCompleted = false;
@@ -2557,7 +2614,7 @@ public final class Z80 {
 
   private void doOUTD(final int ctx) {
     final int bc = getRegisterPair(REGPAIR_BC);
-    int hl = getRegisterPair(REGPAIR_HL);
+    int hl = HLasAddr(ctx);
     int x = _readmem8(ctx, hl--);
     _writeport(ctx, bc, x);
     final int b = ((bc >>> 8) - 1) & 0xFF;
@@ -2572,77 +2629,6 @@ public final class Z80 {
     this.regSet[REG_F] = (byte) f;
 
     this.machineCycles++;
-  }
-
-  private boolean doOTDR(final int ctx) {
-    doOUTD(ctx);
-    boolean loopNonCompleted = true;
-    if ((this.regSet[REG_F] & FLAG_Z) == 0) {
-      this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.machineCycles += 5;
-    } else {
-      loopNonCompleted = false;
-    }
-    return loopNonCompleted;
-  }
-
-  private void doLDD(final int ctx) {
-    int hl = getRegisterPair(REGPAIR_HL);
-    int de = getRegisterPair(REGPAIR_DE);
-
-    int x = _readmem8(ctx, hl--);
-
-    _writemem8(ctx, de--, (byte) x);
-    setRegisterPair(REGPAIR_HL, hl);
-    setRegisterPair(REGPAIR_DE, de);
-
-    final int bc = (getRegisterPair(REGPAIR_BC) - 1) & 0xFFFF;
-    setRegisterPair(REGPAIR_BC, bc);
-
-    int f = this.regSet[REG_F] & FLAG_SZC;
-    f |= bc != 0 ? FLAG_PV : 0;
-    x += this.regSet[REG_A] & 0xFF;
-    f |= x & FLAG_X;
-    f |= (x << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
-
-    this.regSet[REG_F] = (byte) f;
-
-    this.machineCycles += 2;
-  }
-
-  private boolean doLDDR(final int ctx) {
-    doLDD(ctx);
-    boolean loopNonCompleted = true;
-    if (this.getRegisterPair(REGPAIR_BC) != 0) {
-      this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.setWZ(this.regPC + 1, false);
-      this.machineCycles += 5;
-    } else {
-      loopNonCompleted = false;
-    }
-    return loopNonCompleted;
-  }
-
-  private void doCPD(final int ctx) {
-    int hl = getRegisterPair(REGPAIR_HL);
-    int n = _readmem8(ctx, hl--);
-    final int a = getRegister(REG_A);
-    final int z = a - n;
-    setRegisterPair(REGPAIR_HL, hl);
-    final int bc = getRegisterPair(REGPAIR_BC) - 1;
-    setRegisterPair(REGPAIR_BC, bc);
-
-    this.setWZ(this.getWZ(false) - 1, false);
-
-    int f = (a ^ n ^ z) & FLAG_H;
-    n = z - (f >>> FLAG_H_SHIFT);
-    f |= (n << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
-    f |= n & FLAG_X;
-    f |= FTABLE_SZYX[z & 0xff] & FLAG_SZ;
-    f |= bc != 0 ? FLAG_PV : 0;
-    this.regSet[REG_F] = (byte) (f | FLAG_N | (this.regSet[REG_F] & FLAG_C));
-
-    this.machineCycles += 5;
   }
 
   private boolean doCPDR(final int ctx) {
@@ -2732,6 +2718,52 @@ public final class Z80 {
     }
 
     return this.regSP == other.regSP;
+  }
+
+  private void doLDD(final int ctx) {
+    int hl = HLasAddr(ctx);
+    int de = DEasAddr(ctx);
+
+    int x = _readmem8(ctx, hl--);
+
+    _writemem8(ctx, de--, (byte) x);
+    setRegisterPair(REGPAIR_HL, hl);
+    setRegisterPair(REGPAIR_DE, de);
+
+    final int bc = (getRegisterPair(REGPAIR_BC) - 1) & 0xFFFF;
+    setRegisterPair(REGPAIR_BC, bc);
+
+    int f = this.regSet[REG_F] & FLAG_SZC;
+    f |= bc != 0 ? FLAG_PV : 0;
+    x += this.regSet[REG_A] & 0xFF;
+    f |= x & FLAG_X;
+    f |= (x << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
+
+    this.regSet[REG_F] = (byte) f;
+
+    this.machineCycles += 2;
+  }
+
+  private void doCPD(final int ctx) {
+    int hl = HLasAddr(ctx);
+    int n = _readmem8(ctx, hl--);
+    final int a = getRegister(REG_A);
+    final int z = a - n;
+    setRegisterPair(REGPAIR_HL, hl);
+    final int bc = getRegisterPair(REGPAIR_BC) - 1;
+    setRegisterPair(REGPAIR_BC, bc);
+
+    this.setWZ(this.getWZ(false) - 1, false);
+
+    int f = (a ^ n ^ z) & FLAG_H;
+    n = z - (f >>> FLAG_H_SHIFT);
+    f |= (n << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
+    f |= n & FLAG_X;
+    f |= FTABLE_SZYX[z & 0xff] & FLAG_SZ;
+    f |= bc != 0 ? FLAG_PV : 0;
+    this.regSet[REG_F] = (byte) (f | FLAG_N | (this.regSet[REG_F] & FLAG_C));
+
+    this.machineCycles += 5;
   }
 
 }

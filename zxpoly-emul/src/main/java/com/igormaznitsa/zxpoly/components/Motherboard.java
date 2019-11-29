@@ -98,7 +98,7 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.spec256GfxCores = new Z80[SPEC256_GFX_CORES];
     for (int i = 0; i < SPEC256_GFX_CORES; i++) {
-      this.spec256GfxCores[i] = new Z80(this.modules[0].getCpu());
+      this.spec256GfxCores[i] = new Z80(this.modules[0].getCpu(), true);
     }
   }
 
@@ -338,18 +338,10 @@ public final class Motherboard implements ZxPolyConstants {
         final boolean spec256 = boardMode == BoardMode.SPEC256;
         if (spec256) {
           for (int i = 0; i < SPEC256_GFX_CORES; i++) {
-            this.spec256GfxCores[i].fillBySytateAs256Gpu(mainCpu);
+            masterModule.stepWithGfxCpu(i + 1, this.spec256GfxCores[i].fillBySytateAs256Gpu(mainCpu), signalInt);
           }
-          masterModule.saveInternalCopyForGfx();
         }
-
         masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
-
-        if (spec256) {
-          for (int i = 0; i < SPEC256_GFX_CORES; i++) {
-            masterModule.stepWithGfxCpu(i + 1, this.spec256GfxCores[i], signalInt);
-          }
-        }
       }
 
       final long spentMachineCycles = modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;

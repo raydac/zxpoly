@@ -18,6 +18,7 @@
 package com.igormaznitsa.z80;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 public final class TestBus implements Z80CPUBus {
 
@@ -45,6 +46,12 @@ public final class TestBus implements Z80CPUBus {
 
   public boolean isRETI() {
     return this.reti;
+  }
+
+  @Override
+  public int getValueForGpu(Z80 cpu, int ctx, int reg) {
+    fail("Unexpected call");
+    return 0;
   }
 
   @Override
