@@ -363,10 +363,16 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     }
 
     long result = 0;
-    int i = 8;
-    while (i > 0) {
-      result |= (this.gfxRam.get(offset + i) & 0xFFL) << (8 * i);
-      i--;
+    for (int i = 0; i < 8; i++) {
+      result <<= 8;
+      int b = 0;
+      final int msk = 1 << (7 - i);
+      for (int j = 0; j < 8; j++) {
+        if ((this.gfxRam.get(offset + j) & msk) != 0) {
+          b |= (1 << j);
+        }
+      }
+      result = result | b;
     }
     return result;
   }
@@ -521,10 +527,10 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     }
   }
 
-  public void writeGfxRamPage(final int page, final byte[] data) {
+  public void writeGfxRamPage(final int page, final byte[] gfxPageData) {
     int startOffset = page * GFX_PAGE_SIZE;
-    for (int i = 0; i < data.length; i++) {
-      this.gfxRam.set(startOffset++, data[i] & 0xFF);
+    for (int i = 0; i < gfxPageData.length; i++) {
+      this.gfxRam.set(startOffset++, gfxPageData[i] & 0xFF);
     }
   }
 

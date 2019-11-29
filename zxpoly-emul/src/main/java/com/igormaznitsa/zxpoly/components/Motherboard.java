@@ -336,7 +336,7 @@ public final class Motherboard implements ZxPolyConstants {
         if (spec256) {
           final Z80 mainCpu = modules[0].getCpu();
           for (int i = 0; i < SPEC256_GFX_CORES; i++) {
-            spec256GfxCores[i].fillByState(mainCpu);
+            spec256GfxCores[i].fillByState(mainCpu, Z80.FLAG_C);
           }
           master.saveInternalCopyForGfx();
         }

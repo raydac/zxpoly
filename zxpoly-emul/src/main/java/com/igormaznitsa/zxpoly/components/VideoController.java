@@ -227,26 +227,13 @@ public final class VideoController extends JComponent implements ZxPolyConstants
             offset = extractYFromAddress(i) << 10;
           }
 
-          long mask = 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000L;
-
           long pixelData = sourceModule.readGfxVideo(i);
 
           int x = 8;
           while (x-- > 0) {
-            final long masked = pixelData & mask;
-            mask >>>= 1;
-
-            int paletteIndex = (masked & 0xFF00000000000000L) == 0 ? 0 : 0x80;
-            paletteIndex |= (masked & 0x00FF000000000000L) == 0 ? 0 : 0x40;
-            paletteIndex |= (masked & 0x0000FF0000000000L) == 0 ? 0 : 0x20;
-            paletteIndex |= (masked & 0x000000FF00000000L) == 0 ? 0 : 0x10;
-            paletteIndex |= (masked & 0x00000000FF000000L) == 0 ? 0 : 0x08;
-            paletteIndex |= (masked & 0x0000000000FF0000L) == 0 ? 0 : 0x04;
-            paletteIndex |= (masked & 0x000000000000FF00L) == 0 ? 0 : 0x02;
-            paletteIndex |= (masked & 0x00000000000000FFL) == 0 ? 0 : 0x01;
-
+            int paletteIndex = (int) ((pixelData >>> 56) & 0xFF);
             final int color = SPEC256PAL[paletteIndex];
-            pixelData <<= 1;
+            pixelData <<= 8;
 
             pixelRgbBuffer[offset] = color;
             pixelRgbBuffer[offset + SCREEN_WIDTH] = color;

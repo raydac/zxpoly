@@ -38,7 +38,7 @@ public final class Utils {
         final int green = bitInput.readByte();
         final int blue = bitInput.readByte();
 
-        result[i] = 0xFF000000 | (red << 24) | (green << 16) | blue;
+        result[i] = 0xFF000000 | (red << 16) | (green << 8) | blue;
       }
     } catch (IOException ex) {
       throw new RuntimeException(ex);

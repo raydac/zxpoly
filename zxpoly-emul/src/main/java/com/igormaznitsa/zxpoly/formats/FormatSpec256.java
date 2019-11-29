@@ -38,6 +38,38 @@ public class FormatSpec256 extends Snapshot {
     throw new IOException("Save is unsupported");
   }
 
+  private static byte[] gfx2gfxInternalBank(final byte[] bankData) {
+    final byte[] result = new byte[bankData.length];
+
+    for (int offst = 0; offst < bankData.length; offst += 8) {
+      for (int ctx = 0; ctx < 8; ctx++) {
+        final int bitMask = 1 << ctx;
+        int acc = 0;
+        for (int i = 0; i < 8; i++) {
+          if ((bankData[offst + i] & bitMask) != 0) {
+            acc |= 1 << i;
+          }
+        }
+        result[offst + ctx] = (byte) acc;
+      }
+    }
+
+    return result;
+  }
+
+//  private static byte [] makeGfxPageData(final byte [] bankData, final int start) {
+//    final byte[] result = new byte[0x4000 * 8];
+//    int offst = 0;
+//    for(int i=0;i<0x4000;i++){
+//      final byte d = bankData[start+i];
+//      for(int j=0;j<8;j++){
+//        result[offst++] = d;
+//      }
+//    }
+//
+//    return result;
+//  }
+
   @Override
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
     final Spec256Arch archive = new Spec256Arch(array);
@@ -77,7 +109,8 @@ public class FormatSpec256 extends Snapshot {
 
     final int offsetpage2 = 0x8000;
     final int offsetpage5 = 0x14000;
-    final int offsetpageTop = sna128 ? (parser.getEXTENDEDDATA().getPORT7FFD() & 7) * 0x4000 : 0x0000;
+    final int topPageIndex = sna128 ? parser.getEXTENDEDDATA().getPORT7FFD() & 7 : 0;
+    final int offsetpageTop = topPageIndex * 0x4000;
 
     int[] extraBankPages = new int[0];
     if (sna128) {
@@ -122,33 +155,17 @@ public class FormatSpec256 extends Snapshot {
     }
 
     archive.getGfxRamPages().forEach(x -> {
-      module.writeGfxRamPage(x.getPageIndex(), testGfxConvert(x.getData()));
+      module.writeGfxRamPage(x.getPageIndex(), gfx2gfxInternalBank(x.getData()));
     });
 
     module.makeCopyOfRomToGfxRom();
     archive.getGfxRoms().forEach(x -> {
-      module.writeGfxRomPage(x.getPageIndex(), x.getData());
+      module.writeGfxRomPage(x.getPageIndex(), gfx2gfxInternalBank(x.getData()));
     });
 
     board.set3D00(0b1_00_000_0_1, true);
     vc.setBorderColor(parser.getBORDERCOLOR() & 7);
     vc.setVideoMode(ZxPolyConstants.VIDEOMODE_SPEC256);
-  }
-
-  private static byte[] testGfxConvert(final byte[] data) {
-    final byte[] result = new byte[data.length];
-
-    for (int i = 0; i < data.length; i += 8) {
-      for (int v = 0; v < 8; v++) {
-        int b = 0;
-        for (int w = 0; w < 8; w++) {
-          b |= (data[i + w] & (1 << v)) == 0 ? 0 : 1 << w;
-        }
-        result[i + v] = (byte) b;
-      }
-    }
-
-    return result;
   }
 
   @Override

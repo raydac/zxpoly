@@ -205,7 +205,7 @@ public final class Z80 {
    * @param src source CPU, must not be null
    * @return this instance
    */
-  public Z80 fillByState(final Z80 src) {
+  public Z80 fillByState(final Z80 src, final int preventFlags) {
     this.prefix = src.prefix;
     this.resetCycle = src.resetCycle;
     this.iff1 = src.iff1;
@@ -221,8 +221,17 @@ public final class Z80 {
     this.regZ = src.regZ;
     this.regWalt = src.regWalt;
     this.regZalt = src.regZalt;
-    System.arraycopy(src.regSet, 0, this.regSet, 0, src.regSet.length);
-    System.arraycopy(src.altRegSet, 0, this.altRegSet, 0, src.altRegSet.length);
+    if (preventFlags != 0) {
+      final int flagF = this.regSet[REG_F];
+      final int altFlagF = this.altRegSet[REG_F];
+      System.arraycopy(src.regSet, 0, this.regSet, 0, src.regSet.length);
+      System.arraycopy(src.altRegSet, 0, this.altRegSet, 0, src.altRegSet.length);
+      this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & ~preventFlags) | (flagF & preventFlags));
+      this.altRegSet[REG_F] = (byte) ((this.altRegSet[REG_F] & ~preventFlags) | (altFlagF & preventFlags));
+    } else {
+      System.arraycopy(src.regSet, 0, this.regSet, 0, src.regSet.length);
+      System.arraycopy(src.altRegSet, 0, this.altRegSet, 0, src.altRegSet.length);
+    }
     this.lastM1InstructionByte = src.lastM1InstructionByte;
     this.lastInstructionByte = src.lastInstructionByte;
     this.machineCycles = src.machineCycles;
