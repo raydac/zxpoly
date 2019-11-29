@@ -57,19 +57,6 @@ public class FormatSpec256 extends Snapshot {
     return result;
   }
 
-//  private static byte [] makeGfxPageData(final byte [] bankData, final int start) {
-//    final byte[] result = new byte[0x4000 * 8];
-//    int offst = 0;
-//    for(int i=0;i<0x4000;i++){
-//      final byte d = bankData[start+i];
-//      for(int j=0;j<8;j++){
-//        result[offst++] = d;
-//      }
-//    }
-//
-//    return result;
-//  }
-
   @Override
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
     final Spec256Arch archive = new Spec256Arch(array);
@@ -166,6 +153,8 @@ public class FormatSpec256 extends Snapshot {
     board.set3D00(0b1_00_000_0_1, true);
     vc.setBorderColor(parser.getBORDERCOLOR() & 7);
     vc.setVideoMode(ZxPolyConstants.VIDEOMODE_SPEC256);
+
+    board.syncSpec256GpuStates();
   }
 
   @Override

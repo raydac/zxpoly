@@ -199,13 +199,7 @@ public final class Z80 {
     return (cmndByte >>> 3) & 1;
   }
 
-  /**
-   * Fill the CPu by internal state of some another CPU.
-   *
-   * @param src source CPU, must not be null
-   * @return this instance
-   */
-  public Z80 fillByState(final Z80 src, final int preventFlags) {
+  public Z80 fillByState(final Z80 src) {
     this.prefix = src.prefix;
     this.resetCycle = src.resetCycle;
     this.iff1 = src.iff1;
@@ -221,20 +215,35 @@ public final class Z80 {
     this.regZ = src.regZ;
     this.regWalt = src.regWalt;
     this.regZalt = src.regZalt;
-    if (preventFlags != 0) {
-      final int flagF = this.regSet[REG_F];
-      final int altFlagF = this.altRegSet[REG_F];
-      System.arraycopy(src.regSet, 0, this.regSet, 0, src.regSet.length);
-      System.arraycopy(src.altRegSet, 0, this.altRegSet, 0, src.altRegSet.length);
-      this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & ~preventFlags) | (flagF & preventFlags));
-      this.altRegSet[REG_F] = (byte) ((this.altRegSet[REG_F] & ~preventFlags) | (altFlagF & preventFlags));
-    } else {
-      System.arraycopy(src.regSet, 0, this.regSet, 0, src.regSet.length);
-      System.arraycopy(src.altRegSet, 0, this.altRegSet, 0, src.altRegSet.length);
-    }
+    System.arraycopy(src.regSet, 0, this.regSet, 0, src.regSet.length);
+    System.arraycopy(src.altRegSet, 0, this.altRegSet, 0, src.altRegSet.length);
     this.lastM1InstructionByte = src.lastM1InstructionByte;
     this.lastInstructionByte = src.lastInstructionByte;
     this.machineCycles = src.machineCycles;
+    this.cbDisplacementByte = src.cbDisplacementByte;
+    this.outSignals = src.outSignals;
+    this.prevINSignals = src.prevINSignals;
+    this.interruptAllowedForStep = src.interruptAllowedForStep;
+    this.detectedINT = src.detectedINT;
+    this.detectedNMI = src.detectedNMI;
+    this.insideBlockInstruction = src.insideBlockInstruction;
+    this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
+    return this;
+  }
+
+  public Z80 fillBySytateAs256Gpu(final Z80 src) {
+    this.regPC = src.regPC;
+    this.regSP = src.regSP;
+    this.regI = src.regI;
+    this.regR = src.regR;
+    this.iff1 = src.iff1;
+    this.iff2 = src.iff2;
+    this.prefix = src.prefix;
+    this.resetCycle = src.resetCycle;
+    this.im = src.im;
+
+    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
+
     this.cbDisplacementByte = src.cbDisplacementByte;
     this.outSignals = src.outSignals;
     this.prevINSignals = src.prevINSignals;

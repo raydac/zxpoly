@@ -18,7 +18,7 @@
 package com.igormaznitsa.z80;
 
 public interface Z80CPUBus {
-  byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean instructionByte);
+  byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix);
 
   void writeMemory(Z80 cpu, int ctx, int address, byte data);
 

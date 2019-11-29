@@ -331,21 +331,23 @@ public final class Motherboard implements ZxPolyConstants {
           }
         }
       } else {
-        final ZxPolyModule master = modules[0];
+        // ZX128 and SPEC256 modes
+        final ZxPolyModule masterModule = modules[0];
+        final Z80 mainCpu = masterModule.getCpu();
+
         final boolean spec256 = boardMode == BoardMode.SPEC256;
         if (spec256) {
-          final Z80 mainCpu = modules[0].getCpu();
           for (int i = 0; i < SPEC256_GFX_CORES; i++) {
-            spec256GfxCores[i].fillByState(mainCpu, Z80.FLAG_C);
+            this.spec256GfxCores[i].fillBySytateAs256Gpu(mainCpu);
           }
-          master.saveInternalCopyForGfx();
+          masterModule.saveInternalCopyForGfx();
         }
 
-        master.step(signalReset, signalInt, resetStatisticsAtModules);
+        masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
 
         if (spec256) {
           for (int i = 0; i < SPEC256_GFX_CORES; i++) {
-            master.stepWithGfxCpu(i + 1, this.spec256GfxCores[i], signalInt);
+            masterModule.stepWithGfxCpu(i + 1, this.spec256GfxCores[i], signalInt);
           }
         }
       }
@@ -389,6 +391,13 @@ public final class Motherboard implements ZxPolyConstants {
       }
     }
     return result;
+  }
+
+  public void syncSpec256GpuStates() {
+    final Z80 mainCpu = this.modules[0].getCpu();
+    for (final Z80 spec256GfxCore : this.spec256GfxCores) {
+      spec256GfxCore.fillByState(mainCpu);
+    }
   }
 
   private boolean haveModulesSamePositionAndMode() {

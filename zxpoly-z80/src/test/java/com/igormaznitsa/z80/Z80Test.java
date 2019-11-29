@@ -30,7 +30,7 @@ public class Z80Test extends AbstractZ80Test {
   public void testReset_Nop() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
       @Override
-      public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean instructionByte) {
+      public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
         return 0;
       }
 
@@ -5512,7 +5512,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = new Z80(new Z80CPUBus() {
 
       @Override
-      public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean instr) {
+      public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
         return memory[address];
       }
 
@@ -5575,7 +5575,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = new Z80(new Z80CPUBus() {
 
       @Override
-      public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean instruction) {
+      public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
         return memory[address];
       }
 
@@ -5649,7 +5649,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = new Z80(new Z80CPUBus() {
 
       @Override
-      public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean intruction) {
+      public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
         return memory[address];
       }
 
@@ -5738,7 +5738,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = new Z80(new Z80CPUBus() {
 
       @Override
-      public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean instructionByte) {
+      public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
         return memory[address];
       }
 
