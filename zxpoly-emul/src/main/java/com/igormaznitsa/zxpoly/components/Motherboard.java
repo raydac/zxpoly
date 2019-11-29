@@ -334,7 +334,6 @@ public final class Motherboard implements ZxPolyConstants {
         // ZX128 and SPEC256 modes
         final ZxPolyModule masterModule = modules[0];
         final Z80 mainCpu = masterModule.getCpu();
-        masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
 
         final boolean spec256 = boardMode == BoardMode.SPEC256;
         if (spec256) {
@@ -342,6 +341,8 @@ public final class Motherboard implements ZxPolyConstants {
             masterModule.stepWithGfxCpu(i + 1, this.spec256GfxCores[i].fillByGfxState(mainCpu), signalInt);
           }
         }
+
+        masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
       }
 
       final long spentMachineCycles = modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
