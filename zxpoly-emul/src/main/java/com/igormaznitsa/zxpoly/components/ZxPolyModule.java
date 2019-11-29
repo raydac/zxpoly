@@ -393,7 +393,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public int getValueForGpu(Z80 cpu, int ctx, int reg) {
+  public int getValueForGpu(final Z80 cpu, final int ctx, final int reg) {
     switch (reg) {
       case Z80.REGPAIR_BC:
         return this.cpu.getRegisterPair(Z80.REGPAIR_BC, false);

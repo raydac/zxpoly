@@ -337,6 +337,7 @@ public final class Motherboard implements ZxPolyConstants {
 
         final boolean spec256 = boardMode == BoardMode.SPEC256;
         if (spec256) {
+          masterModule.saveInternalCopyForGfx();
           for (int i = 0; i < SPEC256_GFX_CORES; i++) {
             masterModule.stepWithGfxCpu(i + 1, this.spec256GfxCores[i].fillByGfxState(mainCpu), signalInt);
           }
