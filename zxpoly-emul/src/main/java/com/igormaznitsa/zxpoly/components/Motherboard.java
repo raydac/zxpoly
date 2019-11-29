@@ -492,7 +492,7 @@ public final class Motherboard implements ZxPolyConstants {
 
     if (this.getBoardMode() == BoardMode.ZXPOLY && (module.getModuleIndex() == 0 && mappedCPU > 0)) {
       final ZxPolyModule destmodule = modules[mappedCPU];
-      result = this.ram.get(destmodule.ramOffset2HeapAddress(port));
+      result = this.ram.get(destmodule.ramOffset2HeapAddress(destmodule.read7FFD(), port));
       destmodule.prepareLocalInt();
     } else {
       IoDevice firstDetectedActiveDevice = null;
@@ -533,7 +533,7 @@ public final class Motherboard implements ZxPolyConstants {
         } else {
           if (mappedCpu > 0) {
             final ZxPolyModule destmodule = this.modules[mappedCpu];
-            this.ram.set(destmodule.ramOffset2HeapAddress(port), value);
+            this.ram.set(destmodule.ramOffset2HeapAddress(destmodule.read7FFD(), port), value);
             destmodule.prepareLocalNmi();
           } else {
             for (final IoDevice d : this.ioDevices) {

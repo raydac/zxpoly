@@ -407,7 +407,6 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     if (ctx == 0) {
       final int value7FFD = this.port7FFD.get();
-
       final boolean activeRom128 = (value7FFD & PORTw_ZX128_ROM) == 0;
 
       if (m1) {
@@ -451,23 +450,22 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         result = memoryByteForAddress(value7FFD, this.trdosRomActive, address);
       }
     } else {
-      result = readGfxMemory(ctx, this.cpyPort7FFD, this.cpyTrDosRomActive, address);
+      final int value7FFD = this.cpyPort7FFD;
+      final boolean activeRom128 = (value7FFD & PORTw_ZX128_ROM) == 0;
 
-//      if (cmdOrPrefix) {
-//        if (address < 0x4000) {
-//          if (this.cpyTrDosRomActive) {
-//            result = (byte) this.romData.get().readAdress(address + 0x8000);
-//          } else {
-//            final boolean activeRom128 = (this.cpyPort7FFD & PORTw_ZX128_ROM) == 0;
-//            result = (byte) this.romData.get().readAdress(address + (activeRom128 ? 0x4000 : 0));
-//          }
-//        } else {
-//          final int ramAddress = ramOffset2HeapAddress(address - 0x4000);
-//          result = (byte) this.board.readRam(this, ramAddress);
-//        }
-//      } else {
-//        result = readGfxMemory(ctx, this.cpyPort7FFD, this.cpyTrDosRomActive, address);
-//      }
+      if (cmdOrPrefix) {
+        if (address < 0x4000) {
+          if (this.cpyTrDosRomActive) {
+            result = (byte) this.romData.get().readAdress(address + 0x8000);
+          } else {
+            result = (byte) this.romData.get().readAdress(address + (activeRom128 ? 0x4000 : 0));
+          }
+        } else {
+          result = (byte) this.board.readRam(this, ramOffset2HeapAddress(value7FFD, address));
+        }
+      } else {
+        result = readGfxMemory(ctx, value7FFD, this.cpyTrDosRomActive, address);
+      }
     }
     return result;
   }
@@ -552,7 +550,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       final int valueAt7FFD,
       final boolean trDosActive,
       final int address) {
-    final int ramAddress = ramOffset2HeapAddress(address);
+    final int ramAddress = ramOffset2HeapAddress(valueAt7FFD, address);
 
     final byte result;
     if (address < 0x4000) {
@@ -573,7 +571,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     return result;
   }
 
-  public int ramOffset2HeapAddress(final int address) {
+  public int ramOffset2HeapAddress(final int value7FFD, final int address) {
     final int page = (address >>> 14) & 3;
     final int offset = address & 0x3FFF;
     final int result;
@@ -595,7 +593,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       break;
       case 3: {
         //CPU3, top page
-        result = 0x4000 * (this.port7FFD.get() & 0x7);
+        result = 0x4000 * (value7FFD & 0x7);
       }
       break;
       default: {
@@ -646,11 +644,12 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   public void writeMemory(final Z80 cpu, final int ctx, final int address, final byte data) {
     final int val = data & 0xFF;
     if (ctx == 0) {
+      final int value7FFD = this.port7FFD.get();
       if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
         final int reg0 = this.zxPolyRegsWritten.get(0);
 
         if ((reg0 & REG0w_MEMORY_WRITING_DISABLED) == 0) {
-          final int ramOffsetInHeap = ramOffset2HeapAddress(address);
+          final int ramOffsetInHeap = ramOffset2HeapAddress(value7FFD, address);
 
           if (address < 0x4000) {
             if (this.board.is3D00NotLocked() && (this.port7FFD.get() & PORTw_ZX128_ROMRAM) != 0) {
@@ -662,7 +661,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
           }
         }
       } else {
-        final int ramOffsetInHeap = ramOffset2HeapAddress(address);
+        final int ramOffsetInHeap = ramOffset2HeapAddress(value7FFD, address);
         if (address >= 0x4000) {
           // RAM AREA
           this.board.writeRam(this, ramOffsetInHeap, val);
