@@ -232,13 +232,21 @@ public final class Z80 {
   }
 
   public Z80 fillBySytateAs256Gpu(final Z80 src) {
+    this.regPC = src.regPC;
+    this.regSP = src.regSP;
+    this.regI = src.regI;
+    this.regR = src.regR;
     this.iff1 = src.iff1;
     this.iff2 = src.iff2;
     this.im = src.im;
-    this.regI = src.regI;
-    this.regPC = src.regPC;
-    this.regR = src.regR;
-    this.regSP = src.regSP;
+    this.prefix = src.prefix;
+    this.cbDisplacementByte = src.cbDisplacementByte;
+
+    this.detectedINT = src.detectedINT;
+    this.detectedNMI = src.detectedNMI;
+    this.interruptAllowedForStep = src.interruptAllowedForStep;
+    this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
+    this.insideBlockInstruction = src.insideBlockInstruction;
 
     this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
 
