@@ -323,9 +323,10 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     return isHaltDetected;
   }
 
-  public void stepWithGfxCpu(final int ctx, final Z80 gfxCpu, final boolean commonInt) {
-    final int sigWait = this.gfxWaitSignal ? Z80.SIGNAL_IN_nWAIT : 0;
-    final int sigReset = 0;
+  public void stepWithGfxCpu(final int ctx, final Z80 gfxCpu, final boolean signalReset, final boolean commonInt) {
+    this.localInt = false;
+    int sigReset = signalReset ? Z80.SIGNAL_IN_nRESET : 0;
+    int sigWait = this.gfxWaitSignal ? Z80.SIGNAL_IN_nWAIT : 0;
     gfxCpu.step(ctx,
         Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.gfxIntCounter > 0 ? Z80.SIGNAL_IN_nINT : 0) ^ sigWait ^ (this.gfxNmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
   }
@@ -390,24 +391,6 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   @Override
   public byte readAddress(final int address) {
     return memoryByteForAddress(this.port7FFD.get(), this.trdosRomActive, address);
-  }
-
-  @Override
-  public int getValueForGpu(final Z80 cpu, final int ctx, final int reg) {
-    switch (reg) {
-      case Z80.REGPAIR_BC:
-        return this.cpu.getRegisterPair(Z80.REGPAIR_BC, false);
-      case Z80.REGPAIR_DE:
-        return this.cpu.getRegisterPair(Z80.REGPAIR_DE, false);
-      case Z80.REGPAIR_HL:
-        return this.cpu.getRegisterPair(Z80.REGPAIR_HL, false);
-      case Z80.REG_IX:
-        return this.cpu.getRegister(Z80.REG_IX, false);
-      case Z80.REG_IY:
-        return this.cpu.getRegister(Z80.REG_IY, false);
-      default:
-        throw new Error("Unexpected register or register pair in request:" + reg);
-    }
   }
 
   @Override

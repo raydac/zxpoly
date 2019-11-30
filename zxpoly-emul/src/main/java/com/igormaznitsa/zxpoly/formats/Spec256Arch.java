@@ -268,6 +268,10 @@ public class Spec256Arch {
       this.height = height;
     }
 
+    public int getIndex() {
+      return this.index;
+    }
+
     public byte[] getData() {
       return this.data;
     }
@@ -277,7 +281,7 @@ public class Spec256Arch {
     }
 
     public int getHeight() {
-      return this.width;
+      return this.height;
     }
   }
 

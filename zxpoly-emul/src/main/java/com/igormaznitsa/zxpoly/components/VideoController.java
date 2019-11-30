@@ -17,6 +17,7 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import com.igormaznitsa.zxpoly.formats.Spec256Arch;
 import com.igormaznitsa.zxpoly.utils.Utils;
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -109,6 +110,9 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
   private final byte[] lastRenderedZxData = new byte[0x1B00];
 
+  private static volatile boolean gfxBackOverFF = false;
+  private static volatile int[] gfxPrerenderedBack = null;
+
   public VideoController(final Motherboard board) {
     super();
 
@@ -121,92 +125,26 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     this.addMouseWheelListener(this);
   }
 
-  public static int rgbColorToIndex(final int rgbColor) {
-    switch (rgbColor | 0xFF000000) {
-      case 0xFF000000:
-        return 0;
-      case 0xFF0000BE:
-        return 1;
-      case 0xFFBE0000:
-        return 2;
-      case 0xFFBE00BE:
-        return 3;
-      case 0xFF00BE00:
-        return 4;
-      case 0xFF00BEBE:
-        return 5;
-      case 0xFFBEBE00:
-        return 6;
-      case 0xFFBEBEBE:
-        return 7;
-      case 0xFF0000FF:
-        return 9;
-      case 0xFFFF0000:
-        return 10;
-      case 0xFFFF00FF:
-        return 11;
-      case 0xFF00FF00:
-        return 12;
-      case 0xFF00FFFF:
-        return 13;
-      case 0xFFFFFF00:
-        return 14;
-      case 0xFFFFFFFF:
-        return 15;
-      default:
-        return -1;
-    }
-  }
-
-  public static int extractYFromAddress(final int address) {
-    return ((address & 0x1800) >> 5) | ((address & 0x700) >> 8) | ((address & 0xE0) >> 2);
-  }
-
-  public static int calcAttributeAddressZxMode(final int screenOffset) {
-    final int line = ((screenOffset >>> 5) & 0x07) | ((screenOffset >>> 8) & 0x18);
-    final int column = screenOffset & 0x1F;
-    final int off = ((line >>> 3) << 8) | (((line & 0x07) << 5) | column);
-    return 0x1800 + off;
-  }
-
-  private static int extractInkColor(final int attribute, final boolean flashActive) {
-    final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
-    final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
-    final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
-    final boolean flash = (attribute & 0x80) != 0;
-
-    final int result;
-
-    if (flash) {
-      if (flashActive) {
-        result = paperColor;
-      } else {
-        result = inkColor;
-      }
+  public static void setGfxBack(final Spec256Arch.Spec256Bkg bkg) {
+    if (bkg == null) {
+      gfxPrerenderedBack = null;
     } else {
-      result = inkColor;
-    }
-    return result;
-  }
-
-  private static int extractPaperColor(final int attribute, final boolean flashActive) {
-    final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
-    final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
-    final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
-    final boolean flash = (attribute & 0x80) != 0;
-
-    final int result;
-
-    if (flash) {
-      if (flashActive) {
-        result = inkColor;
-      } else {
-        result = paperColor;
+      final int yoffset = (bkg.getHeight() - 192) / 2;
+      final int xoffset = (bkg.getWidth() - 256) / 2;
+      final int[] prerendered = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
+      final byte[] imgData = bkg.getData();
+      for (int y = 0; y < 192; y++) {
+        for (int x = 0; x < 256; x++) {
+          final int color = SPEC256PAL[imgData[(y + yoffset) * bkg.getWidth() + x + xoffset] & 0xFF];
+          int zxoffset = y * 512 * 2 + x * 2;
+          prerendered[zxoffset] = color;
+          prerendered[zxoffset++ + SCREEN_WIDTH] = color;
+          prerendered[zxoffset] = color;
+          prerendered[zxoffset + SCREEN_WIDTH] = color;
+        }
       }
-    } else {
-      result = paperColor;
+      gfxPrerenderedBack = prerendered;
     }
-    return result;
   }
 
   private static void fillDataBufferForVideoMode(
@@ -219,25 +157,51 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   ) {
     switch (videoMode) {
       case VIDEOMODE_SPEC256: {
+        final int[] prerendededGfxBack = gfxPrerenderedBack;
+        final boolean bkOverFF = gfxBackOverFF;
+
+        if (prerendededGfxBack != null) {
+          System.arraycopy(prerendededGfxBack, 0, pixelRgbBuffer, 0, prerendededGfxBack.length);
+        }
+
         final ZxPolyModule sourceModule = modules[0];
         int offset = 0;
+        int coordY = 0;
         for (int i = 0; i < 0x1800; i++) {
           if ((i & 0x1F) == 0) {
             // the first byte in the line
-            offset = extractYFromAddress(i) << 10;
+            coordY = extractYFromAddress(i);
+            offset = coordY << 10;
           }
 
           long pixelData = sourceModule.readGfxVideo(i);
 
           int x = 8;
           while (x-- > 0) {
-            final int color = SPEC256PAL[(int) ((pixelData >>> 56) & 0xFF)];
+            final int index = (int) ((pixelData >>> 56) & 0xFF);
+            final int color;
+            boolean draw = true;
+            if (prerendededGfxBack == null) {
+              color = SPEC256PAL[index];
+            } else {
+              if ((bkOverFF && index != 0xFF) || (!bkOverFF && index != 0x00)) {
+                color = SPEC256PAL[index];
+              } else {
+                color = 0;
+                draw = false;
+              }
+            }
+
             pixelData <<= 8;
 
-            pixelRgbBuffer[offset] = color;
-            pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
-            pixelRgbBuffer[++offset] = color;
-            pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+            if (draw) {
+              pixelRgbBuffer[offset] = color;
+              pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
+              pixelRgbBuffer[++offset] = color;
+              pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+            } else {
+              offset += 2;
+            }
           }
         }
       }
@@ -477,6 +441,98 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       default:
         throw new Error("Unexpected video mode [" + videoMode + ']');
     }
+  }
+
+  public static int rgbColorToIndex(final int rgbColor) {
+    switch (rgbColor | 0xFF000000) {
+      case 0xFF000000:
+        return 0;
+      case 0xFF0000BE:
+        return 1;
+      case 0xFFBE0000:
+        return 2;
+      case 0xFFBE00BE:
+        return 3;
+      case 0xFF00BE00:
+        return 4;
+      case 0xFF00BEBE:
+        return 5;
+      case 0xFFBEBE00:
+        return 6;
+      case 0xFFBEBEBE:
+        return 7;
+      case 0xFF0000FF:
+        return 9;
+      case 0xFFFF0000:
+        return 10;
+      case 0xFFFF00FF:
+        return 11;
+      case 0xFF00FF00:
+        return 12;
+      case 0xFF00FFFF:
+        return 13;
+      case 0xFFFFFF00:
+        return 14;
+      case 0xFFFFFFFF:
+        return 15;
+      default:
+        return -1;
+    }
+  }
+
+  public static int extractYFromAddress(final int address) {
+    return ((address & 0x1800) >> 5) | ((address & 0x700) >> 8) | ((address & 0xE0) >> 2);
+  }
+
+  public static int calcAttributeAddressZxMode(final int screenOffset) {
+    final int line = ((screenOffset >>> 5) & 0x07) | ((screenOffset >>> 8) & 0x18);
+    final int column = screenOffset & 0x1F;
+    final int off = ((line >>> 3) << 8) | (((line & 0x07) << 5) | column);
+    return 0x1800 + off;
+  }
+
+  private static int extractInkColor(final int attribute, final boolean flashActive) {
+    final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
+    final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
+    final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
+    final boolean flash = (attribute & 0x80) != 0;
+
+    final int result;
+
+    if (flash) {
+      if (flashActive) {
+        result = paperColor;
+      } else {
+        result = inkColor;
+      }
+    } else {
+      result = inkColor;
+    }
+    return result;
+  }
+
+  private static int extractPaperColor(final int attribute, final boolean flashActive) {
+    final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
+    final int inkColor = ZXPALETTE[(attribute & 0x07) | bright];
+    final int paperColor = ZXPALETTE[((attribute >> 3) & 0x07) | bright];
+    final boolean flash = (attribute & 0x80) != 0;
+
+    final int result;
+
+    if (flash) {
+      if (flashActive) {
+        result = inkColor;
+      } else {
+        result = paperColor;
+      }
+    } else {
+      result = paperColor;
+    }
+    return result;
+  }
+
+  public void setGfxBackOverFF(final boolean flag) {
+    this.gfxBackOverFF = flag;
   }
 
   private static String decodeVideoModeCode(final int code) {

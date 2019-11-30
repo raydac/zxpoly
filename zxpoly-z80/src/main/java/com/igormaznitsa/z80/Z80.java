@@ -147,6 +147,21 @@ public final class Z80 {
     this.machineCycles = 3L;
   }
 
+  public static int makeGfxSyncRegisterList(final String regs) {
+    final String ALLOWED = "AFBCDEHLXY";
+    final String trimmed = regs.trim().toUpperCase(Locale.ENGLISH);
+    int result = 0;
+    for (final char c : trimmed.toCharArray()) {
+      final int index = ALLOWED.indexOf(c);
+      if (index < 0) {
+        throw new IllegalArgumentException("Unknown register: " + c + ", allowed only A,F,B,C,D,E,H,L,X,Y");
+      } else {
+        result |= 1 << index;
+      }
+    }
+    return result;
+  }
+
   private static int extractX(final int cmndByte) {
     return cmndByte >>> 6;
   }
@@ -604,27 +619,38 @@ public final class Z80 {
     this.bus = cpu.bus;
   }
 
-  public Z80 fillByGfxState(final Z80 src) {
-    this.regPC = src.regPC;
-    this.regSP = src.regSP;
-    this.regI = src.regI;
-    this.regR = src.regR;
-    this.iff1 = src.iff1;
-    this.iff2 = src.iff2;
-    this.im = src.im;
+  public Z80 alignWith(final Z80 cpu, int syncRegsFlag) {
+    this.cbDisplacementByte = cpu.cbDisplacementByte;
+    this.prefix = cpu.prefix;
+    this.iff1 = cpu.iff1;
+    this.iff2 = cpu.iff2;
+    this.im = cpu.im;
+    this.regI = cpu.regI;
+    this.regPC = cpu.regPC;
+    this.regR = cpu.regR;
+    this.regSP = cpu.regSP;
+    this.insideBlockInstruction = cpu.insideBlockInstruction;
+    this.insideBlockInstructionPrev = cpu.insideBlockInstructionPrev;
+    this.prevINSignals = cpu.prevINSignals;
+    this.interruptAllowedForStep = cpu.interruptAllowedForStep;
+    this.detectedINT = cpu.detectedINT;
+    this.detectedNMI = cpu.detectedNMI;
 
-    this.prefix = src.prefix;
-    this.cbDisplacementByte = src.cbDisplacementByte;
+    if (syncRegsFlag != 0) {
+      int pos = 0;
+      while (syncRegsFlag != 0) {
+        if ((syncRegsFlag & 1) != 0) {
+          this.setRegister(pos, cpu.getRegister(pos));
+        }
+        syncRegsFlag >>>= 1;
+        pos++;
+      }
+    }
 
-    this.detectedINT = src.detectedINT;
-    this.detectedNMI = src.detectedNMI;
-
-    this.interruptAllowedForStep = src.interruptAllowedForStep;
-    this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
-    this.insideBlockInstruction = src.insideBlockInstruction;
-
-    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
-
+//    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (cpu.regSet[REG_F] & ~FLAG_C));
+//    this.regSet[REG_H] = cpu.regSet[REG_H];
+//    this.regSet[REG_L] = cpu.regSet[REG_L];
+//    this.regSet[REG_E] = cpu.regSet[REG_E];
     return this;
   }
 
@@ -663,17 +689,17 @@ public final class Z80 {
       case 6: { // (HL)
         switch (normalizedPrefix()) {
           case 0x00: {
-            return _readmem8(ctx, HLasAddr(ctx));
+            return _readmem8(ctx, this.getRegisterPair(REGPAIR_HL));
           }
           case 0xDD: {
             this.machineCycles += 5;
-            final int address = IXasAddr(ctx) + (byte) _read_ixiy_d(ctx);
+            final int address = this.regIX + (byte) _read_ixiy_d(ctx);
             this.setWZ(address, false);
             return _readmem8(ctx, address);
           }
           case 0xFD: {
             this.machineCycles += 5;
-            final int address = IYasAddr(ctx) + (byte) _read_ixiy_d(ctx);
+            final int address = this.regIY + (byte) _read_ixiy_d(ctx);
             this.setWZ(address, false);
             return _readmem8(ctx, address);
           }
@@ -684,18 +710,6 @@ public final class Z80 {
         return getRegister(REG_A);
     }
     throw new Error("Unexpected prefix or R index [" + this.prefix + ':' + r + ']');
-  }
-
-  private int HLasAddr(final int ctx) {
-    return this.gfxCore ? this.bus.getValueForGpu(this, ctx, REGPAIR_HL) : getRegisterPair(REGPAIR_HL);
-  }
-
-  private int BCasAddr(final int ctx) {
-    return this.gfxCore ? this.bus.getValueForGpu(this, ctx, REGPAIR_BC) : getRegisterPair(REGPAIR_BC);
-  }
-
-  private int DEasAddr(final int ctx) {
-    return this.gfxCore ? this.bus.getValueForGpu(this, ctx, REGPAIR_DE) : getRegisterPair(REGPAIR_DE);
   }
 
   private void writeReg16(final int p, final int value) {
@@ -802,14 +816,6 @@ public final class Z80 {
     throw new Error("Unexpected P index or prefix [" + this.prefix + ':' + p + ']');
   }
 
-  private int IXasAddr(final int ctx) {
-    return this.gfxCore ? this.bus.getValueForGpu(this, ctx, REG_IX) : this.regIX;
-  }
-
-  private int IYasAddr(final int ctx) {
-    return this.gfxCore ? this.bus.getValueForGpu(this, ctx, REG_IY) : this.regIY;
-  }
-
   private void writeReg8(final int ctx, final int r, final int value) {
     switch (r) {
       case 0:
@@ -865,18 +871,18 @@ public final class Z80 {
       case 6: { // (HL)
         switch (normalizedPrefix()) {
           case 0x00: {
-            _writemem8(ctx, HLasAddr(ctx), (byte) value);
+            _writemem8(ctx, this.getRegisterPair(REGPAIR_HL), (byte) value);
             return;
           }
           case 0xDD: {
-            final int address = IXasAddr(ctx) + (byte) value;
+            final int address = this.regIX + (byte) value;
             _writemem8(ctx, address, (byte) readInstrOrPrefix(ctx, false));
             this.setWZ(address, false);
             this.machineCycles += 2;
             return;
           }
           case 0xFD: {
-            final int address = IYasAddr(ctx) + (byte) value;
+            final int address = this.regIY + (byte) value;
             _writemem8(ctx, address, (byte) readInstrOrPrefix(ctx, false));
             this.setWZ(address, false);
             this.machineCycles += 2;
@@ -1570,14 +1576,14 @@ public final class Z80 {
       case 6: { // (HL)
         switch (normalizedPrefix()) {
           case 0x00:
-            _writemem8(ctx, HLasAddr(ctx), (byte) value);
+            _writemem8(ctx, this.getRegisterPair(REGPAIR_HL), (byte) value);
             return;
           case 0xDD:
-            _writemem8(ctx, IXasAddr(ctx) + (byte) readInstrOrPrefix(ctx, false), (byte) value);
+            _writemem8(ctx, this.regIX + (byte) readInstrOrPrefix(ctx, false), (byte) value);
             this.machineCycles += 5;
             return;
           case 0xFD:
-            _writemem8(ctx, IYasAddr(ctx) + (byte) readInstrOrPrefix(ctx, false), (byte) value);
+            _writemem8(ctx, this.regIY + (byte) readInstrOrPrefix(ctx, false), (byte) value);
             this.machineCycles += 5;
             return;
         }
@@ -1646,13 +1652,13 @@ public final class Z80 {
         this.machineCycles += 1;
         switch (normalizedPrefix()) {
           case 0x00:
-            _writemem8(ctx, HLasAddr(ctx), (byte) value);
+            _writemem8(ctx, this.getRegisterPair(REGPAIR_HL), (byte) value);
             return;
           case 0xDD:
-            _writemem8(ctx, IXasAddr(ctx) + (byte) (this.cbDisplacementByte < 0 ? this.lastInstructionByte : this.cbDisplacementByte), (byte) value);
+            _writemem8(ctx, this.regIX + (byte) (this.cbDisplacementByte < 0 ? this.lastInstructionByte : this.cbDisplacementByte), (byte) value);
             return;
           case 0xFD:
-            _writemem8(ctx, IYasAddr(ctx) + (byte) (this.cbDisplacementByte < 0 ? this.lastInstructionByte : this.cbDisplacementByte), (byte) value);
+            _writemem8(ctx, this.regIY + (byte) (this.cbDisplacementByte < 0 ? this.lastInstructionByte : this.cbDisplacementByte), (byte) value);
             return;
         }
       }
@@ -1679,7 +1685,7 @@ public final class Z80 {
   }
 
   private void doLD_mBC_A(final int ctx) {
-    final int address = BCasAddr(ctx);
+    final int address = this.getRegisterPair(REGPAIR_BC);
     final byte a = this.regSet[REG_A];
     this.regW = a & 0xFF;
     this.regZ = (address + 1) & 0xFF;
@@ -1687,7 +1693,7 @@ public final class Z80 {
   }
 
   private void doLD_mDE_A(final int ctx) {
-    final int address = DEasAddr(ctx);
+    final int address = this.getRegisterPair(REGPAIR_DE);
     final byte a = this.regSet[REG_A];
     this.regW = a & 0xFF;
     this.regZ = (address + 1) & 0xFF;
@@ -2295,7 +2301,7 @@ public final class Z80 {
   }
 
   private void doRRD(final int ctx) {
-    final int hl = HLasAddr(ctx);
+    int hl = this.getRegisterPair(REGPAIR_HL);
     this.setWZ(hl + 1, false);
     final int A = this.regSet[REG_A] & 0xFF;
     int x = _readmem8(ctx, hl);
@@ -2310,7 +2316,7 @@ public final class Z80 {
   }
 
   private void doRLD(final int ctx) {
-    final int hl = HLasAddr(ctx);
+    int hl = this.getRegisterPair(REGPAIR_HL);
     this.setWZ(hl + 1, false);
     final int A = this.regSet[REG_A] & 0xFF;
     int x = _readmem8(ctx, hl);
@@ -2408,7 +2414,7 @@ public final class Z80 {
   }
 
   private void doLD_A_mBC(final int ctx) {
-    final int addr = BCasAddr(ctx);
+    final int addr = this.getRegisterPair(REGPAIR_BC);
     setRegister(REG_A, _readmem8(ctx, addr));
     this.setWZ(addr + 1, false);
   }
@@ -2427,7 +2433,7 @@ public final class Z80 {
   }
 
   private void doLD_A_mDE(final int ctx) {
-    final int addr = DEasAddr(ctx);
+    final int addr = this.getRegisterPair(REGPAIR_DE);
     setRegister(REG_A, _readmem8(ctx, addr));
     this.setWZ(addr + 1, false);
   }
@@ -2449,7 +2455,7 @@ public final class Z80 {
   private void doINI(final int ctx) {
     final int bc = getRegisterPair(REGPAIR_BC);
     this.setWZ(bc + 1, false);
-    int hl = HLasAddr(ctx);
+    int hl = this.getRegisterPair(REGPAIR_HL);
     int x = _readport(ctx, bc);
     _writemem8(ctx, hl++, (byte) x);
     final int b = ((bc >>> 8) - 1) & 0xFF;
@@ -2479,7 +2485,7 @@ public final class Z80 {
 
   private void doIND(final int ctx) {
     final int bc = getRegisterPair(REGPAIR_BC);
-    int hl = HLasAddr(ctx);
+    int hl = this.getRegisterPair(REGPAIR_HL);
     int x = _readport(ctx, bc);
     _writemem8(ctx, hl--, (byte) x);
     this.setWZ(bc - 1, false);
@@ -2509,8 +2515,8 @@ public final class Z80 {
   }
 
   private void doLDI(final int ctx) {
-    int hl = HLasAddr(ctx);
-    int de = DEasAddr(ctx);
+    int hl = this.getRegisterPair(REGPAIR_HL);
+    int de = this.getRegisterPair(REGPAIR_DE);
 
     int value = _readmem8(ctx, hl++);
 
@@ -2545,7 +2551,7 @@ public final class Z80 {
   }
 
   private void doCPI(final int ctx) {
-    int hl = HLasAddr(ctx);
+    int hl = this.getRegisterPair(REGPAIR_HL);
     int n = _readmem8(ctx, hl++);
 
     final int a = getRegister(REG_A);
@@ -2580,7 +2586,7 @@ public final class Z80 {
 
   private void doOUTI(final int ctx) {
     final int bc = getRegisterPair(REGPAIR_BC);
-    int hl = HLasAddr(ctx);
+    int hl = this.getRegisterPair(REGPAIR_HL);
     int x = _readmem8(ctx, hl++);
     _writeport(ctx, bc, x);
     final int b = ((bc >>> 8) - 1) & 0xFF;
@@ -2612,7 +2618,7 @@ public final class Z80 {
 
   private void doOUTD(final int ctx) {
     final int bc = getRegisterPair(REGPAIR_BC);
-    int hl = HLasAddr(ctx);
+    int hl = this.getRegisterPair(REGPAIR_HL);
     int x = _readmem8(ctx, hl--);
     _writeport(ctx, bc, x);
     final int b = ((bc >>> 8) - 1) & 0xFF;
@@ -2719,8 +2725,8 @@ public final class Z80 {
   }
 
   private void doLDD(final int ctx) {
-    int hl = HLasAddr(ctx);
-    int de = DEasAddr(ctx);
+    int hl = this.getRegisterPair(REGPAIR_HL);
+    int de = this.getRegisterPair(REGPAIR_DE);
 
     int x = _readmem8(ctx, hl--);
 
@@ -2743,7 +2749,7 @@ public final class Z80 {
   }
 
   private void doCPD(final int ctx) {
-    int hl = HLasAddr(ctx);
+    int hl = this.getRegisterPair(REGPAIR_HL);
     int n = _readmem8(ctx, hl--);
     final int a = getRegister(REG_A);
     final int z = a - n;

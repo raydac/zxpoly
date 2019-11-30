@@ -20,7 +20,6 @@ package com.igormaznitsa.z80;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 
 import org.junit.Test;
@@ -30,11 +29,6 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testReset_Nop() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
-      @Override
-      public int getValueForGpu(Z80 cpu, int ctx, int reg) {
-        fail("Unexpected call");
-        return 0;
-      }
 
       @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
@@ -5517,12 +5511,6 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testIntProcessing_IM0_DefaultAfterReset() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
-      @Override
-      public int getValueForGpu(Z80 cpu, int ctx, int reg) {
-        fail("Unexpected call");
-        return 0;
-      }
-
 
       @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
@@ -5586,12 +5574,6 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testIntProcessing_IM1() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
-      @Override
-      public int getValueForGpu(Z80 cpu, int ctx, int reg) {
-        fail("Unexpected call");
-        return 0;
-      }
-
 
       @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
@@ -5666,12 +5648,6 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testIntProcessing_IM2() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
-      @Override
-      public int getValueForGpu(Z80 cpu, int ctx, int reg) {
-        fail("Unexpected call");
-        return 0;
-      }
-
 
       @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
@@ -5761,12 +5737,6 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testIntProcessing_EI_RET_RST38() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
-      @Override
-      public int getValueForGpu(Z80 cpu, int ctx, int reg) {
-        fail("Unexpected call");
-        return 0;
-      }
-
       @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
         return memory[address];

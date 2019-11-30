@@ -65,6 +65,7 @@ public final class Motherboard implements ZxPolyConstants {
   private boolean localResetForAllModules;
   private volatile BoardMode boardMode = BoardMode.ZXPOLY;
   private int statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
+  private volatile int gfxSyncRegsRecord = 0;
 
   public Motherboard(final RomData rom) {
     if (rom == null) {
@@ -214,6 +215,11 @@ public final class Motherboard implements ZxPolyConstants {
     this.triggerMemAddress = address;
   }
 
+  public void setGfxAlignRegisters(final String registers) {
+    this.gfxSyncRegsRecord = Z80.makeGfxSyncRegisterList(registers);
+    LOGGER.info("Set GFX register list for aligning, '" + registers + "' = " + Integer.toBinaryString(this.gfxSyncRegsRecord));
+  }
+
   public int step(final boolean signalInt, final boolean processStep) {
     this.localResetForAllModules = false;
 
@@ -336,14 +342,14 @@ public final class Motherboard implements ZxPolyConstants {
         final Z80 mainCpu = masterModule.getCpu();
 
         final boolean spec256 = boardMode == BoardMode.SPEC256;
+        masterModule.saveInternalCopyForGfx();
+        masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
         if (spec256) {
-          masterModule.saveInternalCopyForGfx();
           for (int i = 0; i < SPEC256_GFX_CORES; i++) {
-            masterModule.stepWithGfxCpu(i + 1, this.spec256GfxCores[i].fillByGfxState(mainCpu), signalInt);
+            masterModule.stepWithGfxCpu(i + 1, this.spec256GfxCores[i], signalReset, signalInt);
+            this.spec256GfxCores[i].alignWith(mainCpu, this.gfxSyncRegsRecord);
           }
         }
-
-        masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
       }
 
       final long spentMachineCycles = modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;

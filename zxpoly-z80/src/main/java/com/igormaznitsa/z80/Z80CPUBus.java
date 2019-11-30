@@ -28,7 +28,5 @@ public interface Z80CPUBus {
 
   byte onCPURequestDataLines(Z80 cpu, int ctx);
 
-  int getValueForGpu(Z80 cpu, int ctx, int reg);
-
   void onRETI(Z80 cpu, int ctx);
 }

@@ -104,13 +104,6 @@ public abstract class AbstractZ80Test {
     }
 
     final Z80CPUBus bus = new Z80CPUBus() {
-
-      @Override
-      public int getValueForGpu(Z80 cpu, int ctx, int reg) {
-        fail("Unexpected call");
-        return 0;
-      }
-
       @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
         return memory[address];
@@ -172,12 +165,6 @@ public abstract class AbstractZ80Test {
     }
 
     final Z80CPUBus bus = new Z80CPUBus() {
-
-      @Override
-      public int getValueForGpu(Z80 cpu, int ctx, int reg) {
-        fail("Unexpected call");
-        return 0;
-      }
 
       @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {

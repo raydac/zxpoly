@@ -24,7 +24,9 @@ import com.igormaznitsa.zxpoly.components.ZxPolyConstants;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.Locale;
+import java.util.Optional;
 
 public class FormatSpec256 extends Snapshot {
 
@@ -153,6 +155,22 @@ public class FormatSpec256 extends Snapshot {
     board.set3D00(0b1_00_000_0_1, true);
     vc.setBorderColor(parser.getBORDERCOLOR() & 7);
     vc.setVideoMode(ZxPolyConstants.VIDEOMODE_SPEC256);
+
+    final Optional<Spec256Arch.Spec256Bkg> bkg = archive.getBackgrounds().stream()
+        .min(Comparator.comparingInt(Spec256Arch.Spec256Bkg::getIndex));
+    if (bkg.isPresent()) {
+      LOGGER.info("Detected GFX background image");
+      vc.setGfxBack(bkg.get());
+    } else {
+      LOGGER.info("No any GFX background");
+      vc.setGfxBack(null);
+    }
+
+    final String alignRegisters = archive.getProperties().getProperty("zxpAlignRegs", "");
+    board.setGfxAlignRegisters(alignRegisters);
+
+    final String gfxBackOverFF = archive.getProperties().getProperty("BkOverFF", "0");
+    vc.setGfxBackOverFF(!"0".equals(gfxBackOverFF));
 
     board.syncSpec256GpuStates();
   }
