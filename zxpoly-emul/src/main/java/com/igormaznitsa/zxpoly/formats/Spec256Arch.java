@@ -84,17 +84,18 @@ public class Spec256Arch {
         } else {
           Matcher matcher = ROM_ABC_PATTERN.matcher(name);
           if (matcher.find()) {
-            final int romBankId = matcher.group(1).charAt(0) - 'a';
+            final int romPageIndex = matcher.group(1).charAt(0) == 'a' ? 1 : 0;
             final byte[] read = readData(zipFile, entry);
             if (read.length > 0) {
-              foundGfxRoms.add(new Spec256GfxPage(romBankId, Arrays.copyOf(read, GFX_PAGE_SIZE)));
+              foundGfxRoms.add(new Spec256GfxPage(romPageIndex, Arrays.copyOf(read, GFX_PAGE_SIZE)));
             }
           } else {
             matcher = ROM_ROMNUM_PATTERN.matcher(name);
             if (matcher.find()) {
               final byte[] read = readData(zipFile, entry);
               if (read.length > 0) {
-                foundGfxRoms.add(new Spec256GfxPage(Integer.parseInt(matcher.group(1)), Arrays.copyOf(read, GFX_PAGE_SIZE)));
+                final int romPageIndex = Integer.parseInt(matcher.group(1));
+                foundGfxRoms.add(new Spec256GfxPage(romPageIndex, Arrays.copyOf(read, GFX_PAGE_SIZE)));
               }
             } else {
               matcher = GFn_PATTERN.matcher(name);
