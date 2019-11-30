@@ -2,11 +2,11 @@ package com.igormaznitsa.zxpoly.utils;
 
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
-public final class AtomicUByteArray {
+public final class ConcurrentUByteArray {
   private final AtomicIntegerArray array;
   private final int length;
 
-  public AtomicUByteArray(final int size) {
+  public ConcurrentUByteArray(final int size) {
     if ((size & 3) != 0) {
       throw new IllegalArgumentException("Wrong size: " + size);
     }

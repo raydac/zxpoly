@@ -16,6 +16,7 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
@@ -30,6 +31,7 @@ public class Spec256Arch {
   private static final Pattern ROM_ROMNUM_PATTERN = Pattern.compile("^(?:.*/)?rom([01])\\.gfx$");
   private static final Pattern BKG_PATTERN = Pattern.compile("^.*\\.b([0-9]{2})$");
   private static final Pattern PALETTE_PATTERN = Pattern.compile("^.*\\.p(al|[0-9]{2})$");
+  private static final Pattern SNA_NAME_PATTERN = Pattern.compile("([^/]*).sna$", Pattern.CASE_INSENSITIVE);
   private final SNAParser parsedSna;
   private final byte[] xorData;
   private final List<Spec256GfxPage> gfxRoms;
@@ -38,6 +40,8 @@ public class Spec256Arch {
   private final List<Spec256Palette> palettes;
   private final Properties properties;
   private final boolean mode128;
+  private final String sha256;
+  private final String snaName;
 
   public Spec256Arch(final File file) throws IOException {
     this(FileUtils.readFileToByteArray(file));
@@ -54,7 +58,10 @@ public class Spec256Arch {
       final Properties properties = new Properties();
       SNAParser parsedSna = null;
       byte[] xorData = null;
-      byte[] foundGfx48Snapshot = null;
+      byte[] foundGfxSnapshot = null;
+      byte[] snaFileBody = null;
+
+      String parsedSnaName = null;
 
       while (iterator.hasMoreElements()) {
         final ZipArchiveEntry entry = iterator.nextElement();
@@ -63,7 +70,13 @@ public class Spec256Arch {
         }
         final String name = entry.getName().replace('\\', '/').toLowerCase(Locale.ENGLISH);
         if (name.endsWith(".sna")) {
-          parsedSna = new SNAParser().read(new JBBPBitInputStream(new ByteArrayInputStream(readData(zipFile, entry))));
+          final Matcher matcher = SNA_NAME_PATTERN.matcher(name);
+          if (!matcher.find()) {
+            throw new IOException("Unexpected SNA name: " + name);
+          }
+          parsedSnaName = matcher.group(1);
+          snaFileBody = readData(zipFile, entry);
+          parsedSna = new SNAParser().read(new JBBPBitInputStream(new ByteArrayInputStream(snaFileBody)));
         } else if (name.endsWith(".xor")) {
           xorData = readData(zipFile, entry);
         } else if (name.endsWith(".cfg")) {
@@ -92,7 +105,7 @@ public class Spec256Arch {
                   if (read.length != GFX_PAGE_SIZE * 3) {
                     throw new IOException("Unexpected size of GFX block: " + read.length);
                   }
-                  foundGfx48Snapshot = read;
+                  foundGfxSnapshot = read;
                 } else {
                   if (read.length != GFX_PAGE_SIZE) {
                     throw new IOException("Unexpected size of GFn block: " + read.length);
@@ -128,14 +141,20 @@ public class Spec256Arch {
         throw new IOException("Can't find SNA file in Spec256 archive");
       }
 
-      if (foundGfx48Snapshot == null) {
+      if (foundGfxSnapshot == null) {
         throw new IOException(("Can't find GFX file in Spec256 archive"));
       }
 
-      if (foundGfx48Snapshot.length != GFX_PAGE_SIZE * 3) {
-        throw new IOException("Found GFX file has wrong size: " + foundGfx48Snapshot.length);
+      if (foundGfxSnapshot.length != GFX_PAGE_SIZE * 3) {
+        throw new IOException("Found GFX file has wrong size: " + foundGfxSnapshot.length);
       }
 
+      final byte[] snagfx = new byte[snaFileBody.length + foundGfxSnapshot.length];
+      System.arraycopy(snaFileBody, 0, snagfx, 0, snaFileBody.length);
+      System.arraycopy(foundGfxSnapshot, 0, snagfx, snaFileBody.length, foundGfxSnapshot.length);
+      this.sha256 = DigestUtils.sha256Hex(snagfx);
+
+      this.snaName = parsedSnaName;
       this.parsedSna = parsedSna;
       this.properties = properties;
       this.palettes = Collections.unmodifiableList(listPalettes);
@@ -154,9 +173,9 @@ public class Spec256Arch {
       final byte[] ram2 = new byte[GFX_PAGE_SIZE];
       final byte[] ramTop = new byte[GFX_PAGE_SIZE];
 
-      System.arraycopy(foundGfx48Snapshot, 0, ram5, 0, ram5.length);
-      System.arraycopy(foundGfx48Snapshot, ram5.length, ram2, 0, ram2.length);
-      System.arraycopy(foundGfx48Snapshot, ram5.length + ram2.length, ramTop, 0, ramTop.length);
+      System.arraycopy(foundGfxSnapshot, 0, ram5, 0, ram5.length);
+      System.arraycopy(foundGfxSnapshot, ram5.length, ram2, 0, ram2.length);
+      System.arraycopy(foundGfxSnapshot, ram5.length + ram2.length, ramTop, 0, ramTop.length);
 
       if (foundGfxRams.stream().noneMatch(x -> x.pageIndex == 5)) {
         foundGfxRams.add(new Spec256GfxPage(5, ram5));
@@ -170,7 +189,16 @@ public class Spec256Arch {
 
       this.gfxRamPages = Collections.unmodifiableList(foundGfxRams);
       this.gfxRoms = Collections.unmodifiableList(foundGfxRoms);
+
     }
+  }
+
+  public String getSnaName() {
+    return this.snaName;
+  }
+
+  public String getSha256() {
+    return this.sha256;
   }
 
   private static byte[] readData(final ZipFile file, final ZipArchiveEntry entry) throws IOException {
@@ -285,5 +313,9 @@ public class Spec256Arch {
     }
   }
 
+  @Override
+  public String toString() {
+    return String.format("Spec256arch (%s,%s)", this.snaName, this.sha256);
+  }
 
 }

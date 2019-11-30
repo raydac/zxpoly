@@ -23,7 +23,7 @@ import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.z80.Z80CPUBus;
 import com.igormaznitsa.z80.Z80Instruction;
 import com.igormaznitsa.z80.disasm.Z80Disasm;
-import com.igormaznitsa.zxpoly.utils.AtomicUByteArray;
+import com.igormaznitsa.zxpoly.utils.ConcurrentUByteArray;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -67,8 +67,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   private volatile boolean trdosRomActive;
 
-  private final AtomicUByteArray gfxRam;
-  private final AtomicUByteArray gfxRom;
+  private final ConcurrentUByteArray gfxRam;
+  private final ConcurrentUByteArray gfxRom;
 
   private int gfxPort7FFD;
   private boolean gfxWaitSignal;
@@ -93,8 +93,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     this.logger = Logger.getLogger("ZX#" + index);
 
     if (index == 0) {
-      this.gfxRam = new AtomicUByteArray(128 * 8 * 1024);
-      this.gfxRom = new AtomicUByteArray(32 * 8 * 1024);
+      this.gfxRam = new ConcurrentUByteArray(128 * 8 * 1024);
+      this.gfxRom = new ConcurrentUByteArray(32 * 8 * 1024);
     } else {
       this.gfxRam = null;
       this.gfxRom = null;

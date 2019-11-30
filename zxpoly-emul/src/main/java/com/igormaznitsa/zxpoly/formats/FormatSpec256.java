@@ -24,44 +24,44 @@ import com.igormaznitsa.zxpoly.components.ZxPolyConstants;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.apache.commons.io.IOUtils;
 
 public class FormatSpec256 extends Snapshot {
 
-  @Override
-  public String getExtension() {
-    return "zip";
-  }
+  private static final Map<String, BaseItem> APP_BASE = new HashMap<>();
 
-  @Override
-  public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
-    throw new IOException("Save is unsupported");
-  }
-
-  private static byte[] gfx2gfxInternalBank(final byte[] bankData) {
-    final byte[] result = new byte[bankData.length];
-
-    for (int offst = 0; offst < bankData.length; offst += 8) {
-      for (int ctx = 0; ctx < 8; ctx++) {
-        final int bitMask = 1 << ctx;
-        int acc = 0;
-        for (int i = 0; i < 8; i++) {
-          if ((bankData[offst + i] & bitMask) != 0) {
-            acc |= 1 << i;
-          }
+  static {
+    try (InputStream in = FormatSpec256.class.getResourceAsStream("/spec256appbase.txt")) {
+      for (final String str : IOUtils.readLines(in, StandardCharsets.UTF_8)) {
+        final String trimmed = str.trim();
+        if (trimmed.isEmpty() || trimmed.startsWith("//")) {
+          continue;
         }
-        result[offst + ctx] = (byte) acc;
+        final Matcher matcher = BaseItem.PATTERN.matcher(str);
+        if (matcher.find()) {
+          APP_BASE.put(matcher.group(2).toLowerCase(Locale.ENGLISH), new BaseItem(matcher.group(1), matcher.group(2), matcher.group(3)));
+        } else {
+          throw new Error("Can't parse line: " + str);
+        }
       }
+    } catch (IOException ex) {
+      throw new Error("Can't load app base", ex);
     }
-
-    return result;
   }
 
   @Override
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
     final Spec256Arch archive = new Spec256Arch(array);
+    LOGGER.info("Archive: " + archive);
     final SNAParser parser = archive.getParsedSna();
 
     final boolean sna128 = parser.extendeddata != null;
@@ -166,13 +166,71 @@ public class FormatSpec256 extends Snapshot {
       vc.setGfxBack(null);
     }
 
-    final String alignRegisters = archive.getProperties().getProperty("zxpAlignRegs", "1XY");
+    String alignRegVector = archive.getProperties().getProperty("zxpAlignRegs");
+    if (alignRegVector == null) {
+      BaseItem itemInBase = APP_BASE.get(archive.getSha256().toLowerCase(Locale.ENGLISH));
+      if (itemInBase == null) {
+        LOGGER.info("Application not found in Spec256 app base");
+      } else {
+        if (archive.getSha256().equalsIgnoreCase(itemInBase.sha256)) {
+          LOGGER.info("Detected item in Spec256 app base, sha256 is OK");
+          alignRegVector = itemInBase.regVector;
+        } else {
+          LOGGER.warning("Detected item in Spec256 app base, sha256 failed");
+        }
+      }
+    } else {
+      LOGGER.info("Config file contains register vector: " + alignRegVector);
+    }
+    final String alignRegisters = archive.getProperties().getProperty("zxpAlignRegs", alignRegVector == null ? "1" : alignRegVector);
     board.setGfxAlignRegisters(alignRegisters);
 
     final String gfxBackOverFF = archive.getProperties().getProperty("BkOverFF", "0");
     vc.setGfxBackOverFF(!"0".equals(gfxBackOverFF));
 
     board.syncSpec256GpuStates();
+  }
+
+  @Override
+  public String getExtension() {
+    return "zip";
+  }
+
+  @Override
+  public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
+    throw new IOException("Save is unsupported");
+  }
+
+  private static byte[] gfx2gfxInternalBank(final byte[] bankData) {
+    final byte[] result = new byte[bankData.length];
+
+    for (int offst = 0; offst < bankData.length; offst += 8) {
+      for (int ctx = 0; ctx < 8; ctx++) {
+        final int bitMask = 1 << ctx;
+        int acc = 0;
+        for (int i = 0; i < 8; i++) {
+          if ((bankData[offst + i] & bitMask) != 0) {
+            acc |= 1 << i;
+          }
+        }
+        result[offst + ctx] = (byte) acc;
+      }
+    }
+
+    return result;
+  }
+
+  private static class BaseItem {
+    private static final Pattern PATTERN = Pattern.compile("^\\s*(\\S+)\\s*,\\s*([0-9a-f]+)\\s*,\\s*([AF1BCDEHLXY]+)\\s*$");
+    private final String name;
+    private final String sha256;
+    private final String regVector;
+
+    private BaseItem(final String name, final String sha256, final String regs) {
+      this.name = name;
+      this.sha256 = sha256;
+      this.regVector = regs;
+    }
   }
 
   @Override
