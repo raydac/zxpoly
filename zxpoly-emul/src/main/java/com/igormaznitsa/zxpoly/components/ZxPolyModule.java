@@ -673,7 +673,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         result = (byte) this.board.readBusIo(this, port);
       }
     } else {
-      result = 0;
+      result = (byte) this.board.readBusIo(this, port);
     }
     return result;
   }
