@@ -667,11 +667,6 @@ public final class Z80 {
         pos++;
       }
     }
-
-//    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (cpu.regSet[REG_F] & ~FLAG_C));
-//    this.regSet[REG_H] = cpu.regSet[REG_H];
-//    this.regSet[REG_L] = cpu.regSet[REG_L];
-//    this.regSet[REG_E] = cpu.regSet[REG_E];
     return this;
   }
 
