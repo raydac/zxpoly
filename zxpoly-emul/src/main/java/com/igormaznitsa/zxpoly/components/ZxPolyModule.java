@@ -23,6 +23,7 @@ import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.z80.Z80CPUBus;
 import com.igormaznitsa.z80.Z80Instruction;
 import com.igormaznitsa.z80.disasm.Z80Disasm;
+import com.igormaznitsa.zxpoly.utils.AtomicUByteArray;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -66,8 +67,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   private volatile boolean trdosRomActive;
 
-  private final AtomicIntegerArray gfxRam;
-  private final AtomicIntegerArray gfxRom;
+  private final AtomicUByteArray gfxRam;
+  private final AtomicUByteArray gfxRom;
 
   private int gfxPort7FFD;
   private boolean gfxWaitSignal;
@@ -92,8 +93,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     this.logger = Logger.getLogger("ZX#" + index);
 
     if (index == 0) {
-      this.gfxRam = new AtomicIntegerArray(128 * 8 * 1024);
-      this.gfxRom = new AtomicIntegerArray(32 * 8 * 1024);
+      this.gfxRam = new AtomicUByteArray(128 * 8 * 1024);
+      this.gfxRom = new AtomicUByteArray(32 * 8 * 1024);
     } else {
       this.gfxRam = null;
       this.gfxRom = null;
@@ -491,14 +492,14 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   public void writeGfxRomPage(final int page, final byte[] data) {
     int startOffset = page * GFX_PAGE_SIZE;
     for (int i = 0; i < data.length; i++) {
-      this.gfxRom.set(startOffset + i, data[i] & 0xFF);
+      this.gfxRom.set(startOffset + i, data[i]);
     }
   }
 
   public void writeGfxRamPage(final int page, final byte[] gfxPageData) {
     int startOffset = page * GFX_PAGE_SIZE;
     for (int i = 0; i < gfxPageData.length; i++) {
-      this.gfxRam.set(startOffset++, gfxPageData[i] & 0xFF);
+      this.gfxRam.set(startOffset++, gfxPageData[i]);
     }
   }
 

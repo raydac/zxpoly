@@ -23,12 +23,12 @@ import static java.lang.Math.min;
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
+import com.igormaznitsa.zxpoly.utils.AtomicUByteArray;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,7 +50,7 @@ public final class Motherboard implements ZxPolyConstants {
   private final IoDevice[] ioDevices;
   private final IoDevice[] ioDevicesPreStep;
   private final IoDevice[] ioDevicesPostStep;
-  private final AtomicIntegerArray ram = new AtomicIntegerArray(512 * 1024);
+  private final AtomicUByteArray ram = new AtomicUByteArray(512 * 1024);
   private final VideoController video;
   private final KeyboardKempstonAndTapeIn keyboard;
   private final BetaDiscInterface betaDisk;
