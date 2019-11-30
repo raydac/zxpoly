@@ -166,29 +166,32 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
         final ZxPolyModule sourceModule = modules[0];
         int offset = 0;
+        int aoffset = 0;
         int coordY = 0;
         for (int i = 0; i < 0x1800; i++) {
           if ((i & 0x1F) == 0) {
             // the first byte in the line
             coordY = extractYFromAddress(i);
+            aoffset = calcAttributeAddressZxMode(i);
             offset = coordY << 10;
           }
 
+          final int attrOffset = aoffset++;
           long pixelData = sourceModule.readGfxVideo(i);
+          final int attrData = sourceModule.readVideo(attrOffset);
+          final int inkColor = extractInkColor(attrData, flashActive);
+          final int paperColor = extractPaperColor(attrData, flashActive);
 
           int x = 8;
           while (x-- > 0) {
             final int index = (int) ((pixelData >>> 56) & 0xFF);
-            final int color;
+            final int color = SPEC256PAL[index];
             boolean draw = true;
-            if (prerendededGfxBack == null) {
-              color = SPEC256PAL[index];
-            } else {
-              if ((bkOverFF && index != 0xFF) || (!bkOverFF && index != 0x00)) {
-                color = SPEC256PAL[index];
-              } else {
-                color = 0;
+            if (prerendededGfxBack != null) {
+              if (bkOverFF && (index == 0 || (index == 0xFF && inkColor != 7))) {
                 draw = false;
+              } else {
+                draw = index != 0;
               }
             }
 

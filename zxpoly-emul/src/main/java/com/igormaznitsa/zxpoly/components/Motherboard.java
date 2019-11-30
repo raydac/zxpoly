@@ -216,7 +216,7 @@ public final class Motherboard implements ZxPolyConstants {
   }
 
   public void setGfxAlignRegisters(final String registers) {
-    this.gfxSyncRegsRecord = Z80.makeGfxSyncRegisterList(registers);
+    this.gfxSyncRegsRecord = Z80.parseAndPackRegAlignValue(registers);
     LOGGER.info("Set GFX register list for aligning, '" + registers + "' = " + Integer.toBinaryString(this.gfxSyncRegsRecord));
   }
 
@@ -347,7 +347,7 @@ public final class Motherboard implements ZxPolyConstants {
         if (spec256) {
           for (int i = 0; i < SPEC256_GFX_CORES; i++) {
             masterModule.stepWithGfxCpu(i + 1, this.spec256GfxCores[i], signalReset, signalInt);
-            this.spec256GfxCores[i].alignWith(mainCpu, this.gfxSyncRegsRecord);
+            this.spec256GfxCores[i].alignRegisterValuesWith(mainCpu, this.gfxSyncRegsRecord);
           }
         }
       }

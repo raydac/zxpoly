@@ -147,14 +147,22 @@ public final class Z80 {
     this.machineCycles = 3L;
   }
 
-  public static int makeGfxSyncRegisterList(final String regs) {
-    final String ALLOWED = "AFBCDEHLXY";
+  /**
+   * Parse string with id of registers and prepare bit vector for it.
+   *
+   * @param regs string, allowed chars A,F,B.C,D,E,H,L,X,Y,1 (1 means F but save C bit)
+   * @return formed bit vector
+   * @see #alignRegisterValuesWith(Z80, int)
+   * @since 2.0.1
+   */
+  public static int parseAndPackRegAlignValue(final String regs) {
+    final String allowedPositions = "AFBCDEHLXY1";
     final String trimmed = regs.trim().toUpperCase(Locale.ENGLISH);
     int result = 0;
     for (final char c : trimmed.toCharArray()) {
-      final int index = ALLOWED.indexOf(c);
+      final int index = allowedPositions.indexOf(c);
       if (index < 0) {
-        throw new IllegalArgumentException("Unknown register: " + c + ", allowed only A,F,B,C,D,E,H,L,X,Y");
+        throw new IllegalArgumentException("Unknown register: " + c + ", allowed only A,F,1,B,C,D,E,H,L,X,Y");
       } else {
         result |= 1 << index;
       }
@@ -619,30 +627,43 @@ public final class Z80 {
     this.bus = cpu.bus;
   }
 
-  public Z80 alignWith(final Z80 cpu, int syncRegsFlag) {
-    this.cbDisplacementByte = cpu.cbDisplacementByte;
-    this.prefix = cpu.prefix;
-    this.iff1 = cpu.iff1;
-    this.iff2 = cpu.iff2;
-    this.im = cpu.im;
-    this.regI = cpu.regI;
-    this.regPC = cpu.regPC;
-    this.regR = cpu.regR;
-    this.regSP = cpu.regSP;
-    this.insideBlockInstruction = cpu.insideBlockInstruction;
-    this.insideBlockInstructionPrev = cpu.insideBlockInstructionPrev;
-    this.prevINSignals = cpu.prevINSignals;
-    this.interruptAllowedForStep = cpu.interruptAllowedForStep;
-    this.detectedINT = cpu.detectedINT;
-    this.detectedNMI = cpu.detectedNMI;
+  /**
+   * Set value of some registers from source CPU.
+   *
+   * @param src                 source CPU must not be null
+   * @param packedRegisterFlags bit flags describe needed registers
+   * @return the instance
+   * @see #parseAndPackRegAlignValue(String)
+   * @since 2.0.1
+   */
+  public Z80 alignRegisterValuesWith(final Z80 src, int packedRegisterFlags) {
+    this.cbDisplacementByte = src.cbDisplacementByte;
+    this.prefix = src.prefix;
+    this.iff1 = src.iff1;
+    this.iff2 = src.iff2;
+    this.im = src.im;
+    this.regI = src.regI;
+    this.regPC = src.regPC;
+    this.regR = src.regR;
+    this.regSP = src.regSP;
+    this.insideBlockInstruction = src.insideBlockInstruction;
+    this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
+    this.prevINSignals = src.prevINSignals;
+    this.interruptAllowedForStep = src.interruptAllowedForStep;
+    this.detectedINT = src.detectedINT;
+    this.detectedNMI = src.detectedNMI;
 
-    if (syncRegsFlag != 0) {
+    if (packedRegisterFlags != 0) {
       int pos = 0;
-      while (syncRegsFlag != 0) {
-        if ((syncRegsFlag & 1) != 0) {
-          this.setRegister(pos, cpu.getRegister(pos));
+      while (packedRegisterFlags != 0) {
+        if ((packedRegisterFlags & 1) != 0) {
+          if (pos == 10) {
+            this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
+          } else {
+            this.setRegister(pos, src.getRegister(pos));
+          }
         }
-        syncRegsFlag >>>= 1;
+        packedRegisterFlags >>>= 1;
         pos++;
       }
     }
