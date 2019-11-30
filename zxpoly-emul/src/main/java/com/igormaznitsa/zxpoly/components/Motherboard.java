@@ -339,16 +339,16 @@ public final class Motherboard implements ZxPolyConstants {
       } else {
         // ZX128 and SPEC256 modes
         final ZxPolyModule masterModule = modules[0];
-        final Z80 mainCpu = masterModule.getCpu();
-
-        final boolean spec256 = boardMode == BoardMode.SPEC256;
-        masterModule.saveInternalCopyForGfx();
-        masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
-        if (spec256) {
+        if (this.boardMode == BoardMode.SPEC256) {
+          final Z80 mainCpu = masterModule.getCpu();
+          masterModule.saveInternalCopyForGfx();
+          masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
           for (int i = 0; i < SPEC256_GFX_CORES; i++) {
             masterModule.stepWithGfxCpu(i + 1, this.spec256GfxCores[i], signalReset, signalInt);
             this.spec256GfxCores[i].alignRegisterValuesWith(mainCpu, this.gfxSyncRegsRecord);
           }
+        } else {
+          masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
         }
       }
 
