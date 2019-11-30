@@ -166,7 +166,7 @@ public class FormatSpec256 extends Snapshot {
       vc.setGfxBack(null);
     }
 
-    final String alignRegisters = archive.getProperties().getProperty("zxpAlignRegs", "");
+    final String alignRegisters = archive.getProperties().getProperty("zxpAlignRegs", "1XY");
     board.setGfxAlignRegisters(alignRegisters);
 
     final String gfxBackOverFF = archive.getProperties().getProperty("BkOverFF", "0");
