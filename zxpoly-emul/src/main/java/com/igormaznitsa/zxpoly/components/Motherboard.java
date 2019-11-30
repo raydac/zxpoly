@@ -66,6 +66,7 @@ public final class Motherboard implements ZxPolyConstants {
   private volatile BoardMode boardMode = BoardMode.ZXPOLY;
   private int statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
   private volatile int gfxSyncRegsRecord = 0;
+  private final Random rnd = new Random();
 
   public Motherboard(final RomData rom) {
     if (rom == null) {
@@ -92,7 +93,6 @@ public final class Motherboard implements ZxPolyConstants {
     this.ioDevicesPostStep = Arrays.stream(this.ioDevices).filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_POSTSTEP) != 0).toArray(IoDevice[]::new);
 
     // simulation of garbage in memory after power on
-    final Random rnd = new Random();
     for (int i = 0; i < this.ram.length(); i++) {
       this.ram.set(i, rnd.nextInt());
     }
@@ -515,8 +515,9 @@ public final class Motherboard implements ZxPolyConstants {
       }
 
       if (result < 0) {
-        // all IO devices in Z state
-        result = 0xFF;
+        // all IO devices in Z state, some simulation of "port FF"
+        result = this.rnd.nextInt(100) > 90 ? 0xFF :
+            this.modules[0].readVideo(0x1800 + rnd.nextInt(0x300));
       }
     }
     return result;
