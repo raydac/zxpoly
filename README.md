@@ -6,6 +6,16 @@
 
 ![ZX-Poly logo](docs/zxpoly_logo.png)
 
+# Changelog
+- __2.0.1-SNAPSHOT__
+  - added Spec256 snapshot support (zipped)
+  - refactoring
+
+- __2.0.0 (20-nov-2019)__
+  - Disk images support: TRD,SCL
+  - Tape snapshot support: TAP
+  - Emulator snapshot support: Z80, SNA, ZXP
+
 # Introduction
 I am a ZX-Spectrum fun since 1989. ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from mono-system to poly-system.   
 
