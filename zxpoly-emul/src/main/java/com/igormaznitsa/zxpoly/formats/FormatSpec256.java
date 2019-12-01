@@ -160,10 +160,10 @@ public class FormatSpec256 extends Snapshot {
         .min(Comparator.comparingInt(Spec256Arch.Spec256Bkg::getIndex));
     if (bkg.isPresent()) {
       LOGGER.info("Detected GFX background image");
-      vc.setGfxBack(bkg.get());
+      VideoController.setGfxBack(bkg.get());
     } else {
       LOGGER.info("No any GFX background");
-      vc.setGfxBack(null);
+      VideoController.setGfxBack(null);
     }
 
     String alignRegVector = archive.getProperties().getProperty("zxpAlignRegs");
@@ -185,10 +185,20 @@ public class FormatSpec256 extends Snapshot {
     final String alignRegisters = archive.getProperties().getProperty("zxpAlignRegs", alignRegVector == null ? "1" : alignRegVector);
     board.setGfxAlignRegisters(alignRegisters);
 
-    final String gfxBackOverFF = archive.getProperties().getProperty("BkOverFF", "0");
-    vc.setGfxBackOverFF(!"0".equals(gfxBackOverFF));
+    final String gfxBackOverFF = archive.getProperties().getProperty("BkOverFF", "1");
+    VideoController.setGfxBackOverFF(!"0".equals(gfxBackOverFF));
+    VideoController.setGfxDownColorsMixed(safeParseInt(archive.getProperties().getProperty("DownColorsMixed", "0"), 0));
+    VideoController.setGfxUpColorsMixed(safeParseInt(archive.getProperties().getProperty("UpColorsMixed", "64"), 64));
 
     board.syncSpec256GpuStates();
+  }
+
+  private int safeParseInt(final String str, final int dflt) {
+    try {
+      return Integer.parseInt(str.trim());
+    } catch (NumberFormatException ex) {
+      return dflt;
+    }
   }
 
   @Override

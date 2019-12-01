@@ -111,6 +111,8 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   private final byte[] lastRenderedZxData = new byte[0x1B00];
 
   private static volatile boolean gfxBackOverFF = false;
+  private static volatile int gfxUpColorsMixed = 64;
+  private static volatile int gfxDownColorsMixed = 0;
   private static volatile int[] gfxPrerenderedBack = null;
 
   public VideoController(final Motherboard board) {
@@ -164,6 +166,9 @@ public final class VideoController extends JComponent implements ZxPolyConstants
           System.arraycopy(prerendededGfxBack, 0, pixelRgbBuffer, 0, prerendededGfxBack.length);
         }
 
+        final int downAttrMixedIndex = gfxDownColorsMixed;
+        final int upAttrMixedIndex = 0xFF - gfxUpColorsMixed;
+
         final ZxPolyModule sourceModule = modules[0];
         int offset = 0;
         int aoffset = 0;
@@ -184,14 +189,31 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
           int x = 8;
           while (x-- > 0) {
-            final int index = (int) ((pixelData >>> 56) & 0xFF);
-            final int color = SPEC256PAL[index];
+            final int colorIndex = (int) ((pixelData >>> 56) & 0xFF);
+            int color = SPEC256PAL[colorIndex];
             boolean draw = true;
-            if (prerendededGfxBack != null) {
-              if (bkOverFF && (index == 0 || (index == 0xFF && inkColor != 7))) {
-                draw = false;
+
+            final boolean colorForInk = colorIndex == 0xFF;
+
+            if (colorForInk || colorIndex == 0) {
+              if (prerendededGfxBack == null) {
+                color = colorForInk ? inkColor : color;
               } else {
-                draw = index != 0;
+                if (colorForInk) {
+                  if (bkOverFF) {
+                    draw = false;
+                  } else {
+                    color = inkColor;
+                  }
+                } else {
+                  draw = false;
+                }
+              }
+            } else if (prerendededGfxBack != null) {
+              if (colorIndex < downAttrMixedIndex || colorIndex > upAttrMixedIndex) {
+                final int attrInkIndex = attrData & 7;
+                final int attrPaperIndex = (attrData >> 3) & 7;
+                color = SPEC256PAL[colorIndex ^ attrPaperIndex];
               }
             }
 
@@ -534,8 +556,16 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     return result;
   }
 
-  public void setGfxBackOverFF(final boolean flag) {
-    this.gfxBackOverFF = flag;
+  public static void setGfxUpColorsMixed(final int value) {
+    gfxUpColorsMixed = value;
+  }
+
+  public static void setGfxDownColorsMixed(final int value) {
+    gfxDownColorsMixed = value;
+  }
+
+  public static void setGfxBackOverFF(final boolean flag) {
+    gfxBackOverFF = flag;
   }
 
   private static String decodeVideoModeCode(final int code) {
