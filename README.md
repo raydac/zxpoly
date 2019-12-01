@@ -9,6 +9,7 @@
 # Changelog
 - __2.0.1-SNAPSHOT__
   - added Spec256 snapshot support (zipped)
+  - improved simulation of "port #FF"
   - refactoring
 
 - __2.0.0 (20-nov-2019)__
