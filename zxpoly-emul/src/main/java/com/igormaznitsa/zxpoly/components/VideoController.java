@@ -211,9 +211,8 @@ public final class VideoController extends JComponent implements ZxPolyConstants
               }
             } else if (prerendededGfxBack != null) {
               if (colorIndex < downAttrMixedIndex || colorIndex > upAttrMixedIndex) {
-                final int attrInkIndex = attrData & 7;
-                final int attrPaperIndex = (attrData >> 3) & 7;
-                color = SPEC256PAL[colorIndex ^ attrPaperIndex];
+                //TODO color mixing as only there is any info how it works
+//                draw = false;
               }
             }
 
