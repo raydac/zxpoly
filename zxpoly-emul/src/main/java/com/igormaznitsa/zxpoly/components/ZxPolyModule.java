@@ -346,7 +346,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       offset = 7 * GFX_PAGE_SIZE + (videoOffset << 3);
     }
 
-    long result = 0;
+    long result = 0L;
     for (int pixIndex = 0; pixIndex < 8; pixIndex++) {
       result <<= 8;
       int acc = 0;
@@ -356,7 +356,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
           acc |= (1 << bitIndex);
         }
       }
-      result = result | acc;
+      result |= acc;
     }
     return result;
   }

@@ -17,8 +17,8 @@
 
 package com.igormaznitsa.zxpoly.utils;
 
-import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import java.awt.Image;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.imageio.ImageIO;
@@ -32,12 +32,13 @@ public final class Utils {
     final int[] result = new int[256];
 
     try {
-      final JBBPBitInputStream bitInput = new JBBPBitInputStream(in);
       for (int i = 0; i < 256; i++) {
-        final int red = bitInput.readByte();
-        final int green = bitInput.readByte();
-        final int blue = bitInput.readByte();
-
+        final int red = in.read();
+        final int green = in.read();
+        final int blue = in.read();
+        if (red < 0 || green < 0 || blue < 0) {
+          throw new EOFException();
+        }
         result[i] = 0xFF000000 | (red << 16) | (green << 8) | blue;
       }
     } catch (IOException ex) {
@@ -51,7 +52,6 @@ public final class Utils {
         }
       }
     }
-
     return result;
   }
 

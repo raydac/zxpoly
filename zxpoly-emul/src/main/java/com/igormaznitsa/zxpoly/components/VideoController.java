@@ -210,9 +210,11 @@ public final class VideoController extends JComponent implements ZxPolyConstants
                 }
               }
             } else if (prerendededGfxBack != null) {
-              if (colorIndex < downAttrMixedIndex || colorIndex > upAttrMixedIndex) {
-                //TODO color mixing as only there is any info how it works
-//                draw = false;
+              // TODO still it is unknown what means "Attribute mixing", code below is just some stub
+              if (colorIndex < downAttrMixedIndex) {
+                color = SPEC256PAL[colorIndex + ((attrData >> 3) & 7)];
+              } else if (colorIndex > upAttrMixedIndex) {
+                color = SPEC256PAL[colorIndex - ((attrData >> 3) & 7)];
               }
             }
 
