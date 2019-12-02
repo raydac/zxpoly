@@ -606,9 +606,9 @@ public final class Z80 {
 
   /**
    * Parse string with id of registers and prepare bit vector for it.
-   * main set: <b>A,F,B,C,D,E,H,L,X,Y,1(F without C)</b>
+   * main set: <b>A,F,B,C,D,E,H,L,1(F without C)</b>
    * alt.set: <b>sa,f,b,c,d,e,h,l,2(F without C)</b>
-   * index: <b>X (IX), Y (IY)</b>
+   * index: <b>X(low), x(high),Y(low), y(high)</b>
    * spec: <b>P(PC),S(low),s(high)</b>
    *
    * @param regs string where each char means register or its part
@@ -617,7 +617,7 @@ public final class Z80 {
    * @since 2.0.1
    */
   public static int parseAndPackRegAlignValue(final String regs) {
-    final String allowedPositions = "AFBCDEHLXY10PSsafbcdehl";
+    final String allowedPositions = "AFBCDEHLXxYy10PSsafbcdehl";
     final String trimmed = regs.trim();
     int result = 0;
     for (final char c : trimmed.toCharArray()) {
@@ -656,40 +656,46 @@ public final class Z80 {
     this.detectedNMI = src.detectedNMI;
 
     if (packedRegisterFlags != 0) {
-      //"AFBCDEHL XY10PSs afbcdehl"
+      //"AFBCDEHL XxYy10PSs afbcdehl"
       int pos = 0;
       while (packedRegisterFlags != 0) {
         if ((packedRegisterFlags & 1) != 0) {
           if (pos < 8) {
             this.regSet[pos] = src.regSet[pos];
-          } else if (pos < 15) {
+          } else if (pos < 17) {
             switch (pos - 8) {
               case 0:
-                this.regIX = src.regIX;
+                this.regIX = (this.regIX & 0xFF00) | (src.regIX & 0xFF);
                 break;
               case 1:
-                this.regIY = src.regIY;
+                this.regIX = (this.regIX & 0xFF) | (src.regIX & 0xFF00);
                 break;
               case 2:
-                this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
+                this.regIY = (this.regIY & 0xFF00) | (src.regIY & 0xFF);
                 break;
               case 3:
-                this.altRegSet[REG_F] = (byte) ((this.altRegSet[REG_F] & FLAG_C) | (src.altRegSet[REG_F] & ~FLAG_C));
+                this.regIY = (this.regIY & 0xFF) | (src.regIY & 0xFF00);
                 break;
               case 4:
-                this.regPC = src.regPC;
+                this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
                 break;
               case 5:
-                this.regSP = (this.regSP & 0xFF00) | (src.regSP & 0xFF);
+                this.altRegSet[REG_F] = (byte) ((this.altRegSet[REG_F] & FLAG_C) | (src.altRegSet[REG_F] & ~FLAG_C));
                 break;
               case 6:
+                this.regPC = src.regPC;
+                break;
+              case 7:
+                this.regSP = (this.regSP & 0xFF00) | (src.regSP & 0xFF);
+                break;
+              case 8:
                 this.regSP = (this.regSP & 0xFF) | (src.regSP & 0xFF00);
                 break;
               default:
                 throw new Error("Unexpected state");
             }
           } else {
-            final int reg = pos - 15;
+            final int reg = pos - 17;
             this.altRegSet[reg] = src.altRegSet[reg];
           }
         }

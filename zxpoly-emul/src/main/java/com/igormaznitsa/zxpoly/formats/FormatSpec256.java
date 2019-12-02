@@ -231,7 +231,7 @@ public class FormatSpec256 extends Snapshot {
   }
 
   private static class BaseItem {
-    private static final Pattern PATTERN = Pattern.compile("^\\s*(\\S+)\\s*,\\s*([0-9a-f]+)\\s*,\\s*([AFBCDEHLXY1SPafbcdehlsp]+)\\s*$");
+    private static final Pattern PATTERN = Pattern.compile("^\\s*(\\S+)\\s*,\\s*([0-9a-f]+)\\s*,\\s*([AFBCDEHLXxYy1SPafbcdehlsp]+)\\s*$");
     private final String name;
     private final String sha256;
     private final String regVector;
