@@ -608,8 +608,8 @@ public final class Z80 {
    * Parse string with id of registers and prepare bit vector for it.
    * main set: <b>A,F,B,C,D,E,H,L,1(F without C)</b>
    * alt.set: <b>sa,f,b,c,d,e,h,l,2(F without C)</b>
-   * index: <b>X(low), x(high),Y(low), y(high)</b>
-   * spec: <b>P(PC),S(low),s(high)</b>
+   * index: <b>X(high byte IX), x(lower byte IX),Y(high byte IY), y(lower byte IY)</b>
+   * spec: <b>P(PC),S(high byte SP),s(lower byte SP)</b>
    *
    * @param regs string where each char means register or its part
    * @return formed bit vector
@@ -665,16 +665,16 @@ public final class Z80 {
           } else if (pos < 17) {
             switch (pos - 8) {
               case 0:
-                this.regIX = (this.regIX & 0xFF00) | (src.regIX & 0xFF);
-                break;
-              case 1:
                 this.regIX = (this.regIX & 0xFF) | (src.regIX & 0xFF00);
                 break;
+              case 1:
+                this.regIX = (this.regIX & 0xFF00) | (src.regIX & 0xFF);
+                break;
               case 2:
-                this.regIY = (this.regIY & 0xFF00) | (src.regIY & 0xFF);
+                this.regIY = (this.regIY & 0xFF) | (src.regIY & 0xFF00);
                 break;
               case 3:
-                this.regIY = (this.regIY & 0xFF) | (src.regIY & 0xFF00);
+                this.regIY = (this.regIY & 0xFF00) | (src.regIY & 0xFF);
                 break;
               case 4:
                 this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
@@ -686,10 +686,10 @@ public final class Z80 {
                 this.regPC = src.regPC;
                 break;
               case 7:
-                this.regSP = (this.regSP & 0xFF00) | (src.regSP & 0xFF);
+                this.regSP = (this.regSP & 0xFF) | (src.regSP & 0xFF00);
                 break;
               case 8:
-                this.regSP = (this.regSP & 0xFF) | (src.regSP & 0xFF00);
+                this.regSP = (this.regSP & 0xFF00) | (src.regSP & 0xFF);
                 break;
               default:
                 throw new Error("Unexpected state");
