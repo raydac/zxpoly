@@ -48,7 +48,7 @@ public class FormatSpec256 extends Snapshot {
         }
         final Matcher matcher = BaseItem.PATTERN.matcher(str);
         if (matcher.find()) {
-          APP_BASE.put(matcher.group(2).toLowerCase(Locale.ENGLISH), new BaseItem(matcher.group(1), matcher.group(2), matcher.group(3)));
+          APP_BASE.put(matcher.group(2).toLowerCase(Locale.ENGLISH), new BaseItem(matcher.group(1).toLowerCase(Locale.ENGLISH), matcher.group(2).toLowerCase(Locale.ENGLISH), matcher.group(3)));
         } else {
           throw new Error("Can't parse line: " + str);
         }
@@ -182,7 +182,7 @@ public class FormatSpec256 extends Snapshot {
     } else {
       LOGGER.info("Config file contains register vector: " + alignRegVector);
     }
-    final String alignRegisters = archive.getProperties().getProperty("zxpAlignRegs", alignRegVector == null ? "1" : alignRegVector);
+    final String alignRegisters = archive.getProperties().getProperty("zxpAlignRegs", alignRegVector == null ? "1PSs" : alignRegVector);
     board.setGfxAlignRegisters(alignRegisters);
 
     final String gfxBackOverFF = archive.getProperties().getProperty("BkOverFF", "1");
@@ -231,7 +231,7 @@ public class FormatSpec256 extends Snapshot {
   }
 
   private static class BaseItem {
-    private static final Pattern PATTERN = Pattern.compile("^\\s*(\\S+)\\s*,\\s*([0-9a-f]+)\\s*,\\s*([AF1BCDEHLXY]+)\\s*$");
+    private static final Pattern PATTERN = Pattern.compile("^\\s*(\\S+)\\s*,\\s*([0-9a-f]+)\\s*,\\s*([AFBCDEHLXY1SPafbcdehlsp]+)\\s*$");
     private final String name;
     private final String sha256;
     private final String regVector;

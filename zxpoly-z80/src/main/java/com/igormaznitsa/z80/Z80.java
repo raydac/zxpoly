@@ -147,29 +147,6 @@ public final class Z80 {
     this.machineCycles = 3L;
   }
 
-  /**
-   * Parse string with id of registers and prepare bit vector for it.
-   *
-   * @param regs string, allowed chars A,F,B.C,D,E,H,L,X,Y,1 (1 means F but save C bit)
-   * @return formed bit vector
-   * @see #alignRegisterValuesWith(Z80, int)
-   * @since 2.0.1
-   */
-  public static int parseAndPackRegAlignValue(final String regs) {
-    final String allowedPositions = "AFBCDEHLXY1";
-    final String trimmed = regs.trim().toUpperCase(Locale.ENGLISH);
-    int result = 0;
-    for (final char c : trimmed.toCharArray()) {
-      final int index = allowedPositions.indexOf(c);
-      if (index < 0) {
-        throw new IllegalArgumentException("Unknown register: " + c + ", allowed only A,F,1,B,C,D,E,H,L,X,Y");
-      } else {
-        result |= 1 << index;
-      }
-    }
-    return result;
-  }
-
   private static int extractX(final int cmndByte) {
     return cmndByte >>> 6;
   }
@@ -628,6 +605,33 @@ public final class Z80 {
   }
 
   /**
+   * Parse string with id of registers and prepare bit vector for it.
+   * main set: <b>A,F,B,C,D,E,H,L,X,Y,1(F without C)</b>
+   * alt.set: <b>sa,f,b,c,d,e,h,l,2(F without C)</b>
+   * index: <b>X (IX), Y (IY)</b>
+   * spec: <b>P(PC),S(low),s(high)</b>
+   *
+   * @param regs string where each char means register or its part
+   * @return formed bit vector
+   * @see #alignRegisterValuesWith(Z80, int)
+   * @since 2.0.1
+   */
+  public static int parseAndPackRegAlignValue(final String regs) {
+    final String allowedPositions = "AFBCDEHLXY10PSsafbcdehl";
+    final String trimmed = regs.trim();
+    int result = 0;
+    for (final char c : trimmed.toCharArray()) {
+      final int index = allowedPositions.indexOf(c);
+      if (index < 0) {
+        throw new IllegalArgumentException("Unexpected char: " + c + " expected one from '" + allowedPositions + "'");
+      } else {
+        result |= 1 << index;
+      }
+    }
+    return result;
+  }
+
+  /**
    * Set value of some registers from source CPU.
    *
    * @param src                 source CPU must not be null
@@ -643,9 +647,7 @@ public final class Z80 {
     this.iff2 = src.iff2;
     this.im = src.im;
     this.regI = src.regI;
-    this.regPC = src.regPC;
     this.regR = src.regR;
-    this.regSP = src.regSP;
     this.insideBlockInstruction = src.insideBlockInstruction;
     this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
     this.prevINSignals = src.prevINSignals;
@@ -654,13 +656,41 @@ public final class Z80 {
     this.detectedNMI = src.detectedNMI;
 
     if (packedRegisterFlags != 0) {
+      //"AFBCDEHL XY10PSs afbcdehl"
       int pos = 0;
       while (packedRegisterFlags != 0) {
         if ((packedRegisterFlags & 1) != 0) {
-          if (pos == 10) {
-            this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
+          if (pos < 8) {
+            this.regSet[pos] = src.regSet[pos];
+          } else if (pos < 15) {
+            switch (pos - 8) {
+              case 0:
+                this.regIX = src.regIX;
+                break;
+              case 1:
+                this.regIY = src.regIY;
+                break;
+              case 2:
+                this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
+                break;
+              case 3:
+                this.altRegSet[REG_F] = (byte) ((this.altRegSet[REG_F] & FLAG_C) | (src.altRegSet[REG_F] & ~FLAG_C));
+                break;
+              case 4:
+                this.regPC = src.regPC;
+                break;
+              case 5:
+                this.regSP = (this.regSP & 0xFF00) | (src.regSP & 0xFF);
+                break;
+              case 6:
+                this.regSP = (this.regSP & 0xFF) | (src.regSP & 0xFF00);
+                break;
+              default:
+                throw new Error("Unexpected state");
+            }
           } else {
-            this.setRegister(pos, src.getRegister(pos));
+            final int reg = pos - 15;
+            this.altRegSet[reg] = src.altRegSet[reg];
           }
         }
         packedRegisterFlags >>>= 1;
