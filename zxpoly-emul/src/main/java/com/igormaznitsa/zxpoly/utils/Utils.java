@@ -28,6 +28,28 @@ public final class Utils {
   private Utils() {
   }
 
+  public static int[] alignPaletteColors(final int[] dstPalette, final int[] etalPalette) {
+    final int[] result = dstPalette.clone();
+
+    for (int i = 0; i < result.length; i++) {
+      final int r = (result[i] >>> 16) & 0xFF;
+      final int g = (result[i] >>> 8) & 0xFF;
+      final int b = result[i] & 0xFF;
+      double dist = Double.MAX_VALUE;
+      for (final int value : etalPalette) {
+        final int rr = (value >>> 16) & 0xFF;
+        final int gg = (value >>> 8) & 0xFF;
+        final int bb = value & 0xFF;
+        final double cdist = Math.sqrt(Math.pow((double) rr - r, 2) + Math.pow((double) gg - g, 2) + Math.pow((double) bb - b, 2));
+        if (cdist < dist) {
+          dist = cdist;
+          result[i] = value;
+        }
+      }
+    }
+    return result;
+  }
+
   public static int[] readRawPalette(final InputStream in, final boolean close) {
     final int[] result = new int[256];
 

@@ -54,7 +54,7 @@ public final class Spec256AGifEncoder implements AnimationEncoder {
     this.stream.write(0);
     this.stream.write(0);
 
-    for (final int i : VideoController.SPEC256PAL) {
+    for (final int i : VideoController.PALETTE_SPEC256) {
       final int r = (i >>> 16) & 0xFF;
       final int g = (i >>> 8) & 0xFF;
       final int b = i & 0xFF;
@@ -142,8 +142,7 @@ public final class Spec256AGifEncoder implements AnimationEncoder {
     this.stream.write(0); // flag
 
     for (int i = 0; i < VideoController.SCREEN_WIDTH * VideoController.SCREEN_HEIGHT; i++) {
-      //TODO find index for color
-      final int ci = 0;
+      final int ci = VideoController.spec256rgbColorToIndex(rgbPixels[i]);
       if (ci < 0) {
         throw new IOException("Detected unsupported color in buffer [" + Integer.toHexString(rgbPixels[i]) + ']');
       }

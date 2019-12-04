@@ -53,7 +53,7 @@ public final class ZxPolyAGifEncoder implements AnimationEncoder {
     this.stream.write(0);
     this.stream.write(0);
 
-    for (final int i : VideoController.ZXPALETTE) {
+    for (final int i : VideoController.PALETTE_ZXPOLY) {
       final int r = (i >>> 16) & 0xFF;
       final int g = (i >>> 8) & 0xFF;
       final int b = i & 0xFF;

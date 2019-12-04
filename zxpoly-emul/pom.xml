@@ -53,7 +53,7 @@
     <profile>
       <id>publish</id>
       <properties>
-        <openjdk.bundled>13.0.1</openjdk.bundled>
+        <openjdk.bundled>13.0.1+10</openjdk.bundled>
       </properties>
       <build>
         <plugins>
