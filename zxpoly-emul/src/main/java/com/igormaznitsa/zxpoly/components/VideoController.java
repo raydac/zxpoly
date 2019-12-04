@@ -87,7 +87,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       new Color(255, 255, 255)
   };
 
-  private static final int[] SPEC256PAL = Utils.readRawPalette(VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/spec256.raw.pal"), true);
+  public static final int[] SPEC256PAL = Utils.readRawPalette(VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/spec256.raw.pal"), true);
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
@@ -149,94 +149,98 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     }
   }
 
-  private static void fillDataBufferForVideoMode(
-      final int videoMode,
+  private static void fillDataBufferForSpec256VideoMode(
+      final ZxPolyModule[] modules,
+      final int[] pixelRgbBuffer,
+      final boolean flashActive
+  ) {
+    final int[] prerendededGfxBack = gfxPrerenderedBack;
+    final boolean bkOverFF = gfxBackOverFF;
+
+    if (prerendededGfxBack != null) {
+      System.arraycopy(prerendededGfxBack, 0, pixelRgbBuffer, 0, prerendededGfxBack.length);
+    }
+
+    final int downAttrMixedIndex = gfxDownColorsMixed;
+    final int upAttrMixedIndex = 0xFF - gfxUpColorsMixed;
+
+    final ZxPolyModule sourceModule = modules[0];
+    int offset = 0;
+    int aoffset = 0;
+    int coordY = 0;
+    for (int i = 0; i < 0x1800; i++) {
+      if ((i & 0x1F) == 0) {
+        // the first byte in the line
+        coordY = extractYFromAddress(i);
+        aoffset = calcAttributeAddressZxMode(i);
+        offset = coordY << 10;
+      }
+
+      final int attrOffset = aoffset++;
+      long pixelData = sourceModule.readGfxVideo(i);
+      final int attrData = sourceModule.readVideo(attrOffset);
+      final int inkColor = extractInkColor(attrData, flashActive);
+      final int paperColor = extractPaperColor(attrData, flashActive);
+
+      int x = 8;
+      while (x-- > 0) {
+        final int colorIndex = (int) ((pixelData >>> 56) & 0xFF);
+        int color = SPEC256PAL[colorIndex];
+        boolean draw = true;
+
+        final boolean colorForInk = colorIndex == 0xFF;
+
+        if (colorForInk || colorIndex == 0) {
+          if (prerendededGfxBack == null) {
+            color = colorForInk ? inkColor : color;
+          } else {
+            if (colorForInk) {
+              if (bkOverFF) {
+                draw = false;
+              } else {
+                color = inkColor;
+              }
+            } else {
+              draw = false;
+            }
+          }
+        } else if (prerendededGfxBack != null) {
+          // TODO still it is unknown what means "Attribute mixing", code below is just some stub
+          if (colorIndex < downAttrMixedIndex) {
+            color = SPEC256PAL[colorIndex + ((attrData >> 3) & 7)];
+          } else if (colorIndex > upAttrMixedIndex) {
+            color = SPEC256PAL[colorIndex - ((attrData >> 3) & 7)];
+          }
+        }
+
+        pixelData <<= 8;
+
+        if (draw) {
+          pixelRgbBuffer[offset] = color;
+          pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
+          pixelRgbBuffer[++offset] = color;
+          pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+        } else {
+          offset += 2;
+        }
+      }
+    }
+  }
+
+  private static void fillDataBufferForZxPolyVideoMode(
+      final int zxPolyVideoMode,
       final ZxPolyModule[] modules,
       final int[] pixelRgbBuffer,
       final byte[] lastRenderedGfxData,
       final boolean flashActive,
       final boolean allowAlreadyRenderedCheck
   ) {
-    switch (videoMode) {
-      case VIDEOMODE_SPEC256: {
-        final int[] prerendededGfxBack = gfxPrerenderedBack;
-        final boolean bkOverFF = gfxBackOverFF;
-
-        if (prerendededGfxBack != null) {
-          System.arraycopy(prerendededGfxBack, 0, pixelRgbBuffer, 0, prerendededGfxBack.length);
-        }
-
-        final int downAttrMixedIndex = gfxDownColorsMixed;
-        final int upAttrMixedIndex = 0xFF - gfxUpColorsMixed;
-
-        final ZxPolyModule sourceModule = modules[0];
-        int offset = 0;
-        int aoffset = 0;
-        int coordY = 0;
-        for (int i = 0; i < 0x1800; i++) {
-          if ((i & 0x1F) == 0) {
-            // the first byte in the line
-            coordY = extractYFromAddress(i);
-            aoffset = calcAttributeAddressZxMode(i);
-            offset = coordY << 10;
-          }
-
-          final int attrOffset = aoffset++;
-          long pixelData = sourceModule.readGfxVideo(i);
-          final int attrData = sourceModule.readVideo(attrOffset);
-          final int inkColor = extractInkColor(attrData, flashActive);
-          final int paperColor = extractPaperColor(attrData, flashActive);
-
-          int x = 8;
-          while (x-- > 0) {
-            final int colorIndex = (int) ((pixelData >>> 56) & 0xFF);
-            int color = SPEC256PAL[colorIndex];
-            boolean draw = true;
-
-            final boolean colorForInk = colorIndex == 0xFF;
-
-            if (colorForInk || colorIndex == 0) {
-              if (prerendededGfxBack == null) {
-                color = colorForInk ? inkColor : color;
-              } else {
-                if (colorForInk) {
-                  if (bkOverFF) {
-                    draw = false;
-                  } else {
-                    color = inkColor;
-                  }
-                } else {
-                  draw = false;
-                }
-              }
-            } else if (prerendededGfxBack != null) {
-              // TODO still it is unknown what means "Attribute mixing", code below is just some stub
-              if (colorIndex < downAttrMixedIndex) {
-                color = SPEC256PAL[colorIndex + ((attrData >> 3) & 7)];
-              } else if (colorIndex > upAttrMixedIndex) {
-                color = SPEC256PAL[colorIndex - ((attrData >> 3) & 7)];
-              }
-            }
-
-            pixelData <<= 8;
-
-            if (draw) {
-              pixelRgbBuffer[offset] = color;
-              pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
-              pixelRgbBuffer[++offset] = color;
-              pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
-            } else {
-              offset += 2;
-            }
-          }
-        }
-      }
-      break;
+    switch (zxPolyVideoMode) {
       case VIDEOMODE_ZX48_CPU0:
       case VIDEOMODE_ZX48_CPU1:
       case VIDEOMODE_ZX48_CPU2:
       case VIDEOMODE_ZX48_CPU3: {
-        final ZxPolyModule sourceModule = modules[videoMode & 0x3];
+        final ZxPolyModule sourceModule = modules[zxPolyVideoMode & 0x3];
 
         int offset = 0;
         int aoffset = 0;
@@ -303,7 +307,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
           int videoValue2 = module2.readVideo(i);
           int videoValue3 = module3.readVideo(i);
 
-          switch (videoMode) {
+          switch (zxPolyVideoMode) {
             case VIDEOMODE_ZXPOLY_256x192_INKPAPER_MASK: {
               final int attrModule0 = module0.readVideo(attributeoffset++);
 
@@ -465,7 +469,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       }
       break;
       default:
-        throw new Error("Unexpected video mode [" + videoMode + ']');
+        throw new Error("Unexpected video mode [" + zxPolyVideoMode + ']');
     }
   }
 
@@ -712,15 +716,23 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     }
   }
 
-  private void refreshBufferData() {
-    fillDataBufferForVideoMode(
-        this.currentVideoMode,
-        this.modules,
-        this.bufferImageRgbData,
-        this.lastRenderedZxData,
-        this.board.isFlashActive(),
-        true
-    );
+  private void refreshBufferData(final boolean spec256) {
+    if (spec256) {
+      fillDataBufferForSpec256VideoMode(
+          this.modules,
+          this.bufferImageRgbData,
+          this.board.isFlashActive()
+      );
+    } else {
+      fillDataBufferForZxPolyVideoMode(
+          this.currentVideoMode,
+          this.modules,
+          this.bufferImageRgbData,
+          this.lastRenderedZxData,
+          this.board.isFlashActive(),
+          true
+      );
+    }
   }
 
   public void drawBuffer(final Graphics2D gfx, final int x, final int y, final float zoom) {
@@ -769,7 +781,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
         }
         this.currentVideoMode = newVideoMode;
         log.log(Level.INFO, "mode set: " + decodeVideoModeCode(newVideoMode));
-        refreshBufferData();
+        refreshBufferData(this.currentVideoMode == VIDEOMODE_SPEC256);
       }
     } finally {
       unlockBuffer();
@@ -792,7 +804,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   public void updateBuffer() {
     lockBuffer();
     try {
-      this.refreshBufferData();
+      this.refreshBufferData(this.currentVideoMode == VIDEOMODE_SPEC256);
     } finally {
       unlockBuffer();
     }
@@ -805,7 +817,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
       BufferedImage buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(
+      fillDataBufferForZxPolyVideoMode(
           this.currentVideoMode,
           this.modules,
           this.bufferImageRgbData,
@@ -819,7 +831,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
       buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(
+      fillDataBufferForZxPolyVideoMode(
           VIDEOMODE_ZX48_CPU0,
           this.modules,
           this.bufferImageRgbData,
@@ -833,7 +845,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
       buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(
+      fillDataBufferForZxPolyVideoMode(
           VIDEOMODE_ZX48_CPU1,
           this.modules,
           this.bufferImageRgbData,
@@ -847,7 +859,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
       buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(
+      fillDataBufferForZxPolyVideoMode(
           VIDEOMODE_ZX48_CPU2,
           this.modules,
           this.bufferImageRgbData,
@@ -861,7 +873,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
       buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
-      fillDataBufferForVideoMode(
+      fillDataBufferForZxPolyVideoMode(
           VIDEOMODE_ZX48_CPU3,
           this.modules,
           this.bufferImageRgbData,
@@ -875,7 +887,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
       return result.toArray(EMPTY_ARRAY);
     } finally {
-      refreshBufferData();
+      refreshBufferData(false);
       this.unlockBuffer();
     }
   }

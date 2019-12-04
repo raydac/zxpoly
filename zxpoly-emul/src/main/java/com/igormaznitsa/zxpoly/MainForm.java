@@ -24,7 +24,8 @@ import static com.igormaznitsa.z80.Utils.toHexByte;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
-import com.igormaznitsa.zxpoly.animeencoders.ZXPolyAGifEncoder;
+import com.igormaznitsa.zxpoly.animeencoders.Spec256AGifEncoder;
+import com.igormaznitsa.zxpoly.animeencoders.ZxPolyAGifEncoder;
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.KempstonMouse;
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
@@ -460,7 +461,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             try {
               theAnimationEncoder.saveFrame(board.getVideoController().makeCopyOfVideoBuffer());
             } catch (IOException ex) {
-              LOGGER.warning("Can't write animation frame");
+              LOGGER.warning("Can't write animation frame: " + ex.getMessage());
             }
           }
         }
@@ -1409,7 +1410,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         }
         this.lastAnimGifOptions = panel.getValue();
         try {
-          encoder = new ZXPolyAGifEncoder(new File(this.lastAnimGifOptions.filePath), this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
+          if (this.board.getBoardMode() == BoardMode.SPEC256) {
+            encoder = new Spec256AGifEncoder(new File(this.lastAnimGifOptions.filePath), this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
+          } else {
+            encoder = new ZxPolyAGifEncoder(new File(this.lastAnimGifOptions.filePath), this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
+          }
         } catch (IOException ex) {
           LOGGER.log(Level.SEVERE, "Can't create GIF encoder", ex);
           return;

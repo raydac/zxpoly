@@ -29,7 +29,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public final class ZXPolyAGifEncoder implements AnimationEncoder {
+public final class ZxPolyAGifEncoder implements AnimationEncoder {
 
   private final JBBPBitOutputStream stream;
   private final int intsBetweenFrames;
@@ -37,7 +37,7 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
   private final byte[] dataBuffer256 = new byte[256];
   private final byte[] indexBuffer = new byte[VideoController.SCREEN_WIDTH * VideoController.SCREEN_HEIGHT];
 
-  public ZXPolyAGifEncoder(final File file, final int frameRate, final boolean loop) throws IOException {
+  public ZxPolyAGifEncoder(final File file, final int frameRate, final boolean loop) throws IOException {
     this.stream = new JBBPBitOutputStream(new BufferedOutputStream(new FileOutputStream(file), 0xFFFF));
     this.intsBetweenFrames = (int) (1000 / MainForm.TIMER_INT_DELAY_MILLISECONDS) / frameRate;
     this.frameDelay = (int) (this.intsBetweenFrames * MainForm.TIMER_INT_DELAY_MILLISECONDS) / 10;
@@ -148,7 +148,7 @@ public final class ZXPolyAGifEncoder implements AnimationEncoder {
       this.indexBuffer[i] = (byte) ci;
     }
     this.stream.write(4);
-    ZXPolyAGifEncoder.compress(this.stream, 4, this.indexBuffer, this.dataBuffer256);
+    ZxPolyAGifEncoder.compress(this.stream, 4, this.indexBuffer, this.dataBuffer256);
     this.stream.write(0);
 
   }
