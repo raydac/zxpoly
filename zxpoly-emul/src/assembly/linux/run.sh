@@ -5,9 +5,9 @@ LOG_FILE=$ZXPOLY_HOME/console.log
 JAVA_HOME=$ZXPOLY_HOME/jre
 
 #JAVA_EXTRA_GFX_FLAGS="-Dcom.sun.management.jmxremote=true -Dsun.java2d.opengl=true"
-JAVA_EXTRA_GFX_FLAGS="-Dsun.java2d.opengl=true"
+#JAVA_EXTRA_GFX_FLAGS="-Dsun.java2d.opengl=true"
 
-JAVA_FLAGS="-client -XX:+IgnoreUnrecognizedVMOptions --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED -Dsun.java2d.dpiaware=true -Dswing.aatext=false -Dawt.useSystemAAFontSettings=off"
+JAVA_FLAGS="-XX:+IgnoreUnrecognizedVMOptions --add-opens=java.base/java.util=ALL-UNNAMED -Dsun.java2d.dpiaware=true -Dswing.aatext=false -Dawt.useSystemAAFontSettings=off"
 
 JAVA_RUN=$JAVA_HOME/bin/java
 
