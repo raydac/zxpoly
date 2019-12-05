@@ -1,4 +1,5 @@
 // base of registers for some known adapted spec256 games
+// allowed A,F,B,C,D,E,H,L,X,x,Y,y,1,0,P,S,s,a,f,b,c,d,e,h,l
 
 rene256,eccdc84f404e341db54f96bd6230ac35ca7ee9a101d96c81210d3b8203f53043,DEPSs
 sabrew,3e74bfeefe7b69d163a12e001ae4ce6416a43ada28fc32569ad2df747d1b83e9,HLXxYyFPSs
