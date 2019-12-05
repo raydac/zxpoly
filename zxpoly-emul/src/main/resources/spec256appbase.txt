@@ -1,5 +1,13 @@
 // base of registers for some known adapted spec256 games
 // allowed A,F,B,C,D,E,H,L,X,x,Y,y,1,0,P,S,s,a,f,b,c,d,e,h,l
+//-----------------------------------
+// reg.set: A,F,B,C,D,E,H,L,1(F without C)
+// alt.set: a,f,b,c,d,e,h,l,0(F' without C)
+// indexex: X(high byte IX), x(lower byte IX),Y(high byte IY), y(lower byte IY)
+// special: P(PC),S(high byte SP),s(lower byte SP)
+//-----------------------------------
+
+
 
 rene256,eccdc84f404e341db54f96bd6230ac35ca7ee9a101d96c81210d3b8203f53043,DEPSs
 sabrew,3e74bfeefe7b69d163a12e001ae4ce6416a43ada28fc32569ad2df747d1b83e9,HLXxYyFPSs

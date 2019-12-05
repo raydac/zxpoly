@@ -607,7 +607,7 @@ public final class Z80 {
   /**
    * Parse string with id of registers and prepare bit vector for it.
    * main set: <b>A,F,B,C,D,E,H,L,1(F without C)</b>
-   * alt.set: <b>sa,f,b,c,d,e,h,l,2(F without C)</b>
+   * alt.set: <b>sa,f,b,c,d,e,h,l,0(F' without C)</b>
    * index: <b>X(high byte IX), x(lower byte IX),Y(high byte IY), y(lower byte IY)</b>
    * spec: <b>P(PC),S(high byte SP),s(lower byte SP)</b>
    *
