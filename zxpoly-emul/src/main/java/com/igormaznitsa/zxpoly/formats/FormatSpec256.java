@@ -148,9 +148,12 @@ public class FormatSpec256 extends Snapshot {
     });
 
     module.makeCopyOfRomToGfxRom();
-    archive.getGfxRoms().forEach(x -> {
-      module.writeGfxRomPage(x.getPageIndex(), gfx2gfxInternalBank(x.getData()));
-    });
+    if (!archive.getGfxRoms().isEmpty()) {
+      LOGGER.info("Snapshot provides adapted ROM");
+      archive.getGfxRoms().forEach(x -> {
+        module.writeGfxRomPage(x.getPageIndex(), gfx2gfxInternalBank(x.getData()));
+      });
+    }
 
     board.set3D00(0b1_00_000_0_1, true);
     vc.setBorderColor(parser.getBORDERCOLOR() & 7);
