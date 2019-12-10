@@ -443,7 +443,12 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         result = memoryByteForAddress(value7FFD, this.trdosRomActive, address);
       }
     } else {
-      result = readGfxMemory(ctx, this.gfxPort7FFD, this.gfxTrDosRomActive, address);
+      if (cmdOrPrefix) {
+        // read command from non-changed memory area
+        result = memoryByteForAddress(this.gfxPort7FFD, this.gfxTrDosRomActive, address);
+      } else {
+        result = readGfxMemory(ctx, this.gfxPort7FFD, this.gfxTrDosRomActive, address);
+      }
     }
     return result;
   }

@@ -535,28 +535,28 @@ public final class Z80 {
     final boolean result;
     final int flags = this.regSet[REG_F];
     switch (cc) {
-      case 0:
+      case 0: // NZ
         result = (flags & FLAG_Z) == 0;
         break;
-      case 1:
+      case 1: // Z
         result = (flags & FLAG_Z) != 0;
         break;
-      case 2:
+      case 2: // NC
         result = (flags & FLAG_C) == 0;
         break;
-      case 3:
+      case 3: // C
         result = (flags & FLAG_C) != 0;
         break;
-      case 4:
+      case 4: // PO
         result = (flags & FLAG_PV) == 0;
         break;
-      case 5:
+      case 5: // PE
         result = (flags & FLAG_PV) != 0;
         break;
-      case 6:
+      case 6: // P
         result = (flags & FLAG_S) == 0;
         break;
-      case 7:
+      case 7: // M
         result = (flags & FLAG_S) != 0;
         break;
       default:
