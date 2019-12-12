@@ -395,6 +395,19 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
+  public byte readMemoryForReg(final Z80 z80, final int ctx, final int reg, final int address) {
+    if (ctx == 0) {
+      return this.readMemory(z80, ctx, address, false, false);
+    } else {
+      if (reg == Z80.REG_PC) {
+        return memoryByteForAddress(this.gfxPort7FFD, this.gfxTrDosRomActive, address);
+      } else {
+        return readGfxMemory(ctx, this.gfxPort7FFD, this.gfxTrDosRomActive, address);
+      }
+    }
+  }
+
+  @Override
   public byte readMemory(final Z80 cpu, final int ctx, final int address, final boolean m1, final boolean cmdOrPrefix) {
     final byte result;
 
