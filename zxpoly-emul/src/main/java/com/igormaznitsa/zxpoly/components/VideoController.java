@@ -180,7 +180,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       long pixelData = sourceModule.readGfxVideo(i);
       final int attrData = sourceModule.readVideo(attrOffset);
       final int inkColor = extractInkColorSpec256(attrData, flashActive);
-//      final int paperColor = extractPaperColor(attrData, flashActive);
+      final int paperColor = extractPaperColor(attrData, flashActive);
 
       int x = 8;
       while (x-- > 0) {
@@ -204,7 +204,13 @@ public final class VideoController extends JComponent implements ZxPolyConstants
               draw = false;
             }
           }
-        } else if (prerendededGfxBack != null) {
+        } else if (prerendededGfxBack == null) {
+          if (inkColor == paperColor) {
+            // fill the pixel by ink color from attributes
+            // because it was hidden in original game
+            color = inkColor;
+          }
+        } else {
           // TODO still it is unknown what means "Attribute mixing", code below is just some stub
           if (colorIndex < downAttrMixedIndex) {
             color = PALETTE_SPEC256[colorIndex + ((attrData >> 3) & 7)];
