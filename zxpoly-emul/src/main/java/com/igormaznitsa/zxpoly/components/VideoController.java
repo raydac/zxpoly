@@ -93,7 +93,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
-  private static final int BORDER_LINES = 64;
+  private static final int BORDER_LINES = 48;
   private static final long MCYCLES_PER_BORDER_LINE = CYCLES_BETWEEN_INT / BORDER_LINES;
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private static volatile boolean gfxBackOverFF = false;
@@ -711,16 +711,11 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   private void drawBorder(final Graphics2D g, final int width, final int height) {
     int curindex = -1;
     int y = 0;
-    int curheight = height;
-    final int lineHeight = (height + (BORDER_LINES >> 1)) / BORDER_LINES;
+    final int lineHeight = Math.max(2, Math.round((float) height / BORDER_LINES));
     for (final byte c : this.borderLineColors) {
-      if (curindex != c) {
-        curindex = c;
-        g.setColor(PALETTE_ZXPOLY_COLORS[c]);
-        g.fillRect(0, y, width, curheight);
-      }
+      g.setColor(PALETTE_ZXPOLY_COLORS[c]);
+      g.fillRect(0, y, width, lineHeight);
       y += lineHeight;
-      curheight -= lineHeight;
     }
     Arrays.fill(this.borderLineColors, (byte) (this.portFEw & 7));
   }
