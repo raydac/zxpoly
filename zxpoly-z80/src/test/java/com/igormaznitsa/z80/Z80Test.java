@@ -31,11 +31,6 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = new Z80(new Z80CPUBus() {
 
       @Override
-      public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
-        return this.readMemory(z80, ctx, address, false, false);
-      }
-
-      @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
         return 0;
       }
@@ -5518,11 +5513,6 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = new Z80(new Z80CPUBus() {
 
       @Override
-      public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
-        return this.readMemory(z80, ctx, address, false, false);
-      }
-
-      @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
         return memory[address];
       }
@@ -5584,11 +5574,6 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testIntProcessing_IM1() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
-
-      @Override
-      public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
-        return this.readMemory(z80, ctx, address, false, false);
-      }
 
       @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
@@ -5663,11 +5648,6 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testIntProcessing_IM2() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
-      @Override
-      public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
-        return this.readMemory(z80, ctx, address, false, false);
-      }
-
       @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
         return memory[address];
@@ -5756,11 +5736,6 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testIntProcessing_EI_RET_RST38() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
-      @Override
-      public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
-        return this.readMemory(z80, ctx, address, false, false);
-      }
-
       @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
         return memory[address];

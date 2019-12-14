@@ -106,11 +106,6 @@ public abstract class AbstractZ80Test {
     final Z80CPUBus bus = new Z80CPUBus() {
 
       @Override
-      public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
-        return this.readMemory(z80, ctx, address, false, false);
-      }
-
-      @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {
         return memory[address];
       }
@@ -171,11 +166,6 @@ public abstract class AbstractZ80Test {
     }
 
     final Z80CPUBus bus = new Z80CPUBus() {
-
-      @Override
-      public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
-        return this.readMemory(z80, ctx, address, false, false);
-      }
 
       @Override
       public byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix) {

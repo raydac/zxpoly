@@ -481,11 +481,6 @@ public final class Z80 {
     this.machineCycles += 4;
   }
 
-  private int _readmemForReg8(final int ctx, final int reg, final int address) {
-    this.machineCycles += 3;
-    return this.bus.readMemoryToPlaceInReg(this, ctx, reg, address & 0xFFFF) & 0xFF;
-  }
-
   private int _readmem8(final int ctx, final int address) {
     this.machineCycles += 3;
     return this.bus.readMemory(this, ctx, address & 0xFFFF, false, false) & 0xFF;
@@ -1754,7 +1749,7 @@ public final class Z80 {
 
   private void doLD_A_mem(final int ctx) {
     final int address = _read16_for_pc(ctx);
-    setRegister(REG_A, _readmemForReg8(ctx, REG_A, address));
+    setRegister(REG_A, _readmem8(ctx, address));
     this.setWZ(address + 1, false);
   }
 
@@ -1895,7 +1890,7 @@ public final class Z80 {
     if (checkCondition(y)) {
       final int sp = this.regSP;
       int sp1 = sp + 1;
-      this.regPC = _readmemForReg8(ctx, REG_PC, sp) | (_readmemForReg8(ctx, REG_PC, sp1++) << 8);
+      this.regPC = _readmem8(ctx, sp) | (_readmem8(ctx, sp1++) << 8);
       this.setWZ(this.regPC, false);
       this.regSP = sp1 & 0xFFFF;
     }
@@ -1905,7 +1900,7 @@ public final class Z80 {
   private void doRET(final int ctx) {
     final int sp = this.regSP;
     int sp1 = sp + 1;
-    this.regPC = _readmemForReg8(ctx, REG_PC, sp) | (_readmemForReg8(ctx, REG_PC, sp1++) << 8);
+    this.regPC = _readmem8(ctx, sp) | (_readmem8(ctx, sp1++) << 8);
     this.setWZ(this.regPC, false);
     this.regSP = sp1 & 0xFFFF;
   }
@@ -1980,7 +1975,7 @@ public final class Z80 {
   private void doEX_mSP_HL(final int ctx) {
     final int stacktop = this.regSP;
     final int hl = readReg16(2);
-    final int value = _readmemForReg8(ctx, REG_L, stacktop) | (_readmemForReg8(ctx, REG_H, stacktop + 1) << 8);
+    final int value = _readmem8(ctx, stacktop) | (_readmem8(ctx, stacktop + 1) << 8);
     this.setWZ(value, false);
     writeReg16(2, value);
     _writemem8(ctx, stacktop, (byte) hl);
@@ -2461,7 +2456,7 @@ public final class Z80 {
 
   private void doLD_A_mBC(final int ctx) {
     final int addr = this.getRegisterPair(REGPAIR_BC);
-    setRegister(REG_A, _readmemForReg8(ctx, REG_A, addr));
+    setRegister(REG_A, _readmem8(ctx, addr));
     this.setWZ(addr + 1, false);
   }
 
@@ -2480,7 +2475,7 @@ public final class Z80 {
 
   private void doLD_A_mDE(final int ctx) {
     final int addr = this.getRegisterPair(REGPAIR_DE);
-    setRegister(REG_A, _readmemForReg8(ctx, REG_A, addr));
+    setRegister(REG_A, _readmem8(ctx, addr));
     this.setWZ(addr + 1, false);
   }
 
