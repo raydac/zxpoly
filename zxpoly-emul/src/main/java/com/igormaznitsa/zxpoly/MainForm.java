@@ -52,6 +52,7 @@ import com.igormaznitsa.zxpoly.utils.RomLoader;
 import com.igormaznitsa.zxpoly.utils.Utils;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.Image;
@@ -71,6 +72,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -184,6 +186,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenuItem menuFileSelectDiskD;
   private JMenu menuHelp;
   private JMenuItem menuHelpAbout;
+  private JMenuItem menuHelpDonation;
   private JMenu menuLoadDrive;
   private JMenu menuOptions;
   private JCheckBoxMenuItem menuOptionsEnableTrapMouse;
@@ -660,6 +663,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsEnableTrapMouse = new JCheckBoxMenuItem();
     menuHelp = new JMenu();
     menuHelpAbout = new JMenuItem();
+    menuHelpDonation = new JMenuItem();
 
     setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
     setLocationByPlatform(true);
@@ -949,6 +953,19 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuHelpAbout.setText("Help");
     menuHelpAbout.addActionListener(this::menuHelpAboutActionPerformed);
     menuHelp.add(menuHelpAbout);
+
+    menuHelpDonation.setText("Make donation");
+    menuHelpDonation.addActionListener(e -> {
+      if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+        try {
+          Desktop.getDesktop().browse(new URI("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AHWJHJFBAWGL2"));
+        } catch (Exception ex) {
+          LOGGER.warning("Can't open link: " + ex.getMessage());
+        }
+      }
+    });
+    menuHelpDonation.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/donate.png"))); // NOI18N
+    menuHelp.add(menuHelpDonation);
 
     menuBar.add(menuHelp);
 
