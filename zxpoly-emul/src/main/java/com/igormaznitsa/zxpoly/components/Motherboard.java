@@ -99,7 +99,7 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.spec256GfxCores = new Z80[SPEC256_GFX_CORES];
     for (int i = 0; i < SPEC256_GFX_CORES; i++) {
-      this.spec256GfxCores[i] = new Z80(this.modules[0].getCpu(), true);
+      this.spec256GfxCores[i] = new Z80(this.modules[0].getCpu());
     }
   }
 

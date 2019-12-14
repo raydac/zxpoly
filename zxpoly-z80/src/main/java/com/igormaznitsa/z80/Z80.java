@@ -103,7 +103,6 @@ public final class Z80 {
   private final Z80CPUBus bus;
   private final byte[] regSet = new byte[8];
   private final byte[] altRegSet = new byte[8];
-  private final boolean gfxCore;
   private boolean iff1;
   private boolean iff2;
   private int im;
@@ -132,14 +131,9 @@ public final class Z80 {
   private int resetCycle = 0;
 
   public Z80(final Z80CPUBus bus) {
-    this(bus, false);
-  }
-
-  public Z80(final Z80CPUBus bus, final boolean gfxCore) {
     if (bus == null) {
       throw new NullPointerException("The CPU BUS must not be null");
     }
-    this.gfxCore = gfxCore;
     this.bus = bus;
     _reset(0);
     _reset(1);
@@ -197,10 +191,6 @@ public final class Z80 {
     this.insideBlockInstruction = src.insideBlockInstruction;
     this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
     return this;
-  }
-
-  public Z80(final Z80 cpu) {
-    this(cpu, false);
   }
 
   public int getWZ(final boolean alt) {
@@ -576,8 +566,7 @@ public final class Z80 {
    *
    * @param cpu source CPU which state should be copied, must not be null
    */
-  public Z80(final Z80 cpu, final boolean gfxCore) {
-    this.gfxCore = gfxCore;
+  public Z80(final Z80 cpu) {
     this.prefix = cpu.prefix;
     this.resetCycle = cpu.resetCycle;
     this.iff1 = cpu.iff1;
