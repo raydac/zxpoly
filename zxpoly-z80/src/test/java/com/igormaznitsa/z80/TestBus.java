@@ -53,7 +53,7 @@ public final class TestBus implements Z80CPUBus {
   }
 
   @Override
-  public byte readMemoryForReg(Z80 z80, int ctx, int reg, int address) {
+  public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
     return this.readMemory(z80, ctx, address, false, false);
   }
 

@@ -31,7 +31,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = new Z80(new Z80CPUBus() {
 
       @Override
-      public byte readMemoryForReg(Z80 z80, int ctx, int reg, int address) {
+      public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
         return this.readMemory(z80, ctx, address, false, false);
       }
 
@@ -5518,7 +5518,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = new Z80(new Z80CPUBus() {
 
       @Override
-      public byte readMemoryForReg(Z80 z80, int ctx, int reg, int address) {
+      public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
         return this.readMemory(z80, ctx, address, false, false);
       }
 
@@ -5586,7 +5586,7 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = new Z80(new Z80CPUBus() {
 
       @Override
-      public byte readMemoryForReg(Z80 z80, int ctx, int reg, int address) {
+      public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
         return this.readMemory(z80, ctx, address, false, false);
       }
 
@@ -5664,7 +5664,7 @@ public class Z80Test extends AbstractZ80Test {
   public void testIntProcessing_IM2() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
       @Override
-      public byte readMemoryForReg(Z80 z80, int ctx, int reg, int address) {
+      public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
         return this.readMemory(z80, ctx, address, false, false);
       }
 
@@ -5757,7 +5757,7 @@ public class Z80Test extends AbstractZ80Test {
   public void testIntProcessing_EI_RET_RST38() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
       @Override
-      public byte readMemoryForReg(Z80 z80, int ctx, int reg, int address) {
+      public byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address) {
         return this.readMemory(z80, ctx, address, false, false);
       }
 

@@ -395,7 +395,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public byte readMemoryForReg(final Z80 z80, final int ctx, final int reg, final int address) {
+  public byte readMemoryToPlaceInReg(final Z80 z80, final int ctx, final int reg, final int address) {
     if (ctx == 0) {
       return this.readMemory(z80, ctx, address, false, false);
     } else {

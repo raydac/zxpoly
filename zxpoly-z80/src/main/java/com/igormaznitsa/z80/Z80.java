@@ -493,7 +493,7 @@ public final class Z80 {
 
   private int _readmemForReg8(final int ctx, final int reg, final int address) {
     this.machineCycles += 3;
-    return this.bus.readMemoryForReg(this, ctx, reg, address & 0xFFFF) & 0xFF;
+    return this.bus.readMemoryToPlaceInReg(this, ctx, reg, address & 0xFFFF) & 0xFF;
   }
 
   private int _readmem8(final int ctx, final int address) {

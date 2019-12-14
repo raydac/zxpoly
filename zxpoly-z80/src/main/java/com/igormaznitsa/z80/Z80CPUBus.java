@@ -20,7 +20,7 @@ package com.igormaznitsa.z80;
 public interface Z80CPUBus {
   byte readMemory(Z80 cpu, int ctx, int address, boolean m1, boolean cmdOrPrefix);
 
-  byte readMemoryForReg(Z80 z80, int ctx, int reg, int address);
+  byte readMemoryToPlaceInReg(Z80 z80, int ctx, int reg, int address);
 
   void writeMemory(Z80 cpu, int ctx, int address, byte data);
 
