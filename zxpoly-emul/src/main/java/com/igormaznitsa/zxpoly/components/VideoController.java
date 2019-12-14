@@ -219,6 +219,17 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 //          }
         }
 
+        if ((attrData & 0x80) != 0) {
+          // processing flash bit from original attribute
+          if (flashActive) {
+            if (prerendededGfxBack == null) {
+              color = flashActive ? inkColor : color;
+            } else {
+              draw = !flashActive;
+            }
+          }
+        }
+
         pixelData <<= 8;
 
         if (draw) {
