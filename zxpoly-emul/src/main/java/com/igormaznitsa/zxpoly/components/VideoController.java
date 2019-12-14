@@ -225,7 +225,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
             if (prerendededGfxBack == null) {
               color = flashActive ? inkColor : color;
             } else {
-              draw = !flashActive;
+              draw = false;
             }
           }
         }
