@@ -178,6 +178,8 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
       final int attrOffset = aoffset++;
       long pixelData = sourceModule.readGfxVideo(i);
+      int origData = sourceModule.readVideo(i);
+
       final int attrData = sourceModule.readVideo(attrOffset);
       final int inkColor = extractInkColorSpec256(attrData, flashActive);
       final int paperColor = extractPaperColor(attrData, flashActive);
@@ -185,6 +187,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       int x = 8;
       while (x-- > 0) {
         final int colorIndex = (int) ((pixelData >>> 56) & 0xFF);
+        final boolean origPixelSet = (origData & 0x80) != 0;
         int color = PALETTE_SPEC256[colorIndex];
         boolean draw = true;
 
@@ -223,7 +226,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
           // processing flash bit from original attribute
           if (flashActive) {
             if (prerendededGfxBack == null) {
-              color = inkColor; // paper color because flash phase
+              color = origPixelSet ? inkColor : color; // paper color because flash phase
             } else {
               draw = false;
             }
@@ -231,6 +234,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
         }
 
         pixelData <<= 8;
+        origData <<= 1;
 
         if (draw) {
           pixelRgbBuffer[offset] = color;
