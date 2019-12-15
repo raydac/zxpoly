@@ -1,0 +1,9 @@
+- __2.0.1 (15-dec-2019)__
+  - added support of Spec256 snapshots (as .ZIP with SNA)
+  - improved simulation of "port #FF"
+  - refactoring
+
+- __2.0.0 (20-nov-2019)__
+  - Disk images support: TRD,SCL
+  - Tape snapshot support: TAP
+  - Emulator snapshot support: Z80, SNA, ZXP

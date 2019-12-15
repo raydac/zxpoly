@@ -7,8 +7,8 @@
 ![ZX-Poly logo](docs/zxpoly_logo.png)
 
 # Changelog
-- __2.0.1-SNAPSHOT__
-  - added Spec256 snapshot support (zipped)
+- __2.0.1 (15-dec-2019)__
+  - added support of Spec256 snapshots (as .ZIP with SNA)
   - improved simulation of "port #FF"
   - refactoring
 
@@ -32,7 +32,7 @@ Keyboard plays role of ZX-Keyboard (ALT = SS, SHIFT = CS, CTRL+WHEEL = scaling),
 ![The Main Window of the Emulator](docs/screenshots/tapeloading.png)
 
 # Supported snapshot formats
- - Snapshots: .Z80, .SNA, .ZXP (ZX-Poly snapshot format)
+ - Snapshots: .Z80, .SNA, .ZXP (ZX-Poly snapshot format), ZIP (Spec256 with SNA inside)
  - Tape: .TAP (allows export to WAV file)
  - Disks: .TRD, .SCL
 
@@ -44,13 +44,13 @@ By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by 
 
 # Theory and structure of the ZX-Poly platform
 ![ZXPoly test ROM screen](docs/block_scheme.png)    
-The base of the platform is the theory that stable synchronous systems (without any inside random processes) built on the same components (because different element base can be also source of random processes) by being started synchronously in the same time from the same state have the same state in any point of time if all synchronous system components get the same input signal states in the same time.
+The base of the platform is the theory that stable synchronous systems (without any inside random processes) built on the same components (because different element base can be also source of random processes) by being started synchronously in the same time from the same state have the same state in any point of time if all synchronous system components get the same input signal states in the same time.   
 ![Structure of ZXPoly](docs/zxpolystruct.png)
 ZX-Poly platform adds several ports to manipulate work modes and the main port of the platform is #3D00. [In more details it is desribed in wiki.](https://github.com/raydac/zxpoly/wiki/Short-description-of-ZX-Poly-platform)
 
 # Supported videomodes
 ## Standard ZX-Spectrum 256x192 (2 colors per pixel in 8x8 block) (mode 0,1,2,3)
-It is just regular ZX-Spectrum mode 256x192 with 2 attributed colors for 8x8 pixel block.
+It is just regular ZX-Spectrum mode 256x192 with 2 attributed colors for 8x8 pixel block.   
 ![Standard ZX screenshot](docs/screenshots/atw_standard.png)
 
 ## ZX-Poly 256x192 (16 colors per pixel)
@@ -59,7 +59,7 @@ It is a family of video-modes and contain three sub-mode. All modes provide way 
 ### ZX-Poly 256x192 STANDARD (mode 4)
 
 It is just regular video mode without any masking. It just integrates pixel info from video-ram of all CPU modules and form 4 bit index in ZX-Spectrum palette.
-[TRD disk with the example can be downloaded from here, the game has been partly colorized](adapted/Atw2/target/atw2.trd)
+[TRD disk with the example can be downloaded from here, the game has been partly colorized](adapted/Atw2/target/atw2.trd)   
 ![ZXPoly256x192 screenshot](docs/screenshots/atw_zxpoly.png)   
 
 ### ZX-Poly 256x192 EXTENSION MASK_INK+PAPER (6)
@@ -73,12 +73,12 @@ It is the most complex from the video-mode family. It analyses FLASH bit of each
 
 ## ZX-Poly 512x384 (2 colors per pixel placed in chess order) (mode 5)
 The Mode uses attributes but places pixels in chess order.   
-[TRD disk with the example can be downloaded from here](adapted/ZxWord/target/zxword.trd)
-![ZXPoly512x384 animation](/adapted/ZxWord/screenshots/zxpoly_zxword_mode5.gif)
+[TRD disk with the example can be downloaded from here](adapted/ZxWord/target/zxword.trd)   
+![ZXPoly512x384 animation](adapted/ZxWord/screenshots/zxpoly_zxword_mode5.gif)
 
 # Adaptation of games
 
-To adapt old games, I have developed special utility called ZX-Poly Sprite corrector, which can be found in releases. It is a very easy editor which shows images in data blocks and allows to redraw them. It supports import from Z80 and SNA snapshots and as the result it generates ZXP snapshots.
+To adapt old games, I have developed special utility called ZX-Poly Sprite corrector, which can be found in releases. It is a very easy editor which shows images in data blocks and allows to redraw them. It supports import from Z80 and SNA snapshots and as the result it generates ZXP snapshots.   
 ![ZXPoly Sprite Corrector screenshot](docs/zxpoly_sprite_editor.png)
 
 ## "Official Father Christmas" (1989)
@@ -97,6 +97,18 @@ Adapted game version in ZX-Poly emulator format can be downloaded [from here](ad
 ## "Flying Shark" (1987)
 In november 2019, I made some adaptation of "Flying Shark" game for ZX-Poly 256x192 (mode 7). It shows possibility of combination of standard ZX-Spectrum colorization (for game panels) and ZX-Poly colorization (for game field). Snapshot for ZX-Poly emulator can be downloaded [from here](/adapted/FlyShark/flyshark.zxp).   
 ![Flying Shark animation](adapted/FlyShark/flyshark_video.gif)
+
+# Support of Spec256 emulation
+Since 2.0.1 version, some restricted [Spec256 platform](http://www.emulatronia.com/emusdaqui/spec256/index-eng.htm) emulation added. Because there is real difference in work of ZX-Poly emulator (which based on parallel CPUs) and [Spec256](http://www.emulatronia.com/emusdaqui/spec256/index-eng.htm) (which based on CPU with 64bit virtual registers), not all games work well, but many of them can be started and playable.   
+![ScoobyDoo for Spec256](docs/screenshots/Spec256emulationScoobyDoo.png)
+
+Known issues with emulation of listed games:
+ - __Knight lore__ doesn't work at all, looks like some problems with SNA snapshot
+ - __Bubbler__ is losing colorization for some game elements
+ - __Atic atac__ has some trash as footsteps of game elements
+ - __Solomon's key__ has some graphics trash
+
+In ZX-Poly emulator working in Spec256 mode, some CPU registers are syncronized every iteration (by default PC, SP and bits of F excluding C bit), but it works not for all games. In games which need another register set, there can be provided special `zxpAlignRegs` parameter in CFG file situated in snapshot archive. For instance `zxpAlignRegs=XxYyPSsHLb` means syncronization of IX,IY,PC,SP,H,L and B' registers.
 
 # F.A.Q.
 ## Is there a hardware implementation?
