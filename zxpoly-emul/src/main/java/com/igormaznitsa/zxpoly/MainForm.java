@@ -48,6 +48,7 @@ import com.igormaznitsa.zxpoly.ui.JIndicatorLabel;
 import com.igormaznitsa.zxpoly.ui.OptionsDialog;
 import com.igormaznitsa.zxpoly.ui.SelectTapPosDialog;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
+import com.igormaznitsa.zxpoly.utils.JHtmlLabel;
 import com.igormaznitsa.zxpoly.utils.RomLoader;
 import com.igormaznitsa.zxpoly.utils.Utils;
 import java.awt.Color;
@@ -1102,7 +1103,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     try {
       this.turnZxKeyboardOff();
       if (AppOptions.getInstance().isTestRomActive()) {
-        JOptionPane.showMessageDialog(MainForm.this, "<html><body><b>Test ROM is active!</b><br><br>ROM 128 is needed for snapshot loading.<br>Go to menu <b><i>File->Options</i></b> and choose ROM 128.</body></html>", "Test ROM detected", JOptionPane.ERROR_MESSAGE);
+        final JHtmlLabel label = new JHtmlLabel("<html><body>ZX-Spectrum 128 ROM is required to load snapshots.<br>Go to menu <b><i><a href=\"rom\">File->Options</i></b></i> and choose ROM 128.</body></html>");
+        label.addLinkListener((source, link) -> {
+          if ("rom".equals(link)) {
+            SwingUtilities.windowForComponent(source).setVisible(false);
+            SwingUtilities.invokeLater(() -> menuFileOptions.doClick());
+          }
+        });
+        JOptionPane.showMessageDialog(MainForm.this, label, "ZX-Spectrum ROM 128 image is required", JOptionPane.WARNING_MESSAGE);
         return;
       }
 
