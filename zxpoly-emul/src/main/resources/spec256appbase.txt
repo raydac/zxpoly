@@ -6,12 +6,17 @@
 // indexex: X(high byte IX), x(lower byte IX),Y(high byte IY), y(lower byte IY)
 // special: P(PC),S(high byte SP),s(lower byte SP)
 //-----------------------------------
+// Format:
+// <name of SNA file>,<SHA256 of SNA+GFX>,<SYNC_REG_LIST>
+//-----------------------------------
 
-// Can't work
+// Doesn't work at all!
+knlore,b3326007551c29790aa815603b335f33d90328286af777c96f53f054c3631edf,1PSsXxYy
+
+// Works not well
 aticatac,7709e8d128ae244022c8ae61299fda0c620c0e323ff69d02ed1dacad267961cf,f1PSsahlbcdeXxYy
 bubbler256,1b2d863b7b85315d71b56877ee26cb458c8746611789c23413bf2904278d19df,f1PSsHXxYyHhLl
 solomons,b045c9b0b8e827c2efaea4be6e74358aa7b6718e33f946e966b0ce334b66553f,1PSsXxYyBbCcLl
-knlore,b3326007551c29790aa815603b335f33d90328286af777c96f53f054c3631edf,PSsFfAaBbCcDdEeHhLlXxYy
 
 // working
 rene256,eccdc84f404e341db54f96bd6230ac35ca7ee9a101d96c81210d3b8203f53043,1DEPSs
