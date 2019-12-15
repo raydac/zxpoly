@@ -17,6 +17,9 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import static java.util.Arrays.fill;
+
+
 import com.igormaznitsa.zxpoly.formats.Spec256Arch;
 import com.igormaznitsa.zxpoly.utils.Utils;
 import java.awt.AlphaComposite;
@@ -32,11 +35,11 @@ import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.RenderedImage;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,6 +49,10 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
   public static final int SCREEN_WIDTH = 512;
   public static final int SCREEN_HEIGHT = 384;
+
+  private static final int PREFERRED_BORDER_WIDTH = 8;
+
+  private static final Dimension MINIMUM_SIZE = new Dimension(SCREEN_WIDTH + (PREFERRED_BORDER_WIDTH << 1), SCREEN_HEIGHT + (PREFERRED_BORDER_WIDTH << 1));
 
   public static final Image IMAGE_ZXKEYS = Utils.loadIcon("zxkeys.png");
   public static final long CYCLES_BETWEEN_INT = 20000000L / (1000000000L / Motherboard.CPU_FREQ);
@@ -692,32 +699,32 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
   @Override
   public Dimension getPreferredSize() {
-    return this.size;
+    return new Dimension(Math.max(this.size.width, MINIMUM_SIZE.width), Math.max(this.size.height, MINIMUM_SIZE.height));
   }
 
   @Override
   public Dimension getMinimumSize() {
-    return this.size;
+    return MINIMUM_SIZE;
   }
 
   private void updateZoom(final float value) {
     this.zoom = value;
     this.size = new Dimension(Math.round(SCREEN_WIDTH * value), Math.round(SCREEN_HEIGHT * value));
-
-    revalidate();
+    invalidate();
     repaint();
   }
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
-    int curindex = -1;
-    int y = 0;
-    final int lineHeight = Math.max(2, Math.round((float) height / BORDER_LINES));
+    final float lineHeight = Math.max(2, (float) height / BORDER_LINES);
+    float y = 0.0f;
+    final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
     for (final byte c : this.borderLineColors) {
       g.setColor(PALETTE_ZXPOLY_COLORS[c]);
-      g.fillRect(0, y, width, lineHeight);
+      rectangle.y = y;
+      g.fill(rectangle);
       y += lineHeight;
     }
-    Arrays.fill(this.borderLineColors, (byte) (this.portFEw & 7));
+    fill(this.borderLineColors, (byte) (this.portFEw & 7));
   }
 
   @Override
@@ -832,7 +839,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
   public void setBorderColor(final int colorIndex) {
     this.portFEw = (this.portFEw & 0xFFFFFFF8) | (colorIndex & 0x07);
-    Arrays.fill(this.borderLineColors, (byte) colorIndex);
+    fill(this.borderLineColors, (byte) colorIndex);
   }
 
   public void lockBuffer() {
