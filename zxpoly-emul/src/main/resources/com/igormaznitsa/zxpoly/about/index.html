@@ -6,26 +6,28 @@
   <body>
   <h2>ZX-Poly platform emulator</h2>
   <b>Version: </b>2.0.1<br>
-      <b>Author: </b><a href="http://www.igormaznitsa.com">Igor Maznitsa</a><br>
-      <b>Project page: </b> <a href="https://github.com/raydac/zxpoly">https://github.com/raydac/zxpoly</a><br>
-    <p>
-        ZX-Poly is attempt to jump over ZX-Spectrum limits and get way to have graphics without atribute clash. The
-        idea of the platform was developed by Igor Maznitsa in april 1994. The first emulator was developed in 1998 and
-        the current emulator was developed in 2014 to prove the idea.
-        <br><br>
-        By default the emulator emulates ZX-Poly platform but it is possible to turn on ZX-128 mode through item in <b>Options</b>
-        menu.
-    </p>
+  <b>Author: </b><a href="http://www.igormaznitsa.com">Igor Maznitsa</a><br>
+  <b>Project page: </b> <a href="https://github.com/raydac/zxpoly">https://github.com/raydac/zxpoly</a><br>
+  <p>
+      ZX-Poly is attempt to jump over ZX-Spectrum limits and get way to have graphics without atribute clash. The
+      idea of the platform was developed by Igor Maznitsa in april 1994. The first emulator was developed in 1998 and
+      the current emulator was developed in 2014 to prove the idea.
+      <br><br>
+      By default the emulator emulates ZX-Poly platform but it is possible to turn on ZX-128 mode through item in <b>Options</b>
+      menu.
+  </p>
+  <h3>License</h3>
+  The emulator is published under <a href="http://www.gnu.org/licenses/gpl.html">GNU GPL3 license</a>
   <h3>Supported formats</h3>
   <ol>
-      <li>Snapshots: Z80, ZXP, SNA</li>
+      <li>Snapshots: Z80, ZXP, SNA, ZIP (Spec256 SNA based)</li>
       <li>Disk format: TRD, SCL</li>
       <li>Tape format: TAP</li>
   </ol>
   <h3>Emulated components</h3>
-    <p>
-      <ol>
-          <li>ZX-Spectrum keyboard (<b>SHIFT = CAPS SHIFT</b>, <b>ALT = SYMBOL SHIFT</b>)</li>
+  <p>
+  <ol>
+      <li>ZX-Spectrum keyboard (<b>SHIFT = CAPS SHIFT</b>, <b>ALT = SYMBOL SHIFT</b>)</li>
         <li>Beta-disk interface</li>
         <li>Kempston mouse (one click by mouse on the emulator form - trap mouse, ESC - free mouse)</li>
           <li>Kempston joystick (emulated by cursor keys of keypad!)</li>
@@ -38,17 +40,21 @@
         <li>F3 - turbo mode</li>
         <li>F4 - play/pause TAP file if loaded</li>
         <li>F5 - show keyboard layout</li>
-        <li>F8 - make screenshot</li>
-        <li>F12- reset</li>
+          <li>F8 - make screenshot</li>
+          <li>F12- reset</li>
           <li>CTRL+mouse wheel - screen scale</li>
       </ul>
-    <h3>System properties</h3>
+  <h3>System properties</h3>
   Emulator supports two system properties:
-    <ul>
+  <ul>
       <li><b>zxpoly.rom.path</b> contains ROM file path</li>
       <li><b>zxpoly.int.ticks</b> number of INT ticks between screen refresh request</li>
-    </ul>
-    <h3>License</h3>
-  The emulator is published under <a href="http://www.gnu.org/licenses/gpl.html">GNU GPL3 license</a>
+  </ul>
+  <h3>Emulation of Spec256</h3>
+  Since 2.0.1 version, the emulator provides minimalistic support for <a
+          href="http://www.emulatronia.com/emusdaqui/spec256/index-eng.htm">Spec256</a> games. <a
+          href="http://www.emulatronia.com/emusdaqui/spec256/index-eng.htm">Spec256</a> games must be zipped and contain
+  SNA file in its archive. Because emulation based on multiple parallel working CPU (instead virtual 64 bit CPU in the
+  original emulator), some games can work not well.
   </body>
 </html>
