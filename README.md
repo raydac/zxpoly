@@ -8,7 +8,7 @@
 
 # Changelog
 - __2.0.1 (15-dec-2019)__
-  - added support of Spec256 snapshots (as .ZIP with SNA)
+  - added support of [Spec256 snapshots](http://www.emulatronia.com/emusdaqui/spec256/download-eng.htm) (as .ZIP with SNA)
   - improved simulation of "port #FF"
   - refactoring
 
