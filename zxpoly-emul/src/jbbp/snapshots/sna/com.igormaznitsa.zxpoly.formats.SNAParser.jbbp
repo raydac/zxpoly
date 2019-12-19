@@ -8,7 +8,7 @@ ubyte regI;
 <ushort regBC;
 <ushort regIY;
 <ushort regIX;
-ubyte interrupt;
+ubyte IFF2;
 ubyte regR;
 <ushort regAF;
 <ushort regSP;

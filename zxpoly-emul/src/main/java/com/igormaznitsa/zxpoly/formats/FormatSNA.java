@@ -71,7 +71,8 @@ public class FormatSNA extends Snapshot {
     cpu.setRegister(Z80.REG_R, parser.getREGR());
 
     cpu.setIM(parser.getINTMODE());
-    cpu.setIFF(true, (parser.getINTERRUPT() & 2) != 0);
+    final boolean iff = (parser.getIFF2() & 4) != 0;
+    cpu.setIFF(iff, iff);
 
     vc.writeIo(module, 0xFE, parser.getBORDERCOLOR());
     vc.setBorderColor(parser.getBORDERCOLOR());
@@ -151,7 +152,7 @@ public class FormatSNA extends Snapshot {
     parser.setREGR((char) cpu.getRegister(Z80.REG_R));
 
     parser.setINTMODE((char) cpu.getIM());
-    parser.setINTERRUPT((char) (cpu.isIFF1() ? 2 : 0));
+    parser.setIFF2((char) (cpu.isIFF1() ? 4 : 0));
 
     parser.setBORDERCOLOR((char) vc.getPortFE());
 

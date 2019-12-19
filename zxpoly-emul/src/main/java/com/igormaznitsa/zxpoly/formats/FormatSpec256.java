@@ -94,7 +94,8 @@ public class FormatSpec256 extends Snapshot {
     cpu.setRegister(Z80.REG_R, parser.getREGR());
 
     cpu.setIM(parser.getINTMODE());
-    cpu.setIFF(true, (parser.getINTERRUPT() & 2) != 0);
+    final boolean iff = (parser.getIFF2() & 4) != 0;
+    cpu.setIFF(iff, iff);
 
     final int offsetpage2 = 0x8000;
     final int offsetpage5 = 0x14000;
