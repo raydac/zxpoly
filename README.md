@@ -7,6 +7,10 @@
 ![ZX-Poly logo](docs/zxpoly_logo.png)
 
 # Changelog
+- __2.0.2-SNAPSHOT__
+  - fixed IFF restore bug in SNA open-write
+  - minor emulator GUI improvements
+  
 - __2.0.1 (15-dec-2019)__
   - added support of [Spec256 snapshots](http://www.emulatronia.com/emusdaqui/spec256/download-eng.htm) (as .ZIP with SNA)
   - improved simulation of "port #FF"
