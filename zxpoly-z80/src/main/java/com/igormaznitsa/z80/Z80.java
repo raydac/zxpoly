@@ -462,7 +462,7 @@ public final class Z80 {
     this.machineCycles += 3;
   }
 
-  private int _read16_for_pc(final int ctx) {
+  private int _readNextPcAddressedWord(final int ctx) {
     return readInstrOrPrefix(ctx, false) | (readInstrOrPrefix(ctx, false) << 8);
   }
 
@@ -1514,7 +1514,7 @@ public final class Z80 {
   }
 
   private void doLDRegPairByNextWord(final int ctx, final int p) {
-    final int value = _read16_for_pc(ctx);
+    final int value = _readNextPcAddressedWord(ctx);
     writeReg16(p, value);
   }
 
@@ -1712,13 +1712,13 @@ public final class Z80 {
   }
 
   private void doLD_mNN_HL(final int ctx) {
-    final int addr = _read16_for_pc(ctx);
+    final int addr = _readNextPcAddressedWord(ctx);
     _writemem16(ctx, addr, readReg16(2));
     this.setWZ(addr + 1, false);
   }
 
   private void doLD_mNN_A(final int ctx) {
-    final int address = _read16_for_pc(ctx);
+    final int address = _readNextPcAddressedWord(ctx);
     final byte a = this.regSet[REG_A];
     this.regW = a & 0xFF;
     this.regZ = (address + 1) & 0xFF;
@@ -1742,13 +1742,13 @@ public final class Z80 {
   }
 
   private void doLD_HL_mem(final int ctx) {
-    final int addr = _readmem16(ctx, _read16_for_pc(ctx));
+    final int addr = _readmem16(ctx, _readNextPcAddressedWord(ctx));
     writeReg16(2, addr);
     this.setWZ(addr + 1, false);
   }
 
   private void doLD_A_mem(final int ctx) {
-    final int address = _read16_for_pc(ctx);
+    final int address = _readNextPcAddressedWord(ctx);
     setRegister(REG_A, _readmem8(ctx, address));
     this.setWZ(address + 1, false);
   }
@@ -1950,7 +1950,7 @@ public final class Z80 {
   }
 
   private void doJP_cc(final int ctx, final int cc) {
-    final int address = _read16_for_pc(ctx);
+    final int address = _readNextPcAddressedWord(ctx);
     if (checkCondition(cc)) {
       this.regPC = address;
     }
@@ -1958,7 +1958,7 @@ public final class Z80 {
   }
 
   private void doJP(final int ctx) {
-    this.regPC = _read16_for_pc(ctx);
+    this.regPC = _readNextPcAddressedWord(ctx);
     this.setWZ(this.regPC, false);
   }
 
@@ -2012,7 +2012,7 @@ public final class Z80 {
   }
 
   private void doCALL(final int ctx, final int y) {
-    final int address = _read16_for_pc(ctx);
+    final int address = _readNextPcAddressedWord(ctx);
     if (checkCondition(y)) {
       _call(ctx, address);
       this.machineCycles++;
@@ -2021,7 +2021,7 @@ public final class Z80 {
   }
 
   private void doCALL(final int ctx) {
-    final int address = _read16_for_pc(ctx);
+    final int address = _readNextPcAddressedWord(ctx);
     this.setWZ(address, false);
     _call(ctx, address);
     this.machineCycles++;
@@ -2250,13 +2250,13 @@ public final class Z80 {
   }
 
   private void doLD_mNN_RegP(final int ctx, final int p) {
-    final int addr = _read16_for_pc(ctx);
+    final int addr = _readNextPcAddressedWord(ctx);
     _writemem16(ctx, addr, readReg16(p));
     this.setWZ(addr + 1, false);
   }
 
   private void doLD_RegP_mNN(final int ctx, final int p) {
-    final int addr = _readmem16(ctx, _read16_for_pc(ctx));
+    final int addr = _readmem16(ctx, _readNextPcAddressedWord(ctx));
     writeReg16(p, addr);
     this.setWZ(addr + 1, false);
   }
