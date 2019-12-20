@@ -987,7 +987,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
         int borderLineIndex;
         final long machineCycles = module.getCpu().getMachineCycles();
         if (module.isMaster()) {
-          borderLineIndex = (int) (((machineCycles << 8) / MCYCLES_PER_BORDER_LINE) >> 8);
+          borderLineIndex = (int) (machineCycles / MCYCLES_PER_BORDER_LINE);
         } else {
           borderLineIndex = (int) (machineCycles % BORDER_LINES);
         }
