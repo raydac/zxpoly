@@ -48,7 +48,7 @@ public class SNAPlugin extends AbstractFilePlugin {
           + "<ushort regBC;"
           + "<ushort regIY;"
           + "<ushort regIX;"
-          + "ubyte interrupt;"
+          + "ubyte iff2;"
           + "ubyte regR;"
           + "<ushort regAF;"
           + "<ushort regSP;"
@@ -200,8 +200,8 @@ public class SNAPlugin extends AbstractFilePlugin {
           .Byte(snaFile.altRegAF)
           .Short(snaFile.regIY)
           .Short(snaFile.regIX)
-          .Byte((snaFile.IFF & 4) == 0 ? 0 : 0xFF)
-          .Byte((snaFile.IFF & 4) == 0 ? 0 : 0xFF)
+          .Byte((snaFile.iff2 & 4) == 0 ? 0 : 0xFF)
+          .Byte((snaFile.iff2 & 4) == 0 ? 0 : 0xFF)
           .Bits(JBBPBitNumber.BITS_2, snaFile.intMode)
           .Bit(0)
           .Bit(0)
@@ -260,8 +260,8 @@ public class SNAPlugin extends AbstractFilePlugin {
           .Byte(snaFile.altRegAF)
           .Short(snaFile.regIY)
           .Short(snaFile.regIX)
-          .Byte((snaFile.IFF & 4) == 0 ? 0 : 0xFF)
-          .Byte((snaFile.IFF & 4) == 0 ? 0 : 0xFF)
+          .Byte((snaFile.iff2 & 4) == 0 ? 0 : 0xFF)
+          .Byte((snaFile.iff2 & 4) == 0 ? 0 : 0xFF)
           .Bits(JBBPBitNumber.BITS_2, snaFile.intMode)
           .Bit(0)
           .Bit(0)
@@ -274,9 +274,7 @@ public class SNAPlugin extends AbstractFilePlugin {
 
   @Override
   public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
-    if (!(data.getPlugin() instanceof SNAPlugin)) {
-      throw new IOException("Only imported SNA ZX48 snapshot can be exported");
-    }
+    throw new IOException("SNA export is unsupported");
   }
 
   @Override
@@ -312,7 +310,7 @@ public class SNAPlugin extends AbstractFilePlugin {
     @Bin(type = BinType.USHORT)
     public char regIX;
     @Bin(type = BinType.UBYTE)
-    public byte IFF;
+    public byte iff2;
     @Bin(type = BinType.UBYTE)
     public byte regR;
     @Bin(type = BinType.USHORT)
