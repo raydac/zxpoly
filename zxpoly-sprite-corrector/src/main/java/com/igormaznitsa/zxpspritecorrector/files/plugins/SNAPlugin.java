@@ -200,8 +200,8 @@ public class SNAPlugin extends AbstractFilePlugin {
           .Byte(snaFile.altRegAF)
           .Short(snaFile.regIY)
           .Short(snaFile.regIX)
-          .Byte(0xFF)
-          .Byte(snaFile.interrupt)
+          .Byte((snaFile.IFF & 4) == 0 ? 0 : 0xFF)
+          .Byte((snaFile.IFF & 4) == 0 ? 0 : 0xFF)
           .Bits(JBBPBitNumber.BITS_2, snaFile.intMode)
           .Bit(0)
           .Bit(0)
@@ -260,8 +260,8 @@ public class SNAPlugin extends AbstractFilePlugin {
           .Byte(snaFile.altRegAF)
           .Short(snaFile.regIY)
           .Short(snaFile.regIX)
-          .Byte(0xFF)
-          .Byte(snaFile.interrupt)
+          .Byte((snaFile.IFF & 4) == 0 ? 0 : 0xFF)
+          .Byte((snaFile.IFF & 4) == 0 ? 0 : 0xFF)
           .Bits(JBBPBitNumber.BITS_2, snaFile.intMode)
           .Bit(0)
           .Bit(0)
@@ -312,7 +312,7 @@ public class SNAPlugin extends AbstractFilePlugin {
     @Bin(type = BinType.USHORT)
     public char regIX;
     @Bin(type = BinType.UBYTE)
-    public byte interrupt;
+    public byte IFF;
     @Bin(type = BinType.UBYTE)
     public byte regR;
     @Bin(type = BinType.USHORT)
