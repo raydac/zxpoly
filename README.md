@@ -7,7 +7,7 @@
 ![ZX-Poly logo](docs/zxpoly_logo.png)
 
 # Changelog
-- __2.0.2-SNAPSHOT__
+- __2.0.2 (21-dec-2019)__
   - fixed IFF restore bug in SNA open-write
   - minor emulator GUI improvements
   
