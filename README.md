@@ -107,10 +107,9 @@ Since 2.0.1 version, some restricted [Spec256 platform](http://www.emulatronia.c
 ![ScoobyDoo for Spec256](docs/screenshots/Spec256emulationScoobyDoo.png)
 
 Known issues with emulation of listed games:
- - __Knight lore__ doesn't work at all, looks like some problems with SNA snapshot
+ - __Knight lore__ a lot of garbage on screen, lost sync between CPUs
  - __Bubbler__ is losing colorization for some game elements
  - __Atic atac__ has some trash as footsteps of game elements
- - __Solomon's key__ has some graphics trash
 
 In ZX-Poly emulator working in Spec256 mode, some CPU registers are syncronized every iteration (by default PC, SP and bits of F excluding C bit), but it works not for all games. In games which need another register set, there can be provided special `zxpAlignRegs` parameter in CFG file situated in snapshot archive. For instance `zxpAlignRegs=XxYyPSsHLb` means syncronization of IX,IY,PC,SP,H,L and B' registers.
 
