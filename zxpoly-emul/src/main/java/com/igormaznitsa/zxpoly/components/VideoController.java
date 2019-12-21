@@ -710,8 +710,8 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   private void updateZoom(final float value) {
     this.zoom = value;
     this.size = new Dimension(Math.round(SCREEN_WIDTH * value), Math.round(SCREEN_HEIGHT * value));
-    invalidate();
-    repaint();
+    this.getParent().revalidate();
+    this.getParent().repaint();
   }
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
