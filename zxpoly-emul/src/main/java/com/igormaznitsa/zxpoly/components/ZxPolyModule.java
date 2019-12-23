@@ -656,6 +656,23 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     }
   }
 
+
+  @Override
+  public int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg) {
+    if (ctx == 0) {
+      return valueInReg;
+    } else {
+      switch (reg) {
+        case Z80.REG_A:
+          return this.cpu.getRegister(Z80.REG_A);
+        case Z80.REGPAIR_BC:
+          return this.cpu.getRegisterPair(Z80.REGPAIR_BC);
+        default:
+          return valueInReg;
+      }
+    }
+  }
+
   @Override
   public byte readPort(final Z80 cpu, final int ctx, final int port) {
     final byte result;

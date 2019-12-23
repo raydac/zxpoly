@@ -22,6 +22,8 @@ public interface Z80CPUBus {
 
   void writeMemory(Z80 cpu, int ctx, int address, byte data);
 
+  int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg);
+
   byte readPort(Z80 cpu, int ctx, int port);
 
   void writePort(Z80 cpu, int ctx, int port, byte data);

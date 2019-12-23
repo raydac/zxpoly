@@ -39,6 +39,11 @@ public final class TestBus implements Z80CPUBus {
     }
   }
 
+  @Override
+  public int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg) {
+    return valueInReg;
+  }
+
   public void resetRETIFlag() {
     this.reti = false;
   }

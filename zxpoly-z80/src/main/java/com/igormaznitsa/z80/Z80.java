@@ -471,6 +471,10 @@ public final class Z80 {
     this._writemem8(ctx, address + 1, (byte) (value >> 8));
   }
 
+  private int _portAddrFromReg(final int ctx, final int reg, final int origValue) {
+    return this.bus.readRegPortAddr(this, ctx, reg, origValue);
+  }
+
   private int _readport(final int ctx, final int port) {
     this.machineCycles += 4;
     return this.bus.readPort(this, ctx, port & 0xFFFF) & 0xFF;
@@ -1964,12 +1968,12 @@ public final class Z80 {
 
   private void doOUTnA(final int ctx) {
     final int n = readInstrOrPrefix(ctx, false);
-    final int a = this.regSet[REG_A] & 0xFF;
+    final int a = _portAddrFromReg(ctx, REG_A, this.regSet[REG_A]) & 0xFF;
     _writeport(ctx, (a << 8) | n, a);
   }
 
   private void doIN_A_n(final int ctx) {
-    this.regSet[REG_A] = (byte) _readport(ctx, ((this.regSet[REG_A] & 0xFF) << 8) | readInstrOrPrefix(ctx, false));
+    this.regSet[REG_A] = (byte) _readport(ctx, ((_portAddrFromReg(ctx, REG_A, this.regSet[REG_A]) & 0xFF) << 8) | readInstrOrPrefix(ctx, false));
   }
 
   private void doEX_mSP_HL(final int ctx) {
@@ -2224,25 +2228,25 @@ public final class Z80 {
   }
 
   private void doIN_C(final int ctx) {
-    final int value = _readport(ctx, this.getRegisterPair(REGPAIR_BC)) & 0xFF;
+    final int value = _readport(ctx, _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC))) & 0xFF;
     this.regSet[REG_F] = (byte) (FTABLE_SZYXP[value] | (this.regSet[REG_F] & FLAG_C));
   }
 
   private void doIN_C(final int ctx, final int y) {
-    final int value = _readport(ctx, getRegisterPair(REGPAIR_BC)) & 0xFF;
+    final int value = _readport(ctx, _portAddrFromReg(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC))) & 0xFF;
     writeReg8(ctx, y, value);
 
     this.regSet[REG_F] = (byte) (FTABLE_SZYXP[value] | (this.regSet[REG_F] & FLAG_C));
   }
 
   private void doOUT_C(final int ctx) {
-    final int port = ((this.regSet[REG_B] & 0xFF) << 8) | (this.regSet[REG_C] & 0xFF);
+    final int port = _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
     this.setWZ(port + 1, false);
     _writeport(ctx, port, 0x00);
   }
 
   private void doOUT_C(final int ctx, final int y) {
-    final int port = this.getRegisterPair(REGPAIR_BC);
+    final int port = _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
     _writeport(ctx, port, readReg8(ctx, y));
     if (y == 7) { // reg A
       this.setWZ(port + 1, false);
@@ -2494,7 +2498,7 @@ public final class Z80 {
   }
 
   private void doINI(final int ctx) {
-    final int bc = getRegisterPair(REGPAIR_BC);
+    final int bc = _portAddrFromReg(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC));
     this.setWZ(bc + 1, false);
     int hl = this.getRegisterPair(REGPAIR_HL);
     int x = _readport(ctx, bc);
@@ -2525,7 +2529,7 @@ public final class Z80 {
   }
 
   private void doIND(final int ctx) {
-    final int bc = getRegisterPair(REGPAIR_BC);
+    final int bc = _portAddrFromReg(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC));
     int hl = this.getRegisterPair(REGPAIR_HL);
     int x = _readport(ctx, bc);
     _writemem8(ctx, hl--, (byte) x);
@@ -2626,7 +2630,7 @@ public final class Z80 {
   }
 
   private void doOUTI(final int ctx) {
-    final int bc = getRegisterPair(REGPAIR_BC);
+    final int bc = _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
     int hl = this.getRegisterPair(REGPAIR_HL);
     int x = _readmem8(ctx, hl++);
     _writeport(ctx, bc, x);
@@ -2658,7 +2662,7 @@ public final class Z80 {
   }
 
   private void doOUTD(final int ctx) {
-    final int bc = getRegisterPair(REGPAIR_BC);
+    final int bc = _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
     int hl = this.getRegisterPair(REGPAIR_HL);
     int x = _readmem8(ctx, hl--);
     _writeport(ctx, bc, x);
