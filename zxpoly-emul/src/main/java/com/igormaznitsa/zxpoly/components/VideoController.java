@@ -156,6 +156,21 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     }
   }
 
+  private static int mixRgb(final int rgb1, final int rgb2) {
+    final int r1 = (rgb1 >>> 16) & 0xFF;
+    final int g1 = (rgb1 >>> 8) & 0xFF;
+    final int b1 = rgb1 & 0xFF;
+    final int r2 = (rgb2 >>> 16) & 0xFF;
+    final int g2 = (rgb2 >>> 8) & 0xFF;
+    final int b2 = rgb2 & 0xFF;
+
+    final int avgR = (r1 + r2) >> 1;
+    final int avgG = (g1 + g2) >> 1;
+    final int avgB = (b1 + b2) >> 1;
+
+    return 0xFF000000 | (avgR << 16) | (avgG << 8) | avgB;
+  }
+
   private static void fillDataBufferForSpec256VideoMode(
       final ZxPolyModule[] modules,
       final int[] pixelRgbBuffer,
@@ -185,6 +200,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
       final int attrOffset = aoffset++;
       long pixelData = sourceModule.readGfxVideo(i);
+      int origData = sourceModule.readVideo(i);
 
       final int attrData = sourceModule.readVideo(attrOffset);
       final int inkColor = extractInkColorSpec256(attrData, flashActive);
@@ -193,9 +209,13 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       int x = 8;
       while (x-- > 0) {
         final int colorIndex = (int) ((pixelData >>> 56) & 0xFF);
+        final boolean origPixelSet = (origData & 0x80) != 0;
 
         int color = PALETTE_SPEC256[colorIndex];
         boolean draw = true;
+
+        final boolean mixWithAttributes = colorIndex < downAttrMixedIndex || colorIndex > upAttrMixedIndex;
+//        final boolean mixWithAttributes = false;
 
         if (prerendededGfxBack == null) {
           if (colorIndex == 0xFF) {
@@ -219,7 +239,12 @@ public final class VideoController extends JComponent implements ZxPolyConstants
           }
         }
 
+        if (draw && mixWithAttributes) {
+          color = mixRgb(origPixelSet ? inkColor : paperColor, color);
+        }
+
         pixelData <<= 8;
+        origData <<= 1;
 
         if (draw) {
           pixelRgbBuffer[offset] = color;
