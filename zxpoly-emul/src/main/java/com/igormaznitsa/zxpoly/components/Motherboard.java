@@ -349,11 +349,8 @@ public final class Motherboard implements ZxPolyConstants {
             gfxCore.alignRegisterValuesWith(mainCpu, syncRegRecord);
             masterModule.stepWithGfxCpu(i + 1, gfxCore, signalReset, signalInt);
           }
-
-          masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
-        } else {
-          masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
         }
+        masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
       }
 
       final long spentMachineCycles = modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
