@@ -185,7 +185,6 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
       final int attrOffset = aoffset++;
       long pixelData = sourceModule.readGfxVideo(i);
-//      int origData = sourceModule.readVideo(i);
 
       final int attrData = sourceModule.readVideo(attrOffset);
       final int inkColor = extractInkColorSpec256(attrData, flashActive);
@@ -194,39 +193,22 @@ public final class VideoController extends JComponent implements ZxPolyConstants
       int x = 8;
       while (x-- > 0) {
         final int colorIndex = (int) ((pixelData >>> 56) & 0xFF);
-//        final boolean origPixelSet = (origData & 0x80) != 0;
+
         int color = PALETTE_SPEC256[colorIndex];
         boolean draw = true;
 
-        final boolean colorForInk = colorIndex == 0xFF;
-
-        if (colorForInk || colorIndex == 0) {
-          if (prerendededGfxBack == null) {
-            color = colorForInk ? inkColor : color;
-          } else {
-            if (colorForInk) {
-              if (bkOverFF) {
-                draw = false;
-              } else {
-                color = inkColor;
-              }
-            } else {
-              draw = false;
-            }
-          }
-        } else if (prerendededGfxBack == null) {
-          if (inkColor == paperColor) {
-            // fill the pixel by ink color from attributes
-            // because it was hidden in original game
+        if (prerendededGfxBack == null) {
+          if (colorIndex == 0xFF) {
             color = inkColor;
           }
         } else {
-          // TODO still it is unknown what means "Attribute mixing", code below is just some stub
-//          if (colorIndex < downAttrMixedIndex) {
-//            color = PALETTE_SPEC256[colorIndex + ((attrData >> 3) & 7)];
-//          } else if (colorIndex > upAttrMixedIndex) {
-//            color = PALETTE_SPEC256[colorIndex - ((attrData >> 3) & 7)];
-//          }
+          if (colorIndex == 0 || colorIndex == 0xFF && bkOverFF) {
+            draw = false;
+          }
+        }
+
+        if (inkColor == paperColor) {
+          color = inkColor;
         }
 
         if ((attrData & 0x80) != 0 && flashActive) {
@@ -238,7 +220,6 @@ public final class VideoController extends JComponent implements ZxPolyConstants
         }
 
         pixelData <<= 8;
-//        origData <<= 1;
 
         if (draw) {
           pixelRgbBuffer[offset] = color;
