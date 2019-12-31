@@ -189,7 +189,7 @@ public class FormatSpec256 extends Snapshot {
     final String alignRegisters = archive.getProperties().getProperty("zxpAlignRegs", alignRegVector == null ? "1PSs" : alignRegVector);
     board.setGfxAlignRegisters(alignRegisters);
 
-    final String gfxBackOverFF = archive.getProperties().getProperty("BkOverFF", "1");
+    final String gfxBackOverFF = archive.getProperties().getProperty("BkOverFF", "0");
     VideoController.setGfxBackOverFF(!"0".equals(gfxBackOverFF));
     VideoController.setGfxDownColorsMixed(safeParseInt(archive.getProperties().getProperty("DownColorsMixed", "0"), 0));
     VideoController.setGfxUpColorsMixed(safeParseInt(archive.getProperties().getProperty("UpColorsMixed", "64"), 64));
