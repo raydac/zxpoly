@@ -7,20 +7,14 @@
 ![ZX-Poly logo](docs/zxpoly_logo.png)
 
 # Changelog
+- __2.0.3 (31-dec-2019)__
+  - added mix of colors with attribute colors in Spec256 mode
+  - fixed wrong default BackOverFF flag value in Spec256 loading
+
 - __2.0.2 (21-dec-2019)__
   - fixed IFF restore bug in SNA open-write
   - minor emulator GUI improvements
   
-- __2.0.1 (15-dec-2019)__
-  - added support of [Spec256 snapshots](http://www.emulatronia.com/emusdaqui/spec256/download-eng.htm) (as .ZIP with SNA)
-  - improved simulation of "port #FF"
-  - refactoring
-
-- __2.0.0 (20-nov-2019)__
-  - Disk images support: TRD,SCL
-  - Tape snapshot support: TAP
-  - Emulator snapshot support: Z80, SNA, ZXP
-
 # Introduction
 I am a ZX-Spectrum fun since 1989. ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from mono-system to poly-system.   
 
@@ -107,8 +101,8 @@ Since 2.0.1 version, some restricted [Spec256 platform](http://www.emulatronia.c
 ![ScoobyDoo for Spec256](docs/screenshots/Spec256emulationScoobyDoo.png)
 
 Known issues with emulation of listed games:
- - __Knight lore__ a lot of garbage on screen, lost sync between CPUs
- - __Bubbler__ is losing colorization for some game elements
+ - __Knight lore__ wrongly colored picture
+ - __Bubbler__ losing colorization for some game elements
  - __Atic atac__ has some trash as footsteps of game elements
 
 In ZX-Poly emulator working in Spec256 mode, some CPU registers are syncronized every iteration (by default PC, SP and bits of F excluding C bit), but it works not for all games. In games which need another register set, there can be provided special `zxpAlignRegs` parameter in CFG file situated in snapshot archive. For instance `zxpAlignRegs=XxYyPSsHLb` means syncronization of IX,IY,PC,SP,H,L and B' registers.
