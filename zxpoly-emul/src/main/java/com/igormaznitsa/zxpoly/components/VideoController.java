@@ -215,7 +215,6 @@ public final class VideoController extends JComponent implements ZxPolyConstants
         boolean draw = true;
 
         final boolean mixWithAttributes = colorIndex < downAttrMixedIndex || colorIndex > upAttrMixedIndex;
-//        final boolean mixWithAttributes = false;
 
         if (prerendededGfxBack == null) {
           if (colorIndex == 0xFF) {
