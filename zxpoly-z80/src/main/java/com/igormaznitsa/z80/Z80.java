@@ -2684,7 +2684,7 @@ public final class Z80 {
     this.setWZ(this.getRegisterPair(REGPAIR_BC) + 1, false);
     setRegisterPair(REGPAIR_HL, hl);
 
-    int f = FTABLE_SZYX[b & 0xff] | (x >> (7 - FLAG_N_SHIFT));
+    int f = FTABLE_SZYX[b] | (x >> (7 - FLAG_N_SHIFT));
     x += hl & 0xff;
     f |= (x & 0x0100) != 0 ? FLAG_HC : 0;
     f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
