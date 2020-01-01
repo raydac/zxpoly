@@ -215,9 +215,10 @@ public final class Motherboard implements ZxPolyConstants {
     this.triggerMemAddress = address;
   }
 
-  public void setGfxAlignRegisters(final String registers) {
-    this.gfxSyncRegsRecord = Z80.parseAndPackRegAlignValue(registers);
-    LOGGER.info("Set GFX register list for aligning, '" + registers + "' = " + Integer.toBinaryString(this.gfxSyncRegsRecord));
+  public void setGfxAlignParams(final String registersToAlignOnStep) {
+    this.gfxSyncRegsRecord = Z80.parseAndPackRegAlignValue(registersToAlignOnStep);
+    LOGGER.info("Set GFX register list for aligning, '" + registersToAlignOnStep + "' = " + Integer.toBinaryString(this.gfxSyncRegsRecord));
+    this.modules[0].setGfxPtrFromMainCpu(registersToAlignOnStep.contains("T"));
   }
 
   public int step(final boolean signalInt, final boolean processStep) {

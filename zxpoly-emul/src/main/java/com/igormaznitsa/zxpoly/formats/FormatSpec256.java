@@ -186,8 +186,8 @@ public class FormatSpec256 extends Snapshot {
     } else {
       LOGGER.info("Config file contains register vector: " + alignRegVector);
     }
-    final String alignRegisters = archive.getProperties().getProperty("zxpAlignRegs", alignRegVector == null ? "1PSs" : alignRegVector);
-    board.setGfxAlignRegisters(alignRegisters);
+    final String alignRegisters = archive.getProperties().getProperty("zxpAlignRegs", alignRegVector == null ? "1PSsT" : alignRegVector);
+    board.setGfxAlignParams(alignRegisters);
 
     final String gfxBackOverFF = archive.getProperties().getProperty("BkOverFF", "0");
     VideoController.setGfxBackOverFF(!"0".equals(gfxBackOverFF));
@@ -235,7 +235,7 @@ public class FormatSpec256 extends Snapshot {
   }
 
   private static class BaseItem {
-    private static final Pattern PATTERN = Pattern.compile("^\\s*(\\S+)\\s*,\\s*([0-9a-f]+)\\s*,\\s*([AFBCDEHLXxYy10PSsafbcdehl]+)\\s*$");
+    private static final Pattern PATTERN = Pattern.compile("^\\s*(\\S+)\\s*,\\s*([0-9a-f]+)\\s*,\\s*([AFBCDEHLTXxYy10PSsafbcdehl]+)\\s*$");
     private final String name;
     private final String sha256;
     private final String regVector;

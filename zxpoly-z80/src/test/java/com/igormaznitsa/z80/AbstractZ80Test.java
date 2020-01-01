@@ -121,6 +121,16 @@ public abstract class AbstractZ80Test {
       }
 
       @Override
+      public int readPtr(Z80 cpu, int ctx, int reg, int valueInReg) {
+        return valueInReg;
+      }
+
+      @Override
+      public int readSpecRegValue(Z80 cpu, int ctx, int reg, int origValue) {
+        return origValue;
+      }
+
+      @Override
       public byte readPort(Z80 cpu, int ctx, int port) {
         fail("Unexpected port reading");
         return -1;
@@ -185,6 +195,16 @@ public abstract class AbstractZ80Test {
       @Override
       public void writeMemory(Z80 cpu, int ctx, int address, byte data) {
         memory[address] = data;
+      }
+
+      @Override
+      public int readPtr(Z80 cpu, int ctx, int reg, int valueInReg) {
+        return valueInReg;
+      }
+
+      @Override
+      public int readSpecRegValue(Z80 cpu, int ctx, int reg, int origValue) {
+        return origValue;
       }
 
       @Override

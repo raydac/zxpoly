@@ -51,6 +51,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   private int intCounter;
   private int nmiCounter;
   private int lastM1Address;
+  private volatile boolean gfxPtrFromMainCpu = false;
 
   private final AtomicReference<RomData> romData = new AtomicReference<>();
   private boolean activeRegisterReading;
@@ -109,6 +110,14 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     this.gfxIntCounter = this.intCounter;
     this.gfxNmiCounter = this.nmiCounter;
     this.gfxTrDosRomActive = this.trdosRomActive;
+  }
+
+  public boolean isGfxPtrFromMainCpu() {
+    return this.gfxPtrFromMainCpu;
+  }
+
+  public void setGfxPtrFromMainCpu(final boolean value) {
+    this.gfxPtrFromMainCpu = value;
   }
 
   public RomData getRomData() {
@@ -659,6 +668,42 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     }
   }
 
+  @Override
+  public int readPtr(Z80 cpu, int ctx, int reg, int valueInReg) {
+    if (ctx != 0 && this.gfxPtrFromMainCpu) {
+      final Z80 mainCpu = this.cpu;
+      switch (reg) {
+        case Z80.REG_SP:
+          return mainCpu.getSP();
+        case Z80.REG_IX:
+        case Z80.REG_IY:
+          return mainCpu.getRegister(reg, false);
+        case Z80.REGPAIR_BC:
+        case Z80.REGPAIR_DE:
+        case Z80.REGPAIR_HL:
+          return mainCpu.getRegisterPair(reg, false);
+        default:
+          return valueInReg;
+      }
+    } else {
+      return valueInReg;
+    }
+  }
+
+  @Override
+  public int readSpecRegValue(Z80 cpu, int ctx, int reg, int origValue) {
+    if (ctx != 0 && this.gfxPtrFromMainCpu) {
+      final Z80 mainCpu = this.cpu;
+      switch (reg) {
+        case Z80.REG_B:
+          return mainCpu.getRegister(Z80.REG_B, false);
+        default:
+          return origValue;
+      }
+    } else {
+      return origValue;
+    }
+  }
 
   @Override
   public int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg) {
