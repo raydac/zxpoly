@@ -73,6 +73,11 @@ public final class TestBus implements Z80CPUBus {
   }
 
   @Override
+  public int readSpecRegPairValue(Z80 cpu, int ctx, int regPair, int origValue) {
+    return origValue;
+  }
+
+  @Override
   public byte readPort(final Z80 cpu, final int ctx, final int port) {
     return this.ports[port & 0xFFFF];
   }

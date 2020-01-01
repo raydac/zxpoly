@@ -506,6 +506,10 @@ public final class Z80 {
     return this.bus.readSpecRegValue(this, ctx, reg, origValue);
   }
 
+  private int _readSpecRegPairValue(final int ctx, final int regPair, final int origValue) {
+    return this.bus.readSpecRegPairValue(this, ctx, regPair, origValue);
+  }
+
   private int _portAddrFromReg(final int ctx, final int reg, final int origValue) {
     return this.bus.readRegPortAddr(this, ctx, reg, origValue);
   }
@@ -2547,7 +2551,7 @@ public final class Z80 {
     this.regSet[REG_B] = (byte) b;
     setRegisterPair(REGPAIR_HL, hl);
 
-    int f = FTABLE_SZYX[b & 0xff] | (x >> (7 - FLAG_N_SHIFT));
+    int f = FTABLE_SZYX[b] | (x >> (7 - FLAG_N_SHIFT));
     x += (readReg8(ctx, REG_C) - 1) & 0xff;
     f |= (x & 0x0100) != 0 ? FLAG_HC : 0;
     f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
@@ -2578,7 +2582,7 @@ public final class Z80 {
     setRegisterPair(REGPAIR_HL, hl);
     setRegisterPair(REGPAIR_DE, de);
 
-    final int bc = (getRegisterPair(REGPAIR_BC) - 1) & 0xFFFF;
+    final int bc = (_readSpecRegPairValue(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC)) - 1) & 0xFFFF;
     setRegisterPair(REGPAIR_BC, bc);
 
     int f = this.regSet[REG_F] & FLAG_SZC;
@@ -2611,7 +2615,7 @@ public final class Z80 {
     final int a = getRegister(REG_A);
     final int z = a - n;
     setRegisterPair(REGPAIR_HL, hl);
-    final int bc = getRegisterPair(REGPAIR_BC) - 1;
+    final int bc = _readSpecRegPairValue(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC)) - 1;
     setRegisterPair(REGPAIR_BC, bc);
     this.setWZ(this.getWZ(false) + 1, false);
 
@@ -2648,7 +2652,7 @@ public final class Z80 {
     this.setWZ(this.getRegisterPair(REGPAIR_BC) + 1, false);
     setRegisterPair(REGPAIR_HL, hl);
 
-    int f = FTABLE_SZYX[b & 0xff] | (x >> (7 - FLAG_N_SHIFT));
+    int f = FTABLE_SZYX[b] | (x >> (7 - FLAG_N_SHIFT));
     x += hl & 0xff;
     f |= (x & 0x0100) != 0 ? FLAG_HC : 0;
     f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
@@ -2788,7 +2792,7 @@ public final class Z80 {
     setRegisterPair(REGPAIR_HL, hl);
     setRegisterPair(REGPAIR_DE, de);
 
-    final int bc = (_readPtr(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC)) - 1) & 0xFFFF;
+    final int bc = (_readSpecRegPairValue(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC)) - 1) & 0xFFFF;
     setRegisterPair(REGPAIR_BC, bc);
 
     int f = this.regSet[REG_F] & FLAG_SZC;
@@ -2808,7 +2812,7 @@ public final class Z80 {
     final int a = getRegister(REG_A);
     final int z = a - n;
     setRegisterPair(REGPAIR_HL, hl);
-    final int bc = _readPtr(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC)) - 1;
+    final int bc = _readSpecRegPairValue(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC)) - 1;
     setRegisterPair(REGPAIR_BC, bc);
 
     this.setWZ(this.getWZ(false) - 1, false);
