@@ -235,6 +235,7 @@ public final class Z80 {
    * Parse string with id of registers and prepare bit vector for it.
    * main set: <b>A,F,B,C,D,E,H,L,1(F without C)</b>
    * alt.set: <b>sa,f,b,c,d,e,h,l,0(F' without C)</b>
+   * special: <b>T(use PTR reg values from main CPU)</b>
    * index: <b>X(high byte IX), x(lower byte IX),Y(high byte IY), y(lower byte IY)</b>
    * spec: <b>P(PC),S(high byte SP),s(lower byte SP)</b>
    *
@@ -1915,7 +1916,7 @@ public final class Z80 {
 
   private void doRETByFlag(final int ctx, final int y) {
     if (checkCondition(y)) {
-      final int sp = _readPtr(ctx, REG_SP, this.regSP);
+      final int sp = _readPtr(ctx, REG_SP, this.getSP());
       int sp1 = sp + 1;
       this.regPC = _readmem8(ctx, sp) | (_readmem8(ctx, sp1++) << 8);
       this.setWZ(this.regPC, false);
@@ -1925,7 +1926,7 @@ public final class Z80 {
   }
 
   private void doRET(final int ctx) {
-    final int sp = _readPtr(ctx, REG_SP, this.regSP);
+    final int sp = _readPtr(ctx, REG_SP, this.getSP());
     int sp1 = sp + 1;
     this.regPC = _readmem8(ctx, sp) | (_readmem8(ctx, sp1++) << 8);
     this.setWZ(this.regPC, false);
@@ -1933,7 +1934,7 @@ public final class Z80 {
   }
 
   private void doPOPRegPair(final int ctx, final int p) {
-    final int address = _readPtr(ctx, REG_SP, this.regSP);
+    final int address = _readPtr(ctx, REG_SP, this.getSP());
     writeReg16_2(p, _readmem16(ctx, address));
     setRegister(REG_SP, address + 2);
   }
@@ -1985,7 +1986,7 @@ public final class Z80 {
   }
 
   private void doEX_mSP_HL(final int ctx) {
-    final int stacktop = _readPtr(ctx, REG_SP, this.regSP);
+    final int stacktop = _readPtr(ctx, REG_SP, this.getSP());
     final int hl = readReg16(2);
     final int value = _readmem8(ctx, stacktop) | (_readmem8(ctx, stacktop + 1) << 8);
     this.setWZ(value, false);
