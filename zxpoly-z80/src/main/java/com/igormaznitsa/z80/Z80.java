@@ -449,7 +449,7 @@ public final class Z80 {
       }
       break;
       case 2: {
-        final int address = _readmem16(ctx, ((this.regI & 0xFF) << 8) | (this.bus.onCPURequestDataLines(this, ctx) & 0xFF));
+        final int address = _readmem16(ctx, ((_readSpecRegValue(ctx, REG_I, this.regI) & 0xFF) << 8) | (this.bus.onCPURequestDataLines(this, ctx) & 0xFF));
         _call(ctx, address);
         this.machineCycles++;
       }
