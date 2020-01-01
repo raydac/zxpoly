@@ -720,16 +720,31 @@ public final class VideoController extends JComponent implements ZxPolyConstants
   }
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
-    final float lineHeight = Math.max(2, (float) height / BORDER_LINES);
-    float y = 0.0f;
-    final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
+    byte borderColor = this.borderLineColors[0];
+
     for (final byte c : this.borderLineColors) {
-      g.setColor(PALETTE_ZXPOLY_COLORS[c]);
-      rectangle.y = y;
-      g.fill(rectangle);
-      y += lineHeight;
+      if (c != borderColor) {
+        borderColor = -1;
+        break;
+      }
+    }
+
+    if (borderColor < 0) {
+      final float lineHeight = Math.max(2, (float) height / BORDER_LINES);
+      float y = 0.0f;
+      final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
+      for (final byte c : this.borderLineColors) {
+        g.setColor(PALETTE_ZXPOLY_COLORS[c]);
+        rectangle.y = y;
+        g.fill(rectangle);
+        y += lineHeight;
+      }
+    } else {
+      g.setColor(PALETTE_ZXPOLY_COLORS[borderColor]);
+      g.fill(new Rectangle2D.Float(0.0f, 0.0f, width, height));
     }
     fill(this.borderLineColors, (byte) (this.portFEw & 7));
+
   }
 
   @Override
