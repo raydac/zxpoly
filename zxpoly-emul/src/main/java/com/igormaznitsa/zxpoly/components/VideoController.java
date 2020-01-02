@@ -129,7 +129,8 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     this.board = board;
     this.modules = board.getModules();
 
-    this.bufferImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    this.bufferImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
+    this.bufferImage.setAccelerationPriority(1.0f);
     this.bufferImageRgbData = ((DataBufferInt) this.bufferImage.getRaster().getDataBuffer()).getData();
 
     this.addMouseWheelListener(this);

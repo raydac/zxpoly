@@ -261,8 +261,17 @@
                             <jre>
                                 <minVersion>1.8.0</minVersion>
                                 <jdkPreference>preferJre</jdkPreference>
-                                <initialHeapSize>256</initialHeapSize>
+                                <initialHeapSize>512</initialHeapSize>
                                 <maxHeapSize>1024</maxHeapSize>
+                                <opts>
+                                    <opt>-server</opt>
+                                    <opt>-Xverify:none</opt>
+                                    <opt>-Dsun.java2d.d3d=true</opt>
+                                    <opt>-Dsun.java2d.ddoffscreen=true</opt>
+                                    <opt>-Dsun.java2d.ddforcevram=true</opt>
+                                    <opt>-Dsun.java2d.ddscale=true</opt>
+                                    <opt>-Dsun.java2d.accthreshold=0</opt>
+                                </opts>
                             </jre>
                             <versionInfo>
                                 <fileVersion>2.0.4.0</fileVersion>

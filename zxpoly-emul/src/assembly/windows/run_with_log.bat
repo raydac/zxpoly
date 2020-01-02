@@ -5,7 +5,9 @@ rem uncomment the line below if graphics works slowly
 rem set JAVA_EXTRA_GFX_FLAGS="-Dsun.java2d.opengl=true"
 rem set JAVA_EXTRA_GFX_FLAGS="-Dcom.sun.management.jmxremote=true -Dsun.java2d.opengl=true"
 
-set JAVA_FLAGS="-XX:+IgnoreUnrecognizedVMOptions --add-opens=java.base/java.lang=ALL-UNNAMED -Dsun.java2d.dpiaware=true -Dswing.aatext=true -Dawt.useSystemAAFontSettings=on"
+rem set JAVA_EXTRA_GFX_FLAGS="-Dcom.sun.management.jmxremote=true -Dsun.java2d.opengl=true"
+
+set JAVA_FLAGS="--add-opens=java.base/java.lang=ALL-UNNAMED"
 set JAVA_RUN="java.exe"
 
 echo %%JAVA_RUN%%=%JAVA_RUN% > %LOG_FILE%
