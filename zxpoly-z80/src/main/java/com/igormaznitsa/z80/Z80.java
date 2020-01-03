@@ -374,7 +374,7 @@ public final class Z80 {
   }
 
   public void setMCycleCounter(final long value) {
-    this.machineCycles = value;
+    this.machineCycles = Math.max(0L, value);
   }
 
   public boolean isInsideBlockLoop() {

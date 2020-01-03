@@ -75,7 +75,6 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -126,7 +125,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
   private static final long serialVersionUID = 7309959798344327441L;
   private final int INT_BETWEEN_FRAMES;
-  private final AtomicBoolean turboMode = new AtomicBoolean();
+  private volatile boolean turboMode = false;
   private final CpuLoadIndicator indicatorCPU0 = new CpuLoadIndicator(48, 14, 4, "CPU0", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final CpuLoadIndicator indicatorCPU1 = new CpuLoadIndicator(48, 14, 4, "CPU1", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final CpuLoadIndicator indicatorCPU2 = new CpuLoadIndicator(48, 14, 4, "CPU2", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
@@ -219,7 +218,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     @Override
     public void run() {
       if (panelIndicators.isVisible()) {
-        labelTurbo.setStatus(turboMode.get());
+        labelTurbo.setStatus(turboMode);
 
         final TapeFileReader tapeFileReader = keyboardAndTapeModule.getTap();
         labelTapeUsage.setStatus(tapeFileReader != null && tapeFileReader.isPlaying());
@@ -288,7 +287,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.board = new Motherboard(BASE_ROM);
     this.board.setBoardMode(BoardMode.ZXPOLY, true);
     this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() != BoardMode.ZXPOLY);
-    this.menuOptionsTurbo.setSelected(this.turboMode.get());
+    this.menuOptionsTurbo.setSelected(this.turboMode);
 
     LOGGER.info("Main form completed");
     this.board.reset();
@@ -427,13 +426,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
       stepSemaphor.lock();
       try {
-
+        final boolean inTurboMode = this.turboMode;
         final boolean systemIntSignal;
         if (nextSystemInt <= currentTime) {
           systemIntSignal = currentMachineCycleCounter >= VideoController.CYCLES_BETWEEN_INT;
           nextSystemInt = currentTime + TIMER_INT_DELAY_MILLISECONDS;
           if (systemIntSignal) {
-            this.board.getMasterCpu().setMCycleCounter(currentMachineCycleCounter - VideoController.CYCLES_BETWEEN_INT);
+            this.board.getMasterCpu().setMCycleCounter(currentMachineCycleCounter % VideoController.CYCLES_BETWEEN_INT);
           }
           countdownToPaint--;
           countToUpdatePanel--;
@@ -442,7 +441,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           systemIntSignal = false;
         }
 
-        final int triggers = this.board.step(systemIntSignal, this.turboMode.get() || (systemIntSignal || currentMachineCycleCounter <= VideoController.CYCLES_BETWEEN_INT));
+        final int triggers = this.board.step(systemIntSignal, inTurboMode || (systemIntSignal || currentMachineCycleCounter <= VideoController.CYCLES_BETWEEN_INT));
 
         if (triggers != Motherboard.TRIGGER_NONE) {
           final Z80[] cpuStates = new Z80[4];
@@ -591,11 +590,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   public boolean isTurboMode() {
-    return this.turboMode.get();
+    return this.turboMode;
   }
 
   public void setTurboMode(final boolean value) {
-    this.turboMode.set(value);
+    this.turboMode = value;
   }
 
   private void updateScreen() {
