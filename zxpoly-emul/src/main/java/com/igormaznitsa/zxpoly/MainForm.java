@@ -432,7 +432,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         if (nextSystemInt <= currentTime) {
           systemIntSignal = currentMachineCycleCounter >= VideoController.CYCLES_BETWEEN_INT;
           nextSystemInt = currentTime + TIMER_INT_DELAY_MILLISECONDS;
-          this.board.getMasterCpu().resetMCycleCounter();
+          if (systemIntSignal) {
+            this.board.getMasterCpu().setMCycleCounter(currentMachineCycleCounter - VideoController.CYCLES_BETWEEN_INT);
+          }
           countdownToPaint--;
           countToUpdatePanel--;
           countdownToAnimationSave--;

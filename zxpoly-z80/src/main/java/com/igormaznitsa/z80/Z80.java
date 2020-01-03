@@ -373,8 +373,8 @@ public final class Z80 {
     return this.machineCycles;
   }
 
-  public void resetMCycleCounter() {
-    this.machineCycles = 0L;
+  public void setMCycleCounter(final long value) {
+    this.machineCycles = value;
   }
 
   public boolean isInsideBlockLoop() {
