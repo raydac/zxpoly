@@ -515,8 +515,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   public void writeGfxRamPage(final int page, final byte[] gfxPageData) {
     int startOffset = page * GFX_PAGE_SIZE;
-    for (int i = 0; i < gfxPageData.length; i++) {
-      this.gfxRam.set(startOffset++, gfxPageData[i]);
+    for (byte gfxPageDatum : gfxPageData) {
+      this.gfxRam.set(startOffset++, gfxPageDatum);
     }
   }
 
