@@ -520,24 +520,24 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     }
   }
 
-  public void writeGfxMemory(final int ctx,
+  public void writeGfxMemory(final int gfxCoreIndex,
                              final int valueAt7FFD,
                              final int address,
                              final int value) {
     if (address >= 0x4000) {
       final int page;
-      final int addrOffset;
+      final int offsetInPage;
       if (address < 0x8000) {
         page = 5;
-        addrOffset = address - 0x4000;
+        offsetInPage = address - 0x4000;
       } else if (address < 0xC000) {
         page = 2;
-        addrOffset = address - 0x8000;
+        offsetInPage = address - 0x8000;
       } else {
         page = valueAt7FFD & 7;
-        addrOffset = address - 0xC000;
+        offsetInPage = address - 0xC000;
       }
-      final int ramHeapAddr = page * GFX_PAGE_SIZE + addrOffset * 8 + ctx - 1;
+      final int ramHeapAddr = page * GFX_PAGE_SIZE + (offsetInPage << 3) + gfxCoreIndex;
       this.gfxRam.set(ramHeapAddr, value);
     }
   }
@@ -664,7 +664,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         }
       }
     } else {
-      this.writeGfxMemory(ctx, this.gfxPort7FFD, address, val);
+      this.writeGfxMemory(ctx - 1, this.gfxPort7FFD, address, val);
     }
   }
 
