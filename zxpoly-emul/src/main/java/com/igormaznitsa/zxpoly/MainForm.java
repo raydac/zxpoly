@@ -19,6 +19,7 @@ package com.igormaznitsa.zxpoly;
 
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
+import static javax.swing.KeyStroke.getKeyStroke;
 
 
 import com.igormaznitsa.z80.Z80;
@@ -190,6 +191,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenu menuLoadDrive;
   private JMenu menuOptions;
   private JCheckBoxMenuItem menuOptionsEnableTrapMouse;
+  private JCheckBoxMenuItem menuOptionsEnableSpeaker;
   private JCheckBoxMenuItem menuOptionsShowIndicators;
   private JCheckBoxMenuItem menuOptionsTurbo;
   private JCheckBoxMenuItem menuOptionsZX128Mode;
@@ -316,17 +318,23 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           @Override
           public void menuSelected(MenuEvent e) {
             MainForm.this.stepSemaphor.lock();
+            MainForm.this.board.getBeeper().pause();
             MainForm.this.keyboardAndTapeModule.doReset();
+            if (e.getSource() == menuOptions) {
+              menuOptionsEnableSpeaker.setState(board.getBeeper().isActive());
+            }
           }
 
           @Override
           public void menuDeselected(MenuEvent e) {
             MainForm.this.stepSemaphor.unlock();
+            MainForm.this.board.getBeeper().resume();
           }
 
           @Override
           public void menuCanceled(MenuEvent e) {
             MainForm.this.stepSemaphor.unlock();
+            MainForm.this.board.getBeeper().resume();
           }
         });
       }
@@ -663,6 +671,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsZX128Mode = new JCheckBoxMenuItem();
     menuOptionsTurbo = new JCheckBoxMenuItem();
     menuOptionsEnableTrapMouse = new JCheckBoxMenuItem();
+    menuOptionsEnableSpeaker = new JCheckBoxMenuItem();
     menuHelp = new JMenu();
     menuHelpAbout = new JMenuItem();
     menuHelpDonation = new JMenuItem();
@@ -749,17 +758,17 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
 
-    menuFileLoadSnapshot.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/snapshot.png"))); // NOI18N
+    menuFileLoadSnapshot.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/snapshot.png"))); // NOI18N
     menuFileLoadSnapshot.setText("Load Snapshot");
     menuFileLoadSnapshot.addActionListener(this::menuFileLoadSnapshotActionPerformed);
     menuFile.add(menuFileLoadSnapshot);
 
-    menuFileLoadTap.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/cassette.png"))); // NOI18N
+    menuFileLoadTap.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/cassette.png"))); // NOI18N
     menuFileLoadTap.setText("Load TAPE");
     menuFileLoadTap.addActionListener(this::menuFileLoadTapActionPerformed);
     menuFile.add(menuFileLoadTap);
 
-    menuLoadDrive.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/disk.png"))); // NOI18N
+    menuLoadDrive.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/disk.png"))); // NOI18N
     menuLoadDrive.setText("Load Disk..");
     menuLoadDrive.addMenuListener(new javax.swing.event.MenuListener() {
       public void menuCanceled(javax.swing.event.MenuEvent evt) {
@@ -791,20 +800,20 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuFile.add(menuLoadDrive);
 
-    menuFileFlushDiskChanges.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/diskflush.png"))); // NOI18N
+    menuFileFlushDiskChanges.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/diskflush.png"))); // NOI18N
     menuFileFlushDiskChanges.setText("Flush disk changes");
     menuFileFlushDiskChanges.addActionListener(this::menuFileFlushDiskChangesActionPerformed);
     menuFile.add(menuFileFlushDiskChanges);
     menuFile.add(jSeparator1);
 
-    menuFileOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/settings.png"))); // NOI18N
+    menuFileOptions.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/settings.png"))); // NOI18N
     menuFileOptions.setText("Options");
     menuFileOptions.addActionListener(this::menuFileOptionsActionPerformed);
     menuFile.add(menuFileOptions);
     menuFile.add(jSeparator3);
 
-    menuFileExit.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, java.awt.event.InputEvent.ALT_MASK));
-    menuFileExit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset.png"))); // NOI18N
+    menuFileExit.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F4, java.awt.event.InputEvent.ALT_MASK));
+    menuFileExit.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset.png"))); // NOI18N
     menuFileExit.setText("Exit");
     menuFileExit.addActionListener(this::menuFileExitActionPerformed);
     menuFile.add(menuFileExit);
@@ -813,29 +822,29 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuTap.setText("Tape");
 
-    menuTapeRewindToStart.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_previous.png"))); // NOI18N
+    menuTapeRewindToStart.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_previous.png"))); // NOI18N
     menuTapeRewindToStart.setText("Rewind to start");
     menuTapeRewindToStart.addActionListener(this::menuTapeRewindToStartActionPerformed);
     menuTap.add(menuTapeRewindToStart);
 
-    menuTapPrevBlock.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_backward.png"))); // NOI18N
+    menuTapPrevBlock.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_backward.png"))); // NOI18N
     menuTapPrevBlock.setText("Prev block");
     menuTapPrevBlock.addActionListener(this::menuTapPrevBlockActionPerformed);
     menuTap.add(menuTapPrevBlock);
 
-    menuTapPlay.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, 0));
+    menuTapPlay.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F4, 0));
     menuTapPlay.setText("Play");
-    menuTapPlay.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_play.png"))); // NOI18N
+    menuTapPlay.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_play.png"))); // NOI18N
     menuTapPlay.setInheritsPopupMenu(true);
     menuTapPlay.addActionListener(this::menuTapPlayActionPerformed);
     menuTap.add(menuTapPlay);
 
-    menuTapNextBlock.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_forward.png"))); // NOI18N
+    menuTapNextBlock.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_forward.png"))); // NOI18N
     menuTapNextBlock.setText("Next block");
     menuTapNextBlock.addActionListener(this::menuTapNextBlockActionPerformed);
     menuTap.add(menuTapNextBlock);
 
-    menuTapGotoBlock.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_pos.png"))); // NOI18N
+    menuTapGotoBlock.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_pos.png"))); // NOI18N
     menuTapGotoBlock.setText("Go to block");
     menuTapGotoBlock.addActionListener(this::menuTapGotoBlockActionPerformed);
     menuTap.add(menuTapGotoBlock);
@@ -844,37 +853,37 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuService.setText("Service");
 
-    menuFileReset.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F12, 0));
-    menuFileReset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset2.png"))); // NOI18N
+    menuFileReset.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F12, 0));
+    menuFileReset.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset2.png"))); // NOI18N
     menuFileReset.setText("Reset");
     menuFileReset.addActionListener(this::menuFileResetActionPerformed);
     menuService.add(menuFileReset);
 
-    menuServiceSaveScreen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F8, 0));
-    menuServiceSaveScreen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/photo.png"))); // NOI18N
+    menuServiceSaveScreen.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F8, 0));
+    menuServiceSaveScreen.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/photo.png"))); // NOI18N
     menuServiceSaveScreen.setText("Make Screenshot");
     menuServiceSaveScreen.addActionListener(this::menuServiceSaveScreenActionPerformed);
     menuService.add(menuServiceSaveScreen);
 
-    menuServiceSaveScreenAllVRAM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/photom.png"))); // NOI18N
+    menuServiceSaveScreenAllVRAM.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/photom.png"))); // NOI18N
     menuServiceSaveScreenAllVRAM.setText("Make Screenshot of all VRAM");
     menuServiceSaveScreenAllVRAM.addActionListener(this::menuServiceSaveScreenAllVRAMActionPerformed);
     menuService.add(menuServiceSaveScreenAllVRAM);
 
-    menuActionAnimatedGIF.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_gif.png"))); // NOI18N
+    menuActionAnimatedGIF.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_gif.png"))); // NOI18N
     menuActionAnimatedGIF.setText("Make Animated GIF");
     menuActionAnimatedGIF.addActionListener(this::menuActionAnimatedGIFActionPerformed);
     menuService.add(menuActionAnimatedGIF);
 
-    menuServicemakeSnapshot.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/save_snapshot.png"))); // NOI18N
+    menuServicemakeSnapshot.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/save_snapshot.png"))); // NOI18N
     menuServicemakeSnapshot.setText("Save snapshot");
     menuServicemakeSnapshot.addActionListener(this::menuServicemakeSnapshotActionPerformed);
     menuService.add(menuServicemakeSnapshot);
 
-    menuTapExportAs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png"))); // NOI18N
+    menuTapExportAs.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png"))); // NOI18N
     menuTapExportAs.setText("Export TAPE as..");
 
-    menuTapExportAsWav.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_wav.png"))); // NOI18N
+    menuTapExportAsWav.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_wav.png"))); // NOI18N
     menuTapExportAsWav.setText("WAV file");
     menuTapExportAsWav.addActionListener(this::menuTapExportAsWavActionPerformed);
     menuTapExportAs.add(menuTapExportAsWav);
@@ -923,35 +932,41 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuOptionsShowIndicators.setSelected(true);
     menuOptionsShowIndicators.setText("Indicator panel");
-    menuOptionsShowIndicators.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/indicator.png"))); // NOI18N
+    menuOptionsShowIndicators.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/indicator.png"))); // NOI18N
     menuOptionsShowIndicators.addActionListener(this::menuOptionsShowIndicatorsActionPerformed);
     menuOptions.add(menuOptionsShowIndicators);
 
     menuOptionsZX128Mode.setSelected(true);
     menuOptionsZX128Mode.setText("ZX Mode");
-    menuOptionsZX128Mode.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/zx128.png"))); // NOI18N
+    menuOptionsZX128Mode.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/zx128.png"))); // NOI18N
     menuOptionsZX128Mode.addActionListener(this::menuOptionsZX128ModeActionPerformed);
     menuOptions.add(menuOptionsZX128Mode);
 
-    menuOptionsTurbo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F3, 0));
+    menuOptionsTurbo.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F3, 0));
     menuOptionsTurbo.setSelected(true);
     menuOptionsTurbo.setText("Turbo");
-    menuOptionsTurbo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/turbo.png"))); // NOI18N
+    menuOptionsTurbo.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/turbo.png"))); // NOI18N
     menuOptionsTurbo.addActionListener(this::menuOptionsTurboActionPerformed);
     menuOptions.add(menuOptionsTurbo);
 
     menuOptionsEnableTrapMouse.setText("Enable trap mouse");
-    menuOptionsEnableTrapMouse.setToolTipText("");
-    menuOptionsEnableTrapMouse.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/pointer.png"))); // NOI18N
+    menuOptionsEnableTrapMouse.setToolTipText("Trap mouse as kempston-mouse");
+    menuOptionsEnableTrapMouse.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/pointer.png"))); // NOI18N
     menuOptionsEnableTrapMouse.addActionListener(this::menuOptionsEnableTrapMouseActionPerformed);
     menuOptions.add(menuOptionsEnableTrapMouse);
+
+    menuOptionsEnableSpeaker.setText("Enable beeper");
+    menuOptionsEnableSpeaker.setToolTipText("Enable beeper sound");
+    menuOptionsEnableSpeaker.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/speaker.png"))); // NOI18N
+    menuOptionsEnableSpeaker.addActionListener(this::menuOptionsEnableSpeakerActionPerformed);
+    menuOptions.add(menuOptionsEnableSpeaker);
 
     menuBar.add(menuOptions);
 
     menuHelp.setText("Help");
 
-    menuHelpAbout.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F1, 0));
-    menuHelpAbout.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/info.png"))); // NOI18N
+    menuHelpAbout.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F1, 0));
+    menuHelpAbout.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/info.png"))); // NOI18N
     menuHelpAbout.setText("Help");
     menuHelpAbout.addActionListener(this::menuHelpAboutActionPerformed);
     menuHelp.add(menuHelpAbout);
@@ -966,7 +981,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         }
       }
     });
-    menuHelpDonation.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/donate.png"))); // NOI18N
+    menuHelpDonation.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/donate.png"))); // NOI18N
     menuHelp.add(menuHelpDonation);
 
     menuBar.add(menuHelp);
@@ -976,11 +991,15 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     pack();
   }
 
-  private void menuFileResetActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuOptionsEnableSpeakerActionPerformed(final ActionEvent actionEvent) {
+    this.board.getBeeper().setEnable(this.menuOptionsEnableSpeaker.isSelected());
+  }
+
+  private void menuFileResetActionPerformed(ActionEvent evt) {
     this.board.resetAndRestoreRom(BASE_ROM);
   }
 
-  private void menuOptionsShowIndicatorsActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuOptionsShowIndicatorsActionPerformed(ActionEvent evt) {
     this.indicatorCPU0.clear();
     this.indicatorCPU1.clear();
     this.indicatorCPU2.clear();
@@ -1076,7 +1095,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuFileSelectDiskAActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuFileSelectDiskAActionPerformed(ActionEvent evt) {
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_A);
   }
 
@@ -1099,7 +1118,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuFileLoadSnapshotActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuFileLoadSnapshotActionPerformed(ActionEvent evt) {
     stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1171,7 +1190,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuOptionsZX128ModeActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuOptionsZX128ModeActionPerformed(ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       this.board.resetAndRestoreRom(BASE_ROM);
@@ -1181,27 +1200,27 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuOptionsTurboActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuOptionsTurboActionPerformed(ActionEvent evt) {
     this.setTurboMode(this.menuOptionsTurbo.isSelected());
   }
 
-  private void menuFileSelectDiskCActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuFileSelectDiskCActionPerformed(ActionEvent evt) {
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_C);
   }
 
-  private void menuFileSelectDiskBActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuFileSelectDiskBActionPerformed(ActionEvent evt) {
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_B);
   }
 
-  private void menuFileSelectDiskDActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuFileSelectDiskDActionPerformed(ActionEvent evt) {
     loadDiskIntoDrive(BetaDiscInterface.DRIVE_D);
   }
 
-  private void menuFileExitActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuFileExitActionPerformed(ActionEvent evt) {
     this.formWindowClosing(null);
   }
 
-  private void menuTapGotoBlockActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTapGotoBlockActionPerformed(ActionEvent evt) {
     final TapeFileReader currentReader = this.keyboardAndTapeModule.getTap();
     if (currentReader != null) {
       currentReader.stopPlay();
@@ -1215,7 +1234,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuFileLoadTapActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuFileLoadTapActionPerformed(ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1244,7 +1263,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuTapExportAsWavActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTapExportAsWavActionPerformed(ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1267,7 +1286,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuTapPlayActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTapPlayActionPerformed(ActionEvent evt) {
     if (this.menuTapPlay.isSelected()) {
       this.keyboardAndTapeModule.getTap().startPlay();
     } else {
@@ -1276,7 +1295,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     updateTapeMenu();
   }
 
-  private void menuTapPrevBlockActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTapPrevBlockActionPerformed(ActionEvent evt) {
     final TapeFileReader tap = this.keyboardAndTapeModule.getTap();
     if (tap != null) {
       tap.rewindToPrevBlock();
@@ -1284,7 +1303,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     updateTapeMenu();
   }
 
-  private void menuTapNextBlockActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTapNextBlockActionPerformed(ActionEvent evt) {
     final TapeFileReader tap = this.keyboardAndTapeModule.getTap();
     if (tap != null) {
       tap.rewindToNextBlock();
@@ -1292,7 +1311,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     updateTapeMenu();
   }
 
-  private void menuTapeRewindToStartActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTapeRewindToStartActionPerformed(ActionEvent evt) {
     final TapeFileReader tap = this.keyboardAndTapeModule.getTap();
     if (tap != null) {
       tap.rewindToStart();
@@ -1300,7 +1319,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     updateTapeMenu();
   }
 
-  private void menuServiceSaveScreenActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuServiceSaveScreenActionPerformed(ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1326,7 +1345,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   }
 
-  private void menuFileOptionsActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuFileOptionsActionPerformed(ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1338,7 +1357,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuHelpAboutActionPerformed(ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1349,7 +1368,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuTraceCPU0ActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTraceCPU0ActionPerformed(ActionEvent evt) {
     if (this.menuTraceCPU0.isSelected()) {
       activateTracerForCPUModule(0);
     } else {
@@ -1357,7 +1376,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuTraceCPU1ActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTraceCPU1ActionPerformed(ActionEvent evt) {
     if (this.menuTraceCPU1.isSelected()) {
       activateTracerForCPUModule(1);
     } else {
@@ -1365,7 +1384,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuTraceCPU2ActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTraceCPU2ActionPerformed(ActionEvent evt) {
     if (this.menuTraceCPU2.isSelected()) {
       activateTracerForCPUModule(2);
     } else {
@@ -1373,7 +1392,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuTraceCPU3ActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTraceCPU3ActionPerformed(ActionEvent evt) {
     if (this.menuTraceCPU3.isSelected()) {
       activateTracerForCPUModule(3);
     } else {
@@ -1381,7 +1400,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuServiceSaveScreenAllVRAMActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuServiceSaveScreenAllVRAMActionPerformed(ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1423,7 +1442,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.zxKeyboardProcessingAllowed = true;
   }
 
-  private void menuActionAnimatedGIFActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuActionAnimatedGIFActionPerformed(ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1480,7 +1499,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     closeAnimationSave();
   }
 
-  private void menuTriggerModuleCPUDesyncActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTriggerModuleCPUDesyncActionPerformed(ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       if (this.menuTriggerModuleCPUDesync.isSelected()) {
@@ -1493,7 +1512,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuTriggerDiffMemActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTriggerDiffMemActionPerformed(ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       if (this.menuTriggerDiffMem.isSelected()) {
@@ -1519,7 +1538,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuTriggerExeCodeDiffActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuTriggerExeCodeDiffActionPerformed(ActionEvent evt) {
     this.stepSemaphor.lock();
     try {
       if (this.menuTriggerExeCodeDiff.isSelected()) {
@@ -1532,7 +1551,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuServicemakeSnapshotActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuServicemakeSnapshotActionPerformed(ActionEvent evt) {
     stepSemaphor.lock();
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
@@ -1574,7 +1593,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.menuFileFlushDiskChanges.setEnabled(hasChangedDisk);
   }
 
-  private void menuFileFlushDiskChangesActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuFileFlushDiskChangesActionPerformed(ActionEvent evt) {
     for (int i = 0; i < 4; i++) {
       final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
       if (disk != null && disk.isChanged()) {
@@ -1644,7 +1663,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuOptionsEnableTrapMouseActionPerformed(java.awt.event.ActionEvent evt) {
+  private void menuOptionsEnableTrapMouseActionPerformed(ActionEvent evt) {
     this.board.getVideoController().setEnableTrapMouse(this.menuOptionsEnableTrapMouse.isSelected());
   }
 

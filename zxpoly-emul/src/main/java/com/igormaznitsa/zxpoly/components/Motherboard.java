@@ -67,6 +67,7 @@ public final class Motherboard implements ZxPolyConstants {
   private int statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
   private volatile int gfxSyncRegsRecord = 0;
   private final Random rnd = new Random();
+  private final Beeper beeper = new Beeper();
 
   public Motherboard(final RomData rom) {
     if (rom == null) {
@@ -103,6 +104,10 @@ public final class Motherboard implements ZxPolyConstants {
     }
   }
 
+  public Beeper getBeeper() {
+    return this.beeper;
+  }
+
   public synchronized void forceResetAllCpu() {
     for (final ZxPolyModule p : this.modules) {
       p.getCpu().doReset();
@@ -111,6 +116,7 @@ public final class Motherboard implements ZxPolyConstants {
 
   public void reset() {
     LOGGER.info("Full system reset");
+    this.beeper.reset();
     this.totalReset = true;
     this.resetCounter = 3;
   }
@@ -124,7 +130,6 @@ public final class Motherboard implements ZxPolyConstants {
     this.totalReset = true;
     this.resetCounter = 3;
   }
-
 
   public boolean set3D00(final int value, final boolean force) {
     if (is3D00NotLocked() || force) {
@@ -353,6 +358,8 @@ public final class Motherboard implements ZxPolyConstants {
         }
         masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
       }
+
+      this.beeper.updateState(signalInt, initialMachineCycleCounter, (this.video.getPortFE() >>> 3) & 3);
 
       final long spentMachineCycles = modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
 

@@ -1,6 +1,6 @@
 package com.igormaznitsa.zxpoly.components;
 
-import static com.igormaznitsa.zxpoly.components.VideoController.CYCLES_BETWEEN_INT;
+import static javax.sound.sampled.AudioFormat.Encoding.PCM_UNSIGNED;
 
 
 import java.util.Arrays;
@@ -22,150 +22,205 @@ public class Beeper {
   private static final byte SND_LEVEL1 = 32; // 01
   private static final byte SND_LEVEL2 = 100; // 10
   private static final byte SND_LEVEL3 = 127; // 11
-  private final AtomicReference<InternalBeeper> activeInternalBeeper = new AtomicReference<>();
+
+  private static final IBeeper NULL_BEEPER = new IBeeper() {
+    @Override
+    public void updateState(boolean intSignal, long machineCycleInInt, int portFed4d3) {
+    }
+
+    @Override
+    public void dispose() {
+    }
+
+    @Override
+    public void reset() {
+    }
+
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void pause() {
+
+    }
+
+    @Override
+    public void resume() {
+
+    }
+  };
+
+  private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
 
   public Beeper() {
 
   }
 
   public void reset() {
-    final InternalBeeper activeBeeper = this.activeInternalBeeper.get();
-    if (activeBeeper != null) {
-      activeBeeper.reset();
-    }
-  }
-
-  public void sendSoundBuffer() {
-    InternalBeeper beeper = this.activeInternalBeeper.get();
-    if (beeper != null) {
-      beeper.blink();
-    }
-  }
-
-  public void doLevel(final long machineCycles, final int d4d3) {
-    InternalBeeper beeper = this.activeInternalBeeper.get();
-    if (beeper != null) {
-      switch (d4d3) {
-        case 0:
-          beeper.set(machineCycles, SND_LEVEL0);
-          break;
-        case 1:
-          beeper.set(machineCycles, SND_LEVEL1);
-          break;
-        case 2:
-          beeper.set(machineCycles, SND_LEVEL2);
-          break;
-        default:
-          beeper.set(machineCycles, SND_LEVEL3);
-          break;
-      }
-    }
+    this.activeInternalBeeper.get().reset();
   }
 
   public void setEnable(final boolean flag) {
-    if (flag) {
-      final InternalBeeper newInternalBeeper = new InternalBeeper();
-      if (this.activeInternalBeeper.compareAndSet(null, newInternalBeeper)) {
-        final Thread newSoundThread = new Thread(newInternalBeeper, "zxpoly-beeper-thread");
-        newSoundThread.setDaemon(true);
-        newSoundThread.start();
+    if (flag && this.activeInternalBeeper.get() == NULL_BEEPER) {
+      try {
+        final IBeeper newInternalBeeper = new InternalBeeper();
+        if (this.activeInternalBeeper.compareAndSet(NULL_BEEPER, newInternalBeeper)) {
+          newInternalBeeper.start();
+        }
+      } catch (LineUnavailableException ex) {
+        LOGGER.severe("Can't create beeper: " + ex.getMessage());
       }
     } else {
-      final InternalBeeper activeBeeper = this.activeInternalBeeper.getAndSet(null);
-      if (activeBeeper != null) {
-        activeBeeper.dispose();
-      }
+      this.activeInternalBeeper.getAndSet(NULL_BEEPER).dispose();
     }
   }
 
-  private static final class InternalBeeper implements Runnable {
-    private static final int SND_FREQ = 22050;
-    private static final AudioFormat AUDIO_FORMAT = new AudioFormat(SND_FREQ, 8, 1, false, true);
+  public void resume() {
+    this.activeInternalBeeper.get().resume();
+  }
+
+  public void pause() {
+    this.activeInternalBeeper.get().pause();
+  }
+
+  public void updateState(boolean intSignal, long machineCycleInInt, int portFeD4D3) {
+    this.activeInternalBeeper.get().updateState(intSignal, machineCycleInInt, portFeD4D3);
+  }
+
+  public boolean isActive() {
+    return this.activeInternalBeeper.get() != NULL_BEEPER;
+  }
+
+  private interface IBeeper {
+    void start();
+
+    void pause();
+
+    void resume();
+
+    void updateState(boolean intSignal, long machineCycleInInt, int portFeD4D3);
+
+    void dispose();
+
+    void reset();
+  }
+
+  private static final class InternalBeeper implements IBeeper, Runnable {
+    private static final int SND_FREQ = 44100;
+    private static final int NUM_OF_BUFFERS = 5;
+    private static final AudioFormat AUDIO_FORMAT = new AudioFormat(
+        PCM_UNSIGNED,
+        SND_FREQ,
+        8,
+        1,
+        1,
+        SND_FREQ,
+        true
+    );
     private static final int SAMPLES_IN_INT = SND_FREQ / 50;
-    private final byte[] SND_BUFFER1 = new byte[SAMPLES_IN_INT];
-    private final byte[] SND_BUFFER2 = new byte[SAMPLES_IN_INT];
+    private final byte[][] soundBuffers = new byte[NUM_OF_BUFFERS][SAMPLES_IN_INT];
     private final Exchanger<byte[]> exchanger = new Exchanger<>();
-    private volatile byte[] currentSndBuffer = SND_BUFFER1;
+    private final SourceDataLine sourceDataLine;
+    private final Thread thread;
+    private int activeBufferIndex = 0;
     private volatile boolean active = true;
-    private int lastDataPosition;
-    private byte lastLevel;
 
-    private InternalBeeper() {
-      Arrays.fill(SND_BUFFER1, SND_LEVEL0);
-      Arrays.fill(SND_BUFFER2, SND_LEVEL0);
-    }
-
-    private SourceDataLine findDataLine() throws LineUnavailableException {
-      DataLine.Info infoDataLine = new DataLine.Info(SourceDataLine.class, AUDIO_FORMAT);
-      return (SourceDataLine) AudioSystem.getLine(infoDataLine);
-    }
-
-    private void blink() {
-      final byte[] buffer = this.currentSndBuffer;
-      if (buffer == SND_BUFFER1) {
-        this.currentSndBuffer = SND_BUFFER2;
-      } else {
-        this.currentSndBuffer = SND_BUFFER1;
+    private InternalBeeper() throws LineUnavailableException {
+      for (byte[] b : this.soundBuffers) {
+        Arrays.fill(b, SND_LEVEL0);
       }
-      Arrays.fill(this.currentSndBuffer, this.lastLevel);
-      this.lastDataPosition = 0;
+      this.sourceDataLine = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, AUDIO_FORMAT));
+      this.thread = new Thread(this, "beeper-thread-" + System.nanoTime());
+      this.thread.setDaemon(true);
+    }
+
+    @Override
+    public void start() {
+      this.thread.start();
+    }
+
+    @Override
+    public void pause() {
+      LOGGER.info("Paused");
+    }
+
+    @Override
+    public void resume() {
+      LOGGER.info("Resumed");
+    }
+
+    void blink() {
+      final byte[] currentBuffer = this.soundBuffers[this.activeBufferIndex++];
+      if (this.activeBufferIndex > NUM_OF_BUFFERS) {
+        this.activeBufferIndex = 0;
+      }
       try {
-        exchanger.exchange(buffer);
+        exchanger.exchange(currentBuffer);
       } catch (InterruptedException ex) {
         Thread.currentThread().interrupt();
       }
     }
 
-    private void set(long machineCycleInInt, final byte level) {
-      if (machineCycleInInt > CYCLES_BETWEEN_INT) {
-        blink();
-        machineCycleInInt -= CYCLES_BETWEEN_INT;
-      }
-      final byte[] data = this.currentSndBuffer;
-
-      final int position = (int) ((machineCycleInInt * (SAMPLES_IN_INT - 1) + (SAMPLES_IN_INT >> 1)) / CYCLES_BETWEEN_INT);
-      int lastPos = this.lastDataPosition;
-
-      if (position < lastPos) {
-        lastPos = 0;
-      }
-      Arrays.fill(data, lastPos, position, this.lastLevel);
-      Arrays.fill(data, position, SAMPLES_IN_INT - 1, level);
-      this.lastDataPosition = position;
-      this.lastLevel = level;
+    @Override
+    public void updateState(
+        final boolean intSignal,
+        final long machineCycleInInt,
+        final int portFeD4D3
+    ) {
     }
 
-    private void reset() {
-      Arrays.fill(SND_BUFFER1, SND_LEVEL0);
-      Arrays.fill(SND_BUFFER2, SND_LEVEL1);
-      this.currentSndBuffer = SND_BUFFER1;
-      this.lastLevel = SND_LEVEL0;
-      this.lastDataPosition = 0;
+    @Override
+    public void reset() {
+      LOGGER.info("Reseting");
+      for (byte[] b : this.soundBuffers) {
+        Arrays.fill(b, SND_LEVEL0);
+      }
     }
 
     @Override
     public void run() {
-      LOGGER.info("Starting");
-      try (SourceDataLine soundLine = findDataLine()) {
-        soundLine.open(AUDIO_FORMAT, SAMPLES_IN_INT * 50);
-        soundLine.start();
-
+      LOGGER.info("Starting thread");
+      try {
+        this.sourceDataLine.start();
         LOGGER.info("Sound line started");
-        while (active && !Thread.currentThread().isInterrupted()) {
+        while (this.active && !Thread.currentThread().isInterrupted()) {
           final byte[] buffer = exchanger.exchange(null);
-          soundLine.write(buffer, 0, buffer.length);
+          if (buffer != null) {
+            this.sourceDataLine.write(buffer, 0, buffer.length);
+          }
         }
         LOGGER.info("Main loop completed");
+      } catch (InterruptedException ex) {
+        LOGGER.info("Interruption");
       } catch (Exception ex) {
-        LOGGER.log(Level.WARNING, "Error in sound line work: " + ex.getMessage());
+        LOGGER.log(Level.WARNING, "Error in sound line work: " + ex);
       } finally {
-        LOGGER.info("Stopping");
+        try {
+          this.sourceDataLine.stop();
+        } catch (Exception ex) {
+          LOGGER.warning("Exception in source line stop: " + ex.getMessage());
+        } finally {
+          try {
+            this.sourceDataLine.close();
+          } catch (Exception ex) {
+            LOGGER.warning("Exception in source line close: " + ex.getMessage());
+          }
+        }
+        LOGGER.info("Thread stopped");
       }
     }
 
-    void dispose() {
-      this.active = false;
+    @Override
+    public void dispose() {
       LOGGER.info("Disposing");
+      this.thread.interrupt();
+      try {
+        this.thread.join();
+      } catch (InterruptedException ex) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 }
