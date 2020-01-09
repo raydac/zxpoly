@@ -96,6 +96,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
   public static final int[] PALETTE_SPEC256 = Utils.readRawPalette(VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/spec256.raw.pal"), true);
   private static final int[] PALETTE_ALIGNED_ZXPOLY = Utils.alignPaletteColors(PALETTE_ZXPOLY, PALETTE_SPEC256);
+  private final Beeper beeper;
 
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
@@ -132,6 +133,9 @@ public final class VideoController extends JComponent implements ZxPolyConstants
     this.bufferImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
     this.bufferImage.setAccelerationPriority(1.0f);
     this.bufferImageRgbData = ((DataBufferInt) this.bufferImage.getRaster().getDataBuffer()).getData();
+
+    this.beeper = new Beeper();
+    this.beeper.setEnable(true);
 
     this.addMouseWheelListener(this);
   }
@@ -1000,6 +1004,7 @@ public final class VideoController extends JComponent implements ZxPolyConstants
         int borderLineIndex;
         final long machineCycles = module.getCpu().getMachineCycles();
         if (module.isMaster()) {
+          this.beeper.doLevel(machineCycles, (value >> 3) & 3);
           borderLineIndex = (int) (machineCycles / MCYCLES_PER_BORDER_LINE);
         } else {
           borderLineIndex = (int) (machineCycles % BORDER_LINES);
@@ -1019,8 +1024,12 @@ public final class VideoController extends JComponent implements ZxPolyConstants
 
   @Override
   public void preStep(final boolean signalReset, final boolean signalInt) {
+    if (signalInt) {
+      this.beeper.sendSoundBuffer();
+    }
     if (signalReset) {
       this.portFEw = 0x00;
+      this.beeper.reset();
     }
   }
 
