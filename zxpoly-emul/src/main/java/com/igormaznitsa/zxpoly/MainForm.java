@@ -1201,7 +1201,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuOptionsTurboActionPerformed(ActionEvent evt) {
-    this.setTurboMode(this.menuOptionsTurbo.isSelected());
+    final boolean turboActivated = this.menuOptionsTurbo.isSelected();
+    this.board.getBeeper().setEnable(false);
+    this.setTurboMode(turboActivated);
   }
 
   private void menuFileSelectDiskCActionPerformed(ActionEvent evt) {
