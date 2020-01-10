@@ -14,6 +14,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.Exchanger;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -140,20 +143,32 @@ public class Beeper {
     private final Thread thread;
     private int activeBufferIndex = 0;
     private int lastPosition = 0;
+    private final AtomicBoolean paused = new AtomicBoolean();
+    private volatile boolean working = true;
 
     @Override
     public void start() {
-      this.thread.start();
+      if (this.working) {
+        this.thread.start();
+      }
     }
 
     @Override
     public void pause() {
-      LOGGER.info("Paused");
+      if (this.working) {
+        if (this.paused.compareAndSet(false, true)) {
+          LOGGER.info("Paused");
+        }
+      }
     }
 
     @Override
     public void resume() {
-      LOGGER.info("Resumed");
+      if (this.working) {
+        if (this.paused.compareAndSet(true, false)) {
+          LOGGER.info("Resumed");
+        }
+      }
     }
 
     private byte lastValue = SND_LEVEL0;
@@ -169,15 +184,19 @@ public class Beeper {
     }
 
     private void blink() {
-      final byte[] currentBuffer = this.soundBuffers[this.activeBufferIndex++];
-      this.lastPosition = 0;
-      if (this.activeBufferIndex >= NUM_OF_BUFFERS) {
-        this.activeBufferIndex = 0;
-      }
-      try {
-        exchanger.exchange(currentBuffer);
-      } catch (InterruptedException ex) {
-        Thread.currentThread().interrupt();
+      if (this.working) {
+        final byte[] currentBuffer = this.soundBuffers[this.activeBufferIndex++];
+        this.lastPosition = 0;
+        if (this.activeBufferIndex >= NUM_OF_BUFFERS) {
+          this.activeBufferIndex = 0;
+        }
+        try {
+          exchanger.exchange(currentBuffer, 20, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException ex) {
+          // DO NOTHING, JUST LOST DATA
+        } catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
 
@@ -187,53 +206,57 @@ public class Beeper {
         long machineCycleInInt,
         final int portFeD4D3
     ) {
-      final byte value;
-      switch (portFeD4D3) {
-        case 0:
-          value = SND_LEVEL0;
-          break;
-        case 1:
-          value = SND_LEVEL1;
-          break;
-        case 2:
-          value = SND_LEVEL2;
-          break;
-        default:
-          value = SND_LEVEL3;
-          break;
+      if (this.working) {
+        final byte value;
+        switch (portFeD4D3) {
+          case 0:
+            value = SND_LEVEL0;
+            break;
+          case 1:
+            value = SND_LEVEL1;
+            break;
+          case 2:
+            value = SND_LEVEL2;
+            break;
+          default:
+            value = SND_LEVEL3;
+            break;
+        }
+
+        if (machineCycleInInt > CYCLES_BETWEEN_INT) {
+          fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, SAMPLES_IN_INT, this.lastValue);
+          blink();
+          machineCycleInInt -= CYCLES_BETWEEN_INT;
+        }
+
+        int position = (int) (machineCycleInInt * SAMPLES_IN_INT / CYCLES_BETWEEN_INT);
+
+        if (position < this.lastPosition) {
+          fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, SAMPLES_IN_INT, this.lastValue);
+          blink();
+        }
+
+        fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, position, this.lastValue);
+        if (position == SAMPLES_IN_INT) {
+          blink();
+          position = 0;
+        }
+        this.soundBuffers[this.activeBufferIndex][position] = value;
+
+        this.lastValue = value;
+        this.lastPosition = position;
       }
-
-      if (machineCycleInInt > CYCLES_BETWEEN_INT) {
-        fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, SAMPLES_IN_INT, this.lastValue);
-        blink();
-        machineCycleInInt -= CYCLES_BETWEEN_INT;
-      }
-
-      int position = (int) (machineCycleInInt * SAMPLES_IN_INT / CYCLES_BETWEEN_INT);
-
-      if (position < this.lastPosition) {
-        fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, SAMPLES_IN_INT, this.lastValue);
-        blink();
-      }
-
-      fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, position, this.lastValue);
-      if (position == SAMPLES_IN_INT) {
-        blink();
-        position = 0;
-      }
-      this.soundBuffers[this.activeBufferIndex][position] = value;
-
-      this.lastValue = value;
-      this.lastPosition = position;
     }
 
     @Override
     public void reset() {
-      LOGGER.info("Reseting");
-      lastPosition = 0;
-      lastValue = SND_LEVEL0;
-      for (byte[] b : this.soundBuffers) {
-        fill(b, SND_LEVEL0);
+      if (this.working) {
+        LOGGER.info("Reseting");
+        lastPosition = 0;
+        lastValue = SND_LEVEL0;
+        for (byte[] b : this.soundBuffers) {
+          fill(b, SND_LEVEL0);
+        }
       }
     }
 
@@ -265,29 +288,49 @@ public class Beeper {
     @Override
     public void run() {
       LOGGER.info("Starting thread");
+      final byte[] localBuffer = new byte[SAMPLES_IN_INT];
+      fill(localBuffer, SND_LEVEL0);
 
       final OutputStream logStream = makeLogStream(new File("./"));
       try {
-        this.sourceDataLine.open(AUDIO_FORMAT, SAMPLES_IN_INT * 50);
+        this.sourceDataLine.open(AUDIO_FORMAT, SAMPLES_IN_INT * 10);
         LOGGER.info("Sound line opened");
+        this.sourceDataLine.write(localBuffer, 0, SAMPLES_IN_INT);
         this.sourceDataLine.start();
         LOGGER.info("Sound line started");
 
-        final byte[] localBuffer = new byte[SAMPLES_IN_INT];
-
-        while (!Thread.currentThread().isInterrupted()) {
-          final byte[] buffer = exchanger.exchange(null);
-          if (buffer != null) {
-            System.arraycopy(buffer, 0, localBuffer, 0, SAMPLES_IN_INT);
-            if (logStream != null) {
-              logStream.write(localBuffer);
+        while (this.working && !Thread.currentThread().isInterrupted()) {
+          try {
+            final byte[] buffer = exchanger.exchange(null, 60, TimeUnit.MILLISECONDS);
+            if (buffer == null) {
+              fill(localBuffer, SND_LEVEL0);
+            } else {
+              System.arraycopy(buffer, 0, localBuffer, 0, SAMPLES_IN_INT);
+              if (logStream != null) {
+                logStream.write(localBuffer);
+              }
             }
             this.sourceDataLine.write(localBuffer, 0, SAMPLES_IN_INT);
+          } catch (final TimeoutException ex) {
+            if (this.paused.get()) {
+              this.sourceDataLine.stop();
+              LOGGER.info("Stopped for data timeout");
+              while (this.paused.get() && this.working && !Thread.currentThread().isInterrupted()) {
+                Thread.sleep(100);
+              }
+              if (this.working && !Thread.currentThread().isInterrupted()) {
+                fill(localBuffer, SND_LEVEL0);
+                this.sourceDataLine.write(localBuffer, 0, SAMPLES_IN_INT);
+                this.sourceDataLine.start();
+                LOGGER.info("Work continued");
+              }
+            }
           }
         }
         LOGGER.info("Main loop completed");
       } catch (InterruptedException ex) {
         LOGGER.info("Interruption");
+        Thread.currentThread().interrupt();
       } catch (Exception ex) {
         LOGGER.log(Level.WARNING, "Error in sound line work: " + ex);
       } finally {
@@ -311,12 +354,20 @@ public class Beeper {
 
     @Override
     public void dispose() {
-      LOGGER.info("Disposing");
-      this.thread.interrupt();
-      try {
-        this.thread.join();
-      } catch (InterruptedException ex) {
-        Thread.currentThread().interrupt();
+      if (this.working) {
+        this.working = false;
+        LOGGER.info("Disposing");
+        this.thread.interrupt();
+        try {
+          this.exchanger.exchange(null, 100, TimeUnit.MILLISECONDS);
+        } catch (Exception ex) {
+          //DO NOTING
+        }
+        try {
+          this.thread.join();
+        } catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
   }
