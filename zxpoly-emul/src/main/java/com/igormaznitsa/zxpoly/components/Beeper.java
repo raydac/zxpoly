@@ -165,6 +165,7 @@ public class Beeper {
       this.sourceDataLine = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, AUDIO_FORMAT));
       this.thread = new Thread(this, "beeper-thread-" + System.nanoTime());
       this.thread.setDaemon(true);
+      this.thread.setPriority(Thread.MAX_PRIORITY);
     }
 
     private void blink() {
