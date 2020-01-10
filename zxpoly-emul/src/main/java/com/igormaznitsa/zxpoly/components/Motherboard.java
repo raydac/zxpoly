@@ -581,4 +581,8 @@ public final class Motherboard implements ZxPolyConstants {
       devices[i].doReset();
     }
   }
+
+  public void dispose() {
+    this.beeper.dispose();
+  }
 }

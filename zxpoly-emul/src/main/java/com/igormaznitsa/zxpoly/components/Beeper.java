@@ -2,9 +2,17 @@ package com.igormaznitsa.zxpoly.components;
 
 import static com.igormaznitsa.zxpoly.components.VideoController.CYCLES_BETWEEN_INT;
 import static java.util.Arrays.fill;
-import static javax.sound.sampled.AudioFormat.Encoding.PCM_UNSIGNED;
+import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
 
 
+import com.igormaznitsa.jbbp.utils.JBBPUtils;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -19,10 +27,12 @@ public class Beeper {
 
   private static final Logger LOGGER = Logger.getLogger("Beeper");
 
-  private static final byte SND_LEVEL0 = 0; // 00
-  private static final byte SND_LEVEL1 = 32; // 01
-  private static final byte SND_LEVEL2 = 100; // 10
-  private static final byte SND_LEVEL3 = 127; // 11
+  private static final byte SND_LEVEL0 = -100; // 00
+  private static final byte SND_LEVEL1 = -70; // 01
+  private static final byte SND_LEVEL2 = 70; // 10
+  private static final byte SND_LEVEL3 = 100; // 11
+
+  private static final boolean LOG_RAW_SOUND = false;
 
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
@@ -56,7 +66,6 @@ public class Beeper {
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
 
   public Beeper() {
-
   }
 
   public void reset() {
@@ -94,6 +103,10 @@ public class Beeper {
     return this.activeInternalBeeper.get() != NULL_BEEPER;
   }
 
+  public void dispose() {
+    this.activeInternalBeeper.get().dispose();
+  }
+
   private interface IBeeper {
     void start();
 
@@ -112,13 +125,13 @@ public class Beeper {
     private static final int SND_FREQ = 44100;
     private static final int NUM_OF_BUFFERS = 3;
     private static final AudioFormat AUDIO_FORMAT = new AudioFormat(
-        PCM_UNSIGNED,
+        PCM_SIGNED,
         SND_FREQ,
         8,
         1,
         1,
         SND_FREQ,
-        true
+        false
     );
     private static final int SAMPLES_IN_INT = SND_FREQ / 50;
     private final byte[][] soundBuffers = new byte[NUM_OF_BUFFERS][SAMPLES_IN_INT];
@@ -223,9 +236,36 @@ public class Beeper {
       }
     }
 
+    private String makeFileNameForFormat(final AudioFormat format) {
+      final DateFormat dataFormat = new SimpleDateFormat("hhmmss");
+
+      return String.format("bpr_hz%d_ch%d_%s_%s_%s.raw",
+          (int) format.getSampleRate(),
+          format.getChannels(),
+          format.getEncoding() == PCM_SIGNED ? "SGN" : "USGN",
+          format.isBigEndian() ? "bge" : "lte",
+          dataFormat.format(new Date()));
+    }
+
+    private OutputStream makeLogStream(final File folder) {
+      if (!LOG_RAW_SOUND) {
+        return null;
+      }
+      try {
+        final File logFile = new File(folder, makeFileNameForFormat(AUDIO_FORMAT));
+        LOGGER.info("Log beeper raw data into " + logFile);
+        return new BufferedOutputStream(new FileOutputStream(logFile));
+      } catch (Exception ex) {
+        LOGGER.warning("Can't create log file:" + ex.getMessage());
+        return null;
+      }
+    }
+
     @Override
     public void run() {
       LOGGER.info("Starting thread");
+
+      final OutputStream logStream = makeLogStream(new File("./"));
       try {
         this.sourceDataLine.open(AUDIO_FORMAT, SAMPLES_IN_INT * 50);
         LOGGER.info("Sound line opened");
@@ -238,6 +278,9 @@ public class Beeper {
           final byte[] buffer = exchanger.exchange(null);
           if (buffer != null) {
             System.arraycopy(buffer, 0, localBuffer, 0, SAMPLES_IN_INT);
+            if (logStream != null) {
+              logStream.write(localBuffer);
+            }
             this.sourceDataLine.write(localBuffer, 0, SAMPLES_IN_INT);
           }
         }
@@ -247,13 +290,16 @@ public class Beeper {
       } catch (Exception ex) {
         LOGGER.log(Level.WARNING, "Error in sound line work: " + ex);
       } finally {
+        JBBPUtils.closeQuietly(logStream);
         try {
           this.sourceDataLine.stop();
+          LOGGER.info("Line stopped");
         } catch (Exception ex) {
           LOGGER.warning("Exception in source line stop: " + ex.getMessage());
         } finally {
           try {
             this.sourceDataLine.close();
+            LOGGER.info("Line closed");
           } catch (Exception ex) {
             LOGGER.warning("Exception in source line close: " + ex.getMessage());
           }

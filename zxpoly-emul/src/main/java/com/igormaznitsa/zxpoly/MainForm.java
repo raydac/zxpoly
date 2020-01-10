@@ -1652,6 +1652,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       close = true;
     }
 
+    this.board.dispose();
+
     if (close) {
       System.exit(0);
     }
