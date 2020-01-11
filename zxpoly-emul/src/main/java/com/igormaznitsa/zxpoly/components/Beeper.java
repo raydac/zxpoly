@@ -3,6 +3,7 @@ package com.igormaznitsa.zxpoly.components;
 import static com.igormaznitsa.zxpoly.components.VideoController.CYCLES_BETWEEN_INT;
 import static java.util.Arrays.fill;
 import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
+import static javax.sound.sampled.AudioFormat.Encoding.PCM_UNSIGNED;
 
 
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
@@ -30,10 +31,10 @@ public class Beeper {
 
   private static final Logger LOGGER = Logger.getLogger("Beeper");
 
-  private static final byte SND_LEVEL0 = -100; // 00
-  private static final byte SND_LEVEL1 = -70; // 01
-  private static final byte SND_LEVEL2 = 70; // 10
-  private static final byte SND_LEVEL3 = 100; // 11
+  private static final byte SND_LEVEL0 = 0; // 00
+  private static final byte SND_LEVEL1 = 50; // 01
+  private static final byte SND_LEVEL2 = (byte) 200; // 10
+  private static final byte SND_LEVEL3 = (byte) 255; // 11
 
   private static final boolean LOG_RAW_SOUND = false;
 
@@ -128,7 +129,7 @@ public class Beeper {
     private static final int SND_FREQ = 44100;
     private static final int NUM_OF_BUFFERS = 3;
     private static final AudioFormat AUDIO_FORMAT = new AudioFormat(
-        PCM_SIGNED,
+        PCM_UNSIGNED,
         SND_FREQ,
         8,
         1,
