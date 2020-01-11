@@ -263,11 +263,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     buttonStartPause.addActionListener((final ActionEvent event) -> {
       final JToggleButton source = (JToggleButton) event.getSource();
       if (source.isSelected()) {
+        MainForm.this.board.getBeeper().pause();
         MainForm.this.stepSemaphor.lock();
         source.setIcon(ICO_EMUL_PLAY);
         LOGGER.info("Emulator is paused by PLAY/PAUSE button");
       } else {
         MainForm.this.stepSemaphor.unlock();
+        MainForm.this.board.getBeeper().resume();
         source.setIcon(ICO_EMUL_PAUSE);
         LOGGER.info("Emulator is started by PLAY/PAUSE button");
       }
