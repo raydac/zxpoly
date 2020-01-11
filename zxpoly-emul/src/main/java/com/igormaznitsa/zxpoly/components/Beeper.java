@@ -285,6 +285,16 @@ public class Beeper {
       }
     }
 
+    private void writeWholeArray(final byte[] data) {
+      int pos = 0;
+      int len = data.length;
+      while (len > 0 && this.working && !Thread.currentThread().isInterrupted()) {
+        final int written = this.sourceDataLine.write(data, pos, len);
+        pos += written;
+        len -= written;
+      }
+    }
+
     @Override
     public void run() {
       LOGGER.info("Starting thread");
@@ -295,7 +305,7 @@ public class Beeper {
       try {
         this.sourceDataLine.open(AUDIO_FORMAT, SAMPLES_IN_INT * 10);
         LOGGER.info("Sound line opened");
-        this.sourceDataLine.write(localBuffer, 0, SAMPLES_IN_INT);
+        writeWholeArray(localBuffer);
         this.sourceDataLine.start();
         LOGGER.info("Sound line started");
 
@@ -320,7 +330,7 @@ public class Beeper {
               }
               if (this.working && !Thread.currentThread().isInterrupted()) {
                 fill(localBuffer, SND_LEVEL0);
-                this.sourceDataLine.write(localBuffer, 0, SAMPLES_IN_INT);
+                writeWholeArray(localBuffer);
                 this.sourceDataLine.start();
                 LOGGER.info("Work continued");
               }
