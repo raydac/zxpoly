@@ -1,6 +1,7 @@
 package com.igormaznitsa.zxpoly.components;
 
 import static com.igormaznitsa.zxpoly.components.VideoController.CYCLES_BETWEEN_INT;
+import static java.lang.String.format;
 import static java.util.Arrays.fill;
 import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
 import static javax.sound.sampled.AudioFormat.Encoding.PCM_UNSIGNED;
@@ -305,7 +306,7 @@ public class Beeper {
     private String makeFileNameForFormat(final AudioFormat format) {
       final DateFormat dataFormat = new SimpleDateFormat("hhmmss");
 
-      return String.format("bpr_hz%d_ch%d_%s_%s_%s.raw",
+      return format("bpr_hz%d_ch%d_%s_%s_%s.raw",
           (int) format.getSampleRate(),
           format.getChannels(),
           format.getEncoding() == PCM_SIGNED ? "SGN" : "USGN",
@@ -348,16 +349,15 @@ public class Beeper {
         this.sourceDataLine.open(AUDIO_FORMAT, SAMPLES_IN_INT * 10);
         if (this.sourceDataLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
           final FloatControl gainControl = (FloatControl) this.sourceDataLine.getControl(FloatControl.Type.MASTER_GAIN);
-          LOGGER.info(String.format("Got master gain control %f..%f", gainControl.getMinimum(), gainControl.getMaximum()));
+          LOGGER.info(format("Got master gain control %f..%f", gainControl.getMinimum(), gainControl.getMaximum()));
           this.gainControl.set(gainControl);
         } else {
           LOGGER.warning("Master gain control is not supported");
         }
         this.gainToMiddle();
 
-        LOGGER.info("Sound line opened");
-        writeWholeArray(localBuffer);
-        writeWholeArray(localBuffer);
+        LOGGER.info(format("Sound line opened, buffer size is %d byte(s)", this.sourceDataLine.getBufferSize()));
+        writeWholeArray(new byte[this.sourceDataLine.getBufferSize()]);
         this.sourceDataLine.start();
         LOGGER.info("Sound line started");
 
@@ -382,7 +382,6 @@ public class Beeper {
               }
               if (this.working && !Thread.currentThread().isInterrupted()) {
                 fill(localBuffer, SND_LEVEL0);
-                writeWholeArray(localBuffer);
                 writeWholeArray(localBuffer);
                 this.sourceDataLine.start();
                 LOGGER.info("Work continued");
