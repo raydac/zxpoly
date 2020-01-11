@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
+import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
@@ -41,6 +42,16 @@ public class Beeper {
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
     public void updateState(boolean intSignal, long machineCycleInInt, int portFed4d3) {
+    }
+
+    @Override
+    public float getMasterGain() {
+      return -1.0f;
+    }
+
+    @Override
+    public void setMasterGain(float valueInDb) {
+
     }
 
     @Override
@@ -114,6 +125,10 @@ public class Beeper {
   private interface IBeeper {
     void start();
 
+    float getMasterGain();
+
+    void setMasterGain(float valueInDb);
+
     void pause();
 
     void resume();
@@ -146,6 +161,7 @@ public class Beeper {
     private int lastPosition = 0;
     private final AtomicBoolean paused = new AtomicBoolean();
     private volatile boolean working = true;
+    private final AtomicReference<FloatControl> gainControl = new AtomicReference<>();
 
     @Override
     public void start() {
@@ -173,6 +189,31 @@ public class Beeper {
     }
 
     private byte lastValue = SND_LEVEL0;
+
+    private void gainToMiddle() {
+      final FloatControl gainControl = this.gainControl.get();
+      if (gainControl != null) {
+        gainControl.setValue(-10.0f);
+      }
+    }
+
+    @Override
+    public float getMasterGain() {
+      final FloatControl gainControl = this.gainControl.get();
+      if (gainControl == null || !this.working) {
+        return -1.0f;
+      } else {
+        return gainControl.getValue();
+      }
+    }
+
+    @Override
+    public void setMasterGain(final float valueInDb) {
+      final FloatControl gainControl = this.gainControl.get();
+      if (gainControl != null && this.working) {
+        gainControl.setValue(Math.max(gainControl.getMinimum(), Math.min(gainControl.getMaximum(), valueInDb)));
+      }
+    }
 
     private InternalBeeper() throws LineUnavailableException {
       for (byte[] b : this.soundBuffers) {
@@ -305,7 +346,17 @@ public class Beeper {
       final OutputStream logStream = makeLogStream(new File("./"));
       try {
         this.sourceDataLine.open(AUDIO_FORMAT, SAMPLES_IN_INT * 10);
+        if (this.sourceDataLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+          final FloatControl gainControl = (FloatControl) this.sourceDataLine.getControl(FloatControl.Type.MASTER_GAIN);
+          LOGGER.info(String.format("Got master gain control %f..%f", gainControl.getMinimum(), gainControl.getMaximum()));
+          this.gainControl.set(gainControl);
+        } else {
+          LOGGER.warning("Master gain control is not supported");
+        }
+        this.gainToMiddle();
+
         LOGGER.info("Sound line opened");
+        writeWholeArray(localBuffer);
         writeWholeArray(localBuffer);
         this.sourceDataLine.start();
         LOGGER.info("Sound line started");
@@ -331,6 +382,7 @@ public class Beeper {
               }
               if (this.working && !Thread.currentThread().isInterrupted()) {
                 fill(localBuffer, SND_LEVEL0);
+                writeWholeArray(localBuffer);
                 writeWholeArray(localBuffer);
                 this.sourceDataLine.start();
                 LOGGER.info("Work continued");
