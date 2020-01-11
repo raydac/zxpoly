@@ -191,10 +191,10 @@ public class Beeper {
 
     private byte lastValue = SND_LEVEL0;
 
-    private void gainToMiddle() {
+    private void initMasterGain() {
       final FloatControl gainControl = this.gainControl.get();
       if (gainControl != null) {
-        gainControl.setValue(-10.0f);
+        gainControl.setValue(-40.0f);
       }
     }
 
@@ -354,7 +354,7 @@ public class Beeper {
         } else {
           LOGGER.warning("Master gain control is not supported");
         }
-        this.gainToMiddle();
+        this.initMasterGain();
 
         LOGGER.info(format("Sound line opened, buffer size is %d byte(s)", this.sourceDataLine.getBufferSize()));
         writeWholeArray(new byte[this.sourceDataLine.getBufferSize()]);
