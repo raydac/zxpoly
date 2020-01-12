@@ -196,8 +196,8 @@ public class Beeper {
     private void initMasterGain() {
       final FloatControl gainControl = this.gainControl.get();
       if (gainControl != null) {
-        gainControl.setValue(-20.0f);
-//        gainControl.setValue(-40.0f);
+        gainControl.setValue(-20.0f); // 50%
+//        gainControl.setValue(-40.0f); // 25%
       }
     }
 
