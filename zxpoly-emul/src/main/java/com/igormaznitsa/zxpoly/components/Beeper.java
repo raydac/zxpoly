@@ -8,6 +8,7 @@ import static javax.sound.sampled.AudioFormat.Encoding.PCM_UNSIGNED;
 
 
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
+import com.igormaznitsa.zxpoly.MainForm;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,6 +27,7 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.FloatControl;
+import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
@@ -221,6 +223,9 @@ public class Beeper {
         fill(b, SND_LEVEL0);
       }
       this.sourceDataLine = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, AUDIO_FORMAT));
+      final Line.Info lineInfo = this.sourceDataLine.getLineInfo();
+      LOGGER.info("Got sound data line: " + lineInfo.toString());
+
       this.thread = new Thread(this, "beeper-thread-" + System.nanoTime());
       this.thread.setDaemon(true);
       this.thread.setPriority(Thread.MAX_PRIORITY);
@@ -346,7 +351,7 @@ public class Beeper {
 
       final OutputStream logStream = makeLogStream(new File("./"));
       try {
-        this.sourceDataLine.open(AUDIO_FORMAT, SAMPLES_IN_INT * 10);
+        this.sourceDataLine.open(AUDIO_FORMAT, SAMPLES_IN_INT << 2);
         if (this.sourceDataLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
           final FloatControl gainControl = (FloatControl) this.sourceDataLine.getControl(FloatControl.Type.MASTER_GAIN);
           LOGGER.info(format("Got master gain control %f..%f", gainControl.getMinimum(), gainControl.getMaximum()));
@@ -359,11 +364,13 @@ public class Beeper {
         LOGGER.info(format("Sound line opened, buffer size is %d byte(s)", this.sourceDataLine.getBufferSize()));
         writeWholeArray(new byte[this.sourceDataLine.getBufferSize()]);
         this.sourceDataLine.start();
+        writeWholeArray(localBuffer);
+
         LOGGER.info("Sound line started");
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
           try {
-            final byte[] buffer = exchanger.exchange(null, 25, TimeUnit.MILLISECONDS);
+            final byte[] buffer = exchanger.exchange(null, MainForm.TIMER_INT_DELAY_MILLISECONDS + 10, TimeUnit.MILLISECONDS);
             if (buffer == null) {
               fill(localBuffer, SND_LEVEL0);
             } else {
