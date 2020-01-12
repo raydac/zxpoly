@@ -368,11 +368,11 @@ public class Beeper {
               fill(localBuffer, SND_LEVEL0);
             } else {
               System.arraycopy(buffer, 0, localBuffer, 0, SAMPLES_IN_INT);
-              if (logStream != null) {
+              if (LOG_RAW_SOUND && logStream != null) {
                 logStream.write(localBuffer);
               }
             }
-            this.sourceDataLine.write(localBuffer, 0, SAMPLES_IN_INT);
+            writeWholeArray(localBuffer);
           } catch (final TimeoutException ex) {
             if (this.paused.get()) {
               this.sourceDataLine.stop();
