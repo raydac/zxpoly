@@ -414,6 +414,7 @@ public class Beeper {
           LOGGER.warning("Exception in source line stop: " + ex.getMessage());
         } finally {
           try {
+            this.sourceDataLine.flush();
             this.sourceDataLine.close();
             LOGGER.info("Line closed");
           } catch (Exception ex) {
