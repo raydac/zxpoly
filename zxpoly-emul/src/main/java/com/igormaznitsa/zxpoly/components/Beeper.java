@@ -145,14 +145,14 @@ public class Beeper {
   private static final class InternalBeeper implements IBeeper, Runnable {
     private static final int SND_FREQ = 44100;
     private static final int SAMPLES_IN_INT = SND_FREQ / 50;
-    private static final int SND_BUFFER_LENGTH = SAMPLES_IN_INT << 1;
+    private static final int SND_BUFFER_LENGTH = SAMPLES_IN_INT << 2;
     private static final int NUM_OF_BUFFERS = 3;
     private static final AudioFormat AUDIO_FORMAT = new AudioFormat(
         PCM_SIGNED,
         SND_FREQ,
         16,
-        1,
         2,
+        4,
         SND_FREQ,
         false
     );
@@ -279,7 +279,7 @@ public class Beeper {
           machineCycleInInt -= CYCLES_BETWEEN_INT;
         }
 
-        int position = ((int) (machineCycleInInt * SAMPLES_IN_INT / CYCLES_BETWEEN_INT)) << 1;
+        int position = ((int) (machineCycleInInt * SAMPLES_IN_INT / CYCLES_BETWEEN_INT)) << 2;
 
         if (position < this.lastPosition) {
           fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, SND_BUFFER_LENGTH, this.lastValue);
