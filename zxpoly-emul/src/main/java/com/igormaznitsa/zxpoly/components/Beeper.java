@@ -385,6 +385,7 @@ public class Beeper {
             writeWholeArray(localBuffer);
           } catch (final TimeoutException ex) {
             if (this.paused.get()) {
+              this.sourceDataLine.drain();
               this.sourceDataLine.stop();
               LOGGER.info("Stopped for data timeout");
               while (this.paused.get() && this.working && !Thread.currentThread().isInterrupted()) {
