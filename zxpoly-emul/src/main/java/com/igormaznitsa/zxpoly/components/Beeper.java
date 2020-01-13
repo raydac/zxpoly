@@ -354,7 +354,7 @@ public class Beeper {
 
       final OutputStream logStream = makeLogStream(new File("./"));
       try {
-        this.sourceDataLine.open(AUDIO_FORMAT, SND_BUFFER_LENGTH << 2);
+        this.sourceDataLine.open(AUDIO_FORMAT, SND_BUFFER_LENGTH << 3);
         if (this.sourceDataLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
           final FloatControl gainControl = (FloatControl) this.sourceDataLine.getControl(FloatControl.Type.MASTER_GAIN);
           LOGGER.info(format("Got master gain control %f..%f", gainControl.getMinimum(), gainControl.getMaximum()));
@@ -396,8 +396,7 @@ public class Beeper {
                 Thread.sleep(300);
               } while (this.paused.get());
               if (this.working && !Thread.currentThread().isInterrupted()) {
-                fill(localBuffer, SND_LEVEL0);
-                writeWholeArray(localBuffer);
+                writeWholeArray(new byte[this.sourceDataLine.getBufferSize()]);
                 this.sourceDataLine.start();
                 LOGGER.info("Work continued");
               }
