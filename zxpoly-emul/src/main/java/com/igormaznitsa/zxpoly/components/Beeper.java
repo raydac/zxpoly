@@ -177,7 +177,7 @@ public class Beeper {
     public void pause() {
       if (this.working) {
         if (this.paused.compareAndSet(false, true)) {
-          LOGGER.info("Paused");
+          LOGGER.info("Pause request");
         }
       }
     }
@@ -186,7 +186,7 @@ public class Beeper {
     public void resume() {
       if (this.working) {
         if (this.paused.compareAndSet(true, false)) {
-          LOGGER.info("Resumed");
+          LOGGER.info("Resume request");
         }
       }
     }
