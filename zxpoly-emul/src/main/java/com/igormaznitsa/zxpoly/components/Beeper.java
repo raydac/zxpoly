@@ -1,6 +1,7 @@
 package com.igormaznitsa.zxpoly.components;
 
 import static com.igormaznitsa.zxpoly.components.VideoController.CYCLES_BETWEEN_INT;
+import static java.lang.Long.toHexString;
 import static java.lang.String.format;
 import static java.util.Arrays.fill;
 import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
@@ -223,13 +224,16 @@ public class Beeper {
       for (byte[] b : this.soundBuffers) {
         fill(b, SND_LEVEL0);
       }
-      this.sourceDataLine = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, AUDIO_FORMAT));
+      this.sourceDataLine = findAudioLine();
       final Line.Info lineInfo = this.sourceDataLine.getLineInfo();
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
-      this.thread = new Thread(this, "beeper-thread-" + System.nanoTime());
+      this.thread = new Thread(this, "beeper-thread-" + toHexString(System.nanoTime()));
       this.thread.setDaemon(true);
-      this.thread.setPriority(Thread.MAX_PRIORITY);
+    }
+
+    private SourceDataLine findAudioLine() throws LineUnavailableException {
+      return (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, AUDIO_FORMAT));
     }
 
     private void blink(final byte fillByte) {
