@@ -48,7 +48,7 @@ public final class AppOptions {
   }
 
   public synchronized int getIntBetweenFrames() {
-    return preferences.getInt(Option.INTBETWEENFRAMES.name(), 5);
+    return preferences.getInt(Option.INTBETWEENFRAMES.name(), 3);
   }
 
   public synchronized void setIntBetweenFrames(final int value) {

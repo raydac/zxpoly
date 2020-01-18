@@ -7,7 +7,7 @@
 ![ZX-Poly logo](docs/zxpoly_logo.png)
 
 # Changelog
-- __2.0.4 (SNAPSHOT)__
+- __2.0.4 (18-jan-2020)__
   - added support of beeper (turned off by default)
   - added more ROM sources
   - fixed ROM loading from WoS

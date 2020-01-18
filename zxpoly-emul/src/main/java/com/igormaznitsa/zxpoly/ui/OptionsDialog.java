@@ -122,7 +122,7 @@ public final class OptionsDialog extends javax.swing.JDialog {
     gridBagConstraints.insets = new Insets(8, 8, 0, 0);
     getContentPane().add(jLabel3, gridBagConstraints);
 
-    spinnerScrRefreshIntTicks.setModel(new SpinnerNumberModel(4, 1, 50, 1));
+    spinnerScrRefreshIntTicks.setModel(new SpinnerNumberModel(3, 1, 50, 1));
     spinnerScrRefreshIntTicks.setToolTipText("INT ticks between refresh screen buffer requests");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
