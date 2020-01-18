@@ -196,6 +196,7 @@
                                     </options>
                                     <addModules>
                                         <module>jdk.management.agent</module>
+                                        <module>jdk.crypto.ec</module>
                                     </addModules>
                                 </configuration>
                             </execution>
@@ -219,6 +220,7 @@
                                     </options>
                                     <addModules>
                                         <module>jdk.management.agent</module>
+                                        <module>jdk.crypto.ec</module>
                                     </addModules>
                                 </configuration>
                             </execution>
@@ -242,6 +244,7 @@
                                     </options>
                                     <addModules>
                                         <module>jdk.management.agent</module>
+                                        <module>jdk.crypto.ec</module>
                                     </addModules>
                                 </configuration>
                             </execution>

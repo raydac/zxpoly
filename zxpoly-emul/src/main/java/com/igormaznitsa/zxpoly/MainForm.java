@@ -286,7 +286,19 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     setIconImage(Utils.loadIcon("appico.png"));
 
-    BASE_ROM = loadRom(romPath);
+    try {
+      BASE_ROM = loadRom(romPath);
+    } catch (Exception ex) {
+      JOptionPane.showMessageDialog(this, "Can't load Spec128 ROM for error: " + ex.getMessage());
+      try {
+        BASE_ROM = loadRom(null);
+      } catch (Exception exx) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Can't load TEST ROM: " + ex.getMessage());
+        System.exit(-1);
+      }
+    }
+
 
     this.board = new Motherboard(BASE_ROM);
     this.board.setBoardMode(BoardMode.ZXPOLY, true);
@@ -355,7 +367,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     });
   }
 
-  private RomData loadRom(final String romPath) throws IOException {
+  private RomData loadRom(final String romPath) throws Exception {
     if (romPath != null) {
       if (romPath.contains("://")) {
         try {
@@ -366,7 +378,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           boolean load = true;
           if (cachedRom.isFile()) {
             LOGGER.log(Level.INFO, "Load cached ROM downloaded from '" + romPath + "' : " + cachedRom);
-            result = new RomData(FileUtils.readFileToByteArray(cachedRom));
+            result = new RomData(cachedRom.getName(), FileUtils.readFileToByteArray(cachedRom));
             load = false;
           }
 
@@ -380,17 +392,18 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           }
           return result;
         } catch (Exception ex) {
-          LOGGER.log(Level.WARNING, "Can't load ROM from '" + romPath + "\'", ex);
+          LOGGER.log(Level.WARNING, "Can't load ROM from '" + romPath + "\': " + ex.getMessage(), ex);
+          throw ex;
         }
       } else {
         LOGGER.log(Level.INFO, "Load ROM from embedded resource '" + romPath + "'");
         try (final InputStream in = Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romPath)) {
-          return RomData.read(in);
+          return RomData.read(romPath, in);
         } catch (IllegalArgumentException ex) {
           final File file = new File(romPath);
           if (file.isFile()) {
             try (final InputStream in = new FileInputStream(file)) {
-              return RomData.read(in);
+              return RomData.read(file.getName(), in);
             }
           } else {
             throw new IllegalArgumentException("Can't find ROM: " + romPath);
@@ -402,7 +415,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     final String testRom = AppOptions.TEST_ROM;
     LOGGER.info("Load ROM from embedded resource '" + testRom + "'");
     try (final InputStream in = Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + testRom)) {
-      return RomData.read(in);
+      return RomData.read(testRom, in);
     }
   }
 

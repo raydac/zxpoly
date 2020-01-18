@@ -56,8 +56,10 @@ public final class OptionsDialog extends javax.swing.JDialog {
     this.comboRom.removeAllItems();
 
     this.comboRom.addItem(new RomUrl("ROM TEST", AppOptions.TEST_ROM));
-    this.comboRom.addItem(new RomUrl("ROM ZX-128 TRDOS (VTR-DOS)", "http://trd.speccy.cz/emulz/UKV12F5.ZIP"));
     this.comboRom.addItem(new RomUrl("ROM ZX-128 TRDOS (WoS)", "http://wos.meulie.net/pub/sinclair/emulators/pc/russian/ukv12f5.zip"));
+    this.comboRom.addItem(new RomUrl("ROM ZX-128 TRDOS (Archive.org)", "https://archive.org/download/World_of_Spectrum_June_2017_Mirror/World%20of%20Spectrum%20June%202017%20Mirror.zip/World%20of%20Spectrum%20June%202017%20Mirror/sinclair/emulators/pc/russian/ukv12f5.zip"));
+    this.comboRom.addItem(new RomUrl("ROM ZX-128 TRDOS (Pdp-11.ru)", "http://mirrors.pdp-11.ru/_zx/vtrdos.ru/emulz/UKV12F5.ZIP"));
+    this.comboRom.addItem(new RomUrl("ROM ZX-128 TRDOS (VTR-DOS)", "http://trd.speccy.cz/emulz/UKV12F5.ZIP"));
 
     this.spinnerScrRefreshIntTicks.setValue(AppOptions.getInstance().getIntBetweenFrames());
     final String activeLink = AppOptions.getInstance().getActiveRom();

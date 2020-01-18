@@ -30,10 +30,12 @@ import org.apache.commons.io.IOUtils;
 
 public final class RomData {
 
+  private final String source;
   private final byte[] data;
   private final int addressMask;
 
-  public RomData(final byte[]... args) {
+  public RomData(final String source, final byte[]... args) {
+    this.source = source;
     final int size = of(args).mapToInt(x -> x.length).sum();
 
     final byte[] result = new byte[size];
@@ -46,7 +48,9 @@ public final class RomData {
     this.addressMask = makeMask(((size / 0x4000) * 0x4000) == size ? size - 1 : size);
   }
 
-  public RomData(final byte[] array) {
+  public RomData(final String source, final byte[] array) {
+    this.source = source;
+
     if (array.length > 0x10000) {
       throw new IllegalArgumentException("Rom data must not be greater than 64k");
     }
@@ -58,11 +62,15 @@ public final class RomData {
   }
 
   public static RomData read(final File file) throws IOException {
-    return new RomData(FileUtils.readFileToByteArray(file));
+    return new RomData(file.getName(), FileUtils.readFileToByteArray(file));
   }
 
-  public static RomData read(final InputStream in) throws IOException {
-    return new RomData(IOUtils.toByteArray(in));
+  public static RomData read(final String sourceName, final InputStream in) throws IOException {
+    return new RomData(sourceName, IOUtils.toByteArray(in));
+  }
+
+  public String getSource() {
+    return this.source;
   }
 
   public int getMask() {

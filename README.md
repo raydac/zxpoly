@@ -8,8 +8,10 @@
 
 # Changelog
 - __2.0.4 (SNAPSHOT)__
-  - added simulation of beeper
-  - refactoring
+  - added support of beeper (turned off by default)
+  - added more ROM sources
+  - fixed ROM loading from WoS
+  - improved CPU sync in Spec256
   
 - __2.0.3 (31-dec-2019)__
   - added mix of colors with attribute colors in Spec256 mode

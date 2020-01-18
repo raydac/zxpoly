@@ -24,6 +24,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.io.IOUtils;
@@ -34,9 +41,17 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 
 public class RomLoader {
@@ -50,9 +65,55 @@ public class RomLoader {
   }
 
   static byte[] loadHTTPArchive(final String url) throws IOException {
-    final HttpClient client = HttpClientBuilder.create().build();
+    final SSLContext sslcontext;
+    try {
+      sslcontext = SSLContext.getInstance("TLS");
+    } catch (NoSuchAlgorithmException ex) {
+      throw new IOException("Can't find TLS: " + ex.getMessage());
+    }
+    X509TrustManager tm = new X509TrustManager() {
+      @Override
+      public X509Certificate[] getAcceptedIssuers() {
+        return null;
+      }
+
+      @Override
+      public void checkClientTrusted(final X509Certificate[] arg0, final String arg1) throws CertificateException {
+      }
+
+      @Override
+      public void checkServerTrusted(final X509Certificate[] arg0, String arg1) throws CertificateException {
+      }
+    };
+    try {
+      sslcontext.init(null, new TrustManager[] {tm}, null);
+    } catch (KeyManagementException ex) {
+      throw new IOException("Can't init ssl context: " + ex.getMessage());
+    }
+
+    final SSLConnectionSocketFactory sslfactory = new SSLConnectionSocketFactory(sslcontext, NoopHostnameVerifier.INSTANCE);
+    final Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
+        .register("https", sslfactory)
+        .register("http", new PlainConnectionSocketFactory())
+        .build();
+
+    final HttpClient client = HttpClientBuilder.create()
+        .setUserAgent("zx-poly-emulator/2.0")
+        .disableCookieManagement()
+        .setConnectionManager(new BasicHttpClientConnectionManager(registry))
+        .setSSLSocketFactory(sslfactory)
+        .setSSLContext(sslcontext)
+        .build();
+
     final HttpContext context = HttpClientContext.create();
     final HttpGet get = new HttpGet(url);
+    get.setConfig(RequestConfig.copy(RequestConfig.DEFAULT)
+        .setAuthenticationEnabled(false)
+        .setRedirectsEnabled(true)
+        .setRelativeRedirectsAllowed(true)
+        .setConnectTimeout(2000)
+        .setSocketTimeout(2000)
+        .build());
     final HttpResponse response = client.execute(get, context);
 
     if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
@@ -171,6 +232,6 @@ public class RomLoader {
       throw new IOException(ROM_TRDOS + " not found");
     }
 
-    return new RomData(rom48, rom128, romTrDos);
+    return new RomData(url, rom48, rom128, romTrDos);
   }
 }
