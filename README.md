@@ -7,20 +7,17 @@
 ![ZX-Poly logo](docs/zxpoly_logo.png)
 
 # Changelog
+
+- __2.0.5 (SNAPSHOT)__
+  - GraalVM CE 19.3.1 as embedded JDK image
+
 - __2.0.4 (18-jan-2020)__
   - added support of beeper (turned off by default)
   - added more ROM sources
   - fixed ROM loading from WoS
   - improved CPU sync in Spec256
   
-- __2.0.3 (31-dec-2019)__
-  - added mix of colors with attribute colors in Spec256 mode
-  - fixed wrong default BackOverFF flag value in Spec256 loading
-
-- __2.0.2 (21-dec-2019)__
-  - fixed IFF restore bug in SNA open-write
-  - minor emulator GUI improvements
-  
+ 
 # Introduction
 I am a ZX-Spectrum fun since 1989. ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from mono-system to poly-system.   
 

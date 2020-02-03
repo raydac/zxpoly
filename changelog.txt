@@ -1,3 +1,6 @@
+- __2.0.5 (SNAPSHOT)__
+  - GraalVM CE 19.3.1 as embedded JDK image
+
 - __2.0.4 (18-jan-2020)__
   - added support of beeper (turned off by default)
   - added more ROM sources

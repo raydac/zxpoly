@@ -54,7 +54,8 @@
         <profile>
             <id>publish</id>
             <properties>
-                <openjdk.bundled>13.0.2+9</openjdk.bundled>
+                <openjdk.bundled.type>java11</openjdk.bundled.type>
+                <openjdk.bundled>19.3.1</openjdk.bundled>
             </properties>
             <build>
                 <plugins>
@@ -95,7 +96,7 @@
                     <plugin>
                         <groupId>com.igormaznitsa</groupId>
                         <artifactId>mvn-jlink-wrapper</artifactId>
-                        <version>1.0.5</version>
+                        <version>1.0.7</version>
                         <executions>
                             <execution>
                                 <id>cache-work-jdk</id>
@@ -104,9 +105,9 @@
                                 </goals>
                                 <configuration>
                                     <jdkPathProperty>mvnjlink.jdk.work.path</jdkPathProperty>
-                                    <provider>BELLSOFT</provider>
+                                    <provider>GRAALVMCE</provider>
                                     <providerConfig>
-                                        <type>jdk</type>
+                                        <type>${openjdk.bundled.type}</type>
                                         <version>${openjdk.bundled}</version>
                                         <arch>amd64</arch>
                                     </providerConfig>
@@ -119,9 +120,9 @@
                                 </goals>
                                 <configuration>
                                     <jdkPathProperty>mvnjlink.jdk.linux.path</jdkPathProperty>
-                                    <provider>BELLSOFT</provider>
+                                    <provider>GRAALVMCE</provider>
                                     <providerConfig>
-                                        <type>jdk</type>
+                                        <type>${openjdk.bundled.type}</type>
                                         <version>${openjdk.bundled}</version>
                                         <os>linux</os>
                                         <arch>amd64</arch>
@@ -135,10 +136,10 @@
                                 </goals>
                                 <configuration>
                                     <jdkPathProperty>mvnjlink.jdk.macos.path</jdkPathProperty>
-                                    <provider>BELLSOFT</provider>
+                                    <provider>GRAALVMCE</provider>
                                     <providerConfig>
-                                        <type>jdk</type>
-                                        <os>macos</os>
+                                        <type>${openjdk.bundled.type}</type>
+                                        <os>darwin</os>
                                         <version>${openjdk.bundled}</version>
                                         <arch>amd64</arch>
                                     </providerConfig>
@@ -151,9 +152,9 @@
                                 </goals>
                                 <configuration>
                                     <jdkPathProperty>mvnjlink.jdk.windows.path</jdkPathProperty>
-                                    <provider>BELLSOFT</provider>
+                                    <provider>GRAALVMCE</provider>
                                     <providerConfig>
-                                        <type>jdk</type>
+                                        <type>${openjdk.bundled.type}</type>
                                         <os>windows</os>
                                         <version>${openjdk.bundled}</version>
                                         <arch>amd64</arch>
