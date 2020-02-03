@@ -320,7 +320,7 @@
                                 </goals>
                                 <configuration>
                                     <appendAssemblyId>false</appendAssemblyId>
-                                    <finalName>${project.build.finalName}-linux-x64-openjdk</finalName>
+                                    <finalName>${project.build.finalName}-linux-x64-withjdk</finalName>
                                     <descriptors>
                                         <descriptor>src${file.separator}assembly${file.separator}linux.xml</descriptor>
                                     </descriptors>
@@ -334,7 +334,7 @@
                                 </goals>
                                 <configuration>
                                     <appendAssemblyId>false</appendAssemblyId>
-                                    <finalName>${project.build.finalName}-windows-x64-openjdk</finalName>
+                                    <finalName>${project.build.finalName}-windows-x64-withjdk</finalName>
                                     <descriptors>
                                         <descriptor>src${file.separator}assembly${file.separator}windows.xml
                                         </descriptor>
@@ -349,7 +349,7 @@
                                 </goals>
                                 <configuration>
                                     <appendAssemblyId>false</appendAssemblyId>
-                                    <finalName>${project.build.finalName}-macos-x64-openjdk</finalName>
+                                    <finalName>${project.build.finalName}-macos-x64-withjdk</finalName>
                                     <descriptors>
                                         <descriptor>src${file.separator}assembly${file.separator}mac.xml</descriptor>
                                     </descriptors>
@@ -371,7 +371,7 @@
                                 <configuration>
                                     <fileset>
                                         <directory>
-                                            ${project.build.directory}${file.separator}${project.build.finalName}-macos-x64-openjdk.jar${file.separator}META-INF
+                                            ${project.build.directory}${file.separator}${project.build.finalName}-macos-x64-withjdk.jar${file.separator}META-INF
                                         </directory>
                                     </fileset>
                                 </configuration>
@@ -391,10 +391,10 @@
                                 </goals>
                                 <configuration>
                                     <sourceFile>
-                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-x64-openjdk.jar
+                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-x64-withjdk.jar
                                     </sourceFile>
                                     <destinationFile>
-                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-x64-openjdk.zip
+                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-x64-withjdk.zip
                                     </destinationFile>
                                 </configuration>
                             </execution>
