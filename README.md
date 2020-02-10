@@ -19,7 +19,7 @@
   
  
 # Introduction
-I am a ZX-Spectrum fun since 1989. ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from mono-system to poly-system.   
+I am a ZX-Spectrum fan since 1989. ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from mono-system to poly-system.   
 
 The idea was to start four ZX-Spectrum-128 in parallel with small modifications of graphics data. It didn't need any changes in ROM and SOS but only total synchronization between CPUs and sharing of all control signals.
 
