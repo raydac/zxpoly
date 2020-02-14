@@ -51,17 +51,11 @@ import javax.sound.sampled.SourceDataLine;
 public class Beeper {
 
   private static final Logger LOGGER = Logger.getLogger("Beeper");
-
-  private static final byte SND_LEVEL0 = (byte) -128; // 00
-  private static final byte SND_LEVEL1 = (byte) -64; // 01
-  private static final byte SND_LEVEL2 = (byte) 64; // 10
-  private static final byte SND_LEVEL3 = (byte) 127; // 11
-
   private static final boolean LOG_RAW_SOUND = false;
 
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
-    public void updateState(boolean intSignal, long machineCycleInInt, int portFed4d3) {
+    public void updateState(boolean intSignal, long machineCycleInInt, int level) {
     }
 
     @Override
@@ -153,7 +147,7 @@ public class Beeper {
 
     void resume();
 
-    void updateState(boolean intSignal, long machineCycleInInt, int portFeD4D3);
+    void updateState(boolean intSignal, long machineCycleInInt, int level);
 
     void dispose();
 
@@ -161,6 +155,7 @@ public class Beeper {
   }
 
   private static final class InternalBeeper implements IBeeper, Runnable {
+    private static final int NUMBER_OF_LEVELS = 8;
     private static final int SND_FREQ = 44100;
     private static final int SAMPLES_IN_INT = SND_FREQ / 50;
     private static final int SND_BUFFER_LENGTH = SAMPLES_IN_INT << 2;
@@ -180,6 +175,7 @@ public class Beeper {
     private final Thread thread;
     private int activeBufferIndex = 0;
     private int lastPosition = 0;
+    private final byte[] LEVELS = new byte[NUMBER_OF_LEVELS];
     private final AtomicBoolean paused = new AtomicBoolean();
     private volatile boolean working = true;
     private final AtomicReference<FloatControl> gainControl = new AtomicReference<>();
@@ -209,7 +205,7 @@ public class Beeper {
       }
     }
 
-    private byte lastValue = SND_LEVEL0;
+    private byte lastValue;
 
     private void initMasterGain() {
       final FloatControl gainControl = this.gainControl.get();
@@ -238,9 +234,22 @@ public class Beeper {
     }
 
     private InternalBeeper() throws LineUnavailableException {
+      //----- init sound level table
+      LEVELS[0b000] = Byte.MIN_VALUE;
+      LEVELS[0b001] = Byte.MIN_VALUE + 17; // 6.5%
+      LEVELS[0b010] = Byte.MIN_VALUE + 46; // 18%
+      LEVELS[0b011] = Byte.MIN_VALUE + 65; // 25.4%
+      LEVELS[0b100] = Byte.MIN_VALUE + 204; // 80%
+      LEVELS[0b101] = Byte.MIN_VALUE + 223; // 87%
+      LEVELS[0b110] = Byte.MIN_VALUE + 238; // 93%
+      LEVELS[0b111] = Byte.MAX_VALUE;
+      //-------------------------------
+
+      this.lastValue = LEVELS[0];
       for (byte[] b : this.soundBuffers) {
-        fill(b, SND_LEVEL0);
+        fill(b, this.lastValue);
       }
+
       this.sourceDataLine = findAudioLine();
       final Line.Info lineInfo = this.sourceDataLine.getLineInfo();
       LOGGER.info("Got sound data line: " + lineInfo.toString());
@@ -275,24 +284,10 @@ public class Beeper {
     public void updateState(
         final boolean intSignal,
         long machineCycleInInt,
-        final int portFeD4D3
+        final int level
     ) {
       if (this.working) {
-        final byte value;
-        switch (portFeD4D3) {
-          case 0:
-            value = SND_LEVEL0;
-            break;
-          case 1:
-            value = SND_LEVEL1;
-            break;
-          case 2:
-            value = SND_LEVEL2;
-            break;
-          default:
-            value = SND_LEVEL3;
-            break;
-        }
+        final byte value = LEVELS[level];
 
         if (machineCycleInInt > CYCLES_BETWEEN_INT) {
           fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, SND_BUFFER_LENGTH, this.lastValue);
@@ -325,9 +320,9 @@ public class Beeper {
       if (this.working) {
         LOGGER.info("Reseting");
         lastPosition = 0;
-        lastValue = SND_LEVEL0;
+        lastValue = LEVELS[0];
         for (byte[] b : this.soundBuffers) {
-          fill(b, SND_LEVEL0);
+          fill(b, LEVELS[0]);
         }
       }
     }
@@ -371,7 +366,7 @@ public class Beeper {
     public void run() {
       LOGGER.info("Starting thread");
       final byte[] localBuffer = new byte[SND_BUFFER_LENGTH];
-      fill(localBuffer, SND_LEVEL0);
+      fill(localBuffer, LEVELS[0]);
 
       final OutputStream logStream = makeLogStream(new File("./"));
       try {
@@ -396,7 +391,7 @@ public class Beeper {
           try {
             final byte[] buffer = exchanger.exchange(null, MainForm.TIMER_INT_DELAY_MILLISECONDS + 10, TimeUnit.MILLISECONDS);
             if (buffer == null) {
-              fill(localBuffer, SND_LEVEL0);
+              fill(localBuffer, LEVELS[0]);
             } else {
               System.arraycopy(buffer, 0, localBuffer, 0, SND_BUFFER_LENGTH);
               if (LOG_RAW_SOUND && logStream != null) {

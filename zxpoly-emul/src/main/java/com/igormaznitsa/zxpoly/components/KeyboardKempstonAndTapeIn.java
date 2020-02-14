@@ -470,4 +470,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     return this.getName();
   }
 
+  public boolean isTapeIn() {
+    final TapeFileReader reader = this.tap.get();
+    return reader != null && reader.getSignal();
+  }
 }

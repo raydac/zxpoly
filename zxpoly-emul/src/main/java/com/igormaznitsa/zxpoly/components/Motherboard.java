@@ -359,7 +359,8 @@ public final class Motherboard implements ZxPolyConstants {
         masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
       }
 
-      this.beeper.updateState(signalInt, initialMachineCycleCounter, (this.video.getPortFE() >>> 3) & 3);
+      int audioLevel = (this.video.getPortFE() >> 2 & 0b110) | (this.keyboard.isTapeIn() ? 1 : 0);
+      this.beeper.updateState(signalInt, initialMachineCycleCounter, audioLevel);
 
       final long spentMachineCycles = modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
 
