@@ -9,6 +9,7 @@
 # Changelog
 
 - __2.0.5 (SNAPSHOT)__
+  - improved beeper to render playing TAP sound
   - GraalVM CE 19.3.1 as embedded JDK image
 
 - __2.0.4 (18-jan-2020)__
