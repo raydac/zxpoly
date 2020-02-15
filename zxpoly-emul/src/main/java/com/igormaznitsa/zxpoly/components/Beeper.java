@@ -20,6 +20,8 @@ package com.igormaznitsa.zxpoly.components;
 import static com.igormaznitsa.zxpoly.components.VideoController.CYCLES_BETWEEN_INT;
 import static java.lang.Long.toHexString;
 import static java.lang.String.format;
+import static java.lang.Thread.MAX_PRIORITY;
+import static java.lang.Thread.NORM_PRIORITY;
 import static java.util.Arrays.fill;
 import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
 
@@ -255,6 +257,7 @@ public class Beeper {
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
       this.thread = new Thread(this, "beeper-thread-" + toHexString(System.nanoTime()));
+      this.thread.setPriority(NORM_PRIORITY + (MAX_PRIORITY - NORM_PRIORITY) / 3);
       this.thread.setDaemon(true);
     }
 
