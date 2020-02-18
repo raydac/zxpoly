@@ -55,7 +55,7 @@
             <id>publish</id>
             <properties>
                 <openjdk.bundled.type>java11</openjdk.bundled.type>
-                <openjdk.bundled>19.3.1</openjdk.bundled>
+                <openjdk.bundled>20.0.0</openjdk.bundled>
             </properties>
             <build>
                 <plugins>
