@@ -392,7 +392,7 @@ public class Beeper {
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
           try {
-            final byte[] buffer = exchanger.exchange(null, MainForm.TIMER_INT_DELAY_MILLISECONDS + 10, TimeUnit.MILLISECONDS);
+            final byte[] buffer = exchanger.exchange(null, MainForm.TIMER_INT_DELAY_MILLISECONDS + 1, TimeUnit.MILLISECONDS);
             if (buffer == null) {
               fill(localBuffer, LEVELS[0]);
             } else {
