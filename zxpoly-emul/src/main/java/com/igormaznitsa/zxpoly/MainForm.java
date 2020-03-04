@@ -335,6 +335,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             MainForm.this.board.getBeeper().pause();
             MainForm.this.keyboardAndTapeModule.doReset();
             if (e.getSource() == menuOptions) {
+              menuOptionsEnableSpeaker.setEnabled(!turboMode);
               menuOptionsEnableSpeaker.setState(board.getBeeper().isActive());
             }
           }
