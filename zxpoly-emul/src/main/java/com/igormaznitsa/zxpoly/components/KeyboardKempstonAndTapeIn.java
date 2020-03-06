@@ -19,8 +19,13 @@ package com.igormaznitsa.zxpoly.components;
 
 import java.awt.event.KeyEvent;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
+import net.java.games.input.Controller;
+import net.java.games.input.ControllerEnvironment;
 
 public final class KeyboardKempstonAndTapeIn implements IoDevice {
+
+  private static final Logger LOGGER = Logger.getLogger("InController");
 
   private static final long ZXKEY_CS = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000001L;
   private static final long ZXKEY_Z = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000010L;
@@ -90,6 +95,9 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   public KeyboardKempstonAndTapeIn(final Motherboard board) {
     this.board = board;
+
+    final Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
+    LOGGER.info(String.format("Detected %d controllers", controllers.length));
   }
 
   private int getKbdValueForLines(int highPortByte) {

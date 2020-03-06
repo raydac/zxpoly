@@ -29,7 +29,7 @@ $JAVA_RUN -version &>>$LOG_FILE
 
 echo ------------------------ &>>$LOG_FILE
 
-$JAVA_RUN $JAVA_FLAGS $JAVA_EXTRA_GFX_FLAGS -jar $ZXPOLY_HOME/zxpoly-emul.jar $@ &>>$LOG_FILE&
+$JAVA_RUN $JAVA_FLAGS $JAVA_EXTRA_GFX_FLAGS -Djava.library.path="$ZXPOLY_HOME" -jar "$ZXPOLY_HOME"/zxpoly-emul.jar $@ &>>$LOG_FILE&
 THE_PID=$!
 echo $THE_PID>$ZXPOLY_HOME/.pid
 wait $THE_PID
