@@ -18,4 +18,4 @@ echo ------JAVA_VERSION------ >> %LOG_FILE%
 
 echo ------------------------ >> %LOG_FILE%
 
-%JAVA_RUN% %JAVA_FLAGS% %JAVA_EXTRA_GFX_FLAGS% -Djava.library.path=%ZXPOLY_HOME -jar %ZXPOLY_HOME%/zxpoly-emul.jar %* 2>> %LOG_FILE%
+%JAVA_RUN% %JAVA_FLAGS% %JAVA_EXTRA_GFX_FLAGS% -Djava.library.path=%ZXPOLY_HOME% -jar %ZXPOLY_HOME%/zxpoly-emul.jar %* 2>> %LOG_FILE%
