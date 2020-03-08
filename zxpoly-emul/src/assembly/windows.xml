@@ -24,10 +24,17 @@
   </files>
   <fileSets>
     <fileSet>
+      <directory>${project.build.directory}${file.separator}jinput-natives-all</directory>
+      <outputDirectory>${project.build.finalName}</outputDirectory>
+      <includes>
+        <include>*.dll</include>
+      </includes>
+    </fileSet>
+    <fileSet>
       <directory>${project.basedir}${file.separator}src${file.separator}assembly${file.separator}windows</directory>
       <outputDirectory>${project.build.finalName}</outputDirectory>
       <includes>
-       <include>*/**</include>
+        <include>*/**</include>
       </includes>
     </fileSet>
     <fileSet>

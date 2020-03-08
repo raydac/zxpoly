@@ -12,6 +12,13 @@
   </formats>
   <fileSets>
     <fileSet>
+      <directory>${project.build.directory}${file.separator}jinput-natives-all</directory>
+      <outputDirectory>${file.separator}ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS</outputDirectory>
+      <includes>
+        <include>*.jnilib</include>
+      </includes>
+    </fileSet>
+    <fileSet>
       <directory>${project.basedir}${file.separator}src${file.separator}assembly${file.separator}mac</directory>
       <outputDirectory>${file.separator}</outputDirectory>
       <excludes>

@@ -13,6 +13,10 @@
     <artifactId>zxpoly-emul</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <jinput.version>2.0.9</jinput.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.igormaznitsa</groupId>
@@ -51,7 +55,7 @@
         <dependency>
             <groupId>net.java.jinput</groupId>
             <artifactId>jinput</artifactId>
-            <version>2.0.9</version>
+            <version>${jinput.version}</version>
         </dependency>
     </dependencies>
 
@@ -246,6 +250,7 @@
                                     <opt>-Dsun.java2d.ddforcevram=true</opt>
                                     <opt>-Dsun.java2d.ddscale=true</opt>
                                     <opt>-Dsun.java2d.accthreshold=0</opt>
+                                    <opt>-Djava.library.path=%EXEDIR%</opt>
                                 </opts>
                             </jre>
                             <versionInfo>
@@ -404,6 +409,34 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <execution>
+                        <id>unpack-jinput</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>net.java.jinput</groupId>
+                                    <artifactId>jinput</artifactId>
+                                    <version>${jinput.version}</version>
+                                    <classifier>natives-all</classifier>
+                                    <overWrite>true</overWrite>
+                                </artifactItem>
+                            </artifactItems>
+                            <includes>**/*.dll,**/*.so,**/*.jnilib</includes>
+                            <outputDirectory>${project.build.directory}${file.separator}jinput-natives-all
+                            </outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>com.igormaznitsa</groupId>
                 <artifactId>jbbp-maven-plugin</artifactId>
