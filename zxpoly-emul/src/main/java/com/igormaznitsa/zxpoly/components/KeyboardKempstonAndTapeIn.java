@@ -17,11 +17,22 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import static net.java.games.input.ControllerEnvironment.getDefaultEnvironment;
+
+
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import net.java.games.input.Component;
 import net.java.games.input.Controller;
-import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.ControllerEvent;
+import net.java.games.input.ControllerListener;
 
 public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
@@ -93,11 +104,185 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private volatile int kempstonBuffer = 0;
   private final AtomicReference<TapeFileReader> tap = new AtomicReference<>();
 
+  private final List<Controller> controllers;
+  private final List<ControllerProcessor> activeControllerProcessors = new CopyOnWriteArrayList<>();
+
   public KeyboardKempstonAndTapeIn(final Motherboard board) {
     this.board = board;
 
-    final Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
-    LOGGER.info(String.format("Detected %d controllers", controllers.length));
+    if (getDefaultEnvironment().isSupported()) {
+      this.controllers = new CopyOnWriteArrayList<>(Arrays.stream(getDefaultEnvironment().getControllers())
+          .filter(x -> isControllerTypeAllowed(x.getType()))
+          .collect(Collectors.toList()));
+      getDefaultEnvironment().addControllerListener(new ControllerListener() {
+        @Override
+        public void controllerRemoved(ControllerEvent controllerEvent) {
+          if (isControllerTypeAllowed(controllerEvent.getController().getType())) {
+            LOGGER.info("Removed controller: " + controllerEvent.getController().getName());
+            controllers.remove(controllerEvent.getController());
+          }
+        }
+
+        @Override
+        public void controllerAdded(ControllerEvent controllerEvent) {
+          if (isControllerTypeAllowed(controllerEvent.getController().getType())) {
+            LOGGER.info("Added controller: " + controllerEvent.getController().getName());
+            controllers.add(controllerEvent.getController());
+          }
+        }
+      });
+    } else {
+      this.controllers = null;
+    }
+  }
+
+  public void disposeAllControllerProcessors() {
+    synchronized (this.activeControllerProcessors) {
+      this.activeControllerProcessors.forEach(ControllerProcessor::dispose);
+      this.activeControllerProcessors.clear();
+    }
+  }
+
+  public ControllerProcessor makeControllerProcessor(final Controller controller, final ControllerDestination destination) {
+    return new ControllerProcessor(this, controller, destination);
+  }
+
+  public List<ControllerProcessor> getActiveControllerProcessors() {
+    synchronized (this.activeControllerProcessors) {
+      return new ArrayList<>(this.activeControllerProcessors);
+    }
+  }
+
+  public void setActiveControllerProcessors(final List<ControllerProcessor> activeControllerProcessors) {
+    synchronized (this.activeControllerProcessors) {
+      this.activeControllerProcessors.forEach(ControllerProcessor::dispose);
+      this.activeControllerProcessors.clear();
+      this.activeControllerProcessors.addAll(activeControllerProcessors);
+      this.activeControllerProcessors.forEach(ControllerProcessor::start);
+    }
+  }
+
+  private boolean isControllerTypeAllowed(final Controller.Type type) {
+    return type == Controller.Type.FINGERSTICK
+        || type == Controller.Type.STICK
+        || type == Controller.Type.RUDDER
+        || type == Controller.Type.GAMEPAD;
+  }
+
+  public List<Controller> getControllers() {
+    return this.controllers == null ? Collections.emptyList() : this.controllers;
+  }
+
+  public boolean isControllerEngineAllowed() {
+    return this.controllers != null;
+  }
+
+  public enum ControllerDestination {
+    NONE(""),
+    KEMPSTON("Kempston"),
+    INTERFACEII_PLAYER1("InterfaceII Player1"),
+    INTERFACEII_PLAYER2("InterfaceII Player2");
+
+    private final String description;
+
+    ControllerDestination(final String description) {
+      this.description = description;
+    }
+
+    public String getDescription() {
+      return this.description;
+    }
+
+    @Override
+    public String toString() {
+      return this.description;
+    }
+  }
+
+  public class ControllerProcessor implements Runnable {
+    private final KeyboardKempstonAndTapeIn parent;
+    private final Controller controller;
+    private final ControllerDestination destination;
+    private final AtomicReference<Thread> controllerThread = new AtomicReference<>();
+
+    private ControllerProcessor(final KeyboardKempstonAndTapeIn keyboardModule, final Controller controller, final ControllerDestination destination) {
+      this.parent = keyboardModule;
+      this.controller = controller;
+      this.destination = destination;
+    }
+
+    public Controller getController() {
+      return this.controller;
+    }
+
+    public ControllerDestination getDestination() {
+      return this.destination;
+    }
+
+    void dispose() {
+      final Thread thread = this.controllerThread.getAndSet(null);
+      if (thread != null) {
+        thread.interrupt();
+        try {
+          thread.join();
+        } catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+
+    void start() {
+      final Thread thread = new Thread(this, "zxpoly-controller-" + this.controller.getName());
+      thread.setDaemon(true);
+      thread.start();
+    }
+
+    @Override
+    public void run() {
+      while (!Thread.currentThread().isInterrupted()) {
+        if (!this.controller.poll()) {
+          LOGGER.warning("Can't poll data from controller: " + this);
+          break;
+        }
+
+        for (final Component c : this.controller.getComponents()) {
+          final Component.Identifier identifier = c.getIdentifier();
+          if (identifier == Component.Identifier.Axis.X) {
+            final float value = c.getPollData();
+            if (value < 0.0f) {
+              kempstonSignals = KEMPSTON_LEFT | (kempstonSignals & ~KEMPSTON_RIGHT);
+            } else if (value > 0.0f) {
+              kempstonSignals = KEMPSTON_RIGHT | (kempstonSignals & ~KEMPSTON_LEFT);
+            } else {
+              kempstonSignals = kempstonSignals & ~(KEMPSTON_LEFT | KEMPSTON_RIGHT);
+            }
+          } else if (identifier == Component.Identifier.Axis.Y) {
+            final float value = c.getPollData();
+            if (value < 0.0f) {
+              kempstonSignals = KEMPSTON_UP | (kempstonSignals & ~KEMPSTON_DOWN);
+            } else if (value > 0.0f) {
+              kempstonSignals = KEMPSTON_DOWN | (kempstonSignals & ~KEMPSTON_UP);
+            } else {
+              kempstonSignals = kempstonSignals & ~(KEMPSTON_DOWN | KEMPSTON_UP);
+            }
+          } else if (identifier == Component.Identifier.Button.THUMB2) {
+            final float value = c.getPollData();
+            if (value == 0.0f) {
+              kempstonSignals = kempstonSignals & ~KEMPSTON_FIRE;
+            } else {
+              kempstonSignals |= KEMPSTON_FIRE;
+            }
+          }
+        }
+        Thread.yield();
+      }
+      activeControllerProcessors.remove(this);
+    }
+
+    @Override
+    public String toString() {
+      return this.controller.getName();
+    }
   }
 
   private int getKbdValueForLines(int highPortByte) {

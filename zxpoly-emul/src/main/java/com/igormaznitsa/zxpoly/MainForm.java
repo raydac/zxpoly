@@ -45,6 +45,7 @@ import com.igormaznitsa.zxpoly.tracer.TraceCpuForm;
 import com.igormaznitsa.zxpoly.ui.AboutDialog;
 import com.igormaznitsa.zxpoly.ui.AddressPanel;
 import com.igormaznitsa.zxpoly.ui.CpuLoadIndicator;
+import com.igormaznitsa.zxpoly.ui.GameControllerPanel;
 import com.igormaznitsa.zxpoly.ui.JIndicatorLabel;
 import com.igormaznitsa.zxpoly.ui.OptionsDialog;
 import com.igormaznitsa.zxpoly.ui.SelectTapPosDialog;
@@ -192,6 +193,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenu menuOptions;
   private JCheckBoxMenuItem menuOptionsEnableTrapMouse;
   private JCheckBoxMenuItem menuOptionsEnableSpeaker;
+  private JCheckBoxMenuItem menuOptionsEnableGameController;
   private JCheckBoxMenuItem menuOptionsShowIndicators;
   private JCheckBoxMenuItem menuOptionsTurbo;
   private JCheckBoxMenuItem menuOptionsZX128Mode;
@@ -338,6 +340,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
               menuOptionsEnableSpeaker.setEnabled(!turboMode);
               menuOptionsEnableSpeaker.setState(board.getBeeper().isActive());
             }
+            menuOptionsEnableGameController.setEnabled(keyboardAndTapeModule.isControllerEngineAllowed());
           }
 
           @Override
@@ -690,6 +693,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsTurbo = new JCheckBoxMenuItem();
     menuOptionsEnableTrapMouse = new JCheckBoxMenuItem();
     menuOptionsEnableSpeaker = new JCheckBoxMenuItem();
+    menuOptionsEnableGameController = new JCheckBoxMenuItem();
     menuHelp = new JMenu();
     menuHelpAbout = new JMenuItem();
     menuHelpDonation = new JMenuItem();
@@ -979,6 +983,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsEnableSpeaker.addActionListener(this::menuOptionsEnableSpeakerActionPerformed);
     menuOptions.add(menuOptionsEnableSpeaker);
 
+    menuOptionsEnableGameController.setText("Game controller");
+    menuOptionsEnableGameController.setToolTipText("Turn on game controller");
+    menuOptionsEnableGameController.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/speaker.png"))); // NOI18N
+    menuOptionsEnableGameController.addActionListener(this::menuOptionsEnableGameControllerActionPerformed);
+    menuOptions.add(menuOptionsEnableGameController);
+
     menuBar.add(menuOptions);
 
     menuHelp.setText("Help");
@@ -1011,6 +1021,23 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   private void menuOptionsEnableSpeakerActionPerformed(final ActionEvent actionEvent) {
     this.board.getBeeper().setEnable(this.menuOptionsEnableSpeaker.isSelected());
+  }
+
+  private void menuOptionsEnableGameControllerActionPerformed(final ActionEvent actionEvent) {
+    if (this.menuOptionsEnableGameController.isSelected()) {
+      final GameControllerPanel gameControllerPanel = new GameControllerPanel(this.keyboardAndTapeModule);
+      if (JOptionPane.showConfirmDialog(
+          this,
+          gameControllerPanel,
+          "Game controllers",
+          JOptionPane.OK_CANCEL_OPTION,
+          JOptionPane.PLAIN_MESSAGE
+      ) == JOptionPane.OK_OPTION) {
+        this.keyboardAndTapeModule.setActiveControllerProcessors(gameControllerPanel.getSelected());
+      }
+    } else {
+      this.keyboardAndTapeModule.disposeAllControllerProcessors();
+    }
   }
 
   private void menuFileResetActionPerformed(ActionEvent evt) {
