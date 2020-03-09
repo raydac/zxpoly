@@ -142,8 +142,17 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     this.activeGadapters.clear();
   }
 
-  public ControllerProcessor makeControllerProcessor(final Controller controller, final ControllerDestination destination) {
-    return new ControllerProcessor(this, controller, destination);
+  public Gadapter makeGadapter(final Controller controller, final GadapterType type) {
+    switch (type) {
+      case KEMPSTON:
+        return new GadapterKempston(this, controller);
+      case INTERFACEII_PLAYER1:
+        return new GadapterInterface2(0, this, controller);
+      case INTERFACEII_PLAYER2:
+        return new GadapterInterface2(1, this, controller);
+      default:
+        throw new Error("Unexpected destination: " + type);
+    }
   }
 
   public List<Gadapter> getActiveGadapters() {
@@ -307,7 +316,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
         kempstonCode = KEMPSTON_DOWN;
       }
       break;
-      case 65368: // NUMPAD 5 
+      case 65368: // NUMPAD 5
       case KeyEvent.VK_NUMPAD5: {
         kempstonCode = KEMPSTON_FIRE;
       }
