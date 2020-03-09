@@ -20,6 +20,10 @@ package com.igormaznitsa.zxpoly.components;
 import static net.java.games.input.ControllerEnvironment.getDefaultEnvironment;
 
 
+import com.igormaznitsa.zxpoly.components.gadapter.Gadapter;
+import com.igormaznitsa.zxpoly.components.gadapter.GadapterInterface2;
+import com.igormaznitsa.zxpoly.components.gadapter.GadapterKempston;
+import com.igormaznitsa.zxpoly.components.gadapter.GadapterType;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +33,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEvent;
 import net.java.games.input.ControllerListener;
@@ -97,21 +100,19 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private static final int TAP_BIT = 0b01000000;
 
   private final Motherboard board;
-
+  private final AtomicReference<TapeFileReader> tap = new AtomicReference<>();
+  private final List<Controller> detectedControllers;
+  private final List<Gadapter> activeGadapters = new CopyOnWriteArrayList<>();
   private volatile long keyboardLines = 0L;
   private volatile long bufferKeyboardLines = 0L;
   private volatile int kempstonSignals = 0;
   private volatile int kempstonBuffer = 0;
-  private final AtomicReference<TapeFileReader> tap = new AtomicReference<>();
-
-  private final List<Controller> controllers;
-  private final List<ControllerProcessor> activeControllerProcessors = new CopyOnWriteArrayList<>();
 
   public KeyboardKempstonAndTapeIn(final Motherboard board) {
     this.board = board;
 
     if (getDefaultEnvironment().isSupported()) {
-      this.controllers = new CopyOnWriteArrayList<>(Arrays.stream(getDefaultEnvironment().getControllers())
+      this.detectedControllers = new CopyOnWriteArrayList<>(Arrays.stream(getDefaultEnvironment().getControllers())
           .filter(x -> isControllerTypeAllowed(x.getType()))
           .collect(Collectors.toList()));
       getDefaultEnvironment().addControllerListener(new ControllerListener() {
@@ -119,7 +120,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
         public void controllerRemoved(ControllerEvent controllerEvent) {
           if (isControllerTypeAllowed(controllerEvent.getController().getType())) {
             LOGGER.info("Removed controller: " + controllerEvent.getController().getName());
-            controllers.remove(controllerEvent.getController());
+            detectedControllers.remove(controllerEvent.getController());
           }
         }
 
@@ -127,39 +128,40 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
         public void controllerAdded(ControllerEvent controllerEvent) {
           if (isControllerTypeAllowed(controllerEvent.getController().getType())) {
             LOGGER.info("Added controller: " + controllerEvent.getController().getName());
-            controllers.add(controllerEvent.getController());
+            detectedControllers.add(controllerEvent.getController());
           }
         }
       });
     } else {
-      this.controllers = null;
+      this.detectedControllers = null;
     }
   }
 
-  public void disposeAllControllerProcessors() {
-    synchronized (this.activeControllerProcessors) {
-      this.activeControllerProcessors.forEach(ControllerProcessor::dispose);
-      this.activeControllerProcessors.clear();
-    }
+  public void disposeAllActiveGadapters() {
+    this.activeGadapters.forEach(Gadapter::dispose);
+    this.activeGadapters.clear();
   }
 
   public ControllerProcessor makeControllerProcessor(final Controller controller, final ControllerDestination destination) {
     return new ControllerProcessor(this, controller, destination);
   }
 
-  public List<ControllerProcessor> getActiveControllerProcessors() {
-    synchronized (this.activeControllerProcessors) {
-      return new ArrayList<>(this.activeControllerProcessors);
+  public List<Gadapter> getActiveGadapters() {
+    synchronized (this.activeGadapters) {
+      return new ArrayList<>(this.activeGadapters);
     }
   }
 
-  public void setActiveControllerProcessors(final List<ControllerProcessor> activeControllerProcessors) {
-    synchronized (this.activeControllerProcessors) {
-      this.activeControllerProcessors.forEach(ControllerProcessor::dispose);
-      this.activeControllerProcessors.clear();
-      this.activeControllerProcessors.addAll(activeControllerProcessors);
-      this.activeControllerProcessors.forEach(ControllerProcessor::start);
+  public void setActiveGadapters(final List<Gadapter> adapters) {
+    this.activeGadapters.forEach(Gadapter::dispose);
+    if (!this.activeGadapters.isEmpty()) {
+      throw new Error("Detected non-disposed controller");
     }
+    adapters.forEach(x -> {
+      LOGGER.info("Registering adapter: " + x);
+      this.activeGadapters.addAll(adapters);
+    });
+    this.activeGadapters.forEach(Gadapter::start);
   }
 
   private boolean isControllerTypeAllowed(final Controller.Type type) {
@@ -169,120 +171,12 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
         || type == Controller.Type.GAMEPAD;
   }
 
-  public List<Controller> getControllers() {
-    return this.controllers == null ? Collections.emptyList() : this.controllers;
+  public List<Controller> getDetectedControllers() {
+    return this.detectedControllers == null ? Collections.emptyList() : this.detectedControllers;
   }
 
   public boolean isControllerEngineAllowed() {
-    return this.controllers != null;
-  }
-
-  public enum ControllerDestination {
-    NONE(""),
-    KEMPSTON("Kempston"),
-    INTERFACEII_PLAYER1("InterfaceII Player1"),
-    INTERFACEII_PLAYER2("InterfaceII Player2");
-
-    private final String description;
-
-    ControllerDestination(final String description) {
-      this.description = description;
-    }
-
-    public String getDescription() {
-      return this.description;
-    }
-
-    @Override
-    public String toString() {
-      return this.description;
-    }
-  }
-
-  public class ControllerProcessor implements Runnable {
-    private final KeyboardKempstonAndTapeIn parent;
-    private final Controller controller;
-    private final ControllerDestination destination;
-    private final AtomicReference<Thread> controllerThread = new AtomicReference<>();
-
-    private ControllerProcessor(final KeyboardKempstonAndTapeIn keyboardModule, final Controller controller, final ControllerDestination destination) {
-      this.parent = keyboardModule;
-      this.controller = controller;
-      this.destination = destination;
-    }
-
-    public Controller getController() {
-      return this.controller;
-    }
-
-    public ControllerDestination getDestination() {
-      return this.destination;
-    }
-
-    void dispose() {
-      final Thread thread = this.controllerThread.getAndSet(null);
-      if (thread != null) {
-        thread.interrupt();
-        try {
-          thread.join();
-        } catch (InterruptedException ex) {
-          Thread.currentThread().interrupt();
-        }
-      }
-    }
-
-    void start() {
-      final Thread thread = new Thread(this, "zxpoly-controller-" + this.controller.getName());
-      thread.setDaemon(true);
-      thread.start();
-    }
-
-    @Override
-    public void run() {
-      while (!Thread.currentThread().isInterrupted()) {
-        if (!this.controller.poll()) {
-          LOGGER.warning("Can't poll data from controller: " + this);
-          break;
-        }
-
-        for (final Component c : this.controller.getComponents()) {
-          final Component.Identifier identifier = c.getIdentifier();
-          if (identifier == Component.Identifier.Axis.X) {
-            final float value = c.getPollData();
-            if (value < 0.0f) {
-              kempstonSignals = KEMPSTON_LEFT | (kempstonSignals & ~KEMPSTON_RIGHT);
-            } else if (value > 0.0f) {
-              kempstonSignals = KEMPSTON_RIGHT | (kempstonSignals & ~KEMPSTON_LEFT);
-            } else {
-              kempstonSignals = kempstonSignals & ~(KEMPSTON_LEFT | KEMPSTON_RIGHT);
-            }
-          } else if (identifier == Component.Identifier.Axis.Y) {
-            final float value = c.getPollData();
-            if (value < 0.0f) {
-              kempstonSignals = KEMPSTON_UP | (kempstonSignals & ~KEMPSTON_DOWN);
-            } else if (value > 0.0f) {
-              kempstonSignals = KEMPSTON_DOWN | (kempstonSignals & ~KEMPSTON_UP);
-            } else {
-              kempstonSignals = kempstonSignals & ~(KEMPSTON_DOWN | KEMPSTON_UP);
-            }
-          } else if (identifier == Component.Identifier.Button.THUMB2) {
-            final float value = c.getPollData();
-            if (value == 0.0f) {
-              kempstonSignals = kempstonSignals & ~KEMPSTON_FIRE;
-            } else {
-              kempstonSignals |= KEMPSTON_FIRE;
-            }
-          }
-        }
-        Thread.yield();
-      }
-      activeControllerProcessors.remove(this);
-    }
-
-    @Override
-    public String toString() {
-      return this.controller.getName();
-    }
+    return this.detectedControllers != null;
   }
 
   private int getKbdValueForLines(int highPortByte) {
@@ -666,5 +560,134 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   public boolean isTapeIn() {
     final TapeFileReader reader = this.tap.get();
     return reader != null && reader.getSignal();
+  }
+
+  public void doKempstonCenterX() {
+    int state = this.kempstonSignals;
+    state = state & ~(KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT | KeyboardKempstonAndTapeIn.KEMPSTON_LEFT);
+    this.kempstonSignals = state;
+  }
+
+  public void doKempstonCenterY() {
+    int state = this.kempstonSignals;
+    state = state & ~(KeyboardKempstonAndTapeIn.KEMPSTON_UP | KeyboardKempstonAndTapeIn.KEMPSTON_DOWN);
+    this.kempstonSignals = state;
+  }
+
+  public void doKempstonLeft() {
+    int state = this.kempstonSignals;
+    state = KeyboardKempstonAndTapeIn.KEMPSTON_LEFT | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT);
+    this.kempstonSignals = state;
+  }
+
+  public void doKempstonUp() {
+    int state = this.kempstonSignals;
+    state = KeyboardKempstonAndTapeIn.KEMPSTON_UP | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_DOWN);
+    this.kempstonSignals = state;
+  }
+
+  public void doKempstonRight() {
+    int state = this.kempstonSignals;
+    state = KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_LEFT);
+    this.kempstonSignals = state;
+  }
+
+  public void doKempstonDown() {
+    int state = this.kempstonSignals;
+    state = KeyboardKempstonAndTapeIn.KEMPSTON_DOWN | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_UP);
+    this.kempstonSignals = state;
+  }
+
+  public void doKempstonFire(final boolean pressed) {
+    int state = this.kempstonSignals;
+    if (pressed) {
+      state |= KeyboardKempstonAndTapeIn.KEMPSTON_FIRE;
+    } else {
+      state = state & ~KeyboardKempstonAndTapeIn.KEMPSTON_FIRE;
+    }
+    this.kempstonSignals = state;
+  }
+
+  public void doInterface2Fire(final int player, final boolean pressed) {
+    long state = this.keyboardLines;
+    if (player == 0) {
+      if (pressed) {
+        state &= ZXKEY_NONE ^ ZXKEY_5;
+      } else {
+        state |= ZXKEY_NONE & ZXKEY_5;
+      }
+    } else {
+      if (pressed) {
+        state &= ZXKEY_NONE ^ ZXKEY_0;
+      } else {
+        state |= ZXKEY_NONE & ZXKEY_0;
+      }
+    }
+    this.keyboardLines = state;
+  }
+
+  public void doInterface2Down(final int player) {
+    long state = this.keyboardLines;
+    if (player == 0) {
+      state = (state | (ZXKEY_NONE & ZXKEY_4)) & (ZXKEY_NONE ^ ZXKEY_3);
+    } else {
+      state = (state | (ZXKEY_NONE & ZXKEY_9)) & (ZXKEY_NONE ^ ZXKEY_8);
+    }
+    this.keyboardLines = state;
+  }
+
+  public void doInterface2Up(final int player) {
+    long state = this.keyboardLines;
+    if (player == 0) {
+      state = (state | (ZXKEY_NONE & ZXKEY_3)) & (ZXKEY_NONE ^ ZXKEY_4);
+    } else {
+      state = (state | (ZXKEY_NONE & ZXKEY_8)) & (ZXKEY_NONE ^ ZXKEY_9);
+    }
+    this.keyboardLines = state;
+  }
+
+  public void doInterface2Left(final int player) {
+    long state = this.keyboardLines;
+    if (player == 0) {
+      state = (state | (ZXKEY_NONE & ZXKEY_2)) & (ZXKEY_NONE ^ ZXKEY_1);
+    } else {
+      state = (state | (ZXKEY_NONE & ZXKEY_7)) & (ZXKEY_NONE ^ ZXKEY_6);
+    }
+    this.keyboardLines = state;
+  }
+
+  public void doInterface2Right(final int player) {
+    long state = this.keyboardLines;
+    if (player == 0) {
+      state = (state | (ZXKEY_NONE & ZXKEY_1)) & (ZXKEY_NONE ^ ZXKEY_2);
+    } else {
+      state = (state | (ZXKEY_NONE & ZXKEY_6)) & (ZXKEY_NONE ^ ZXKEY_7);
+    }
+    this.keyboardLines = state;
+  }
+
+  public void doInterface2CenterX(final int player) {
+    long state = this.keyboardLines;
+    if (player == 0) {
+      state |= ZXKEY_NONE & (ZXKEY_1 | ZXKEY_2);
+    } else {
+      state |= ZXKEY_NONE & (ZXKEY_6 | ZXKEY_7);
+    }
+    this.keyboardLines = state;
+  }
+
+  public void doInterface2CenterY(final int player) {
+    long state = this.keyboardLines;
+    if (player == 0) {
+      state |= ZXKEY_NONE & (ZXKEY_3 | ZXKEY_4);
+    } else {
+      state |= ZXKEY_NONE & (ZXKEY_8 | ZXKEY_9);
+    }
+    this.keyboardLines = state;
+  }
+
+  public void notifyUnregisterGadapter(final Gadapter adapter) {
+    LOGGER.info("Unregistering adpater: " + adapter);
+    this.activeGadapters.remove(adapter);
   }
 }

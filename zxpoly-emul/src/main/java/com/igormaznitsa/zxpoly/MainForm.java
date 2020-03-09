@@ -193,11 +193,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenu menuOptions;
   private JCheckBoxMenuItem menuOptionsEnableTrapMouse;
   private JCheckBoxMenuItem menuOptionsEnableSpeaker;
-  private JCheckBoxMenuItem menuOptionsEnableGameController;
   private JCheckBoxMenuItem menuOptionsShowIndicators;
   private JCheckBoxMenuItem menuOptionsTurbo;
   private JCheckBoxMenuItem menuOptionsZX128Mode;
   private JMenu menuService;
+  private JMenuItem menuServiceGameControllers;
   private JMenuItem menuServiceSaveScreen;
   private JMenuItem menuServiceSaveScreenAllVRAM;
   private JMenuItem menuServicemakeSnapshot;
@@ -340,7 +340,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
               menuOptionsEnableSpeaker.setEnabled(!turboMode);
               menuOptionsEnableSpeaker.setState(board.getBeeper().isActive());
             }
-            menuOptionsEnableGameController.setEnabled(keyboardAndTapeModule.isControllerEngineAllowed());
+            menuServiceGameControllers.setEnabled(keyboardAndTapeModule.isControllerEngineAllowed());
           }
 
           @Override
@@ -673,6 +673,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuService = new JMenu();
     menuFileReset = new JMenuItem();
     menuServiceSaveScreen = new JMenuItem();
+    menuServiceGameControllers = new JMenuItem();
     menuServiceSaveScreenAllVRAM = new JMenuItem();
     menuActionAnimatedGIF = new JMenuItem();
     menuServicemakeSnapshot = new JMenuItem();
@@ -693,7 +694,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsTurbo = new JCheckBoxMenuItem();
     menuOptionsEnableTrapMouse = new JCheckBoxMenuItem();
     menuOptionsEnableSpeaker = new JCheckBoxMenuItem();
-    menuOptionsEnableGameController = new JCheckBoxMenuItem();
     menuHelp = new JMenu();
     menuHelpAbout = new JMenuItem();
     menuHelpDonation = new JMenuItem();
@@ -912,6 +912,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuService.add(menuTapExportAs);
 
+    menuServiceGameControllers.setText("Game controllers");
+    menuServiceGameControllers.setToolTipText("Turn on game controller");
+    menuServiceGameControllers.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/gcontroller.png"))); // NOI18N
+    menuServiceGameControllers.addActionListener(this::menuServiceGameControllerActionPerformed);
+
+    menuService.add(menuServiceGameControllers);
+
     menuCatcher.setText("Test triggers");
 
     menuTriggerDiffMem.setText("Diff mem.content");
@@ -945,6 +952,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuTraceCPU3.setText("CPU3");
     menuTraceCPU3.addActionListener(this::menuTraceCPU3ActionPerformed);
     menuTracer.add(menuTraceCPU3);
+
 
     menuService.add(menuTracer);
 
@@ -983,12 +991,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsEnableSpeaker.addActionListener(this::menuOptionsEnableSpeakerActionPerformed);
     menuOptions.add(menuOptionsEnableSpeaker);
 
-    menuOptionsEnableGameController.setText("Game controller");
-    menuOptionsEnableGameController.setToolTipText("Turn on game controller");
-    menuOptionsEnableGameController.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/speaker.png"))); // NOI18N
-    menuOptionsEnableGameController.addActionListener(this::menuOptionsEnableGameControllerActionPerformed);
-    menuOptions.add(menuOptionsEnableGameController);
-
     menuBar.add(menuOptions);
 
     menuHelp.setText("Help");
@@ -1023,20 +1025,27 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.board.getBeeper().setEnable(this.menuOptionsEnableSpeaker.isSelected());
   }
 
-  private void menuOptionsEnableGameControllerActionPerformed(final ActionEvent actionEvent) {
-    if (this.menuOptionsEnableGameController.isSelected()) {
-      final GameControllerPanel gameControllerPanel = new GameControllerPanel(this.keyboardAndTapeModule);
-      if (JOptionPane.showConfirmDialog(
-          this,
-          gameControllerPanel,
-          "Game controllers",
-          JOptionPane.OK_CANCEL_OPTION,
-          JOptionPane.PLAIN_MESSAGE
-      ) == JOptionPane.OK_OPTION) {
-        this.keyboardAndTapeModule.setActiveControllerProcessors(gameControllerPanel.getSelected());
+  private void menuServiceGameControllerActionPerformed(final ActionEvent actionEvent) {
+    this.stepSemaphor.lock();
+    try {
+      if (!this.keyboardAndTapeModule.isControllerEngineAllowed()) {
+        JOptionPane.showMessageDialog(this, "Can't init game controller engine!", "Error", JOptionPane.ERROR_MESSAGE);
+      } else if (this.keyboardAndTapeModule.getDetectedControllers().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Can't find any game controller. Try restart the emulator with conected one.", "Can't find game controllers", JOptionPane.WARNING_MESSAGE);
+      } else {
+        final GameControllerPanel gameControllerPanel = new GameControllerPanel(this.keyboardAndTapeModule);
+        if (JOptionPane.showConfirmDialog(
+            this,
+            gameControllerPanel,
+            "Detected game controllers",
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.PLAIN_MESSAGE
+        ) == JOptionPane.OK_OPTION) {
+          this.keyboardAndTapeModule.setActiveGadapters(gameControllerPanel.getSelected());
+        }
       }
-    } else {
-      this.keyboardAndTapeModule.disposeAllControllerProcessors();
+    } finally {
+      this.stepSemaphor.unlock();
     }
   }
 
