@@ -1,6 +1,7 @@
 - __2.0.5 (SNAPSHOT)__
   - improved beeper to render playing TAP sound
   - GraalVM CE 20.0.0 as embedded JDK image
+  - added support for gamepads and joysticks (through Jinput library)
 
 - __2.0.4 (18-jan-2020)__
   - added support of beeper (turned off by default)
