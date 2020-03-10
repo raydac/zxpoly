@@ -69,6 +69,8 @@ public abstract class Gadapter implements Runnable {
           break;
         }
 
+        float buttonAccum = 0.0f;
+        boolean buttonDetected = false;
         for (final Component c : this.controller.getComponents()) {
           final Component.Identifier identifier = c.getIdentifier();
           final float pollData = c.getPollData();
@@ -92,12 +94,13 @@ public abstract class Gadapter implements Runnable {
             } else {
               this.doCenterY();
             }
-          } else if (identifier == Component.Identifier.Button.THUMB2
-              || identifier == Component.Identifier.Button.A
-              || identifier == Component.Identifier.Button._2
-          ) {
-            this.doFire(pollData != 0.0f);
+          } else if (identifier instanceof Component.Identifier.Button) {
+            buttonAccum += Math.abs(pollData);
+            buttonDetected = true;
           }
+        }
+        if (buttonDetected) {
+          this.doFire(buttonAccum != 0.0f);
         }
 
         try {
