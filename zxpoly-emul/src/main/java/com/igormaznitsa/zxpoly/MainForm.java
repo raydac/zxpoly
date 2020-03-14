@@ -1031,7 +1031,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       if (!this.keyboardAndTapeModule.isControllerEngineAllowed()) {
         JOptionPane.showMessageDialog(this, "Can't init game controller engine!", "Error", JOptionPane.ERROR_MESSAGE);
       } else if (this.keyboardAndTapeModule.getDetectedControllers().isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Can't find any game controller. Try restart the emulator with conected one.", "Can't find game controllers", JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Can't find any game controller. Try restart the emulator if controller already connected.", "Can't find game controllers", JOptionPane.WARNING_MESSAGE);
       } else {
         final GameControllerPanel gameControllerPanel = new GameControllerPanel(this.keyboardAndTapeModule);
         if (JOptionPane.showConfirmDialog(

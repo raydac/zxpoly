@@ -13,8 +13,8 @@
       idea of the platform was developed by Igor Maznitsa in april 1994. The first emulator was developed in 1998 and
       the current emulator was developed in 2014 to prove the idea.
       <br><br>
-      By default the emulator emulates ZX-Poly platform but it is possible to turn on ZX-128 mode through <b>Options->ZX-Mode</b>
-      menu item. If you have any problems with work of ZX-Spectrum applications then turn on ZX-Mode.
+      By default the emulator works in ZX-Poly mode, you can move it into ZX-128 mode through <b>Options->ZX-Mode</b>
+      menu item.
   </p>
   <h3>License</h3>
   The emulator is published under <a href="http://www.gnu.org/licenses/gpl.html">GNU GPL3 license</a>
@@ -28,23 +28,31 @@
   <p>
   <ol>
       <li>ZX-Spectrum keyboard (<b>SHIFT = CAPS SHIFT</b>, <b>ALT = SYMBOL SHIFT</b>)</li>
-        <li>Beta-disk interface</li>
-        <li>Kempston mouse (one click by mouse on the emulator form - trap mouse, ESC - free mouse)</li>
-        <li>Kempston joystick (emulated by cursor keys of keypad!)</li>
-        <li>Tape (only reading)</li>
+      <li>Beta-disk interface</li>
+      <li>Kempston mouse (one click by mouse on the emulator form - trap mouse, ESC - free mouse)</li>
+      <li>Kempston joystick (emulated by cursor keys of keypad!)</li>
+      <li>Tape (only reading)</li>
       <li>Beeper (by default is turned off, can be enabled through <b>Options->Beeper</b>)</li>
-      </ol>
-    </p>
+  </ol>
+  </p>
+  <h3>Game controller support</h3>
+  <p>
+      Since 2.0.5, gamepad and joysticks are supported. Menu <b>Service-&gt;Game controllers</b> opens window where you
+      can activate found game controller and assign it to emulate either kempston or interfaceII. Support of game
+      controllers provided through JInput library and sometime it work not well in detection of new conected devices, so
+      I recommend restart emulator after game controller connect.<br>
+      Emulator uses only X and Y as position parameters and all buttons recognized as Fire.
+  </p>
   <h3>Keyboard shortcuts</h3>
-      <ul>
-        <li>F1 - this info</li>
-        <li>F3 - turbo mode</li>
-        <li>F4 - play/pause TAP file if loaded</li>
-        <li>F5 - show keyboard layout</li>
-          <li>F8 - make screenshot</li>
-          <li>F12- reset</li>
-          <li>CTRL+mouse wheel - screen scale</li>
-      </ul>
+  <ul>
+      <li>F1 - this info</li>
+      <li>F3 - turbo mode</li>
+      <li>F4 - play/pause TAP file if loaded</li>
+      <li>F5 - show keyboard layout</li>
+      <li>F8 - make screenshot</li>
+      <li>F12- reset</li>
+      <li>CTRL+mouse wheel - screen scale</li>
+  </ul>
   <h3>System properties</h3>
   Emulator supports two system properties:
   <ul>
