@@ -8,7 +8,7 @@
 
 # Changelog
 
-- __2.0.5 (SNAPSHOT)__
+- __2.0.5 (14-mar-2020)__
   - improved beeper to render playing TAP sound
   - GraalVM CE 20.0.0 as embedded JDK image
   - added support for gamepads and joysticks (through Jinput library)
@@ -40,10 +40,13 @@ Keyboard plays role of ZX-Keyboard (ALT = SS, SHIFT = CS, CTRL+WHEEL = scaling),
  - Disks: .TRD, .SCL
 
 # Prebuilt versions
-The pre-built versions of the emulator and sprite editor can be downloaded from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.0.2).   
-The emulator is written in Java and its JAR file can be started just through command line `java -jar zxpoly-emul-2.0.2-SNAPSHOT.jar`   
+The pre-built versions of the emulator and sprite editor can be downloaded from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.0.5).   
+The emulator is written in Java and its JAR file can be started just through command line `java -jar zxpoly-emul-2.0.5-SNAPSHOT.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in **File->Options->Active ROM**, the ROM will be downloaded from one of remote network resources.   
 ![Test-ROM](/docs/screenshots/testromscr1.png)
+
+# Support of game controllers
+Since 2.0.5 the emulator supports gamepads and joysticks. It uses X,Y position and recognizing all buttons as Fire. Mapping of game controller can be turned on through **Service->Game controllers**. I recommend restart emulator after new controller connect because JInput works not well for such situation.
 
 # Theory and structure of the ZX-Poly platform
 ![ZXPoly test ROM screen](docs/block_scheme.png)    
