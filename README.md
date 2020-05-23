@@ -7,6 +7,11 @@
 
 # Changelog
 
+_ __2.0.6 (SNAPSHOT)__
+  - added dialog to choose sound device for beeper if several devices detected
+  - GraalVM CE updated to 20.1.0
+  - improved ubuntu desktop icon script
+  
 - __2.0.5 (14-mar-2020)__
   - improved beeper to render playing TAP sound
   - GraalVM CE 20.0.0 as embedded JDK image

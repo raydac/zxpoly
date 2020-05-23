@@ -78,11 +78,13 @@ public class RomLoader {
       }
 
       @Override
-      public void checkClientTrusted(final X509Certificate[] arg0, final String arg1) throws CertificateException {
+      public void checkClientTrusted(final X509Certificate[] arg0, final String arg1)
+          throws CertificateException {
       }
 
       @Override
-      public void checkServerTrusted(final X509Certificate[] arg0, String arg1) throws CertificateException {
+      public void checkServerTrusted(final X509Certificate[] arg0, String arg1)
+          throws CertificateException {
       }
     };
     try {
@@ -91,11 +93,13 @@ public class RomLoader {
       throw new IOException("Can't init ssl context: " + ex.getMessage());
     }
 
-    final SSLConnectionSocketFactory sslfactory = new SSLConnectionSocketFactory(sslcontext, NoopHostnameVerifier.INSTANCE);
-    final Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
-        .register("https", sslfactory)
-        .register("http", new PlainConnectionSocketFactory())
-        .build();
+    final SSLConnectionSocketFactory sslfactory =
+        new SSLConnectionSocketFactory(sslcontext, NoopHostnameVerifier.INSTANCE);
+    final Registry<ConnectionSocketFactory> registry =
+        RegistryBuilder.<ConnectionSocketFactory>create()
+            .register("https", sslfactory)
+            .register("http", new PlainConnectionSocketFactory())
+            .build();
 
     final HttpClient client = HttpClientBuilder.create()
         .setUserAgent("zx-poly-emulator/2.0")
@@ -119,15 +123,16 @@ public class RomLoader {
     if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
       final HttpEntity entity = response.getEntity();
       try (final InputStream in = entity.getContent()) {
-        final byte[] data = entity.getContentLength() < 0L ? IOUtils.toByteArray(in) : IOUtils.toByteArray(in, entity.getContentLength());
-        return data;
+        return entity.getContentLength() < 0L ? IOUtils.toByteArray(in) :
+            IOUtils.toByteArray(in, entity.getContentLength());
       }
     } else {
       throw new IOException("Can't download from http '" + url + "' code [" + url + ']');
     }
   }
 
-  static byte[] loadFTPArchive(final String host, final String path, final String name, final String password) throws IOException {
+  static byte[] loadFTPArchive(final String host, final String path, final String name,
+                               final String password) throws IOException {
     final FTPClient client = new FTPClient();
     client.connect(host);
     int replyCode = client.getReplyCode();
@@ -142,7 +147,8 @@ public class RomLoader {
         if (client.retrieveFile(path, out)) {
           return out.toByteArray();
         } else {
-          throw new IOException("Can't load file 'ftp://" + host + path + "\' status=" + client.getReplyCode());
+          throw new IOException(
+              "Can't load file 'ftp://" + host + path + "\' status=" + client.getReplyCode());
         }
       } finally {
         client.disconnect();

@@ -22,6 +22,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.imageio.ImageIO;
+import javax.swing.SwingUtilities;
 
 public final class Utils {
 
@@ -75,6 +76,12 @@ public final class Utils {
       }
     }
     return result;
+  }
+
+  public static void assertUiThread() {
+    if (!SwingUtilities.isEventDispatchThread()) {
+      throw new Error("Detected call from outside of event dispatch thread!");
+    }
   }
 
   public static Image loadIcon(final String name) {

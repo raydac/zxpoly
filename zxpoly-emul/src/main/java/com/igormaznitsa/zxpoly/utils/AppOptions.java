@@ -39,6 +39,14 @@ public final class AppOptions {
     return TEST_ROM.equals(this.getActiveRom());
   }
 
+  public synchronized String getLastSelectedAudioDevice() {
+    return preferences.get(Option.LAST_SELECTED_AUDIO_DEVICE.name(), null);
+  }
+
+  public synchronized void setLastSelectedAudioDevice(final String device) {
+    preferences.put(Option.LAST_SELECTED_AUDIO_DEVICE.name(),device);
+  }
+
   public synchronized String getActiveRom() {
     return preferences.get(Option.ROMPATH.name(), AppOptions.TEST_ROM);
   }
@@ -78,7 +86,8 @@ public final class AppOptions {
 
   public enum Option {
     ROMPATH,
-    INTBETWEENFRAMES
+    INTBETWEENFRAMES,
+    LAST_SELECTED_AUDIO_DEVICE
   }
 
 }

@@ -19,6 +19,7 @@ package com.igormaznitsa.zxpoly;
 
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
+import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
 import static javax.swing.KeyStroke.getKeyStroke;
 
 
@@ -32,6 +33,7 @@ import com.igormaznitsa.zxpoly.components.KempstonMouse;
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.RomData;
+import com.igormaznitsa.zxpoly.components.SourceSoundPort;
 import com.igormaznitsa.zxpoly.components.TapeFileReader;
 import com.igormaznitsa.zxpoly.components.VideoController;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
@@ -56,6 +58,7 @@ import com.igormaznitsa.zxpoly.utils.Utils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.Image;
@@ -76,23 +79,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
+import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioFormat;
 import javax.swing.Box;
 import javax.swing.Box.Filler;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu.Separator;
 import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
@@ -109,18 +118,23 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   public static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
   public static final Logger LOGGER = Logger.getLogger("UI");
   private static final Icon ICO_MOUSE = new ImageIcon(Utils.loadIcon("mouse.png"));
-  private static final Icon ICO_MOUSE_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_MOUSE);
+  private static final Icon ICO_MOUSE_DIS =
+      UIManager.getLookAndFeel().getDisabledIcon(null, ICO_MOUSE);
   private static final Icon ICO_DISK = new ImageIcon(Utils.loadIcon("disk.png"));
-  private static final Icon ICO_DISK_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_DISK);
+  private static final Icon ICO_DISK_DIS =
+      UIManager.getLookAndFeel().getDisabledIcon(null, ICO_DISK);
   private static final Icon ICO_AGIF_RECORD = new ImageIcon(Utils.loadIcon("record.png"));
   private static final Icon ICO_AGIF_STOP = new ImageIcon(Utils.loadIcon("tape_stop.png"));
   private static final Icon ICO_TAPE = new ImageIcon(Utils.loadIcon("cassette.png"));
   private static final Icon ICO_MDISK = new ImageIcon(Utils.loadIcon("mdisk.png"));
-  private static final Icon ICO_TAPE_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TAPE);
+  private static final Icon ICO_TAPE_DIS =
+      UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TAPE);
   private static final Icon ICO_TURBO = new ImageIcon(Utils.loadIcon("turbo.png"));
-  private static final Icon ICO_TURBO_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TURBO);
+  private static final Icon ICO_TURBO_DIS =
+      UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TURBO);
   private static final Icon ICO_ZX128 = new ImageIcon(Utils.loadIcon("zx128.png"));
-  private static final Icon ICO_ZX128_DIS = UIManager.getLookAndFeel().getDisabledIcon(null, ICO_ZX128);
+  private static final Icon ICO_ZX128_DIS =
+      UIManager.getLookAndFeel().getDisabledIcon(null, ICO_ZX128);
   private static final Icon ICO_EMUL_PLAY = new ImageIcon(Utils.loadIcon("emul_play.png"));
   private static final Icon ICO_EMUL_PAUSE = new ImageIcon(Utils.loadIcon("emul_pause.png"));
   private static final String TEXT_START_ANIM_GIF = "Record AGIF";
@@ -128,10 +142,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private static final long serialVersionUID = 7309959798344327441L;
   private final int INT_BETWEEN_FRAMES;
   private volatile boolean turboMode = false;
-  private final CpuLoadIndicator indicatorCPU0 = new CpuLoadIndicator(48, 14, 4, "CPU0", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
-  private final CpuLoadIndicator indicatorCPU1 = new CpuLoadIndicator(48, 14, 4, "CPU1", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
-  private final CpuLoadIndicator indicatorCPU2 = new CpuLoadIndicator(48, 14, 4, "CPU2", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
-  private final CpuLoadIndicator indicatorCPU3 = new CpuLoadIndicator(48, 14, 4, "CPU3", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+  private final CpuLoadIndicator indicatorCPU0 =
+      new CpuLoadIndicator(48, 14, 4, "CPU0", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+  private final CpuLoadIndicator indicatorCPU1 =
+      new CpuLoadIndicator(48, 14, 4, "CPU1", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+  private final CpuLoadIndicator indicatorCPU2 =
+      new CpuLoadIndicator(48, 14, 4, "CPU2", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+  private final CpuLoadIndicator indicatorCPU3 =
+      new CpuLoadIndicator(48, 14, 4, "CPU3", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final TraceCpuForm[] cpuTracers = new TraceCpuForm[4];
   private final AtomicInteger activeTracerWindowCounter = new AtomicInteger();
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
@@ -157,7 +175,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final KeyboardKempstonAndTapeIn keyboardAndTapeModule;
   private final KempstonMouse kempstonMouse;
   private final ReentrantLock stepSemaphor = new ReentrantLock();
-  private AnimatedGifTunePanel.AnimGifOptions lastAnimGifOptions = new AnimatedGifTunePanel.AnimGifOptions("./zxpoly.gif", 10, false);
+  private AnimatedGifTunePanel.AnimGifOptions lastAnimGifOptions =
+      new AnimatedGifTunePanel.AnimGifOptions("./zxpoly.gif", 10, false);
   private File lastTapFolder;
   private File lastFloppyFolder;
   private File lastSnapshotFolder;
@@ -301,7 +320,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     }
 
-
     this.board = new Motherboard(BASE_ROM);
     this.board.setBoardMode(BoardMode.ZXPOLY, true);
     this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() != BoardMode.ZXPOLY);
@@ -315,7 +333,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.kempstonMouse = this.board.findIoDevice(KempstonMouse.class);
 
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    manager.addKeyEventDispatcher(new KeyboardDispatcher(this.board.getVideoController(), this.keyboardAndTapeModule));
+    manager.addKeyEventDispatcher(
+        new KeyboardDispatcher(this.board.getVideoController(), this.keyboardAndTapeModule));
 
     final GridBagConstraints cpuIndicatorConstraint = new GridBagConstraints();
     cpuIndicatorConstraint.ipadx = 5;
@@ -325,7 +344,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.panelIndicators.add(this.indicatorCPU2, cpuIndicatorConstraint, 2);
     this.panelIndicators.add(this.indicatorCPU3, cpuIndicatorConstraint, 3);
 
-    this.menuOptionsEnableTrapMouse.setSelected(this.board.getVideoController().isTrapMouseEnabled());
+    this.menuOptionsEnableTrapMouse
+        .setSelected(this.board.getVideoController().isTrapMouseEnabled());
 
     for (final Component item : this.menuBar.getComponents()) {
       if (item instanceof JMenu) {
@@ -340,7 +360,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
               menuOptionsEnableSpeaker.setEnabled(!turboMode);
               menuOptionsEnableSpeaker.setState(board.getBeeper().isActive());
             }
-            menuServiceGameControllers.setEnabled(keyboardAndTapeModule.isControllerEngineAllowed());
+            menuServiceGameControllers
+                .setEnabled(keyboardAndTapeModule.isControllerEngineAllowed());
           }
 
           @Override
@@ -371,17 +392,80 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     });
   }
 
+  private Optional<SourceSoundPort> showSelectSoundLineDialog(
+      final List<SourceSoundPort> variants) {
+    assertUiThread();
+    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.TRAILING));
+    final String previouslySelectedDevice = AppOptions.getInstance().getLastSelectedAudioDevice();
+
+    final JComboBox<SourceSoundPort> comboBox =
+        new JComboBox<>(variants.toArray(new SourceSoundPort[0]));
+    comboBox.setPrototypeDisplayValue(
+        new SourceSoundPort(null, "some very long device name to be shown", null));
+    comboBox.addActionListener(x -> {
+      comboBox.setToolTipText(comboBox.getSelectedItem().toString());
+    });
+    comboBox.setToolTipText(comboBox.getSelectedItem().toString());
+
+    int index = -1;
+    for (int i = 0; i < comboBox.getItemCount(); i++) {
+      if (comboBox.getItemAt(i).toString().equals(previouslySelectedDevice)) {
+        index = i;
+        break;
+      }
+    }
+
+    comboBox.setSelectedIndex(Math.max(0, index));
+
+    panel.add(new JLabel("Sound device:"));
+    panel.add(comboBox);
+    if (JOptionPane.showConfirmDialog(
+        this,
+        panel,
+        "Select sound device",
+        JOptionPane.OK_CANCEL_OPTION,
+        JOptionPane.PLAIN_MESSAGE
+    ) == JOptionPane.OK_OPTION) {
+      final SourceSoundPort selected = (SourceSoundPort) comboBox.getSelectedItem();
+      AppOptions.getInstance().setLastSelectedAudioDevice(selected.toString());
+      return Optional.ofNullable(selected);
+    } else {
+      return Optional.empty();
+    }
+
+  }
+
+  private Optional<SourceSoundPort> findAudioLine(final AudioFormat audioFormat) {
+    final List<SourceSoundPort> foundPorts = SourceSoundPort.findForFormat(audioFormat);
+    LOGGER.info("Detected audio source lines: " + foundPorts);
+    if (foundPorts.isEmpty()) {
+      JOptionPane
+          .showMessageDialog(this, "There is no detected audio devices!", "Can't find audio device",
+              JOptionPane.WARNING_MESSAGE);
+      return Optional.empty();
+    } else {
+      if (foundPorts.size() == 1) {
+        return Optional.of(foundPorts.get(0));
+      } else {
+        return this.showSelectSoundLineDialog(foundPorts);
+      }
+    }
+  }
+
   private RomData loadRom(final String romPath) throws Exception {
     if (romPath != null) {
       if (romPath.contains("://")) {
         try {
-          final String cached = "loaded_" + Integer.toHexString(romPath.hashCode()).toUpperCase(Locale.ENGLISH) + ".rom";
+          final String cached =
+              "loaded_" + Integer.toHexString(romPath.hashCode()).toUpperCase(Locale.ENGLISH)
+                  + ".rom";
           final File cacheFolder = new File(AppOptions.getInstance().getAppConfigFolder(), "cache");
           final File cachedRom = new File(cacheFolder, cached);
           RomData result = null;
           boolean load = true;
           if (cachedRom.isFile()) {
-            LOGGER.log(Level.INFO, "Load cached ROM downloaded from '" + romPath + "' : " + cachedRom);
+            LOGGER.log(Level.INFO,
+                "Load cached ROM downloaded from '" + romPath + "' : " + cachedRom);
             result = new RomData(cachedRom.getName(), FileUtils.readFileToByteArray(cachedRom));
             load = false;
           }
@@ -396,12 +480,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           }
           return result;
         } catch (Exception ex) {
-          LOGGER.log(Level.WARNING, "Can't load ROM from '" + romPath + "\': " + ex.getMessage(), ex);
+          LOGGER
+              .log(Level.WARNING, "Can't load ROM from '" + romPath + "\': " + ex.getMessage(), ex);
           throw ex;
         }
       } else {
         LOGGER.log(Level.INFO, "Load ROM from embedded resource '" + romPath + "'");
-        try (final InputStream in = Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romPath)) {
+        try (final InputStream in = Utils
+            .findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romPath)) {
           return RomData.read(romPath, in);
         } catch (IllegalArgumentException ex) {
           final File file = new File(romPath);
@@ -418,7 +504,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     final String testRom = AppOptions.TEST_ROM;
     LOGGER.info("Load ROM from embedded resource '" + testRom + "'");
-    try (final InputStream in = Utils.findResourceOrError("com/igormaznitsa/zxpoly/rom/" + testRom)) {
+    try (final InputStream in = Utils
+        .findResourceOrError("com/igormaznitsa/zxpoly/rom/" + testRom)) {
       return RomData.read(testRom, in);
     }
   }
@@ -459,7 +546,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           systemIntSignal = currentMachineCycleCounter >= VideoController.CYCLES_BETWEEN_INT;
           nextSystemInt = currentTime + TIMER_INT_DELAY_MILLISECONDS;
           if (systemIntSignal) {
-            this.board.getMasterCpu().setMCycleCounter(currentMachineCycleCounter % VideoController.CYCLES_BETWEEN_INT);
+            this.board.getMasterCpu()
+                .setMCycleCounter(currentMachineCycleCounter % VideoController.CYCLES_BETWEEN_INT);
           }
           countdownToPaint--;
           countToUpdatePanel--;
@@ -468,7 +556,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           systemIntSignal = false;
         }
 
-        final int triggers = this.board.step(systemIntSignal, inTurboMode || (systemIntSignal || currentMachineCycleCounter <= VideoController.CYCLES_BETWEEN_INT));
+        final int triggers = this.board.step(systemIntSignal, inTurboMode ||
+            (systemIntSignal || currentMachineCycleCounter <= VideoController.CYCLES_BETWEEN_INT));
 
         if (triggers != Motherboard.TRIGGER_NONE) {
           final Z80[] cpuStates = new Z80[4];
@@ -553,11 +642,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       buffer.append("EXE CODE DIFFERENCE");
     }
 
-    buffer.append("\n\nDisasm since last executed address in CPU0 memory: ").append(toHex(lastAddress)).append('\n');
+    buffer.append("\n\nDisasm since last executed address in CPU0 memory: ")
+        .append(toHex(lastAddress)).append('\n');
 
-    buffer.append(this.board.getModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
+    buffer.append(this.board.getModules()[0].toHexStringSinceAddress(lastAddress - 8, 8))
+        .append("\n\n");
 
-    this.board.getModules()[0].disasmSinceAddress(lastAddress, 5).forEach((l) -> buffer.append(l.toString()).append('\n'));
+    this.board.getModules()[0].disasmSinceAddress(lastAddress, 5)
+        .forEach((l) -> buffer.append(l.toString()).append('\n'));
 
     buffer.append('\n');
 
@@ -570,7 +662,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     LOGGER.info(buffer.toString());
   }
 
-  private String makeInfoStringForRegister(final Z80[] cpuModuleStates, final int lastAddress, final String extraString, final int register, final boolean alt) {
+  private String makeInfoStringForRegister(final Z80[] cpuModuleStates, final int lastAddress,
+                                           final String extraString, final int register,
+                                           final boolean alt) {
     final StringBuilder result = new StringBuilder();
 
     if (extraString != null) {
@@ -581,13 +675,17 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       if (i > 0) {
         result.append(", ");
       }
-      result.append("CPU#").append(i).append('=').append(toHex(cpuModuleStates[i].getRegister(register, alt)));
+      result.append("CPU#").append(i).append('=')
+          .append(toHex(cpuModuleStates[i].getRegister(register, alt)));
     }
 
-    result.append("\n\nLast executed address : ").append(toHex(lastAddress)).append("\n--------------\n\n");
-    result.append(this.board.getModules()[0].toHexStringSinceAddress(lastAddress - 8, 8)).append("\n\n");
+    result.append("\n\nLast executed address : ").append(toHex(lastAddress))
+        .append("\n--------------\n\n");
+    result.append(this.board.getModules()[0].toHexStringSinceAddress(lastAddress - 8, 8))
+        .append("\n\n");
 
-    this.board.getModules()[0].disasmSinceAddress(lastAddress, 5).forEach((l) -> result.append(l.toString()).append('\n'));
+    this.board.getModules()[0].disasmSinceAddress(lastAddress, 5)
+        .forEach((l) -> result.append(l.toString()).append('\n'));
 
     return result.toString();
   }
@@ -600,17 +698,25 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
       if ((triggered & Motherboard.TRIGGER_DIFF_MODULESTATES) != 0) {
         this.menuTriggerModuleCPUDesync.setSelected(false);
-        JOptionPane.showMessageDialog(MainForm.this, "Detected desync of module CPUs\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(MainForm.this, "Detected desync of module CPUs\n" +
+                makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false),
+            "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
 
       if ((triggered & Motherboard.TRIGGER_DIFF_MEM_ADDR) != 0) {
         this.menuTriggerDiffMem.setSelected(false);
-        JOptionPane.showMessageDialog(MainForm.this, "Detected memory cell difference " + toHex(this.board.getMemTriggerAddress()) + "\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, getCellContentForAddress(this.board.getMemTriggerAddress()), Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(MainForm.this,
+            "Detected memory cell difference " + toHex(this.board.getMemTriggerAddress()) + "\n" +
+                makeInfoStringForRegister(cpuModuleStates, lastM1Address,
+                    getCellContentForAddress(this.board.getMemTriggerAddress()), Z80.REG_PC, false),
+            "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
 
       if ((triggered & Motherboard.TRIGGER_DIFF_EXE_CODE) != 0) {
         this.menuTriggerExeCodeDiff.setSelected(false);
-        JOptionPane.showMessageDialog(MainForm.this, "Detected EXE code difference\n" + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false), "Triggered", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(MainForm.this, "Detected EXE code difference\n" +
+                makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false),
+            "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
     } finally {
       this.stepSemaphor.unlock();
@@ -644,12 +750,17 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     scrollPanel = new javax.swing.JScrollPane();
     jSeparator2 = new JSeparator();
     panelIndicators = new javax.swing.JPanel();
-    filler1 = new Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
-    labelTurbo = new JIndicatorLabel(ICO_TURBO, ICO_TURBO_DIS, "Turbo-mode is ON", "Turbo-mode is OFF");
-    labelMouseUsage = new JIndicatorLabel(ICO_MOUSE, ICO_MOUSE_DIS, "Mouse is catched", "Mouse is not active");
+    filler1 = new Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0),
+        new java.awt.Dimension(32767, 0));
+    labelTurbo =
+        new JIndicatorLabel(ICO_TURBO, ICO_TURBO_DIS, "Turbo-mode is ON", "Turbo-mode is OFF");
+    labelMouseUsage =
+        new JIndicatorLabel(ICO_MOUSE, ICO_MOUSE_DIS, "Mouse is catched", "Mouse is not active");
     labelZX128 = new JIndicatorLabel(ICO_ZX128, ICO_ZX128_DIS, "ZX mode is ON", "ZX mode is OFF");
-    labelTapeUsage = new JIndicatorLabel(ICO_TAPE, ICO_TAPE_DIS, "Reading tape", "No IO tape operations");
-    labelDiskUsage = new JIndicatorLabel(ICO_DISK, ICO_DISK_DIS, "Some disk operation is active", "No IO disk operations");
+    labelTapeUsage =
+        new JIndicatorLabel(ICO_TAPE, ICO_TAPE_DIS, "Reading tape", "No IO tape operations");
+    labelDiskUsage = new JIndicatorLabel(ICO_DISK, ICO_DISK_DIS, "Some disk operation is active",
+        "No IO disk operations");
     menuBar = new JMenuBar();
     menuFile = new JMenu();
     menuFileLoadSnapshot = new JMenuItem();
@@ -780,17 +891,20 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
 
-    menuFileLoadSnapshot.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/snapshot.png"))); // NOI18N
+    menuFileLoadSnapshot.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/snapshot.png"))); // NOI18N
     menuFileLoadSnapshot.setText("Load Snapshot");
     menuFileLoadSnapshot.addActionListener(this::menuFileLoadSnapshotActionPerformed);
     menuFile.add(menuFileLoadSnapshot);
 
-    menuFileLoadTap.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/cassette.png"))); // NOI18N
+    menuFileLoadTap.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/cassette.png"))); // NOI18N
     menuFileLoadTap.setText("Load TAPE");
     menuFileLoadTap.addActionListener(this::menuFileLoadTapActionPerformed);
     menuFile.add(menuFileLoadTap);
 
-    menuLoadDrive.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/disk.png"))); // NOI18N
+    menuLoadDrive.setIcon(
+        new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/disk.png"))); // NOI18N
     menuLoadDrive.setText("Load Disk..");
     menuLoadDrive.addMenuListener(new javax.swing.event.MenuListener() {
       public void menuCanceled(javax.swing.event.MenuEvent evt) {
@@ -822,20 +936,24 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuFile.add(menuLoadDrive);
 
-    menuFileFlushDiskChanges.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/diskflush.png"))); // NOI18N
+    menuFileFlushDiskChanges.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/diskflush.png"))); // NOI18N
     menuFileFlushDiskChanges.setText("Flush disk changes");
     menuFileFlushDiskChanges.addActionListener(this::menuFileFlushDiskChangesActionPerformed);
     menuFile.add(menuFileFlushDiskChanges);
     menuFile.add(jSeparator1);
 
-    menuFileOptions.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/settings.png"))); // NOI18N
+    menuFileOptions.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/settings.png"))); // NOI18N
     menuFileOptions.setText("Options");
     menuFileOptions.addActionListener(this::menuFileOptionsActionPerformed);
     menuFile.add(menuFileOptions);
     menuFile.add(jSeparator3);
 
-    menuFileExit.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F4, java.awt.event.InputEvent.ALT_MASK));
-    menuFileExit.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset.png"))); // NOI18N
+    menuFileExit.setAccelerator(
+        getKeyStroke(java.awt.event.KeyEvent.VK_F4, java.awt.event.InputEvent.ALT_MASK));
+    menuFileExit.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset.png"))); // NOI18N
     menuFileExit.setText("Exit");
     menuFileExit.addActionListener(this::menuFileExitActionPerformed);
     menuFile.add(menuFileExit);
@@ -844,29 +962,34 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuTap.setText("Tape");
 
-    menuTapeRewindToStart.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_previous.png"))); // NOI18N
+    menuTapeRewindToStart.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_previous.png"))); // NOI18N
     menuTapeRewindToStart.setText("Rewind to start");
     menuTapeRewindToStart.addActionListener(this::menuTapeRewindToStartActionPerformed);
     menuTap.add(menuTapeRewindToStart);
 
-    menuTapPrevBlock.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_backward.png"))); // NOI18N
+    menuTapPrevBlock.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_backward.png"))); // NOI18N
     menuTapPrevBlock.setText("Prev block");
     menuTapPrevBlock.addActionListener(this::menuTapPrevBlockActionPerformed);
     menuTap.add(menuTapPrevBlock);
 
     menuTapPlay.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F4, 0));
     menuTapPlay.setText("Play");
-    menuTapPlay.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_play.png"))); // NOI18N
+    menuTapPlay.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_play.png"))); // NOI18N
     menuTapPlay.setInheritsPopupMenu(true);
     menuTapPlay.addActionListener(this::menuTapPlayActionPerformed);
     menuTap.add(menuTapPlay);
 
-    menuTapNextBlock.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_forward.png"))); // NOI18N
+    menuTapNextBlock.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_forward.png"))); // NOI18N
     menuTapNextBlock.setText("Next block");
     menuTapNextBlock.addActionListener(this::menuTapNextBlockActionPerformed);
     menuTap.add(menuTapNextBlock);
 
-    menuTapGotoBlock.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_pos.png"))); // NOI18N
+    menuTapGotoBlock.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_pos.png"))); // NOI18N
     menuTapGotoBlock.setText("Go to block");
     menuTapGotoBlock.addActionListener(this::menuTapGotoBlockActionPerformed);
     menuTap.add(menuTapGotoBlock);
@@ -876,36 +999,44 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuService.setText("Service");
 
     menuFileReset.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F12, 0));
-    menuFileReset.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset2.png"))); // NOI18N
+    menuFileReset.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset2.png"))); // NOI18N
     menuFileReset.setText("Reset");
     menuFileReset.addActionListener(this::menuFileResetActionPerformed);
     menuService.add(menuFileReset);
 
     menuServiceSaveScreen.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F8, 0));
-    menuServiceSaveScreen.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/photo.png"))); // NOI18N
+    menuServiceSaveScreen.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/photo.png"))); // NOI18N
     menuServiceSaveScreen.setText("Make Screenshot");
     menuServiceSaveScreen.addActionListener(this::menuServiceSaveScreenActionPerformed);
     menuService.add(menuServiceSaveScreen);
 
-    menuServiceSaveScreenAllVRAM.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/photom.png"))); // NOI18N
+    menuServiceSaveScreenAllVRAM.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/photom.png"))); // NOI18N
     menuServiceSaveScreenAllVRAM.setText("Make Screenshot of all VRAM");
-    menuServiceSaveScreenAllVRAM.addActionListener(this::menuServiceSaveScreenAllVRAMActionPerformed);
+    menuServiceSaveScreenAllVRAM
+        .addActionListener(this::menuServiceSaveScreenAllVRAMActionPerformed);
     menuService.add(menuServiceSaveScreenAllVRAM);
 
-    menuActionAnimatedGIF.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_gif.png"))); // NOI18N
+    menuActionAnimatedGIF.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_gif.png"))); // NOI18N
     menuActionAnimatedGIF.setText("Make Animated GIF");
     menuActionAnimatedGIF.addActionListener(this::menuActionAnimatedGIFActionPerformed);
     menuService.add(menuActionAnimatedGIF);
 
-    menuServicemakeSnapshot.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/save_snapshot.png"))); // NOI18N
+    menuServicemakeSnapshot.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/save_snapshot.png"))); // NOI18N
     menuServicemakeSnapshot.setText("Save snapshot");
     menuServicemakeSnapshot.addActionListener(this::menuServicemakeSnapshotActionPerformed);
     menuService.add(menuServicemakeSnapshot);
 
-    menuTapExportAs.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png"))); // NOI18N
+    menuTapExportAs.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png"))); // NOI18N
     menuTapExportAs.setText("Export TAPE as..");
 
-    menuTapExportAsWav.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_wav.png"))); // NOI18N
+    menuTapExportAsWav.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_wav.png"))); // NOI18N
     menuTapExportAsWav.setText("WAV file");
     menuTapExportAsWav.addActionListener(this::menuTapExportAsWavActionPerformed);
     menuTapExportAs.add(menuTapExportAsWav);
@@ -914,7 +1045,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuServiceGameControllers.setText("Game controllers");
     menuServiceGameControllers.setToolTipText("Turn on game controller");
-    menuServiceGameControllers.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/gcontroller.png"))); // NOI18N
+    menuServiceGameControllers.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/gcontroller.png"))); // NOI18N
     menuServiceGameControllers.addActionListener(this::menuServiceGameControllerActionPerformed);
 
     menuService.add(menuServiceGameControllers);
@@ -953,7 +1085,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuTraceCPU3.addActionListener(this::menuTraceCPU3ActionPerformed);
     menuTracer.add(menuTraceCPU3);
 
-
     menuService.add(menuTracer);
 
     menuBar.add(menuService);
@@ -962,32 +1093,37 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuOptionsShowIndicators.setSelected(true);
     menuOptionsShowIndicators.setText("Indicator panel");
-    menuOptionsShowIndicators.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/indicator.png"))); // NOI18N
+    menuOptionsShowIndicators.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/indicator.png"))); // NOI18N
     menuOptionsShowIndicators.addActionListener(this::menuOptionsShowIndicatorsActionPerformed);
     menuOptions.add(menuOptionsShowIndicators);
 
     menuOptionsZX128Mode.setSelected(true);
     menuOptionsZX128Mode.setText("ZX Mode");
-    menuOptionsZX128Mode.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/zx128.png"))); // NOI18N
+    menuOptionsZX128Mode.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/zx128.png"))); // NOI18N
     menuOptionsZX128Mode.addActionListener(this::menuOptionsZX128ModeActionPerformed);
     menuOptions.add(menuOptionsZX128Mode);
 
     menuOptionsTurbo.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F3, 0));
     menuOptionsTurbo.setSelected(true);
     menuOptionsTurbo.setText("Turbo");
-    menuOptionsTurbo.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/turbo.png"))); // NOI18N
+    menuOptionsTurbo.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/turbo.png"))); // NOI18N
     menuOptionsTurbo.addActionListener(this::menuOptionsTurboActionPerformed);
     menuOptions.add(menuOptionsTurbo);
 
     menuOptionsEnableTrapMouse.setText("Trap mouse");
     menuOptionsEnableTrapMouse.setToolTipText("Trap mouse as kempston-mouse");
-    menuOptionsEnableTrapMouse.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/pointer.png"))); // NOI18N
+    menuOptionsEnableTrapMouse.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/pointer.png"))); // NOI18N
     menuOptionsEnableTrapMouse.addActionListener(this::menuOptionsEnableTrapMouseActionPerformed);
     menuOptions.add(menuOptionsEnableTrapMouse);
 
     menuOptionsEnableSpeaker.setText("Beeper");
     menuOptionsEnableSpeaker.setToolTipText("Turn on beeper sound");
-    menuOptionsEnableSpeaker.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/speaker.png"))); // NOI18N
+    menuOptionsEnableSpeaker.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/speaker.png"))); // NOI18N
     menuOptionsEnableSpeaker.addActionListener(this::menuOptionsEnableSpeakerActionPerformed);
     menuOptions.add(menuOptionsEnableSpeaker);
 
@@ -996,7 +1132,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuHelp.setText("Help");
 
     menuHelpAbout.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F1, 0));
-    menuHelpAbout.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/info.png"))); // NOI18N
+    menuHelpAbout.setIcon(
+        new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/info.png"))); // NOI18N
     menuHelpAbout.setText("Help");
     menuHelpAbout.addActionListener(this::menuHelpAboutActionPerformed);
     menuHelp.add(menuHelpAbout);
@@ -1005,13 +1142,15 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuHelpDonation.addActionListener(e -> {
       if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
         try {
-          Desktop.getDesktop().browse(new URI("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AHWJHJFBAWGL2"));
+          Desktop.getDesktop().browse(new URI(
+              "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AHWJHJFBAWGL2"));
         } catch (Exception ex) {
           LOGGER.warning("Can't open link: " + ex.getMessage());
         }
       }
     });
-    menuHelpDonation.setIcon(new ImageIcon(getClass().getResource("/com/igormaznitsa/zxpoly/icons/donate.png"))); // NOI18N
+    menuHelpDonation.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/donate.png"))); // NOI18N
     menuHelp.add(menuHelpDonation);
 
     menuBar.add(menuHelp);
@@ -1022,18 +1161,39 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuOptionsEnableSpeakerActionPerformed(final ActionEvent actionEvent) {
-    this.board.getBeeper().setEnable(this.menuOptionsEnableSpeaker.isSelected());
+    this.stepSemaphor.lock();
+    try {
+      if (this.menuOptionsEnableSpeaker.isSelected()) {
+        final Optional<SourceSoundPort> port = this.findAudioLine(this.board.getBeeper().getAudioFormat());
+        if (port.isPresent()) {
+          this.board.getBeeper().setSourceSoundPort(port.get());
+          if (this.board.getBeeper().isNullBeeper()) {
+            this.menuOptionsEnableSpeaker.setSelected(false);
+          }
+        } else {
+          this.menuOptionsEnableSpeaker.setSelected(false);
+        }
+      } else {
+        this.board.getBeeper().setSourceSoundPort(null);
+      }
+    }finally {
+      this.stepSemaphor.unlock();
+    }
   }
 
   private void menuServiceGameControllerActionPerformed(final ActionEvent actionEvent) {
     this.stepSemaphor.lock();
     try {
       if (!this.keyboardAndTapeModule.isControllerEngineAllowed()) {
-        JOptionPane.showMessageDialog(this, "Can't init game controller engine!", "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Can't init game controller engine!", "Error",
+            JOptionPane.ERROR_MESSAGE);
       } else if (this.keyboardAndTapeModule.getDetectedControllers().isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Can't find any game controller. Try restart the emulator if controller already connected.", "Can't find game controllers", JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(this,
+            "Can't find any game controller. Try restart the emulator if controller already connected.",
+            "Can't find game controllers", JOptionPane.WARNING_MESSAGE);
       } else {
-        final GameControllerPanel gameControllerPanel = new GameControllerPanel(this.keyboardAndTapeModule);
+        final GameControllerPanel gameControllerPanel =
+            new GameControllerPanel(this.keyboardAndTapeModule);
         if (JOptionPane.showConfirmDialog(
             this,
             gameControllerPanel,
@@ -1100,7 +1260,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         }
       };
 
-      File selectedFile = chooseFileForOpen("Select Disk " + diskName, this.lastFloppyFolder, filter, allSupportedFilters, sclFileFilter, trdFileFilter);
+      File selectedFile =
+          chooseFileForOpen("Select Disk " + diskName, this.lastFloppyFolder, filter,
+              allSupportedFilters, sclFileFilter, trdFileFilter);
       if (selectedFile != null) {
         this.lastFloppyFolder = selectedFile.getParentFile();
         try {
@@ -1119,7 +1281,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             }
             selectedFile = new File(selectedFile.getParentFile(), name);
             if (!selectedFile.isFile()) {
-              if (JOptionPane.showConfirmDialog(this, "Create TRD file: " + selectedFile.getName() + "?", "Create TRD file", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+              if (JOptionPane
+                  .showConfirmDialog(this, "Create TRD file: " + selectedFile.getName() + "?",
+                      "Create TRD file", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                 LOGGER.log(Level.INFO, "Creating TRD disk: " + selectedFile.getAbsolutePath());
                 FileUtils.writeByteArrayToFile(selectedFile, new TrDosDisk().getDiskData());
               } else {
@@ -1128,12 +1292,16 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             }
           }
 
-          final TrDosDisk floppy = new TrDosDisk(selectedFile, filter.get().getClass() == SCLFileFilter.class ? TrDosDisk.SourceDataType.SCL : TrDosDisk.SourceDataType.TRD, FileUtils.readFileToByteArray(selectedFile), false);
+          final TrDosDisk floppy = new TrDosDisk(selectedFile,
+              filter.get().getClass() == SCLFileFilter.class ? TrDosDisk.SourceDataType.SCL :
+                  TrDosDisk.SourceDataType.TRD, FileUtils.readFileToByteArray(selectedFile), false);
           this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
-          LOGGER.log(Level.INFO, "Loaded drive " + diskName + " by floppy image file " + selectedFile);
+          LOGGER.log(Level.INFO,
+              "Loaded drive " + diskName + " by floppy image file " + selectedFile);
         } catch (IOException ex) {
           LOGGER.log(Level.WARNING, "Can't read Floppy image file [" + selectedFile + ']', ex);
-          JOptionPane.showMessageDialog(this, "Can't read Floppy image file", "Error", JOptionPane.ERROR_MESSAGE);
+          JOptionPane.showMessageDialog(this, "Can't read Floppy image file", "Error",
+              JOptionPane.ERROR_MESSAGE);
         }
       }
     } finally {
@@ -1180,14 +1348,16 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     try {
       this.turnZxKeyboardOff();
       if (AppOptions.getInstance().isTestRomActive()) {
-        final JHtmlLabel label = new JHtmlLabel("<html><body>ZX-Spectrum 128 ROM is required to load snapshots.<br>Go to menu <b><i><a href=\"rom\">File->Options</i></b></i> and choose ROM 128.</body></html>");
+        final JHtmlLabel label = new JHtmlLabel(
+            "<html><body>ZX-Spectrum 128 ROM is required to load snapshots.<br>Go to menu <b><i><a href=\"rom\">File->Options</i></b></i> and choose ROM 128.</body></html>");
         label.addLinkListener((source, link) -> {
           if ("rom".equals(link)) {
             SwingUtilities.windowForComponent(source).setVisible(false);
             SwingUtilities.invokeLater(() -> menuFileOptions.doClick());
           }
         });
-        JOptionPane.showMessageDialog(MainForm.this, label, "ZX-Spectrum ROM 128 image is required", JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(MainForm.this, label, "ZX-Spectrum ROM 128 image is required",
+            JOptionPane.WARNING_MESSAGE);
         return;
       }
 
@@ -1212,7 +1382,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       };
 
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
-      final File selected = chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, formatAll, formatZ80, formatSpec256, formatSNA, formatZXP);
+      final File selected =
+          chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, formatAll,
+              formatZ80, formatSpec256, formatSNA, formatZXP);
 
       if (selected != null) {
         this.board.forceResetAllCpu();
@@ -1234,11 +1406,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
           LOGGER.log(Level.INFO, "Loading snapshot " + selectedFilter.getName());
-          selectedFilter.loadFromArray(selected, this.board, this.board.getVideoController(), FileUtils.readFileToByteArray(selected));
+          selectedFilter.loadFromArray(selected, this.board, this.board.getVideoController(),
+              FileUtils.readFileToByteArray(selected));
           this.menuOptionsZX128Mode.setState(this.board.getBoardMode() != BoardMode.ZXPOLY);
         } catch (Exception ex) {
           LOGGER.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
-          JOptionPane.showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
+          JOptionPane.showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']',
+              "Error", JOptionPane.ERROR_MESSAGE);
         }
       }
     } finally {
@@ -1252,7 +1426,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.stepSemaphor.lock();
     try {
       this.board.resetAndRestoreRom(BASE_ROM);
-      this.board.setBoardMode(this.menuOptionsZX128Mode.isSelected() ? BoardMode.ZX128 : BoardMode.ZXPOLY, true);
+      this.board
+          .setBoardMode(this.menuOptionsZX128Mode.isSelected() ? BoardMode.ZX128 : BoardMode.ZXPOLY,
+              true);
     } finally {
       this.stepSemaphor.unlock();
     }
@@ -1260,7 +1436,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   private void menuOptionsTurboActionPerformed(ActionEvent evt) {
     final boolean turboActivated = this.menuOptionsTurbo.isSelected();
-    this.board.getBeeper().setEnable(false);
+    this.board.getBeeper().setSourceSoundPort(null);
     this.setTurboMode(turboActivated);
   }
 
@@ -1299,7 +1475,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
-      final File selectedTapFile = chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
+      final File selectedTapFile =
+          chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
       if (selectedTapFile != null) {
         this.lastTapFolder = selectedTapFile.getParentFile();
         try (InputStream in = new BufferedInputStream(new FileInputStream(selectedTapFile))) {
@@ -1313,7 +1490,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           this.keyboardAndTapeModule.setTap(tapfile);
         } catch (Exception ex) {
           LOGGER.log(Level.SEVERE, "Can't read " + selectedTapFile, ex);
-          JOptionPane.showMessageDialog(this, "Can't load TAP file", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+          JOptionPane.showMessageDialog(this, "Can't load TAP file", ex.getMessage(),
+              JOptionPane.ERROR_MESSAGE);
         } finally {
           updateTapeMenu();
         }
@@ -1338,11 +1516,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           fileToSave = new File(fileToSave.getParentFile(), name + ".wav");
         }
         FileUtils.writeByteArrayToFile(fileToSave, wav);
-        LOGGER.log(Level.INFO, "Exported current TAP file as WAV file " + fileToSave + " size " + wav.length + " bytes");
+        LOGGER.log(Level.INFO,
+            "Exported current TAP file as WAV file " + fileToSave + " size " + wav.length +
+                " bytes");
       }
     } catch (Exception ex) {
       LOGGER.log(Level.WARNING, "Can't export as WAV", ex);
-      JOptionPane.showMessageDialog(this, "Can't export as WAV", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(this, "Can't export as WAV", ex.getMessage(),
+          JOptionPane.ERROR_MESSAGE);
     } finally {
       this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
@@ -1391,7 +1572,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       final RenderedImage img = this.board.getVideoController().makeCopyOfCurrentPicture();
       final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       ImageIO.write(img, "png", buffer);
-      File pngFile = chooseFileForSave("Save screenshot", lastScreenshotFolder, null, true, new PNGFileFilter());
+      File pngFile = chooseFileForSave("Save screenshot", lastScreenshotFolder, null, true,
+          new PNGFileFilter());
       if (pngFile != null) {
         final String fileName = pngFile.getName();
         if (!fileName.contains(".")) {
@@ -1401,7 +1583,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         FileUtils.writeByteArrayToFile(pngFile, buffer.toByteArray());
       }
     } catch (IOException ex) {
-      JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error", JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error",
+          JOptionPane.ERROR_MESSAGE);
       LOGGER.log(Level.SEVERE, "Can't make screenshot", ex);
     } finally {
       this.turnZxKeyboardOn();
@@ -1475,9 +1658,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
-      final RenderedImage[] images = this.board.getVideoController().renderAllModuleVideoMemoryInZx48Mode();
+      final RenderedImage[] images =
+          this.board.getVideoController().renderAllModuleVideoMemoryInZx48Mode();
 
-      final BufferedImage result = new BufferedImage(images[0].getWidth() * images.length, images[0].getHeight(), BufferedImage.TYPE_INT_RGB);
+      final BufferedImage result =
+          new BufferedImage(images[0].getWidth() * images.length, images[0].getHeight(),
+              BufferedImage.TYPE_INT_RGB);
       final Graphics g = result.getGraphics();
       for (int i = 0; i < images.length; i++) {
         g.drawImage((Image) images[i], i * images[0].getWidth(), 0, null);
@@ -1486,7 +1672,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
       final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       ImageIO.write(result, "png", buffer);
-      File pngFile = chooseFileForSave("Save screenshot", lastScreenshotFolder, null, true, new PNGFileFilter());
+      File pngFile = chooseFileForSave("Save screenshot", lastScreenshotFolder, null, true,
+          new PNGFileFilter());
       if (pngFile != null) {
         final String fileName = pngFile.getName();
         if (!fileName.contains(".")) {
@@ -1496,7 +1683,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         FileUtils.writeByteArrayToFile(pngFile, buffer.toByteArray());
       }
     } catch (IOException ex) {
-      JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error", JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error",
+          JOptionPane.ERROR_MESSAGE);
       LOGGER.log(Level.SEVERE, "Can't make screenshot", ex);
     } finally {
       this.turnZxKeyboardOn();
@@ -1522,16 +1710,19 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       AnimationEncoder encoder = this.currentAnimationEncoder.get();
       if (encoder == null) {
         final AnimatedGifTunePanel panel = new AnimatedGifTunePanel(this.lastAnimGifOptions);
-        final int result = JOptionPane.showConfirmDialog(this, panel, "Options for Animated GIF", JOptionPane.OK_CANCEL_OPTION);
+        final int result = JOptionPane.showConfirmDialog(this, panel, "Options for Animated GIF",
+            JOptionPane.OK_CANCEL_OPTION);
         if (result != JOptionPane.OK_OPTION) {
           return;
         }
         this.lastAnimGifOptions = panel.getValue();
         try {
           if (this.board.getBoardMode() == BoardMode.SPEC256) {
-            encoder = new Spec256AGifEncoder(new File(this.lastAnimGifOptions.filePath), this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
+            encoder = new Spec256AGifEncoder(new File(this.lastAnimGifOptions.filePath),
+                this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
           } else {
-            encoder = new ZxPolyAGifEncoder(new File(this.lastAnimGifOptions.filePath), this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
+            encoder = new ZxPolyAGifEncoder(new File(this.lastAnimGifOptions.filePath),
+                this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
           }
         } catch (IOException ex) {
           LOGGER.log(Level.SEVERE, "Can't create GIF encoder", ex);
@@ -1592,17 +1783,21 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     try {
       if (this.menuTriggerDiffMem.isSelected()) {
         final AddressPanel panel = new AddressPanel(this.board.getMemTriggerAddress());
-        if (JOptionPane.showConfirmDialog(MainForm.this, panel, "Triggering address", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
+        if (JOptionPane.showConfirmDialog(MainForm.this, panel, "Triggering address",
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
           try {
             final int addr = panel.extractAddressFromText();
             if (addr < 0 || addr > 0xFFFF) {
-              JOptionPane.showMessageDialog(MainForm.this, "Error address must be in #0000...#FFFF", "Error address", JOptionPane.ERROR_MESSAGE);
+              JOptionPane.showMessageDialog(MainForm.this, "Error address must be in #0000...#FFFF",
+                  "Error address", JOptionPane.ERROR_MESSAGE);
             } else {
               this.board.setMemTriggerAddress(addr);
               this.board.setTrigger(Motherboard.TRIGGER_DIFF_MEM_ADDR);
             }
           } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(MainForm.this, "Error address format, use # for hexadecimal address (example #AA00)", "Error address", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(MainForm.this,
+                "Error address format, use # for hexadecimal address (example #AA00)",
+                "Error address", JOptionPane.ERROR_MESSAGE);
           }
         }
       } else {
@@ -1632,28 +1827,36 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     stepSemaphor.lock();
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
-      File selected = chooseFileForSave("Save snapshot", this.lastSnapshotFolder, theFilter, false, new FormatZXP(), new FormatZ80(), new FormatSNA());
+      File selected = chooseFileForSave("Save snapshot", this.lastSnapshotFolder, theFilter, false,
+          new FormatZXP(), new FormatZ80(), new FormatSNA());
 
       if (selected != null) {
         this.lastSnapshotFolder = selected.getParentFile();
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
-          if (!selectedFilter.getExtension().equals(FilenameUtils.getExtension(selected.getName()).toLowerCase(Locale.ENGLISH))) {
-            selected = new File(selected.getParentFile(), selected.getName() + '.' + selectedFilter.getExtension());
+          if (!selectedFilter.getExtension()
+              .equals(FilenameUtils.getExtension(selected.getName()).toLowerCase(Locale.ENGLISH))) {
+            selected = new File(selected.getParentFile(),
+                selected.getName() + '.' + selectedFilter.getExtension());
           }
 
-          if (selected.isFile() && JOptionPane.showConfirmDialog(this, "Do you want override file '" + selected.getName() + "\'?", "File exists", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+          if (selected.isFile() && JOptionPane
+              .showConfirmDialog(this, "Do you want override file '" + selected.getName() + "\'?",
+                  "File exists", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
             return;
           }
 
-          LOGGER.info("Saving snapshot " + selectedFilter.getName() + " as file " + selected.getName());
-          final byte[] preparedSnapshotData = selectedFilter.saveToArray(this.board, this.board.getVideoController());
+          LOGGER.info(
+              "Saving snapshot " + selectedFilter.getName() + " as file " + selected.getName());
+          final byte[] preparedSnapshotData =
+              selectedFilter.saveToArray(this.board, this.board.getVideoController());
           LOGGER.info("Prepared snapshot data, size " + preparedSnapshotData.length + " bytes");
           FileUtils.writeByteArrayToFile(selected, preparedSnapshotData);
         } catch (Exception ex) {
           ex.printStackTrace();
           LOGGER.log(Level.WARNING, "Can't save snapshot file [" + ex.getMessage() + ']', ex);
-          JOptionPane.showMessageDialog(this, "Can't save snapshot file [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
+          JOptionPane.showMessageDialog(this, "Can't save snapshot file [" + ex.getMessage() + ']',
+              "Error", JOptionPane.ERROR_MESSAGE);
         }
       }
     } finally {
@@ -1675,7 +1878,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     for (int i = 0; i < 4; i++) {
       final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
       if (disk != null && disk.isChanged()) {
-        final int result = JOptionPane.showConfirmDialog(this, "Do you want flush disk data '" + disk.getSrcFile().getName() + "' ?", "Disk changed", JOptionPane.YES_NO_CANCEL_OPTION);
+        final int result = JOptionPane.showConfirmDialog(this,
+            "Do you want flush disk data '" + disk.getSrcFile().getName() + "' ?", "Disk changed",
+            JOptionPane.YES_NO_CANCEL_OPTION);
         if (result == JOptionPane.CANCEL_OPTION) {
           break;
         }
@@ -1687,7 +1892,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             fileChooser.setAcceptAllFileFilterUsed(false);
             fileChooser.setDialogTitle("Save disk as TRD file");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.setSelectedFile(new File(disk.getSrcFile().getParentFile(), FilenameUtils.getBaseName(disk.getSrcFile().getName()) + ".trd"));
+            fileChooser.setSelectedFile(new File(disk.getSrcFile().getParentFile(),
+                FilenameUtils.getBaseName(disk.getSrcFile().getName()) + ".trd"));
             if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
               destFile = fileChooser.getSelectedFile();
             } else {
@@ -1700,10 +1906,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             try {
               FileUtils.writeByteArrayToFile(destFile, disk.getDiskData());
               disk.replaceSrcFile(destFile, TrDosDisk.SourceDataType.TRD, true);
-              LOGGER.info("Changes for disk " + ('A' + i) + " is saved as file: " + destFile.getAbsolutePath());
+              LOGGER.info("Changes for disk " + ('A' + i) + " is saved as file: " +
+                  destFile.getAbsolutePath());
             } catch (IOException ex) {
               LOGGER.warning("Can't write disk for error: " + ex.getMessage());
-              JOptionPane.showMessageDialog(this, "Can't save disk for IO error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+              JOptionPane
+                  .showMessageDialog(this, "Can't save disk for IO error: " + ex.getMessage(),
+                      "Error", JOptionPane.ERROR_MESSAGE);
             }
           }
         }
@@ -1721,7 +1930,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     boolean close = false;
 
     if (hasChangedDisk) {
-      if (JOptionPane.showConfirmDialog(this, "Emulator has unsaved disks, do you realy want to close it?", "Detected unsaved data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+      if (JOptionPane
+          .showConfirmDialog(this, "Emulator has unsaved disks, do you realy want to close it?",
+              "Detected unsaved data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
         close = true;
       }
     } else {
@@ -1736,7 +1947,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuLoadDriveMenuSelected(javax.swing.event.MenuEvent evt) {
-    final JMenuItem[] disks = new JMenuItem[] {this.menuFileSelectDiskA, this.menuFileSelectDiskB, this.menuFileSelectDiskC, this.menuFileSelectDiskD};
+    final JMenuItem[] disks = new JMenuItem[] {this.menuFileSelectDiskA, this.menuFileSelectDiskB,
+        this.menuFileSelectDiskC, this.menuFileSelectDiskD};
     for (int i = 0; i < 4; i++) {
       final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
       disks[i].setIcon(disk == null ? null : ICO_MDISK);
@@ -1744,7 +1956,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuOptionsEnableTrapMouseActionPerformed(ActionEvent evt) {
-    this.board.getVideoController().setEnableTrapMouse(this.menuOptionsEnableTrapMouse.isSelected());
+    this.board.getVideoController()
+        .setEnableTrapMouse(this.menuOptionsEnableTrapMouse.isSelected());
   }
 
   private void activateTracerForCPUModule(final int index) {
@@ -1785,7 +1998,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.activeTracerWindowCounter.decrementAndGet();
   }
 
-  private File chooseFileForOpen(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final FileFilter... filter) {
+  private File chooseFileForOpen(final String title, final File initial,
+                                 final AtomicReference<FileFilter> selectedFilter,
+                                 final FileFilter... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     for (final FileFilter f : filter) {
       chooser.addChoosableFileFilter(f);
@@ -1808,7 +2023,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     return result;
   }
 
-  private File chooseFileForSave(final String title, final File initial, final AtomicReference<FileFilter> selectedFilter, final boolean allowAcceptAll, final FileFilter... filters) {
+  private File chooseFileForSave(final String title, final File initial,
+                                 final AtomicReference<FileFilter> selectedFilter,
+                                 final boolean allowAcceptAll, final FileFilter... filters) {
     final JFileChooser chooser = new JFileChooser(initial);
     for (final FileFilter f : filters) {
       chooser.addChoosableFileFilter(f);

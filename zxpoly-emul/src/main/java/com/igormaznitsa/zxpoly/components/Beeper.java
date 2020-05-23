@@ -43,8 +43,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
@@ -103,19 +101,24 @@ public class Beeper {
     this.activeInternalBeeper.get().reset();
   }
 
-  public void setEnable(final boolean flag) {
-    if (flag && this.activeInternalBeeper.get() == NULL_BEEPER) {
+  public void setSourceSoundPort(final SourceSoundPort soundPort) {
+    if (soundPort == null) {
+      this.activeInternalBeeper.getAndSet(NULL_BEEPER).dispose();
+    } else {
       try {
-        final IBeeper newInternalBeeper = new InternalBeeper();
+        final IBeeper newInternalBeeper = new InternalBeeper(soundPort);
         if (this.activeInternalBeeper.compareAndSet(NULL_BEEPER, newInternalBeeper)) {
           newInternalBeeper.start();
         }
       } catch (LineUnavailableException | IllegalArgumentException ex) {
         LOGGER.severe("Can't create beeper: " + ex.getMessage());
+        this.activeInternalBeeper.getAndSet(NULL_BEEPER).dispose();
       }
-    } else {
-      this.activeInternalBeeper.getAndSet(NULL_BEEPER).dispose();
     }
+  }
+
+  public boolean isNullBeeper() {
+    return this.activeInternalBeeper.get() == NULL_BEEPER;
   }
 
   public void resume() {
@@ -138,7 +141,12 @@ public class Beeper {
     this.activeInternalBeeper.get().dispose();
   }
 
+  public AudioFormat getAudioFormat() {
+    return InternalBeeper.AUDIO_FORMAT;
+  }
+
   private interface IBeeper {
+
     void start();
 
     float getMasterGain();
@@ -157,6 +165,7 @@ public class Beeper {
   }
 
   private static final class InternalBeeper implements IBeeper, Runnable {
+
     private static final int NUMBER_OF_LEVELS = 8;
     private static final int SND_FREQ = 44100;
     private static final int SAMPLES_IN_INT = SND_FREQ / 50;
@@ -184,7 +193,7 @@ public class Beeper {
 
     @Override
     public void start() {
-      if (this.working) {
+      if (this.thread != null && this.working) {
         this.thread.start();
       }
     }
@@ -231,11 +240,13 @@ public class Beeper {
     public void setMasterGain(final float valueInDb) {
       final FloatControl gainControl = this.gainControl.get();
       if (gainControl != null && this.working) {
-        gainControl.setValue(Math.max(gainControl.getMinimum(), Math.min(gainControl.getMaximum(), valueInDb)));
+        gainControl.setValue(
+            Math.max(gainControl.getMinimum(), Math.min(gainControl.getMaximum(), valueInDb)));
       }
     }
 
-    private InternalBeeper() throws LineUnavailableException {
+    private InternalBeeper(final SourceSoundPort sourceSoundPort)
+        throws LineUnavailableException {
       //----- init sound level table
       LEVELS[0b000] = Byte.MIN_VALUE;
       LEVELS[0b001] = Byte.MIN_VALUE + 17; // 6.5%
@@ -252,17 +263,13 @@ public class Beeper {
         fill(b, this.lastValue);
       }
 
-      this.sourceDataLine = findAudioLine();
+      this.sourceDataLine = sourceSoundPort.asSourceDataLine();
       final Line.Info lineInfo = this.sourceDataLine.getLineInfo();
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
       this.thread = new Thread(this, "beeper-thread-" + toHexString(System.nanoTime()));
       this.thread.setPriority(NORM_PRIORITY + (MAX_PRIORITY - NORM_PRIORITY) / 3);
       this.thread.setDaemon(true);
-    }
-
-    private SourceDataLine findAudioLine() throws LineUnavailableException {
-      return (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, AUDIO_FORMAT));
     }
 
     private void blink(final byte fillByte) {
@@ -293,7 +300,8 @@ public class Beeper {
         final byte value = LEVELS[level];
 
         if (machineCycleInInt > CYCLES_BETWEEN_INT) {
-          fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, SND_BUFFER_LENGTH, this.lastValue);
+          fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, SND_BUFFER_LENGTH,
+              this.lastValue);
           blink(this.lastValue);
           machineCycleInInt -= CYCLES_BETWEEN_INT;
         }
@@ -301,11 +309,13 @@ public class Beeper {
         int position = ((int) (machineCycleInInt * SAMPLES_IN_INT / CYCLES_BETWEEN_INT)) << 2;
 
         if (position < this.lastPosition) {
-          fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, SND_BUFFER_LENGTH, this.lastValue);
+          fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, SND_BUFFER_LENGTH,
+              this.lastValue);
           blink(this.lastValue);
         }
 
-        fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, position, this.lastValue);
+        fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, position,
+            this.lastValue);
         if (position == SND_BUFFER_LENGTH) {
           blink(value);
           position = 0;
@@ -375,15 +385,18 @@ public class Beeper {
       try {
         this.sourceDataLine.open(AUDIO_FORMAT, SND_BUFFER_LENGTH << 3);
         if (this.sourceDataLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
-          final FloatControl gainControl = (FloatControl) this.sourceDataLine.getControl(FloatControl.Type.MASTER_GAIN);
-          LOGGER.info(format("Got master gain control %f..%f", gainControl.getMinimum(), gainControl.getMaximum()));
+          final FloatControl gainControl =
+              (FloatControl) this.sourceDataLine.getControl(FloatControl.Type.MASTER_GAIN);
+          LOGGER.info(format("Got master gain control %f..%f", gainControl.getMinimum(),
+              gainControl.getMaximum()));
           this.gainControl.set(gainControl);
         } else {
           LOGGER.warning("Master gain control is not supported");
         }
         this.initMasterGain();
 
-        LOGGER.info(format("Sound line opened, buffer size is %d byte(s)", this.sourceDataLine.getBufferSize()));
+        LOGGER.info(format("Sound line opened, buffer size is %d byte(s)",
+            this.sourceDataLine.getBufferSize()));
         writeWholeArray(new byte[this.sourceDataLine.getBufferSize()]);
         this.sourceDataLine.start();
         writeWholeArray(localBuffer);
@@ -392,7 +405,8 @@ public class Beeper {
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
           try {
-            final byte[] buffer = exchanger.exchange(null, MainForm.TIMER_INT_DELAY_MILLISECONDS + 1, TimeUnit.MILLISECONDS);
+            final byte[] buffer = exchanger
+                .exchange(null, MainForm.TIMER_INT_DELAY_MILLISECONDS + 1, TimeUnit.MILLISECONDS);
             if (buffer == null) {
               fill(localBuffer, LEVELS[0]);
             } else {
@@ -408,7 +422,8 @@ public class Beeper {
               this.sourceDataLine.stop();
               LOGGER.info("Stopped for data timeout");
               do {
-                while (this.paused.get() && this.working && !Thread.currentThread().isInterrupted()) {
+                while (this.paused.get() && this.working &&
+                    !Thread.currentThread().isInterrupted()) {
                   Thread.sleep(100);
                 }
                 // prevent short pauses
@@ -450,7 +465,7 @@ public class Beeper {
 
     @Override
     public void dispose() {
-      if (this.working) {
+      if (this.thread != null && this.working) {
         this.working = false;
         LOGGER.info("Disposing");
         this.thread.interrupt();

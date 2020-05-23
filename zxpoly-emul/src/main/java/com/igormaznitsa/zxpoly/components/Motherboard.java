@@ -29,8 +29,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.SourceDataLine;
 
 @SuppressWarnings( {"unused", "FieldCanBeLocal", "NonAtomicOperationOnVolatileField"})
 public final class Motherboard implements ZxPolyConstants {
@@ -67,7 +70,7 @@ public final class Motherboard implements ZxPolyConstants {
   private int statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
   private volatile int gfxSyncRegsRecord = 0;
   private final Random rnd = new Random();
-  private final Beeper beeper = new Beeper();
+  private final Beeper beeper;
 
   public Motherboard(final RomData rom) {
     if (rom == null) {
@@ -80,6 +83,7 @@ public final class Motherboard implements ZxPolyConstants {
       iodevices.add(this.modules[i]);
     }
 
+    this.beeper = new Beeper();
     this.betaDisk = new BetaDiscInterface(this);
 
     iodevices.add(this.betaDisk);
