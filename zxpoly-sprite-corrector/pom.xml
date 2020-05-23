@@ -114,11 +114,11 @@
                     <maxHeapSize>1024</maxHeapSize>
                   </jre>
                   <versionInfo>
-                    <fileVersion>2.0.5.0</fileVersion>
+                    <fileVersion>2.0.6.0</fileVersion>
                     <txtFileVersion>${project.version}</txtFileVersion>
                     <fileDescription>ZX-Poly Emulator</fileDescription>
                     <copyright>2015-2020 Igor Maznitsa</copyright>
-                    <productVersion>2.0.5.0</productVersion>
+                    <productVersion>2.0.6.0</productVersion>
                     <txtProductVersion>${project.version}</txtProductVersion>
                     <productName>${project.name}</productName>
                     <companyName>igormaznitsa.com</companyName>
