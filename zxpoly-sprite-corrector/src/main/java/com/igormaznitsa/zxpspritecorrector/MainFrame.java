@@ -926,13 +926,11 @@ public final class MainFrame extends javax.swing.JFrame {
     final int columnIndex = this.sliderColumns.getValue();
     final int columns;
     switch (this.mainEditor.getColumnMode()) {
-      case ALL:
-        columns = columnIndex;
-        break;
       case EVEN:
       case ODD:
         columns = columnIndex * 2;
         break;
+      case ALL:
       default:
         columns = columnIndex;
         break;

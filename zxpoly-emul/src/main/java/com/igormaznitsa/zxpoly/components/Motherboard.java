@@ -29,11 +29,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.SourceDataLine;
 
 @SuppressWarnings( {"unused", "FieldCanBeLocal", "NonAtomicOperationOnVolatileField"})
 public final class Motherboard implements ZxPolyConstants {
