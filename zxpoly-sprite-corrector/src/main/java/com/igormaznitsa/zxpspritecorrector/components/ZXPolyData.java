@@ -177,12 +177,20 @@ public class ZXPolyData {
     return this.mask[address] & 0xFF;
   }
 
+  public byte [] getMask() {
+    return this.mask;
+  }
+
   public int getPackedZxPolyData3012(final int address) {
     return ((this.zxpoly[ZXPOLY_3][address] & 0xFF) << 24) | ((this.zxpoly[ZXPOLY_0][address] & 0xFF) << 16) | ((this.zxpoly[ZXPOLY_1][address] & 0xFF) << 8) | (this.zxpoly[ZXPOLY_2][address] & 0xFF);
   }
 
   public int getBaseData(final int address) {
     return this.basedata[address] & 0xFF;
+  }
+
+  public byte[] getBaseData() {
+    return this.basedata;
   }
 
   public byte[] getDataForCPU(final int cpuIndex) {

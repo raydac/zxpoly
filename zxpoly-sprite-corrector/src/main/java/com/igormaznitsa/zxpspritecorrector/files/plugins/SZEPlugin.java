@@ -47,7 +47,7 @@ public class SZEPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public boolean allowsExport() {
+  public boolean isExportable() {
     return false;
   }
 

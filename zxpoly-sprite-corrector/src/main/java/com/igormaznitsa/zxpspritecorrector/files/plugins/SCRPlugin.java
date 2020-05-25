@@ -40,7 +40,7 @@ public class SCRPlugin extends AbstractFilePlugin {
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return "A ZX-Spectrum Screen file";
+    return "ZX-Spectrum Screen file";
   }
 
   @Override
@@ -55,7 +55,7 @@ public class SCRPlugin extends AbstractFilePlugin {
 
   @Override
   public String getImportingFileInfo(File file) {
-    return "  A ZX-Spectrum scrren  \n  256x192  ";
+    return "  ZX-Spectrum screen  \n  256x192  ";
   }
 
   @Override

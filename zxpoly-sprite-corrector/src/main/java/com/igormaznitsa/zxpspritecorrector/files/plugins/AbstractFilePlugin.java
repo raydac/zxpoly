@@ -65,7 +65,11 @@ public abstract class AbstractFilePlugin extends FileFilter {
     return prepared + index;
   }
 
-  public boolean allowsExport() {
+  public boolean isImportable() {
+    return true;
+  }
+  
+  public boolean isExportable() {
     return true;
   }
 

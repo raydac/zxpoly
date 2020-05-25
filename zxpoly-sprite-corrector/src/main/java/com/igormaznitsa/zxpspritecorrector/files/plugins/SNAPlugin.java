@@ -35,7 +35,7 @@ import java.util.stream.IntStream;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
 
-public class SNAPlugin extends AbstractFilePlugin {
+public final class SNAPlugin extends AbstractFilePlugin {
 
   private final JBBPParser SNA_PARSER = JBBPParser.prepare(
       "ubyte regI;"
@@ -67,13 +67,13 @@ public class SNAPlugin extends AbstractFilePlugin {
   );
 
   @Override
-  public boolean allowsExport() {
+  public boolean isExportable() {
     return false;
   }
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return forExport ? "ZXPZ80 snapshot" : "SNA ZX48 snapshot";
+    return "SNA ZX snapshot";
   }
 
   @Override
@@ -91,19 +91,19 @@ public class SNAPlugin extends AbstractFilePlugin {
     return new javax.swing.filechooser.FileFilter() {
       @Override
       public boolean accept(final File f) {
-        return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zxp"));
+        return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".sna"));
       }
 
       @Override
       public String getDescription() {
-        return "ZXP Snapshot (*.ZXP)";
+        return "SNA ZX snapshot file (*.SNA)";
       }
     };
   }
 
   @Override
   public String getPluginDescription(final boolean forExport) {
-    return forExport ? "SNA ZX48 file" : "SNA ZX48 file";
+    return "SNA ZX snapshot file" ;
   }
 
   @Override
@@ -118,7 +118,7 @@ public class SNAPlugin extends AbstractFilePlugin {
 
   @Override
   public String getExtension(final boolean forExport) {
-    return forExport ? "zxp" : "sna";
+    return "sna";
   }
 
   @Override

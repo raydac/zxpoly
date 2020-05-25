@@ -36,6 +36,7 @@ import com.igormaznitsa.zxpspritecorrector.files.plugins.SCLPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SCRPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SNAPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SZEPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.Spec256ZipPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.TAPPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.TRDPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin;
@@ -214,6 +215,7 @@ public final class MainFrame extends javax.swing.JFrame {
     this.container.addComponent(SCRPlugin.class);
     this.container.addComponent(Z80Plugin.class);
     this.container.addComponent(SNAPlugin.class);
+    this.container.addComponent(Spec256ZipPlugin.class);
     this.container.addComponent(LegacySZEPlugin.class);
 
     this.container.addComponent(ToolPencil.class);
@@ -241,7 +243,7 @@ public final class MainFrame extends javax.swing.JFrame {
     );
 
     this.container.getComponents(AbstractFilePlugin.class).stream()
-        .filter(AbstractFilePlugin::allowsExport)
+        .filter(AbstractFilePlugin::isExportable)
         .forEachOrdered(p -> {
           final JMenuItem menuItem = new JMenuItem(p.getPluginDescription(true));
           this.menuFileExportAs.add(menuItem);
@@ -970,7 +972,9 @@ public final class MainFrame extends javax.swing.JFrame {
       chooser.setAcceptAllFileFilterUsed(false);
 
       container.getComponents(AbstractFilePlugin.class)
-          .forEach((plugin) -> chooser.addChoosableFileFilter(plugin.getImportFileFilter()));
+              .stream()
+              .filter(AbstractFilePlugin::isImportable)
+              .forEach((plugin) -> chooser.addChoosableFileFilter(plugin.getImportFileFilter()));
 
       final InsideFileView insideFileView = new InsideFileView(chooser);
       chooser.setAccessory(insideFileView);

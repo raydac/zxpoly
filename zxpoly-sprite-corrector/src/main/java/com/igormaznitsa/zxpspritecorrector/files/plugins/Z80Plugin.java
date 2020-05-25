@@ -42,28 +42,29 @@ import java.util.List;
 import java.util.Locale;
 import org.apache.commons.io.FileUtils;
 
-public class Z80Plugin extends AbstractFilePlugin {
+public final class Z80Plugin extends AbstractFilePlugin {
 
-  private static final int PAGE_SIZE = 0x4000;
+  public static final int PAGE_SIZE = 0x4000;
 
-  private static final int VERSION_1 = 0;
-  private static final int VERSION_2 = 1;
-  private static final int VERSION_3A = 2;
-  private static final int VERSION_3B = 3;
-  private static final JBBPParser Z80_MAINPART = JBBPParser.prepare(
+  public static final int VERSION_1 = 0;
+  public static final int VERSION_2 = 1;
+  public static final int VERSION_3A = 2;
+  public static final int VERSION_3B = 3;
+  
+  public static final JBBPParser Z80_MAINPART = JBBPParser.prepare(
       "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
           + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
           + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
           + "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
   );
-  private static final JBBPParser Z80_VERSION1 = JBBPParser.prepare(
+  public static final JBBPParser Z80_VERSION1 = JBBPParser.prepare(
       "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
           + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
           + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
           + "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
           + "byte [_] data;"
   );
-  private static final JBBPParser Z80_VERSION2 = JBBPParser.prepare(
+  public static final JBBPParser Z80_VERSION2 = JBBPParser.prepare(
       "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
           + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
           + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
@@ -76,7 +77,7 @@ public class Z80Plugin extends AbstractFilePlugin {
           + "byte [18] extra;"// misc non zx or not supported stuff
           + "byte [_] data;"
   );
-  private static final JBBPParser Z80_VERSION3A = JBBPParser.prepare(
+  public static final JBBPParser Z80_VERSION3A = JBBPParser.prepare(
       "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
           + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
           + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
@@ -89,7 +90,7 @@ public class Z80Plugin extends AbstractFilePlugin {
           + "byte [49] extra;" // misc non zx or not supported stuff
           + "byte [_] data;"
   );
-  private static final JBBPParser Z80_VERSION3B = JBBPParser.prepare(
+  public static final JBBPParser Z80_VERSION3B = JBBPParser.prepare(
       "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
           + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
           + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
@@ -103,7 +104,7 @@ public class Z80Plugin extends AbstractFilePlugin {
           + "byte [_] data;"
   );
 
-  private static boolean is48k(final int version, final Z80Snapshot snapshot) {
+  public static boolean is48k(final int version, final Z80Snapshot snapshot) {
     switch (version) {
       case VERSION_1:
         return true;
@@ -119,7 +120,7 @@ public class Z80Plugin extends AbstractFilePlugin {
     }
   }
 
-  private static boolean is48k(final int version, final byte[] header) {
+  public static boolean is48k(final int version, final byte[] header) {
     switch (version) {
       case VERSION_1:
         return true;
@@ -135,7 +136,7 @@ public class Z80Plugin extends AbstractFilePlugin {
     }
   }
 
-  private static int getVersion(final byte[] data) {
+  public static int getVersion(final byte[] data) {
     final int version;
     if ((data[6] | data[7]) == 0) {
       switch (((data[31] & 0xFF) << 8 | (data[30] & 0xFF))) {
@@ -160,11 +161,11 @@ public class Z80Plugin extends AbstractFilePlugin {
     return version;
   }
 
-  private static int makePair(final byte a, final byte b) {
+  public static int makePair(final byte a, final byte b) {
     return ((a & 0xFF) << 8) | (b & 0xFF);
   }
 
-  private static byte[] convertZ80BankIndexesToPages(final byte[] bankIndexes, final boolean mode48, final int version) {
+  public static byte[] convertZ80BankIndexesToPages(final byte[] bankIndexes, final boolean mode48, final int version) {
     final byte[] result;
     if (version == VERSION_1) {
       result = new byte[] {5, 2, 0};
@@ -201,7 +202,7 @@ public class Z80Plugin extends AbstractFilePlugin {
     return result;
   }
 
-  private static Page makePage(final int cpu, final int page, final ZXPolyData data, final int offset) throws IOException {
+  public static Page makePage(final int cpu, final int page, final ZXPolyData data, final int offset) throws IOException {
     final byte[] bankData = new byte[PAGE_SIZE];
     System.arraycopy(data.getDataForCPU(cpu), offset, bankData, 0, PAGE_SIZE);
     return new Page(page, bankData);
@@ -366,9 +367,7 @@ public class Z80Plugin extends AbstractFilePlugin {
               break;
             }
             if (offset >= 0) {
-              for (int i = 0; i < PAGE_SIZE; i++) {
-                data[offset + i] = b.data[i];
-              }
+                System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
             }
           }
         } else {
@@ -376,9 +375,7 @@ public class Z80Plugin extends AbstractFilePlugin {
           for (final Bank b : current.banks) {
             if (b.page >= 3 && b.page <= 10) {
               final int offset = (b.page - 3) * PAGE_SIZE;
-              for (int i = 0; i < PAGE_SIZE; i++) {
-                data[offset + i] = b.data[i];
-              }
+                System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
             }
           }
         }
