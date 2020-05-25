@@ -37,7 +37,8 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
   private javax.swing.JScrollPane jScrollPane2;
   private javax.swing.JTable tableItems;
 
-  public SelectInsideDataDialog(final java.awt.Frame parent, final File file, final AbstractFilePlugin plugin) throws IOException {
+  public SelectInsideDataDialog(final java.awt.Frame parent, final File file,
+                                final AbstractFilePlugin plugin) throws IOException {
     super(parent, true);
     initComponents();
     this.setLocationRelativeTo(parent);
@@ -76,11 +77,13 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
 
     setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-    buttonCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/cross.png"))); // NOI18N
+    buttonCancel.setIcon(new javax.swing.ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/cross.png"))); // NOI18N
     buttonCancel.setText("Cancel");
     buttonCancel.addActionListener(this::buttonCancelActionPerformed);
 
-    buttonOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/tick.png"))); // NOI18N
+    buttonOk.setIcon(new javax.swing.ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/tick.png"))); // NOI18N
     buttonOk.setText("Ok");
     buttonOk.addActionListener(this::buttonOkActionPerformed);
 
@@ -107,7 +110,8 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
                         .addComponent(buttonOk)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(buttonCancel))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING,
+                        javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
     );
 
@@ -117,7 +121,8 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(13, 13, 13)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 240,
+                    Short.MAX_VALUE)
                 .addGap(9, 9, 9)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(buttonCancel)
@@ -128,12 +133,14 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
     pack();
   }// </editor-fold>//GEN-END:initComponents
 
-  private void buttonOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOkActionPerformed
+  private void buttonOkActionPerformed(
+      java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOkActionPerformed
     this.result = this.tableItems.getSelectedRow();
     setVisible(false);
   }//GEN-LAST:event_buttonOkActionPerformed
 
-  private void buttonCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCancelActionPerformed
+  private void buttonCancelActionPerformed(
+      java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCancelActionPerformed
     this.result = -1;
     setVisible(false);
   }//GEN-LAST:event_buttonCancelActionPerformed

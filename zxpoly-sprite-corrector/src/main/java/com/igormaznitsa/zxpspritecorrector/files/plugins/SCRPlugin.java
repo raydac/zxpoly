@@ -61,12 +61,17 @@ public class SCRPlugin extends AbstractFilePlugin {
   @Override
   public ReadResult readFrom(final File file, final int index) throws IOException {
     final byte[] wholeFile = FileUtils.readFileToByteArray(file);
-    return new ReadResult(new ZXPolyData(new Info(file.getName(), '$', 16384, wholeFile.length, 0), this, wholeFile), null);
+    return new ReadResult(
+        new ZXPolyData(new Info(file.getName(), '$', 16384, wholeFile.length, 0), this, wholeFile),
+        null);
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
-    final FileNameDialog dialog = new FileNameDialog(this.mainFrame, "Base file name is " + file.getName(), FileNameDialog.makeFileNames(file.getName()), null, null);
+  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData)
+      throws IOException {
+    final FileNameDialog dialog =
+        new FileNameDialog(this.mainFrame, "Base file name is " + file.getName(),
+            FileNameDialog.makeFileNames(file.getName()), null, null);
     dialog.setVisible(true);
     if (dialog.approved()) {
       final String[] fileNames = dialog.getFileName();
@@ -85,7 +90,8 @@ public class SCRPlugin extends AbstractFilePlugin {
 
   @Override
   public boolean accept(final File pathname) {
-    return pathname != null && (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".scr"));
+    return pathname != null &&
+        (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".scr"));
   }
 
   @Override

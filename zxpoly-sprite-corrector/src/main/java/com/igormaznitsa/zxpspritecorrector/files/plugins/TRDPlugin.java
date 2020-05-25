@@ -38,7 +38,8 @@ import java.util.Locale;
 
 public class TRDPlugin extends AbstractFilePlugin {
 
-  public static final JBBPParser CATALOG_PARSER = JBBPParser.prepare("byte [8] name; ubyte type; <ushort start; <ushort length; ubyte sectors; ubyte firstSector; ubyte track;");
+  public static final JBBPParser CATALOG_PARSER = JBBPParser.prepare(
+      "byte [8] name; ubyte type; <ushort start; <ushort length; ubyte sectors; ubyte firstSector; ubyte track;");
 
   public TRDPlugin() {
     super();
@@ -87,7 +88,8 @@ public class TRDPlugin extends AbstractFilePlugin {
 
   @Override
   public ReadResult readFrom(final File file, final int index) throws IOException {
-    final JBBPBitInputStream inStream = new JBBPBitInputStream(new FileInputStream(file), JBBPBitOrder.LSB0);
+    final JBBPBitInputStream inStream =
+        new JBBPBitInputStream(new FileInputStream(file), JBBPBitOrder.LSB0);
     try {
       final List<TRDosCatalogItem> list = new ArrayList<>();
       for (int i = 0; i < 128; i++) {
@@ -105,7 +107,9 @@ public class TRDPlugin extends AbstractFilePlugin {
       if (skept != toskip) {
         throw new IllegalStateException("Can't skip needed byte number [" + toskip + ']');
       }
-      return new ReadResult(new ZXPolyData(new Info(info.name, info.type, info.start, info.length, offsetToFile), this, inStream.readByteArray(info.sectors << 8)), null);
+      return new ReadResult(
+          new ZXPolyData(new Info(info.name, info.type, info.start, info.length, offsetToFile),
+              this, inStream.readByteArray(info.sectors << 8)), null);
 
     } finally {
       JBBPUtils.closeQuietly(inStream);
@@ -113,14 +117,19 @@ public class TRDPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData session) throws IOException {
+  public void writeTo(final File file, final ZXPolyData data, final SessionData session)
+      throws IOException {
 
     final String zxname = data.getInfo().getName();
-    final String[] zxFileName = new String[] {prepareNameForTRD(zxname, 0), prepareNameForTRD(zxname, 1), prepareNameForTRD(zxname, 2), prepareNameForTRD(zxname, 3)};
+    final String[] zxFileName =
+        new String[] {prepareNameForTRD(zxname, 0), prepareNameForTRD(zxname, 1),
+            prepareNameForTRD(zxname, 2), prepareNameForTRD(zxname, 3)};
 
     final char type = data.getInfo().getType();
 
-    final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "TRD file " + file.getName(), null, zxFileName, new char[] {type, type, type, type});
+    final FileNameDialog fileNameDialog =
+        new FileNameDialog(this.mainFrame, "TRD file " + file.getName(), null, zxFileName,
+            new char[] {type, type, type, type});
     fileNameDialog.setVisible(true);
     if (fileNameDialog.approved()) {
       final JBBPOut out = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
@@ -133,12 +142,15 @@ public class TRDPlugin extends AbstractFilePlugin {
       int csector = 16;
 
       for (int i = 0; i < 4; i++) {
-        out.Byte(fnames[i]).Byte(fchars[i]).Short(data.getInfo().getStartAddress(), data.getInfo().getLength()).Byte(sectorslen).Byte(csector & 0xF).Byte(csector >>> 4);
+        out.Byte(fnames[i]).Byte(fchars[i])
+            .Short(data.getInfo().getStartAddress(), data.getInfo().getLength()).Byte(sectorslen)
+            .Byte(csector & 0xF).Byte(csector >>> 4);
         csector += sectorslen;
       }
 
       out.Align(2048).ResetCounter();
-      out.Byte(0).Skip(224).Byte(csector & 0xF, csector >>> 4, 22, 4).Short(2560 - csector).Byte(16, 0, 0).Byte("         ").Byte(0, 0).Byte("ZXPOLY D").Byte(0, 0, 0);
+      out.Byte(0).Skip(224).Byte(csector & 0xF, csector >>> 4, 22, 4).Short(2560 - csector)
+          .Byte(16, 0, 0).Byte("         ").Byte(0, 0).Byte("ZXPOLY D").Byte(0, 0, 0);
       out.Skip(1792);
 
       out.ResetCounter();
@@ -154,7 +166,8 @@ public class TRDPlugin extends AbstractFilePlugin {
 
   @Override
   public boolean accept(final File pathname) {
-    return pathname != null && (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".trd"));
+    return pathname != null &&
+        (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".trd"));
   }
 
   @Override

@@ -32,7 +32,8 @@ public final class GfxUtils {
 
   public static Image loadImage(final String iconFile) {
     try {
-      return ImageIO.read(ClassLoader.getSystemResourceAsStream("com/igormaznitsa/zxpspritecorrector/icons/" + iconFile));
+      return ImageIO.read(ClassLoader
+          .getSystemResourceAsStream("com/igormaznitsa/zxpspritecorrector/icons/" + iconFile));
     } catch (Exception ex) {
       ex.printStackTrace();
     }
@@ -40,12 +41,14 @@ public final class GfxUtils {
   }
 
   public static boolean doesClipboardHasImage() {
-    final Transferable transferable = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+    final Transferable transferable =
+        Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
     return transferable != null && transferable.isDataFlavorSupported(DataFlavor.imageFlavor);
   }
 
   public static Image getImageFromClipboard() {
-    final Transferable transferable = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+    final Transferable transferable =
+        Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
     if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.imageFlavor)) {
       try {
         return (Image) transferable.getTransferData(DataFlavor.imageFlavor);

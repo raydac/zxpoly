@@ -49,7 +49,8 @@ public final class PenWidth extends JPanel {
 
   public PenWidth() {
     super();
-    this.changeListener = (ChangeEvent e) -> drawImageForValue(((BoundedRangeModel) e.getSource()).getValue());
+    this.changeListener =
+        (ChangeEvent e) -> drawImageForValue(((BoundedRangeModel) e.getSource()).getValue());
     setOpaque(false);
     setLayout(new BorderLayout(0, 0));
 

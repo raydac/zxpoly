@@ -72,7 +72,8 @@ public class SZEPlugin extends AbstractFilePlugin {
       FileInputStream in = null;
       try {
         in = new FileInputStream(file);
-        final ZXPolyData zxpoly = new ZXPolyData(in, this.context.getComponents(AbstractFilePlugin.class));
+        final ZXPolyData zxpoly =
+            new ZXPolyData(in, this.context.getComponents(AbstractFilePlugin.class));
 
         String result = "  Name : " + zxpoly.getInfo().getName() + '\n' +
             "  Type : " + zxpoly.getInfo().getType() + '\n' +
@@ -95,7 +96,8 @@ public class SZEPlugin extends AbstractFilePlugin {
   @Override
   public ReadResult readFrom(final File file, final int index) throws IOException {
     try (FileInputStream inStream = new FileInputStream(file)) {
-      final ZXPolyData zxpolyData = new ZXPolyData(inStream, this.context.getComponents(AbstractFilePlugin.class));
+      final ZXPolyData zxpolyData =
+          new ZXPolyData(inStream, this.context.getComponents(AbstractFilePlugin.class));
       final JBBPBitInputStream in = new JBBPBitInputStream(inStream);
       final int length = in.readInt(JBBPByteOrder.BIG_ENDIAN);
       return new ReadResult(zxpolyData, new SessionData(in));
@@ -103,18 +105,22 @@ public class SZEPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
+  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData)
+      throws IOException {
     final byte[] dataarray = data.getAsArray();
     final byte[] sessionarray = sessionData.makeArray();
 
-    final byte[] result = JBBPOut.BeginBin().Byte(dataarray).Int(sessionarray.length).Byte(sessionarray).End().toByteArray();
+    final byte[] result =
+        JBBPOut.BeginBin().Byte(dataarray).Int(sessionarray.length).Byte(sessionarray).End()
+            .toByteArray();
 
     saveDataToFile(file, result);
   }
 
   @Override
   public boolean accept(final File pathname) {
-    return pathname != null && (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".sze"));
+    return pathname != null &&
+        (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".sze"));
   }
 
   @Override

@@ -54,7 +54,9 @@ public class InsideFileView extends javax.swing.JPanel implements PropertyChange
       private final JTextArea renderer = new JTextArea();
 
       @Override
-      public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
+      public Component getListCellRendererComponent(final JList list, final Object value,
+                                                    final int index, final boolean isSelected,
+                                                    final boolean cellHasFocus) {
         renderer.setFont(list.getFont());
         renderer.setBackground(list.getBackground());
         renderer.setForeground(list.getForeground());

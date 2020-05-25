@@ -65,11 +65,13 @@ public final class NewDataDialog extends javax.swing.JDialog {
     setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     setTitle("New data block");
 
-    buttonCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/cross.png"))); // NOI18N
+    buttonCancel.setIcon(new javax.swing.ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/cross.png"))); // NOI18N
     buttonCancel.setText("Cancel");
     buttonCancel.addActionListener(this::buttonCancelActionPerformed);
 
-    buttonOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/tick.png"))); // NOI18N
+    buttonOk.setIcon(new javax.swing.ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/tick.png"))); // NOI18N
     buttonOk.setText("Ok");
     buttonOk.addActionListener(this::buttonOkActionPerformed);
 
@@ -91,7 +93,8 @@ public final class NewDataDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(labelName)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(spinnerSize, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(spinnerSize, javax.swing.GroupLayout.PREFERRED_SIZE, 169,
+                    javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(labelBytes)
                 .addContainerGap(40, Short.MAX_VALUE))
@@ -105,9 +108,11 @@ public final class NewDataDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(labelName)
-                    .addComponent(spinnerSize, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(spinnerSize, javax.swing.GroupLayout.PREFERRED_SIZE, 28,
+                        javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(labelBytes))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED,
+                    javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(buttonCancel)
                     .addComponent(buttonOk))
@@ -117,13 +122,17 @@ public final class NewDataDialog extends javax.swing.JDialog {
     pack();
   }// </editor-fold>//GEN-END:initComponents
 
-  private void buttonOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOkActionPerformed
+  private void buttonOkActionPerformed(
+      java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOkActionPerformed
     final int len = ((Integer) spinnerSize.getValue());
-    this.result = new AbstractFilePlugin.ReadResult(new ZXPolyData(new Info("Undefined", '$', 0x4000, len, 0), frame.getPico().getComponent(SCRPlugin.class), new byte[len]), null);
+    this.result = new AbstractFilePlugin.ReadResult(
+        new ZXPolyData(new Info("Undefined", '$', 0x4000, len, 0),
+            frame.getPico().getComponent(SCRPlugin.class), new byte[len]), null);
     dispose();
   }//GEN-LAST:event_buttonOkActionPerformed
 
-  private void buttonCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCancelActionPerformed
+  private void buttonCancelActionPerformed(
+      java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCancelActionPerformed
     this.result = null;
     dispose();
   }//GEN-LAST:event_buttonCancelActionPerformed

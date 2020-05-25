@@ -33,7 +33,8 @@ public class Info {
   private final int offset;
   private final byte[] extra;
 
-  public Info(final String name, final char type, final int startAddress, final int length, final int offset, final byte... extra) {
+  public Info(final String name, final char type, final int startAddress, final int length,
+              final int offset, final byte... extra) {
     this.name = name;
     this.type = type;
     this.startAddress = startAddress;
@@ -54,7 +55,8 @@ public class Info {
   }
 
   public JBBPOut save(final JBBPOut context) throws IOException {
-    context.Byte(name.length()).Byte(name).Short(this.type).Int(this.startAddress, this.length, this.offset).Int(this.extra.length).Byte(this.extra);
+    context.Byte(name.length()).Byte(name).Short(this.type)
+        .Int(this.startAddress, this.length, this.offset).Int(this.extra.length).Byte(this.extra);
     return context;
   }
 
@@ -93,7 +95,8 @@ public class Info {
     while (result.length() < 18) {
       result.append('.');
     }
-    result.append('<').append(type).append('>').append(' ').append(length).append(" bytes").append("  ");
+    result.append('<').append(type).append('>').append(' ').append(length).append(" bytes")
+        .append("  ");
     return result.toString();
   }
 }

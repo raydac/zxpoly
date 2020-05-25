@@ -37,7 +37,8 @@ import java.util.Locale;
 
 public class SCLPlugin extends AbstractFilePlugin {
 
-  public static final JBBPParser CATALOG_PARSER = JBBPParser.prepare("byte [8] name; ubyte type; <ushort start; <ushort length; ubyte sectors;");
+  public static final JBBPParser CATALOG_PARSER = JBBPParser
+      .prepare("byte [8] name; ubyte type; <ushort start; <ushort length; ubyte sectors;");
 
   public SCLPlugin() {
     super();
@@ -116,7 +117,9 @@ public class SCLPlugin extends AbstractFilePlugin {
           }
         }
         final long offset = in.getCounter();
-        return new ReadResult(new ZXPolyData(new Info(itemToRead.name, itemToRead.type, itemToRead.start, itemToRead.length, (int) offset), this, in.readByteArray(itemToRead.sectors * 256)), null);
+        return new ReadResult(new ZXPolyData(
+            new Info(itemToRead.name, itemToRead.type, itemToRead.start, itemToRead.length,
+                (int) offset), this, in.readByteArray(itemToRead.sectors * 256)), null);
 
       } else {
         throw new IllegalArgumentException("It's not a SCl file [" + file.getAbsolutePath() + ']');
@@ -127,14 +130,19 @@ public class SCLPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
+  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData)
+      throws IOException {
 
     final String zxname = data.getInfo().getName();
-    final String[] zxFileName = new String[] {prepareNameForTRD(zxname, 0), prepareNameForTRD(zxname, 1), prepareNameForTRD(zxname, 2), prepareNameForTRD(zxname, 3)};
+    final String[] zxFileName =
+        new String[] {prepareNameForTRD(zxname, 0), prepareNameForTRD(zxname, 1),
+            prepareNameForTRD(zxname, 2), prepareNameForTRD(zxname, 3)};
 
     final char type = data.getInfo().getType();
 
-    final FileNameDialog fileNameDialog = new FileNameDialog(this.mainFrame, "SCL file " + file.getName(), null, zxFileName, new char[] {type, type, type, type});
+    final FileNameDialog fileNameDialog =
+        new FileNameDialog(this.mainFrame, "SCL file " + file.getName(), null, zxFileName,
+            new char[] {type, type, type, type});
     fileNameDialog.setVisible(true);
     if (fileNameDialog.approved()) {
       final JBBPOut out = JBBPOut.BeginBin();
@@ -146,7 +154,8 @@ public class SCLPlugin extends AbstractFilePlugin {
       final int sectors = (data.length() >>> 8) + ((data.length() & 0xFF) == 0 ? 0 : 1);
 
       for (int i = 0; i < 4; i++) {
-        out.Byte(fnames[i]).Byte(fchars[i]).Short(data.getInfo().getStartAddress(), data.getInfo().getLength()).Byte(sectors);
+        out.Byte(fnames[i]).Byte(fchars[i])
+            .Short(data.getInfo().getStartAddress(), data.getInfo().getLength()).Byte(sectors);
       }
 
       out.ResetCounter();
@@ -160,7 +169,8 @@ public class SCLPlugin extends AbstractFilePlugin {
 
   @Override
   public boolean accept(final File pathname) {
-    return pathname != null && (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".scl"));
+    return pathname != null &&
+        (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".scl"));
   }
 
   @Override

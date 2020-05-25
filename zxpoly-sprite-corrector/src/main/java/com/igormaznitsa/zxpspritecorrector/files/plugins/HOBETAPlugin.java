@@ -52,6 +52,15 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     super();
   }
 
+  private static byte[] ensureHobetaName(final String name) {
+    final byte[] result = new byte[8];
+    Arrays.fill(result, (byte) ' ');
+    for (int i = 0; i < Math.min(8, name.length()); i++) {
+      result[i] = (byte) name.charAt(i);
+    }
+    return result;
+  }
+
   @Override
   public String getPluginUID() {
     return "HBTA";
@@ -60,15 +69,6 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   @Override
   public String getToolTip(final boolean forExport) {
     return "A Hobeta file format";
-  }
-
-  private static byte[] ensureHobetaName(final String name) {
-    final byte[] result = new byte[8];
-    Arrays.fill(result, (byte) ' ');
-    for (int i = 0; i < Math.min(8, name.length()); i++) {
-      result[i] = (byte) name.charAt(i);
-    }
-    return result;
   }
 
   @Override
@@ -83,11 +83,13 @@ public class HOBETAPlugin extends AbstractFilePlugin {
       try {
         final StringBuilder result = new StringBuilder();
 
-        final Hobeta hobeta = HOBETA_FILE_PARSER.parse(new FileInputStream(file)).mapTo(new Hobeta());
+        final Hobeta hobeta =
+            HOBETA_FILE_PARSER.parse(new FileInputStream(file)).mapTo(new Hobeta());
         result.append("     Name:").append(hobeta.name).append("  ").append('\n');
         result.append("     Type:").append((char) hobeta.type).append("  ").append('\n');
         result.append("    Start:").append(hobeta.start).append("  ").append('\n');
-        result.append("   Length:").append(hobeta.length).append(" bytes").append("  ").append('\n');
+        result.append("   Length:").append(hobeta.length).append(" bytes").append("  ")
+            .append('\n');
         result.append("  Sectors:").append(hobeta.sectors).append(" sectors").append("  ");
 
         return result.toString();
@@ -103,7 +105,9 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   public ReadResult readFrom(final File file, final int index) throws IOException {
     final byte[] wholeFile = FileUtils.readFileToByteArray(file);
     final Hobeta parsed = HOBETA_FILE_PARSER.parse(wholeFile).mapTo(new Hobeta());
-    return new ReadResult(new ZXPolyData(new Info(parsed.name, (char) (parsed.type & 0xFF), parsed.start, parsed.length, 0), this, parsed.data), null);
+    return new ReadResult(new ZXPolyData(
+        new Info(parsed.name, (char) (parsed.type & 0xFF), parsed.start, parsed.length, 0), this,
+        parsed.data), null);
   }
 
   @Override
@@ -112,7 +116,8 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData session) throws IOException {
+  public void writeTo(final File file, final ZXPolyData data, final SessionData session)
+      throws IOException {
     final File dir = file.getParentFile();
     final char zxType = data.getInfo().getType();
     String name = file.getName();
@@ -125,8 +130,10 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     final FileNameDialog nameDialog = new FileNameDialog(
         this.mainFrame,
         "Base file name is " + file.getName(),
-        new String[] {addNumberToFileName(name, 0), addNumberToFileName(name, 1), addNumberToFileName(name, 2), addNumberToFileName(name, 3)},
-        new String[] {prepareNameForTRD(zxName, 0), prepareNameForTRD(zxName, 1), prepareNameForTRD(zxName, 2), prepareNameForTRD(zxName, 3)},
+        new String[] {addNumberToFileName(name, 0), addNumberToFileName(name, 1),
+            addNumberToFileName(name, 2), addNumberToFileName(name, 3)},
+        new String[] {prepareNameForTRD(zxName, 0), prepareNameForTRD(zxName, 1),
+            prepareNameForTRD(zxName, 2), prepareNameForTRD(zxName, 3)},
         new char[] {zxType, zxType, zxType, zxType}
     );
     nameDialog.setVisible(true);
@@ -138,7 +145,8 @@ public class HOBETAPlugin extends AbstractFilePlugin {
 
       for (int i = 0; i < 4; i++) {
         final File savingfile = new File(dir, fileNames[i]);
-        if (!writeDataBlockAsHobeta(savingfile, zxNames[i], (byte) types[i].charValue(), data.getInfo().getStartAddress(), data.getDataForCPU(i))) {
+        if (!writeDataBlockAsHobeta(savingfile, zxNames[i], (byte) types[i].charValue(),
+            data.getInfo().getStartAddress(), data.getDataForCPU(i))) {
           break;
         }
       }
@@ -173,7 +181,8 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     return false;
   }
 
-  private boolean writeDataBlockAsHobeta(final File file, final String name, final byte type, final int start, final byte[] data) throws IOException {
+  private boolean writeDataBlockAsHobeta(final File file, final String name, final byte type,
+                                         final int start, final byte[] data) throws IOException {
     final byte[] header = JBBPOut.BeginBin()
         .ByteOrder(JBBPByteOrder.LITTLE_ENDIAN)
         .Byte(ensureHobetaName(name))
@@ -197,7 +206,8 @@ public class HOBETAPlugin extends AbstractFilePlugin {
 
   @Override
   public boolean accept(final File pathname) {
-    return pathname != null && (pathname.isDirectory() || pathname.getName().lastIndexOf(".$") == (pathname.getName().length() - 3));
+    return pathname != null && (pathname.isDirectory() ||
+        pathname.getName().lastIndexOf(".$") == (pathname.getName().length() - 3));
   }
 
   @Override

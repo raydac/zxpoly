@@ -50,25 +50,34 @@ public final class Z80Plugin extends AbstractFilePlugin {
   public static final int VERSION_2 = 1;
   public static final int VERSION_3A = 2;
   public static final int VERSION_3B = 3;
-  
+
   public static final JBBPParser Z80_MAINPART = JBBPParser.prepare(
       "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
-          + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
-          + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
-          + "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
+          +
+          "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
+          +
+          "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
+          +
+          "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
   );
   public static final JBBPParser Z80_VERSION1 = JBBPParser.prepare(
       "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
-          + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
-          + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
-          + "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
+          +
+          "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
+          +
+          "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
+          +
+          "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
           + "byte [_] data;"
   );
   public static final JBBPParser Z80_VERSION2 = JBBPParser.prepare(
       "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
-          + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
-          + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
-          + "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
+          +
+          "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
+          +
+          "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
+          +
+          "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
           + "<ushort extrahdrlen;" // header length
           + "<ushort reg_pc2;"
           + "ubyte mode;"
@@ -79,9 +88,12 @@ public final class Z80Plugin extends AbstractFilePlugin {
   );
   public static final JBBPParser Z80_VERSION3A = JBBPParser.prepare(
       "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
-          + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
-          + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
-          + "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
+          +
+          "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
+          +
+          "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
+          +
+          "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
           + "<ushort extrahdrlen;" // header length
           + "<ushort reg_pc2;"
           + "ubyte mode;"
@@ -92,9 +104,12 @@ public final class Z80Plugin extends AbstractFilePlugin {
   );
   public static final JBBPParser Z80_VERSION3B = JBBPParser.prepare(
       "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
-          + "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
-          + "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
-          + "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
+          +
+          "flags{ bit:1 reg_r_bit7; bit:3 bordercolor; bit:1 basic_samrom; bit:1 compressed; bit:2 nomeaning;}"
+          +
+          "<short reg_de; <short reg_bc_alt; <short reg_de_alt; <short reg_hl_alt; byte reg_a_alt; byte reg_f_alt; <short reg_iy; <short reg_ix; byte iff; byte iff2;"
+          +
+          "emulFlags{bit:2 interruptmode; bit:1 issue2emulation; bit:1 doubleintfreq; bit:2 videosync; bit:2 inputdevice;}"
           + "<ushort extrahdrlen;" // header length
           + "<ushort reg_pc2;"
           + "ubyte mode;"
@@ -165,7 +180,8 @@ public final class Z80Plugin extends AbstractFilePlugin {
     return ((a & 0xFF) << 8) | (b & 0xFF);
   }
 
-  public static byte[] convertZ80BankIndexesToPages(final byte[] bankIndexes, final boolean mode48, final int version) {
+  public static byte[] convertZ80BankIndexesToPages(final byte[] bankIndexes, final boolean mode48,
+                                                    final int version) {
     final byte[] result;
     if (version == VERSION_1) {
       result = new byte[] {5, 2, 0};
@@ -185,7 +201,8 @@ public final class Z80Plugin extends AbstractFilePlugin {
               pageIndex = 2;
               break;
             default:
-              throw new IllegalArgumentException("Unexpected bank index for Z80 48K mode: " + bankIndexes[i]);
+              throw new IllegalArgumentException(
+                  "Unexpected bank index for Z80 48K mode: " + bankIndexes[i]);
           }
           result[i] = (byte) pageIndex;
         }
@@ -202,7 +219,8 @@ public final class Z80Plugin extends AbstractFilePlugin {
     return result;
   }
 
-  public static Page makePage(final int cpu, final int page, final ZXPolyData data, final int offset) throws IOException {
+  public static Page makePage(final int cpu, final int page, final ZXPolyData data,
+                              final int offset) throws IOException {
     final byte[] bankData = new byte[PAGE_SIZE];
     System.arraycopy(data.getDataForCPU(cpu), offset, bankData, 0, PAGE_SIZE);
     return new Page(page, bankData);
@@ -215,7 +233,8 @@ public final class Z80Plugin extends AbstractFilePlugin {
 
   @Override
   public boolean accept(final File f) {
-    return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".z80"));
+    return f != null &&
+        (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".z80"));
   }
 
   @Override
@@ -253,7 +272,8 @@ public final class Z80Plugin extends AbstractFilePlugin {
     return new javax.swing.filechooser.FileFilter() {
       @Override
       public boolean accept(final File f) {
-        return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zxp"));
+        return f != null &&
+            (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zxp"));
       }
 
       @Override
@@ -296,7 +316,9 @@ public final class Z80Plugin extends AbstractFilePlugin {
         throw new IOException("Detected unsupported version of Z80 snapshot");
     }
 
-    final Z80Snapshot current = parser.parse(array).mapTo(new Z80Snapshot(), new DataProcessor(version), JBBPMapper.FLAG_IGNORE_MISSING_VALUES);
+    final Z80Snapshot current = parser.parse(array)
+        .mapTo(new Z80Snapshot(), new DataProcessor(version),
+            JBBPMapper.FLAG_IGNORE_MISSING_VALUES);
 
     // check hardware mode
     switch (version) {
@@ -367,7 +389,7 @@ public final class Z80Plugin extends AbstractFilePlugin {
               break;
             }
             if (offset >= 0) {
-                System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
+              System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
             }
           }
         } else {
@@ -375,7 +397,7 @@ public final class Z80Plugin extends AbstractFilePlugin {
           for (final Bank b : current.banks) {
             if (b.page >= 3 && b.page <= 10) {
               final int offset = (b.page - 3) * PAGE_SIZE;
-                System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
+              System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
             }
           }
         }
@@ -383,7 +405,8 @@ public final class Z80Plugin extends AbstractFilePlugin {
       break;
     }
 
-    final byte[] extra = new byte[(version == VERSION_1 ? 1 : 1 + current.banks.length) + headerLength];
+    final byte[] extra =
+        new byte[(version == VERSION_1 ? 1 : 1 + current.banks.length) + headerLength];
     extra[0] = current.banks == null ? (byte) 0 : (byte) current.banks.length;
     int bankIndex = 1;
     if (version != VERSION_1) {
@@ -392,11 +415,14 @@ public final class Z80Plugin extends AbstractFilePlugin {
       }
     }
     System.arraycopy(array, 0, extra, bankIndex, headerLength);
-    return new ReadResult(new ZXPolyData(new Info(file.getName(), 'C', startAddress, data.length, PAGE_SIZE, extra), this, data), null);
+    return new ReadResult(
+        new ZXPolyData(new Info(file.getName(), 'C', startAddress, data.length, PAGE_SIZE, extra),
+            this, data), null);
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
+  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData)
+      throws IOException {
     if (!(data.getPlugin() instanceof Z80Plugin)) {
       throw new IOException("Only imported Z80 snapshot can be exported");
     }
@@ -428,7 +454,8 @@ public final class Z80Plugin extends AbstractFilePlugin {
     System.arraycopy(extra, banksInExtra + 1, z80header, 0, z80header.length);
     final int version = getVersion(z80header);
     final Z80MainHeader mheader = Z80_MAINPART.parse(z80header).mapTo(new Z80MainHeader());
-    final int regpc = version == VERSION_1 ? mheader.reg_pc : ((z80header[33] & 0xFF) << 8) | (z80header[32] & 0xFF);
+    final int regpc = version == VERSION_1 ? mheader.reg_pc :
+        ((z80header[33] & 0xFF) << 8) | (z80header[32] & 0xFF);
 
     final ZXEMLSnapshotFormat block = new ZXEMLSnapshotFormat();
 
@@ -488,7 +515,8 @@ public final class Z80Plugin extends AbstractFilePlugin {
 
     block.setPortFE(mheader.flags.bordercolor & 7);
 
-    final byte[] pageIndexes = convertZ80BankIndexesToPages(bankIndexes, is48k(version, z80header), version);
+    final byte[] pageIndexes =
+        convertZ80BankIndexesToPages(bankIndexes, is48k(version, z80header), version);
 
     for (int cpu = 0; cpu < 4; cpu++) {
       final List<Page> pages = new ArrayList<>();
@@ -568,12 +596,15 @@ public final class Z80Plugin extends AbstractFilePlugin {
     }
 
     @Override
-    public Object prepareObjectForMapping(JBBPFieldStruct parsedBlock, Bin annotation, Field field) {
+    public Object prepareObjectForMapping(JBBPFieldStruct parsedBlock, Bin annotation,
+                                          Field field) {
       if (this.version == VERSION_1) {
         if (field.getName().equals("data")) {
-          final byte[] data = parsedBlock.findFieldForNameAndType("data", JBBPFieldArrayByte.class).getArray();
+          final byte[] data =
+              parsedBlock.findFieldForNameAndType("data", JBBPFieldArrayByte.class).getArray();
 
-          if (parsedBlock.findFieldForPathAndType("flags.compressed", JBBPFieldBit.class).getAsBool()) {
+          if (parsedBlock.findFieldForPathAndType("flags.compressed", JBBPFieldBit.class)
+              .getAsBool()) {
             return decodeRLE(data, 0, data.length);
           } else {
             // uncompressed
@@ -586,7 +617,8 @@ public final class Z80Plugin extends AbstractFilePlugin {
         if (field.getName().equalsIgnoreCase("data")) {
           return parsedBlock.findFieldForNameAndType("data", JBBPFieldArrayByte.class).getArray();
         } else if (field.getName().equalsIgnoreCase("banks")) {
-          final byte[] rawdata = parsedBlock.findFieldForNameAndType("data", JBBPFieldArrayByte.class).getArray();
+          final byte[] rawdata =
+              parsedBlock.findFieldForNameAndType("data", JBBPFieldArrayByte.class).getArray();
           int pos = 0;
           int len = rawdata.length;
           final List<Bank> banks = new ArrayList<>();
@@ -677,30 +709,23 @@ public final class Z80Plugin extends AbstractFilePlugin {
     public EmulFlags emulFlags;
     @Bin(order = 21, custom = true)
     public byte[] data;
-    @Bin(order = 9)
-    Flags flags;
-
     // version 2,3A
     @Bin(type = BinType.USHORT)
     public int extrahdrlen;
-
     @Bin(type = BinType.USHORT)
     public int reg_pc2;
-
     @Bin(type = BinType.UBYTE)
     public int mode;
-
     @Bin(type = BinType.UBYTE)
     public int port7FFD;
-
     @Bin(type = BinType.UBYTE)
     public int portFF;
-
     @Bin(type = BinType.BYTE_ARRAY)
     public byte[] extra;
-
     @Bin(custom = true)
     public Bank[] banks;
+    @Bin(order = 9)
+    Flags flags;
 
     public Object newInstance(Class<?> klazz) {
       if (klazz == Flags.class) {

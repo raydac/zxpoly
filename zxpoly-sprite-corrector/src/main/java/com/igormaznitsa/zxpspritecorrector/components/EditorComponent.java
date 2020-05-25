@@ -46,23 +46,27 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
   private static final Stroke GRID_STROKE = new BasicStroke(0.3f);
   private static final Stroke COLUMN_BORDER_STROKE = new BasicStroke(0.7f);
   private static final Stroke TOOL_AREA_STROKE = new BasicStroke(2.3f);
-  private static final Stroke SELECTED_AREA_STROKE = new BasicStroke(3.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[] {3, 3}, 0);
-  private static final RenderingHints RENDERING_IMAGE_HINTS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-  private static final RenderingHints RENDERING_LINE_HINTS = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
+  private static final Stroke SELECTED_AREA_STROKE =
+      new BasicStroke(3.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[] {3, 3}, 0);
+  private static final RenderingHints RENDERING_IMAGE_HINTS =
+      new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+  private static final RenderingHints RENDERING_LINE_HINTS =
+      new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
 
   static {
-    RENDERING_IMAGE_HINTS.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
+    RENDERING_IMAGE_HINTS
+        .put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
     RENDERING_IMAGE_HINTS.put(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
 
-    RENDERING_LINE_HINTS.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
+    RENDERING_LINE_HINTS
+        .put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
   }
-
-  private volatile boolean changed;
 
   private final ZXGraphics zxGraphics = new ZXGraphics(this);
   private final List<ChangeListener> changeListeners = new ArrayList<>();
   private final java.util.List<ZXPolyData.UndoBlock> listUndo = new ArrayList<>();
   private final java.util.List<ZXPolyData.UndoBlock> listRedo = new ArrayList<>();
+  private volatile boolean changed;
   private Color colorSelectedAreaBorder = Color.MAGENTA.brighter().brighter();
   private Color colorToolArea = Color.WHITE;
   private Color colorPixelOn = Color.GRAY.darker();
@@ -97,19 +101,19 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     setMode512(false);
   }
 
+  public static double intensity(final int rgb) {
+    int r = (rgb >>> 16) & 0xFF;
+    int g = (rgb >>> 8) & 0xFF;
+    int b = rgb & 0xFF;
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+  }
+
   public boolean isChanged() {
     return this.processingData != null && this.changed;
   }
 
   public void setChanged(final boolean flag) {
     this.changed = flag;
-  }
-
-  public static double intensity(final int rgb) {
-    int r = (rgb >>> 16) & 0xFF;
-    int g = (rgb >>> 8) & 0xFF;
-    int b = rgb & 0xFF;
-    return 0.299 * r + 0.587 * g + 0.114 * b;
   }
 
   public Point mousePoint2ScreenPoint(final Point pointAtComponent) {
@@ -135,7 +139,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       if (baseData || this.mode512) {
         result = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_BINARY);
       } else {
-        result = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_BINARY, ZXPalette.makeIndexPalette());
+        result =
+            new BufferedImage(w, h, BufferedImage.TYPE_BYTE_BINARY, ZXPalette.makeIndexPalette());
       }
 
       final Graphics gfx = result.createGraphics();
@@ -491,7 +496,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
   public void startSelectArea(final Point editorPoint) {
     this.startSelectedAreaPoint = ensureInsideScreenAndEven(editorPoint);
-    this.selectedArea = new Rectangle(ensureInsideScreenAndEven(this.startSelectedAreaPoint), new Dimension(this.mode512 ? 2 : 1, this.mode512 ? 2 : 1));
+    this.selectedArea = new Rectangle(ensureInsideScreenAndEven(this.startSelectedAreaPoint),
+        new Dimension(this.mode512 ? 2 : 1, this.mode512 ? 2 : 1));
     repaint();
   }
 
@@ -618,8 +624,10 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
           int data2 = packedData3012;
           int data3 = packedData3012 >>> 24;
 
-          final int attributeAddress = ZXPalette.calcAttributeAddressZXMode(this.startAddress, addr - this.startAddress);
-          final int baseAttribute = attributeAddress >= this.processingData.length() ? 0 : this.processingData.getBaseData(attributeAddress);
+          final int attributeAddress =
+              ZXPalette.calcAttributeAddressZXMode(this.startAddress, addr - this.startAddress);
+          final int baseAttribute = attributeAddress >= this.processingData.length() ? 0 :
+              this.processingData.getBaseData(attributeAddress);
 
           for (int i = 0; i < 8; i++) {
             if ((mask & 0x80) == 0) {
@@ -639,21 +647,27 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
               if (this.mode512) {
                 // 512x384 mode
                 if (this.attributeMode == AttributeMode.SHOW_512x384_ZXPOLY_PLANES) {
-                  final int packedAttributes3012 = attributeAddress >= this.processingData.length() ? 0 : this.processingData.getPackedZxPolyData3012(attributeAddress);
+                  final int packedAttributes3012 =
+                      attributeAddress >= this.processingData.length() ? 0 :
+                          this.processingData.getPackedZxPolyData3012(attributeAddress);
                   final int attr0 = (packedAttributes3012 >>> 16) & 0xFF;
-                  gfx.setColor((data0 & 0x80) == 0 ? ZXPalette.extractPaper(attr0) : ZXPalette.extractInk(attr0));
+                  gfx.setColor((data0 & 0x80) == 0 ? ZXPalette.extractPaper(attr0) :
+                      ZXPalette.extractInk(attr0));
                   gfx.drawLine(x, cury, x, cury);
 
                   final int attr1 = (packedAttributes3012 >>> 8) & 0xFF;
-                  gfx.setColor((data1 & 0x80) == 0 ? ZXPalette.extractPaper(attr1) : ZXPalette.extractInk(attr1));
+                  gfx.setColor((data1 & 0x80) == 0 ? ZXPalette.extractPaper(attr1) :
+                      ZXPalette.extractInk(attr1));
                   gfx.drawLine(x + 1, cury, x + 1, cury);
 
                   final int attr2 = packedAttributes3012 & 0xFF;
-                  gfx.setColor((data2 & 0x80) == 0 ? ZXPalette.extractPaper(attr2) : ZXPalette.extractInk(attr2));
+                  gfx.setColor((data2 & 0x80) == 0 ? ZXPalette.extractPaper(attr2) :
+                      ZXPalette.extractInk(attr2));
                   gfx.drawLine(x, cury + 1, x, cury + 1);
 
                   final int attr3 = (packedAttributes3012 >>> 24) & 0xFF;
-                  gfx.setColor((data3 & 0x80) == 0 ? ZXPalette.extractPaper(attr3) : ZXPalette.extractInk(attr3));
+                  gfx.setColor((data3 & 0x80) == 0 ? ZXPalette.extractPaper(attr3) :
+                      ZXPalette.extractInk(attr3));
                   gfx.drawLine(x + 1, cury + 1, x + 1, cury + 1);
                 } else {
                   gfx.setColor((data0 & 0x80) == 0 ? this.colorZX512Off : this.colorZX512On);
@@ -667,7 +681,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
                 }
               } else {
                 // zxpoly mode
-                final int colorIndex = ((data3 & 0x80) >>> 4) | ((data0 & 0x80) >>> 5) | ((data1 & 0x80) >>> 6) | ((data2 & 0x80) >>> 7);
+                final int colorIndex =
+                    ((data3 & 0x80) >>> 4) | ((data0 & 0x80) >>> 5) | ((data1 & 0x80) >>> 6) |
+                        ((data2 & 0x80) >>> 7);
                 gfx.setColor(ZXPalette.COLORS[colorIndex]);
                 gfx.fillRect(x, cury, step, step);
               }
@@ -742,7 +758,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       final int w = this.draggedImage.getWidth(null);
       final int h = this.draggedImage.getHeight(null);
       final int[] pixels = new int[w * h];
-      final PixelGrabber pixelGrabber = new PixelGrabber(this.draggedImage, 0, 0, w, h, pixels, 0, w);
+      final PixelGrabber pixelGrabber =
+          new PixelGrabber(this.draggedImage, 0, 0, w, h, pixels, 0, w);
       try {
         pixelGrabber.grabPixels();
       } catch (InterruptedException ex) {
@@ -795,7 +812,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
 
     if (this.zoom > 1) {
       gfx.setRenderingHints(RENDERING_LINE_HINTS);
-      final int columnBorder = (this.columnMode == ColumnMode.ALL ? this.columns : this.columns >> 1) * (this.zoom << (this.mode512 ? 4 : 3));
+      final int columnBorder =
+          (this.columnMode == ColumnMode.ALL ? this.columns : this.columns >> 1) *
+              (this.zoom << (this.mode512 ? 4 : 3));
 
       if (this.showGrid) {
 
@@ -825,14 +844,18 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       gfx.setStroke(SELECTED_AREA_STROKE);
       gfx.setColor(colorSelectedAreaBorder);
 
-      final Rectangle rect = new Rectangle(this.selectedArea.x * this.zoom, this.selectedArea.y * this.zoom, this.selectedArea.width * this.zoom, this.selectedArea.height * this.zoom);
+      final Rectangle rect =
+          new Rectangle(this.selectedArea.x * this.zoom, this.selectedArea.y * this.zoom,
+              this.selectedArea.width * this.zoom, this.selectedArea.height * this.zoom);
       gfx.draw(rect);
     }
 
     if (this.draggedImage != null && this.cursorPoint != null) {
       final Composite prev = gfx.getComposite();
       gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
-      gfx.drawImage(this.draggedImage, this.cursorPoint.x * this.zoom, this.cursorPoint.y * this.zoom, this.draggedImage.getWidth(null) * this.zoom, this.draggedImage.getHeight(null) * this.zoom, null);
+      gfx.drawImage(this.draggedImage, this.cursorPoint.x * this.zoom,
+          this.cursorPoint.y * this.zoom, this.draggedImage.getWidth(null) * this.zoom,
+          this.draggedImage.getHeight(null) * this.zoom, null);
       gfx.setComposite(prev);
     }
 
@@ -840,7 +863,9 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
       gfx.setRenderingHints(RENDERING_LINE_HINTS);
       gfx.setStroke(TOOL_AREA_STROKE);
 
-      final Rectangle zoomed = new Rectangle(this.toolArea.x * this.zoom, this.toolArea.y * this.zoom, this.toolArea.width * this.zoom, this.toolArea.height * this.zoom);
+      final Rectangle zoomed =
+          new Rectangle(this.toolArea.x * this.zoom, this.toolArea.y * this.zoom,
+              this.toolArea.width * this.zoom, this.toolArea.height * this.zoom);
 
       gfx.setColor(this.colorToolArea);
       gfx.draw(zoomed);
@@ -1148,7 +1173,8 @@ public final class EditorComponent extends JComponent implements SpinnerModel {
     public boolean isBaseBitSet(final int x, final int y) {
       final int address = coordToAddress(x, y);
       if (address >= 0) {
-        return (this.editor.processingData.getBaseData(address) & makeXMask(x >> (this.editor.mode512 ? 1 : 0))) != 0;
+        return (this.editor.processingData.getBaseData(address) &
+            makeXMask(x >> (this.editor.mode512 ? 1 : 0))) != 0;
       }
 
       return false;

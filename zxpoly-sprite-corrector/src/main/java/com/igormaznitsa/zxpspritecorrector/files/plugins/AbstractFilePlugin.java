@@ -68,7 +68,7 @@ public abstract class AbstractFilePlugin extends FileFilter {
   public boolean isImportable() {
     return true;
   }
-  
+
   public boolean isExportable() {
     return true;
   }
@@ -95,11 +95,14 @@ public abstract class AbstractFilePlugin extends FileFilter {
 
   public abstract ReadResult readFrom(File file, int index) throws IOException;
 
-  public abstract void writeTo(File file, ZXPolyData data, SessionData sessionData) throws IOException;
+  public abstract void writeTo(File file, ZXPolyData data, SessionData sessionData)
+      throws IOException;
 
   protected boolean saveDataToFile(final File file, final byte[] data) throws IOException {
     if (file.isFile()) {
-      switch (JOptionPane.showConfirmDialog(this.mainFrame, "Overwrite file '" + file.getAbsolutePath() + "'?", "Overwrite file", JOptionPane.YES_NO_CANCEL_OPTION)) {
+      switch (JOptionPane
+          .showConfirmDialog(this.mainFrame, "Overwrite file '" + file.getAbsolutePath() + "'?",
+              "Overwrite file", JOptionPane.YES_NO_CANCEL_OPTION)) {
         case JOptionPane.NO_OPTION:
           return true;
         case JOptionPane.CANCEL_OPTION:

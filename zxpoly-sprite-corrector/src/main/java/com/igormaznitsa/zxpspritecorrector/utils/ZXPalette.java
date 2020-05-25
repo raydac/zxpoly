@@ -69,7 +69,8 @@ public final class ZXPalette {
     return COLORS[bright | ((attribute >>> 3) & 0x7)];
   }
 
-  public static int calcAttributeAddressZXMode(final int startScreenAddress, final int screenOffset) {
+  public static int calcAttributeAddressZXMode(final int startScreenAddress,
+                                               final int screenOffset) {
     final int line = ((screenOffset >>> 5) & 0x07) | ((screenOffset >>> 8) & 0x18);
     final int column = screenOffset & 0x1F;
     final int off = ((line >>> 3) << 8) | (((line & 0x07) << 5) | column);
@@ -94,7 +95,8 @@ public final class ZXPalette {
         index = currentIndex;
         break;
       } else {
-        final double distance = Math.sqrt(Math.pow(rr - r, 2) + Math.pow(gg - g, 2) + Math.pow(bb - b, 2));
+        final double distance =
+            Math.sqrt(Math.pow(rr - r, 2) + Math.pow(gg - g, 2) + Math.pow(bb - b, 2));
         final int comparation = Double.compare(distance, lastDistance);
         if (comparation < 0) {
           index = currentIndex;

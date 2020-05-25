@@ -30,12 +30,14 @@ public class ZXEMLSnapshotFormat {
   public static final int INDEX_CPU1 = 1;
   public static final int INDEX_CPU2 = 2;
   public static final int INDEX_CPU3 = 3;
-  private static final JBBPParser ZXEML_SNAPSHOT = JBBPParser.prepare("int magic; int flags; ubyte port3D00; ubyte portFE;"
-      + "byte [5] cpu0ports; byte [5] cpu1ports; byte [5] cpu2ports; byte [5] cpu3ports;"
-      + "short [4] reg_af; short [4] reg_af_alt; short [4] reg_bc; short [4] reg_bc_alt; short [4] reg_de; short [4] reg_de_alt; short [4] reg_hl; short [4] reg_hl_alt; short [4] reg_ix; short [4] reg_iy; short [4] reg_ir;"
-      + "byte [4] reg_im; bool [4] iff; bool [4] iff2;"
-      + "short [4] reg_pc; short [4] reg_sp;"
-      + "pages [4]{ubyte number; page[number]{ubyte index; byte [16384] data;}}");
+  private static final JBBPParser ZXEML_SNAPSHOT =
+      JBBPParser.prepare("int magic; int flags; ubyte port3D00; ubyte portFE;"
+          + "byte [5] cpu0ports; byte [5] cpu1ports; byte [5] cpu2ports; byte [5] cpu3ports;"
+          +
+          "short [4] reg_af; short [4] reg_af_alt; short [4] reg_bc; short [4] reg_bc_alt; short [4] reg_de; short [4] reg_de_alt; short [4] reg_hl; short [4] reg_hl_alt; short [4] reg_ix; short [4] reg_iy; short [4] reg_ir;"
+          + "byte [4] reg_im; bool [4] iff; bool [4] iff2;"
+          + "short [4] reg_pc; short [4] reg_sp;"
+          + "pages [4]{ubyte number; page[number]{ubyte index; byte [16384] data;}}");
   @Bin(order = 1, type = BinType.INT)
   public int magic = MAGIC;
   @Bin(order = 2, type = BinType.INT)
@@ -250,7 +252,8 @@ public class ZXEMLSnapshotFormat {
     this.portFE = value;
   }
 
-  public void setModulePorts(final int cpuIndex, final int port7FFD, final int r0, final int r1, final int r2, final int r3) {
+  public void setModulePorts(final int cpuIndex, final int port7FFD, final int r0, final int r1,
+                             final int r2, final int r3) {
     final byte[] data = new byte[] {(byte) port7FFD, (byte) r0, (byte) r1, (byte) r2, (byte) r3};
     switch (cpuIndex) {
       case INDEX_CPU0:

@@ -64,7 +64,8 @@ public class SessionData {
     invertBase = inStream.readBoolean();
     mode512x384 = inStream.readBoolean();
     columnNumber = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
-    attributeMode = EditorComponent.AttributeMode.values()[inStream.readInt(JBBPByteOrder.BIG_ENDIAN)];
+    attributeMode =
+        EditorComponent.AttributeMode.values()[inStream.readInt(JBBPByteOrder.BIG_ENDIAN)];
     zoom = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
   }
 

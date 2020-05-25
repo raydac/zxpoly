@@ -46,7 +46,8 @@ public class SliceImageCmd {
         } else if (img.getWidth() == 512 && img.getHeight() == 384) {
           processScreen512x384(imgFile, img);
         } else {
-          System.err.print("Incompatible image resolution = " + img.getWidth() + 'x' + img.getHeight());
+          System.err
+              .print("Incompatible image resolution = " + img.getWidth() + 'x' + img.getHeight());
           return 1;
         }
 
@@ -63,14 +64,16 @@ public class SliceImageCmd {
 
   private BufferedImage loadARGBImage(final File file) throws IOException {
     final BufferedImage img = ImageIO.read(file);
-    final BufferedImage result = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage result =
+        new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
     final Graphics2D gfx = result.createGraphics();
     gfx.drawImage(img, 0, 0, null);
     gfx.dispose();
     return result;
   }
 
-  public void processScreen512x384(final File srcFile, final BufferedImage image) throws IOException {
+  public void processScreen512x384(final File srcFile, final BufferedImage image)
+      throws IOException {
     System.out.println("Slicing image for 512x384");
 
     final int pixelsNumber = 256 * 192;
@@ -122,13 +125,22 @@ public class SliceImageCmd {
 
     final File outFolder = srcFile.getParentFile();
 
-    FileUtils.writeByteArrayToFile(new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c0.c0"), packZxScreen(dataCpu0, attributesCpu0));
-    FileUtils.writeByteArrayToFile(new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c1.c1"), packZxScreen(dataCpu1, attributesCpu1));
-    FileUtils.writeByteArrayToFile(new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c2.c2"), packZxScreen(dataCpu2, attributesCpu2));
-    FileUtils.writeByteArrayToFile(new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c3.c3"), packZxScreen(dataCpu3, attributesCpu3));
+    FileUtils.writeByteArrayToFile(
+        new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c0.c0"),
+        packZxScreen(dataCpu0, attributesCpu0));
+    FileUtils.writeByteArrayToFile(
+        new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c1.c1"),
+        packZxScreen(dataCpu1, attributesCpu1));
+    FileUtils.writeByteArrayToFile(
+        new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c2.c2"),
+        packZxScreen(dataCpu2, attributesCpu2));
+    FileUtils.writeByteArrayToFile(
+        new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c3.c3"),
+        packZxScreen(dataCpu3, attributesCpu3));
   }
 
-  public byte analyzeBlockForAttrib(final int attributeIndex, final int[] nonInterlacedArgbArray, final byte[] screenArray) {
+  public byte analyzeBlockForAttrib(final int attributeIndex, final int[] nonInterlacedArgbArray,
+                                    final byte[] screenArray) {
     final int[] colorUse = new int[16];
 
     final int attrx = attributeIndex % 32;
@@ -212,7 +224,8 @@ public class SliceImageCmd {
     return (byte) result;
   }
 
-  public void processScreen256x192(final File srcFile, final BufferedImage srcArgbImage) throws IOException {
+  public void processScreen256x192(final File srcFile, final BufferedImage srcArgbImage)
+      throws IOException {
     System.out.println("Slicing image for 256x192x16");
 
     final int totalPixels = 256 * 192;
@@ -222,7 +235,8 @@ public class SliceImageCmd {
     final byte[] planB = new byte[totalPixels];
     final byte[] planY = new byte[totalPixels];
 
-    final int[] srcImageBuffer = ((DataBufferInt) srcArgbImage.getRaster().getDataBuffer()).getData();
+    final int[] srcImageBuffer =
+        ((DataBufferInt) srcArgbImage.getRaster().getDataBuffer()).getData();
 
     for (int pixelIndex = 0; pixelIndex < totalPixels; pixelIndex++) {
       final int argb = srcImageBuffer[pixelIndex];
@@ -246,10 +260,18 @@ public class SliceImageCmd {
 
     final File outFolder = srcFile.getParentFile();
 
-    FileUtils.writeByteArrayToFile(new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c1.c1"), packZxRester(planR));
-    FileUtils.writeByteArrayToFile(new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c0.c0"), packZxRester(planG));
-    FileUtils.writeByteArrayToFile(new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c2.c2"), packZxRester(planB));
-    FileUtils.writeByteArrayToFile(new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c3.c3"), packZxRester(planY));
+    FileUtils.writeByteArrayToFile(
+        new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c1.c1"),
+        packZxRester(planR));
+    FileUtils.writeByteArrayToFile(
+        new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c0.c0"),
+        packZxRester(planG));
+    FileUtils.writeByteArrayToFile(
+        new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c2.c2"),
+        packZxRester(planB));
+    FileUtils.writeByteArrayToFile(
+        new File(outFolder, FilenameUtils.getBaseName(srcFile.getName()) + "c3.c3"),
+        packZxRester(planY));
   }
 
   private byte[] packZxScreen(final byte[] raster, final byte[] attributeArea) {

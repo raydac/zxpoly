@@ -116,7 +116,9 @@ public class LegacySZEPlugin extends AbstractFilePlugin {
       final byte[] hobetaData = new byte[hobetaLength];
       inStream.readFully(hobetaData);
 
-      final Info info = new Info(new String(hobetaName, StandardCharsets.US_ASCII), (char) (hobetaType & 0xFF), hobetaStartAddress, hobetaLength, 0);
+      final Info info =
+          new Info(new String(hobetaName, StandardCharsets.US_ASCII), (char) (hobetaType & 0xFF),
+              hobetaStartAddress, hobetaLength, 0);
 
       final byte[][] decodedZxPolyPlanes = new byte[4][hobetaData.length];
       for (int a = 0; a < hobetaData.length; a++) {
@@ -171,7 +173,8 @@ public class LegacySZEPlugin extends AbstractFilePlugin {
 
   @Override
   public boolean accept(File path) {
-    return path != null && (path.isDirectory() || path.getName().endsWith(this.getExtension(false)));
+    return path != null &&
+        (path.isDirectory() || path.getName().endsWith(this.getExtension(false)));
   }
 
   @Override

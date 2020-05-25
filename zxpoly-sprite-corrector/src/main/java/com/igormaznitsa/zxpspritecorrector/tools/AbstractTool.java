@@ -65,5 +65,6 @@ public abstract class AbstractTool extends JToggleButton {
     return true;
   }
 
-  public abstract void process(final EditorComponent editComponent, final Rectangle area, final int buttons);
+  public abstract void process(final EditorComponent editComponent, final Rectangle area,
+                               final int buttons);
 }

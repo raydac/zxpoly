@@ -34,7 +34,8 @@ public class ToolPencil extends AbstractTool {
   }
 
   @Override
-  public void process(final EditorComponent editComponent, final Rectangle area, final int buttons) {
+  public void process(final EditorComponent editComponent, final Rectangle area,
+                      final int buttons) {
     final EditorComponent.ZXGraphics gfx = editComponent.getZXGraphics();
 
     final int index;

@@ -56,16 +56,20 @@ public class ZXPolyData {
 
   private final Info info;
 
-  public ZXPolyData(final Info info, final AbstractFilePlugin basePlugin, final byte[] data, final byte[] mask, byte[][] zxpolyPlanes) {
+  public ZXPolyData(final Info info, final AbstractFilePlugin basePlugin, final byte[] data,
+                    final byte[] mask, byte[][] zxpolyPlanes) {
     if (data.length != mask.length) {
-      throw new IllegalArgumentException("Mask array must have same size as data array: " + data.length + "!=" + mask.length);
+      throw new IllegalArgumentException(
+          "Mask array must have same size as data array: " + data.length + "!=" + mask.length);
     }
     this.basedata = data.clone();
     this.mask = mask.clone();
     this.zxpoly = new byte[4][];
     for (int i = 0; i < this.zxpoly.length; i++) {
       if (this.basedata.length != zxpolyPlanes[i].length) {
-        throw new IllegalArgumentException("Detected illegal size of ZXPoly plane: " + i + ", expected size " + this.basedata.length + " bytes");
+        throw new IllegalArgumentException(
+            "Detected illegal size of ZXPoly plane: " + i + ", expected size " +
+                this.basedata.length + " bytes");
       }
       this.zxpoly[i] = zxpolyPlanes[i].clone();
     }
@@ -77,7 +81,8 @@ public class ZXPolyData {
     this(info, basePlugin, array, new byte[array.length], new byte[4][array.length]);
   }
 
-  public ZXPolyData(final InputStream in, final List<AbstractFilePlugin> plugins) throws IOException {
+  public ZXPolyData(final InputStream in, final List<AbstractFilePlugin> plugins)
+      throws IOException {
     @Bin
     final class Parsed {
 
@@ -165,7 +170,8 @@ public class ZXPolyData {
     return this.info;
   }
 
-  public void setZXPolyData(final int address, final int mask, final int zxpoly0, final int zxpoly1, final int zxpoly2, final int zxpoly3) {
+  public void setZXPolyData(final int address, final int mask, final int zxpoly0, final int zxpoly1,
+                            final int zxpoly2, final int zxpoly3) {
     this.zxpoly[ZXPOLY_0][address] = (byte) (zxpoly0 & mask);
     this.zxpoly[ZXPOLY_1][address] = (byte) (zxpoly1 & mask);
     this.zxpoly[ZXPOLY_2][address] = (byte) (zxpoly2 & mask);
@@ -177,12 +183,14 @@ public class ZXPolyData {
     return this.mask[address] & 0xFF;
   }
 
-  public byte [] getMask() {
+  public byte[] getMask() {
     return this.mask;
   }
 
   public int getPackedZxPolyData3012(final int address) {
-    return ((this.zxpoly[ZXPOLY_3][address] & 0xFF) << 24) | ((this.zxpoly[ZXPOLY_0][address] & 0xFF) << 16) | ((this.zxpoly[ZXPOLY_1][address] & 0xFF) << 8) | (this.zxpoly[ZXPOLY_2][address] & 0xFF);
+    return ((this.zxpoly[ZXPOLY_3][address] & 0xFF) << 24) |
+        ((this.zxpoly[ZXPOLY_0][address] & 0xFF) << 16) |
+        ((this.zxpoly[ZXPOLY_1][address] & 0xFF) << 8) | (this.zxpoly[ZXPOLY_2][address] & 0xFF);
   }
 
   public int getBaseData(final int address) {

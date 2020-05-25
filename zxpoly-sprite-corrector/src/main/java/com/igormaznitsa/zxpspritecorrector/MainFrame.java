@@ -107,13 +107,19 @@ public final class MainFrame extends javax.swing.JFrame {
       .withConstructorInjection()
       .withCaching()
       .build();
-  private final Cursor CURSOR_BLANK = Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB), new Point(0, 0), "blank cursor");
+  final BoundedRangeModel SLIDER_ALL_MODEL = new DefaultBoundedRangeModel(32, 0, 1, 32);
+  final BoundedRangeModel SLIDER_ODD_OR_EVEN_MODEL = new DefaultBoundedRangeModel(16, 0, 1, 16);
+  final Dictionary<Integer, JLabel> SLIDER_ALL_LABELS;
+  final Dictionary<Integer, JLabel> SLIDER_ODD_LABELS;
+  final Dictionary<Integer, JLabel> SLIDER_EVEN_LABELS;
+  private final Cursor CURSOR_BLANK = Toolkit.getDefaultToolkit()
+      .createCustomCursor(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB), new Point(0, 0),
+          "blank cursor");
   private final AtomicReference<AbstractTool> currentAbstractTool = new AtomicReference<>();
   private File lastOpenedFile;
   private File lastExportedFile;
   private File szeFile;
   private boolean selectAreaMode = false;
-
   private ButtonGroup attributesButtonGroup;
   private JToggleButton buttonLock;
   private ZXColorSelector colorSelector;
@@ -170,12 +176,6 @@ public final class MainFrame extends javax.swing.JFrame {
   private PenWidth sliderPenWidth;
   private JSpinner spinnerCurrentAddress;
   private ButtonGroup toolsButtonGroup;
-
-  final BoundedRangeModel SLIDER_ALL_MODEL = new DefaultBoundedRangeModel(32, 0, 1, 32);
-  final BoundedRangeModel SLIDER_ODD_OR_EVEN_MODEL = new DefaultBoundedRangeModel(16, 0, 1, 16);
-  final Dictionary<Integer, JLabel> SLIDER_ALL_LABELS;
-  final Dictionary<Integer, JLabel> SLIDER_ODD_LABELS;
-  final Dictionary<Integer, JLabel> SLIDER_EVEN_LABELS;
 
   public MainFrame() {
     SLIDER_ALL_LABELS = new Hashtable<>();
@@ -284,7 +284,8 @@ public final class MainFrame extends javax.swing.JFrame {
 
     this.menuOptionsMode512.addActionListener(x -> {
       final boolean mode512 = this.menuOptionsMode512.isSelected();
-      this.container.getComponents(AbstractTool.class).forEach((t) -> t.setEnabled(!mode512 || (mode512 && t.doesSupport512x384())));
+      this.container.getComponents(AbstractTool.class)
+          .forEach((t) -> t.setEnabled(!mode512 || (mode512 && t.doesSupport512x384())));
     });
 
     resetOptions();
@@ -344,20 +345,25 @@ public final class MainFrame extends javax.swing.JFrame {
 
   private void exportDataWithPlugin(final AbstractFilePlugin plugin) {
     if (!this.mainEditor.hasData()) {
-      JOptionPane.showMessageDialog(this, "There is no data to export!", "There is no data", JOptionPane.WARNING_MESSAGE);
+      JOptionPane.showMessageDialog(this, "There is no data to export!", "There is no data",
+          JOptionPane.WARNING_MESSAGE);
       return;
     }
 
-    final JFileChooser fileChooser = new JFileChooser(this.lastExportedFile == null ? null : this.lastExportedFile.getParentFile());
+    final JFileChooser fileChooser = new JFileChooser(
+        this.lastExportedFile == null ? null : this.lastExportedFile.getParentFile());
     fileChooser.setAcceptAllFileFilterUsed(false);
     fileChooser.addChoosableFileFilter(plugin.getExportFileFilter());
     if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
       this.lastExportedFile = ensureExtension(fileChooser.getSelectedFile(), plugin);
       try {
-        plugin.writeTo(this.lastExportedFile, this.mainEditor.getProcessingData(), new SessionData(this.mainEditor));
+        plugin.writeTo(this.lastExportedFile, this.mainEditor.getProcessingData(),
+            new SessionData(this.mainEditor));
       } catch (Exception ex) {
         ex.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Can't export data for exception [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane
+            .showMessageDialog(this, "Can't export data for exception [" + ex.getMessage() + ']',
+                "Error", JOptionPane.ERROR_MESSAGE);
       }
     }
   }
@@ -551,20 +557,26 @@ public final class MainFrame extends javax.swing.JFrame {
     mainEditorPanelLayout.setHorizontalGroup(
         mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 598, Short.MAX_VALUE)
-            .addGroup(mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(mainEditorPanelLayout.createSequentialGroup()
-                    .addGap(0, 0, Short.MAX_VALUE)
-                    .addComponent(mainEditor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 0, Short.MAX_VALUE)))
+            .addGroup(
+                mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(mainEditorPanelLayout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(mainEditor, javax.swing.GroupLayout.PREFERRED_SIZE,
+                            javax.swing.GroupLayout.DEFAULT_SIZE,
+                            javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
     );
     mainEditorPanelLayout.setVerticalGroup(
         mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 394, Short.MAX_VALUE)
-            .addGroup(mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(mainEditorPanelLayout.createSequentialGroup()
-                    .addGap(0, 0, Short.MAX_VALUE)
-                    .addComponent(mainEditor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 0, Short.MAX_VALUE)))
+            .addGroup(
+                mainEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(mainEditorPanelLayout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(mainEditor, javax.swing.GroupLayout.PREFERRED_SIZE,
+                            javax.swing.GroupLayout.DEFAULT_SIZE,
+                            javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
     );
 
     jScrollPane1.setViewportView(mainEditorPanel);
@@ -599,7 +611,8 @@ public final class MainFrame extends javax.swing.JFrame {
     menuFileOpen.addActionListener(this::menuFileOpenActionPerformed);
     menuFile.add(menuFileOpen);
 
-    menuSave.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
+    menuSave.setAccelerator(javax.swing.KeyStroke
+        .getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
     menuSave.setText("Save");
     menuSave.addActionListener(this::menuSaveActionPerformed);
     menuFile.add(menuSave);
@@ -660,32 +673,41 @@ public final class MainFrame extends javax.swing.JFrame {
       }
     });
 
-    menuEditUndo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, java.awt.event.InputEvent.CTRL_MASK));
+    menuEditUndo.setAccelerator(javax.swing.KeyStroke
+        .getKeyStroke(java.awt.event.KeyEvent.VK_Z, java.awt.event.InputEvent.CTRL_MASK));
     menuEditUndo.setText("Undo");
     menuEditUndo.addActionListener(this::menuEditUndoActionPerformed);
     menuEdit.add(menuEditUndo);
 
-    menuEditRedo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+    menuEditRedo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z,
+        java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
     menuEditRedo.setText("Redo");
     menuEditRedo.addActionListener(this::menuEditRedoActionPerformed);
     menuEdit.add(menuEditRedo);
     menuEdit.add(jSeparator2);
 
-    menuEditSelectArea.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.CTRL_MASK));
+    menuEditSelectArea.setAccelerator(javax.swing.KeyStroke
+        .getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.CTRL_MASK));
     menuEditSelectArea.setText("Select area");
     menuEditSelectArea.addActionListener(this::menuEditSelectAreaActionPerformed);
     menuEdit.add(menuEditSelectArea);
 
-    menuEditCopySelectedZxPolyAsImage.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+    menuEditCopySelectedZxPolyAsImage.setAccelerator(javax.swing.KeyStroke
+        .getKeyStroke(java.awt.event.KeyEvent.VK_C,
+            java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
     menuEditCopySelectedZxPolyAsImage.setText("Copy selection (zxpoly)");
-    menuEditCopySelectedZxPolyAsImage.addActionListener(this::menuEditCopySelectedZxPolyAsImageActionPerformed);
+    menuEditCopySelectedZxPolyAsImage
+        .addActionListener(this::menuEditCopySelectedZxPolyAsImageActionPerformed);
     menuEdit.add(menuEditCopySelectedZxPolyAsImage);
 
     menuEditCopySelectedBaseAsImage.setText("Copy selection (base)");
-    menuEditCopySelectedBaseAsImage.addActionListener(this::menuEditCopySelectedBaseAsImageActionPerformed);
+    menuEditCopySelectedBaseAsImage
+        .addActionListener(this::menuEditCopySelectedBaseAsImageActionPerformed);
     menuEdit.add(menuEditCopySelectedBaseAsImage);
 
-    menuEditPasteImage.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_V, java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+    menuEditPasteImage.setAccelerator(javax.swing.KeyStroke
+        .getKeyStroke(java.awt.event.KeyEvent.VK_V,
+            java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
     menuEditPasteImage.setText("Paste image");
     menuEditPasteImage.addActionListener(this::menuEditPasteImageActionPerformed);
     menuEdit.add(menuEditPasteImage);
@@ -719,7 +741,8 @@ public final class MainFrame extends javax.swing.JFrame {
     menuOptions.add(menuOptionsInvertBase);
     menuOptions.add(jSeparator5);
 
-    menuOptionsZXScreen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, 0));
+    menuOptionsZXScreen
+        .setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, 0));
     menuOptionsZXScreen.setSelected(true);
     menuOptionsZXScreen.setText("ZX-Screen addressing");
     menuOptionsZXScreen.addChangeListener(this::menuOptionsZXScreenStateChanged);
@@ -731,23 +754,31 @@ public final class MainFrame extends javax.swing.JFrame {
     menuOptions.add(menuOptionsMode512);
     menuOptions.add(jSeparator6);
 
-    menuOptionDontShowAttributes.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+    menuOptionDontShowAttributes.setAccelerator(javax.swing.KeyStroke
+        .getKeyStroke(java.awt.event.KeyEvent.VK_A,
+            java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
     attributesButtonGroup.add(menuOptionDontShowAttributes);
     menuOptionDontShowAttributes.setSelected(true);
     menuOptionDontShowAttributes.setText("Don't show attribute colors");
-    menuOptionDontShowAttributes.addActionListener(this::menuOptionDontShowAttributesActionPerformed);
+    menuOptionDontShowAttributes
+        .addActionListener(this::menuOptionDontShowAttributesActionPerformed);
     menuOptions.add(menuOptionDontShowAttributes);
 
-    menuOptionsShowBaseAttributes.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_MASK));
+    menuOptionsShowBaseAttributes.setAccelerator(javax.swing.KeyStroke
+        .getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_MASK));
     attributesButtonGroup.add(menuOptionsShowBaseAttributes);
     menuOptionsShowBaseAttributes.setText("Show attribute colors");
-    menuOptionsShowBaseAttributes.addActionListener(this::menuOptionsShowBaseAttributesActionPerformed);
+    menuOptionsShowBaseAttributes
+        .addActionListener(this::menuOptionsShowBaseAttributesActionPerformed);
     menuOptions.add(menuOptionsShowBaseAttributes);
 
-    menuOptionsShow512x384Attributes.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
+    menuOptionsShow512x384Attributes.setAccelerator(javax.swing.KeyStroke
+        .getKeyStroke(java.awt.event.KeyEvent.VK_A,
+            java.awt.event.InputEvent.ALT_MASK | java.awt.event.InputEvent.CTRL_MASK));
     attributesButtonGroup.add(menuOptionsShow512x384Attributes);
     menuOptionsShow512x384Attributes.setText("Show 512x384 plane attributes");
-    menuOptionsShow512x384Attributes.addActionListener(this::menuOptionsShow512x384AttributesActionPerformed);
+    menuOptionsShow512x384Attributes
+        .addActionListener(this::menuOptionsShow512x384AttributesActionPerformed);
     menuOptions.add(menuOptionsShow512x384Attributes);
     menuOptions.add(jSeparator3);
 
@@ -783,26 +814,41 @@ public final class MainFrame extends javax.swing.JFrame {
     getContentPane().setLayout(layout);
     layout.setHorizontalGroup(
         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING,
+                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE,
+                Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jScrollPane1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(scrollBarAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(colorSelector, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(
+                            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(jScrollPane1)
+                                    .addPreferredGap(
+                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(scrollBarAddress,
+                                        javax.swing.GroupLayout.PREFERRED_SIZE,
+                                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                                        javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(colorSelector, javax.swing.GroupLayout.DEFAULT_SIZE,
+                                    javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(sliderPenWidth, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGroup(layout
+                            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING,
+                                javax.swing.GroupLayout.PREFERRED_SIZE, 107,
+                                javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(sliderPenWidth, javax.swing.GroupLayout.DEFAULT_SIZE,
+                                javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(sliderColumns, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(sliderColumns, javax.swing.GroupLayout.DEFAULT_SIZE,
+                            javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(29, 29, 29)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(buttonLock, javax.swing.GroupLayout.DEFAULT_SIZE, 107, Short.MAX_VALUE)
+                        .addGroup(layout
+                            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(buttonLock, javax.swing.GroupLayout.DEFAULT_SIZE, 107,
+                                Short.MAX_VALUE)
                             .addComponent(spinnerCurrentAddress))))
                 .addContainerGap())
     );
@@ -811,22 +857,35 @@ public final class MainFrame extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(scrollBarAddress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 399, Short.MAX_VALUE)
-                    .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(scrollBarAddress, javax.swing.GroupLayout.DEFAULT_SIZE,
+                        javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING,
+                        javax.swing.GroupLayout.DEFAULT_SIZE, 399, Short.MAX_VALUE)
+                    .addComponent(panelTools, javax.swing.GroupLayout.Alignment.TRAILING,
+                        javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE,
+                        Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(sliderColumns, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(spinnerCurrentAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(sliderColumns, javax.swing.GroupLayout.PREFERRED_SIZE,
+                            javax.swing.GroupLayout.DEFAULT_SIZE,
+                            javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(spinnerCurrentAddress, javax.swing.GroupLayout.PREFERRED_SIZE,
+                            javax.swing.GroupLayout.DEFAULT_SIZE,
+                            javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(buttonLock)
                         .addGap(27, 27, 27)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(colorSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sliderPenWidth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(colorSelector, javax.swing.GroupLayout.PREFERRED_SIZE,
+                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sliderPenWidth, javax.swing.GroupLayout.PREFERRED_SIZE,
+                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                        javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE,
+                    javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
     );
 
     layout.linkSize(javax.swing.SwingConstants.VERTICAL, colorSelector, sliderPenWidth);
@@ -840,7 +899,8 @@ public final class MainFrame extends javax.swing.JFrame {
     final File file = new File(path);
     if (file.isFile()) {
       if (this.mainEditor.isChanged()) {
-        if (showConfirmDialog(this, "Open file '" + file.getName() + "'?", "Confirmation", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+        if (showConfirmDialog(this, "Open file '" + file.getName() + "'?", "Confirmation",
+            JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
           return;
         }
       }
@@ -853,7 +913,8 @@ public final class MainFrame extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
       }
     } else {
-      JOptionPane.showMessageDialog(this, "Can't find file '" + path + '\'', "Error", JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(this, "Can't find file '" + path + '\'', "Error",
+          JOptionPane.ERROR_MESSAGE);
     }
   }
 
@@ -887,7 +948,8 @@ public final class MainFrame extends javax.swing.JFrame {
 
   private void applicationClosing(java.awt.event.WindowEvent evt) {
     if (this.mainEditor.hasData()) {
-      if (showConfirmDialog(this, "Close application?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
+      if (showConfirmDialog(this, "Close application?", "Confirmation",
+          JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
         return;
       }
     }
@@ -946,7 +1008,8 @@ public final class MainFrame extends javax.swing.JFrame {
     this.menuSave.setEnabled(file != null);
   }
 
-  private void loadFileWithPlugin(final AbstractFilePlugin plugin, final File selectedFile, final int selected) throws IOException {
+  private void loadFileWithPlugin(final AbstractFilePlugin plugin, final File selectedFile,
+                                  final int selected) throws IOException {
     final AbstractFilePlugin.ReadResult result = plugin.readFrom(selectedFile, selected);
     this.setTitle(selectedFile.getAbsolutePath());
     this.mainEditor.setProcessingData(result.getData());
@@ -972,9 +1035,9 @@ public final class MainFrame extends javax.swing.JFrame {
       chooser.setAcceptAllFileFilterUsed(false);
 
       container.getComponents(AbstractFilePlugin.class)
-              .stream()
-              .filter(AbstractFilePlugin::isImportable)
-              .forEach((plugin) -> chooser.addChoosableFileFilter(plugin.getImportFileFilter()));
+          .stream()
+          .filter(AbstractFilePlugin::isImportable)
+          .forEach((plugin) -> chooser.addChoosableFileFilter(plugin.getImportFileFilter()));
 
       final InsideFileView insideFileView = new InsideFileView(chooser);
       chooser.setAccessory(insideFileView);
@@ -987,7 +1050,8 @@ public final class MainFrame extends javax.swing.JFrame {
         try {
           int selected = -1;
           if (plugin.doesContainInternalFileItems()) {
-            final SelectInsideDataDialog itemSelector = new SelectInsideDataDialog(this, selectedFile, plugin);
+            final SelectInsideDataDialog itemSelector =
+                new SelectInsideDataDialog(this, selectedFile, plugin);
             itemSelector.setVisible(true);
             selected = itemSelector.getSelectedIndex();
             if (selected < 0) {
@@ -1000,13 +1064,17 @@ public final class MainFrame extends javax.swing.JFrame {
           }
         } catch (IllegalArgumentException ex) {
           ex.printStackTrace();
-          JOptionPane.showMessageDialog(this, ex.getMessage(), "Can't read", JOptionPane.WARNING_MESSAGE);
+          JOptionPane
+              .showMessageDialog(this, ex.getMessage(), "Can't read", JOptionPane.WARNING_MESSAGE);
         } catch (IOException ex) {
           ex.printStackTrace();
-          JOptionPane.showMessageDialog(this, "Can't read file or its part [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
+          JOptionPane
+              .showMessageDialog(this, "Can't read file or its part [" + ex.getMessage() + ']',
+                  "Error", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
           ex.printStackTrace();
-          JOptionPane.showMessageDialog(this, "Unexpected exception! See log!", "Unexpected error", JOptionPane.ERROR_MESSAGE);
+          JOptionPane.showMessageDialog(this, "Unexpected exception! See log!", "Unexpected error",
+              JOptionPane.ERROR_MESSAGE);
         } finally {
           updateAddressScrollBar();
           updateRedoUndo();
@@ -1034,7 +1102,8 @@ public final class MainFrame extends javax.swing.JFrame {
   }
 
   private Point mouseCoord2EditorCoord(final MouseEvent evt) {
-    return this.mainEditor.mousePoint2ScreenPoint(SwingUtilities.convertPoint(this.mainEditorPanel, evt.getPoint(), this.mainEditor));
+    return this.mainEditor.mousePoint2ScreenPoint(
+        SwingUtilities.convertPoint(this.mainEditorPanel, evt.getPoint(), this.mainEditor));
   }
 
   private Rectangle updateToolRectangle(final Point editorPoint) {
@@ -1043,7 +1112,8 @@ public final class MainFrame extends javax.swing.JFrame {
     if (width <= 1) {
       rect = new Rectangle(editorPoint.x, editorPoint.y, 1, 1);
     } else {
-      rect = new Rectangle(editorPoint.x - (width >> 1), editorPoint.y - (width >> 1), width, width);
+      rect =
+          new Rectangle(editorPoint.x - (width >> 1), editorPoint.y - (width >> 1), width, width);
     }
 
     if (this.currentAbstractTool.get() == null) {
@@ -1162,7 +1232,8 @@ public final class MainFrame extends javax.swing.JFrame {
   }
 
   private void menuEditClearActionPerformed(java.awt.event.ActionEvent evt) {
-    if (showConfirmDialog(this, "Clear ZX-Poly data?", "Confirmation", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+    if (showConfirmDialog(this, "Clear ZX-Poly data?", "Confirmation",
+        JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
       this.mainEditor.clear();
     }
   }
@@ -1184,14 +1255,18 @@ public final class MainFrame extends javax.swing.JFrame {
       fileChoolser.addChoosableFileFilter(container.getComponent(SZEPlugin.class));
       if (fileChoolser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
         try {
-          final File thefile = ensureExtension(fileChoolser.getSelectedFile(), container.getComponent(SZEPlugin.class));
-          container.getComponent(SZEPlugin.class).writeTo(thefile, zxpolydata, new SessionData(this.mainEditor));
+          final File thefile = ensureExtension(fileChoolser.getSelectedFile(),
+              container.getComponent(SZEPlugin.class));
+          container.getComponent(SZEPlugin.class)
+              .writeTo(thefile, zxpolydata, new SessionData(this.mainEditor));
           this.mainEditor.setChanged(false);
           this.setTitle(thefile.getAbsolutePath());
           setCurrentSZEFile(thefile);
         } catch (Exception ex) {
           ex.printStackTrace();
-          JOptionPane.showMessageDialog(this, "Error during operation [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
+          JOptionPane
+              .showMessageDialog(this, "Error during operation [" + ex.getMessage() + ']', "Error",
+                  JOptionPane.ERROR_MESSAGE);
         }
       }
     }
@@ -1202,25 +1277,30 @@ public final class MainFrame extends javax.swing.JFrame {
   }
 
   private void menuEditCopyBaseToPlansActionPerformed(java.awt.event.ActionEvent evt) {
-    if (showConfirmDialog(this, "Do you really want to copy base data to all ZX-Poly planes?", "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
+    if (showConfirmDialog(this, "Do you really want to copy base data to all ZX-Poly planes?",
+        "Confirmation", JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
       this.mainEditor.copyPlansFromBase();
     }
   }
 
   private void menuSaveActionPerformed(java.awt.event.ActionEvent evt) {
     try {
-      container.getComponent(SZEPlugin.class).writeTo(this.szeFile, this.mainEditor.getProcessingData(), new SessionData(this.mainEditor));
+      container.getComponent(SZEPlugin.class)
+          .writeTo(this.szeFile, this.mainEditor.getProcessingData(),
+              new SessionData(this.mainEditor));
       this.mainEditor.setChanged(false);
     } catch (Exception ex) {
       ex.printStackTrace();
-      JOptionPane.showMessageDialog(this, "Can't save file for exception [" + ex.getMessage() + ']', "Error", JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(this, "Can't save file for exception [" + ex.getMessage() + ']',
+          "Error", JOptionPane.ERROR_MESSAGE);
     }
   }
 
   private void menuFileNewActionPerformed(java.awt.event.ActionEvent evt) {
     try {
       if (this.mainEditor.hasData()) {
-        if (showConfirmDialog(this, "Do you really want to create new data?", "Confirmation", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+        if (showConfirmDialog(this, "Do you really want to create new data?", "Confirmation",
+            JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
           return;
         }
       }
@@ -1337,7 +1417,8 @@ public final class MainFrame extends javax.swing.JFrame {
     if (this.mainEditor.getProcessingData() == null) {
       this.scrollBarAddress.setEnabled(false);
     } else {
-      this.scrollBarAddress.setMaximum(Math.max(0, this.mainEditor.getProcessingData().length() - 32));
+      this.scrollBarAddress
+          .setMaximum(Math.max(0, this.mainEditor.getProcessingData().length() - 32));
       this.scrollBarAddress.setEnabled(true);
       this.scrollBarAddress.setValue(this.mainEditor.getAddress());
       this.scrollBarAddress.setUnitIncrement(this.mainEditor.getColumns());

@@ -91,7 +91,8 @@ public final class SNAPlugin extends AbstractFilePlugin {
     return new javax.swing.filechooser.FileFilter() {
       @Override
       public boolean accept(final File f) {
-        return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".sna"));
+        return f != null &&
+            (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".sna"));
       }
 
       @Override
@@ -103,7 +104,7 @@ public final class SNAPlugin extends AbstractFilePlugin {
 
   @Override
   public String getPluginDescription(final boolean forExport) {
-    return "SNA ZX snapshot file" ;
+    return "SNA ZX snapshot file";
   }
 
   @Override
@@ -141,7 +142,8 @@ public final class SNAPlugin extends AbstractFilePlugin {
     }
 
 
-    SnaFileSnapshot snaFile = SNA_PARSER.parse(array).mapTo(new SnaFileSnapshot(), JBBPMapper.FLAG_IGNORE_MISSING_VALUES);
+    SnaFileSnapshot snaFile =
+        SNA_PARSER.parse(array).mapTo(new SnaFileSnapshot(), JBBPMapper.FLAG_IGNORE_MISSING_VALUES);
 
     if (sna128) {
       System.out.println("SNA128 DETECTED");
@@ -218,7 +220,9 @@ public final class SNAPlugin extends AbstractFilePlugin {
           .Byte(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
           .End().toByteArray();
-      return new ReadResult(new ZXPolyData(new Info(file.getName(), 'C', snaFile.extendedData.regPC, data.length, 0, extra), new Z80Plugin(), data), null);
+      return new ReadResult(new ZXPolyData(
+          new Info(file.getName(), 'C', snaFile.extendedData.regPC, data.length, 0, extra),
+          new Z80Plugin(), data), null);
     } else {
       System.out.println("SNA48 DETECTED");
 
@@ -268,18 +272,22 @@ public final class SNAPlugin extends AbstractFilePlugin {
           .Bits(JBBPBitNumber.BITS_2, 0)
           .Bits(JBBPBitNumber.BITS_2, 0)
           .End().toByteArray();
-      return new ReadResult(new ZXPolyData(new Info(file.getName(), 'C', startAddress, dataLength, 0, extra), new Z80Plugin(), data), null);
+      return new ReadResult(
+          new ZXPolyData(new Info(file.getName(), 'C', startAddress, dataLength, 0, extra),
+              new Z80Plugin(), data), null);
     }
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData) throws IOException {
+  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData)
+      throws IOException {
     throw new IOException("SNA export is unsupported");
   }
 
   @Override
   public boolean accept(final File f) {
-    return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".sna"));
+    return f != null &&
+        (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".sna"));
   }
 
   @Override

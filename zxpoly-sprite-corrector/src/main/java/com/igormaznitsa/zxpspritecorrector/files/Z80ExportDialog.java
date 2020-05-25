@@ -70,17 +70,20 @@ public class Z80ExportDialog extends javax.swing.JDialog {
     setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     setTitle("Options for ZX-Poly snapshot");
 
-    buttonCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/cross.png"))); // NOI18N
+    buttonCancel.setIcon(new javax.swing.ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/cross.png"))); // NOI18N
     buttonCancel.setText("Cancel");
     buttonCancel.addActionListener(this::buttonCancelActionPerformed);
 
-    buttonOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/tick.png"))); // NOI18N
+    buttonOk.setIcon(new javax.swing.ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpspritecorrector/icons/tick.png"))); // NOI18N
     buttonOk.setText("Ok");
     buttonOk.addActionListener(this::buttonOkActionPerformed);
 
     labelVideoMode.setText("Initial video mode:");
 
-    comboVideoMode.setModel(new javax.swing.DefaultComboBoxModel(new String[] {"Item 1", "Item 2", "Item 3", "Item 4"}));
+    comboVideoMode.setModel(new javax.swing.DefaultComboBoxModel(
+        new String[] {"Item 1", "Item 2", "Item 3", "Item 4"}));
 
     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
     getContentPane().setLayout(layout);
@@ -89,15 +92,17 @@ public class Z80ExportDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 202, Short.MAX_VALUE)
-                        .addComponent(buttonOk)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(buttonCancel))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING,
+                        layout.createSequentialGroup()
+                            .addGap(0, 202, Short.MAX_VALUE)
+                            .addComponent(buttonOk)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(buttonCancel))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(labelVideoMode)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(comboVideoMode, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(comboVideoMode, 0, javax.swing.GroupLayout.DEFAULT_SIZE,
+                            Short.MAX_VALUE)))
                 .addContainerGap())
     );
 
@@ -109,8 +114,11 @@ public class Z80ExportDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(labelVideoMode)
-                    .addComponent(comboVideoMode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                    .addComponent(comboVideoMode, javax.swing.GroupLayout.PREFERRED_SIZE,
+                        javax.swing.GroupLayout.DEFAULT_SIZE,
+                        javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27,
+                    Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(buttonCancel)
                     .addComponent(buttonOk))
