@@ -71,21 +71,21 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       0xFFFFFFFF};
 
   private static final int[] PALETTE_ARGB_SPEC256 = readSpec256RawPalette();
-  private static final byte[] MAP_ZXPOLY2SPEC256INDEX = makePaletteMapIndexes(PALETTE_ARGB_SPEC256);
+  private static final byte[] MAP_ZXPOLY2SPEC256INDEX = makePaletteMap(PALETTE_ARGB_SPEC256);
 
-  public static byte[] getPhysicalCpuPage(final int cpu, final int page, final ZXPolyData data) {
+  private static byte[] getPhysicalCpuPage(final int cpu, final int page, final ZXPolyData data) {
     final byte[] bankData = new byte[PAGE_SIZE];
     System.arraycopy(data.getDataForCPU(cpu), page * PAGE_SIZE, bankData, 0, PAGE_SIZE);
     return bankData;
   }
 
-  public static byte[] getPhysicalMaskPage(final int page, final ZXPolyData data) {
+  private static byte[] getPhysicalMaskPage(final int page, final ZXPolyData data) {
     final byte[] maskData = new byte[PAGE_SIZE];
     System.arraycopy(data.getMask(), page * PAGE_SIZE, maskData, 0, PAGE_SIZE);
     return maskData;
   }
 
-  public static byte[] getPhysicalBasePage(final int page, final ZXPolyData data) {
+  private static byte[] getPhysicalBasePage(final int page, final ZXPolyData data) {
     final byte[] baseData = new byte[PAGE_SIZE];
     System.arraycopy(data.getBaseData(), page * PAGE_SIZE, baseData, 0, PAGE_SIZE);
     return baseData;
@@ -118,7 +118,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     return (byte) lastIndex;
   }
 
-  private static byte[] makePaletteMapIndexes(final int[] argbSpec256Palette) {
+  private static byte[] makePaletteMap(final int[] argbSpec256Palette) {
     final byte[] result = new byte[ARGB_PALETTE_ZXPOLY.length];
 
     for (int i = 0; i < result.length; i++) {
@@ -248,9 +248,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     } else {
       bankIndexes = new byte[extraData[0] & 0xFF];
       banksInExtra = bankIndexes.length;
-      for (int i = 0; i < bankIndexes.length; i++) {
-        bankIndexes[i] = extraData[i + 1];
-      }
+      System.arraycopy(extraData, 1, bankIndexes, 0, bankIndexes.length);
     }
     final byte[] z80header = Arrays.copyOfRange(extraData, banksInExtra + 1, extraData.length);
     final int version = getVersion(z80header);
@@ -352,8 +350,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       }
     }
 
-    final byte[] resultArray = result.End().toByteArray();
-    return resultArray;
+    return result.End().toByteArray();
   }
 
   private void saveSpec256Zip(
