@@ -27,6 +27,8 @@ import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugi
 import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.getVersion;
 import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.is48k;
 import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.makePair;
+import static java.lang.Math.pow;
+import static java.lang.Math.sqrt;
 
 
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
@@ -93,25 +95,32 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     return baseData;
   }
 
-  private static byte findCloseIndex(final int argb, final int[] argbSpec256Palette,
-                                     final int lowIndex, final int highIndex) {
-    final int r = (argb >>> 16) & 0xFF;
-    final int g = (argb >>> 8) & 0xFF;
-    final int b = argb & 0xFF;
+  private static byte findCloserIndexInPalette(
+      final int argbColor,
+      final int[] argbPalette,
+      final int minIndexIncl,
+      final int maxIndexExcl
+  ) {
+    final int r = (argbColor >>> 16) & 0xFF;
+    final int g = (argbColor >>> 8) & 0xFF;
+    final int b = argbColor & 0xFF;
 
-    double lastDistance = Double.MAX_VALUE;
-    int lastIndex = lowIndex;
+    double curDistance = Double.MAX_VALUE;
+    int lastIndex = minIndexIncl;
 
-    for (int i = lowIndex; i < highIndex; i++) {
-      final int zr = (argbSpec256Palette[i] >>> 16) & 0xFF;
-      final int zg = (argbSpec256Palette[i] >>> 8) & 0xFF;
-      final int zb = argbSpec256Palette[i] & 0xFF;
+    for (int i = minIndexIncl; i < maxIndexExcl; i++) {
+      final int ir = (argbPalette[i] >>> 16) & 0xFF;
+      final int ig = (argbPalette[i] >>> 8) & 0xFF;
+      final int ib = argbPalette[i] & 0xFF;
 
       final double distance =
-          Math.sqrt((Math.pow(r - zr, 2) + Math.pow(g - zg, 2) + Math.pow(b - zb, 2)));
-      if (distance < lastDistance) {
+          sqrt((pow(r - ir, 2) + pow(g - ig, 2) + pow(b - ib, 2)));
+      if (distance < .1e-15d) {
         lastIndex = i;
-        lastDistance = distance;
+        break;
+      } else if (distance < curDistance) {
+        lastIndex = i;
+        curDistance = distance;
       }
     }
 
@@ -122,7 +131,11 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     final byte[] result = new byte[ARGB_PALETTE_ZXPOLY.length];
 
     for (int i = 0; i < result.length; i++) {
-      result[i] = findCloseIndex(ARGB_PALETTE_ZXPOLY[i], argbSpec256Palette, 0, 191);
+      result[i] = findCloserIndexInPalette(
+          ARGB_PALETTE_ZXPOLY[i],
+          argbSpec256Palette,
+          0,
+          192);
     }
 
     return result;
@@ -302,7 +315,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       for (int page = 0; page < 3; page++) {
         ram.Byte(getPhysicalBasePage(page, data));
       }
-      final byte [] ramField = ram.End().toByteArray();
+      final byte[] ramField = ram.End().toByteArray();
 
       int spAddr = mheader.reg_sp;
 
