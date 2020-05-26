@@ -43,6 +43,7 @@ import com.igormaznitsa.zxpoly.formats.FormatSpec256;
 import com.igormaznitsa.zxpoly.formats.FormatZ80;
 import com.igormaznitsa.zxpoly.formats.FormatZXP;
 import com.igormaznitsa.zxpoly.formats.Snapshot;
+import com.igormaznitsa.zxpoly.streamer.ZxVideoStreamer;
 import com.igormaznitsa.zxpoly.tracer.TraceCpuForm;
 import com.igormaznitsa.zxpoly.ui.AboutDialog;
 import com.igormaznitsa.zxpoly.ui.AddressPanel;
@@ -78,7 +79,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -156,6 +159,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final Motherboard board;
   private volatile boolean zxKeyboardProcessingAllowed = true;
   public static RomData BASE_ROM;
+  private final AtomicReference<ZxVideoStreamer> videoStreamer = new AtomicReference<>();
 
   private final Runnable traceWindowsUpdater = new Runnable() {
 
@@ -212,6 +216,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenu menuOptions;
   private JCheckBoxMenuItem menuOptionsEnableTrapMouse;
   private JCheckBoxMenuItem menuOptionsEnableSpeaker;
+  private JCheckBoxMenuItem menuOptionsEnableVideoStream;
   private JCheckBoxMenuItem menuOptionsShowIndicators;
   private JCheckBoxMenuItem menuOptionsTurbo;
   private JCheckBoxMenuItem menuOptionsZX128Mode;
@@ -261,6 +266,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private javax.swing.JScrollPane scrollPanel;
 
   public MainForm(final String title, final String romPath) throws IOException {
+    Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
+
     final String ticks = System.getProperty("zxpoly.int.ticks", "");
     int intBetweenFrames = AppOptions.getInstance().getIntBetweenFrames();
     try {
@@ -390,6 +397,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       daemon.setDaemon(true);
       daemon.start();
     });
+  }
+
+  private void doOnShutdown() {
+    final ZxVideoStreamer streamer = this.videoStreamer.getAndSet(null);
+    if (streamer != null) {
+      streamer.stop();
+    }
   }
 
   private Optional<SourceSoundPort> showSelectSoundLineDialog(
@@ -805,6 +819,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsTurbo = new JCheckBoxMenuItem();
     menuOptionsEnableTrapMouse = new JCheckBoxMenuItem();
     menuOptionsEnableSpeaker = new JCheckBoxMenuItem();
+    menuOptionsEnableVideoStream = new JCheckBoxMenuItem();
     menuHelp = new JMenu();
     menuHelpAbout = new JMenuItem();
     menuHelpDonation = new JMenuItem();
@@ -1127,6 +1142,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsEnableSpeaker.addActionListener(this::menuOptionsEnableSpeakerActionPerformed);
     menuOptions.add(menuOptionsEnableSpeaker);
 
+    menuOptionsEnableVideoStream.setText("Video stream");
+    menuOptionsEnableVideoStream.setToolTipText("Turn on video streaming");
+    menuOptionsEnableVideoStream.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/speaker.png"))); // NOI18N
+    menuOptionsEnableVideoStream
+        .addActionListener(this::menuOptionsEnableVideoStreamActionPerformed);
+    menuOptions.add(menuOptionsEnableVideoStream);
+
     menuBar.add(menuOptions);
 
     menuHelp.setText("Help");
@@ -1160,11 +1183,71 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     pack();
   }
 
+  private void menuOptionsEnableVideoStreamActionPerformed(final ActionEvent actionEvent) {
+    this.stepSemaphor.lock();
+    try {
+      if (this.menuOptionsEnableVideoStream.isSelected()) {
+        final InetAddress address;
+        try {
+          address = InetAddress.getLocalHost();
+        } catch (UnknownHostException ex) {
+          JOptionPane.showMessageDialog(this, "Can't get address: " + ex.getMessage(), "Error",
+              JOptionPane.WARNING_MESSAGE);
+          this.menuOptionsEnableVideoStream.setSelected(false);
+          return;
+        }
+        final ZxVideoStreamer newStreamer;
+        try {
+          newStreamer = new ZxVideoStreamer(
+              this.board.getVideoController(),
+              this.board.getBeeper(),
+              "ffmpeg",
+              address,
+              0,
+              25,
+              streamer -> {
+                if (this.videoStreamer.compareAndSet(streamer, null)) {
+                  streamer.stop();
+                  SwingUtilities.invokeLater(()->this.menuOptionsEnableVideoStream.setSelected(false));
+                }
+              }
+          );
+        } catch (Exception ex) {
+          JOptionPane.showMessageDialog(this, "Can't create stream: " + ex.getMessage(), "Error",
+              JOptionPane.WARNING_MESSAGE);
+          this.menuOptionsEnableVideoStream.setSelected(false);
+          return;
+        }
+
+        if (this.videoStreamer.compareAndSet(null, newStreamer)) {
+          try {
+            newStreamer.start();
+          } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Can't start: " + ex.getMessage(), "Error",
+                JOptionPane.ERROR_MESSAGE);
+            this.menuOptionsEnableVideoStream.setSelected(false);
+          }
+        } else {
+          JOptionPane.showMessageDialog(this, "Video stream already active!", "Alrady active",
+              JOptionPane.WARNING_MESSAGE);
+        }
+      } else {
+        final ZxVideoStreamer streamer = this.videoStreamer.getAndSet(null);
+        if (streamer != null) {
+          streamer.stop();
+        }
+      }
+    } finally {
+      this.stepSemaphor.unlock();
+    }
+  }
+
   private void menuOptionsEnableSpeakerActionPerformed(final ActionEvent actionEvent) {
     this.stepSemaphor.lock();
     try {
       if (this.menuOptionsEnableSpeaker.isSelected()) {
-        final Optional<SourceSoundPort> port = this.findAudioLine(this.board.getBeeper().getAudioFormat());
+        final Optional<SourceSoundPort> port =
+            this.findAudioLine(this.board.getBeeper().getAudioFormat());
         if (port.isPresent()) {
           this.board.getBeeper().setSourceSoundPort(port.get());
           if (this.board.getBeeper().isNullBeeper()) {
@@ -1176,7 +1259,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       } else {
         this.board.getBeeper().setSourceSoundPort(null);
       }
-    }finally {
+    } finally {
       this.stepSemaphor.unlock();
     }
   }

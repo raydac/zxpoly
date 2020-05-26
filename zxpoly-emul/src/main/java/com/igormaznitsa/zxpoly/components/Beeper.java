@@ -52,6 +52,18 @@ public class Beeper {
 
   private static final Logger LOGGER = Logger.getLogger("Beeper");
   private static final boolean LOG_RAW_SOUND = false;
+  private static final int SND_FREQ = 44100;
+
+  public static final AudioFormat AUDIO_FORMAT = new AudioFormat(
+      PCM_SIGNED,
+      SND_FREQ,
+      16,
+      2,
+      4,
+      SND_FREQ,
+      false
+  );
+
 
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
@@ -142,7 +154,7 @@ public class Beeper {
   }
 
   public AudioFormat getAudioFormat() {
-    return InternalBeeper.AUDIO_FORMAT;
+    return AUDIO_FORMAT;
   }
 
   private interface IBeeper {
@@ -167,19 +179,9 @@ public class Beeper {
   private static final class InternalBeeper implements IBeeper, Runnable {
 
     private static final int NUMBER_OF_LEVELS = 8;
-    private static final int SND_FREQ = 44100;
     private static final int SAMPLES_IN_INT = SND_FREQ / 50;
     private static final int SND_BUFFER_LENGTH = SAMPLES_IN_INT << 2;
     private static final int NUM_OF_BUFFERS = 3;
-    private static final AudioFormat AUDIO_FORMAT = new AudioFormat(
-        PCM_SIGNED,
-        SND_FREQ,
-        16,
-        2,
-        4,
-        SND_FREQ,
-        false
-    );
     private final byte[][] soundBuffers = new byte[NUM_OF_BUFFERS][SND_BUFFER_LENGTH];
     private final Exchanger<byte[]> exchanger = new Exchanger<>();
     private final SourceDataLine sourceDataLine;
