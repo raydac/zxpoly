@@ -297,9 +297,21 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
         .Byte(makeSnaHeaderFromZ80Header(mheader, snaIn48));
 
     if (snaIn48) {
+      JBBPOut ram = JBBPOut.BeginBin();
+
       for (int page = 0; page < 3; page++) {
-        mainSnapshotOut.Byte(getPhysicalBasePage(page, data));
+        ram.Byte(getPhysicalBasePage(page, data));
       }
+      final byte [] ramField = ram.End().toByteArray();
+
+      int spAddr = mheader.reg_sp;
+
+      spAddr--;
+      ramField[spAddr - 0x4000] = (byte) regPc;
+      spAddr--;
+      ramField[spAddr - 0x4000] = (byte) (regPc >>> 8);
+
+      mainSnapshotOut.Byte(ramField);
       mainGfxData = makeGfx(data, 0, 1, 2);
     } else {
       if (orig48) {
@@ -314,7 +326,8 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
         mainGfxData = makeGfx(data, 5, 2, port7ffd & 7);
       }
 
-      mainSnapshotOut.Short(regPc)
+      mainSnapshotOut
+          .Short(regPc)
           .Byte(port7ffd)
           .Byte(0);
 
