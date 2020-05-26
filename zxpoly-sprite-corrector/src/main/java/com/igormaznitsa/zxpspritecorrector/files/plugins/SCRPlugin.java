@@ -29,6 +29,8 @@ import org.apache.commons.io.FileUtils;
 
 public class SCRPlugin extends AbstractFilePlugin {
 
+  private static final String DESCRIPTION = "ZX 256x192 screen";
+
   public SCRPlugin() {
     super();
   }
@@ -40,7 +42,7 @@ public class SCRPlugin extends AbstractFilePlugin {
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return "ZX-Spectrum Screen file";
+    return DESCRIPTION;
   }
 
   @Override
@@ -111,12 +113,12 @@ public class SCRPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return getToolTip(false) + " (*.SCR)";
+    return DESCRIPTION + " (*.SCR)";
   }
 
   @Override
   public String getPluginDescription(final boolean forExport) {
-    return "SCR file";
+    return DESCRIPTION;
   }
 
 }

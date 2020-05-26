@@ -37,6 +37,8 @@ import org.apache.commons.io.FileUtils;
 
 public final class SNAPlugin extends AbstractFilePlugin {
 
+  private static final String DESCRIPTION = "SNA snapshot";
+
   private final JBBPParser SNA_PARSER = JBBPParser.prepare(
       "ubyte regI;"
           + "<ushort altRegHL;"
@@ -73,7 +75,7 @@ public final class SNAPlugin extends AbstractFilePlugin {
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return "SNA ZX snapshot";
+    return DESCRIPTION;
   }
 
   @Override
@@ -97,14 +99,14 @@ public final class SNAPlugin extends AbstractFilePlugin {
 
       @Override
       public String getDescription() {
-        return "SNA ZX snapshot file (*.SNA)";
+        return getToolTip(true) + " (*.SNA)";
       }
     };
   }
 
   @Override
   public String getPluginDescription(final boolean forExport) {
-    return "SNA ZX snapshot file";
+    return DESCRIPTION;
   }
 
   @Override
@@ -222,7 +224,7 @@ public final class SNAPlugin extends AbstractFilePlugin {
           .End().toByteArray();
       return new ReadResult(new ZXPolyData(
           new Info(file.getName(), 'C', snaFile.extendedData.regPC, data.length, 0, extra),
-          new Z80Plugin(), data), null);
+          new Z80InZXPOutPlugin(), data), null);
     } else {
       System.out.println("SNA48 DETECTED");
 
@@ -274,7 +276,7 @@ public final class SNAPlugin extends AbstractFilePlugin {
           .End().toByteArray();
       return new ReadResult(
           new ZXPolyData(new Info(file.getName(), 'C', startAddress, dataLength, 0, extra),
-              new Z80Plugin(), data), null);
+              new Z80InZXPOutPlugin(), data), null);
     }
   }
 
@@ -292,7 +294,7 @@ public final class SNAPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return "SNA ZX48 Snapshot (*.SNA)";
+    return DESCRIPTION + " (*.SNA)";
   }
 
   public static class SnaFileSnapshot {

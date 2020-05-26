@@ -42,7 +42,10 @@ import java.util.List;
 import java.util.Locale;
 import org.apache.commons.io.FileUtils;
 
-public final class Z80Plugin extends AbstractFilePlugin {
+public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
+
+  private static final String DESCRIPTION_IN = "Z80 snapshot";
+  private static final String DESCRIPTION_OUT = "ZX-Poly snapshot";
 
   public static final int PAGE_SIZE = 0x4000;
 
@@ -228,7 +231,7 @@ public final class Z80Plugin extends AbstractFilePlugin {
 
   @Override
   public String getPluginDescription(final boolean forExport) {
-    return forExport ? "ZXP file" : "Z80 file";
+    return forExport ? DESCRIPTION_OUT : DESCRIPTION_IN;
   }
 
   @Override
@@ -239,7 +242,7 @@ public final class Z80Plugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return "Z80 Snapshot (*.Z80)";
+    return DESCRIPTION_IN + " (*.Z80)";
   }
 
   @Override
@@ -259,7 +262,7 @@ public final class Z80Plugin extends AbstractFilePlugin {
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return forExport ? "ZXPZ80 snapshot" : "Z80 snapshot file";
+    return forExport ? DESCRIPTION_OUT : DESCRIPTION_IN;
   }
 
   @Override
@@ -278,7 +281,7 @@ public final class Z80Plugin extends AbstractFilePlugin {
 
       @Override
       public String getDescription() {
-        return "ZXP Snapshot (*.ZXP)";
+        return DESCRIPTION_OUT + " (*.ZXP)";
       }
     };
   }
@@ -423,7 +426,7 @@ public final class Z80Plugin extends AbstractFilePlugin {
   @Override
   public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData)
       throws IOException {
-    if (!(data.getPlugin() instanceof Z80Plugin)) {
+    if (!(data.getPlugin() instanceof Z80InZXPOutPlugin)) {
       throw new IOException("Only imported Z80 snapshot can be exported");
     }
 

@@ -15,9 +15,12 @@ import java.util.List;
 import javax.swing.filechooser.FileFilter;
 
 public class LegacySZEPlugin extends AbstractFilePlugin {
+
+  private static final String DESCRIPTION = "Old ZX-Poly corrector";
+
   @Override
   public String getToolTip(boolean forExport) {
-    return forExport ? "unsupported" : "Legacy ZXPoly corrector format";
+    return "Old format of ZX-Editor container";
   }
 
   @Override
@@ -160,15 +163,13 @@ public class LegacySZEPlugin extends AbstractFilePlugin {
           zoom
       );
 
-      final ReadResult result = new ReadResult(data, sessionData);
-
-      return result;
+      return new ReadResult(data, sessionData);
     }
   }
 
   @Override
   public void writeTo(File file, ZXPolyData data, SessionData sessionData) throws IOException {
-    throw new UnsupportedOperationException("Write is unsupported for the plugin");
+    throw new UnsupportedOperationException("Write is unsupported");
   }
 
   @Override
@@ -184,6 +185,6 @@ public class LegacySZEPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return getToolTip(false) + " (*.ZXP)";
+    return DESCRIPTION + " (*.ZXP)";
   }
 }

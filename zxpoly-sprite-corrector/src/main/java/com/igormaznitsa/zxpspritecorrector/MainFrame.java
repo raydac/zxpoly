@@ -39,7 +39,7 @@ import com.igormaznitsa.zxpspritecorrector.files.plugins.SZEPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.Spec256ZipPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.TAPPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.TRDPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin;
 import com.igormaznitsa.zxpspritecorrector.tools.AbstractTool;
 import com.igormaznitsa.zxpspritecorrector.tools.ToolButtonModel;
 import com.igormaznitsa.zxpspritecorrector.tools.ToolColorizer;
@@ -213,7 +213,7 @@ public final class MainFrame extends javax.swing.JFrame {
     this.container.addComponent(TRDPlugin.class);
     this.container.addComponent(SCLPlugin.class);
     this.container.addComponent(SCRPlugin.class);
-    this.container.addComponent(Z80Plugin.class);
+    this.container.addComponent(Z80InZXPOutPlugin.class);
     this.container.addComponent(SNAPlugin.class);
     this.container.addComponent(Spec256ZipPlugin.class);
     this.container.addComponent(LegacySZEPlugin.class);

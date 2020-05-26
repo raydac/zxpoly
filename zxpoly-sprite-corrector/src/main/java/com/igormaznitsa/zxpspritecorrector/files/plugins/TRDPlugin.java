@@ -38,6 +38,8 @@ import java.util.Locale;
 
 public class TRDPlugin extends AbstractFilePlugin {
 
+  private static final String DESCRIPTION = "TR-Dos disk image";
+
   public static final JBBPParser CATALOG_PARSER = JBBPParser.prepare(
       "byte [8] name; ubyte type; <ushort start; <ushort length; ubyte sectors; ubyte firstSector; ubyte track;");
 
@@ -47,12 +49,12 @@ public class TRDPlugin extends AbstractFilePlugin {
 
   @Override
   public String getPluginDescription(final boolean forExport) {
-    return "TRD file";
+    return DESCRIPTION;
   }
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return "A TR-DOS disk image format";
+    return DESCRIPTION;
   }
 
   @Override
@@ -172,7 +174,7 @@ public class TRDPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return getToolTip(false) + " (*.TRD)";
+    return DESCRIPTION + " (*.TRD)";
   }
 
   @Override

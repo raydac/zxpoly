@@ -38,6 +38,8 @@ import org.apache.commons.io.FilenameUtils;
 
 public class HOBETAPlugin extends AbstractFilePlugin {
 
+  private static final String DESCRIPTION = "Hobeta file";
+
   public static final JBBPParser HOBETA_FILE_PARSER = JBBPParser.prepare(
       "byte [8] name; "
           + "byte type; <ushort start; "
@@ -68,7 +70,7 @@ public class HOBETAPlugin extends AbstractFilePlugin {
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return "A Hobeta file format";
+    return "Single file extracted from a TR-Dos disk";
   }
 
   @Override
@@ -112,7 +114,7 @@ public class HOBETAPlugin extends AbstractFilePlugin {
 
   @Override
   public String getPluginDescription(final boolean forExport) {
-    return "Hobeta file";
+    return DESCRIPTION;
   }
 
   @Override
@@ -212,7 +214,7 @@ public class HOBETAPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return getToolTip(false) + " (*.$?)";
+    return DESCRIPTION + " (*.$?)";
   }
 
   public static final class Hobeta {

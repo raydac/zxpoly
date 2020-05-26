@@ -37,6 +37,8 @@ import java.util.Locale;
 
 public class SCLPlugin extends AbstractFilePlugin {
 
+  private static final String DESCRIPTION = "TR-Dos SCL disk image";
+
   public static final JBBPParser CATALOG_PARSER = JBBPParser
       .prepare("byte [8] name; ubyte type; <ushort start; <ushort length; ubyte sectors;");
 
@@ -51,7 +53,7 @@ public class SCLPlugin extends AbstractFilePlugin {
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return "A TR-DOS compact disk image format";
+    return DESCRIPTION;
   }
 
   @Override
@@ -61,7 +63,7 @@ public class SCLPlugin extends AbstractFilePlugin {
 
   @Override
   public String getPluginDescription(final boolean forExport) {
-    return "SCL file";
+    return DESCRIPTION;
   }
 
   @Override
@@ -113,7 +115,7 @@ public class SCLPlugin extends AbstractFilePlugin {
         for (int i = 0; i < index; i++) {
           final int len = list.get(i).sectors * 256;
           if (len != in.skip(len)) {
-            throw new IllegalStateException("Can't skip bytes [" + list.get(i).length + ']');
+            throw new IllegalStateException("Can't skip bytes:" + list.get(i).length);
           }
         }
         final long offset = in.getCounter();
@@ -122,7 +124,7 @@ public class SCLPlugin extends AbstractFilePlugin {
                 (int) offset), this, in.readByteArray(itemToRead.sectors * 256)), null);
 
       } else {
-        throw new IllegalArgumentException("It's not a SCl file [" + file.getAbsolutePath() + ']');
+        throw new IllegalArgumentException("It's not a SCl file: " + file);
       }
     } finally {
       JBBPUtils.closeQuietly(in);
@@ -169,8 +171,8 @@ public class SCLPlugin extends AbstractFilePlugin {
 
   @Override
   public boolean accept(final File pathname) {
-    return pathname != null &&
-        (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".scl"));
+    return pathname != null
+        && (pathname.isDirectory() || pathname.getName().toLowerCase(Locale.ENGLISH).endsWith(".scl"));
   }
 
   @Override

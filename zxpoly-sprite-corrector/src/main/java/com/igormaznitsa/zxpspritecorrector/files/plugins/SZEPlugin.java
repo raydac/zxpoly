@@ -34,6 +34,8 @@ import org.picocontainer.annotations.Inject;
 
 public class SZEPlugin extends AbstractFilePlugin {
 
+  private static final String DESCRIPTION = "ZX-Poly editor session";
+
   @Inject
   private PicoContainer context;
 
@@ -53,7 +55,7 @@ public class SZEPlugin extends AbstractFilePlugin {
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return "ZX-Poly Sprite corrector session";
+    return DESCRIPTION;
   }
 
   @Override
@@ -90,7 +92,7 @@ public class SZEPlugin extends AbstractFilePlugin {
 
   @Override
   public String getPluginDescription(final boolean forExport) {
-    return "SZE file";
+    return DESCRIPTION;
   }
 
   @Override
@@ -140,7 +142,7 @@ public class SZEPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return getToolTip(false) + " (*.SZE)";
+    return DESCRIPTION + " (*.SZE)";
   }
 
 }

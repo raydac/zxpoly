@@ -17,16 +17,16 @@
 
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin.PAGE_SIZE;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin.VERSION_1;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin.VERSION_2;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin.VERSION_3A;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin.VERSION_3B;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin.Z80_MAINPART;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin.convertZ80BankIndexesToPages;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin.getVersion;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin.is48k;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80Plugin.makePair;
+import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.PAGE_SIZE;
+import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.VERSION_1;
+import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.VERSION_2;
+import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.VERSION_3A;
+import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.VERSION_3B;
+import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.Z80_MAINPART;
+import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.convertZ80BankIndexesToPages;
+import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.getVersion;
+import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.is48k;
+import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.makePair;
 
 
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
@@ -51,6 +51,8 @@ import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FilenameUtils;
 
 public class Spec256ZipPlugin extends AbstractFilePlugin {
+
+  private static final String DESCRIPTION = "Spec256 container";
 
   public static final int[] ARGB_PALETTE_ZXPOLY = new int[] {
       0xFF000000,
@@ -186,7 +188,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return "Spec256 ZIP container";
+    return DESCRIPTION + " (*.ZIP)";
   }
 
   @Override
@@ -206,7 +208,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
 
   @Override
   public String getPluginDescription(final boolean forExport) {
-    return "ZIP Spec256 container";
+    return DESCRIPTION;
   }
 
   @Override
@@ -234,7 +236,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       final File file,
       final ZXPolyData data,
       final SessionData sessionData) throws IOException {
-    if (!(data.getPlugin() instanceof Z80Plugin)) {
+    if (!(data.getPlugin() instanceof Z80InZXPOutPlugin)) {
       throw new IOException("Only imported Z80 snapshot can be exported");
     }
 
@@ -253,8 +255,8 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     final byte[] z80header = Arrays.copyOfRange(extraData, banksInExtra + 1, extraData.length);
     final int version = getVersion(z80header);
     final boolean mode48 = is48k(version, z80header);
-    final Z80Plugin.Z80MainHeader mheader =
-        Z80_MAINPART.parse(z80header).mapTo(new Z80Plugin.Z80MainHeader());
+    final Z80InZXPOutPlugin.Z80MainHeader mheader =
+        Z80_MAINPART.parse(z80header).mapTo(new Z80InZXPOutPlugin.Z80MainHeader());
     final int regPc = version == VERSION_1 ? mheader.reg_pc :
         ((z80header[32] & 0xFF) << 8) | (z80header[33] & 0xFF);
     final byte[] pageIndexes = convertZ80BankIndexesToPages(bankIndexes, mode48, version);
@@ -401,7 +403,8 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
         + "DownMixPaper=0\n"
         + "BkMixed=0\n"
         + "BkMixBkAttr=0\n"
-        + "BkOverFF=1";
+        + "BkOverFF=1\n"
+        + "zxpAlignRegs=1PSsT";
   }
 
   @Override
@@ -412,11 +415,11 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return this.getToolTip(true) + " (*.zip)";
+    return this.getToolTip(true) + " (*.ZIP)";
   }
 
   private byte[] makeSnaHeaderFromZ80Header(
-      final Z80Plugin.Z80MainHeader z80header,
+      final Z80InZXPOutPlugin.Z80MainHeader z80header,
       final boolean pcOnStack
   ) throws IOException {
     return JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN)

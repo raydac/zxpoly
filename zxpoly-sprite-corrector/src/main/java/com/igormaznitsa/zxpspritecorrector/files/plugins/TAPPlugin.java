@@ -37,6 +37,8 @@ import org.apache.commons.io.FilenameUtils;
 
 public class TAPPlugin extends AbstractFilePlugin {
 
+  private static final String DESCRIPTION = "ZX Tape image";
+
   public static final JBBPParser TAP_FILE_PARSER = JBBPParser
       .prepare("tapblocks [_]{ <ushort len; byte flag; byte [len-2] data; byte checksum;}");
   public static final JBBPParser HEADER_PARSER = JBBPParser
@@ -71,12 +73,12 @@ public class TAPPlugin extends AbstractFilePlugin {
 
   @Override
   public String getPluginDescription(final boolean forExport) {
-    return "TAP file";
+    return DESCRIPTION;
   }
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return "A Tape image format";
+    return DESCRIPTION;
   }
 
   @Override
@@ -232,7 +234,7 @@ public class TAPPlugin extends AbstractFilePlugin {
   public void writeTo(final File file, final ZXPolyData data, final SessionData session)
       throws IOException {
     final int saveAsSeparateFiles = JOptionPane
-        .showConfirmDialog(this.mainFrame, "Save each block as a separated file?", "Separate files",
+        .showConfirmDialog(this.mainFrame, "Save each block as separated file?", "Separate files",
             JOptionPane.YES_NO_CANCEL_OPTION);
     if (saveAsSeparateFiles == JOptionPane.CANCEL_OPTION) {
       return;
@@ -325,7 +327,7 @@ public class TAPPlugin extends AbstractFilePlugin {
 
   @Override
   public String getDescription() {
-    return getToolTip(false) + " (*.TAP)";
+    return DESCRIPTION + " (*.TAP)";
   }
 
   @Override
