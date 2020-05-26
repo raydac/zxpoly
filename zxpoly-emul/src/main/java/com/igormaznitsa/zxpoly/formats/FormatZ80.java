@@ -57,6 +57,11 @@ public class FormatZ80 extends Snapshot {
     }
   }
 
+  private boolean isMode48(final ZxPolyModule module) {
+    final int port7FFD = module.read7FFD();
+    return (port7FFD & 0b00111000) == 0b00110000;
+  }
+
   @Override
   public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
     final Z80V3AParser parser = new Z80V3AParser();
@@ -100,6 +105,7 @@ public class FormatZ80 extends Snapshot {
     emulflags.setINPUTDEVICE((byte) 0);
 
     final ZxPolyModule module = board.getModules()[0];
+    final boolean mode48 = this.isMode48(module);
 
     final Z80V3AParser.FLAGS flags = parser.makeFLAGS();
 
@@ -113,18 +119,24 @@ public class FormatZ80 extends Snapshot {
     parser.setPORTFF((char) module.getMotherboard().readBusIo(module, 0xFF));
 
     parser.setHEADERLEN((char) 54);
-    parser.setMODE((char) 4);
+    parser.setMODE(mode48 ? (char) 0 : (char) 4);
     parser.setMISCNONZX(new byte[49]);
 
-    // save non compressed data blocks
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    for (int i = 0; i < 8; i++) {
-      int addr = i * PAGE_SIZE;
-      final byte[] data = new byte[PAGE_SIZE];
-      for (int x = 0; x < PAGE_SIZE; x++) {
-        data[x] = (byte) module.readHeap(addr++);
+    if (mode48) {
+      // save non compressed data blocks
+      final byte [] page4000 = module.makeCopyOfZxMemPage(1);
+      final byte [] page8000 = module.makeCopyOfZxMemPage(2);
+      final byte [] pageC000 = module.makeCopyOfZxMemPage(3);
+      new Bank(4, page8000).writeNonCompressed(bos);
+      new Bank(5, pageC000).writeNonCompressed(bos);
+      new Bank(8, page4000).writeNonCompressed(bos);
+    } else {
+      // save non compressed data blocks
+      for (int i = 0; i < 8; i++) {
+        final byte [] data = module.makeCopyOfHeapPage(i);
+        new Bank(i + 3, data).writeNonCompressed(bos);
       }
-      new Bank(i + 3, data).writeNonCompressed(bos);
     }
     bos.flush();
     bos.close();

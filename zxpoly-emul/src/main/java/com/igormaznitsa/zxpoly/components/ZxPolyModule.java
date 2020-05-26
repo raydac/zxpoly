@@ -161,7 +161,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     fiveElementArray[4] = (byte) this.zxPolyRegsWritten.get(3);
   }
 
-  public void fillPortByValues(final int port7ffd, final int reg0, final int reg1, final int reg2, final int reg3) {
+  public void fillPortByValues(final int port7ffd, final int reg0, final int reg1, final int reg2,
+                               final int reg3) {
     this.port7FFD.set(port7ffd & 0xFF);
     this.zxPolyRegsWritten.set(0, reg0 & 0xFF);
     this.zxPolyRegsWritten.set(1, reg1 & 0xFF);
@@ -266,7 +267,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     this.localInt = true;
   }
 
-  public boolean step(final boolean signalReset, final boolean commonInt, final boolean resetStatistic) {
+  public boolean step(final boolean signalReset, final boolean commonInt,
+                      final boolean resetStatistic) {
     final boolean doInt;
     final boolean doNmi;
 
@@ -285,7 +287,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         doInt = commonInt || this.localInt;
       }
     } else {
-      doInt = (!this.activeRegisterReading && this.registerReadingCounter <= 0) && ((!this.board.is3D00NotLocked() && commonInt) || this.localInt);
+      doInt = (!this.activeRegisterReading && this.registerReadingCounter <= 0) &&
+          ((!this.board.is3D00NotLocked() && commonInt) || this.localInt);
     }
     this.localInt = false;
 
@@ -322,23 +325,28 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     final int oldCpuState = this.cpu.getState();
     this.cpu.step(0,
-        Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.intCounter > 0 ? Z80.SIGNAL_IN_nINT : 0) ^ sigWait ^ (this.nmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
+        Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.intCounter > 0 ? Z80.SIGNAL_IN_nINT : 0) ^
+            sigWait ^ (this.nmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
     final int newCpuState = this.cpu.getState();
 
-    final boolean isHaltDetected = (newCpuState & Z80.SIGNAL_OUT_nHALT) == 0 && (oldCpuState & Z80.SIGNAL_OUT_nHALT) != 0;
+    final boolean isHaltDetected =
+        (newCpuState & Z80.SIGNAL_OUT_nHALT) == 0 && (oldCpuState & Z80.SIGNAL_OUT_nHALT) != 0;
 
     final boolean cpuIsActive = (sigWait | sigReset) == 0 && !(isHaltDetected || doInt);
 
-    this.mcyclesOfActivityBetweenInt += cpuIsActive ? Math.max(0L, this.cpu.getMachineCycles() - curMcyclesNumber) : -15000L;
+    this.mcyclesOfActivityBetweenInt +=
+        cpuIsActive ? Math.max(0L, this.cpu.getMachineCycles() - curMcyclesNumber) : -15000L;
     return isHaltDetected;
   }
 
-  public void stepWithGfxCpu(final int ctx, final Z80 gfxCpu, final boolean signalReset, final boolean commonInt) {
+  public void stepWithGfxCpu(final int ctx, final Z80 gfxCpu, final boolean signalReset,
+                             final boolean commonInt) {
     this.localInt = false;
     int sigReset = signalReset ? Z80.SIGNAL_IN_nRESET : 0;
     int sigWait = this.gfxWaitSignal ? Z80.SIGNAL_IN_nWAIT : 0;
     gfxCpu.step(ctx,
-        Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.gfxIntCounter > 0 ? Z80.SIGNAL_IN_nINT : 0) ^ sigWait ^ (this.gfxNmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
+        Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.gfxIntCounter > 0 ? Z80.SIGNAL_IN_nINT : 0) ^
+            sigWait ^ (this.gfxNmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
   }
 
   public boolean is7FFDLocked() {
@@ -391,6 +399,24 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     this.board.writeRam(this, getHeapOffset() + offset, data);
   }
 
+  public byte[] makeCopyOfHeapPage(final int page) {
+    final byte[] result = new byte[0x4000];
+    final int offset = 0x4000 * page;
+    for (int i = 0; i < 0x4000; i++) {
+      result[i] = (byte) this.readHeap(i + offset);
+    }
+    return result;
+  }
+
+  public byte[] makeCopyOfZxMemPage(final int page) {
+    final byte[] result = new byte[0x4000];
+    final int offset = 0x4000 * page;
+    for (int i = 0; i < 0x4000; i++) {
+      result[i] = this.readAddress(i + offset);
+    }
+    return result;
+  }
+
   public int readHeap(final int offset) {
     if (offset < 0 || offset > 0x1FFFF) {
       throw new IllegalArgumentException("Outbound memory offset [" + offset + ']');
@@ -404,7 +430,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public byte readMemory(final Z80 cpu, final int ctx, final int address, final boolean m1, final boolean cmdOrPrefix) {
+  public byte readMemory(final Z80 cpu, final int ctx, final int address, final boolean m1,
+                         final boolean cmdOrPrefix) {
     final byte result;
 
     if (ctx == 0) {
@@ -427,7 +454,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
       if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
         if (m1 && this.board.is3D00NotLocked() && this.registerReadingCounter == 0) {
-          final int moduleStopAddress = this.zxPolyRegsWritten.get(2) | (this.zxPolyRegsWritten.get(3) << 8);
+          final int moduleStopAddress =
+              this.zxPolyRegsWritten.get(2) | (this.zxPolyRegsWritten.get(3) << 8);
           this.stopAddressWait = address != 0 && address == moduleStopAddress;
         }
 
@@ -475,7 +503,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       if (trdosRomActive) {
         result = (byte) this.romData.get().readAdress(address + 0x8000);
       } else {
-        result = (byte) this.gfxRom.get((activeRom128 ? GFX_PAGE_SIZE : 0) + (address << 3) + gfxCoreIndex);
+        result = (byte) this.gfxRom
+            .get((activeRom128 ? GFX_PAGE_SIZE : 0) + (address << 3) + gfxCoreIndex);
       }
     } else {
       final int page;
@@ -738,9 +767,12 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
             final int reg0 = zxPolyRegsWritten.get(0);
             final int outForCPU0 =
                 this.moduleIndex == this.board.getMappedCpuIndex() ? PORTr_ZXPOLY_IOFORCPU0 : 0;
-            final int memDisabled = (reg0 & ZXPOLY_wREG0_MEMWR_DISABLED) == 0 ? 0 : PORTr_ZXPOLY_MEMDISABLED;
-            final int ioDisabled = (reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 ? 0 : PORTr_ZXPOLY_IODISABLED;
-            result = (byte) (this.moduleIndex | ((reg0 & 7) << 5) | outForCPU0 | memDisabled | ioDisabled);
+            final int memDisabled =
+                (reg0 & ZXPOLY_wREG0_MEMWR_DISABLED) == 0 ? 0 : PORTr_ZXPOLY_MEMDISABLED;
+            final int ioDisabled =
+                (reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 ? 0 : PORTr_ZXPOLY_IODISABLED;
+            result = (byte) (this.moduleIndex | ((reg0 & 7) << 5) | outForCPU0 | memDisabled |
+                ioDisabled);
           }
         } else {
           result = (byte) this.board.readBusIo(this, port);
@@ -773,7 +805,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         if ((reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 || port == PORTw_ZX128) {
           if (port == PORTw_ZX128) {
             if (this.moduleIndex == 0) {
-              if (this.board.getMappedCpuIndex() > 0 && (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_WRITE_MAPPED_IO_7FFD) != 0) {
+              if (this.board.getMappedCpuIndex() > 0 &&
+                  (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_WRITE_MAPPED_IO_7FFD) != 0) {
                 this.board.writeBusIo(this, port, val);
               } else {
                 write7FFD(val, false);
@@ -823,7 +856,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   private void prepareWaitSignal() {
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
-      this.waitSignal = this.stopAddressWait || (this.moduleIndex > 0 && this.board.isSlaveModulesInWaitMode());
+      this.waitSignal =
+          this.stopAddressWait || (this.moduleIndex > 0 && this.board.isSlaveModulesInWaitMode());
     } else {
       this.waitSignal = false;
     }

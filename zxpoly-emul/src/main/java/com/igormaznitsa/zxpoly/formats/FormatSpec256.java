@@ -75,7 +75,7 @@ public class FormatSpec256 extends Snapshot {
     final ZxPolyModule module = board.getModules()[0];
     final Z80 cpu = module.getCpu();
 
-    module.write7FFD(0b00_1_1_0_000, true);
+    module.write7FFD(sna128 ? parser.getEXTENDEDDATA().port7ffd : 0b00_1_1_0_000, true);
 
     cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getREGAF());
     cpu.setRegisterPair(Z80.REGPAIR_BC, parser.getREGBC());
@@ -135,10 +135,22 @@ public class FormatSpec256 extends Snapshot {
       }
     } else {
       int spValue = parser.getREGSP();
-      final int lowPc = parser.getRAMDUMP()[spValue - 0x4000] & 0xFF;
-      spValue = (spValue + 1) & 0xFFFF;
-      final int highPc = parser.getRAMDUMP()[spValue - 0x4000] & 0xFF;
-      spValue = (spValue + 1) & 0xFFFF;
+      final int lowPc;
+      final int highPc;
+      if (spValue < 0x4000) {
+        // ROM area
+        final byte [] romData = board.getRomData().getAsArray();
+        lowPc = romData[spValue] & 0xFF;
+        spValue = (spValue + 1) & 0xFFFF;
+        highPc = romData[spValue] & 0xFF;
+        spValue = (spValue + 1) & 0xFFFF;
+      } else {
+        lowPc = parser.getRAMDUMP()[spValue - 0x4000] & 0xFF;
+        spValue = (spValue + 1) & 0xFFFF;
+        highPc = parser.getRAMDUMP()[spValue - 0x4000] & 0xFF;
+        spValue = (spValue + 1) & 0xFFFF;
+      }
+
 
       cpu.setRegister(Z80.REG_SP, spValue);
       cpu.setRegister(Z80.REG_PC, (highPc << 8) | lowPc);

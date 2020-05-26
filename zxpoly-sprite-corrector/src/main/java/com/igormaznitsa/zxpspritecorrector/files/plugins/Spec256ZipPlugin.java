@@ -103,8 +103,6 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     int lastIndex = lowIndex;
 
     for (int i = lowIndex; i < highIndex; i++) {
-      final int currentIndex = i;
-
       final int zr = (argbSpec256Palette[i] >>> 16) & 0xFF;
       final int zg = (argbSpec256Palette[i] >>> 8) & 0xFF;
       final int zb = argbSpec256Palette[i] & 0xFF;
@@ -254,12 +252,15 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     }
     final byte[] z80header = Arrays.copyOfRange(extraData, banksInExtra + 1, extraData.length);
     final int version = getVersion(z80header);
-    final boolean mode48 = is48k(version, z80header);
     final Z80InZXPOutPlugin.Z80MainHeader mheader =
         Z80_MAINPART.parse(z80header).mapTo(new Z80InZXPOutPlugin.Z80MainHeader());
     final int regPc = version == VERSION_1 ? mheader.reg_pc :
         ((z80header[32] & 0xFF) << 8) | (z80header[33] & 0xFF);
-    final byte[] pageIndexes = convertZ80BankIndexesToPages(bankIndexes, mode48, version);
+    final byte[] pageIndexes =
+        convertZ80BankIndexesToPages(bankIndexes, is48k(version, z80header), version);
+
+    final boolean orig48 = is48k(version, z80header);
+    final boolean snaIn48 = orig48 && mheader.reg_sp > 0x4000;
 
     final int port7ffd;
     if (version == VERSION_1) {
@@ -289,44 +290,53 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       }
     }
 
-    final byte[] mainSnapshotData;
     final List<GfxPage> extraGfxPages = new ArrayList<>();
     final byte[] mainGfxData;
 
     final JBBPOut mainSnapshotOut = JBBPOut.BeginBin()
-        .Byte(makeSnaHeaderFromZ80Header(mheader, mode48));
+        .Byte(makeSnaHeaderFromZ80Header(mheader, snaIn48));
 
-    if (mode48) {
+    if (snaIn48) {
       for (int page = 0; page < 3; page++) {
         mainSnapshotOut.Byte(getPhysicalBasePage(page, data));
       }
-      mainSnapshotData = mainSnapshotOut.End().toByteArray();
       mainGfxData = makeGfx(data, 0, 1, 2);
     } else {
-      mainSnapshotOut.Byte(getPhysicalBasePage(5, data));
-      mainSnapshotOut.Byte(getPhysicalBasePage(2, data));
-      mainSnapshotOut.Byte(getPhysicalBasePage(port7ffd & 7, data));
-
-      mainGfxData = makeGfx(data, 5, 2, port7ffd & 7);
+      if (orig48) {
+        for (int page = 0; page < 3; page++) {
+          mainSnapshotOut.Byte(getPhysicalBasePage(page, data));
+        }
+        mainGfxData = makeGfx(data, 0, 1, 2);
+      } else {
+        mainSnapshotOut.Byte(getPhysicalBasePage(5, data));
+        mainSnapshotOut.Byte(getPhysicalBasePage(2, data));
+        mainSnapshotOut.Byte(getPhysicalBasePage(port7ffd & 7, data));
+        mainGfxData = makeGfx(data, 5, 2, port7ffd & 7);
+      }
 
       mainSnapshotOut.Short(regPc)
           .Byte(port7ffd)
           .Byte(0);
 
-      for (int i : pageIndexes) {
-        if (i == 2 || i == 5 || i == (port7ffd & 7)) {
-          continue;
+      if (orig48) {
+        final byte[] fakePage = new byte[0x4000];
+        for (int i = 0; i < 5; i++) {
+          mainSnapshotOut.Byte(fakePage);
         }
-        mainSnapshotOut.Byte(getPhysicalBasePage(i, data));
-        extraGfxPages.add(new GfxPage(i, makeGfx(data, i)));
+      } else {
+        for (int i : pageIndexes) {
+          if (i == 2 || i == 5 || i == (port7ffd & 7)) {
+            continue;
+          }
+          mainSnapshotOut.Byte(getPhysicalBasePage(i, data));
+          extraGfxPages.add(new GfxPage(i, makeGfx(data, i)));
+        }
       }
-      mainSnapshotData = mainSnapshotOut.End().toByteArray();
-
-      if (extraGfxPages.stream().noneMatch(x -> x.index == 0)) {
+      if (!orig48 && extraGfxPages.stream().noneMatch(x -> x.index == 0)) {
         extraGfxPages.add(new GfxPage(0, makeGfx(data, 0)));
       }
     }
-    saveSpec256Zip(file, mainSnapshotData, mainGfxData, extraGfxPages);
+    saveSpec256Zip(file, mainSnapshotOut.End().toByteArray(), mainGfxData, extraGfxPages);
   }
 
   private byte[] makeGfx(final ZXPolyData data, final int... pageIndexes) throws IOException {

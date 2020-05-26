@@ -219,7 +219,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenuItem menuServiceGameControllers;
   private JMenuItem menuServiceSaveScreen;
   private JMenuItem menuServiceSaveScreenAllVRAM;
-  private JMenuItem menuServicemakeSnapshot;
+  private JMenuItem menuServiceMakeSnapshot;
   private JMenu menuTap;
   private JMenu menuTapExportAs;
   private JMenuItem menuTapExportAsWav;
@@ -787,7 +787,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuServiceGameControllers = new JMenuItem();
     menuServiceSaveScreenAllVRAM = new JMenuItem();
     menuActionAnimatedGIF = new JMenuItem();
-    menuServicemakeSnapshot = new JMenuItem();
+    menuServiceMakeSnapshot = new JMenuItem();
     menuTapExportAs = new JMenu();
     menuTapExportAsWav = new JMenuItem();
     menuCatcher = new JMenu();
@@ -1025,11 +1025,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuActionAnimatedGIF.addActionListener(this::menuActionAnimatedGIFActionPerformed);
     menuService.add(menuActionAnimatedGIF);
 
-    menuServicemakeSnapshot.setIcon(new ImageIcon(
+    menuServiceMakeSnapshot.setIcon(new ImageIcon(
         getClass().getResource("/com/igormaznitsa/zxpoly/icons/save_snapshot.png"))); // NOI18N
-    menuServicemakeSnapshot.setText("Save snapshot");
-    menuServicemakeSnapshot.addActionListener(this::menuServicemakeSnapshotActionPerformed);
-    menuService.add(menuServicemakeSnapshot);
+    menuServiceMakeSnapshot.setText("Save snapshot");
+    menuServiceMakeSnapshot.addActionListener(this::menuServicemakeSnapshotActionPerformed);
+    menuService.add(menuServiceMakeSnapshot);
 
     menuTapExportAs.setIcon(new ImageIcon(
         getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png"))); // NOI18N

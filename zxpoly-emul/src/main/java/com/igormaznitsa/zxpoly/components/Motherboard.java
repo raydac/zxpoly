@@ -68,6 +68,7 @@ public final class Motherboard implements ZxPolyConstants {
   private volatile int gfxSyncRegsRecord = 0;
   private final Random rnd = new Random();
   private final Beeper beeper;
+  private final RomData romData;
 
   public Motherboard(final RomData rom) {
     if (rom == null) {
@@ -82,6 +83,7 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.beeper = new Beeper();
     this.betaDisk = new BetaDiscInterface(this);
+    this.romData = rom;
 
     iodevices.add(this.betaDisk);
 
@@ -429,6 +431,10 @@ public final class Motherboard implements ZxPolyConstants {
 
     }
     return result;
+  }
+
+  public RomData getRomData() {
+    return this.romData;
   }
 
   private void doModuleHaltNotification(final int moduleIndex) {
