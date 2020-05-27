@@ -47,16 +47,18 @@ public class ZxVideoStreamer {
     this.frameRate = snapsPerSecond;
     this.videoWriter =
         new TcpWriter("tcp-video-writer", 2, InetAddress.getLoopbackAddress(), 0);
-    this.soundWriter =
-        new TcpWriter("tcp-sound-writer", 16, InetAddress.getLoopbackAddress(), 0);
+
+    if (this.beeper == null) {
+      this.soundWriter = null;
+      this.soudPort = null;
+    } else {
+      this.soundWriter =
+          new TcpWriter("tcp-sound-writer", 16, InetAddress.getLoopbackAddress(), 0);
+      this.soudPort = new ZxSoundPort(this.soundWriter);
+    }
     this.outDataRetranslator =
         new InternalHttpServer("video/MP2T", InetAddress.getLoopbackAddress(), 0,
             address, port);
-    this.soudPort = new ZxSoundPort(this.soundWriter);
-  }
-
-  public ZxSoundPort getSoudPort() {
-    return this.soudPort;
   }
 
   public void stop() {
@@ -74,7 +76,9 @@ public class ZxVideoStreamer {
     }
 
     this.videoWriter.stop();
-    this.soundWriter.stop();
+    if (this.soundWriter != null) {
+      this.soundWriter.stop();
+    }
 
     final Thread thread = this.currentThread.getAndSet(null);
     if (thread != null) {
@@ -91,7 +95,7 @@ public class ZxVideoStreamer {
     stop();
 
     this.stopped = false;
-    CountDownLatch latch = new CountDownLatch(2);
+    CountDownLatch latch = new CountDownLatch(this.soundWriter == null ? 1 : 2);
     final AtomicInteger errorCounter = new AtomicInteger();
 
     final AbstractTcpSingleThreadServer.TcpServerListener
@@ -119,10 +123,11 @@ public class ZxVideoStreamer {
     };
 
     this.videoWriter.addListener(listener);
-    this.soundWriter.addListener(listener);
-
+    if (this.soundWriter != null) {
+      this.soundWriter.addListener(listener);
+      this.soundWriter.start();
+    }
     this.videoWriter.start();
-    this.soundWriter.start();
 
     try {
       latch.await();
@@ -147,7 +152,8 @@ public class ZxVideoStreamer {
         this.ffmpegPath,
         this.frameRate,
         "tcp://" + this.videoWriter.getServerAddress(),
-        "tcp://" + this.soundWriter.getServerAddress(),
+        this.soundWriter == null ? null :
+            "tcp://" + this.soundWriter.getServerAddress(),
         "tcp://" + this.outDataRetranslator.getTcpAddress()
     );
 

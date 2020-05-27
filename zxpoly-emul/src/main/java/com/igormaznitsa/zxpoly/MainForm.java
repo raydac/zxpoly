@@ -1200,7 +1200,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         try {
           newStreamer = new ZxVideoStreamer(
               this.board.getVideoController(),
-              this.board.getBeeper(),
+              null, //this.board.getBeeper(),
               "ffmpeg",
               address,
               0,

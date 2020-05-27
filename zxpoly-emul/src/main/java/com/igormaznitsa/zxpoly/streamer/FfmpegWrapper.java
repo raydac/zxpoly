@@ -79,30 +79,32 @@ public class FfmpegWrapper {
     args.add("-i");
     args.add(this.srcVideo);
 
-    args.add("-thread_queue_size");
-    args.add("1024");
+    if (this.srcAudio != null) {
+      args.add("-thread_queue_size");
+      args.add("1024");
 
-    args.add("-re");
+      args.add("-re");
 
-    args.add("-ar");
-    args.add("44100");
+      args.add("-ar");
+      args.add("44100");
 
-    args.add("-ac");
-    args.add("2");
+      args.add("-ac");
+      args.add("2");
 
-    args.add("-f");
-    args.add("s16be");
+      args.add("-f");
+      args.add("s16be");
 
-    args.add("-i");
-    args.add(this.srcAudio);
+      args.add("-i");
+      args.add(this.srcAudio);
 
-    args.add("-c:a");
-    args.add("ac3_fixed");
-    args.add("-b:a");
-    args.add("320k");
+      args.add("-c:a");
+      args.add("ac3_fixed");
+      args.add("-b:a");
+      args.add("320k");
 
-    args.add("-af");
-    args.add("aresample=async=44100");
+      args.add("-af");
+      args.add("aresample=async=44100");
+    }
 
     args.add("-b:v");
     args.add("10M");
@@ -114,7 +116,7 @@ public class FfmpegWrapper {
     args.add("-filter:v");
     args.add("fps=fps=30");
     args.add("-preset:v");
-    args.add("medium");
+    args.add("ultrafast");
     args.add("-tune");
     args.add("zerolatency");
 
@@ -134,14 +136,21 @@ public class FfmpegWrapper {
     args.add("+faststart");
 
     args.add("-g");
-    args.add(Integer.toString(this.frameRate * 2));
+    args.add("2");
 
     args.add("-map");
     args.add("0:v");
-    args.add("-map");
-    args.add("1:a");
+
+    if (this.srcAudio != null) {
+      args.add("-map");
+      args.add("1:a");
+    }
+
     args.add("-vsync");
     args.add("1");
+
+    args.add("-bf");
+    args.add("0");
 
     args.add("-mpegts_flags");
     args.add("resend_headers");
