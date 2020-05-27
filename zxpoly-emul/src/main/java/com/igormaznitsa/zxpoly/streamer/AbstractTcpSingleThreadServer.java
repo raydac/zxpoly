@@ -115,6 +115,8 @@ public abstract class AbstractTcpSingleThreadServer {
         final Socket socket;
         try {
           socket = serverSocket.accept();
+          socket.setTcpNoDelay(true);
+          socket.setKeepAlive(true);
         } catch (Exception ex) {
           this.listeners.forEach(x -> x.onClientError(this, ex));
           break;

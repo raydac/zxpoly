@@ -1204,11 +1204,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
               "ffmpeg",
               address,
               0,
-              25,
+              20,
               streamer -> {
                 if (this.videoStreamer.compareAndSet(streamer, null)) {
                   streamer.stop();
-                  SwingUtilities.invokeLater(()->this.menuOptionsEnableVideoStream.setSelected(false));
+                  SwingUtilities
+                      .invokeLater(() -> this.menuOptionsEnableVideoStream.setSelected(false));
                 }
               }
           );

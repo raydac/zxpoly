@@ -53,9 +53,8 @@ public class FfmpegWrapper {
 
     args.add(this.ffmpegPath);
 
-    args.add("-y");
     args.add("-loglevel");
-    args.add("warning");
+    args.add("info");
     args.add("-nostats");
     args.add("-hide_banner");
 
@@ -64,11 +63,13 @@ public class FfmpegWrapper {
     args.add("-use_wallclock_as_timestamps");
     args.add("1");
 
+    args.add("-thread_queue_size");
+    args.add("1024");
+
     args.add("-f");
     args.add("rawvideo");
 
-    args.add("-framerate");
-    args.add(Integer.toString(frameRate));
+    args.add("-re");
 
     args.add("-video_size");
     args.add("512X384");
@@ -78,45 +79,70 @@ public class FfmpegWrapper {
     args.add("-i");
     args.add(this.srcVideo);
 
-    // Sound-----
+    args.add("-thread_queue_size");
+    args.add("1024");
+
     args.add("-ac");
     args.add("2");
-    args.add("-ar");
-    args.add("44100");
+    args.add("-re");
     args.add("-f");
     args.add("s16be");
+
     args.add("-i");
     args.add(this.srcAudio);
+
     args.add("-c:a");
     args.add("ac3_fixed");
     args.add("-b:a");
-    args.add("192k");
-    //-------
+    args.add("320k");
 
+    args.add("-af");
+    args.add("aresample=async=1");
+
+    args.add("-b:v");
+    args.add("10M");
+    args.add("-maxrate");
+    args.add("10M");
+    args.add("-bufsize");
+    args.add("10M");
+
+    args.add("-filter:v");
+    args.add("fps=fps=30");
     args.add("-preset:v");
-    args.add("faster");
+    args.add("medium");
     args.add("-tune");
     args.add("zerolatency");
 
     args.add("-c:v");
     args.add("libx264");
+    args.add("-qmin");
+    args.add("5");
+    args.add("-qmax");
+    args.add("50");
     args.add("-pix_fmt");
     args.add("yuv420p");
-
-    args.add("-blocksize");
-    args.add("2048");
-    args.add("-flush_packets");
-    args.add("1");
+    args.add("-vf");
+    args.add("scale=pal");
+    args.add("-sws_flags");
+    args.add("fast_bilinear");
     args.add("-movflags");
-    args.add("+faststart+genpts");
-    args.add("-r");
-    args.add("25");
+    args.add("+faststart");
+
+    args.add("-g");
+    args.add(Integer.toString(this.frameRate * 2));
+
+    args.add("-map");
+    args.add("0:v");
+    args.add("-map");
+    args.add("1:a");
+    args.add("-vsync");
+    args.add("1");
 
     args.add("-f");
     args.add("mpegts");
     args.add(this.dstResult);
 
-    LOGGER.info("Starting FFmpeg: "+args.stream().collect(Collectors.joining(" ")));
+    LOGGER.info("Starting FFmpeg: " + args.stream().collect(Collectors.joining(" ")));
 
     final Process process = new ProcessBuilder(args)
         .redirectError(ProcessBuilder.Redirect.INHERIT)

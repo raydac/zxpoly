@@ -31,7 +31,8 @@ public class TcpReader extends AbstractTcpSingleThreadServer {
 
     final InputStream inputStream = socket.getInputStream();
     while (!this.isStopped() && !Thread.currentThread().isInterrupted()) {
-      final int read = inputStream.read(chunk);
+      final int available = Math.max(256, Math.min(this.maxChunkSize, inputStream.available()));
+      final int read = inputStream.read(chunk, 0, available);
       if (read < 0) {
         throw new IOException("input stream is closed");
       } else if (read > 0) {

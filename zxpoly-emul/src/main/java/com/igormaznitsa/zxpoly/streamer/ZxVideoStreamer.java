@@ -27,7 +27,7 @@ public class ZxVideoStreamer {
   private final AtomicReference<FfmpegWrapper> ffmpegWrapper = new AtomicReference<>();
   private final Consumer<ZxVideoStreamer> endWorkConsumer;
   private final ZxSoundPort soudPort;
-  private final Tcp2HttpMediaStreamRetranslator outDataRetranslator;
+  private final InternalHttpServer outDataRetranslator;
   private volatile boolean stopped;
 
   public ZxVideoStreamer(
@@ -45,10 +45,12 @@ public class ZxVideoStreamer {
     this.port = port;
     this.videoController = videoController;
     this.frameRate = snapsPerSecond;
-    this.videoWriter = new TcpWriter("tcp-video-writer", 2, InetAddress.getLoopbackAddress(), 0);
-    this.soundWriter = new TcpWriter("tcp-sound-writer", 16, InetAddress.getLoopbackAddress(), 0);
+    this.videoWriter =
+        new TcpWriter("tcp-video-writer", 2, InetAddress.getLoopbackAddress(), 0);
+    this.soundWriter =
+        new TcpWriter("tcp-sound-writer", 16, InetAddress.getLoopbackAddress(), 0);
     this.outDataRetranslator =
-        new Tcp2HttpMediaStreamRetranslator("video/MP2T", InetAddress.getLoopbackAddress(), 0,
+        new InternalHttpServer("video/MP2T", InetAddress.getLoopbackAddress(), 0,
             address, port);
     this.soudPort = new ZxSoundPort(this.soundWriter);
   }
@@ -101,7 +103,8 @@ public class ZxVideoStreamer {
       }
 
       @Override
-      public void onEstablishing(AbstractTcpSingleThreadServer writer, ServerSocket socket, Throwable error) {
+      public void onEstablishing(AbstractTcpSingleThreadServer writer, ServerSocket socket,
+                                 Throwable error) {
         if (error != null) {
           errorCounter.incrementAndGet();
         }
@@ -187,7 +190,7 @@ public class ZxVideoStreamer {
   }
 
   private void doWork() {
-    LOGGER.info("started streamer, http address: "+this.outDataRetranslator.getHttpAddress());
+    LOGGER.info("started streamer, http address: " + this.outDataRetranslator.getHttpAddress());
 
     final long delay = ((10000L / frameRate) + 5L) / 10L;
     while (!Thread.currentThread().isInterrupted()) {

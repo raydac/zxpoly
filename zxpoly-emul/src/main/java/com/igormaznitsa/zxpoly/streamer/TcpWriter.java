@@ -5,16 +5,17 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 public class TcpWriter extends AbstractTcpSingleThreadServer {
+
   public TcpWriter(
-      String id,
-      int bufferSize,
-      InetAddress address,
-      int port
+      final String id,
+      final int bufferSize,
+      final InetAddress address,
+      final int port
   ) {
     super(id, bufferSize, address, port);
   }
 
-  public void write(final byte [] data) {
+  public void write(final byte[] data) {
     this.buffer.put(data);
   }
 

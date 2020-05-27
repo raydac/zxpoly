@@ -7,10 +7,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class Tcp2HttpMediaStreamRetranslator {
+public class InternalHttpServer {
+
+  private static final String STREAM_RESOURCE = "stream.ts";
 
   private final String mime;
   private final InetAddress tcpReaderAddress;
@@ -21,7 +24,7 @@ public class Tcp2HttpMediaStreamRetranslator {
   private final AtomicReference<TcpReader> tcpReaderRef = new AtomicReference<>();
   private volatile boolean stopped;
 
-  public Tcp2HttpMediaStreamRetranslator(
+  public InternalHttpServer(
       final String mime,
       final InetAddress addressIn,
       final int portIn,
@@ -52,7 +55,8 @@ public class Tcp2HttpMediaStreamRetranslator {
     final HttpServer server =
         HttpServer.create(new InetSocketAddress(this.httpServerAddress, this.httpServerPort), 3);
     if (this.httpServerRef.compareAndSet(null, server)) {
-      server.createContext("/ts", this::handleHttpRequest);
+      server.createContext("/" + STREAM_RESOURCE, this::handleStreamData);
+      server.createContext("/", this::handleMainPage);
       server.setExecutor(Executors.newSingleThreadExecutor());
       server.start();
     }
@@ -65,10 +69,50 @@ public class Tcp2HttpMediaStreamRetranslator {
         address.getAddress().getHostAddress() + ":" + address.getPort();
   }
 
-  private void handleHttpRequest(final HttpExchange exchange) throws IOException {
-    Headers headers = exchange.getResponseHeaders();
+  private void handleMainPage(final HttpExchange exchange) throws IOException {
+    final String linkToVideoStream = "http://" + this.getHttpAddress() + "/" + STREAM_RESOURCE;
+
+    final String page = "<!DOCTYPE html>"
+        + "<html>"
+        + "<body>"
+        + "<h3>Zx-Poly emulator stream</h3>"
+        + "<hr>"
+        + "<p>"
+        + "Link: <b><a href=\"" + linkToVideoStream + "\">" + linkToVideoStream + "</a></b><br>"
+        + "Mime: " + this.mime
+        + "</p>"
+        + "<video width=\"512\" height=\"384\" controls>\n"
+        + "<source src=\"http://" + this.getHttpAddress() + "/" + STREAM_RESOURCE + "\" type=\"" +
+        this.mime + "\">"
+        + "Your browser does not support HTML video."
+        + "</video>"
+        + "</body>"
+        + "</html>";
+
+    final Headers headers = exchange.getResponseHeaders();
+    headers.add("Content-Type", "text/html");
+
+    final byte[] content = page.getBytes(StandardCharsets.UTF_8);
+
+    exchange.sendResponseHeaders(200, content.length);
+    final OutputStream out = exchange.getResponseBody();
+    out.write(content);
+    out.flush();
+    out.close();
+  }
+
+  private void handleStreamData(final HttpExchange exchange) throws IOException {
+    final Headers headers = exchange.getResponseHeaders();
     headers.add("Content-Type", this.mime);
-    headers.add("Connection", "keep-alive");
+    headers.add("Cache-Control", "no-cache, no-store");
+    headers.add("Pragma", "no-cache");
+    headers.add("Transfer-Encoding", "chunked");
+    headers.add("Content-Transfer-Encoding", "binary");
+    headers.add("Expires", "0");
+    headers.add("Connection", "Keep-Alive");
+    headers.add("Keep-Alive", "max");
+    headers.add("Accept-Ranges", "none");
+
 
     exchange.sendResponseHeaders(200, 0);
 
@@ -84,7 +128,6 @@ public class Tcp2HttpMediaStreamRetranslator {
           }
         }
       }
-
     } finally {
       os.close();
     }
