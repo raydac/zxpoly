@@ -82,9 +82,14 @@ public class FfmpegWrapper {
     args.add("-thread_queue_size");
     args.add("1024");
 
+    args.add("-re");
+
+    args.add("-ar");
+    args.add("44100");
+
     args.add("-ac");
     args.add("2");
-    args.add("-re");
+
     args.add("-f");
     args.add("s16be");
 
@@ -97,7 +102,7 @@ public class FfmpegWrapper {
     args.add("320k");
 
     args.add("-af");
-    args.add("aresample=async=1");
+    args.add("aresample=async=44100");
 
     args.add("-b:v");
     args.add("10M");
@@ -137,6 +142,12 @@ public class FfmpegWrapper {
     args.add("1:a");
     args.add("-vsync");
     args.add("1");
+
+    args.add("-mpegts_flags");
+    args.add("resend_headers");
+
+    args.add("-pcr_period");
+    args.add("50");
 
     args.add("-f");
     args.add("mpegts");
