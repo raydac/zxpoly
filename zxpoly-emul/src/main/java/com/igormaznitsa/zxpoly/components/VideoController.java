@@ -110,6 +110,7 @@ public final class VideoController extends JComponent
   private static final long MCYCLES_PER_BORDER_LINE = CYCLES_BETWEEN_INT / BORDER_LINES;
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private static volatile boolean gfxBackOverFF = false;
+  private static volatile boolean gfxHideSameInkPaper = true;
   private static volatile int gfxUpColorsMixed = 64;
   private static volatile int gfxDownColorsMixed = 0;
   private static volatile int[] gfxPrerenderedBack = null;
@@ -188,6 +189,7 @@ public final class VideoController extends JComponent
   ) {
     final int[] prerendededGfxBack = gfxPrerenderedBack;
     final boolean bkOverFF = gfxBackOverFF;
+    final boolean hideSameInkPaper = gfxHideSameInkPaper;
 
     if (prerendededGfxBack != null) {
       System.arraycopy(prerendededGfxBack, 0, pixelRgbBuffer, 0, prerendededGfxBack.length);
@@ -237,7 +239,7 @@ public final class VideoController extends JComponent
           }
         }
 
-        if (inkColor == paperColor) {
+        if (hideSameInkPaper && inkColor == paperColor) {
           color = inkColor;
         }
 
@@ -645,6 +647,10 @@ public final class VideoController extends JComponent
 
   public static void setGfxBackOverFF(final boolean flag) {
     gfxBackOverFF = flag;
+  }
+
+  public static void setGfxHideSameInkPaper(final boolean flag) {
+    gfxHideSameInkPaper = flag;
   }
 
   private static String decodeVideoModeCode(final int code) {

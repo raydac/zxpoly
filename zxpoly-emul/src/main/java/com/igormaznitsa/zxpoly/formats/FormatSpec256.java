@@ -198,13 +198,18 @@ public class FormatSpec256 extends Snapshot {
     } else {
       LOGGER.info("Config file contains register vector: " + alignRegVector);
     }
-    final String alignRegisters = archive.getProperties().getProperty("zxpAlignRegs", alignRegVector == null ? "1PSsT" : alignRegVector);
+    final String alignRegisters = archive.getProperties()
+        .getProperty("zxpAlignRegs", alignRegVector == null ? "1PSsT" : alignRegVector);
     board.setGfxAlignParams(alignRegisters);
 
-    final String gfxBackOverFF = archive.getProperties().getProperty("BkOverFF", "0");
-    VideoController.setGfxBackOverFF(!"0".equals(gfxBackOverFF));
-    VideoController.setGfxDownColorsMixed(safeParseInt(archive.getProperties().getProperty("DownColorsMixed", "0"), 0));
-    VideoController.setGfxUpColorsMixed(safeParseInt(archive.getProperties().getProperty("UpColorsMixed", "64"), 64));
+    VideoController
+        .setGfxBackOverFF(!"0".equals(archive.getProperties().getProperty("BkOverFF", "0")));
+    VideoController.setGfxHideSameInkPaper(
+        !"0".equals(archive.getProperties().getProperty("HideSameInkPaper", "1")));
+    VideoController.setGfxDownColorsMixed(
+        safeParseInt(archive.getProperties().getProperty("DownColorsMixed", "0"), 0));
+    VideoController.setGfxUpColorsMixed(
+        safeParseInt(archive.getProperties().getProperty("UpColorsMixed", "64"), 64));
 
     board.syncSpec256GpuStates();
   }
