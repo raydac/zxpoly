@@ -50,7 +50,7 @@ import com.igormaznitsa.zxpoly.ui.AddressPanel;
 import com.igormaznitsa.zxpoly.ui.CpuLoadIndicator;
 import com.igormaznitsa.zxpoly.ui.GameControllerPanel;
 import com.igormaznitsa.zxpoly.ui.JIndicatorLabel;
-import com.igormaznitsa.zxpoly.ui.OptionsDialog;
+import com.igormaznitsa.zxpoly.ui.OptionsPanel;
 import com.igormaznitsa.zxpoly.ui.SelectTapPosDialog;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.JHtmlLabel;
@@ -960,7 +960,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuFileOptions.setIcon(new ImageIcon(
         getClass().getResource("/com/igormaznitsa/zxpoly/icons/settings.png"))); // NOI18N
-    menuFileOptions.setText("Options");
+    menuFileOptions.setText("Preferences");
     menuFileOptions.addActionListener(this::menuFileOptionsActionPerformed);
     menuFile.add(menuFileOptions);
     menuFile.add(jSeparator3);
@@ -1145,7 +1145,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsEnableVideoStream.setText("Video stream");
     menuOptionsEnableVideoStream.setToolTipText("Turn on video streaming");
     menuOptionsEnableVideoStream.setIcon(new ImageIcon(
-        getClass().getResource("/com/igormaznitsa/zxpoly/icons/speaker.png"))); // NOI18N
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/streaming.png"))); // NOI18N
     menuOptionsEnableVideoStream
         .addActionListener(this::menuOptionsEnableVideoStreamActionPerformed);
     menuOptions.add(menuOptionsEnableVideoStream);
@@ -1683,8 +1683,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
-      final OptionsDialog dialog = new OptionsDialog(this);
-      dialog.setVisible(true);
+      final OptionsPanel optionsPanel = new OptionsPanel(null);
+      if (JOptionPane.showConfirmDialog(this, optionsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+        optionsPanel.getData().store();
+      }
     } finally {
       this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
