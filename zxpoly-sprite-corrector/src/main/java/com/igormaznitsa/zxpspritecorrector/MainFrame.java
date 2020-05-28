@@ -366,7 +366,7 @@ public final class MainFrame extends javax.swing.JFrame {
           Properties properties = spec256Properties;
           final Spec256ConfigEditorPanel configEditorPanel =
               new Spec256ConfigEditorPanel(properties);
-          if (JOptionPane.showConfirmDialog(this, configEditorPanel, "Spec256 config properties",
+          if (JOptionPane.showConfirmDialog(this, configEditorPanel, "Spec256 properties",
               JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == OK_OPTION) {
             properties = configEditorPanel.make();
             spec256Properties = properties;
