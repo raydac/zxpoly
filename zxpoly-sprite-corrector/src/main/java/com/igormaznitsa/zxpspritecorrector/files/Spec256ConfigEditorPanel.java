@@ -60,6 +60,7 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox checkGFXScreenXORBuffered;
     private javax.swing.JCheckBox checkUpMixPaper;
     private javax.swing.JCheckBox checkUseBrightInMix;
+    private javax.swing.JCheckBox checkHideSameInkPaper;
     private javax.swing.Box.Filler filler1;
     private javax.swing.Box.Filler filler2;
     private javax.swing.Box.Filler filler3;
@@ -98,6 +99,7 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         result.put("BkMixed", "0");
         result.put("BkMixBkAttr", "0");
         result.put("BkOverFF", "1");
+        result.put("HideSameInkPaper", "1");
         result.put("zxpAlignRegs", "1PSsT");
 
         return result;
@@ -129,6 +131,7 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         this.checkGFXScreenXORBuffered
             .setSelected(isPropertySet("GFXScreenXORBuffered", properties, false));
         this.checkUseBrightInMix.setSelected(isPropertySet("UseBrightInMix", properties, false));
+        this.checkHideSameInkPaper.setSelected(isPropertySet("HideSameInkPaper", properties, true));
         this.checkUpMixPaper.setSelected(isPropertySet("UpMixPaper", properties, false));
         this.checkDownMixPaper.setSelected(isPropertySet("DownMixPaper", properties, false));
         this.checkBkMixed.setSelected(isPropertySet("BkMixed", properties, false));
@@ -225,6 +228,8 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         properties.setProperty("GFXScreenXORBuffered",
             this.checkGFXScreenXORBuffered.isSelected() ? "1" : "0");
         properties.setProperty("UseBrightInMix", this.checkUseBrightInMix.isSelected() ? "1" : "0");
+        properties
+            .setProperty("HideSameInkPaper", this.checkHideSameInkPaper.isSelected() ? "1" : "0");
         properties.setProperty("UpMixPaper", this.checkUpMixPaper.isSelected() ? "1" : "0");
         properties.setProperty("DownMixPaper", this.checkDownMixPaper.isSelected() ? "1" : "0");
         properties.setProperty("BkMixed", this.checkBkMixed.isSelected() ? "1" : "0");
@@ -282,6 +287,7 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         checkBkMixBkAttr = new javax.swing.JCheckBox();
         checkBkOverFF = new javax.swing.JCheckBox();
         checkUseBrightInMix = new javax.swing.JCheckBox();
+        checkHideSameInkPaper = new javax.swing.JCheckBox();
         checkUpMixPaper = new javax.swing.JCheckBox();
         checkDownMixPaper = new javax.swing.JCheckBox();
         filler1 =
@@ -684,9 +690,21 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 8, 0, 0);
         jPanel1.add(checkDownMixPaper, gridBagConstraints);
+
+        checkHideSameInkPaper.setText("HideSameInkPaper");
+        checkHideSameInkPaper
+            .setToolTipText("force show ink color if attribute ink and paper has same value");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 8, 0, 0);
+        jPanel1.add(checkHideSameInkPaper, gridBagConstraints);
+
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 7;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weighty = 1000.0;
