@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2019 Igor Maznitsa
+ * Copyright (C) 2014-2020 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -364,7 +364,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             MainForm.this.board.getBeeper().pause();
             MainForm.this.keyboardAndTapeModule.doReset();
             if (e.getSource() == menuOptions) {
-              menuOptionsEnableSpeaker.setEnabled(!turboMode);
+              menuOptionsEnableSpeaker.setEnabled(!turboMode && !menuOptionsEnableVideoStream.isSelected());
               menuOptionsEnableSpeaker.setState(board.getBeeper().isActive());
             }
             menuServiceGameControllers
