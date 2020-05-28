@@ -168,7 +168,12 @@ public class LegacySZEPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public void writeTo(File file, ZXPolyData data, SessionData sessionData) throws IOException {
+  public void writeTo(
+      final File file,
+      final ZXPolyData data,
+      final SessionData sessionData,
+      final Object... extraData
+  ) throws IOException {
     throw new UnsupportedOperationException("Write is unsupported");
   }
 

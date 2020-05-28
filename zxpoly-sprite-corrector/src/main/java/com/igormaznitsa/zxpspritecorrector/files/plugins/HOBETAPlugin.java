@@ -118,8 +118,12 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData session)
-      throws IOException {
+  public void writeTo(
+      final File file,
+      final ZXPolyData data,
+      final SessionData session,
+      final Object... extraData
+  ) throws IOException {
     final File dir = file.getParentFile();
     final char zxType = data.getInfo().getType();
     String name = file.getName();

@@ -424,8 +424,12 @@ public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData)
-      throws IOException {
+  public void writeTo(
+      final File file,
+      final ZXPolyData data,
+      final SessionData sessionData,
+      final Object... extraData
+  ) throws IOException {
     if (!(data.getPlugin() instanceof Z80InZXPOutPlugin)) {
       throw new IOException("Only imported Z80 snapshot can be exported");
     }

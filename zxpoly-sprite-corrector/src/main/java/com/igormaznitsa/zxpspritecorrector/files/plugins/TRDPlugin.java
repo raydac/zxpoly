@@ -119,8 +119,12 @@ public class TRDPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData session)
-      throws IOException {
+  public void writeTo(
+      final File file,
+      final ZXPolyData data,
+      final SessionData session,
+      final Object... extraData
+  ) throws IOException {
 
     final String zxname = data.getInfo().getName();
     final String[] zxFileName =

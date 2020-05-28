@@ -69,8 +69,12 @@ public class SCRPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData)
-      throws IOException {
+  public void writeTo(
+      final File file,
+      final ZXPolyData data,
+      final SessionData sessionData,
+      final Object... extraData
+  ) throws IOException {
     final FileNameDialog dialog =
         new FileNameDialog(this.mainFrame, "Base file name is " + file.getName(),
             FileNameDialog.makeFileNames(file.getName()), null, null);

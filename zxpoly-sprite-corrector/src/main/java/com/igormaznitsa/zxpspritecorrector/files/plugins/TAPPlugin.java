@@ -231,8 +231,12 @@ public class TAPPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData session)
-      throws IOException {
+  public void writeTo(
+      final File file,
+      final ZXPolyData data,
+      final SessionData session,
+      final Object... extraData
+  ) throws IOException {
     final int saveAsSeparateFiles = JOptionPane
         .showConfirmDialog(this.mainFrame, "Save each block as separated file?", "Separate files",
             JOptionPane.YES_NO_CANCEL_OPTION);

@@ -41,12 +41,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.swing.filechooser.FileFilter;
@@ -240,7 +242,8 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
   public void writeTo(
       final File file,
       final ZXPolyData data,
-      final SessionData sessionData) throws IOException {
+      final SessionData sessionData,
+      final Object... extraObjects) throws IOException {
     if (!(data.getPlugin() instanceof Z80InZXPOutPlugin)) {
       throw new IOException("Only imported Z80 snapshot can be exported");
     }
@@ -356,7 +359,8 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
         extraGfxPages.add(new GfxPage(0, makeGfx(data, 0)));
       }
     }
-    saveSpec256Zip(file, mainSnapshotOut.End().toByteArray(), mainGfxData, extraGfxPages);
+    saveSpec256Zip(file, mainSnapshotOut.End().toByteArray(), mainGfxData,
+        (Properties) extraObjects[0], extraGfxPages);
   }
 
   private byte[] makeGfx(final ZXPolyData data, final int... pageIndexes) throws IOException {
@@ -389,6 +393,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       final File file,
       final byte[] snaData,
       final byte[] gfxData,
+      final Properties configProperties,
       final List<GfxPage> gfxPages
   ) throws IOException {
     final String name = FilenameUtils.getBaseName(file.getName()).toUpperCase(Locale.ENGLISH);
@@ -405,7 +410,11 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
 
       final ZipEntry cfgEntry = new ZipEntry(name + ".CFG");
       zos.putNextEntry(cfgEntry);
-      zos.write(makeCfg().getBytes(StandardCharsets.UTF_8));
+
+      final StringWriter writer = new StringWriter();
+      configProperties.store(writer, null);
+
+      zos.write(writer.toString().getBytes(StandardCharsets.UTF_8));
       zos.closeEntry();
 
       for (final GfxPage page : gfxPages) {
@@ -416,25 +425,6 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       }
       zos.finish();
     }
-  }
-
-  private String makeCfg() {
-    return "GFXLeveledXOR=0\n"
-        + "GFXLeveledOR=0\n"
-        + "GFXLeveledAND=0\n"
-        + "GFXScreenXORbuffered=0\n"
-        + "OrderPaletteSignedBytes=0\n"
-        + "UpColorsMixed=64\n"
-        + "DownColorsMixed=0\n"
-        + "UpMixChgBright=0\n"
-        + "DownMixChgBright=0\n"
-        + "UseBrightInMix=0\n"
-        + "UpMixPaper=0\n"
-        + "DownMixPaper=0\n"
-        + "BkMixed=0\n"
-        + "BkMixBkAttr=0\n"
-        + "BkOverFF=1\n"
-        + "zxpAlignRegs=1PSsT";
   }
 
   @Override

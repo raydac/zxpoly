@@ -281,7 +281,12 @@ public final class SNAPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData)
+  public void writeTo(
+      final File file,
+      final ZXPolyData data,
+      final SessionData sessionData,
+      final Object... extraData
+  )
       throws IOException {
     throw new IOException("SNA export is unsupported");
   }

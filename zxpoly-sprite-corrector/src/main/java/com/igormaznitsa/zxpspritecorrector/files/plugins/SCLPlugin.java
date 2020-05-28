@@ -132,8 +132,12 @@ public class SCLPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public void writeTo(final File file, final ZXPolyData data, final SessionData sessionData)
-      throws IOException {
+  public void writeTo(
+      final File file,
+      final ZXPolyData data,
+      final SessionData sessionData,
+      final Object... extraData
+  ) throws IOException {
 
     final String zxname = data.getInfo().getName();
     final String[] zxFileName =

@@ -19,6 +19,7 @@ package com.igormaznitsa.zxpspritecorrector;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static javax.swing.JOptionPane.OK_OPTION;
 import static javax.swing.JOptionPane.showConfirmDialog;
 
 
@@ -29,6 +30,7 @@ import com.igormaznitsa.zxpspritecorrector.components.SelectInsideDataDialog;
 import com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
+import com.igormaznitsa.zxpspritecorrector.files.Spec256ConfigEditorPanel;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.HOBETAPlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.LegacySZEPlugin;
@@ -67,6 +69,7 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.prefs.Preferences;
 import javax.swing.BoundedRangeModel;
@@ -98,6 +101,8 @@ import org.picocontainer.PicoContainer;
 import org.picocontainer.injectors.ProviderAdapter;
 
 public final class MainFrame extends javax.swing.JFrame {
+
+  private static Properties spec256Properties = null;
 
   private static final long serialVersionUID = -5031012548284731523L;
   public final MutablePicoContainer container = new PicoBuilder()
@@ -357,8 +362,23 @@ public final class MainFrame extends javax.swing.JFrame {
     if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
       this.lastExportedFile = ensureExtension(fileChooser.getSelectedFile(), plugin);
       try {
-        plugin.writeTo(this.lastExportedFile, this.mainEditor.getProcessingData(),
-            new SessionData(this.mainEditor));
+        if (plugin instanceof Spec256ZipPlugin) {
+          Properties properties = spec256Properties;
+          final Spec256ConfigEditorPanel configEditorPanel =
+              new Spec256ConfigEditorPanel(properties);
+          if (JOptionPane.showConfirmDialog(this, configEditorPanel, "Spec256 config properties",
+              JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == OK_OPTION) {
+            properties = configEditorPanel.make();
+            spec256Properties = properties;
+            plugin.writeTo(this.lastExportedFile, this.mainEditor.getProcessingData(),
+                new SessionData(this.mainEditor), properties);
+          } else {
+            return;
+          }
+        } else {
+          plugin.writeTo(this.lastExportedFile, this.mainEditor.getProcessingData(),
+              new SessionData(this.mainEditor));
+        }
       } catch (Exception ex) {
         ex.printStackTrace();
         JOptionPane
