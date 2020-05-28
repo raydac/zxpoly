@@ -171,23 +171,17 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     final byte[] bankBytes = new byte[8];
 
     for (int i = 0; i < 8; i++) {
-      if ((maskData & 1) == 0) {
-        bankBytes[i] = (baseData & 1) == 0 ? 0 : (byte) 0xFF;
+      final int bitMask = 1 << i;
+      if ((maskData & bitMask) == 0) {
+        bankBytes[i] = (baseData & bitMask) == 0 ? 0 : (byte) 0xFF;
       } else {
-        final int polyPaletteIndex = ((cpu3 & 1) == 0 ? 0 : 0x08)
-            | ((cpu0 & 1) == 0 ? 0 : 0x04)
-            | ((cpu1 & 1) == 0 ? 0 : 0x02)
-            | ((cpu2 & 1) == 0 ? 0 : 0x01);
+        final int zxPolyColorIndex = ((cpu3 & bitMask) == 0 ? 0 : 0x08)
+            | ((cpu0 & bitMask) == 0 ? 0 : 0x04)
+            | ((cpu1 & bitMask) == 0 ? 0 : 0x02)
+            | ((cpu2 & bitMask) == 0 ? 0 : 0x01);
 
-        bankBytes[i] = MAP_ZXPOLY2SPEC256INDEX[polyPaletteIndex];
+        bankBytes[i] = MAP_ZXPOLY2SPEC256INDEX[zxPolyColorIndex];
       }
-
-      cpu0 >>>= 1;
-      cpu1 >>>= 1;
-      cpu2 >>>= 1;
-      cpu3 >>>= 1;
-      maskData >>>= 1;
-      baseData >>>= 1;
     }
     return bankBytes;
   }
