@@ -37,6 +37,7 @@ public class OptionsPanel extends javax.swing.JPanel {
         public final boolean grabSound;
         public final String activeRom;
         public final int intPerFrame;
+        public final int frameRate;
 
         public DataContainer() {
             this.activeRom = AppOptions.getInstance().getActiveRom();
@@ -45,15 +46,17 @@ public class OptionsPanel extends javax.swing.JPanel {
             this.inetAddress = AppOptions.getInstance().getAddress();
             this.grabSound = AppOptions.getInstance().isGrabSound();
             this.ffmpegPath = AppOptions.getInstance().getFfmpegPath();
+            this.frameRate = AppOptions.getInstance().getFrameRate();
         }
 
         public DataContainer(final OptionsPanel optionsPanel) {
-            this.activeRom = optionsPanel.comboRomSource.getSelectedItem().toString();
+            this.activeRom = Rom.findForTitle(optionsPanel.comboRomSource.getSelectedItem().toString(),Rom.TEST).getLink();
             this.intPerFrame = (Integer) optionsPanel.spinnerIntFrame.getValue();
             this.ffmpegPath = optionsPanel.textFfmpegPath.getText();
             this.port = (Integer) optionsPanel.spinnerPort.getValue();
             this.grabSound = optionsPanel.checkGrabSound.isSelected();
             this.inetAddress = optionsPanel.comboNetAdddr.getSelectedItem().toString();
+            this.frameRate = (Integer)optionsPanel.spinnerFramesPerSec.getValue();
         }
 
         public void store() {
@@ -63,6 +66,7 @@ public class OptionsPanel extends javax.swing.JPanel {
             AppOptions.getInstance().setIntBetweenFrames(this.intPerFrame);
             AppOptions.getInstance().setPort(this.port);
             AppOptions.getInstance().setAddress(this.inetAddress);
+            AppOptions.getInstance().setFrameRate(this.frameRate);
             try {
                 AppOptions.getInstance().flush();
             } catch (BackingStoreException ex) {
@@ -111,6 +115,7 @@ public class OptionsPanel extends javax.swing.JPanel {
         this.spinnerIntFrame.setValue(data.intPerFrame);
         this.textFfmpegPath.setText(data.ffmpegPath);
         this.comboNetAdddr.setSelectedItem(data.inetAddress);
+        this.spinnerFramesPerSec.setValue(data.frameRate);
         this.comboRomSource.setSelectedItem(Rom.findForLink(data.activeRom, Rom.TEST).getTitle());
     }
 
@@ -132,6 +137,8 @@ public class OptionsPanel extends javax.swing.JPanel {
         spinnerPort = new javax.swing.JSpinner();
         jLabel4 = new javax.swing.JLabel();
         checkGrabSound = new javax.swing.JCheckBox();
+        jLabel7 = new javax.swing.JLabel();
+        spinnerFramesPerSec = new javax.swing.JSpinner();
         jPanel2 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
@@ -195,15 +202,30 @@ public class OptionsPanel extends javax.swing.JPanel {
         jLabel4.setText("Sound:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
         jPanel1.add(jLabel4, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         jPanel1.add(checkGrabSound, gridBagConstraints);
+
+        jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel7.setText("Frame rate:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        jPanel1.add(jLabel7, gridBagConstraints);
+
+        spinnerFramesPerSec.setModel(new javax.swing.SpinnerNumberModel(25, 1, 50, 1));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        jPanel1.add(spinnerFramesPerSec, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -262,8 +284,10 @@ public class OptionsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JSpinner spinnerFramesPerSec;
     private javax.swing.JSpinner spinnerIntFrame;
     private javax.swing.JSpinner spinnerPort;
     private javax.swing.JTextField textFfmpegPath;

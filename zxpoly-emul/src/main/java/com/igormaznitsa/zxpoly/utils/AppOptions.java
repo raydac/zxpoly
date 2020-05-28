@@ -100,7 +100,7 @@ public final class AppOptions {
     }
 
     public synchronized void setAddress(final String address) {
-        preferences.put(Option.STREAM_FFMPEGPATH.name(), address == null ? InetAddress.getLoopbackAddress().getHostAddress() : address);
+        preferences.put(Option.STREAM_ADDR.name(), address == null ? InetAddress.getLoopbackAddress().getHostAddress() : address);
     }
 
     public synchronized int getPort() {
@@ -109,6 +109,14 @@ public final class AppOptions {
 
     public synchronized void setPort(final int port) {
         preferences.putInt(Option.STREAM_PORT.name(), port & 0xFFFF);
+    }
+
+    public synchronized int getFrameRate() {
+        return preferences.getInt(Option.STREAM_FRAMERATE.name(), 25);
+    }
+
+    public synchronized void setFrameRate(final int value) {
+        preferences.putInt(Option.STREAM_FRAMERATE.name(), Math.max(1, Math.min(50, value)));
     }
 
     public synchronized String getFfmpegPath() {
@@ -169,6 +177,7 @@ public final class AppOptions {
         STREAM_GRABSOUND,
         STREAM_ADDR,
         STREAM_PORT,
+        STREAM_FRAMERATE,
         ROMPATH,
         INTBETWEENFRAMES,
         LAST_SELECTED_AUDIO_DEVICE

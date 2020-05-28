@@ -1198,13 +1198,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         }
         final ZxVideoStreamer newStreamer;
         try {
+          final InetAddress interfaceAddress = InetAddress.getByName(AppOptions.getInstance().getAddress());
           newStreamer = new ZxVideoStreamer(
               this.board.getVideoController(),
-              null, //this.board.getBeeper(),
-              "ffmpeg",
-              address,
-              0,
-              20,
+              AppOptions.getInstance().isGrabSound() ? this.board.getBeeper() : null,
+              AppOptions.getInstance().getFfmpegPath(),
+              interfaceAddress,
+              AppOptions.getInstance().getPort(),
+              AppOptions.getInstance().getFrameRate(),
               streamer -> {
                 if (this.videoStreamer.compareAndSet(streamer, null)) {
                   streamer.stop();
