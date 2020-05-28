@@ -22,6 +22,10 @@ import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.Properties;
 
 public class SessionData {
 
@@ -34,6 +38,7 @@ public class SessionData {
   private final boolean mode512x384;
   private final int zoom;
   private final EditorComponent.AttributeMode attributeMode;
+  private final Properties extraProperties;
 
   public SessionData(final int baseAddress,
                      final boolean showGrid,
@@ -54,6 +59,7 @@ public class SessionData {
     this.columnNumber = columnNumber;
     this.attributeMode = attributeMode;
     this.zoom = zoom;
+    this.extraProperties = new Properties();
   }
 
   public SessionData(final JBBPBitInputStream inStream) throws IOException {
@@ -67,6 +73,18 @@ public class SessionData {
     attributeMode =
         EditorComponent.AttributeMode.values()[inStream.readInt(JBBPByteOrder.BIG_ENDIAN)];
     zoom = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
+
+    extraProperties = new Properties();
+
+    if (inStream.hasAvailableData()) {
+      final int extraDataLength = inStream.readInt(JBBPByteOrder.BIG_ENDIAN);
+      final byte[] propertyData = inStream.readByteArray(extraDataLength);
+      final Properties properties = new Properties();
+      properties.load(new StringReader(new String(propertyData, StandardCharsets.UTF_8)));
+      properties.stringPropertyNames().forEach(name -> {
+        this.extraProperties.put(name, properties.getProperty(name));
+      });
+    }
   }
 
   public SessionData(final EditorComponent editor) {
@@ -79,6 +97,19 @@ public class SessionData {
     this.invertBase = editor.isInvertShowBaseData();
     this.mode512x384 = editor.isMode512();
     this.zoom = editor.getZoom();
+    this.extraProperties = new Properties();
+  }
+
+  public String getExtraProperty(final String propertyName) {
+    return this.extraProperties.getProperty(propertyName);
+  }
+
+  public void setExtraProperty(final String propertyName, final String value) {
+    if (value == null) {
+      this.extraProperties.remove(propertyName);
+    } else {
+      this.extraProperties.setProperty(propertyName, value);
+    }
   }
 
   public int getBaseAddress() {
@@ -128,10 +159,19 @@ public class SessionData {
   }
 
   public byte[] makeArray() throws IOException {
-    return JBBPOut.BeginBin().
-        Int(this.baseAddress).
-        Bool(this.showGrid, this.showColumns, this.zxAddressing, this.invertBase, this.mode512x384).
-        Int(this.columnNumber, this.attributeMode.ordinal(), this.zoom).End().toByteArray();
+    final StringWriter writer = new StringWriter();
+    this.extraProperties.store(writer, null);
+
+    final byte[] extraPropertiesData = writer.toString().getBytes(StandardCharsets.UTF_8);
+
+    return JBBPOut.BeginBin()
+        .Int(this.baseAddress)
+        .Bool(this.showGrid, this.showColumns, this.zxAddressing, this.invertBase, this.mode512x384)
+        .Int(this.columnNumber, this.attributeMode.ordinal(), this.zoom)
+        .Int(extraPropertiesData.length)
+        .Byte(extraPropertiesData)
+        .End()
+        .toByteArray();
   }
 
 }

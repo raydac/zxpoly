@@ -117,7 +117,10 @@ public class SZEPlugin extends AbstractFilePlugin {
     final byte[] sessionarray = sessionData.makeArray();
 
     final byte[] result =
-        JBBPOut.BeginBin().Byte(dataarray).Int(sessionarray.length).Byte(sessionarray).End()
+        JBBPOut.BeginBin()
+            .Byte(dataarray)
+            .Int(sessionarray.length)
+            .Byte(sessionarray).End()
             .toByteArray();
 
     saveDataToFile(file, result);

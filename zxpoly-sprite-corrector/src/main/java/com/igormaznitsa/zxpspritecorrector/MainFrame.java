@@ -63,8 +63,12 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
@@ -102,7 +106,8 @@ import org.picocontainer.injectors.ProviderAdapter;
 
 public final class MainFrame extends javax.swing.JFrame {
 
-  private static Properties spec256Properties = null;
+  private static final String EXTRA_PROPERTY_DATA_ID = "spec256.config.properties";
+  private static Properties lastSpec256Properties = new Properties();
 
   private static final long serialVersionUID = -5031012548284731523L;
   public final MutablePicoContainer container = new PicoBuilder()
@@ -348,6 +353,33 @@ public final class MainFrame extends javax.swing.JFrame {
     return file;
   }
 
+  private static Properties deserializeProperties(final String data) {
+    if (data == null) {
+      return null;
+    }
+    final byte[] array = Base64.getDecoder().decode(data);
+    final Properties result = new Properties();
+    try {
+      result.load(new StringReader(new String(array, StandardCharsets.UTF_8)));
+    } catch (IOException ex) {
+      throw new Error("Can't load properties", ex);
+    }
+    return result;
+  }
+
+  private static String serializeProperties(final Properties properties) {
+    if (properties == null) {
+      return null;
+    }
+    final StringWriter writer = new StringWriter();
+    try {
+      properties.store(writer, null);
+    } catch (IOException ex) {
+      throw new Error("Can't write properties", ex);
+    }
+    return Base64.getEncoder().encodeToString(writer.toString().getBytes(StandardCharsets.UTF_8));
+  }
+
   private void exportDataWithPlugin(final AbstractFilePlugin plugin) {
     if (!this.mainEditor.hasData()) {
       JOptionPane.showMessageDialog(this, "There is no data to export!", "There is no data",
@@ -363,21 +395,23 @@ public final class MainFrame extends javax.swing.JFrame {
       this.lastExportedFile = ensureExtension(fileChooser.getSelectedFile(), plugin);
       try {
         if (plugin instanceof Spec256ZipPlugin) {
-          Properties properties = spec256Properties;
+          Properties properties = lastSpec256Properties;
           final Spec256ConfigEditorPanel configEditorPanel =
               new Spec256ConfigEditorPanel(properties);
           if (JOptionPane.showConfirmDialog(this, configEditorPanel, "Spec256 properties",
               JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == OK_OPTION) {
             properties = configEditorPanel.make();
-            spec256Properties = properties;
+            lastSpec256Properties = properties;
+            final SessionData sessionDataToSave = makeCurrentSessionData();
             plugin.writeTo(this.lastExportedFile, this.mainEditor.getProcessingData(),
-                new SessionData(this.mainEditor), properties);
+                sessionDataToSave, properties);
           } else {
             return;
           }
         } else {
+          final SessionData sessionDataToSave = makeCurrentSessionData();
           plugin.writeTo(this.lastExportedFile, this.mainEditor.getProcessingData(),
-              new SessionData(this.mainEditor));
+              sessionDataToSave);
         }
       } catch (Exception ex) {
         ex.printStackTrace();
@@ -396,6 +430,20 @@ public final class MainFrame extends javax.swing.JFrame {
     final int address = sessionData.getBaseAddress();
 
     sessionData.fill(this.mainEditor);
+
+    Properties foundSpec256Properties =
+        deserializeProperties(sessionData.getExtraProperty(EXTRA_PROPERTY_DATA_ID));
+    final Properties sessionSpec256Properties;
+    if (foundSpec256Properties == null) {
+      sessionSpec256Properties = Spec256ConfigEditorPanel.makeDefault();
+    } else {
+      sessionSpec256Properties = foundSpec256Properties;
+    }
+
+    lastSpec256Properties.clear();
+    sessionSpec256Properties.stringPropertyNames().forEach(name -> {
+      lastSpec256Properties.setProperty(name, sessionSpec256Properties.getProperty(name));
+    });
 
     this.menuOptionsColumnsAll.setSelected(true);
     this.menuOptionsZXScreen.setSelected(sessionData.isZXAddressing());
@@ -1278,7 +1326,7 @@ public final class MainFrame extends javax.swing.JFrame {
           final File thefile = ensureExtension(fileChoolser.getSelectedFile(),
               container.getComponent(SZEPlugin.class));
           container.getComponent(SZEPlugin.class)
-              .writeTo(thefile, zxpolydata, new SessionData(this.mainEditor));
+              .writeTo(thefile, zxpolydata, makeCurrentSessionData());
           this.mainEditor.setChanged(false);
           this.setTitle(thefile.getAbsolutePath());
           setCurrentSZEFile(thefile);
@@ -1303,11 +1351,17 @@ public final class MainFrame extends javax.swing.JFrame {
     }
   }
 
+  private SessionData makeCurrentSessionData() {
+    final SessionData result = new SessionData(this.mainEditor);
+    result.setExtraProperty(EXTRA_PROPERTY_DATA_ID, serializeProperties(lastSpec256Properties));
+    return result;
+  }
+
   private void menuSaveActionPerformed(java.awt.event.ActionEvent evt) {
     try {
       container.getComponent(SZEPlugin.class)
           .writeTo(this.szeFile, this.mainEditor.getProcessingData(),
-              new SessionData(this.mainEditor));
+              makeCurrentSessionData());
       this.mainEditor.setChanged(false);
     } catch (Exception ex) {
       ex.printStackTrace();
