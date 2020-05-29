@@ -136,7 +136,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       result[i] = findCloserIndexInPalette(
           ARGB_PALETTE_ZXPOLY[i],
           argbSpec256Palette,
-          0,
+          1,
           192);
     }
 
@@ -195,7 +195,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
 
   @Override
   public String getToolTip(final boolean forExport) {
-    return DESCRIPTION + " (*.ZIP)";
+    return DESCRIPTION;
   }
 
   @Override
