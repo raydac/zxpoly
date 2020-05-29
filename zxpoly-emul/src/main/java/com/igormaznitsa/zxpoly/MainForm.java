@@ -1142,7 +1142,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsEnableSpeaker.addActionListener(this::menuOptionsEnableSpeakerActionPerformed);
     menuOptions.add(menuOptionsEnableSpeaker);
 
-    menuOptionsEnableVideoStream.setText("Video stream");
+    menuOptionsEnableVideoStream.setText("Video stream (beta)");
     menuOptionsEnableVideoStream.setToolTipText("Turn on video streaming");
     menuOptionsEnableVideoStream.setIcon(new ImageIcon(
         getClass().getResource("/com/igormaznitsa/zxpoly/icons/streaming.png"))); // NOI18N
@@ -1225,7 +1225,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           try {
             newStreamer.start();
           } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Can't start: " + ex.getMessage(), "Error",
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error",
                 JOptionPane.ERROR_MESSAGE);
             this.menuOptionsEnableVideoStream.setSelected(false);
           }

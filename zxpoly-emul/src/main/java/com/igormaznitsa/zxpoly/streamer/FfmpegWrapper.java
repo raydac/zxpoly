@@ -43,6 +43,11 @@ public class FfmpegWrapper {
     final Process process = this.process.getAndSet(null);
     if (process != null) {
       process.destroyForcibly();
+      try {
+        LOGGER.info("FFmpeg exit value: " + process.waitFor());
+      } catch (Exception ex) {
+        LOGGER.warning("error during ffmpeg stop: " + ex.getMessage());
+      }
     }
   }
 
@@ -113,8 +118,6 @@ public class FfmpegWrapper {
     args.add("-bufsize");
     args.add("10M");
 
-    args.add("-filter:v");
-    args.add("fps=fps=30");
     args.add("-preset:v");
     args.add("ultrafast");
     args.add("-tune");
@@ -126,10 +129,10 @@ public class FfmpegWrapper {
     args.add("5");
     args.add("-qmax");
     args.add("50");
-    args.add("-pix_fmt");
-    args.add("yuv420p");
+
     args.add("-vf");
-    args.add("scale=pal");
+    args.add("format=yuv420p,scale=pal,fps=fps=30");
+
     args.add("-sws_flags");
     args.add("fast_bilinear");
     args.add("-movflags");

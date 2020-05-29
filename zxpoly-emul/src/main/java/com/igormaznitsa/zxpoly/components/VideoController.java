@@ -110,6 +110,7 @@ public final class VideoController extends JComponent
   private static final long MCYCLES_PER_BORDER_LINE = CYCLES_BETWEEN_INT / BORDER_LINES;
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private static volatile boolean gfxBackOverFF = false;
+  private static volatile boolean gfxPaper00InkFF = false;
   private static volatile boolean gfxHideSameInkPaper = true;
   private static volatile int gfxUpColorsMixed = 64;
   private static volatile int gfxDownColorsMixed = 0;
@@ -189,6 +190,7 @@ public final class VideoController extends JComponent
   ) {
     final int[] prerendededGfxBack = gfxPrerenderedBack;
     final boolean bkOverFF = gfxBackOverFF;
+    final boolean paper00inkFF = gfxPaper00InkFF;
     final boolean hideSameInkPaper = gfxHideSameInkPaper;
 
     if (prerendededGfxBack != null) {
@@ -230,24 +232,26 @@ public final class VideoController extends JComponent
             colorIndex < downAttrMixedIndex || colorIndex > upAttrMixedIndex;
 
         if (prerendededGfxBack == null) {
-          if (colorIndex == 0xFF) {
+          if (hideSameInkPaper && inkColor == paperColor) {
             color = inkColor;
+          } else if (paper00inkFF) {
+            if (colorIndex == 0) {
+              color = paperColor;
+            } else if (colorIndex == 0xFF) {
+              color = inkColor;
+            }
           }
         } else {
-          if (colorIndex == 0 || colorIndex == 0xFF && bkOverFF) {
+          if ((colorIndex == 0xFF && bkOverFF)
+              || ((attrData & 0x80) != 0 && flashActive)
+              || (hideSameInkPaper && inkColor == paperColor)) {
             draw = false;
-          }
-        }
-
-        if (hideSameInkPaper && inkColor == paperColor) {
-          color = inkColor;
-        }
-
-        if ((attrData & 0x80) != 0 && flashActive) {
-          if (prerendededGfxBack == null) {
-            color = inkColor; // paper color because flash phase
-          } else {
-            draw = false;
+          } else if (paper00inkFF) {
+            if (colorIndex == 0) {
+              color = paperColor;
+            } else if (colorIndex == 0xFF) {
+              color = inkColor;
+            }
           }
         }
 
@@ -647,6 +651,10 @@ public final class VideoController extends JComponent
 
   public static void setGfxBackOverFF(final boolean flag) {
     gfxBackOverFF = flag;
+  }
+
+  public static void setGfxPaper00InkFF(final boolean flag) {
+    gfxPaper00InkFF = flag;
   }
 
   public static void setGfxHideSameInkPaper(final boolean flag) {

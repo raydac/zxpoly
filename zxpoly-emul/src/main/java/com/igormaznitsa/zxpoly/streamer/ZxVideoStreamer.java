@@ -2,9 +2,12 @@ package com.igormaznitsa.zxpoly.streamer;
 
 import com.igormaznitsa.zxpoly.components.Beeper;
 import com.igormaznitsa.zxpoly.components.VideoController;
+import com.igormaznitsa.zxpoly.utils.Utils;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -27,7 +30,7 @@ public class ZxVideoStreamer {
   private final AtomicReference<FfmpegWrapper> ffmpegWrapper = new AtomicReference<>();
   private final Consumer<ZxVideoStreamer> endWorkConsumer;
   private final ZxSoundPort soudPort;
-  private final InternalHttpServer outDataRetranslator;
+  private final InternalHttpServer internalHttpServer;
   private volatile boolean stopped;
 
   public ZxVideoStreamer(
@@ -56,15 +59,18 @@ public class ZxVideoStreamer {
           new TcpWriter("tcp-sound-writer", 16, InetAddress.getLoopbackAddress(), 0);
       this.soudPort = new ZxSoundPort(this.soundWriter);
     }
-    this.outDataRetranslator =
+    this.internalHttpServer =
         new InternalHttpServer("video/MP2T", InetAddress.getLoopbackAddress(), 0,
-            address, port);
+            address, port, server -> {
+          LOGGER.info("Internal HTTP server has been stopped");
+          this.stop();
+        });
   }
 
   public void stop() {
     this.stopped = true;
 
-    this.outDataRetranslator.stop();
+    this.internalHttpServer.stop();
 
     if (this.beeper != null) {
       this.beeper.setSourceSoundPort(null);
@@ -116,10 +122,15 @@ public class ZxVideoStreamer {
       }
 
       @Override
-      public void onDone(final AbstractTcpSingleThreadServer writer) {
+      public void onDone(final AbstractTcpSingleThreadServer source) {
         ZxVideoStreamer.this.onDone();
       }
 
+      @Override
+      public void onConnectionDone(final AbstractTcpSingleThreadServer source,
+                                   final Socket socket) {
+        ZxVideoStreamer.this.onDone();
+      }
     };
 
     this.videoWriter.addListener(listener);
@@ -142,7 +153,7 @@ public class ZxVideoStreamer {
     }
 
     try {
-      this.outDataRetranslator.start();
+      this.internalHttpServer.start();
     } catch (Exception ex) {
       stop();
       throw new IllegalStateException("Can't start internal tcp-http retranslator", ex);
@@ -154,7 +165,7 @@ public class ZxVideoStreamer {
         "tcp://" + this.videoWriter.getServerAddress(),
         this.soundWriter == null ? null :
             "tcp://" + this.soundWriter.getServerAddress(),
-        "tcp://" + this.outDataRetranslator.getTcpAddress()
+        "tcp://" + this.internalHttpServer.getTcpAddress()
     );
 
     if (this.beeper != null) {
@@ -165,7 +176,8 @@ public class ZxVideoStreamer {
       ffmpeg.start();
     } catch (Exception ex) {
       stop();
-      throw new IllegalStateException("Can't start FFmpeg", ex);
+      LOGGER.warning("Can't start ffmpeg: " + ex.getMessage());
+      throw new IllegalStateException(ex.getMessage(), ex);
     }
     try {
       Thread.sleep(300);
@@ -175,7 +187,7 @@ public class ZxVideoStreamer {
 
     if (!ffmpeg.isAlive()) {
       this.stop();
-      throw new IllegalStateException("Can't start");
+      throw new IllegalStateException("ffmpeg can't start");
     }
 
     final Thread newThread = new Thread(
@@ -185,6 +197,12 @@ public class ZxVideoStreamer {
     newThread.setDaemon(true);
     if (this.currentThread.compareAndSet(null, newThread)) {
       newThread.start();
+      final String link = "http://" + this.internalHttpServer.getHttpAddress() + '/';
+      try {
+        Utils.browseLink(new URL(link));
+      } catch (MalformedURLException ex) {
+        LOGGER.warning("Can't make URL: " + link);
+      }
     }
   }
 
@@ -196,7 +214,7 @@ public class ZxVideoStreamer {
   }
 
   private void doWork() {
-    LOGGER.info("started streamer, http address: " + this.outDataRetranslator.getHttpAddress());
+    LOGGER.info("started streamer, http address: " + this.internalHttpServer.getHttpAddress());
 
     final long delay = ((10000L / frameRate) + 5L) / 10L;
     while (!Thread.currentThread().isInterrupted()) {

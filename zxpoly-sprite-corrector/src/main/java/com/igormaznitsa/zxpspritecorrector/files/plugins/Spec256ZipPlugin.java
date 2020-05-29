@@ -27,7 +27,6 @@ import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugi
 import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.getVersion;
 import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.is48k;
 import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.makePair;
-import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 
 
@@ -60,13 +59,13 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
 
   public static final int[] ARGB_PALETTE_ZXPOLY = new int[] {
       0xFF000000,
-      0xFF0000BE,
-      0xFFBE0000,
-      0xFFBE00BE,
-      0xFF00BE00,
-      0xFF00BEBE,
-      0xFFBEBE00,
-      0xFFBEBEBE,
+      0xFF0000A0,
+      0xFFA00000,
+      0xFFA000A0,
+      0xFF00A000,
+      0xFF00A0A0,
+      0xFFA0A000,
+      0xFFA0A0A0,
       0xFF000000,
       0xFF0000FF,
       0xFFFF0000,
@@ -115,12 +114,12 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       final int ig = (argbPalette[i] >>> 8) & 0xFF;
       final int ib = argbPalette[i] & 0xFF;
 
-      final double distance =
-          sqrt((pow(r - ir, 2) + pow(g - ig, 2) + pow(b - ib, 2)));
-      if (distance < .1e-15d) {
-        lastIndex = i;
-        break;
-      } else if (distance < curDistance) {
+      final double dr = r - ir;
+      final double dg = g - ig;
+      final double db = b - ib;
+
+      final double distance = sqrt((dr * dr) + (double)(dg * dg) + (double)(db * db));
+      if (distance < curDistance) {
         lastIndex = i;
         curDistance = distance;
       }
@@ -136,7 +135,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       result[i] = findCloserIndexInPalette(
           ARGB_PALETTE_ZXPOLY[i],
           argbSpec256Palette,
-          1,
+          64,
           192);
     }
 

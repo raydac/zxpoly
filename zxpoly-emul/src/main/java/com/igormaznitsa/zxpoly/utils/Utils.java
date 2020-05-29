@@ -17,16 +17,60 @@
 
 package com.igormaznitsa.zxpoly.utils;
 
+import java.awt.Desktop;
 import java.awt.Image;
+import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.SystemUtils;
 
 public final class Utils {
 
+  public static final Logger LOGGER = Logger.getLogger("Utils");
+
   private Utils() {
+  }
+
+  public static void browseLink(final URL url) {
+    if (Desktop.isDesktopSupported()) {
+      final Desktop desktop = Desktop.getDesktop();
+      if (desktop.isSupported(Desktop.Action.BROWSE)) {
+        try {
+          desktop.browse(url.toURI());
+        } catch (Exception x) {
+          LOGGER.warning("Can't browse URL in Desktop: " + x.getMessage());
+        }
+      } else if (SystemUtils.IS_OS_LINUX) {
+        final Runtime runtime = Runtime.getRuntime();
+        try {
+          runtime.exec("xdg-open " + url);
+        } catch (IOException e) {
+          LOGGER.warning("Can't browse URL under Linux: " + e.getMessage());
+        }
+      } else if (SystemUtils.IS_OS_MAC) {
+        final Runtime runtime = Runtime.getRuntime();
+        try {
+          runtime.exec("open " + url);
+        } catch (IOException e) {
+          LOGGER.warning("Can't browse URL on MAC: " + e.getMessage());
+        }
+      }
+    }
+  }
+
+  public static void closeQuietly(final Closeable closeable) {
+    if (closeable != null) {
+      try {
+        closeable.close();
+      } catch (Exception ex) {
+        // DO NOTHING
+      }
+    }
   }
 
   public static int[] alignPaletteColors(final int[] dstPalette, final int[] etalPalette) {
@@ -41,7 +85,8 @@ public final class Utils {
         final int rr = (value >>> 16) & 0xFF;
         final int gg = (value >>> 8) & 0xFF;
         final int bb = value & 0xFF;
-        final double cdist = Math.sqrt(Math.pow((double) rr - r, 2) + Math.pow((double) gg - g, 2) + Math.pow((double) bb - b, 2));
+        final double cdist = Math.sqrt(Math.pow((double) rr - r, 2) + Math.pow((double) gg - g, 2) +
+            Math.pow((double) bb - b, 2));
         if (cdist < dist) {
           dist = cdist;
           result[i] = value;

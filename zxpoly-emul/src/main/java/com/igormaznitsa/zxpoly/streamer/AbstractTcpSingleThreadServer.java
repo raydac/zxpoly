@@ -1,12 +1,15 @@
 package com.igormaznitsa.zxpoly.streamer;
 
+import static com.igormaznitsa.zxpoly.utils.Utils.closeQuietly;
+
+
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import org.apache.commons.io.IOUtils;
 
 public abstract class AbstractTcpSingleThreadServer {
   protected final PreemptiveBuffer buffer;
@@ -17,19 +20,24 @@ public abstract class AbstractTcpSingleThreadServer {
 
   public interface TcpServerListener {
 
-    default void onEstablishing(AbstractTcpSingleThreadServer server, ServerSocket socket, Throwable error) {
+    default void onEstablishing(AbstractTcpSingleThreadServer source, ServerSocket socket,
+                                Throwable error) {
 
     }
 
-    default void onConnected(AbstractTcpSingleThreadServer server, Socket socket) {
+    default void onConnected(AbstractTcpSingleThreadServer source, Socket socket) {
 
     }
 
-    default void onClientError(AbstractTcpSingleThreadServer server, Throwable error) {
+    default void onClientError(AbstractTcpSingleThreadServer source, Throwable error) {
 
     }
 
-    default void onDone(AbstractTcpSingleThreadServer server) {
+    default void onDone(AbstractTcpSingleThreadServer source) {
+
+    }
+
+    default void onConnectionDone(AbstractTcpSingleThreadServer source, Socket socket) {
 
     }
   }
@@ -83,8 +91,8 @@ public abstract class AbstractTcpSingleThreadServer {
     final Thread thread = this.currentThread.getAndSet(null);
     if (thread != null) {
       thread.interrupt();
-      IOUtils.closeQuietly(this.serverSocket.get());
-      IOUtils.closeQuietly(this.currentSocket.get());
+      closeQuietly(this.serverSocket.get());
+      closeQuietly(this.currentSocket.get());
       try {
         thread.join();
       } catch (InterruptedException ex) {
@@ -115,8 +123,12 @@ public abstract class AbstractTcpSingleThreadServer {
         final Socket socket;
         try {
           socket = serverSocket.accept();
+          socket.setSoLinger(false, 0);
+          socket.setSoTimeout((int)TimeUnit.SECONDS.toMillis(5));
+          socket.setReuseAddress(true);
           socket.setTcpNoDelay(true);
           socket.setKeepAlive(true);
+          socket.setPerformancePreferences(0,1, 0);
         } catch (Exception ex) {
           this.listeners.forEach(x -> x.onClientError(this, ex));
           break;
@@ -130,6 +142,8 @@ public abstract class AbstractTcpSingleThreadServer {
           if (!this.stopped && !Thread.currentThread().isInterrupted()) {
             this.listeners.forEach(x -> x.onClientError(this, ex));
           }
+        } finally {
+          this.listeners.forEach(x -> x.onConnectionDone(this, socket));
         }
       }
     } finally {

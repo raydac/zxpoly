@@ -204,6 +204,8 @@ public class FormatSpec256 extends Snapshot {
 
     VideoController
         .setGfxBackOverFF(!"0".equals(archive.getProperties().getProperty("BkOverFF", "0")));
+    VideoController
+        .setGfxPaper00InkFF(!"0".equals(archive.getProperties().getProperty("Paper00InkFF", "0")));
     VideoController.setGfxHideSameInkPaper(
         !"0".equals(archive.getProperties().getProperty("HideSameInkPaper", "1")));
     VideoController.setGfxDownColorsMixed(

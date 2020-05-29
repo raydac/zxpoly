@@ -7,11 +7,16 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 public class InternalHttpServer {
+
+  private static final Logger LOGGER = Logger.getLogger("VideoStreamer.InternalHttpServer");
 
   private static final String STREAM_RESOURCE = "stream.ts";
 
@@ -22,6 +27,7 @@ public class InternalHttpServer {
   private final int httpServerPort;
   private final AtomicReference<HttpServer> httpServerRef = new AtomicReference<>();
   private final AtomicReference<TcpReader> tcpReaderRef = new AtomicReference<>();
+  private final Consumer<InternalHttpServer> stopConsumer;
   private volatile boolean stopped;
 
   public InternalHttpServer(
@@ -29,13 +35,15 @@ public class InternalHttpServer {
       final InetAddress addressIn,
       final int portIn,
       final InetAddress addressOut,
-      final int portOut
+      final int portOut,
+      final Consumer<InternalHttpServer> stopConsumer
   ) {
     this.mime = mime;
     this.tcpReaderAddress = addressIn;
     this.httpServerAddress = addressOut;
     this.tcpReaderPort = portIn;
     this.httpServerPort = portOut;
+    this.stopConsumer = stopConsumer;
   }
 
   public void start() throws IOException {
@@ -47,6 +55,16 @@ public class InternalHttpServer {
     final TcpReader newReader =
         new TcpReader("tcp-reader", 0x10000, 10, InetAddress.getLoopbackAddress(), 0);
     if (this.tcpReaderRef.compareAndSet(null, newReader)) {
+      newReader.addListener(new AbstractTcpSingleThreadServer.TcpServerListener() {
+        @Override
+        public void onConnectionDone(final AbstractTcpSingleThreadServer source,
+                                     final Socket socket) {
+          if (source == newReader) {
+            LOGGER.info("TCP reader connection lost");
+            stop();
+          }
+        }
+      });
       newReader.start();
     }
   }
@@ -113,7 +131,6 @@ public class InternalHttpServer {
     headers.add("Keep-Alive", "max");
     headers.add("Accept-Ranges", "none");
 
-
     exchange.sendResponseHeaders(200, 0);
 
     OutputStream os = exchange.getResponseBody();
@@ -136,7 +153,19 @@ public class InternalHttpServer {
   public void stop() {
     final HttpServer server = this.httpServerRef.getAndSet(null);
     if (server != null) {
-      server.stop(0);
+      final TcpReader reader = this.tcpReaderRef.getAndSet(null);
+      if (reader != null) {
+          reader.stop();
+      }
+      try {
+        server.stop(0);
+      } catch (Exception ex) {
+        LOGGER.warning("Error on server stop: " + ex.getMessage());
+      }
+
+      if (this.stopConsumer != null) {
+        this.stopConsumer.accept(this);
+      }
     }
   }
 
