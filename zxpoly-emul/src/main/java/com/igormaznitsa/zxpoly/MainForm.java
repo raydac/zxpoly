@@ -537,13 +537,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   @Override
   public void run() {
-    final int INT_TO_UPDATE_INFOPANEL = 20;
+    final int INT_TICKS_BETWEEN_INFO_PANEL_UPDATE = 20;
 
     long nextIntTickTime = System.currentTimeMillis() + TIMER_INT_DELAY_MILLISECONDS;
     int countdownToPaint = 0;
     int countdownToAnimationSave = 0;
 
-    int countToUpdatePanel = INT_TO_UPDATE_INFOPANEL;
+    int countToUpdatePanel = INT_TICKS_BETWEEN_INFO_PANEL_UPDATE;
 
     while (!Thread.currentThread().isInterrupted()) {
       final long currentMachineCycleCounter = this.board.getMasterCpu().getMachineCycles();
@@ -599,7 +599,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           }
 
           if (countToUpdatePanel <= 0) {
-            countToUpdatePanel = INT_TO_UPDATE_INFOPANEL;
+            countToUpdatePanel = INT_TICKS_BETWEEN_INFO_PANEL_UPDATE;
             updateInfoPanel();
           }
         } finally {
@@ -684,8 +684,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     LOGGER.info(buffer.toString());
   }
 
-  private String makeInfoStringForRegister(final Z80[] cpuModuleStates, final int lastAddress,
-                                           final String extraString, final int register,
+  private String makeInfoStringForRegister(final Z80[] cpuModuleStates,
+                                           final int lastAddress,
+                                           final String extraString,
+                                           final int register,
                                            final boolean alt) {
     final StringBuilder result = new StringBuilder();
 
@@ -712,31 +714,31 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     return result.toString();
   }
 
-  public void onTrigger(final int triggered, final int lastM1Address, final Z80[] cpuModuleStates) {
+  void onTrigger(final int triggered, final int lastM1Address, final Z80[] cpuModuleStates) {
     this.stepSemaphor.lock();
     try {
       logTrigger(triggered, lastM1Address, cpuModuleStates);
 
       if ((triggered & Motherboard.TRIGGER_DIFF_MODULESTATES) != 0) {
         this.menuTriggerModuleCPUDesync.setSelected(false);
-        JOptionPane.showMessageDialog(MainForm.this, "Detected desync of module CPUs\n" +
-                makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false),
+        JOptionPane.showMessageDialog(MainForm.this, "Detected desync of module CPUs\n"
+                + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false),
             "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
 
       if ((triggered & Motherboard.TRIGGER_DIFF_MEM_ADDR) != 0) {
         this.menuTriggerDiffMem.setSelected(false);
         JOptionPane.showMessageDialog(MainForm.this,
-            "Detected memory cell difference " + toHex(this.board.getMemTriggerAddress()) + "\n" +
-                makeInfoStringForRegister(cpuModuleStates, lastM1Address,
-                    getCellContentForAddress(this.board.getMemTriggerAddress()), Z80.REG_PC, false),
+            "Detected memory cell difference " + toHex(this.board.getMemTriggerAddress()) + "\n"
+                + makeInfoStringForRegister(cpuModuleStates, lastM1Address,
+                getCellContentForAddress(this.board.getMemTriggerAddress()), Z80.REG_PC, false),
             "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
 
       if ((triggered & Motherboard.TRIGGER_DIFF_EXE_CODE) != 0) {
         this.menuTriggerExeCodeDiff.setSelected(false);
-        JOptionPane.showMessageDialog(MainForm.this, "Detected EXE code difference\n" +
-                makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false),
+        JOptionPane.showMessageDialog(MainForm.this, "Detected EXE code difference\n"
+                + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false),
             "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
     } finally {
@@ -1916,8 +1918,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           }
 
           if (selected.isFile() && JOptionPane
-              .showConfirmDialog(this, "Do you want override file '" + selected.getName() + "\'?",
-                  "File exists", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+              .showConfirmDialog(
+                  this,
+                  String.format("Do you want override file '%s'?", selected.getName()),
+                  "Found existing file",
+                  JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
             return;
           }
 
@@ -1939,7 +1944,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuFileMenuSelected(javax.swing.event.MenuEvent evt) {
+  private void menuFileMenuSelected(final MenuEvent evt) {
     boolean hasChangedDisk = false;
     for (int i = 0; i < 4; i++) {
       final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
@@ -1980,8 +1985,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             try {
               FileUtils.writeByteArrayToFile(destFile, disk.getDiskData());
               disk.replaceSrcFile(destFile, TrDosDisk.SourceDataType.TRD, true);
-              LOGGER.info("Changes for disk " + ('A' + i) + " is saved as file: " +
-                  destFile.getAbsolutePath());
+              LOGGER.info("Changes for disk " + ('A' + i) + " is saved as file: "
+                  + destFile.getAbsolutePath());
             } catch (IOException ex) {
               LOGGER.warning("Can't write disk for error: " + ex.getMessage());
               JOptionPane
@@ -2173,7 +2178,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private static class TapFileFilter extends FileFilter {
 
     @Override
-    public boolean accept(File f) {
+    public boolean accept(final File f) {
       return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".tap");
     }
 
