@@ -17,7 +17,7 @@
 
 package com.igormaznitsa.zxpoly.components;
 
-import static com.igormaznitsa.zxpoly.components.VideoController.CYCLES_BETWEEN_INT;
+import static com.igormaznitsa.zxpoly.components.VideoController.MCYCLES_PER_INT;
 import static java.lang.Math.min;
 
 
@@ -241,7 +241,7 @@ public final class Motherboard implements ZxPolyConstants {
       this.statisticCounter--;
       if (this.statisticCounter <= 0) {
         for (int i = 0; i < 4; i++) {
-          this.cpuLoad[i] = min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweenInt() / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (CYCLES_BETWEEN_INT));
+          this.cpuLoad[i] = min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweenInt() / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (MCYCLES_PER_INT));
         }
         this.statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
         resetStatisticsAtModules = true;

@@ -90,7 +90,7 @@ public final class ZxSoundPort extends SourceSoundPort implements SourceDataLine
 
   @Override
   public int available() {
-    return 0;
+    return Integer.MAX_VALUE;
   }
 
   @Override

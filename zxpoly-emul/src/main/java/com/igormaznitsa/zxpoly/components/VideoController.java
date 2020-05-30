@@ -58,7 +58,7 @@ public final class VideoController extends JComponent
           SCREEN_HEIGHT + (PREFERRED_BORDER_WIDTH << 1));
 
   public static final Image IMAGE_ZXKEYS = Utils.loadIcon("zxkeys.png");
-  public static final long CYCLES_BETWEEN_INT = 20000000L / (1000000000L / Motherboard.CPU_FREQ);
+  public static final long MCYCLES_PER_INT = 20000000L / (1000000000L / Motherboard.CPU_FREQ);
   public static final int[] PALETTE_ZXPOLY = new int[] {
       0xFF000000,
       0xFF0000BE,
@@ -107,7 +107,7 @@ public final class VideoController extends JComponent
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
   private static final int BORDER_LINES = 37;
-  private static final long MCYCLES_PER_BORDER_LINE = CYCLES_BETWEEN_INT / BORDER_LINES;
+  private static final long MCYCLES_PER_BORDER_LINE = MCYCLES_PER_INT / BORDER_LINES;
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;

@@ -19,7 +19,7 @@ package com.igormaznitsa.zxpoly;
 
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
-import static com.igormaznitsa.zxpoly.components.VideoController.CYCLES_BETWEEN_INT;
+import static com.igormaznitsa.zxpoly.components.VideoController.MCYCLES_PER_INT;
 import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
 import static javax.swing.KeyStroke.getKeyStroke;
 
@@ -554,11 +554,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           final boolean inTurboMode = this.turboMode;
           final boolean systemIntSignal;
           if (nextIntTickTime <= wallclockTime) {
-            systemIntSignal = currentMachineCycleCounter >= CYCLES_BETWEEN_INT;
+            systemIntSignal = currentMachineCycleCounter >= MCYCLES_PER_INT;
             nextIntTickTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
             if (systemIntSignal) {
               this.board.getMasterCpu()
-                  .setMCycleCounter(currentMachineCycleCounter % CYCLES_BETWEEN_INT);
+                  .setMCycleCounter(currentMachineCycleCounter % MCYCLES_PER_INT);
             }
             countdownToPaint--;
             countToUpdatePanel--;
@@ -568,7 +568,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           }
 
           final int triggers = this.board.step(systemIntSignal,
-              inTurboMode || (systemIntSignal || currentMachineCycleCounter <= CYCLES_BETWEEN_INT));
+              inTurboMode || (systemIntSignal || currentMachineCycleCounter <= MCYCLES_PER_INT));
 
           if (triggers != Motherboard.TRIGGER_NONE) {
             final Z80[] cpuStates = new Z80[4];
@@ -610,12 +610,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           updateTracerWindowsForStep();
         }
       } else {
-        final long diff = wallclockTime - nextIntTickTime;
-        if (diff >= 0L) {
+        final long timeDiff = wallclockTime - nextIntTickTime;
+        if (timeDiff >= 0L) {
           nextIntTickTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
           this.board.dryIntTickOnWallClockTime(
-              diff == 0 ? CYCLES_BETWEEN_INT : Math.round(
-                  CYCLES_BETWEEN_INT * ((double) diff / (double) TIMER_INT_DELAY_MILLISECONDS)
+              timeDiff == 0 ? MCYCLES_PER_INT : Math.round(
+                  MCYCLES_PER_INT * ((double) timeDiff / (double) TIMER_INT_DELAY_MILLISECONDS)
               )
           );
         }
