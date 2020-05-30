@@ -232,6 +232,7 @@ public final class VideoController extends JComponent
             colorIndex < downAttrMixedIndex || colorIndex > upAttrMixedIndex;
 
         if (preRenderedBack == null) {
+          // No GFX Background
           if (hideSameInkPaper && inkColor == paperColor) {
             color = inkColor;
           } else if (paper00inkFF) {
@@ -242,18 +243,20 @@ public final class VideoController extends JComponent
             }
           }
         } else {
-          if (colorIndex == 0
-              || (bkOverFF && colorIndex == 0xFF)
-              || ((attrData & 0x80) != 0 && flashActive)
-              || (hideSameInkPaper && inkColor == paperColor)
-          ) {
-            draw = false;
-          } else if (paper00inkFF) {
+          // GFX Background is presented
+          final boolean backShouldBeShown = ((attrData & 0x80) != 0 && flashActive)
+              || (hideSameInkPaper && inkColor == paperColor);
+
+          if (paper00inkFF) {
             if (colorIndex == 0) {
               color = paperColor;
             } else if (colorIndex == 0xFF) {
               color = inkColor;
+            } else {
+              draw = !backShouldBeShown;
             }
+          } else {
+            draw = !(backShouldBeShown || (colorIndex == 0 || (bkOverFF && colorIndex == 0xFF)));
           }
         }
 
