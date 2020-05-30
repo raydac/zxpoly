@@ -614,7 +614,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         if (diff >= 0L) {
           nextIntTickTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
           this.board.dryIntTickOnWallClockTime(
-              diff == 0 ? CYCLES_BETWEEN_INT : Math.round(CYCLES_BETWEEN_INT * ((double)diff/(double)TIMER_INT_DELAY_MILLISECONDS))
+              diff == 0 ? CYCLES_BETWEEN_INT : Math.round(
+                  CYCLES_BETWEEN_INT * ((double) diff / (double) TIMER_INT_DELAY_MILLISECONDS)
+              )
           );
         }
       }
