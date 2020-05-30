@@ -99,7 +99,7 @@
                 </goals>
                 <configuration>
                   <headerType>gui</headerType>
-                  <jar>${project.build.directory}/${artifactId}-${version}.jar</jar>
+                  <jar>${project.build.directory}/${project.artifactId}-${project.version}.jar</jar>
                   <outfile>${project.build.directory}/zxpoly-sprite-corrector_${project.version}.exe</outfile>
                   <downloadUrl>http://www.oracle.com/technetwork/java/javase/downloads</downloadUrl>
                   <classPath>

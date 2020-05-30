@@ -12,7 +12,7 @@
   </formats>
   <files>
     <file>
-      <source>${project.build.directory}${file.separator}${artifactId}-${version}.jar</source>
+      <source>${project.build.directory}${file.separator}${project.artifactId}-${project.version}.jar</source>
       <destName>zxpoly-emul.jar</destName>
       <outputDirectory>${project.build.finalName}${file.separator}</outputDirectory>
     </file>

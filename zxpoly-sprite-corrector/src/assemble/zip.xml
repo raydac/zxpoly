@@ -11,7 +11,7 @@
     </formats>
     <files>
         <file>
-            <source>${project.build.directory}/${artifactId}-${version}.jar</source>
+            <source>${project.build.directory}/${project.artifactId}-${project.version}.jar</source>
             <destName>zxpoly-corrector.jar</destName>
             <outputDirectory>/</outputDirectory>
         </file>

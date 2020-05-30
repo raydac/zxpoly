@@ -56,8 +56,8 @@
       <fileMode>0755</fileMode>
     </file>
     <file>
-      <source>${project.build.directory}${file.separator}${artifactId}-${version}.jar</source>
-      <destName>${artifactId}-${version}.jar</destName>
+      <source>${project.build.directory}${file.separator}${project.artifactId}-${project.version}.jar</source>
+      <destName>${project.artifactId}-${project.version}.jar</destName>
       <outputDirectory>${file.separator}ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS</outputDirectory>
     </file>
   </files>
