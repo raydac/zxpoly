@@ -19,6 +19,7 @@ package com.igormaznitsa.zxpoly;
 
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
+import static com.igormaznitsa.zxpoly.components.VideoController.CYCLES_BETWEEN_INT;
 import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
 import static javax.swing.KeyStroke.getKeyStroke;
 
@@ -364,7 +365,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             MainForm.this.board.getBeeper().pause();
             MainForm.this.keyboardAndTapeModule.doReset();
             if (e.getSource() == menuOptions) {
-              menuOptionsEnableSpeaker.setEnabled(!turboMode && !menuOptionsEnableVideoStream.isSelected());
+              menuOptionsEnableSpeaker
+                  .setEnabled(!turboMode && !menuOptionsEnableVideoStream.isSelected());
               menuOptionsEnableSpeaker.setState(board.getBeeper().isActive());
             }
             menuServiceGameControllers
@@ -542,75 +544,83 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   public void run() {
     final int INT_TO_UPDATE_INFOPANEL = 20;
 
-    long nextSystemInt = System.currentTimeMillis() + TIMER_INT_DELAY_MILLISECONDS;
+    long nextIntTickTime = System.currentTimeMillis() + TIMER_INT_DELAY_MILLISECONDS;
     int countdownToPaint = 0;
     int countdownToAnimationSave = 0;
 
     int countToUpdatePanel = INT_TO_UPDATE_INFOPANEL;
 
+    long machineCyclesPausedOffset = 0L;
+
     while (!Thread.currentThread().isInterrupted()) {
       final long currentMachineCycleCounter = this.board.getMasterCpu().getMachineCycles();
-      long currentTime = System.currentTimeMillis();
+      long wallclockTime = System.currentTimeMillis();
 
-      stepSemaphor.lock();
-      try {
-        final boolean inTurboMode = this.turboMode;
-        final boolean systemIntSignal;
-        if (nextSystemInt <= currentTime) {
-          systemIntSignal = currentMachineCycleCounter >= VideoController.CYCLES_BETWEEN_INT;
-          nextSystemInt = currentTime + TIMER_INT_DELAY_MILLISECONDS;
-          if (systemIntSignal) {
-            this.board.getMasterCpu()
-                .setMCycleCounter(currentMachineCycleCounter % VideoController.CYCLES_BETWEEN_INT);
-          }
-          countdownToPaint--;
-          countToUpdatePanel--;
-          countdownToAnimationSave--;
-        } else {
-          systemIntSignal = false;
-        }
-
-        final int triggers = this.board.step(systemIntSignal, inTurboMode ||
-            (systemIntSignal || currentMachineCycleCounter <= VideoController.CYCLES_BETWEEN_INT));
-
-        if (triggers != Motherboard.TRIGGER_NONE) {
-          final Z80[] cpuStates = new Z80[4];
-          final int lastM1Address = this.board.getModules()[0].getLastM1Address();
-          for (int i = 0; i < 4; i++) {
-            cpuStates[i] = new Z80(this.board.getModules()[i].getCpu());
-          }
-          SwingUtilities.invokeLater(() -> onTrigger(triggers, lastM1Address, cpuStates));
-        }
-
-        if (countdownToPaint <= 0) {
-          countdownToPaint = INT_BETWEEN_FRAMES;
-          updateScreen();
-        }
-
-        if (countdownToAnimationSave <= 0) {
-          final AnimationEncoder theAnimationEncoder = this.currentAnimationEncoder.get();
-          if (theAnimationEncoder == null) {
-            countdownToAnimationSave = 0;
+      if (stepSemaphor.tryLock()) {
+        try {
+          final boolean inTurboMode = this.turboMode;
+          final boolean systemIntSignal;
+          if (nextIntTickTime <= wallclockTime) {
+            systemIntSignal = currentMachineCycleCounter >= CYCLES_BETWEEN_INT;
+            nextIntTickTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
+            if (systemIntSignal) {
+              this.board.getMasterCpu()
+                  .setMCycleCounter(currentMachineCycleCounter % CYCLES_BETWEEN_INT);
+            }
+            countdownToPaint--;
+            countToUpdatePanel--;
+            countdownToAnimationSave--;
           } else {
-            countdownToAnimationSave = theAnimationEncoder.getIntsBetweenFrames();
-            try {
-              theAnimationEncoder.saveFrame(board.getVideoController().makeCopyOfVideoBuffer());
-            } catch (IOException ex) {
-              LOGGER.warning("Can't write animation frame: " + ex.getMessage());
+            systemIntSignal = false;
+          }
+
+          final int triggers = this.board.step(systemIntSignal,
+              inTurboMode || (systemIntSignal || currentMachineCycleCounter <= CYCLES_BETWEEN_INT));
+
+          if (triggers != Motherboard.TRIGGER_NONE) {
+            final Z80[] cpuStates = new Z80[4];
+            final int lastM1Address = this.board.getModules()[0].getLastM1Address();
+            for (int i = 0; i < 4; i++) {
+              cpuStates[i] = new Z80(this.board.getModules()[i].getCpu());
+            }
+            SwingUtilities.invokeLater(() -> onTrigger(triggers, lastM1Address, cpuStates));
+          }
+
+          if (countdownToPaint <= 0) {
+            countdownToPaint = INT_BETWEEN_FRAMES;
+            updateScreen();
+          }
+
+          if (countdownToAnimationSave <= 0) {
+            final AnimationEncoder theAnimationEncoder = this.currentAnimationEncoder.get();
+            if (theAnimationEncoder == null) {
+              countdownToAnimationSave = 0;
+            } else {
+              countdownToAnimationSave = theAnimationEncoder.getIntsBetweenFrames();
+              try {
+                theAnimationEncoder.saveFrame(board.getVideoController().makeCopyOfVideoBuffer());
+              } catch (IOException ex) {
+                LOGGER.warning("Can't write animation frame: " + ex.getMessage());
+              }
             }
           }
+
+          if (countToUpdatePanel <= 0) {
+            countToUpdatePanel = INT_TO_UPDATE_INFOPANEL;
+            updateInfoPanel();
+          }
+        } finally {
+          stepSemaphor.unlock();
         }
 
-        if (countToUpdatePanel <= 0) {
-          countToUpdatePanel = INT_TO_UPDATE_INFOPANEL;
-          updateInfoPanel();
+        if (this.activeTracerWindowCounter.get() > 0) {
+          updateTracerWindowsForStep();
         }
-      } finally {
-        stepSemaphor.unlock();
-      }
-
-      if (this.activeTracerWindowCounter.get() > 0) {
-        updateTracerWindowsForStep();
+      } else {
+        if (nextIntTickTime <= wallclockTime) {
+          nextIntTickTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
+          this.board.processIntTickInPause();
+        }
       }
     }
   }
@@ -1198,7 +1208,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         }
         final ZxVideoStreamer newStreamer;
         try {
-          final InetAddress interfaceAddress = InetAddress.getByName(AppOptions.getInstance().getAddress());
+          final InetAddress interfaceAddress =
+              InetAddress.getByName(AppOptions.getInstance().getAddress());
           newStreamer = new ZxVideoStreamer(
               this.board.getVideoController(),
               AppOptions.getInstance().isGrabSound() ? this.board.getBeeper() : null,
@@ -1685,7 +1696,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     try {
       this.turnZxKeyboardOff();
       final OptionsPanel optionsPanel = new OptionsPanel(null);
-      if (JOptionPane.showConfirmDialog(this, optionsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+      if (JOptionPane
+          .showConfirmDialog(this, optionsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION,
+              JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
         optionsPanel.getData().store();
       }
     } finally {

@@ -282,9 +282,7 @@ public class Beeper {
           this.activeBufferIndex = 0;
         }
         try {
-          exchanger.exchange(currentBuffer, 20, TimeUnit.MILLISECONDS);
-        } catch (TimeoutException ex) {
-          // DO NOTHING, JUST LOST DATA
+          exchanger.exchange(currentBuffer);
         } catch (InterruptedException ex) {
           Thread.currentThread().interrupt();
         }
@@ -300,33 +298,38 @@ public class Beeper {
     ) {
       if (this.working) {
         final byte value = LEVELS[level];
-
-        if (machineCycleInInt > CYCLES_BETWEEN_INT) {
-          fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, SND_BUFFER_LENGTH,
-              this.lastValue);
-          blink(this.lastValue);
-          machineCycleInInt -= CYCLES_BETWEEN_INT;
-        }
-
         int position = ((int) (machineCycleInInt * SAMPLES_IN_INT / CYCLES_BETWEEN_INT)) << 2;
 
-        if (position < this.lastPosition) {
-          fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, SND_BUFFER_LENGTH,
-              this.lastValue);
-          blink(this.lastValue);
-        }
-
-        fill(this.soundBuffers[this.activeBufferIndex], this.lastPosition, position,
-            this.lastValue);
-        if (position == SND_BUFFER_LENGTH) {
-          blink(value);
-          position = 0;
+        if (position > SND_BUFFER_LENGTH) {
+          fill(
+              this.soundBuffers[this.activeBufferIndex],
+              this.lastPosition,
+              SND_BUFFER_LENGTH,
+              value
+          );
+          if (intSignal) {
+            this.blink(value);
+          }
+          position -= SND_BUFFER_LENGTH;
+        } else if (position < this.lastPosition) {
+          if (intSignal) {
+            this.blink(value);
+          }
+          fill(
+              this.soundBuffers[this.activeBufferIndex],
+              0,
+              position,
+              value
+          );
         } else {
-          this.soundBuffers[this.activeBufferIndex][position] = value;
+          fill(this.soundBuffers[this.activeBufferIndex],
+              this.lastPosition,
+              position,
+              value
+          );
         }
-
-        this.lastValue = value;
         this.lastPosition = position;
+        this.lastValue = value;
       }
     }
 

@@ -17,6 +17,7 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import static com.igormaznitsa.zxpoly.components.VideoController.CYCLES_BETWEEN_INT;
 import static java.lang.Math.min;
 
 
@@ -240,7 +241,7 @@ public final class Motherboard implements ZxPolyConstants {
       this.statisticCounter--;
       if (this.statisticCounter <= 0) {
         for (int i = 0; i < 4; i++) {
-          this.cpuLoad[i] = min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweenInt() / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (VideoController.CYCLES_BETWEEN_INT));
+          this.cpuLoad[i] = min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweenInt() / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (CYCLES_BETWEEN_INT));
         }
         this.statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
         resetStatisticsAtModules = true;
@@ -362,7 +363,7 @@ public final class Motherboard implements ZxPolyConstants {
         masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
       }
 
-      int audioLevel = (this.video.getPortFE() >> 2 & 0b110) | (this.keyboard.isTapeIn() ? 1 : 0);
+      final int audioLevel = (this.video.getPortFE() >> 2 & 0b110) | (this.keyboard.isTapeIn() ? 1 : 0);
       this.beeper.updateState(signalInt, initialMachineCycleCounter, audioLevel);
 
       final long spentMachineCycles = modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
@@ -401,9 +402,15 @@ public final class Motherboard implements ZxPolyConstants {
             }
           }
         }
+      } else {
+        this.beeper.updateState(signalInt, initialMachineCycleCounter, audioLevel);
       }
     }
     return result;
+  }
+
+  public void processIntTickInPause() {
+    this.beeper.updateState(true, CYCLES_BETWEEN_INT, 0);
   }
 
   public void syncSpec256GpuStates() {
