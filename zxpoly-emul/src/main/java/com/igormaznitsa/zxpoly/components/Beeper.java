@@ -236,24 +236,34 @@ public class Beeper {
 
     @Override
     public void updateState(
-        final boolean intSignal,
+        boolean intSignal,
         long machineCyclesInInt,
         final int level
     ) {
       if (this.working) {
         final byte value = LEVELS[level];
-        int position = ((int) (machineCyclesInInt * SAMPLES_PER_INT * 4 / MCYCLES_PER_INT));
+        int position = ((int) (machineCyclesInInt * SAMPLES_PER_INT / MCYCLES_PER_INT)) * 4;
 
         if (intSignal) {
           blink(value);
         }
 
         if (position > SND_BUFFER_LENGTH) {
+          if (intSignal) {
+            blink(value);
+            intSignal = false;
+          }
           position -= SND_BUFFER_LENGTH;
         }
 
         fill(this.soundBuffers[this.activeBufferIndex],
-            position, SND_BUFFER_LENGTH, value);
+            position,
+            SND_BUFFER_LENGTH,
+            value);
+
+        if (intSignal) {
+          blink(value);
+        }
       }
     }
 
@@ -292,8 +302,9 @@ public class Beeper {
       }
     }
 
-    private void flushDataIntoLine(final byte[] data) {
-      this.sourceDataLine.write(data, 0, Math.min(this.sourceDataLine.available(), data.length));
+    private synchronized void flushDataIntoLine(final byte[] data) {
+      final int len = Math.min(this.sourceDataLine.available(), data.length);
+      this.sourceDataLine.write(data, data.length - len, len);
     }
 
     @Override
@@ -318,9 +329,7 @@ public class Beeper {
 
         LOGGER.info(format("Sound line opened, buffer size is %d byte(s)",
             this.sourceDataLine.getBufferSize()));
-        flushDataIntoLine(new byte[this.sourceDataLine.getBufferSize()]);
         this.sourceDataLine.start();
-        flushDataIntoLine(localBuffer);
 
         LOGGER.info("Sound line started");
 
