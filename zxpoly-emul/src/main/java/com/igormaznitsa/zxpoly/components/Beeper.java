@@ -27,7 +27,6 @@ import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
 
 
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
-import com.igormaznitsa.zxpoly.MainForm;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -37,7 +36,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -92,16 +90,6 @@ public class Beeper {
     public void start() {
 
     }
-
-    @Override
-    public void pause() {
-
-    }
-
-    @Override
-    public void resume() {
-
-    }
   };
 
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
@@ -133,14 +121,6 @@ public class Beeper {
     return this.activeInternalBeeper.get() == NULL_BEEPER;
   }
 
-  public void resume() {
-    this.activeInternalBeeper.get().resume();
-  }
-
-  public void pause() {
-    this.activeInternalBeeper.get().pause();
-  }
-
   public void updateState(boolean intSignal, long machineCycleInInt, int portFeD4D3) {
     this.activeInternalBeeper.get().updateState(intSignal, machineCycleInInt, portFeD4D3);
   }
@@ -165,10 +145,6 @@ public class Beeper {
 
     void setMasterGain(float valueInDb);
 
-    void pause();
-
-    void resume();
-
     void updateState(boolean intSignal, long machineCycleInInt, int level);
 
     void dispose();
@@ -189,7 +165,6 @@ public class Beeper {
     private int activeBufferIndex = 0;
     private int lastPosition = 0;
     private final byte[] LEVELS = new byte[NUMBER_OF_LEVELS];
-    private final AtomicBoolean paused = new AtomicBoolean();
     private volatile boolean working = true;
     private final AtomicReference<FloatControl> gainControl = new AtomicReference<>();
 
@@ -200,31 +175,12 @@ public class Beeper {
       }
     }
 
-    @Override
-    public void pause() {
-      if (this.working) {
-        if (this.paused.compareAndSet(false, true)) {
-          LOGGER.info("Pause request");
-        }
-      }
-    }
-
-    @Override
-    public void resume() {
-      if (this.working) {
-        if (this.paused.compareAndSet(true, false)) {
-          LOGGER.info("Resume request");
-        }
-      }
-    }
-
     private byte lastValue;
 
     private void initMasterGain() {
       final FloatControl gainControl = this.gainControl.get();
       if (gainControl != null) {
         gainControl.setValue(-20.0f); // 50%
-//        gainControl.setValue(-40.0f); // 25%
       }
     }
 
@@ -370,14 +326,8 @@ public class Beeper {
       }
     }
 
-    private void writeWholeArray(final byte[] data) {
-      int pos = 0;
-      int len = data.length;
-      while (len > 0 && this.working && !Thread.currentThread().isInterrupted()) {
-        final int written = this.sourceDataLine.write(data, pos, len);
-        pos += written;
-        len -= written;
-      }
+    private void flushDataIntoLine(final byte[] data) {
+      this.sourceDataLine.write(data, 0, data.length);
     }
 
     @Override
@@ -402,45 +352,19 @@ public class Beeper {
 
         LOGGER.info(format("Sound line opened, buffer size is %d byte(s)",
             this.sourceDataLine.getBufferSize()));
-        writeWholeArray(new byte[this.sourceDataLine.getBufferSize()]);
+        flushDataIntoLine(new byte[this.sourceDataLine.getBufferSize()]);
         this.sourceDataLine.start();
-        writeWholeArray(localBuffer);
+        flushDataIntoLine(localBuffer);
 
         LOGGER.info("Sound line started");
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
-          try {
-            final byte[] buffer = exchanger
-                .exchange(null, MainForm.TIMER_INT_DELAY_MILLISECONDS + 1, TimeUnit.MILLISECONDS);
-            if (buffer == null) {
-              fill(localBuffer, LEVELS[0]);
-            } else {
-              System.arraycopy(buffer, 0, localBuffer, 0, SND_BUFFER_LENGTH);
-              if (LOG_RAW_SOUND && logStream != null) {
-                logStream.write(localBuffer);
-              }
-            }
-            writeWholeArray(localBuffer);
-          } catch (final TimeoutException ex) {
-            if (this.paused.get()) {
-              this.sourceDataLine.drain();
-              this.sourceDataLine.stop();
-              LOGGER.info("Stopped for data timeout");
-              do {
-                while (this.paused.get() && this.working &&
-                    !Thread.currentThread().isInterrupted()) {
-                  Thread.sleep(100);
-                }
-                // prevent short pauses
-                Thread.sleep(300);
-              } while (this.paused.get());
-              if (this.working && !Thread.currentThread().isInterrupted()) {
-                writeWholeArray(new byte[this.sourceDataLine.getBufferSize()]);
-                this.sourceDataLine.start();
-                LOGGER.info("Work continued");
-              }
-            }
+          final byte[] buffer = exchanger.exchange(null);
+          System.arraycopy(buffer, 0, localBuffer, 0, SND_BUFFER_LENGTH);
+          if (LOG_RAW_SOUND && logStream != null) {
+            logStream.write(localBuffer);
           }
+          flushDataIntoLine(localBuffer);
         }
         LOGGER.info("Main loop completed");
       } catch (InterruptedException ex) {

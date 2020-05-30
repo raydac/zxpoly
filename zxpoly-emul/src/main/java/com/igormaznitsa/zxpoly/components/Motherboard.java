@@ -409,8 +409,8 @@ public final class Motherboard implements ZxPolyConstants {
     return result;
   }
 
-  public void processIntTickInPause() {
-    this.beeper.updateState(true, CYCLES_BETWEEN_INT, 0);
+  public void dryIntTickOnWallClockTime(final long calculatedMachineCycles) {
+    this.beeper.updateState(true, calculatedMachineCycles, 0);
   }
 
   public void syncSpec256GpuStates() {

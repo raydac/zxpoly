@@ -266,7 +266,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   };
   private javax.swing.JScrollPane scrollPanel;
 
-  public MainForm(final String title, final String romPath) throws IOException {
+  public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
 
     final String ticks = System.getProperty("zxpoly.int.ticks", "");
@@ -292,13 +292,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     buttonStartPause.addActionListener((final ActionEvent event) -> {
       final JToggleButton source = (JToggleButton) event.getSource();
       if (source.isSelected()) {
-        MainForm.this.board.getBeeper().pause();
         MainForm.this.stepSemaphor.lock();
         source.setIcon(ICO_EMUL_PLAY);
         LOGGER.info("Emulator is paused by PLAY/PAUSE button");
       } else {
         MainForm.this.stepSemaphor.unlock();
-        MainForm.this.board.getBeeper().resume();
         source.setIcon(ICO_EMUL_PAUSE);
         LOGGER.info("Emulator is started by PLAY/PAUSE button");
       }
@@ -362,7 +360,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           @Override
           public void menuSelected(MenuEvent e) {
             MainForm.this.stepSemaphor.lock();
-            MainForm.this.board.getBeeper().pause();
             MainForm.this.keyboardAndTapeModule.doReset();
             if (e.getSource() == menuOptions) {
               menuOptionsEnableSpeaker
@@ -376,13 +373,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           @Override
           public void menuDeselected(MenuEvent e) {
             MainForm.this.stepSemaphor.unlock();
-            MainForm.this.board.getBeeper().resume();
           }
 
           @Override
           public void menuCanceled(MenuEvent e) {
             MainForm.this.stepSemaphor.unlock();
-            MainForm.this.board.getBeeper().resume();
           }
         });
       }
@@ -617,9 +612,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           updateTracerWindowsForStep();
         }
       } else {
-        if (nextIntTickTime <= wallclockTime) {
+        final long diff = wallclockTime - nextIntTickTime;
+        if (diff >= 0L) {
           nextIntTickTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
-          this.board.processIntTickInPause();
+          this.board.dryIntTickOnWallClockTime(
+              diff == 0 ? CYCLES_BETWEEN_INT : Math.round(CYCLES_BETWEEN_INT * ((double)diff/(double)TIMER_INT_DELAY_MILLISECONDS))
+          );
         }
       }
     }
@@ -715,7 +713,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   public void onTrigger(final int triggered, final int lastM1Address, final Z80[] cpuModuleStates) {
-    this.board.getBeeper().pause();
     this.stepSemaphor.lock();
     try {
       logTrigger(triggered, lastM1Address, cpuModuleStates);
@@ -744,7 +741,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     } finally {
       this.stepSemaphor.unlock();
-      this.board.getBeeper().resume();
     }
   }
 
@@ -1318,7 +1314,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void loadDiskIntoDrive(final int drive) {
-    this.board.getBeeper().pause();
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1403,7 +1398,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
-      this.board.getBeeper().resume();
     }
   }
 
@@ -1439,7 +1433,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuFileLoadSnapshotActionPerformed(ActionEvent evt) {
-    this.board.getBeeper().pause();
     stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1514,7 +1507,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.turnZxKeyboardOn();
       stepSemaphor.unlock();
-      this.board.getBeeper().resume();
     }
   }
 
@@ -1567,7 +1559,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuFileLoadTapActionPerformed(ActionEvent evt) {
-    this.board.getBeeper().pause();
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1595,12 +1586,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
-      this.board.getBeeper().resume();
     }
   }
 
   private void menuTapExportAsWavActionPerformed(ActionEvent evt) {
-    this.board.getBeeper().pause();
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1623,7 +1612,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
-      this.board.getBeeper().resume();
     }
   }
 
@@ -1661,7 +1649,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuServiceSaveScreenActionPerformed(ActionEvent evt) {
-    this.board.getBeeper().pause();
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1685,13 +1672,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
-      this.board.getBeeper().resume();
     }
 
   }
 
   private void menuFileOptionsActionPerformed(ActionEvent evt) {
-    this.board.getBeeper().pause();
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1704,12 +1689,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
-      this.board.getBeeper().resume();
     }
   }
 
   private void menuHelpAboutActionPerformed(ActionEvent evt) {
-    this.board.getBeeper().pause();
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1717,7 +1700,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
-      this.board.getBeeper().resume();
     }
   }
 
@@ -1754,7 +1736,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuServiceSaveScreenAllVRAMActionPerformed(ActionEvent evt) {
-    this.board.getBeeper().pause();
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1789,7 +1770,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
-      this.board.getBeeper().resume();
     }
   }
 
@@ -1803,7 +1783,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuActionAnimatedGIFActionPerformed(ActionEvent evt) {
-    this.board.getBeeper().pause();
     this.stepSemaphor.lock();
     try {
       this.turnZxKeyboardOff();
@@ -1845,7 +1824,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
-      this.board.getBeeper().resume();
     }
   }
 
@@ -1878,7 +1856,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuTriggerDiffMemActionPerformed(ActionEvent evt) {
-    this.board.getBeeper().pause();
     this.stepSemaphor.lock();
     try {
       if (this.menuTriggerDiffMem.isSelected()) {
@@ -1905,7 +1882,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     } finally {
       this.stepSemaphor.unlock();
-      this.board.getBeeper().resume();
     }
   }
 
@@ -1923,7 +1899,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuServicemakeSnapshotActionPerformed(ActionEvent evt) {
-    this.board.getBeeper().pause();
     stepSemaphor.lock();
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
@@ -1961,7 +1936,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     } finally {
       stepSemaphor.unlock();
-      this.board.getBeeper().resume();
     }
   }
 
