@@ -188,13 +188,13 @@ public final class VideoController extends JComponent
       final int[] pixelRgbBuffer,
       final boolean flashActive
   ) {
-    final int[] prerendededGfxBack = gfxPrerenderedBack;
+    final int[] preRenderedBack = gfxPrerenderedBack;
     final boolean bkOverFF = gfxBackOverFF;
     final boolean paper00inkFF = gfxPaper00InkFF;
     final boolean hideSameInkPaper = gfxHideSameInkPaper;
 
-    if (prerendededGfxBack != null) {
-      System.arraycopy(prerendededGfxBack, 0, pixelRgbBuffer, 0, prerendededGfxBack.length);
+    if (preRenderedBack != null) {
+      System.arraycopy(preRenderedBack, 0, pixelRgbBuffer, 0, preRenderedBack.length);
     }
 
     final int downAttrMixedIndex = gfxDownColorsMixed;
@@ -231,7 +231,7 @@ public final class VideoController extends JComponent
         final boolean mixWithAttributes =
             colorIndex < downAttrMixedIndex || colorIndex > upAttrMixedIndex;
 
-        if (prerendededGfxBack == null) {
+        if (preRenderedBack == null) {
           if (hideSameInkPaper && inkColor == paperColor) {
             color = inkColor;
           } else if (paper00inkFF) {
@@ -242,9 +242,11 @@ public final class VideoController extends JComponent
             }
           }
         } else {
-          if ((colorIndex == 0xFF && bkOverFF)
+          if (colorIndex == 0
+              || (bkOverFF && colorIndex == 0xFF)
               || ((attrData & 0x80) != 0 && flashActive)
-              || (hideSameInkPaper && inkColor == paperColor)) {
+              || (hideSameInkPaper && inkColor == paperColor)
+          ) {
             draw = false;
           } else if (paper00inkFF) {
             if (colorIndex == 0) {
