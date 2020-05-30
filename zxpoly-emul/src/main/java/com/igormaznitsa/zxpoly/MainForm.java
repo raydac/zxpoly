@@ -545,8 +545,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     int countToUpdatePanel = INT_TO_UPDATE_INFOPANEL;
 
-    long machineCyclesPausedOffset = 0L;
-
     while (!Thread.currentThread().isInterrupted()) {
       final long currentMachineCycleCounter = this.board.getMasterCpu().getMachineCycles();
       long wallclockTime = System.currentTimeMillis();
