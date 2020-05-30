@@ -59,7 +59,7 @@ public class FfmpegWrapper {
     args.add(this.ffmpegPath);
 
     args.add("-loglevel");
-    args.add("warning");
+    args.add("info");
     args.add("-nostats");
     args.add("-hide_banner");
 
@@ -111,13 +111,6 @@ public class FfmpegWrapper {
       args.add("aresample=async=44100");
     }
 
-    args.add("-b:v");
-    args.add("10M");
-    args.add("-maxrate");
-    args.add("10M");
-    args.add("-bufsize");
-    args.add("10M");
-
     args.add("-preset:v");
     args.add("ultrafast");
     args.add("-tune");
@@ -125,21 +118,15 @@ public class FfmpegWrapper {
 
     args.add("-c:v");
     args.add("libx264");
-    args.add("-qmin");
-    args.add("5");
-    args.add("-qmax");
-    args.add("50");
+
+    args.add("-x264opts");
+    args.add(String.format("keyint=%1$d:min-keyint=%1$d:no-scenecut", this.frameRate));
 
     args.add("-vf");
-    args.add("format=yuv420p,scale=pal,fps=fps=30");
+    args.add("format=yuv420p,scale=pal:flags=fast_bilinear,fps=fps=30");
 
-    args.add("-sws_flags");
-    args.add("fast_bilinear");
     args.add("-movflags");
     args.add("+faststart");
-
-    args.add("-g");
-    args.add("2");
 
     args.add("-map");
     args.add("0:v");
@@ -150,10 +137,7 @@ public class FfmpegWrapper {
     }
 
     args.add("-vsync");
-    args.add("1");
-
-    args.add("-bf");
-    args.add("0");
+    args.add("cfr");
 
     args.add("-mpegts_flags");
     args.add("resend_headers");
