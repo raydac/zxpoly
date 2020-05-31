@@ -15,7 +15,7 @@ public class TcpWriter extends AbstractTcpSingleThreadServer {
     super(id, bufferSize, address, port);
   }
 
-  public void write(final byte[] data) {
+  public synchronized void write(final byte[] data) {
     this.buffer.put(data);
   }
 

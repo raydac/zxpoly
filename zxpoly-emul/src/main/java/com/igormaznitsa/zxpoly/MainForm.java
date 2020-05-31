@@ -160,7 +160,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final Motherboard board;
   private volatile boolean zxKeyboardProcessingAllowed = true;
   public static RomData BASE_ROM;
-  private final AtomicReference<ZxVideoStreamer> videoStreamer = new AtomicReference<>();
+  private final ZxVideoStreamer videoStreamer;
 
   private final Runnable traceWindowsUpdater = new Runnable() {
 
@@ -383,6 +383,15 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     }
 
+    this.videoStreamer = new ZxVideoStreamer(
+        this.board.getVideoController(),
+        streamer -> {
+          streamer.stop();
+          SwingUtilities
+              .invokeLater(() -> this.menuOptionsEnableVideoStream.setSelected(false));
+        }
+    );
+
     updateTapeMenu();
 
     pack();
@@ -397,10 +406,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void doOnShutdown() {
-    final ZxVideoStreamer streamer = this.videoStreamer.getAndSet(null);
-    if (streamer != null) {
-      streamer.stop();
-    }
+    this.videoStreamer.stop();
   }
 
   private Optional<SourceSoundPort> showSelectSoundLineDialog(
@@ -570,6 +576,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           final int triggers = this.board.step(systemIntSignal,
               inTurboMode || (systemIntSignal || currentMachineCycleCounter <= MCYCLES_PER_INT));
 
+          if (systemIntSignal) {
+            this.videoStreamer.onSystemIntTick();
+          }
+
           if (triggers != Motherboard.TRIGGER_NONE) {
             final Z80[] cpuStates = new Z80[4];
             final int lastM1Address = this.board.getModules()[0].getLastM1Address();
@@ -613,9 +623,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         final long timeDiff = wallclockTime - nextIntTickTime;
         if (timeDiff >= 0L) {
           nextIntTickTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
+          this.videoStreamer.onSystemIntTick();
           this.board.dryIntTickOnWallClockTime(
               timeDiff == 0 ? MCYCLES_PER_INT : Math.round(
-                  MCYCLES_PER_INT * ((double) timeDiff / (double) TIMER_INT_DELAY_MILLISECONDS)
+                  MCYCLES_PER_INT * ((double) (timeDiff + TIMER_INT_DELAY_MILLISECONDS / 2)
+                      / (double) TIMER_INT_DELAY_MILLISECONDS)
               )
           );
         }
@@ -1204,49 +1216,24 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           this.menuOptionsEnableVideoStream.setSelected(false);
           return;
         }
-        final ZxVideoStreamer newStreamer;
+
         try {
           final InetAddress interfaceAddress =
               InetAddress.getByName(AppOptions.getInstance().getAddress());
-          newStreamer = new ZxVideoStreamer(
-              this.board.getVideoController(),
+          this.videoStreamer.start(
               AppOptions.getInstance().isGrabSound() ? this.board.getBeeper() : null,
               AppOptions.getInstance().getFfmpegPath(),
               interfaceAddress,
               AppOptions.getInstance().getPort(),
-              AppOptions.getInstance().getFrameRate(),
-              streamer -> {
-                if (this.videoStreamer.compareAndSet(streamer, null)) {
-                  streamer.stop();
-                  SwingUtilities
-                      .invokeLater(() -> this.menuOptionsEnableVideoStream.setSelected(false));
-                }
-              }
+              AppOptions.getInstance().getFrameRate()
           );
         } catch (Exception ex) {
-          JOptionPane.showMessageDialog(this, "Can't create stream: " + ex.getMessage(), "Error",
-              JOptionPane.WARNING_MESSAGE);
+          JOptionPane.showMessageDialog(this, ex.getMessage(), "Error",
+              JOptionPane.ERROR_MESSAGE);
           this.menuOptionsEnableVideoStream.setSelected(false);
-          return;
-        }
-
-        if (this.videoStreamer.compareAndSet(null, newStreamer)) {
-          try {
-            newStreamer.start();
-          } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error",
-                JOptionPane.ERROR_MESSAGE);
-            this.menuOptionsEnableVideoStream.setSelected(false);
-          }
-        } else {
-          JOptionPane.showMessageDialog(this, "Video stream already active!", "Alrady active",
-              JOptionPane.WARNING_MESSAGE);
         }
       } else {
-        final ZxVideoStreamer streamer = this.videoStreamer.getAndSet(null);
-        if (streamer != null) {
-          streamer.stop();
-        }
+        this.videoStreamer.stop();
       }
     } finally {
       this.stepSemaphor.unlock();

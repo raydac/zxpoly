@@ -242,27 +242,25 @@ public class Beeper {
     ) {
       if (this.working) {
         final byte value = LEVELS[level];
-        int position = ((int) (machineCyclesInInt * SAMPLES_PER_INT / MCYCLES_PER_INT)) * 4;
+        int position = ((int) ((machineCyclesInInt * SAMPLES_PER_INT + MCYCLES_PER_INT / 2) / MCYCLES_PER_INT)) * 4;
 
         if (intSignal) {
           blink(value);
         }
 
-        if (position > SND_BUFFER_LENGTH) {
-          if (intSignal) {
-            blink(value);
-            intSignal = false;
-          }
-          position -= SND_BUFFER_LENGTH;
+        if (position <= SND_BUFFER_LENGTH) {
+          fill(this.soundBuffers[this.activeBufferIndex],
+              position,
+              SND_BUFFER_LENGTH,
+              value);
         }
-
-        fill(this.soundBuffers[this.activeBufferIndex],
-            position,
-            SND_BUFFER_LENGTH,
-            value);
 
         if (intSignal) {
           blink(value);
+          fill(this.soundBuffers[this.activeBufferIndex],
+              0,
+              SND_BUFFER_LENGTH,
+              value);
         }
       }
     }
@@ -315,7 +313,7 @@ public class Beeper {
 
       final OutputStream logStream = makeLogStream(new File("./"));
       try {
-        this.sourceDataLine.open(AUDIO_FORMAT, SND_BUFFER_LENGTH * 10);
+        this.sourceDataLine.open(AUDIO_FORMAT, SND_BUFFER_LENGTH * 4);
         if (this.sourceDataLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
           final FloatControl gainControl =
               (FloatControl) this.sourceDataLine.getControl(FloatControl.Type.MASTER_GAIN);
@@ -327,8 +325,10 @@ public class Beeper {
         }
         this.initMasterGain();
 
-        LOGGER.info(format("Sound line opened, buffer size is %d byte(s)",
-            this.sourceDataLine.getBufferSize()));
+        LOGGER.info(format(
+            "Sound line opened, buffer size is %d byte(s)",
+            this.sourceDataLine.getBufferSize())
+        );
         this.sourceDataLine.start();
 
         LOGGER.info("Sound line started");
@@ -339,7 +339,7 @@ public class Beeper {
           if (LOG_RAW_SOUND && logStream != null) {
             logStream.write(localBuffer);
           }
-          flushDataIntoLine(localBuffer);
+          this.flushDataIntoLine(localBuffer);
         }
         LOGGER.info("Main loop completed");
       } catch (InterruptedException ex) {

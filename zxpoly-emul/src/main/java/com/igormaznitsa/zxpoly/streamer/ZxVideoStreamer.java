@@ -9,47 +9,78 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-public class ZxVideoStreamer {
+public final class ZxVideoStreamer {
   public static final Logger LOGGER = Logger.getLogger("VideoStreamer");
 
   private final VideoController videoController;
-  private final Beeper beeper;
 
-  private final AtomicReference<Thread> currentThread = new AtomicReference<>();
-  private final int frameRate;
-  private final String ffmpegPath;
-  private final InetAddress address;
-  private final int port;
-  private final TcpWriter videoWriter;
-  private final TcpWriter soundWriter;
-  private final AtomicReference<FfmpegWrapper> ffmpegWrapper = new AtomicReference<>();
+  private final AtomicBoolean started = new AtomicBoolean();
   private final Consumer<ZxVideoStreamer> endWorkConsumer;
-  private final ZxSoundPort soudPort;
-  private final InternalHttpServer internalHttpServer;
-  private volatile boolean stopped;
+  private volatile TcpWriter videoWriter;
+  private volatile TcpWriter soundWriter;
+  private volatile FfmpegWrapper ffmpegWrapper;
+  private volatile ZxSoundPort soudPort;
+  private volatile InternalHttpServer internalHttp;
+  private volatile Beeper beeper;
+  private volatile long delayBetweenFrameGrab;
+  private long timeNextFrame;
 
   public ZxVideoStreamer(
       final VideoController videoController,
-      final Beeper beeper,
-      final String ffmpegPath,
+      final Consumer<ZxVideoStreamer> endWorkConsumer) {
+    this.endWorkConsumer = endWorkConsumer;
+    this.videoController = videoController;
+  }
+
+  private synchronized void stopAllInternalEntities() {
+    if (this.internalHttp != null) {
+      this.internalHttp.stop();
+      this.internalHttp = null;
+    }
+
+    if (this.beeper != null) {
+      this.beeper.setSourceSoundPort(null);
+    }
+
+    if (this.ffmpegWrapper != null) {
+      this.ffmpegWrapper.stop();
+      this.ffmpegWrapper = null;
+    }
+
+    if (this.videoWriter != null) {
+      this.videoWriter.stop();
+      this.videoWriter = null;
+    }
+    if (this.soundWriter != null) {
+      this.soundWriter.stop();
+      this.soundWriter = null;
+    }
+  }
+
+  public boolean isStarted() {
+    return this.started.get();
+  }
+
+  public void stop() {
+    if (this.started.compareAndSet(true, false)) {
+      stopAllInternalEntities();
+    }
+  }
+
+  private synchronized void startInternalEntities(
       final InetAddress address,
       final int port,
-      final int snapsPerSecond,
-      final Consumer<ZxVideoStreamer> endWorkConsumer) {
-    this.beeper = beeper;
-    this.endWorkConsumer = endWorkConsumer;
-    this.ffmpegPath = ffmpegPath;
-    this.address = address;
-    this.port = port;
-    this.videoController = videoController;
-    this.frameRate = snapsPerSecond;
+      final String ffmpegPath,
+      final int frameRate) {
     this.videoWriter =
         new TcpWriter("tcp-video-writer", 2, InetAddress.getLoopbackAddress(), 0);
+
+    this.delayBetweenFrameGrab = (1000L + frameRate / 2) / frameRate;
 
     if (this.beeper == null) {
       this.soundWriter = null;
@@ -59,48 +90,7 @@ public class ZxVideoStreamer {
           new TcpWriter("tcp-sound-writer", 16, InetAddress.getLoopbackAddress(), 0);
       this.soudPort = new ZxSoundPort(this.soundWriter);
     }
-    this.internalHttpServer =
-        new InternalHttpServer("video/MP2T", InetAddress.getLoopbackAddress(), 0,
-            address, port, server -> {
-          LOGGER.info("Internal HTTP server has been stopped");
-          this.stop();
-        });
-  }
 
-  public void stop() {
-    this.stopped = true;
-
-    this.internalHttpServer.stop();
-
-    if (this.beeper != null) {
-      this.beeper.setSourceSoundPort(null);
-    }
-
-    final FfmpegWrapper ffmpeg = this.ffmpegWrapper.getAndSet(null);
-    if (ffmpeg != null) {
-      ffmpeg.stop();
-    }
-
-    this.videoWriter.stop();
-    if (this.soundWriter != null) {
-      this.soundWriter.stop();
-    }
-
-    final Thread thread = this.currentThread.getAndSet(null);
-    if (thread != null) {
-      thread.interrupt();
-      try {
-        thread.join();
-      } catch (InterruptedException ex) {
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
-  public void start() {
-    stop();
-
-    this.stopped = false;
     CountDownLatch latch = new CountDownLatch(this.soundWriter == null ? 1 : 2);
     final AtomicInteger errorCounter = new AtomicInteger();
 
@@ -109,7 +99,7 @@ public class ZxVideoStreamer {
 
       @Override
       public void onConnected(AbstractTcpSingleThreadServer writer, Socket socket) {
-        LOGGER.info("Incomming connection " + writer.getId() + ": " + socket);
+        LOGGER.info(String.format("Incoming connection %s:%s", writer.getId(), socket));
       }
 
       @Override
@@ -153,19 +143,30 @@ public class ZxVideoStreamer {
     }
 
     try {
-      this.internalHttpServer.start();
+      this.internalHttp =
+          new InternalHttpServer(
+              "video/MP2T",
+              InetAddress.getLoopbackAddress(),
+              0,
+              address,
+              port,
+              server -> {
+                LOGGER.info("Internal HTTP server has been stopped");
+                this.stop();
+              });
+      this.internalHttp.start();
     } catch (Exception ex) {
       stop();
       throw new IllegalStateException("Can't start internal tcp-http retranslator", ex);
     }
 
     final FfmpegWrapper ffmpeg = new FfmpegWrapper(
-        this.ffmpegPath,
-        this.frameRate,
+        ffmpegPath,
+        frameRate,
         "tcp://" + this.videoWriter.getServerAddress(),
         this.soundWriter == null ? null :
             "tcp://" + this.soundWriter.getServerAddress(),
-        "tcp://" + this.internalHttpServer.getTcpAddress()
+        "tcp://" + this.internalHttp.getTcpAddress()
     );
 
     if (this.beeper != null) {
@@ -189,15 +190,20 @@ public class ZxVideoStreamer {
       this.stop();
       throw new IllegalStateException("ffmpeg can't start");
     }
+  }
 
-    final Thread newThread = new Thread(
-        this::doWork,
-        "zx-video-streamer-" + Long.toHexString(System.currentTimeMillis())
-    );
-    newThread.setDaemon(true);
-    if (this.currentThread.compareAndSet(null, newThread)) {
-      newThread.start();
-      final String link = "http://" + this.internalHttpServer.getHttpAddress() + '/';
+  public void start(
+      final Beeper beeper,
+      final String ffmpegPath,
+      final InetAddress address,
+      final int port,
+      final int frameRate
+  ) {
+    if (this.started.compareAndSet(false, true)) {
+      this.beeper = beeper;
+      this.startInternalEntities(address, port, ffmpegPath, frameRate);
+
+      final String link = "http://" + this.internalHttp.getHttpAddress() + '/';
       try {
         Utils.browseLink(new URL(link));
       } catch (MalformedURLException ex) {
@@ -213,20 +219,12 @@ public class ZxVideoStreamer {
     }
   }
 
-  private void doWork() {
-    LOGGER.info("started streamer, http address: " + this.internalHttpServer.getHttpAddress());
-
-    final long delay = ((10000L / frameRate) + 5L) / 10L;
-    while (!Thread.currentThread().isInterrupted()) {
-      final long time = System.currentTimeMillis();
-      this.videoWriter.write(this.videoController.grabRgb());
-      final long restDelay = (time + delay) - System.currentTimeMillis();
-      if (restDelay > 0) {
-        try {
-          Thread.sleep(restDelay);
-        } catch (InterruptedException ex) {
-          Thread.currentThread().interrupt();
-        }
+  public void onSystemIntTick() {
+    if (this.isStarted()) {
+      final long wallclock = System.currentTimeMillis();
+      if (wallclock > timeNextFrame) {
+        this.videoWriter.write(this.videoController.grabRgb());
+        timeNextFrame = wallclock + this.delayBetweenFrameGrab;
       }
     }
   }
