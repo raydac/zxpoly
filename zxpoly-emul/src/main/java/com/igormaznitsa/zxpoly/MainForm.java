@@ -57,6 +57,7 @@ import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.JHtmlLabel;
 import com.igormaznitsa.zxpoly.utils.RomLoader;
 import com.igormaznitsa.zxpoly.utils.Utils;
+import com.igormaznitsa.zxpoly.utils.Wallclock;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
@@ -161,6 +162,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private volatile boolean zxKeyboardProcessingAllowed = true;
   public static RomData BASE_ROM;
   private final ZxVideoStreamer videoStreamer;
+  private final Wallclock wallclock = new Wallclock();
 
   private final Runnable traceWindowsUpdater = new Runnable() {
 
@@ -545,7 +547,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   public void run() {
     final int INT_TICKS_BETWEEN_INFO_PANEL_UPDATE = 20;
 
-    long nextIntTickTime = System.currentTimeMillis() + TIMER_INT_DELAY_MILLISECONDS;
+    long nextIntTickTime = this.wallclock.getTimeInMilliseconds() + TIMER_INT_DELAY_MILLISECONDS;
     int countdownToPaint = 0;
     int countdownToAnimationSave = 0;
 
@@ -553,7 +555,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     while (!Thread.currentThread().isInterrupted()) {
       final long currentMachineCycleCounter = this.board.getMasterCpu().getMachineCycles();
-      long wallclockTime = System.currentTimeMillis();
+      long wallclockTime = this.wallclock.getTimeInMilliseconds();
 
       if (stepSemaphor.tryLock()) {
         try {
@@ -563,8 +565,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             systemIntSignal = currentMachineCycleCounter >= MCYCLES_PER_INT;
             nextIntTickTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
             if (systemIntSignal) {
-              this.board.getMasterCpu()
-                  .setMCycleCounter(currentMachineCycleCounter % MCYCLES_PER_INT);
+              this.board
+                  .getMasterCpu()
+                  .setMCycleCounter(0);
             }
             countdownToPaint--;
             countToUpdatePanel--;

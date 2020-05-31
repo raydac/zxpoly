@@ -3,6 +3,7 @@ package com.igormaznitsa.zxpoly.streamer;
 import com.igormaznitsa.zxpoly.components.Beeper;
 import com.igormaznitsa.zxpoly.components.VideoController;
 import com.igormaznitsa.zxpoly.utils.Utils;
+import com.igormaznitsa.zxpoly.utils.Wallclock;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -29,6 +30,8 @@ public final class ZxVideoStreamer {
   private volatile Beeper beeper;
   private volatile long delayBetweenFrameGrab;
   private long timeNextFrame;
+
+  private final Wallclock wallclock = new Wallclock();
 
   public ZxVideoStreamer(
       final VideoController videoController,
@@ -221,10 +224,10 @@ public final class ZxVideoStreamer {
 
   public void onSystemIntTick() {
     if (this.isStarted()) {
-      final long wallclock = System.currentTimeMillis();
-      if (wallclock > timeNextFrame) {
+      final long wallclockTime = this.wallclock.getTimeInMilliseconds();
+      if (wallclockTime > timeNextFrame) {
         this.videoWriter.write(this.videoController.grabRgb());
-        timeNextFrame = wallclock + this.delayBetweenFrameGrab;
+        timeNextFrame = wallclockTime + this.delayBetweenFrameGrab;
       }
     }
   }

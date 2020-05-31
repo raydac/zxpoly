@@ -18,6 +18,7 @@
 package com.igormaznitsa.zxpoly.components.betadisk;
 
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk.Sector;
+import com.igormaznitsa.zxpoly.utils.Wallclock;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -70,6 +71,7 @@ public final class FddControllerK1818VG93 {
   private long operationTimeOutCycles;
   private volatile long lastBusyOnTime;
   private Object tempAuxiliaryObject;
+  private final Wallclock wallclock = new Wallclock();
 
   public FddControllerK1818VG93(final Logger logger) {
     this.logger = logger;
@@ -104,7 +106,7 @@ public final class FddControllerK1818VG93 {
 
   private void setInternalFlag(final int flags) {
     if ((flags & STAT_BUSY) != 0) {
-      this.lastBusyOnTime = System.currentTimeMillis();
+      this.lastBusyOnTime = this.wallclock.getTimeInMilliseconds();
     }
     registers[REG_STATUS] |= flags;
   }
@@ -923,7 +925,7 @@ public final class FddControllerK1818VG93 {
   }
 
   public boolean isMotorOn() {
-    return (System.currentTimeMillis() - this.lastBusyOnTime) < 200L;
+    return (this.wallclock.getTimeInMilliseconds() - this.lastBusyOnTime) < 200L;
   }
 
   private static abstract class TrackHelper {
