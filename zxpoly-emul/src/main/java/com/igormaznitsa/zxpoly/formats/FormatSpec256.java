@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.IOUtils;
@@ -43,12 +44,16 @@ public class FormatSpec256 extends Snapshot {
     try (InputStream in = FormatSpec256.class.getResourceAsStream("/spec256appbase.txt")) {
       for (final String str : IOUtils.readLines(in, StandardCharsets.UTF_8)) {
         final String trimmed = str.trim();
-        if (trimmed.isEmpty() || trimmed.startsWith("//")) {
+        if (trimmed.isEmpty() || trimmed.startsWith("//") || trimmed.startsWith("#")) {
           continue;
         }
         final Matcher matcher = BaseItem.PATTERN.matcher(str);
         if (matcher.find()) {
-          APP_BASE.put(matcher.group(2).toLowerCase(Locale.ENGLISH), new BaseItem(matcher.group(1).toLowerCase(Locale.ENGLISH), matcher.group(2).toLowerCase(Locale.ENGLISH), matcher.group(3)));
+          APP_BASE.put
+              (matcher.group(2).toLowerCase(Locale.ENGLISH),
+                  new BaseItem(matcher.group(1).toLowerCase(Locale.ENGLISH),
+                      matcher.group(2).toLowerCase(Locale.ENGLISH),
+                      matcher.group(3)));
         } else {
           throw new Error("Can't parse line: " + str);
         }
@@ -58,8 +63,28 @@ public class FormatSpec256 extends Snapshot {
     }
   }
 
+  private static byte[] gfx2gfxInternalBank(final byte[] bankData) {
+    final byte[] result = new byte[bankData.length];
+
+    for (int offst = 0; offst < bankData.length; offst += 8) {
+      for (int ctx = 0; ctx < 8; ctx++) {
+        final int bitMask = 1 << ctx;
+        int acc = 0;
+        for (int i = 0; i < 8; i++) {
+          if ((bankData[offst + i] & bitMask) != 0) {
+            acc |= 1 << i;
+          }
+        }
+        result[offst + ctx] = (byte) acc;
+      }
+    }
+
+    return result;
+  }
+
   @Override
-  public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
+  public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc,
+                            final byte[] array) throws IOException {
     final Spec256Arch archive = new Spec256Arch(array);
     LOGGER.info("Archive: " + archive);
     final SNAParser parser = archive.getParsedSna();
@@ -123,7 +148,8 @@ public class FormatSpec256 extends Snapshot {
       module.setTrdosActive(parser.getEXTENDEDDATA().getONTRDOS() != 0);
 
       int extraBankIndex = 0;
-      for (int i = 0; i < 8 && extraBankIndex < parser.getEXTENDEDDATA().getEXTRABANK().length; i++) {
+      for (int i = 0; i < 8 && extraBankIndex < parser.getEXTENDEDDATA().getEXTRABANK().length;
+           i++) {
         if (extraBankPages[i] < 0) {
           continue;
         }
@@ -139,7 +165,7 @@ public class FormatSpec256 extends Snapshot {
       final int highPc;
       if (spValue < 0x4000) {
         // ROM area
-        final byte [] romData = board.getRomData().getAsArray();
+        final byte[] romData = board.getRomData().getAsArray();
         lowPc = romData[spValue] & 0xFF;
         spValue = (spValue + 1) & 0xFFFF;
         highPc = romData[spValue] & 0xFF;
@@ -150,8 +176,6 @@ public class FormatSpec256 extends Snapshot {
         highPc = parser.getRAMDUMP()[spValue - 0x4000] & 0xFF;
         spValue = (spValue + 1) & 0xFFFF;
       }
-
-
       cpu.setRegister(Z80.REG_SP, spValue);
       cpu.setRegister(Z80.REG_PC, (highPc << 8) | lowPc);
     }
@@ -182,38 +206,38 @@ public class FormatSpec256 extends Snapshot {
       VideoController.setGfxBack(null);
     }
 
-    String alignRegVector = archive.getProperties().getProperty("zxpAlignRegs");
-    if (alignRegVector == null) {
-      BaseItem itemInBase = APP_BASE.get(archive.getSha256().toLowerCase(Locale.ENGLISH));
-      if (itemInBase == null) {
-        LOGGER.info("Application not found in Spec256 app base");
-      } else {
-        if (archive.getSha256().equalsIgnoreCase(itemInBase.sha256)) {
-          LOGGER.info("Detected item in Spec256 app base, sha256 is OK");
-          alignRegVector = itemInBase.regVector;
-        } else {
-          LOGGER.warning("Detected item in Spec256 app base, sha256 failed");
-        }
-      }
-    } else {
-      LOGGER.info("Config file contains register vector: " + alignRegVector);
+    final BaseItem dbItem = APP_BASE.get(archive.getSha256().toLowerCase(Locale.ENGLISH));
+    if (dbItem == null) {
+      LOGGER.info("Application not found in Spec256 app base");
     }
-    final String alignRegisters = archive.getProperties()
-        .getProperty("zxpAlignRegs", alignRegVector == null ? "1PSsT" : alignRegVector);
-    board.setGfxAlignParams(alignRegisters);
+
+    board.setGfxAlignParams(findPropertys(archive, "zxpAlignRegs", dbItem, "1PSsT"));
 
     VideoController
-        .setGfxBackOverFF(!"0".equals(archive.getProperties().getProperty("BkOverFF", "0")));
+        .setGfxBackOverFF(!"0".equals(findPropertys(archive, "BkOverFF", dbItem, "0")));
+
     VideoController
-        .setGfxPaper00InkFF(!"0".equals(archive.getProperties().getProperty("Paper00InkFF", "0")));
-    VideoController.setGfxHideSameInkPaper(
-        !"0".equals(archive.getProperties().getProperty("HideSameInkPaper", "1")));
+        .setGfxHideSameInkPaper(
+            !"0".equals(findPropertys(archive, "HideSameInkPaper", dbItem, "1")));
+
     VideoController.setGfxDownColorsMixed(
-        safeParseInt(archive.getProperties().getProperty("DownColorsMixed", "0"), 0));
+        safeParseInt(findPropertys(archive, "DownColorsMixed", dbItem, "0"), 0));
+
     VideoController.setGfxUpColorsMixed(
-        safeParseInt(archive.getProperties().getProperty("UpColorsMixed", "64"), 64));
+        safeParseInt(findPropertys(archive, "UpColorsMixed", dbItem, "64"), 64));
+
+    VideoController
+        .setGfxPaper00InkFF(!"0".equals(
+            findPropertys(archive, "Paper00InkFF", dbItem, bkg.isPresent() ? "0" : "1")));
 
     board.syncSpec256GpuStates();
+  }
+
+  private String findPropertys(final Spec256Arch arch, final String name, final BaseItem baseItem,
+                               final String dflt) {
+    return arch.getProperties()
+        .getProperty(name,
+            baseItem == null ? dflt : baseItem.findProperty(name, dflt));
   }
 
   private int safeParseInt(final String str, final int dflt) {
@@ -234,38 +258,6 @@ public class FormatSpec256 extends Snapshot {
     throw new IOException("Save is unsupported");
   }
 
-  private static byte[] gfx2gfxInternalBank(final byte[] bankData) {
-    final byte[] result = new byte[bankData.length];
-
-    for (int offst = 0; offst < bankData.length; offst += 8) {
-      for (int ctx = 0; ctx < 8; ctx++) {
-        final int bitMask = 1 << ctx;
-        int acc = 0;
-        for (int i = 0; i < 8; i++) {
-          if ((bankData[offst + i] & bitMask) != 0) {
-            acc |= 1 << i;
-          }
-        }
-        result[offst + ctx] = (byte) acc;
-      }
-    }
-
-    return result;
-  }
-
-  private static class BaseItem {
-    private static final Pattern PATTERN = Pattern.compile("^\\s*(\\S+)\\s*,\\s*([0-9a-f]+)\\s*,\\s*([AFBCDEHLTXxYy10PSsafbcdehl]+)\\s*$");
-    private final String name;
-    private final String sha256;
-    private final String regVector;
-
-    private BaseItem(final String name, final String sha256, final String regs) {
-      this.name = name;
-      this.sha256 = sha256;
-      this.regVector = regs;
-    }
-  }
-
   @Override
   public String getName() {
     return "Spec256 snapshot";
@@ -273,12 +265,48 @@ public class FormatSpec256 extends Snapshot {
 
   @Override
   public boolean accept(final File f) {
-    return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zip"));
+    return f != null &&
+        (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zip"));
   }
 
   @Override
   public String getDescription() {
     return "Spec256 archive (*.zip)";
+  }
+
+  private static class BaseItem {
+    private static final Pattern PATTERN = Pattern.compile(
+        "^\\s*(\\S+)\\s*,\\s*([0-9a-f]+)\\s*(?:,\\s*([\\S]+)\\s*)?$");
+    private final String name;
+    private final String sha256;
+    private final Properties defaultProperties;
+
+    private BaseItem(
+        final String name,
+        final String sha256,
+        final String defaultPropertiesList
+    ) {
+      this.name = name;
+      this.sha256 = sha256;
+      this.defaultProperties = new Properties();
+      if (defaultPropertiesList != null && !defaultPropertiesList.trim().isEmpty()) {
+        for (final String line : defaultPropertiesList.split(";")) {
+          final String trimmed = line.trim();
+          if (!trimmed.isEmpty()) {
+            final String[] pair = trimmed.split("=");
+            if (pair.length != 2) {
+              throw new Error("Can't find name-value: " + trimmed);
+            } else {
+              this.defaultProperties.setProperty(pair[0].trim(), pair[1].trim());
+            }
+          }
+        }
+      }
+    }
+
+    private String findProperty(final String name, final String dflt) {
+      return this.defaultProperties.getProperty(name, dflt);
+    }
   }
 
 }
