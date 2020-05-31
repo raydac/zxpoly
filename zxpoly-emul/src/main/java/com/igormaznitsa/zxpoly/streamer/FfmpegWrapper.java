@@ -120,7 +120,7 @@ public class FfmpegWrapper {
     args.add("libx264");
 
     args.add("-x264opts");
-    args.add(String.format("keyint=%1$d:min-keyint=%1$d:no-scenecut", this.frameRate));
+    args.add(String.format("keyint=%1$d:min-keyint=%1$d:no-scenecut:nal-hrd=cbr:force-cfr=1", this.frameRate));
 
     args.add("-vf");
     args.add("format=yuv420p,scale=pal:flags=fast_bilinear,fps=fps=30");
@@ -141,6 +141,14 @@ public class FfmpegWrapper {
 
     args.add("-mpegts_flags");
     args.add("resend_headers");
+
+    args.add("-muxpreload");
+    args.add("0");
+    args.add("-muxdelay");
+    args.add("0");
+
+    args.add("-avoid_negative_ts");
+    args.add("disabled");
 
     args.add("-pcr_period");
     args.add("50");
