@@ -59,7 +59,7 @@ public class FfmpegWrapper {
     args.add(this.ffmpegPath);
 
     args.add("-loglevel");
-    args.add("info");
+    args.add("warning");
     args.add("-nostats");
     args.add("-hide_banner");
 
