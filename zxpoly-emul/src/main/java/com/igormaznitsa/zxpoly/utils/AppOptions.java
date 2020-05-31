@@ -128,7 +128,7 @@ public final class AppOptions {
     }
 
     public synchronized boolean isGrabSound() {
-        return preferences.getBoolean(Option.STREAM_GRABSOUND.name(), true);
+        return preferences.getBoolean(Option.STREAM_GRABSOUND.name(), false);
     }
 
     public synchronized void setGrabSound(final boolean value) {

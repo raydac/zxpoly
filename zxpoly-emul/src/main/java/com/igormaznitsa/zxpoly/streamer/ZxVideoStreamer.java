@@ -25,7 +25,7 @@ public final class ZxVideoStreamer {
   private volatile TcpWriter videoWriter;
   private volatile TcpWriter soundWriter;
   private volatile FfmpegWrapper ffmpegWrapper;
-  private volatile ZxSoundPort soudPort;
+  private volatile ZxStreamingSoundPort soudPort;
   private volatile InternalHttpServer internalHttp;
   private volatile Beeper beeper;
   private volatile long delayBetweenFrameGrab;
@@ -91,7 +91,7 @@ public final class ZxVideoStreamer {
     } else {
       this.soundWriter =
           new TcpWriter("tcp-sound-writer", 16, InetAddress.getLoopbackAddress(), 0);
-      this.soudPort = new ZxSoundPort(this.soundWriter);
+      this.soudPort = new ZxStreamingSoundPort(this.soundWriter);
     }
 
     CountDownLatch latch = new CountDownLatch(this.soundWriter == null ? 1 : 2);
@@ -173,7 +173,7 @@ public final class ZxVideoStreamer {
     );
 
     if (this.beeper != null) {
-      this.beeper.setSourceSoundPort(new ZxSoundPort(this.soundWriter));
+      this.beeper.setSourceSoundPort(new ZxStreamingSoundPort(this.soundWriter));
     }
 
     try {

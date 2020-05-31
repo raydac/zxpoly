@@ -2,7 +2,9 @@ package com.igormaznitsa.zxpoly.streamer;
 
 import com.igormaznitsa.zxpoly.components.Beeper;
 import com.igormaznitsa.zxpoly.components.SourceSoundPort;
+import com.igormaznitsa.zxpoly.utils.Wallclock;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.Control;
 import javax.sound.sampled.Line;
@@ -10,12 +12,17 @@ import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
-public final class ZxSoundPort extends SourceSoundPort implements SourceDataLine {
+public final class ZxStreamingSoundPort extends SourceSoundPort implements SourceDataLine {
 
   private final AudioFormat audioFormat;
   private final TcpWriter soundWriter;
+  private final Wallclock wallclock = new Wallclock();
+  private final AtomicLong nextBufferEmptyTime = new AtomicLong(0L);
 
-  public ZxSoundPort(final TcpWriter soundWriter) {
+  private static final int SAMPLES_PER_MILLISECOND_X10 = 44100 * 2 * 2 / 100;
+  private static final int SAMPLES_PER_INT = SAMPLES_PER_MILLISECOND_X10 * 2;
+
+  public ZxStreamingSoundPort(final TcpWriter soundWriter) {
     super(null, "zx-snd-grabber-port", null);
     this.audioFormat = Beeper.AUDIO_FORMAT;
     this.soundWriter = soundWriter;
@@ -44,10 +51,16 @@ public final class ZxSoundPort extends SourceSoundPort implements SourceDataLine
   }
 
   @Override
-  public int write(byte[] b, int off, int len) {
+  public int write(final byte[] b, final int off, final int len) {
     final byte[] copy = Arrays.copyOfRange(b, off, off + len);
     this.soundWriter.write(copy);
-    return len;
+
+    final long lengthImMilliseconds = (copy.length * 10 + SAMPLES_PER_MILLISECOND_X10 / 2)/ SAMPLES_PER_MILLISECOND_X10;
+    final long wallTime = this.wallclock.getTimeInMilliseconds();
+    if (this.nextBufferEmptyTime.get() <= wallTime) {
+      this.nextBufferEmptyTime.set(wallTime + lengthImMilliseconds);
+    }
+    return copy.length;
   }
 
   @Override
@@ -90,7 +103,15 @@ public final class ZxSoundPort extends SourceSoundPort implements SourceDataLine
 
   @Override
   public int available() {
-    return Integer.MAX_VALUE;
+    final long diffMilliseconds = this.nextBufferEmptyTime.get() - this.wallclock.getTimeInMilliseconds();
+    final int virtualBufferSize;
+    if (diffMilliseconds <= 0L) {
+      virtualBufferSize = SAMPLES_PER_INT;
+    } else {
+      final long possibleSizeInBytes = (diffMilliseconds * SAMPLES_PER_MILLISECOND_X10) / 10;
+      virtualBufferSize = (int) Math.min(possibleSizeInBytes, SAMPLES_PER_INT);
+    }
+    return virtualBufferSize;
   }
 
   @Override
@@ -115,7 +136,7 @@ public final class ZxSoundPort extends SourceSoundPort implements SourceDataLine
 
   @Override
   public Line.Info getLineInfo() {
-    return new Line.Info(ZxSoundPort.class);
+    return new Line.Info(ZxStreamingSoundPort.class);
   }
 
   @Override
