@@ -567,7 +567,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             if (systemIntSignal) {
               this.board
                   .getMasterCpu()
-                  .setMCycleCounter(0);
+                  .setMCycleCounter(currentMachineCycleCounter % MCYCLES_PER_INT);
             }
             countdownToPaint--;
             countToUpdatePanel--;
@@ -576,7 +576,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             systemIntSignal = false;
           }
 
-          final boolean processCpuStep = inTurboMode || (systemIntSignal || currentMachineCycleCounter <= MCYCLES_PER_INT);
+          final boolean processCpuStep =
+              inTurboMode || (systemIntSignal || currentMachineCycleCounter <= MCYCLES_PER_INT);
           final int triggers = this.board.step(systemIntSignal, processCpuStep);
 
           if (systemIntSignal) {

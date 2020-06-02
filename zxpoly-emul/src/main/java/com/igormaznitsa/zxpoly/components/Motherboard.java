@@ -33,7 +33,7 @@ import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@SuppressWarnings( {"unused", "FieldCanBeLocal", "NonAtomicOperationOnVolatileField"})
+@SuppressWarnings({"unused", "FieldCanBeLocal", "NonAtomicOperationOnVolatileField"})
 public final class Motherboard implements ZxPolyConstants {
 
   public static final long CPU_FREQ = 3540000L;
@@ -54,6 +54,7 @@ public final class Motherboard implements ZxPolyConstants {
   private final ConcurrentUByteArray ram = new ConcurrentUByteArray(512 * 1024);
   private final VideoController video;
   private final KeyboardKempstonAndTapeIn keyboard;
+
   private final BetaDiscInterface betaDisk;
   private final float[] cpuLoad = new float[4];
   private volatile int port3D00 = (int) System.nanoTime() & 0xFF; // simulate noise after turning on
@@ -94,8 +95,12 @@ public final class Motherboard implements ZxPolyConstants {
     iodevices.add(video);
     iodevices.add(new KempstonMouse(this));
     this.ioDevices = iodevices.toArray(new IoDevice[0]);
-    this.ioDevicesPreStep = Arrays.stream(this.ioDevices).filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_PRESTEP) != 0).toArray(IoDevice[]::new);
-    this.ioDevicesPostStep = Arrays.stream(this.ioDevices).filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_POSTSTEP) != 0).toArray(IoDevice[]::new);
+    this.ioDevicesPreStep = Arrays.stream(this.ioDevices)
+        .filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_PRESTEP) != 0)
+        .toArray(IoDevice[]::new);
+    this.ioDevicesPostStep = Arrays.stream(this.ioDevices)
+        .filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_POSTSTEP) != 0)
+        .toArray(IoDevice[]::new);
 
     // simulation of garbage in memory after power on
     for (int i = 0; i < this.ram.length(); i++) {
@@ -226,7 +231,8 @@ public final class Motherboard implements ZxPolyConstants {
 
   public void setGfxAlignParams(final String registersToAlignOnStep) {
     this.gfxSyncRegsRecord = Z80.parseAndPackRegAlignValue(registersToAlignOnStep);
-    LOGGER.info("Set GFX register list for aligning, '" + registersToAlignOnStep + "' = " + Integer.toBinaryString(this.gfxSyncRegsRecord));
+    LOGGER.info("Set GFX register list for aligning, '" + registersToAlignOnStep + "' = "
+        + Integer.toBinaryString(this.gfxSyncRegsRecord));
     this.modules[0].setGfxPtrFromMainCpu(registersToAlignOnStep.contains("T"));
   }
 
@@ -241,7 +247,8 @@ public final class Motherboard implements ZxPolyConstants {
       this.statisticCounter--;
       if (this.statisticCounter <= 0) {
         for (int i = 0; i < 4; i++) {
-          this.cpuLoad[i] = min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweenInt() / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (MCYCLES_PER_INT));
+          this.cpuLoad[i] = min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweenInt()
+              / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (MCYCLES_PER_INT));
         }
         this.statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
         resetStatisticsAtModules = true;
@@ -363,10 +370,12 @@ public final class Motherboard implements ZxPolyConstants {
         masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
       }
 
-      final int audioLevel = (this.video.getPortFE() >> 2 & 0b110) | (this.keyboard.isTapeIn() ? 1 : 0);
+      final int audioLevel =
+          (this.video.getPortFE() >> 2 & 0b110) | (this.keyboard.isTapeIn() ? 1 : 0);
       this.beeper.updateState(signalInt, initialMachineCycleCounter, audioLevel);
 
-      final long spentMachineCycles = modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
+      final long spentMachineCycles =
+          modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
 
       for (final IoDevice device : this.ioDevicesPostStep) {
         device.postStep(spentMachineCycles);
@@ -395,16 +404,17 @@ public final class Motherboard implements ZxPolyConstants {
           final int exeByte = modules[0].getCpu().getLastInstructionByte();
 
           for (int i = 1; i < 4; i++) {
-            if (m1ExeByte != modules[i].getCpu().getLastM1InstructionByte() || exeByte != modules[i].getCpu().getLastInstructionByte()) {
+            if (m1ExeByte != modules[i].getCpu().getLastM1InstructionByte() ||
+                exeByte != modules[i].getCpu().getLastInstructionByte()) {
               result |= TRIGGER_DIFF_EXE_CODE;
               this.triggers = this.triggers & ~TRIGGER_DIFF_EXE_CODE;
               break;
             }
           }
         }
-      } else {
-        this.beeper.updateState(signalInt, initialMachineCycleCounter, audioLevel);
       }
+    } else {
+      this.beeper.updateState(signalInt, MCYCLES_PER_INT, 0);
     }
     return result;
   }
@@ -514,7 +524,8 @@ public final class Motherboard implements ZxPolyConstants {
     final int mappedCPU = getMappedCpuIndex();
     int result = -1;
 
-    if (this.getBoardMode() == BoardMode.ZXPOLY && (module.getModuleIndex() == 0 && mappedCPU > 0)) {
+    if (this.getBoardMode() == BoardMode.ZXPOLY &&
+        (module.getModuleIndex() == 0 && mappedCPU > 0)) {
       final ZxPolyModule destmodule = modules[mappedCPU];
       result = this.ram.get(destmodule.ramOffset2HeapAddress(destmodule.read7FFD(), port));
       destmodule.prepareLocalInt();
@@ -533,7 +544,10 @@ public final class Motherboard implements ZxPolyConstants {
           final int prevResult = result;
           result |= data;
           if (prevResult != result) {
-            LOGGER.log(Level.WARNING, "Detected IO collision during read: " + firstDetectedActiveDevice + ", " + device.getName() + " port #" + Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
+            LOGGER.log(Level.WARNING,
+                "Detected IO collision during read: " + firstDetectedActiveDevice + ", " +
+                    device.getName() + " port #" +
+                    Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
           }
         }
       }
