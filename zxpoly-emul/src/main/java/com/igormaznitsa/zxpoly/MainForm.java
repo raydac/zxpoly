@@ -576,8 +576,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             systemIntSignal = false;
           }
 
-          final int triggers = this.board.step(systemIntSignal,
-              inTurboMode || (systemIntSignal || currentMachineCycleCounter <= MCYCLES_PER_INT));
+          final boolean processCpuStep = inTurboMode || (systemIntSignal || currentMachineCycleCounter <= MCYCLES_PER_INT);
+          final int triggers = this.board.step(systemIntSignal, processCpuStep);
 
           if (systemIntSignal) {
             this.videoStreamer.onSystemIntTick();
