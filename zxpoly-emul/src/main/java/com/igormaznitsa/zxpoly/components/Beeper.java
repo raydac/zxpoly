@@ -216,6 +216,8 @@ public class Beeper {
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
       this.thread = new Thread(this, "beeper-thread-" + toHexString(System.nanoTime()));
+      this.thread
+          .setPriority((Thread.MAX_PRIORITY - Thread.NORM_PRIORITY) / 2 + Thread.NORM_PRIORITY);
       this.thread.setDaemon(true);
     }
 
@@ -242,7 +244,8 @@ public class Beeper {
     ) {
       if (this.working) {
         final byte value = LEVELS[level];
-        int position = ((int) ((machineCyclesInInt * SAMPLES_PER_INT + MCYCLES_PER_INT / 2) / MCYCLES_PER_INT)) * 4;
+        int position = ((int) ((machineCyclesInInt * SAMPLES_PER_INT + MCYCLES_PER_INT / 2)
+            / MCYCLES_PER_INT)) * 4;
 
         if (intSignal) {
           blink(value);
