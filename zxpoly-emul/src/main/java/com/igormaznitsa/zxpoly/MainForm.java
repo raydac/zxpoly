@@ -111,6 +111,7 @@ import javax.swing.JPopupMenu.Separator;
 import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
@@ -245,27 +246,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JCheckBoxMenuItem menuTriggerExeCodeDiff;
   private JCheckBoxMenuItem menuTriggerModuleCPUDesync;
   private javax.swing.JPanel panelIndicators;
-  private final Runnable infobarUpdater = new Runnable() {
-    @Override
-    public void run() {
-      if (panelIndicators.isVisible()) {
-        labelTurbo.setStatus(turboMode);
-
-        final TapeFileReader tapeFileReader = keyboardAndTapeModule.getTap();
-        labelTapeUsage.setStatus(tapeFileReader != null && tapeFileReader.isPlaying());
-        labelMouseUsage.setStatus(board.getVideoController().isHoldMouse());
-        labelDiskUsage.setStatus(board.getBetaDiskInterface().isActive());
-        labelZX128.setStatus(board.getBoardMode() != BoardMode.ZXPOLY);
-
-        indicatorCPU0.updateForState(board.getCpuActivity(0));
-        indicatorCPU1.updateForState(board.getCpuActivity(1));
-        indicatorCPU2.updateForState(board.getCpuActivity(2));
-        indicatorCPU3.updateForState(board.getCpuActivity(3));
-      }
-
-      updateTracerCheckBoxes();
-    }
-  };
   private javax.swing.JScrollPane scrollPanel;
 
   public MainForm(final String title, final String romPath) {
@@ -401,11 +381,37 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.setLocationRelativeTo(null);
 
     SwingUtilities.invokeLater(() -> {
-      final Thread daemon = new Thread(this, "ZXPolyThread");
-      daemon.setDaemon(true);
-      daemon.start();
+      final Thread mainCpuThread = new Thread(this, "zx-poly-main-cpu-thread");
+      mainCpuThread.setPriority(Thread.MAX_PRIORITY);
+      mainCpuThread.setDaemon(true);
+      mainCpuThread.start();
+
+      final Timer infobarUpdateTimer = new Timer(1000, action -> updateInfobar());
+      infobarUpdateTimer.setRepeats(true);
+      infobarUpdateTimer.setInitialDelay(1000);
+      infobarUpdateTimer.start();
     });
   }
+
+  private void updateInfobar() {
+    assertUiThread();
+    if (panelIndicators.isVisible()) {
+      labelTurbo.setStatus(turboMode);
+
+      final TapeFileReader tapeFileReader = keyboardAndTapeModule.getTap();
+      labelTapeUsage.setStatus(tapeFileReader != null && tapeFileReader.isPlaying());
+      labelMouseUsage.setStatus(board.getVideoController().isHoldMouse());
+      labelDiskUsage.setStatus(board.getBetaDiskInterface().isActive());
+      labelZX128.setStatus(board.getBoardMode() != BoardMode.ZXPOLY);
+
+      indicatorCPU0.updateForState(board.getCpuActivity(0));
+      indicatorCPU1.updateForState(board.getCpuActivity(1));
+      indicatorCPU2.updateForState(board.getCpuActivity(2));
+      indicatorCPU3.updateForState(board.getCpuActivity(3));
+    }
+    updateTracerCheckBoxes();
+  }
+
 
   private void doOnShutdown() {
     this.videoStreamer.stop();
@@ -551,8 +557,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     int countdownToPaint = 0;
     int countdownToAnimationSave = 0;
 
-    int countToUpdatePanel = INT_TICKS_BETWEEN_INFO_PANEL_UPDATE;
-
     while (!Thread.currentThread().isInterrupted()) {
       final long currentMachineCycleCounter = this.board.getMasterCpu().getMachineCycles();
       long wallclockTime = this.wallclock.getTimeInMilliseconds();
@@ -572,7 +576,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
                   .setMCycleCounter(currentMachineCycleCounter % MCYCLES_PER_INT);
             }
             countdownToPaint--;
-            countToUpdatePanel--;
             countdownToAnimationSave--;
 
             virtualIntTick = true;
@@ -619,11 +622,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
                 LOGGER.warning("Can't write animation frame: " + ex.getMessage());
               }
             }
-          }
-
-          if (countToUpdatePanel <= 0) {
-            countToUpdatePanel = INT_TICKS_BETWEEN_INFO_PANEL_UPDATE;
-            updateInfoPanel();
           }
         } finally {
           stepSemaphor.unlock();
@@ -1404,14 +1402,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } finally {
       this.turnZxKeyboardOn();
       this.stepSemaphor.unlock();
-    }
-  }
-
-  private void updateInfoPanel() {
-    if (SwingUtilities.isEventDispatchThread()) {
-      infobarUpdater.run();
-    } else {
-      SwingUtilities.invokeLater(infobarUpdater);
     }
   }
 
