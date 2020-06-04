@@ -227,7 +227,7 @@ public class Beeper {
 
     @Override
     public void updateState(
-        boolean intSignal,
+        boolean wallclockIntSignal,
         long machineCyclesInInt,
         final int level
     ) {
@@ -236,7 +236,7 @@ public class Beeper {
         int position = ((int) ((machineCyclesInInt * SAMPLES_PER_INT + MCYCLES_PER_INT / 2)
             / MCYCLES_PER_INT)) * 4;
 
-        if (intSignal) {
+        if (wallclockIntSignal) {
           blink(value);
         }
 
@@ -247,7 +247,7 @@ public class Beeper {
               value);
         }
 
-        if (intSignal) {
+        if (wallclockIntSignal) {
           blink(value);
           fill(this.soundBuffer,
               0,
