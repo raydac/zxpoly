@@ -279,6 +279,102 @@ public final class VideoController extends JComponent
     }
   }
 
+  private static void fillDataBufferForSpec256x16VideoMode(
+      final ZxPolyModule[] modules,
+      final int[] pixelRgbBuffer,
+      final boolean flashActive
+  ) {
+    final int[] preRenderedBack = gfxPrerenderedBack;
+    final boolean bkOverFF = gfxBackOverFF;
+    final boolean paper00inkFF = gfxPaper00InkFF;
+    final boolean hideSameInkPaper = gfxHideSameInkPaper;
+
+    if (preRenderedBack != null) {
+      System.arraycopy(preRenderedBack, 0, pixelRgbBuffer, 0, preRenderedBack.length);
+    }
+
+    final int downAttrMixedIndex = gfxDownColorsMixed;
+    final int upAttrMixedIndex = 0xFF - gfxUpColorsMixed;
+
+    final ZxPolyModule sourceModule = modules[0];
+    int offset = 0;
+    int aoffset = 0;
+    int coordY = 0;
+    for (int i = 0; i < 0x1800; i++) {
+      if ((i & 0x1F) == 0) {
+        // the first byte in the line
+        coordY = extractYFromAddress(i);
+        aoffset = calcAttributeAddressZxMode(i);
+        offset = coordY << 10;
+      }
+
+      final int attrOffset = aoffset++;
+      long pixelData = sourceModule.readGfxVideo(i);
+      int origData = sourceModule.readVideo(i);
+
+      final int attrData = sourceModule.readVideo(attrOffset);
+      final int inkColor = extractInkColorSpec256(attrData, flashActive);
+      final int paperColor = extractPaperColor(attrData, flashActive);
+
+      int x = 8;
+      while (x-- > 0) {
+        final int colorIndex = (int) ((pixelData >>> 56) & 0xFF);
+        final boolean origPixelSet = (origData & 0x80) != 0;
+
+        int color = PALETTE_SPEC256[colorIndex];
+        boolean draw = true;
+
+        final boolean mixWithAttributes =
+            colorIndex < downAttrMixedIndex || colorIndex > upAttrMixedIndex;
+
+        if (preRenderedBack == null) {
+          // No GFX Background
+          if (hideSameInkPaper && inkColor == paperColor) {
+            color = inkColor;
+          } else if (paper00inkFF) {
+            if (colorIndex == 0) {
+              color = paperColor;
+            } else if (colorIndex == 0xFF) {
+              color = inkColor;
+            }
+          }
+        } else {
+          // GFX Background is presented
+          final boolean backShouldBeShown = ((attrData & 0x80) != 0 && flashActive)
+              || (hideSameInkPaper && inkColor == paperColor);
+
+          if (paper00inkFF) {
+            if (colorIndex == 0) {
+              color = paperColor;
+            } else if (colorIndex == 0xFF) {
+              color = inkColor;
+            } else {
+              draw = !backShouldBeShown;
+            }
+          } else {
+            draw = !(backShouldBeShown || (colorIndex == 0 || (bkOverFF && colorIndex == 0xFF)));
+          }
+        }
+
+        if (draw && mixWithAttributes) {
+          color = mixRgb(origPixelSet ? inkColor : paperColor, color);
+        }
+
+        pixelData <<= 8;
+        origData <<= 1;
+
+        if (draw) {
+          pixelRgbBuffer[offset] = color;
+          pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
+          pixelRgbBuffer[++offset] = color;
+          pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+        } else {
+          offset += 2;
+        }
+      }
+    }
+  }
+
   private static void fillDataBufferForZxPolyVideoMode(
       final int zxPolyVideoMode,
       final ZxPolyModule[] modules,
@@ -686,6 +782,8 @@ public final class VideoController extends JComponent
         return "ZX-Poly 256x192M1";
       case VIDEOMODE_SPEC256:
         return "SPEC256 256x192";
+      case VIDEOMODE_SPEC256_16:
+        return "SPEC256 256x192 16 colors";
       default:
         return "Unknown [" + code + ']';
     }
@@ -823,22 +921,34 @@ public final class VideoController extends JComponent
     }
   }
 
-  private void refreshBufferData(final boolean spec256) {
-    if (spec256) {
-      fillDataBufferForSpec256VideoMode(
-          this.modules,
-          this.bufferImageRgbData,
-          this.board.isFlashActive()
-      );
-    } else {
-      fillDataBufferForZxPolyVideoMode(
-          this.currentVideoMode,
-          this.modules,
-          this.bufferImageRgbData,
-          this.lastRenderedZxData,
-          this.board.isFlashActive(),
-          true
-      );
+  private void refreshBufferData(final int videoMode) {
+    switch (videoMode) {
+      case VIDEOMODE_SPEC256: {
+        fillDataBufferForSpec256VideoMode(
+            this.modules,
+            this.bufferImageRgbData,
+            this.board.isFlashActive()
+        );
+      } break;
+      case VIDEOMODE_SPEC256_16: {
+        fillDataBufferForSpec256x16VideoMode(
+            this.modules,
+            this.bufferImageRgbData,
+            this.board.isFlashActive()
+        );
+      }
+      break;
+      default: {
+        fillDataBufferForZxPolyVideoMode(
+            this.currentVideoMode,
+            this.modules,
+            this.bufferImageRgbData,
+            this.lastRenderedZxData,
+            this.board.isFlashActive(),
+            true
+        );
+      }
+      break;
     }
   }
 
@@ -893,7 +1003,7 @@ public final class VideoController extends JComponent
         }
         this.currentVideoMode = newVideoMode;
         log.log(Level.INFO, "mode set: " + decodeVideoModeCode(newVideoMode));
-        refreshBufferData(this.currentVideoMode == VIDEOMODE_SPEC256);
+        refreshBufferData(this.currentVideoMode);
       }
     } finally {
       unlockBuffer();
@@ -931,7 +1041,7 @@ public final class VideoController extends JComponent
   public void updateBuffer() {
     lockBuffer();
     try {
-      this.refreshBufferData(this.currentVideoMode == VIDEOMODE_SPEC256);
+      this.refreshBufferData(this.currentVideoMode);
     } finally {
       unlockBuffer();
     }
@@ -1020,7 +1130,7 @@ public final class VideoController extends JComponent
 
       return result.toArray(EMPTY_ARRAY);
     } finally {
-      refreshBufferData(false);
+      refreshBufferData(VIDEOMODE_ZX48_CPU0);
       this.unlockBuffer();
     }
   }
@@ -1091,7 +1201,8 @@ public final class VideoController extends JComponent
   }
 
   @Override
-  public void preStep(final boolean signalReset, final boolean virtualIntTick, boolean wallclockInt) {
+  public void preStep(final boolean signalReset, final boolean virtualIntTick,
+                      boolean wallclockInt) {
     if (signalReset) {
       this.portFEw = 0x00;
     }
