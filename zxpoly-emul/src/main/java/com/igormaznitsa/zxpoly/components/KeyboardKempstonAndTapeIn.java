@@ -252,7 +252,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   @Override
-  public void preStep(final boolean signalReset, final boolean signalInt) {
+  public void preStep(final boolean signalReset, final boolean virtualIntTick, boolean wallclockInt) {
     if (signalReset) {
       doReset();
     }

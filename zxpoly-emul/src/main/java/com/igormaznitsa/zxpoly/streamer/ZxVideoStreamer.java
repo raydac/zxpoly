@@ -222,7 +222,7 @@ public final class ZxVideoStreamer {
     }
   }
 
-  public void onSystemIntTick() {
+  public void onWallclockInt() {
     if (this.isStarted()) {
       final long wallclockTime = this.wallclock.getTimeInMilliseconds();
       if (wallclockTime > timeNextFrame) {

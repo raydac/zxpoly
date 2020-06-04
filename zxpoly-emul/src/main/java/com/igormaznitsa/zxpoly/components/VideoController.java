@@ -1091,7 +1091,7 @@ public final class VideoController extends JComponent
   }
 
   @Override
-  public void preStep(final boolean signalReset, final boolean signalInt) {
+  public void preStep(final boolean signalReset, final boolean virtualIntTick, boolean wallclockInt) {
     if (signalReset) {
       this.portFEw = 0x00;
     }

@@ -547,7 +547,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   public void run() {
     final int INT_TICKS_BETWEEN_INFO_PANEL_UPDATE = 20;
 
-    long nextIntTickTime = this.wallclock.getTimeInMilliseconds() + TIMER_INT_DELAY_MILLISECONDS;
+    long nextWallclockIntTime = this.wallclock.getTimeInMilliseconds() + TIMER_INT_DELAY_MILLISECONDS;
     int countdownToPaint = 0;
     int countdownToAnimationSave = 0;
 
@@ -560,11 +560,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       if (stepSemaphor.tryLock()) {
         try {
           final boolean inTurboMode = this.turboMode;
-          final boolean systemIntSignal;
-          if (nextIntTickTime <= wallclockTime) {
-            systemIntSignal = currentMachineCycleCounter >= MCYCLES_PER_INT;
-            nextIntTickTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
-            if (systemIntSignal) {
+          final boolean allMcyclesInIntCompleted = currentMachineCycleCounter >= MCYCLES_PER_INT;
+          final boolean wallclockInt = nextWallclockIntTime <= wallclockTime;
+
+          final boolean virtualIntTick;
+          if (wallclockInt) {
+            nextWallclockIntTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
+            if (allMcyclesInIntCompleted) {
               this.board
                   .getMasterCpu()
                   .setMCycleCounter(currentMachineCycleCounter % MCYCLES_PER_INT);
@@ -572,25 +574,32 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             countdownToPaint--;
             countToUpdatePanel--;
             countdownToAnimationSave--;
+
+            virtualIntTick = true;
+
+            if (!allMcyclesInIntCompleted) {
+              this.onSlownessDetected(MCYCLES_PER_INT - currentMachineCycleCounter);
+            }
           } else {
-            systemIntSignal = false;
+            virtualIntTick = false;
           }
 
-          final boolean processCpuStep =
-              inTurboMode || (systemIntSignal || currentMachineCycleCounter <= MCYCLES_PER_INT);
-          final int triggers = this.board.step(systemIntSignal, processCpuStep);
+          final int detectedTriggers = this.board.step(
+              virtualIntTick,
+              wallclockInt,
+              inTurboMode || !allMcyclesInIntCompleted || virtualIntTick);
 
-          if (systemIntSignal) {
-            this.videoStreamer.onSystemIntTick();
+          if (wallclockInt) {
+            this.videoStreamer.onWallclockInt();
           }
 
-          if (triggers != Motherboard.TRIGGER_NONE) {
+          if (detectedTriggers != Motherboard.TRIGGER_NONE) {
             final Z80[] cpuStates = new Z80[4];
             final int lastM1Address = this.board.getModules()[0].getLastM1Address();
             for (int i = 0; i < 4; i++) {
               cpuStates[i] = new Z80(this.board.getModules()[i].getCpu());
             }
-            SwingUtilities.invokeLater(() -> onTrigger(triggers, lastM1Address, cpuStates));
+            SwingUtilities.invokeLater(() -> onTrigger(detectedTriggers, lastM1Address, cpuStates));
           }
 
           if (countdownToPaint <= 0) {
@@ -624,10 +633,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           updateTracerWindowsForStep();
         }
       } else {
-        final long timeDiff = wallclockTime - nextIntTickTime;
+        final long timeDiff = wallclockTime - nextWallclockIntTime;
         if (timeDiff >= 0L) {
-          nextIntTickTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
-          this.videoStreamer.onSystemIntTick();
+          nextWallclockIntTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
+          this.videoStreamer.onWallclockInt();
           this.board.dryIntTickOnWallClockTime(
               timeDiff == 0 ? MCYCLES_PER_INT : Math.round(
                   MCYCLES_PER_INT * ((double) (timeDiff + TIMER_INT_DELAY_MILLISECONDS / 2)
@@ -637,6 +646,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         }
       }
     }
+  }
+
+  private void onSlownessDetected(final long nonCompletedMcycles) {
+    LOGGER.warning(String.format("Slowness detected: %.02f%%",(float)nonCompletedMcycles / (float)MCYCLES_PER_INT * 100.0f));
   }
 
   private void updateTracerWindowsForStep() {

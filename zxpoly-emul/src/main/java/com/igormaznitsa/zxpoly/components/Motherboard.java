@@ -236,14 +236,16 @@ public final class Motherboard implements ZxPolyConstants {
     this.modules[0].setGfxPtrFromMainCpu(registersToAlignOnStep.contains("T"));
   }
 
-  public int step(final boolean signalInt, final boolean processStep) {
+  public int step(final boolean virtualInt,
+                  final boolean wallclockInt,
+                  final boolean executionEnabled) {
     this.localResetForAllModules = false;
 
     final boolean resetStatisticsAtModules;
 
     int result = TRIGGER_NONE;
 
-    if (signalInt) {
+    if (wallclockInt) {
       this.statisticCounter--;
       if (this.statisticCounter <= 0) {
         for (int i = 0; i < 4; i++) {
@@ -265,7 +267,7 @@ public final class Motherboard implements ZxPolyConstants {
       resetStatisticsAtModules = false;
     }
 
-    if (processStep) {
+    if (executionEnabled) {
       final ZxPolyModule[] modules = this.modules;
 
       final boolean signalReset = this.totalReset;
@@ -279,7 +281,7 @@ public final class Motherboard implements ZxPolyConstants {
       }
 
       for (final IoDevice device : this.ioDevicesPreStep) {
-        device.preStep(signalReset, signalInt);
+        device.preStep(signalReset, virtualInt, wallclockInt);
       }
 
       final long initialMachineCycleCounter = modules[0].getCpu().getMachineCycles();
@@ -295,40 +297,40 @@ public final class Motherboard implements ZxPolyConstants {
 
         switch ((int) System.nanoTime() & 0x3) {
           case 0: {
-            zx0halt = modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
             if (localResetForAllModules) {
               return result;
             }
-            zx3halt = modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx2halt = modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx1halt = modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
+            zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
+            zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
           }
           break;
           case 1: {
-            zx1halt = modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx2halt = modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx0halt = modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
+            zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
+            zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
             if (this.localResetForAllModules) {
               return result;
             }
-            zx3halt = modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
           }
           break;
           case 2: {
-            zx3halt = modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx0halt = modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
+            zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
             if (this.localResetForAllModules) {
               return result;
             }
-            zx1halt = modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx2halt = modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
+            zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
           }
           break;
           case 3: {
-            zx2halt = modules[2].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx3halt = modules[3].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx1halt = modules[1].step(signalReset, signalInt, resetStatisticsAtModules);
-            zx0halt = modules[0].step(signalReset, signalInt, resetStatisticsAtModules);
+            zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
+            zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
+            zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
+            zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
             if (this.localResetForAllModules) {
               return result;
             }
@@ -364,15 +366,15 @@ public final class Motherboard implements ZxPolyConstants {
           for (int i = 0; i < SPEC256_GFX_CORES; i++) {
             final Z80 gfxCore = this.spec256GfxCores[i];
             gfxCore.alignRegisterValuesWith(mainCpu, syncRegRecord);
-            masterModule.stepWithGfxCpu(i + 1, gfxCore, signalReset, signalInt);
+            masterModule.stepWithGfxCpu(i + 1, gfxCore, signalReset, virtualInt);
           }
         }
-        masterModule.step(signalReset, signalInt, resetStatisticsAtModules);
+        masterModule.step(signalReset, virtualInt, resetStatisticsAtModules);
       }
 
       final int audioLevel =
           (this.video.getPortFE() >> 2 & 0b110) | (this.keyboard.isTapeIn() ? 1 : 0);
-      this.beeper.updateState(signalInt, initialMachineCycleCounter, audioLevel);
+      this.beeper.updateState(wallclockInt, initialMachineCycleCounter, audioLevel);
 
       final long spentMachineCycles =
           modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
@@ -414,7 +416,7 @@ public final class Motherboard implements ZxPolyConstants {
         }
       }
     } else {
-      this.beeper.updateState(signalInt, MCYCLES_PER_INT, 0);
+      this.beeper.updateState(virtualInt, MCYCLES_PER_INT, 0);
     }
     return result;
   }

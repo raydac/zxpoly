@@ -92,7 +92,7 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
   }
 
   @Override
-  public void preStep(boolean signalReset, boolean signalInt) {
+  public void preStep(boolean signalReset, boolean virtualIntTick, boolean wallclockInt) {
     if (signalReset) {
       this.coordX.set(128);
       this.coordY.set(86);

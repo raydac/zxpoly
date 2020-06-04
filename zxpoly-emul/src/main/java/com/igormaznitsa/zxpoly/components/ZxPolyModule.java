@@ -843,7 +843,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public void preStep(final boolean signalReset, final boolean signalInt) {
+  public void preStep(final boolean signalReset, final boolean virtualIntTick, boolean wallclockInt) {
     if (signalReset) {
       setStateForSystemReset();
     }
