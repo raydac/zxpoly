@@ -288,88 +288,95 @@ public final class Motherboard implements ZxPolyConstants {
 
       final BoardMode mode = this.getBoardMode();
 
-      if (mode == BoardMode.ZXPOLY) {
+      switch (this.boardMode) {
+        case ZXPOLY: {
+          final boolean zx0halt;
+          final boolean zx1halt;
+          final boolean zx2halt;
+          final boolean zx3halt;
 
-        final boolean zx0halt;
-        final boolean zx1halt;
-        final boolean zx2halt;
-        final boolean zx3halt;
+          switch ((int) System.nanoTime() & 0x3) {
+            case 0: {
+              zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
+              if (localResetForAllModules) {
+                return result;
+              }
+              zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
+            }
+            break;
+            case 1: {
+              zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
+              if (this.localResetForAllModules) {
+                return result;
+              }
+              zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
+            }
+            break;
+            case 2: {
+              zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
+              if (this.localResetForAllModules) {
+                return result;
+              }
+              zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
+            }
+            break;
+            case 3: {
+              zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
+              if (this.localResetForAllModules) {
+                return result;
+              }
+            }
+            break;
+            default:
+              throw new Error("Unexpected value");
+          }
 
-        switch ((int) System.nanoTime() & 0x3) {
-          case 0: {
-            zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
-            if (localResetForAllModules) {
-              return result;
+          if (is3D00NotLocked() && (zx0halt || zx1halt || zx2halt || zx3halt)) {
+            // a cpu has met halt and we need process notification
+            if (zx0halt) {
+              doModuleHaltNotification(0);
             }
-            zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
-            zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
-            zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
-          }
-          break;
-          case 1: {
-            zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
-            zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
-            zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
-            if (this.localResetForAllModules) {
-              return result;
+            if (zx1halt) {
+              doModuleHaltNotification(1);
             }
-            zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
-          }
-          break;
-          case 2: {
-            zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
-            zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
-            if (this.localResetForAllModules) {
-              return result;
+            if (zx2halt) {
+              doModuleHaltNotification(2);
             }
-            zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
-            zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
-          }
-          break;
-          case 3: {
-            zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
-            zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
-            zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
-            zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
-            if (this.localResetForAllModules) {
-              return result;
+            if (zx3halt) {
+              doModuleHaltNotification(3);
             }
           }
-          break;
-          default:
-            throw new Error("Unexpected value");
         }
-
-        if (is3D00NotLocked() && (zx0halt || zx1halt || zx2halt || zx3halt)) {
-          // a cpu has met halt and we need process notification
-          if (zx0halt) {
-            doModuleHaltNotification(0);
-          }
-          if (zx1halt) {
-            doModuleHaltNotification(1);
-          }
-          if (zx2halt) {
-            doModuleHaltNotification(2);
-          }
-          if (zx3halt) {
-            doModuleHaltNotification(3);
-          }
+        break;
+        case ZX128: {
+          modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
         }
-      } else {
-        // ZX128 and SPEC256 modes
-        final ZxPolyModule masterModule = modules[0];
-        if (this.boardMode == BoardMode.SPEC256) {
+        break;
+        case SPEC256:
+        case SPEC256_16: {
+          final ZxPolyModule masterModule = modules[0];
           final Z80 mainCpu = masterModule.getCpu();
           masterModule.saveInternalCopyForGfx();
-
           final int syncRegRecord = this.gfxSyncRegsRecord;
           for (int i = 0; i < SPEC256_GFX_CORES; i++) {
             final Z80 gfxCore = this.spec256GfxCores[i];
             gfxCore.alignRegisterValuesWith(mainCpu, syncRegRecord);
             masterModule.stepWithGfxCpu(i + 1, gfxCore, signalReset, virtualInt);
           }
+          masterModule.step(signalReset, virtualInt, resetStatisticsAtModules);
         }
-        masterModule.step(signalReset, virtualInt, resetStatisticsAtModules);
+        break;
+        default:
+          throw new Error("Unexpected board mode: " + this.boardMode);
       }
 
       final int audioLevel =

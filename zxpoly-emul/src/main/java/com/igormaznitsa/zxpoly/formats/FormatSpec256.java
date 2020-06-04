@@ -86,15 +86,22 @@ public class FormatSpec256 extends Snapshot {
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc,
                             final byte[] array) throws IOException {
     final Spec256Arch archive = new Spec256Arch(array);
+    final BaseItem dbItem = APP_BASE.get(archive.getSha256().toLowerCase(Locale.ENGLISH));
+    if (dbItem == null) {
+      LOGGER.info("Application not found in Spec256 app base");
+    }
+
+    final boolean modeSpec256colors16 = !"0".equals(findPropertys(archive,"GFXColors16",dbItem,"0"));
+
     LOGGER.info("Archive: " + archive);
     final SNAParser parser = archive.getParsedSna();
 
     final boolean sna128 = parser.extendeddata != null;
 
     if (sna128) {
-      doModeSpec256_128(board);
+      doModeSpec256_128(board, modeSpec256colors16);
     } else {
-      doModeSpec256_48(board);
+      doModeSpec256_48(board, modeSpec256colors16);
     }
 
     final ZxPolyModule module = board.getModules()[0];
@@ -194,7 +201,12 @@ public class FormatSpec256 extends Snapshot {
 
     board.set3D00(0b1_00_000_0_1, true);
     vc.setBorderColor(parser.getBORDERCOLOR() & 7);
-    vc.setVideoMode(ZxPolyConstants.VIDEOMODE_SPEC256);
+
+    if (modeSpec256colors16) {
+      vc.setVideoMode(ZxPolyConstants.VIDEOMODE_SPEC256_16);
+    } else {
+      vc.setVideoMode(ZxPolyConstants.VIDEOMODE_SPEC256);
+    }
 
     final Optional<Spec256Arch.Spec256Bkg> bkg = archive.getBackgrounds().stream()
         .min(Comparator.comparingInt(Spec256Arch.Spec256Bkg::getIndex));
@@ -204,11 +216,6 @@ public class FormatSpec256 extends Snapshot {
     } else {
       LOGGER.info("No any GFX background");
       VideoController.setGfxBack(null);
-    }
-
-    final BaseItem dbItem = APP_BASE.get(archive.getSha256().toLowerCase(Locale.ENGLISH));
-    if (dbItem == null) {
-      LOGGER.info("Application not found in Spec256 app base");
     }
 
     board.setGfxAlignParams(findPropertys(archive, "zxpAlignRegs", dbItem, "1PSsT"));
