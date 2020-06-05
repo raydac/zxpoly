@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.swing.filechooser.FileFilter;
@@ -100,7 +101,9 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       final int argbColor,
       final int[] argbPalette,
       final int minIndexIncl,
-      final int maxIndexExcl
+      final int maxIndexExcl,
+      final int allowedCpuMask,
+      final AtomicLong minDistanceAsDouble 
   ) {
     final int r = (argbColor >>> 16) & 0xFF;
     final int g = (argbColor >>> 8) & 0xFF;
@@ -110,6 +113,8 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     int lastIndex = minIndexIncl;
 
     for (int i = minIndexIncl; i < maxIndexExcl; i++) {
+      if ((i | allowedCpuMask) != allowedCpuMask) continue;
+        
       final int ir = (argbPalette[i] >>> 16) & 0xFF;
       final int ig = (argbPalette[i] >>> 8) & 0xFF;
       final int ib = argbPalette[i] & 0xFF;
@@ -124,7 +129,9 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
         curDistance = distance;
       }
     }
-
+    if (minDistanceAsDouble!=null){
+        minDistanceAsDouble.set(Double.doubleToLongBits(curDistance));
+    }
     return (byte) lastIndex;
   }
 
@@ -136,7 +143,9 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
           ARGB_PALETTE_ZXPOLY[i],
           argbSpec256Palette,
           64,
-          192);
+          192,
+          0xFF,
+          null);
     }
 
     return result;

@@ -134,7 +134,7 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         this.checkGFXScreenXORBuffered
             .setSelected(isPropertySet("GFXScreenXORBuffered", properties, false));
         this.checkGFXColors16
-            .setSelected(isPropertySet("GFX Colors16", properties, false));
+            .setSelected(isPropertySet("GFXColors16", properties, false));
         this.checkPaper00InkFF
             .setSelected(isPropertySet("Paper00InkFF", properties, false));
         this.checkUseBrightInMix.setSelected(isPropertySet("UseBrightInMix", properties, false));
@@ -643,7 +643,7 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
 
         checkGFXColors16.setText("GFXColors16");
         checkGFXColors16.setToolTipText(
-            "force use only 4 GFX core to get 16 colors from ZX-Spectrum palette");
+            "provides hint to emulator that only 16 colors of ZX-Palette in use");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 4;
