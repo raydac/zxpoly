@@ -48,10 +48,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.swing.filechooser.FileFilter;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 public class Spec256ZipPlugin extends AbstractFilePlugin {
@@ -97,13 +97,11 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     return baseData;
   }
 
-  private static byte findCloserIndexInPalette(
+  private static byte findClosestSpec256PaletteIndex(
       final int argbColor,
       final int[] argbPalette,
       final int minIndexIncl,
-      final int maxIndexExcl,
-      final int allowedCpuMask,
-      final AtomicLong minDistanceAsDouble 
+      final int maxIndexExcl
   ) {
     final int r = (argbColor >>> 16) & 0xFF;
     final int g = (argbColor >>> 8) & 0xFF;
@@ -113,7 +111,6 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     int lastIndex = minIndexIncl;
 
     for (int i = minIndexIncl; i < maxIndexExcl; i++) {
-      if ((i | allowedCpuMask) != allowedCpuMask) continue;
         
       final int ir = (argbPalette[i] >>> 16) & 0xFF;
       final int ig = (argbPalette[i] >>> 8) & 0xFF;
@@ -129,9 +126,6 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
         curDistance = distance;
       }
     }
-    if (minDistanceAsDouble!=null){
-        minDistanceAsDouble.set(Double.doubleToLongBits(curDistance));
-    }
     return (byte) lastIndex;
   }
 
@@ -139,18 +133,40 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     final byte[] result = new byte[ARGB_PALETTE_ZXPOLY.length];
 
     for (int i = 0; i < result.length; i++) {
-      result[i] = findCloserIndexInPalette(
+      result[i] = findClosestSpec256PaletteIndex(
           ARGB_PALETTE_ZXPOLY[i],
           argbSpec256Palette,
-          64,
-          192,
-          0xFF,
-          null);
+          1,
+          254);
     }
 
     return result;
   }
 
+  private static String colorToHtml(final int argb) {
+      final String r = Integer.toHexString((argb >>> 16) & 0xFF).toUpperCase(Locale.ENGLISH);
+      final String g = Integer.toHexString((argb >>> 8) & 0xFF).toUpperCase(Locale.ENGLISH);
+      final String b = Integer.toHexString(argb & 0xFF).toUpperCase(Locale.ENGLISH);
+      
+      return "#"+(r.length() < 2 ? "0" : "") + r
+              + (g.length() < 2 ? "0" : "") + g
+              + (b.length() < 2 ? "0" : "") + b;
+  }
+  
+  private static String paletteAsHtml(final int [] argbPalette) {
+      final StringBuilder result = new StringBuilder();
+      result.append("<html><body><table>");
+      for(int i=0;i<argbPalette.length;i++){
+          result.append("<tr>");
+          result.append("<th><b>  ").append(i).append("  </b></th>");
+          result.append("<th>").append(colorToHtml(argbPalette[i])).append("</th>");
+          result.append("<th style=\"width:50%;background-color:").append(colorToHtml(argbPalette[i])).append("\">").append("                ").append("</th>");
+          result.append("</tr>");
+      }
+      result.append("</table></body></html>");
+      return result.toString();
+  }
+  
   private static int[] readSpec256RawPalette() {
     try (InputStream in = Spec256ZipPlugin.class.getResourceAsStream("/spec256.pal")) {
       final int[] result = new int[256];
@@ -164,6 +180,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
         }
         result[i] = 0xFF000000 | (red << 16) | (green << 8) | blue;
       }
+      // FileUtils.write(new File("spec256pal.html"),paletteAsHtml(result),StandardCharsets.UTF_8);
       return result;
     } catch (IOException ex) {
       throw new Error(ex);
