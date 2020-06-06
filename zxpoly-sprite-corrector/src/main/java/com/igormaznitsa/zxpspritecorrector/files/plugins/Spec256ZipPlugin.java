@@ -128,7 +128,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     }
     return (byte) lastIndex;
   }
-
+  
   private static byte[] makePaletteMap(final int[] argbSpec256Palette) {
     final byte[] result = new byte[ARGB_PALETTE_ZXPOLY.length];
 
