@@ -23,6 +23,7 @@ import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.z80.Z80CPUBus;
 import com.igormaznitsa.z80.Z80Instruction;
 import com.igormaznitsa.z80.disasm.Z80Disasm;
+import com.igormaznitsa.zxpoly.formats.Spec256Arch;
 import com.igormaznitsa.zxpoly.utils.ConcurrentUByteArray;
 import java.util.ArrayList;
 import java.util.List;
@@ -345,8 +346,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     int sigReset = signalReset ? Z80.SIGNAL_IN_nRESET : 0;
     int sigWait = this.gfxWaitSignal ? Z80.SIGNAL_IN_nWAIT : 0;
     gfxCpu.step(ctx,
-        Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.gfxIntCounter > 0 ? Z80.SIGNAL_IN_nINT : 0) ^
-            sigWait ^ (this.gfxNmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
+        Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.gfxIntCounter > 0 ? Z80.SIGNAL_IN_nINT : 0)
+            ^ sigWait ^ (this.gfxNmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
   }
 
   public boolean is7FFDLocked() {
@@ -378,6 +379,31 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     return result;
   }
 
+  public long readGfxVideo16(final int videoOffset) {
+    int offset;
+    if ((this.gfxPort7FFD & PORTw_ZX128_SCREEN) == 0) {
+      // RAM 5
+      offset = 5 * GFX_PAGE_SIZE + (videoOffset << 3);
+    } else {
+      // RAM 7
+      offset = 7 * GFX_PAGE_SIZE + (videoOffset << 3);
+    }
+
+    long result = 0L;
+    for (int pixIndex = 0; pixIndex < 8; pixIndex++) {
+      result <<= 5;
+      int acc = 0;
+      final int msk = 1 << (7 - pixIndex);
+      for (int bitIndex = 0; bitIndex < 5; bitIndex++) {
+        if ((this.gfxRam.get(offset + bitIndex) & msk) != 0) {
+          acc |= (1 << bitIndex);
+        }
+      }
+      result |= acc;
+    }
+    return result;
+  }
+
   public int readVideo(final int videoOffset) {
     final int moduleRamOffsetInHeap = getHeapOffset();
 
@@ -397,6 +423,10 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       throw new IllegalArgumentException("Outbound memory offset [" + offset + ']');
     }
     this.board.writeRam(this, getHeapOffset() + offset, data);
+  }
+
+  public byte[] makeCopyOfRomPage(final int page) {
+    return this.romData.get().makeCopyPage(page);
   }
 
   public byte[] makeCopyOfHeapPage(final int page) {
@@ -535,16 +565,17 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     }
   }
 
-  public void writeGfxRomPage(final int page, final byte[] data) {
-    int startOffset = page * GFX_PAGE_SIZE;
+  public void writeGfxRomPage(final Spec256Arch.Spec256GfxPage page) {
+    int startOffset = page.getPageIndex() * GFX_PAGE_SIZE;
+    final byte[] data = page.getGfxData();
     for (int i = 0; i < data.length; i++) {
       this.gfxRom.set(startOffset + i, data[i]);
     }
   }
 
-  public void writeGfxRamPage(final int page, final byte[] gfxPageData) {
-    int startOffset = page * GFX_PAGE_SIZE;
-    for (byte gfxPageDatum : gfxPageData) {
+  public void writeGfxRamPage(final Spec256Arch.Spec256GfxPage page) {
+    int startOffset = page.getPageIndex() * GFX_PAGE_SIZE;
+    for (byte gfxPageDatum : page.getGfxData()) {
       this.gfxRam.set(startOffset++, gfxPageDatum);
     }
   }
@@ -843,7 +874,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public void preStep(final boolean signalReset, final boolean virtualIntTick, boolean wallclockInt) {
+  public void preStep(final boolean signalReset, final boolean virtualIntTick,
+                      boolean wallclockInt) {
     if (signalReset) {
       setStateForSystemReset();
     }

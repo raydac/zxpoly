@@ -168,6 +168,29 @@ public final class VideoController extends JComponent
     }
   }
 
+  public static int toZxPolyIndex(final byte spec256PaletteIndex) {
+    final int spec256argb = PALETTE_SPEC256[spec256PaletteIndex & 0xFF];
+    final int sr = (spec256argb >>> 16) & 0xFF;
+    final int sg = (spec256argb >>> 8) & 0xFF;
+    final int sb = spec256argb & 0xFF;
+
+    double minDistance = Double.MAX_VALUE;
+    int zxPolyIndex = 0;
+    for (int i = 0; i < PALETTE_ZXPOLY.length; i++) {
+      final int zpolyArgb = PALETTE_ZXPOLY[i];
+      final double dr = sr - ((zpolyArgb >>> 16) & 0xFF);
+      final double dg = sg - ((zpolyArgb >>> 8) & 0xFF);
+      final double db = sb - (zpolyArgb & 0xFF);
+
+      final double dist = Math.sqrt(Math.pow(dr, 2) + Math.pow(dg, 2) + Math.pow(db, 2));
+      if (Double.compare(dist, minDistance) < 0) {
+        zxPolyIndex = i;
+        minDistance = dist;
+      }
+    }
+    return zxPolyIndex;
+  }
+
   private static int mixRgb(final int rgb1, final int rgb2) {
     final int r1 = (rgb1 >>> 16) & 0xFF;
     final int g1 = (rgb1 >>> 8) & 0xFF;
@@ -309,7 +332,7 @@ public final class VideoController extends JComponent
       }
 
       final int attrOffset = aoffset++;
-      long pixelData = sourceModule.readGfxVideo(i);
+      long pixelData = sourceModule.readGfxVideo16(i);
       int origData = sourceModule.readVideo(i);
 
       final int attrData = sourceModule.readVideo(attrOffset);
@@ -318,10 +341,10 @@ public final class VideoController extends JComponent
 
       int x = 8;
       while (x-- > 0) {
-        final int colorIndex = (int) ((pixelData >>> 56) & 0xFF);
+        final int colorIndex = (int) ((pixelData >>> 35) & 0x1F);
         final boolean origPixelSet = (origData & 0x80) != 0;
 
-        int color = PALETTE_SPEC256[colorIndex];
+        int color = PALETTE_ZXPOLY[colorIndex & 0xF];
         boolean draw = true;
 
         final boolean mixWithAttributes =
@@ -334,7 +357,7 @@ public final class VideoController extends JComponent
           } else if (paper00inkFF) {
             if (colorIndex == 0) {
               color = paperColor;
-            } else if (colorIndex == 0xFF) {
+            } else if (colorIndex == 0x1F) {
               color = inkColor;
             }
           }
@@ -346,13 +369,13 @@ public final class VideoController extends JComponent
           if (paper00inkFF) {
             if (colorIndex == 0) {
               color = paperColor;
-            } else if (colorIndex == 0xFF) {
+            } else if (colorIndex == 0x1F) {
               color = inkColor;
             } else {
               draw = !backShouldBeShown;
             }
           } else {
-            draw = !(backShouldBeShown || (colorIndex == 0 || (bkOverFF && colorIndex == 0xFF)));
+            draw = !(backShouldBeShown || (colorIndex == 0 || (bkOverFF && colorIndex == 0x1F)));
           }
         }
 
@@ -360,7 +383,7 @@ public final class VideoController extends JComponent
           color = mixRgb(origPixelSet ? inkColor : paperColor, color);
         }
 
-        pixelData <<= 8;
+        pixelData <<= 5;
         origData <<= 1;
 
         if (draw) {
@@ -634,7 +657,7 @@ public final class VideoController extends JComponent
     }
   }
 
-  public static int rgbColorToIndex(final int rgbColor) {
+  public static int preciseRgbColorToIndex(final int rgbColor) {
     switch (rgbColor | 0xFF000000) {
       case 0xFF000000:
         return 0;
@@ -929,7 +952,8 @@ public final class VideoController extends JComponent
             this.bufferImageRgbData,
             this.board.isFlashActive()
         );
-      } break;
+      }
+      break;
       case VIDEOMODE_SPEC256_16: {
         fillDataBufferForSpec256x16VideoMode(
             this.modules,

@@ -141,7 +141,7 @@ public final class ZxPolyAGifEncoder implements AnimationEncoder {
     this.stream.write(0); // flag
 
     for (int i = 0; i < VideoController.SCREEN_WIDTH * VideoController.SCREEN_HEIGHT; i++) {
-      final int ci = VideoController.rgbColorToIndex(rgbPixels[i]);
+      final int ci = VideoController.preciseRgbColorToIndex(rgbPixels[i]);
       if (ci < 0) {
         throw new IOException("Detected unsupported color in buffer [" + Integer.toHexString(rgbPixels[i]) + ']');
       }

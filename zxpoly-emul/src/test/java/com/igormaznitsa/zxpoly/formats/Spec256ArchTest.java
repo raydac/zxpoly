@@ -7,11 +7,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 
+import com.igormaznitsa.zxpoly.components.RomData;
 import java.io.IOException;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 public class Spec256ArchTest {
+
+  private static final RomData TEST_ROM = new RomData("blablabla", new byte[3 * 0x4000]);
 
   private byte[] readSnapshot(final String name) throws IOException {
     return IOUtils.resourceToByteArray("/snapshots/" + name);
@@ -19,9 +22,9 @@ public class Spec256ArchTest {
 
   @Test
   public void testParseSpec256_48kb() throws Exception {
-    final Spec256Arch arch = new Spec256Arch(readSnapshot("Renegade_spec256.zip"));
+    final Spec256Arch arch = new Spec256Arch(TEST_ROM, readSnapshot("Renegade_spec256.zip"));
     assertNull(arch.getParsedSna().extendeddata);
-    assertFalse(arch.isMode128());
+    assertFalse(arch.is128());
     assertEquals(16, arch.getProperties().size());
     assertEquals(1, arch.getGfxRoms().size());
     assertEquals(3, arch.getGfxRamPages().size());
@@ -31,8 +34,8 @@ public class Spec256ArchTest {
 
   @Test
   public void testParseSpec256_48kb_Rom0() throws Exception {
-    final Spec256Arch arch = new Spec256Arch(readSnapshot("Jetpac_spec256.zip"));
-    assertFalse(arch.isMode128());
+    final Spec256Arch arch = new Spec256Arch(TEST_ROM, readSnapshot("Jetpac_spec256.zip"));
+    assertFalse(arch.is128());
     assertTrue(arch.getProperties().isEmpty());
     assertEquals(1, arch.getGfxRoms().size());
     assertEquals(3, arch.getGfxRamPages().size());
@@ -42,9 +45,9 @@ public class Spec256ArchTest {
 
   @Test
   public void testParseSpec256_128kb() throws Exception {
-    final Spec256Arch arch = new Spec256Arch(readSnapshot("TreeWeeks128k_spec256.zip"));
+    final Spec256Arch arch = new Spec256Arch(TEST_ROM, readSnapshot("TreeWeeks128k_spec256.zip"));
     assertNotNull(arch.getParsedSna().extendeddata);
-    assertTrue(arch.isMode128());
+    assertTrue(arch.is128());
     assertTrue(arch.getGfxRoms().isEmpty());
     assertEquals(15, arch.getProperties().size());
     assertEquals(8, arch.getGfxRamPages().size());

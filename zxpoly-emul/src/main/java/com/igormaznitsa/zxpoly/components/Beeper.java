@@ -40,7 +40,6 @@ import java.util.logging.Logger;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.Line;
-import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
 public class Beeper {
@@ -214,7 +213,7 @@ public class Beeper {
 
       this.thread = new Thread(this, "beeper-thread-" + toHexString(System.nanoTime()));
       this.thread
-          .setPriority((Thread.MAX_PRIORITY - Thread.NORM_PRIORITY) / 2 + Thread.NORM_PRIORITY);
+          .setPriority(Thread.NORM_PRIORITY + 1);
       this.thread.setDaemon(true);
     }
 

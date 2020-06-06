@@ -1495,6 +1495,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
               FileUtils.readFileToByteArray(selected));
           this.menuOptionsZX128Mode.setState(this.board.getBoardMode() != BoardMode.ZXPOLY);
         } catch (Exception ex) {
+          ex.printStackTrace();
           LOGGER.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
           JOptionPane.showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']',
               "Error", JOptionPane.ERROR_MESSAGE);

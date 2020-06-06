@@ -59,19 +59,21 @@ public class FormatSpec256 extends Snapshot {
         }
       }
     } catch (IOException ex) {
-      throw new Error("Can't load app base", ex);
+      throw new Error("Can't load app bData()ase", ex);
     }
   }
 
-  private static byte[] gfx2gfxInternalBank(final byte[] bankData) {
-    final byte[] result = new byte[bankData.length];
+  private static Spec256Arch.Spec256GfxPage decodeGfx(Spec256Arch.Spec256GfxPage from) {
+    final int dataLen = from.getGfxData().length;
 
-    for (int offst = 0; offst < bankData.length; offst += 8) {
+    final byte[] result = new byte[dataLen];
+
+    for (int offst = 0; offst < dataLen; offst += 8) {
       for (int ctx = 0; ctx < 8; ctx++) {
         final int bitMask = 1 << ctx;
         int acc = 0;
         for (int i = 0; i < 8; i++) {
-          if ((bankData[offst + i] & bitMask) != 0) {
+          if ((from.getGfxData()[offst + i] & bitMask) != 0) {
             acc |= 1 << i;
           }
         }
@@ -79,26 +81,64 @@ public class FormatSpec256 extends Snapshot {
       }
     }
 
-    return result;
+    return new Spec256Arch.Spec256GfxPage(from, result);
+  }
+
+  private static void writeToHeap(final ZxPolyModule module,
+                                  final Spec256Arch.Spec256GfxPage page) {
+    final int offset = page.getPageIndex() * 0x4000;
+    for (int i = 0; i < 0x4000; i++) {
+      module.writeHeap(offset + i, page.getOrigData()[i]);
+    }
+  }
+
+  private static Spec256Arch.Spec256GfxPage adaptPageForColor16(
+      final Spec256Arch.Spec256GfxPage page) {
+    final byte[] origData = page.getOrigData();
+    final byte[] gfxData = page.getGfxData();
+    final byte[] newGfx = new byte[gfxData.length];
+
+    final Map<Byte, Byte> cache = new HashMap<>();
+
+    for (int i = 0; i < origData.length; i++) {
+      final int gfxOffset = i * 8;
+      for (int b = 0; b < 8; b++) {
+        final int gfxAddr = gfxOffset + b;
+        final boolean origSet = (origData[i] & (1 << b)) != 0;
+        final byte oldGfx = gfxData[gfxAddr];
+        if (oldGfx != 0 && oldGfx != (byte) 0xFF) {
+          newGfx[gfxAddr] = cache
+              .computeIfAbsent(oldGfx, spindex -> {
+                byte zxpIndex = (byte) VideoController.toZxPolyIndex(spindex);
+                if (zxpIndex == 0) {
+                  zxpIndex = 8;
+                }
+                return zxpIndex;
+              });
+        } else {
+          newGfx[gfxAddr] = oldGfx;
+        }
+      }
+    }
+    return new Spec256Arch.Spec256GfxPage(page, newGfx);
   }
 
   @Override
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc,
                             final byte[] array) throws IOException {
-    final Spec256Arch archive = new Spec256Arch(array);
+    final Spec256Arch archive = new Spec256Arch(board.getRomData(), array);
     final BaseItem dbItem = APP_BASE.get(archive.getSha256().toLowerCase(Locale.ENGLISH));
     if (dbItem == null) {
       LOGGER.info("Application not found in Spec256 app base");
     }
 
-    final boolean modeSpec256colors16 = !"0".equals(findPropertys(archive,"GFXColors16",dbItem,"0"));
+    final boolean modeSpec256colors16 =
+        !"0".equals(findPropertys(archive, "GFXColors16", dbItem, "0"));
 
     LOGGER.info("Archive: " + archive);
     final SNAParser parser = archive.getParsedSna();
 
-    final boolean sna128 = parser.extendeddata != null;
-
-    if (sna128) {
+    if (archive.is128()) {
       doModeSpec256_128(board, modeSpec256colors16);
     } else {
       doModeSpec256_48(board, modeSpec256colors16);
@@ -107,7 +147,7 @@ public class FormatSpec256 extends Snapshot {
     final ZxPolyModule module = board.getModules()[0];
     final Z80 cpu = module.getCpu();
 
-    module.write7FFD(sna128 ? parser.getEXTENDEDDATA().port7ffd : 0b00_1_1_0_000, true);
+    module.write7FFD(archive.is128() ? parser.getEXTENDEDDATA().port7ffd : 0b00_1_1_0_000, true);
 
     cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getREGAF());
     cpu.setRegisterPair(Z80.REGPAIR_BC, parser.getREGBC());
@@ -129,43 +169,38 @@ public class FormatSpec256 extends Snapshot {
     final boolean iff = (parser.getIFF2() & 4) != 0;
     cpu.setIFF(iff, iff);
 
-    final int offsetpage2 = 0x8000;
-    final int offsetpage5 = 0x14000;
-    final int topPageIndex = sna128 ? parser.getEXTENDEDDATA().getPORT7FFD() & 7 : 0;
-    final int offsetpageTop = topPageIndex * 0x4000;
+    final int[] pages =
+        archive.is128() ? new int[] {0, 1, 2, 3, 4, 5, 6, 7} : new int[] {5, 2, 0};
 
-    int[] extraBankPages = new int[0];
-    if (sna128) {
-      extraBankPages = new int[] {0, 1, 2, 3, 4, 5, 6, 7};
-      extraBankPages[2] = -1;
-      extraBankPages[5] = -1;
-      extraBankPages[parser.getEXTENDEDDATA().getPORT7FFD() & 7] = -1;
+    for (final int pageIndex : pages) {
+      archive.getGfxRamPages().stream()
+          .filter(x -> x.getPageIndex() == pageIndex)
+          .findFirst()
+          .ifPresent(p -> {
+            LOGGER.info("Detected RAM page: " + p.getPageIndex());
+            writeToHeap(module, p);
+            module.writeGfxRamPage(decodeGfx(modeSpec256colors16 ? adaptPageForColor16(p) : p));
+          });
     }
 
-    for (int i = 0; i < 0x4000; i++) {
-      module.writeHeap(offsetpage5 + i, parser.getRAMDUMP()[i]);
-      module.writeHeap(offsetpage2 + i, parser.getRAMDUMP()[i + 0x4000]);
-      module.writeHeap(offsetpageTop + i, parser.getRAMDUMP()[i + 0x8000]);
+    module.makeCopyOfRomToGfxRom();
+    if (!archive.getGfxRoms().isEmpty()) {
+      LOGGER.info("provided adapted ROM");
+      archive.getGfxRoms().stream()
+          .map(x -> modeSpec256colors16 ? adaptPageForColor16(x) : x)
+          .forEach(x -> {
+            module.writeGfxRomPage(decodeGfx(x));
+          });
     }
 
-    if (sna128) {
+    if (archive.is128()) {
+      LOGGER.info("#" + Integer.toHexString(parser.getEXTENDEDDATA().getREGPC()) + " => PC");
       cpu.setRegister(Z80.REG_PC, parser.getEXTENDEDDATA().getREGPC());
+      LOGGER.info("#" + Integer.toHexString(parser.getREGSP()) + " => SP");
       cpu.setRegister(Z80.REG_SP, parser.getREGSP());
+      LOGGER.info("#" + Integer.toHexString(parser.getEXTENDEDDATA().getPORT7FFD()) + " => #7FFD");
       module.write7FFD(parser.getEXTENDEDDATA().getPORT7FFD(), true);
       module.setTrdosActive(parser.getEXTENDEDDATA().getONTRDOS() != 0);
-
-      int extraBankIndex = 0;
-      for (int i = 0; i < 8 && extraBankIndex < parser.getEXTENDEDDATA().getEXTRABANK().length;
-           i++) {
-        if (extraBankPages[i] < 0) {
-          continue;
-        }
-        final byte[] data = parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA();
-        final int heapoffset = extraBankPages[i] * 0x4000;
-        for (int a = 0; a < data.length; a++) {
-          module.writeHeap(heapoffset + a, data[a]);
-        }
-      }
     } else {
       int spValue = parser.getREGSP();
       final int lowPc;
@@ -185,18 +220,6 @@ public class FormatSpec256 extends Snapshot {
       }
       cpu.setRegister(Z80.REG_SP, spValue);
       cpu.setRegister(Z80.REG_PC, (highPc << 8) | lowPc);
-    }
-
-    archive.getGfxRamPages().forEach(x -> {
-      module.writeGfxRamPage(x.getPageIndex(), gfx2gfxInternalBank(x.getData()));
-    });
-
-    module.makeCopyOfRomToGfxRom();
-    if (!archive.getGfxRoms().isEmpty()) {
-      LOGGER.info("Snapshot provides adapted ROM");
-      archive.getGfxRoms().forEach(x -> {
-        module.writeGfxRomPage(x.getPageIndex(), gfx2gfxInternalBank(x.getData()));
-      });
     }
 
     board.set3D00(0b1_00_000_0_1, true);
@@ -272,8 +295,8 @@ public class FormatSpec256 extends Snapshot {
 
   @Override
   public boolean accept(final File f) {
-    return f != null &&
-        (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zip"));
+    return f != null
+        && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zip"));
   }
 
   @Override

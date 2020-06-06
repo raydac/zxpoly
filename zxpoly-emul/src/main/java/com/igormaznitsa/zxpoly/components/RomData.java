@@ -85,4 +85,12 @@ public final class RomData {
     return this.data[address & this.addressMask] & 0xFF;
   }
 
+  public byte[] makeCopyPage(final int page) {
+    final byte[] result = new byte[0x4000];
+    final int offset = page * 0x4000;
+    for (int i = 0; i < 0x4000; i++) {
+      result[i] = this.data[offset + i];
+    }
+    return result;
+  }
 }
