@@ -24,7 +24,6 @@ import com.igormaznitsa.z80.Z80CPUBus;
 import com.igormaznitsa.z80.Z80Instruction;
 import com.igormaznitsa.z80.disasm.Z80Disasm;
 import com.igormaznitsa.zxpoly.formats.Spec256Arch;
-import com.igormaznitsa.zxpoly.utils.ConcurrentUByteArray;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -69,8 +68,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   private volatile boolean trdosRomActive;
 
-  private final ConcurrentUByteArray gfxRam;
-  private final ConcurrentUByteArray gfxRom;
+  private final byte[] gfxRam;
+  private final byte[] gfxRom;
 
   private int gfxPort7FFD;
   private boolean gfxWaitSignal;
@@ -95,8 +94,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     this.logger = Logger.getLogger("ZX#" + index);
 
     if (index == 0) {
-      this.gfxRam = new ConcurrentUByteArray(128 * 8 * 1024);
-      this.gfxRom = new ConcurrentUByteArray(32 * 8 * 1024);
+      this.gfxRam = new byte[128 * 8 * 1024];
+      this.gfxRom = new byte[32 * 8 * 1024];
     } else {
       this.gfxRam = null;
       this.gfxRom = null;
@@ -370,7 +369,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       int acc = 0;
       final int msk = 1 << (7 - pixIndex);
       for (int bitIndex = 0; bitIndex < 8; bitIndex++) {
-        if ((this.gfxRam.get(offset + bitIndex) & msk) != 0) {
+        if ((this.gfxRam[offset + bitIndex] & msk) != 0) {
           acc |= (1 << bitIndex);
         }
       }
@@ -395,7 +394,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       int acc = 0;
       final int msk = 1 << (7 - pixIndex);
       for (int bitIndex = 0; bitIndex < 5; bitIndex++) {
-        if ((this.gfxRam.get(offset + bitIndex) & msk) != 0) {
+        if ((this.gfxRam[offset + bitIndex] & msk) != 0) {
           acc |= (1 << bitIndex);
         }
       }
@@ -418,11 +417,14 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     return result;
   }
 
-  public void writeHeap(final int offset, final int data) {
-    if (offset < 0 || offset > 0x1FFFF) {
-      throw new IllegalArgumentException("Outbound memory offset [" + offset + ']');
+  public synchronized void syncWriteHeapPage(final int pageIndex, final byte[] data) {
+    if (data.length != 0x4000) {
+      throw new IllegalArgumentException("Page size must be 0x4000:" + data.length);
     }
-    this.board.writeRam(this, getHeapOffset() + offset, data);
+    final int pageOffset = pageIndex * 0x4000;
+    for (int i = 0; i < data.length; i++) {
+      this.board.writeRam(this, this.getHeapOffset() + pageOffset + i, data[i]);
+    }
   }
 
   public byte[] makeCopyOfRomPage(final int page) {
@@ -533,8 +535,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       if (trdosRomActive) {
         result = (byte) this.romData.get().readAdress(address + 0x8000);
       } else {
-        result = (byte) this.gfxRom
-            .get((activeRom128 ? GFX_PAGE_SIZE : 0) + (address << 3) + gfxCoreIndex);
+        result = this.gfxRom[(activeRom128 ? GFX_PAGE_SIZE : 0) + (address << 3) + gfxCoreIndex];
       }
     } else {
       final int page;
@@ -549,7 +550,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         page = valueAt7FFD & 7;
         offsetInPage = address - 0xC000;
       }
-      result = (byte) this.gfxRam.get(page * GFX_PAGE_SIZE + (offsetInPage << 3) + gfxCoreIndex);
+      result = this.gfxRam[page * GFX_PAGE_SIZE + (offsetInPage << 3) + gfxCoreIndex];
     }
     return result;
   }
@@ -560,23 +561,27 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     for (int i = 0; i < 0x8000 && i < data.length; i++) {
       final int value = data[i] & 0xFF;
       for (int j = 0; j < 8; j++) {
-        this.gfxRom.set(offst++, value);
+        this.gfxRom[offst++] = (byte) value;
       }
     }
   }
 
   public void writeGfxRomPage(final Spec256Arch.Spec256GfxPage page) {
-    int startOffset = page.getPageIndex() * GFX_PAGE_SIZE;
-    final byte[] data = page.getGfxData();
-    for (int i = 0; i < data.length; i++) {
-      this.gfxRom.set(startOffset + i, data[i]);
+    synchronized (this.gfxRom) {
+      int startOffset = page.getPageIndex() * GFX_PAGE_SIZE;
+      final byte[] data = page.getGfxData();
+      for (int i = 0; i < data.length; i++) {
+        this.gfxRom[startOffset + i] = data[i];
+      }
     }
   }
 
   public void writeGfxRamPage(final Spec256Arch.Spec256GfxPage page) {
-    int startOffset = page.getPageIndex() * GFX_PAGE_SIZE;
-    for (byte gfxPageDatum : page.getGfxData()) {
-      this.gfxRam.set(startOffset++, gfxPageDatum);
+    synchronized (this.gfxRam) {
+      int startOffset = page.getPageIndex() * GFX_PAGE_SIZE;
+      for (byte gfxPageDatum : page.getGfxData()) {
+        this.gfxRam[startOffset++] = (byte) gfxPageDatum;
+      }
     }
   }
 
@@ -598,7 +603,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         offsetInPage = address - 0xC000;
       }
       final int ramHeapAddr = page * GFX_PAGE_SIZE + (offsetInPage << 3) + gfxCoreIndex;
-      this.gfxRam.set(ramHeapAddr, value);
+      this.gfxRam[ramHeapAddr] = (byte) value;
     }
   }
 

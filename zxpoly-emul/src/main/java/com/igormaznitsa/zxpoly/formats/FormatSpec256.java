@@ -84,14 +84,6 @@ public class FormatSpec256 extends Snapshot {
     return new Spec256Arch.Spec256GfxPage(from, result);
   }
 
-  private static void writeToHeap(final ZxPolyModule module,
-                                  final Spec256Arch.Spec256GfxPage page) {
-    final int offset = page.getPageIndex() * 0x4000;
-    for (int i = 0; i < 0x4000; i++) {
-      module.writeHeap(offset + i, page.getOrigData()[i]);
-    }
-  }
-
   private static Spec256Arch.Spec256GfxPage adaptPageForColor16(
       final Spec256Arch.Spec256GfxPage page) {
     final byte[] origData = page.getOrigData();
@@ -178,7 +170,7 @@ public class FormatSpec256 extends Snapshot {
           .findFirst()
           .ifPresent(p -> {
             LOGGER.info("Detected RAM page: " + p.getPageIndex());
-            writeToHeap(module, p);
+            module.syncWriteHeapPage(p.getPageIndex(), p.getOrigData());
             module.writeGfxRamPage(decodeGfx(modeSpec256colors16 ? adaptPageForColor16(p) : p));
           });
     }

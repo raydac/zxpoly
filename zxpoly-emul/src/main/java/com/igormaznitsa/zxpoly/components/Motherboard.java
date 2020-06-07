@@ -24,7 +24,6 @@ import static java.lang.Math.min;
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
-import com.igormaznitsa.zxpoly.utils.ConcurrentUByteArray;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -51,7 +50,7 @@ public final class Motherboard implements ZxPolyConstants {
   private final IoDevice[] ioDevices;
   private final IoDevice[] ioDevicesPreStep;
   private final IoDevice[] ioDevicesPostStep;
-  private final ConcurrentUByteArray ram = new ConcurrentUByteArray(512 * 1024);
+  private final byte[] ram = new byte[512 * 1024];
   private final VideoController video;
   private final KeyboardKempstonAndTapeIn keyboard;
 
@@ -103,8 +102,8 @@ public final class Motherboard implements ZxPolyConstants {
         .toArray(IoDevice[]::new);
 
     // simulation of garbage in memory after power on
-    for (int i = 0; i < this.ram.length(); i++) {
-      this.ram.set(i, rnd.nextInt());
+    for (int i = 0; i < this.ram.length; i++) {
+      this._writeRam(i, rnd.nextInt());
     }
 
     this.spec256GfxCores = new Z80[SPEC256_GFX_CORES];
@@ -121,6 +120,14 @@ public final class Motherboard implements ZxPolyConstants {
     for (final ZxPolyModule p : this.modules) {
       p.getCpu().doReset();
     }
+  }
+
+  private void _writeRam(final int addr, final int value) {
+    this.ram[addr] = (byte) value;
+  }
+
+  private int _readRam(final int addr) {
+    return this.ram[addr] & 0xFF;
   }
 
   public void reset() {
@@ -534,11 +541,11 @@ public final class Motherboard implements ZxPolyConstants {
   }
 
   public int readRam(final ZxPolyModule module, final int address) {
-    return this.ram.get(address);
+    return this._readRam(address);
   }
 
   public void writeRam(final ZxPolyModule module, final int heapAddress, final int value) {
-    this.ram.set(heapAddress, value);
+    this._writeRam(heapAddress, value);
   }
 
   public int readBusIo(final ZxPolyModule module, final int port) {
@@ -548,7 +555,7 @@ public final class Motherboard implements ZxPolyConstants {
     if (this.getBoardMode() == BoardMode.ZXPOLY &&
         (module.getModuleIndex() == 0 && mappedCPU > 0)) {
       final ZxPolyModule destmodule = modules[mappedCPU];
-      result = this.ram.get(destmodule.ramOffset2HeapAddress(destmodule.read7FFD(), port));
+      result = this._readRam(destmodule.ramOffset2HeapAddress(destmodule.read7FFD(), port));
       destmodule.prepareLocalInt();
     } else {
       IoDevice firstDetectedActiveDevice = null;
@@ -593,7 +600,7 @@ public final class Motherboard implements ZxPolyConstants {
         } else {
           if (mappedCpu > 0) {
             final ZxPolyModule destmodule = this.modules[mappedCpu];
-            this.ram.set(destmodule.ramOffset2HeapAddress(destmodule.read7FFD(), port), value);
+            this._writeRam(destmodule.ramOffset2HeapAddress(destmodule.read7FFD(), port), value);
             destmodule.prepareLocalNmi();
           } else {
             for (final IoDevice d : this.ioDevices) {

@@ -60,7 +60,8 @@ public class FormatZXP extends Snapshot {
       snapshot.getREG_IX()[cpu] = (short) z80.getRegister(Z80.REG_IX);
       snapshot.getREG_IY()[cpu] = (short) z80.getRegister(Z80.REG_IY);
 
-      snapshot.getREG_IR()[cpu] = (short) ((z80.getRegister(Z80.REG_I) << 8) | z80.getRegister(Z80.REG_R));
+      snapshot.getREG_IR()[cpu] =
+          (short) ((z80.getRegister(Z80.REG_I) << 8) | z80.getRegister(Z80.REG_R));
 
       snapshot.getIFF()[cpu] = z80.isIFF1();
       snapshot.getIFF2()[cpu] = z80.isIFF2();
@@ -89,7 +90,8 @@ public class FormatZXP extends Snapshot {
   }
 
   @Override
-  public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
+  public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc,
+                            final byte[] array) throws IOException {
     final ZxEmlSnapshotFormat snapshot = new ZxEmlSnapshotFormat(array);
 
     this.doZxPoly(board);
@@ -122,15 +124,14 @@ public class FormatZXP extends Snapshot {
       z80.setIFF(snapshot.getIFF()[cpu], snapshot.getIFF2()[cpu]);
       z80.setIM(snapshot.getREG_IM()[cpu]);
 
-      module.fillPortByValues(snapshot.getModulePorts(cpu)[0], snapshot.getModulePorts(cpu)[1], snapshot.getModulePorts(cpu)[2], snapshot.getModulePorts(cpu)[3], snapshot.getModulePorts(cpu)[4]);
+      module.fillPortByValues(snapshot.getModulePorts(cpu)[0], snapshot.getModulePorts(cpu)[1],
+          snapshot.getModulePorts(cpu)[2], snapshot.getModulePorts(cpu)[3],
+          snapshot.getModulePorts(cpu)[4]);
 
       final ZXPParser.PAGES memory = snapshot.getPAGES()[cpu];
 
       for (final ZXPParser.PAGES.PAGE p : memory.getPAGE()) {
-        final int pageOffset = p.getINDEX() * 0x4000;
-        for (int addr = 0; addr < 0x4000; addr++) {
-          module.writeHeap(pageOffset + addr, p.getDATA()[addr] & 0xFF);
-        }
+        module.syncWriteHeapPage(p.getINDEX(), p.getDATA());
       }
     }
 
@@ -145,7 +146,8 @@ public class FormatZXP extends Snapshot {
 
   @Override
   public boolean accept(final File f) {
-    return f != null && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zxp"));
+    return f != null &&
+        (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zxp"));
   }
 
   @Override

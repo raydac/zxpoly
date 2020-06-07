@@ -88,6 +88,9 @@ public class FfmpegWrapper {
       args.add("-thread_queue_size");
       args.add("1024");
 
+      args.add("-use_wallclock_as_timestamps");
+      args.add("1");
+
       args.add("-re");
 
       args.add("-ar");

@@ -27,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.stream.IntStream;
 
@@ -87,11 +88,10 @@ public class FormatSNA extends Snapshot {
       bankIndex[5] = -1;
       bankIndex[parser.getEXTENDEDDATA().getPORT7FFD() & 7] = -1;
 
-      for (int i = 0; i < 0x4000; i++) {
-        module.writeHeap(offsetpage5 + i, parser.getRAMDUMP()[i]);
-        module.writeHeap(offsetpage2 + i, parser.getRAMDUMP()[i + 0x4000]);
-        module.writeHeap(offsetpageTop + i, parser.getRAMDUMP()[i + 0x8000]);
-      }
+      module.syncWriteHeapPage(5, Arrays.copyOfRange(parser.ramdump, 0, 0x4000));
+      module.syncWriteHeapPage(2, Arrays.copyOfRange(parser.ramdump, 0x4000, 0x8000));
+      module.syncWriteHeapPage(parser.getEXTENDEDDATA().getPORT7FFD() & 7,
+          Arrays.copyOfRange(parser.ramdump, 0x8000, 0xC000));
 
       cpu.setRegister(Z80.REG_PC, parser.getEXTENDEDDATA().getREGPC());
       cpu.setRegister(Z80.REG_SP, parser.getREGSP());
@@ -99,15 +99,13 @@ public class FormatSNA extends Snapshot {
       module.setTrdosActive(parser.getEXTENDEDDATA().getONTRDOS() != 0);
 
       int extraBankIndex = 0;
-      for (int i = 0; i < 8 && extraBankIndex < parser.getEXTENDEDDATA().getEXTRABANK().length; i++) {
+      for (int i = 0; i < 8 && extraBankIndex < parser.getEXTENDEDDATA().getEXTRABANK().length;
+           i++) {
         if (bankIndex[i] < 0) {
           continue;
         }
-        final byte[] data = parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA();
-        final int heapoffset = bankIndex[i] * 0x4000;
-        for (int a = 0; a < data.length; a++) {
-          module.writeHeap(heapoffset + a, data[a]);
-        }
+        module.syncWriteHeapPage(bankIndex[i],
+            parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA());
       }
 
     } else {

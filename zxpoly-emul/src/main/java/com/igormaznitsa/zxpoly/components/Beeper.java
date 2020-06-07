@@ -155,7 +155,7 @@ public class Beeper {
     private static final int SND_BUFFER_LENGTH =
         SAMPLES_PER_INT * AUDIO_FORMAT.getChannels() * AUDIO_FORMAT.getSampleSizeInBits() / 8;
     private final byte[] soundBuffer = new byte[SND_BUFFER_LENGTH];
-    private final BlockingQueue<byte[]> soundDataQueue = new ArrayBlockingQueue<>(2);
+    private final BlockingQueue<byte[]> soundDataQueue = new ArrayBlockingQueue<>(5);
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
     private final byte[] LEVELS = new byte[NUMBER_OF_LEVELS];
@@ -211,21 +211,12 @@ public class Beeper {
       final Line.Info lineInfo = this.sourceDataLine.getLineInfo();
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
-      this.thread = new Thread(this, "beeper-thread-" + toHexString(System.nanoTime()));
-      this.thread
-          .setPriority(Thread.NORM_PRIORITY + 1);
+      this.thread = new Thread(this, "zxp-beeper-thread-" + toHexString(System.nanoTime()));
       this.thread.setDaemon(true);
     }
 
-    long lastBlinkTime = System.currentTimeMillis();
-
     private void blink(final byte fillByte) {
       if (this.working) {
-        if (System.currentTimeMillis() - lastBlinkTime < 2) {
-          new IllegalStateException().printStackTrace();
-        }
-        lastBlinkTime = System.currentTimeMillis();
-
         this.soundDataQueue.offer(this.soundBuffer.clone());
         fill(this.soundBuffer, fillByte);
       }

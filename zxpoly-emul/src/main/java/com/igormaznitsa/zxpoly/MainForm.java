@@ -29,6 +29,7 @@ import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.Spec256AGifEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.ZxPolyAGifEncoder;
+import com.igormaznitsa.zxpoly.components.Beeper;
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.KempstonMouse;
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
@@ -83,7 +84,6 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -562,7 +562,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   public void run() {
     final int INT_TICKS_BETWEEN_INFO_PANEL_UPDATE = 20;
 
-    long nextWallclockIntTime = this.wallclock.getTimeInMilliseconds() + TIMER_INT_DELAY_MILLISECONDS;
+    long nextWallclockIntTime =
+        this.wallclock.getTimeInMilliseconds() + TIMER_INT_DELAY_MILLISECONDS;
     int countdownToPaint = 0;
     int countdownToAnimationSave = 0;
 
@@ -656,7 +657,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void onSlownessDetected(final long nonCompletedMcycles) {
-    LOGGER.warning(String.format("Slowness detected: %.02f%%",(float)nonCompletedMcycles / (float)MCYCLES_PER_INT * 100.0f));
+    LOGGER.warning(String.format("Slowness detected: %.02f%%",
+        (float) nonCompletedMcycles / (float) MCYCLES_PER_INT * 100.0f));
   }
 
   private void updateTracerWindowsForStep() {
@@ -1231,21 +1233,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.stepSemaphor.lock();
     try {
       if (this.menuOptionsEnableVideoStream.isSelected()) {
-        final InetAddress address;
-        try {
-          address = InetAddress.getLocalHost();
-        } catch (UnknownHostException ex) {
-          JOptionPane.showMessageDialog(this, "Can't get address: " + ex.getMessage(), "Error",
-              JOptionPane.WARNING_MESSAGE);
-          this.menuOptionsEnableVideoStream.setSelected(false);
-          return;
-        }
+        final Beeper beeper = this.board.getBeeper().isNullBeeper()
+            && AppOptions.getInstance().isGrabSound() ? this.board.getBeeper() : null;
 
         try {
           final InetAddress interfaceAddress =
               InetAddress.getByName(AppOptions.getInstance().getAddress());
           this.videoStreamer.start(
-              AppOptions.getInstance().isGrabSound() ? this.board.getBeeper() : null,
+              beeper,
               AppOptions.getInstance().getFfmpegPath(),
               interfaceAddress,
               AppOptions.getInstance().getPort(),
