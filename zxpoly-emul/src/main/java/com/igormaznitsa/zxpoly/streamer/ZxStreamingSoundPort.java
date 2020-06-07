@@ -4,7 +4,6 @@ import com.igormaznitsa.zxpoly.components.Beeper;
 import com.igormaznitsa.zxpoly.components.SourceSoundPort;
 import com.igormaznitsa.zxpoly.utils.Wallclock;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicLong;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.Control;
 import javax.sound.sampled.Line;
@@ -14,13 +13,11 @@ import javax.sound.sampled.SourceDataLine;
 
 public final class ZxStreamingSoundPort extends SourceSoundPort implements SourceDataLine {
 
+  private static final int SAMPLES_PER_MILLISECOND_X10 = 44100 * 2 * 2 / 100;
+  private static final int SAMPLES_PER_INT = SAMPLES_PER_MILLISECOND_X10 * 2;
   private final AudioFormat audioFormat;
   private final TcpWriter soundWriter;
   private final Wallclock wallclock = new Wallclock();
-  private final AtomicLong nextBufferEmptyTime = new AtomicLong(0L);
-
-  private static final int SAMPLES_PER_MILLISECOND_X10 = 44100 * 2 * 2 / 100;
-  private static final int SAMPLES_PER_INT = SAMPLES_PER_MILLISECOND_X10 * 2;
 
   public ZxStreamingSoundPort(final TcpWriter soundWriter) {
     super(null, "zx-snd-grabber-port", null);
@@ -54,13 +51,7 @@ public final class ZxStreamingSoundPort extends SourceSoundPort implements Sourc
   public int write(final byte[] b, final int off, final int len) {
     final byte[] copy = Arrays.copyOfRange(b, off, off + len);
     this.soundWriter.write(copy);
-
-    final long lengthImMilliseconds = (copy.length * 10 + SAMPLES_PER_MILLISECOND_X10 / 2)/ SAMPLES_PER_MILLISECOND_X10;
-    final long wallTime = this.wallclock.getTimeInMilliseconds();
-    if (this.nextBufferEmptyTime.get() <= wallTime) {
-      this.nextBufferEmptyTime.set(wallTime + lengthImMilliseconds);
-    }
-    return copy.length;
+    return len;
   }
 
   @Override
@@ -103,15 +94,7 @@ public final class ZxStreamingSoundPort extends SourceSoundPort implements Sourc
 
   @Override
   public int available() {
-    final long diffMilliseconds = this.nextBufferEmptyTime.get() - this.wallclock.getTimeInMilliseconds();
-    final int virtualBufferSize;
-    if (diffMilliseconds <= 0L) {
-      virtualBufferSize = SAMPLES_PER_INT;
-    } else {
-      final long possibleSizeInBytes = (diffMilliseconds * SAMPLES_PER_MILLISECOND_X10) / 10;
-      virtualBufferSize = (int) Math.min(possibleSizeInBytes, SAMPLES_PER_INT);
-    }
-    return virtualBufferSize;
+    return SAMPLES_PER_INT;
   }
 
   @Override

@@ -384,7 +384,16 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       final Thread mainCpuThread = new Thread(this, "zx-poly-main-cpu-thread");
       mainCpuThread.setPriority(Thread.MAX_PRIORITY);
       mainCpuThread.setDaemon(true);
+      mainCpuThread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+          LOGGER.severe("Detected exception in main thread, stopping application, see logs");
+          e.printStackTrace(System.err);
+          System.exit(666);
+        }
+      });
       mainCpuThread.start();
+
 
       final Timer infobarUpdateTimer = new Timer(1000, action -> updateInfobar());
       infobarUpdateTimer.setRepeats(true);

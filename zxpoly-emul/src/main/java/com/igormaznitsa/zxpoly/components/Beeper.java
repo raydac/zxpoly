@@ -217,8 +217,15 @@ public class Beeper {
       this.thread.setDaemon(true);
     }
 
+    long lastBlinkTime = System.currentTimeMillis();
+
     private void blink(final byte fillByte) {
       if (this.working) {
+        if (System.currentTimeMillis() - lastBlinkTime < 2) {
+          new IllegalStateException().printStackTrace();
+        }
+        lastBlinkTime = System.currentTimeMillis();
+
         this.soundDataQueue.offer(this.soundBuffer.clone());
         fill(this.soundBuffer, fillByte);
       }
@@ -237,19 +244,15 @@ public class Beeper {
 
         if (wallclockIntSignal) {
           blink(value);
+          fill(this.soundBuffer,
+              0,
+              SND_BUFFER_LENGTH,
+              value);
         }
 
         if (position <= SND_BUFFER_LENGTH) {
           fill(this.soundBuffer,
               position,
-              SND_BUFFER_LENGTH,
-              value);
-        }
-
-        if (wallclockIntSignal) {
-          blink(value);
-          fill(this.soundBuffer,
-              0,
               SND_BUFFER_LENGTH,
               value);
         }

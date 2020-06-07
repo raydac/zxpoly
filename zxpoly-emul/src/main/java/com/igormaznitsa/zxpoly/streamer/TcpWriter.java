@@ -26,7 +26,6 @@ public class TcpWriter extends AbstractTcpSingleThreadServer {
       final byte[] next = this.buffer.next();
       if (next != null) {
         outStream.write(next);
-        outStream.flush();
       }
     }
   }

@@ -22,6 +22,7 @@ public final class ZxVideoStreamer {
 
   private final AtomicBoolean started = new AtomicBoolean();
   private final Consumer<ZxVideoStreamer> endWorkConsumer;
+  private final Wallclock wallclock = new Wallclock();
   private volatile TcpWriter videoWriter;
   private volatile TcpWriter soundWriter;
   private volatile FfmpegWrapper ffmpegWrapper;
@@ -30,8 +31,7 @@ public final class ZxVideoStreamer {
   private volatile Beeper beeper;
   private volatile long delayBetweenFrameGrab;
   private long timeNextFrame;
-
-  private final Wallclock wallclock = new Wallclock();
+  private volatile boolean internalEntitiesStarted;
 
   public ZxVideoStreamer(
       final VideoController videoController,
@@ -71,6 +71,7 @@ public final class ZxVideoStreamer {
 
   public void stop() {
     if (this.started.compareAndSet(true, false)) {
+      this.internalEntitiesStarted = false;
       stopAllInternalEntities();
     }
   }
@@ -90,7 +91,7 @@ public final class ZxVideoStreamer {
       this.soudPort = null;
     } else {
       this.soundWriter =
-          new TcpWriter("tcp-sound-writer", 16, InetAddress.getLoopbackAddress(), 0);
+          new TcpWriter("tcp-sound-writer", 2, InetAddress.getLoopbackAddress(), 0);
       this.soudPort = new ZxStreamingSoundPort(this.soundWriter);
     }
 
@@ -116,12 +117,14 @@ public final class ZxVideoStreamer {
 
       @Override
       public void onDone(final AbstractTcpSingleThreadServer source) {
+        internalEntitiesStarted = false;
         ZxVideoStreamer.this.onDone();
       }
 
       @Override
       public void onConnectionDone(final AbstractTcpSingleThreadServer source,
                                    final Socket socket) {
+        internalEntitiesStarted = false;
         ZxVideoStreamer.this.onDone();
       }
     };
@@ -205,7 +208,7 @@ public final class ZxVideoStreamer {
     if (this.started.compareAndSet(false, true)) {
       this.beeper = beeper;
       this.startInternalEntities(address, port, ffmpegPath, frameRate);
-
+      internalEntitiesStarted = true;
       final String link = "http://" + this.internalHttp.getHttpAddress() + '/';
       try {
         Utils.browseLink(new URL(link));
@@ -223,9 +226,9 @@ public final class ZxVideoStreamer {
   }
 
   public void onWallclockInt() {
-    if (this.isStarted()) {
+    if (this.internalEntitiesStarted) {
       final long wallclockTime = this.wallclock.getTimeInMilliseconds();
-      if (wallclockTime > timeNextFrame) {
+      if (wallclockTime >= timeNextFrame) {
         this.videoWriter.write(this.videoController.grabRgb());
         timeNextFrame = wallclockTime + this.delayBetweenFrameGrab;
       }
