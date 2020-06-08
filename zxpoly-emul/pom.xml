@@ -244,6 +244,8 @@
                                 <maxHeapSize>1024</maxHeapSize>
                                 <opts>
                                     <opt>-server</opt>
+                                    <opt>-Dsun.rmi.transport.tcp.maxConnectionThreads=0</opt>
+                                    <opt>-XX:+DisableAttachMechanism</opt>
                                     <opt>-Xverify:none</opt>
                                     <opt>-Dsun.java2d.d3d=true</opt>
                                     <opt>-Dsun.java2d.ddoffscreen=true</opt>
