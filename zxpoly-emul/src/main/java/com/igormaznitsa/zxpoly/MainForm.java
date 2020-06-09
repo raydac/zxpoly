@@ -1233,6 +1233,18 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.stepSemaphor.lock();
     try {
       if (this.menuOptionsEnableVideoStream.isSelected()) {
+        if (AppOptions.getInstance().isGrabSound()
+            && !this.board.getBeeper().isNullBeeper()
+            && JOptionPane.showConfirmDialog(this,
+            "Beeper should be turned off for video sound. Ok?",
+            "Beeper deactivation", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE)
+            != JOptionPane.OK_OPTION) {
+          this.menuOptionsEnableVideoStream.setSelected(false);
+          return;
+        } else {
+          this.board.getBeeper().setSourceSoundPort(null);
+        }
+
         final Beeper beeper = this.board.getBeeper().isNullBeeper()
             && AppOptions.getInstance().isGrabSound() ? this.board.getBeeper() : null;
 
