@@ -3,6 +3,7 @@
 /zxpoly-emul/target/
 /trds/
 /gfx/
+/.settings/
 /.idea/
 /zxpoly-z80/target/
 /zxpoly-emul/dependency-reduced-pom.xml

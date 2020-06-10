@@ -291,10 +291,12 @@ public final class VideoController extends JComponent
         origData <<= 1;
 
         if (draw) {
+          pixelRgbBuffer[offset++] = color;
           pixelRgbBuffer[offset] = color;
-          pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
-          pixelRgbBuffer[++offset] = color;
-          pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+          offset += SCREEN_WIDTH;
+          pixelRgbBuffer[offset--] = color;
+          pixelRgbBuffer[offset] = color;
+          offset -= SCREEN_WIDTH - 2;
         } else {
           offset += 2;
         }
@@ -387,10 +389,12 @@ public final class VideoController extends JComponent
         origData <<= 1;
 
         if (draw) {
+          pixelRgbBuffer[offset++] = color;
           pixelRgbBuffer[offset] = color;
-          pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
-          pixelRgbBuffer[++offset] = color;
-          pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+          offset += SCREEN_WIDTH;
+          pixelRgbBuffer[offset--] = color;
+          pixelRgbBuffer[offset] = color;
+          offset -= SCREEN_WIDTH - 2;
         } else {
           offset += 2;
         }
@@ -447,10 +451,12 @@ public final class VideoController extends JComponent
               final int color = (pixelData & 0x80) == 0 ? paperColor : inkColor;
               pixelData <<= 1;
 
+              pixelRgbBuffer[offset++] = color;
               pixelRgbBuffer[offset] = color;
-              pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
-              pixelRgbBuffer[++offset] = color;
-              pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+              offset += SCREEN_WIDTH;
+              pixelRgbBuffer[offset--] = color;
+              pixelRgbBuffer[offset] = color;
+              offset -= SCREEN_WIDTH - 2;
             }
           }
         }
@@ -489,10 +495,12 @@ public final class VideoController extends JComponent
               int x = 8;
               if (inkColor == paperColor) {
                 while (x-- > 0) {
+                  pixelRgbBuffer[offset++] = inkColor;
                   pixelRgbBuffer[offset] = inkColor;
-                  pixelRgbBuffer[offset + SCREEN_WIDTH] = inkColor;
-                  pixelRgbBuffer[++offset] = inkColor;
-                  pixelRgbBuffer[offset++ + SCREEN_WIDTH] = inkColor;
+                  offset += SCREEN_WIDTH;
+                  pixelRgbBuffer[offset--] = inkColor;
+                  pixelRgbBuffer[offset] = inkColor;
+                  offset -= SCREEN_WIDTH - 2;
                 }
               } else {
                 while (x-- > 0) {
@@ -508,10 +516,12 @@ public final class VideoController extends JComponent
 
                   final int color = PALETTE_ZXPOLY[value];
 
+                  pixelRgbBuffer[offset++] = color;
                   pixelRgbBuffer[offset] = color;
-                  pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
-                  pixelRgbBuffer[++offset] = color;
-                  pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+                  offset += SCREEN_WIDTH;
+                  pixelRgbBuffer[offset--] = color;
+                  pixelRgbBuffer[offset] = color;
+                  offset -= SCREEN_WIDTH - 2;
                 }
               }
             }
@@ -544,10 +554,12 @@ public final class VideoController extends JComponent
               } else {
                 if (inkColorMod0 == paperColorMod0) {
                   while (x-- > 0) {
+                    pixelRgbBuffer[offset++] = inkColorMod0;
                     pixelRgbBuffer[offset] = inkColorMod0;
-                    pixelRgbBuffer[offset + SCREEN_WIDTH] = inkColorMod0;
-                    pixelRgbBuffer[++offset] = inkColorMod0;
-                    pixelRgbBuffer[offset++ + SCREEN_WIDTH] = inkColorMod0;
+                    offset += SCREEN_WIDTH;
+                    pixelRgbBuffer[offset--] = inkColorMod0;
+                    pixelRgbBuffer[offset] = inkColorMod0;
+                    offset -= SCREEN_WIDTH - 2;
                   }
                 } else {
                   while (x-- > 0) {
@@ -563,10 +575,12 @@ public final class VideoController extends JComponent
 
                     final int color = PALETTE_ZXPOLY[value];
 
+                    pixelRgbBuffer[offset++] = color;
                     pixelRgbBuffer[offset] = color;
-                    pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
-                    pixelRgbBuffer[++offset] = color;
-                    pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+                    offset += SCREEN_WIDTH;
+                    pixelRgbBuffer[offset--] = color;
+                    pixelRgbBuffer[offset] = color;
+                    offset -= SCREEN_WIDTH - 2;
                   }
                 }
               }
@@ -587,10 +601,12 @@ public final class VideoController extends JComponent
 
                 final int color = PALETTE_ZXPOLY[value];
 
+                pixelRgbBuffer[offset++] = color;
                 pixelRgbBuffer[offset] = color;
-                pixelRgbBuffer[offset + SCREEN_WIDTH] = color;
-                pixelRgbBuffer[++offset] = color;
-                pixelRgbBuffer[offset++ + SCREEN_WIDTH] = color;
+                offset += SCREEN_WIDTH;
+                pixelRgbBuffer[offset--] = color;
+                pixelRgbBuffer[offset] = color;
+                offset -= SCREEN_WIDTH - 2;
               }
             }
             break;
