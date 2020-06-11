@@ -14,3 +14,5 @@
 /adapted/Atw2/target/lst.lst
 *.iml
 /zxpoly-sprite-corrector/nbproject/
+.classpath
+.project

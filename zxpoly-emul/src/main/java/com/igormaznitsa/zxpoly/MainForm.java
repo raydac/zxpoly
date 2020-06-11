@@ -148,8 +148,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private static final String TEXT_START_ANIM_GIF = "Record AGIF";
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
   private static final long serialVersionUID = 7309959798344327441L;
+  public static RomData BASE_ROM;
   private final int INT_BETWEEN_FRAMES;
-  private volatile boolean turboMode = false;
   private final CpuLoadIndicator indicatorCPU0 =
       new CpuLoadIndicator(48, 14, 4, "CPU0", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final CpuLoadIndicator indicatorCPU1 =
@@ -162,11 +162,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final AtomicInteger activeTracerWindowCounter = new AtomicInteger();
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
   private final Motherboard board;
-  private volatile boolean zxKeyboardProcessingAllowed = true;
-  public static RomData BASE_ROM;
   private final ZxVideoStreamer videoStreamer;
   private final Wallclock wallclock = new Wallclock();
-
   private final Runnable traceWindowsUpdater = new Runnable() {
 
     @Override
@@ -185,6 +182,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final KeyboardKempstonAndTapeIn keyboardAndTapeModule;
   private final KempstonMouse kempstonMouse;
   private final ReentrantLock stepSemaphor = new ReentrantLock();
+  private volatile boolean turboMode = false;
+  private volatile boolean zxKeyboardProcessingAllowed = true;
   private AnimatedGifTunePanel.AnimGifOptions lastAnimGifOptions =
       new AnimatedGifTunePanel.AnimGifOptions("./zxpoly.gif", 10, false);
   private File lastTapFolder;
@@ -250,6 +249,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JCheckBoxMenuItem menuTriggerModuleCPUDesync;
   private javax.swing.JPanel panelIndicators;
   private javax.swing.JScrollPane scrollPanel;
+  private File lastPokeFileFolder = null;
 
   public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
@@ -423,7 +423,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
     updateTracerCheckBoxes();
   }
-
 
   private void doOnShutdown() {
     this.videoStreamer.stop();
@@ -800,8 +799,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     vc.updateBuffer();
     vc.repaint();
   }
-
-  private File lastPokeFileFolder = null;
 
   private void menuOptionsEnableVideoStreamActionPerformed(final ActionEvent actionEvent) {
     this.stepSemaphor.lock();
