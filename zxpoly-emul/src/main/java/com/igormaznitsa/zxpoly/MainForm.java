@@ -1737,6 +1737,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           .showConfirmDialog(this, optionsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION,
               JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
         optionsPanel.getData().store();
+        JOptionPane
+            .showMessageDialog(this, "Some options will be applied only after emulator restart",
+                "Restart may required",
+                JOptionPane.INFORMATION_MESSAGE);
       }
     } finally {
       this.turnZxKeyboardOn();
