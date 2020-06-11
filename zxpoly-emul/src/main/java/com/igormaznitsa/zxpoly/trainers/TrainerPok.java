@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -25,6 +26,7 @@ import javax.swing.UIManager;
 import org.apache.commons.io.FileUtils;
 
 public class TrainerPok extends AbstractTrainer {
+  public static final Logger LOGGER = Logger.getLogger("Trainer.POK");
 
   public TrainerPok() {
     super("POK file (*.pok)", "pok");
@@ -110,16 +112,23 @@ public class TrainerPok extends AbstractTrainer {
               if (JOptionPane
                   .showConfirmDialog(component, panel,
                       String.format("%s, value for addr %d", poke.parent.title, poke.address),
-                      JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) ==
-                  JOptionPane.CANCEL_OPTION) {
+                      JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE)
+                  == JOptionPane.CANCEL_OPTION) {
                 return;
               }
               data = (Integer) spinner.getValue();
             }
             for (final ZxPolyModule module : motherboard.getModules()) {
               if ((poke.bank & 8) == 0 && poke.address >= 0xC000) {
+                if (module.getModuleIndex() == 0) {
+                  LOGGER
+                      .info(String.format("POKE %d:%d,%d", poke.bank, poke.address - 0xC000, data));
+                }
                 module.poke(poke.bank, poke.address - 0xC000, data);
               } else {
+                if (module.getModuleIndex() == 0) {
+                  LOGGER.info(String.format("POKE %d,%d", poke.address, data));
+                }
                 module.writeMemory(module.getCpu(), 0, poke.address, (byte) data);
               }
             }
