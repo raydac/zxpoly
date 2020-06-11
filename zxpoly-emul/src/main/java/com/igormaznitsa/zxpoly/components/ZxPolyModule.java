@@ -701,6 +701,11 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     return result;
   }
 
+  public void poke(final int page, final int offset, final int value) {
+    final int addr = this.getHeapOffset() + page * 0x4000 + (offset & 0x3FFF);
+    this.board.writeRam(this, addr, value);
+  }
+
   @Override
   public void writeMemory(final Z80 cpu, final int ctx, final int address, final byte data) {
     final int val = data & 0xFF;
