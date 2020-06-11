@@ -1554,6 +1554,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           selectedTrainer.apply(this, selectedFile, this.board);
         } catch (Exception ex) {
           LOGGER.log(Level.WARNING, "Error during trainer processing: " + ex.getMessage(), ex);
+          JOptionPane.showMessageDialog(this, ex.getMessage(), "Can't read or parse file",
+              JOptionPane.ERROR_MESSAGE);
         }
       }
     } finally {
