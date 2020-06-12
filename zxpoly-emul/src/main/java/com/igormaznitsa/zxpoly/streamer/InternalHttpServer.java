@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
+import org.apache.commons.io.IOUtils;
 
 public class InternalHttpServer {
 
@@ -28,7 +29,17 @@ public class InternalHttpServer {
   private final AtomicReference<HttpServer> httpServerRef = new AtomicReference<>();
   private final AtomicReference<TcpReader> tcpReaderRef = new AtomicReference<>();
   private final Consumer<InternalHttpServer> stopConsumer;
+  private static final String HTML_TEMPLATE;
   private volatile boolean stopped;
+
+  static {
+    try {
+      HTML_TEMPLATE = IOUtils.resourceToString("/com/igormaznitsa/zxpoly/streamer/streamer.html",
+          StandardCharsets.UTF_8);
+    } catch (IOException ex) {
+      throw new Error("Can't read template", ex);
+    }
+  }
 
   public InternalHttpServer(
       final String mime,
@@ -90,22 +101,8 @@ public class InternalHttpServer {
   private void handleMainPage(final HttpExchange exchange) throws IOException {
     final String linkToVideoStream = "http://" + this.getHttpAddress() + "/" + STREAM_RESOURCE;
 
-    final String page = "<!DOCTYPE html>"
-        + "<html>"
-        + "<body>"
-        + "<h3>Zx-Poly emulator stream</h3>"
-        + "<hr>"
-        + "<p>"
-        + "Link: <b><a href=\"" + linkToVideoStream + "\">" + linkToVideoStream + "</a></b><br>"
-        + "Mime: " + this.mime
-        + "</p>"
-        + "<video width=\"512\" height=\"384\" controls>\n"
-        + "<source src=\"http://" + this.getHttpAddress() + "/" + STREAM_RESOURCE + "\" type=\"" +
-        this.mime + "\">"
-        + "Your browser does not support HTML video."
-        + "</video>"
-        + "</body>"
-        + "</html>";
+    final String page = HTML_TEMPLATE.replace("${video.link}", linkToVideoStream)
+        .replace("${video.mime}", this.mime);
 
     final Headers headers = exchange.getResponseHeaders();
     headers.add("Content-Type", "text/html");

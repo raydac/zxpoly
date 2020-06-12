@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<title>ZX-Poly streaming</title>
+<head>
+    <style>
+.video {
+    padding: 32px;
+    display: block;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+.content {
+  max-width: 800px;
+  margin: auto;
+}
+.code {
+    font-family: "Courier New", Courier, monospace;
+    font-weight: bold;
+    color: lightgray;
+    background: darkblue;
+}
+footer {color: cyan; text-align: right;}
+body {background-color: black;}
+h1   {color: yellow;}
+h3   {color: orange;}
+h4   {color: orange;}
+p    {color: white;}
+a    {color: yellow;}
+video {border: 3px solid cyan;}
+
+
+
+
+    </style>
+    <meta charset="UTF-8">
+    <meta content="ZX-Poly streaming page" name="description">
+    <meta content="ZX, stream, video" name="keywords">
+    <meta content="Igor Maznitsa" name="author">
+    <meta content="width=80%, initial-scale=1.0" name="viewport">
+</head>
+<body>
+<div class="content">
+    <h1>ZX-Poly streaming</h1>
+    <hr/>
+    <p>The page is hosted by ZX-Poly emulator and contains link to its active video stream. Content type is
+        '${video.mime}'.</p>
+    <p>ZX-Poly is the official OSS emulator of ZX-Poly platform (a multi-CPU ZX-Spectrum 128 clone). The project page
+        hosted by <a href="https://github.com/raydac/zxpoly">GitHub</a>.</p>
+    <p>Video-stream link: <a href="${video.link}">${video.link}</a></p>
+    <div class="video">
+        <video controls height="384" width="512">
+            <source src="${video.link}" type="${video.mime}">
+            Your browser does not support HTML video
+        </video>
+    </div>
+    <h3>Tips for some stream players</h3>
+    <h4>FFplay</h4>
+    <div class="code">ffplay -fflags nobuffer -flags low_delay ${video.link}</div>
+    <h4>VLC</h4>
+    <div class="code">vlc --network-caching=0 --tcp-caching=0 ${video.link}</div>
+    <hr/>
+    <footer><small>&copy; Copyright 2020 Igor Maznitsa</small></footer>
+</
+>
+</body>
+</html>
