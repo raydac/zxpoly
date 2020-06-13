@@ -7,15 +7,15 @@
 
 # Changelog
 
-_ __2.0.6 (13-jun-2020)__
- - minor improvements in Spec256 emulation
- - added support of POK trainers
- - added support of Spec256 container export into editor
- - added dialog to choose sound device for beeper if several devices detected
- - GraalVM CE updated to 20.1.0
- - improved ubuntu desktop icon script
- - refactoring
- - added MPEG TS streaming, requires [FFMpeg](https://ffmpeg.org/) (beta)
+- __2.0.6 (13-jun-2020)__
+  - minor improvements in Spec256 emulation
+  - added support of POK trainers
+  - added support of Spec256 container export into editor
+  - added dialog to choose sound device for beeper if several devices detected
+  - GraalVM CE updated to 20.1.0
+  - improved ubuntu desktop icon script
+  - refactoring
+  - added MPEG TS streaming, requires [FFMpeg](https://ffmpeg.org/) (beta)
   
 - __2.0.5 (14-mar-2020)__
   - improved beeper to render playing TAP sound
