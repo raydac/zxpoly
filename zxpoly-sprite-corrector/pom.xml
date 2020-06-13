@@ -73,7 +73,7 @@
               <generateDiskImageFile>true</generateDiskImageFile>
               <includeApplicationsSymlink>true</includeApplicationsSymlink>
               <diskImageInternetEnable>true</diskImageInternetEnable>
-              <jvmVersion>1.7+</jvmVersion>
+              <jvmVersion>1.8+</jvmVersion>
               <jvmOptions>
                 <opt>-Dprol.stack.depth=512m</opt>
               </jvmOptions>
