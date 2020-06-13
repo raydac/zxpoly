@@ -7,22 +7,20 @@
 
 # Changelog
 
-_ __2.0.6 (SNAPSHOT)__
-  - added dialog to choose sound device for beeper if several devices detected
-  - GraalVM CE updated to 20.1.0
-  - improved ubuntu desktop icon script
+_ __2.0.6 (13-jun-2020)__
+ - minor improvements in Spec256 emulation
+ - added support of POK trainers
+ - added support of Spec256 container export into editor
+ - added dialog to choose sound device for beeper if several devices detected
+ - GraalVM CE updated to 20.1.0
+ - improved ubuntu desktop icon script
+ - refactoring
+ - added MPEG TS streaming, requires [FFMpeg](https://ffmpeg.org/) (beta)
   
 - __2.0.5 (14-mar-2020)__
   - improved beeper to render playing TAP sound
   - GraalVM CE 20.0.0 as embedded JDK image
   - added support for gamepads and joysticks (through Jinput library)
-
-- __2.0.4 (18-jan-2020)__
-  - added support of beeper (turned off by default)
-  - added more ROM sources
-  - fixed ROM loading from WoS
-  - improved CPU sync in Spec256
-  
  
 # Introduction
 I am a ZX-Spectrum fan since 1989. ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from mono-system to poly-system.   
@@ -36,7 +34,7 @@ Both the concept and emulator and all its parts are published under [GNU GPL3 li
 
 # Emulator GUI
 Keyboard plays role of ZX-Keyboard (ALT = SS, SHIFT = CS, CTRL+WHEEL = scaling), F5 shows ZX-keys on the screen. Numpad plays role of Kempson joystick.  
-![The Main Window of the Emulator](docs/screenshots/tapeloading.png)
+![The Main Window of the Emulator](docs/screenshots/pidentity48.png)
 
 # Supported snapshot formats
  - Snapshots: .Z80, .SNA, .ZXP (ZX-Poly snapshot format), ZIP (Spec256 with SNA inside)
@@ -44,10 +42,10 @@ Keyboard plays role of ZX-Keyboard (ALT = SS, SHIFT = CS, CTRL+WHEEL = scaling),
  - Disks: .TRD, .SCL
 
 # Prebuilt versions
-The pre-built versions of the emulator and sprite editor can be downloaded from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.0.5).   
-The emulator is written in Java and its JAR file can be started just through command line `java -jar zxpoly-emul-2.0.5-SNAPSHOT.jar`   
+The pre-built versions of the emulator and sprite editor can be downloaded from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.0.6).   
+The emulator is written in Java and its JAR file can be started just through command line `java -jar zxpoly-emul-2.0.6.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in **File->Options->Active ROM**, the ROM will be downloaded from one of remote network resources.   
-![Test-ROM](/docs/screenshots/testromscr1.png)
+![Test-ROM](docs/screenshots/testromscr1.png)
 
 # Support of game controllers
 Since 2.0.5 the emulator supports gamepads and joysticks. It uses X,Y position and recognizing all buttons as Fire. Mapping of game controller can be turned on through **Service->Game controllers**. I recommend restart emulator after new controller connect because JInput works not well for such situation.

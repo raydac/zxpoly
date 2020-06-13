@@ -31,7 +31,7 @@ public final class AboutDialog extends javax.swing.JDialog {
     super(parent, true);
     initComponents();
 
-    this.infoText.setText(this.infoText.getText().replace("${project.version}", "2.0.6-SNAPSHOT"));
+    this.infoText.setText(this.infoText.getText().replace("${project.version}", "2.0.6"));
 
     this.setLocationRelativeTo(null);
   }

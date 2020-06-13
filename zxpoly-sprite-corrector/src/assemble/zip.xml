@@ -11,18 +11,34 @@
     </formats>
     <files>
         <file>
-            <source>${project.build.directory}/${project.artifactId}-${project.version}.jar</source>
+            <source>${project.build.directory}${file.separator}${project.artifactId}-${project.version}.jar</source>
             <destName>zxpoly-corrector.jar</destName>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory>${file.separator}</outputDirectory>
         </file>
     </files>
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}/src/assemble/zip</directory>
-            <outputDirectory>/</outputDirectory>
+            <directory>${project.basedir}${file.separator}src${file.separator}assemble${file.separator}zip</directory>
+            <outputDirectory>${file.separator}</outputDirectory>
             <includes>
-                <include>*/**</include>
+                <include>*.png</include>
             </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}${file.separator}src${file.separator}assemble${file.separator}zip</directory>
+            <outputDirectory>${file.separator}</outputDirectory>
+            <includes>
+                <include>*.bat</include>
+            </includes>
+            <fileMode>755</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}${file.separator}src${file.separator}assemble${file.separator}zip</directory>
+            <outputDirectory>${file.separator}</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+            </includes>
+            <fileMode>755</fileMode>
         </fileSet>
     </fileSets>
 </assembly>
