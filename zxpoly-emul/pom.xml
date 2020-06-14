@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.igormaznitsa</groupId>
         <artifactId>zxpoly</artifactId>
-        <version>2.0.6</version>
+        <version>2.0.7-SNAPSHOT</version>
     </parent>
 
     <description>ZX-Poly emulator</description>
@@ -256,11 +256,11 @@
                                 </opts>
                             </jre>
                             <versionInfo>
-                                <fileVersion>2.0.6.0</fileVersion>
+                                <fileVersion>2.0.7.0</fileVersion>
                                 <txtFileVersion>${project.version}</txtFileVersion>
                                 <fileDescription>ZX-Poly Emulator</fileDescription>
                                 <copyright>2015-2020 Igor Maznitsa</copyright>
-                                <productVersion>2.0.6.0</productVersion>
+                                <productVersion>2.0.7.0</productVersion>
                                 <txtProductVersion>${project.version}</txtProductVersion>
                                 <productName>${project.name}</productName>
                                 <companyName>igormaznitsa.com</companyName>
