@@ -58,6 +58,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ItemEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
@@ -95,6 +96,7 @@ import javax.swing.JSeparator;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
@@ -150,6 +152,10 @@ public final class MainFrame extends javax.swing.JFrame {
   private JPanel mainEditorPanel;
   private JMenuBar menuBar;
   private JMenu menuEdit;
+  private JMenu menuView;
+  private JMenu menuViewZoom;
+  private JMenuItem menuViewZoomIn;
+  private JMenuItem menuViewZoomOut;
   private JMenuItem menuEditClear;
   private JMenuItem menuEditCopyBaseToPlans;
   private JMenuItem menuEditCopySelectedBaseAsImage;
@@ -509,6 +515,10 @@ public final class MainFrame extends javax.swing.JFrame {
     jSeparator1 = new JSeparator();
     menuFileExit = new JMenuItem();
     menuEdit = new JMenu();
+    menuView = new JMenu();
+    menuViewZoom = new JMenu();
+    menuViewZoomIn = new JMenuItem();
+    menuViewZoomOut = new JMenuItem();
     menuEditUndo = new JMenuItem();
     menuEditRedo = new JMenuItem();
     jSeparator2 = new Separator();
@@ -726,6 +736,16 @@ public final class MainFrame extends javax.swing.JFrame {
     menuFile.add(menuFileExit);
 
     menuBar.add(menuFile);
+    menuView.setText("View");
+    menuViewZoom.setText("Zoom");
+    menuViewZoomIn.setText("Zoom In");
+    menuViewZoomIn.addActionListener(e -> this.mainEditor.zoomIn());
+    menuViewZoomIn.setAccelerator(KeyStroke
+        .getKeyStroke(KeyEvent.VK_EQUALS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+    menuViewZoomOut.setText("Zoom Out");
+    menuViewZoomOut.addActionListener(e -> this.mainEditor.zoomOut());
+    menuViewZoomOut.setAccelerator(KeyStroke
+        .getKeyStroke(KeyEvent.VK_MINUS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
     menuEdit.setText("Edit");
     menuEdit.addMenuListener(new javax.swing.event.MenuListener() {
@@ -790,6 +810,12 @@ public final class MainFrame extends javax.swing.JFrame {
     menuEdit.add(menuEditClear);
 
     menuBar.add(menuEdit);
+
+    menuViewZoom.add(menuViewZoomIn);
+    menuViewZoom.add(menuViewZoomOut);
+    menuView.add(menuViewZoom);
+
+    menuBar.add(menuView);
 
     menuOptions.setText("Options");
 
