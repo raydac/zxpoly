@@ -51,7 +51,6 @@ import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.swing.filechooser.FileFilter;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 public class Spec256ZipPlugin extends AbstractFilePlugin {
@@ -111,7 +110,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     int lastIndex = minIndexIncl;
 
     for (int i = minIndexIncl; i < maxIndexExcl; i++) {
-        
+
       final int ir = (argbPalette[i] >>> 16) & 0xFF;
       final int ig = (argbPalette[i] >>> 8) & 0xFF;
       final int ib = argbPalette[i] & 0xFF;
@@ -120,7 +119,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       final double dg = g - ig;
       final double db = b - ib;
 
-      final double distance = sqrt((dr * dr) + (double)(dg * dg) + (double)(db * db));
+      final double distance = sqrt((dr * dr) + (double) (dg * dg) + (double) (db * db));
       if (distance < curDistance) {
         lastIndex = i;
         curDistance = distance;
@@ -128,7 +127,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
     }
     return (byte) lastIndex;
   }
-  
+
   private static byte[] makePaletteMap(final int[] argbSpec256Palette) {
     final byte[] result = new byte[ARGB_PALETTE_ZXPOLY.length];
 
@@ -144,29 +143,30 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
   }
 
   private static String colorToHtml(final int argb) {
-      final String r = Integer.toHexString((argb >>> 16) & 0xFF).toUpperCase(Locale.ENGLISH);
-      final String g = Integer.toHexString((argb >>> 8) & 0xFF).toUpperCase(Locale.ENGLISH);
-      final String b = Integer.toHexString(argb & 0xFF).toUpperCase(Locale.ENGLISH);
-      
-      return "#"+(r.length() < 2 ? "0" : "") + r
-              + (g.length() < 2 ? "0" : "") + g
-              + (b.length() < 2 ? "0" : "") + b;
+    final String r = Integer.toHexString((argb >>> 16) & 0xFF).toUpperCase(Locale.ENGLISH);
+    final String g = Integer.toHexString((argb >>> 8) & 0xFF).toUpperCase(Locale.ENGLISH);
+    final String b = Integer.toHexString(argb & 0xFF).toUpperCase(Locale.ENGLISH);
+
+    return "#" + (r.length() < 2 ? "0" : "") + r
+        + (g.length() < 2 ? "0" : "") + g
+        + (b.length() < 2 ? "0" : "") + b;
   }
-  
-  private static String paletteAsHtml(final int [] argbPalette) {
-      final StringBuilder result = new StringBuilder();
-      result.append("<html><body><table>");
-      for(int i=0;i<argbPalette.length;i++){
-          result.append("<tr>");
-          result.append("<th><b>  ").append(i).append("  </b></th>");
-          result.append("<th>").append(colorToHtml(argbPalette[i])).append("</th>");
-          result.append("<th style=\"width:50%;background-color:").append(colorToHtml(argbPalette[i])).append("\">").append("                ").append("</th>");
-          result.append("</tr>");
-      }
-      result.append("</table></body></html>");
-      return result.toString();
+
+  private static String paletteAsHtml(final int[] argbPalette) {
+    final StringBuilder result = new StringBuilder();
+    result.append("<html><body><table>");
+    for (int i = 0; i < argbPalette.length; i++) {
+      result.append("<tr>");
+      result.append("<th><b>  ").append(i).append("  </b></th>");
+      result.append("<th>").append(colorToHtml(argbPalette[i])).append("</th>");
+      result.append("<th style=\"width:50%;background-color:").append(colorToHtml(argbPalette[i]))
+          .append("\">").append("                ").append("</th>");
+      result.append("</tr>");
+    }
+    result.append("</table></body></html>");
+    return result.toString();
   }
-  
+
   private static int[] readSpec256RawPalette() {
     try (InputStream in = Spec256ZipPlugin.class.getResourceAsStream("/spec256.pal")) {
       final int[] result = new int[256];
