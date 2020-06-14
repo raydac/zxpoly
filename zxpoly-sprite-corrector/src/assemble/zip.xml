@@ -28,6 +28,13 @@
             <directory>${project.basedir}${file.separator}src${file.separator}assemble${file.separator}zip</directory>
             <outputDirectory>${file.separator}</outputDirectory>
             <includes>
+                <include>*.svg</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}${file.separator}src${file.separator}assemble${file.separator}zip</directory>
+            <outputDirectory>${file.separator}</outputDirectory>
+            <includes>
                 <include>*.bat</include>
             </includes>
             <fileMode>755</fileMode>
