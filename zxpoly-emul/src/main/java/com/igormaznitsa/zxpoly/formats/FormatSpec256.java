@@ -186,6 +186,7 @@ public class FormatSpec256 extends Snapshot {
     }
 
     if (archive.is128()) {
+      LOGGER.info("Detected SNA 128");
       LOGGER.info("#" + Integer.toHexString(parser.getEXTENDEDDATA().getREGPC()) + " => PC");
       cpu.setRegister(Z80.REG_PC, parser.getEXTENDEDDATA().getREGPC());
       LOGGER.info("#" + Integer.toHexString(parser.getREGSP()) + " => SP");
@@ -194,6 +195,7 @@ public class FormatSpec256 extends Snapshot {
       module.write7FFD(parser.getEXTENDEDDATA().getPORT7FFD(), true);
       module.setTrdosActive(parser.getEXTENDEDDATA().getONTRDOS() != 0);
     } else {
+      LOGGER.info("Detected SNA 48");
       int spValue = parser.getREGSP();
       final int lowPc;
       final int highPc;
@@ -210,9 +212,14 @@ public class FormatSpec256 extends Snapshot {
         highPc = parser.getRAMDUMP()[spValue - 0x4000] & 0xFF;
         spValue = (spValue + 1) & 0xFFFF;
       }
+      final int pcAddr = (highPc << 8) | lowPc;
+      LOGGER.info("#" + Integer.toHexString(pcAddr) + " => PC");
+      LOGGER.info("#" + Integer.toHexString(spValue) + " => SP");
       cpu.setRegister(Z80.REG_SP, spValue);
-      cpu.setRegister(Z80.REG_PC, (highPc << 8) | lowPc);
+      cpu.setRegister(Z80.REG_PC, pcAddr);
     }
+    LOGGER.info("Interrupt mode: " + parser.getINTMODE());
+
 
     board.set3D00(0b1_00_000_0_1, true);
     vc.setBorderColor(parser.getBORDERCOLOR() & 7);
