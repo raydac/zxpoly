@@ -342,9 +342,9 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
       int spAddr = mheader.reg_sp;
 
       spAddr--;
-      ramField[spAddr - 0x4000] = (byte) regPc;
-      spAddr--;
       ramField[spAddr - 0x4000] = (byte) (regPc >>> 8);
+      spAddr--;
+      ramField[spAddr - 0x4000] = (byte) regPc;
 
       mainSnapshotOut.Byte(ramField);
       mainGfxData = makeGfx(data, 0, 1, 2);
