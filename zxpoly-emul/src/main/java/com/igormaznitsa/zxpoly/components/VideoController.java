@@ -869,6 +869,15 @@ public final class VideoController extends JComponent
     }
   }
 
+
+  public void zoomIn() {
+    updateZoom(Math.min(5.0f, this.zoom + 0.2f));
+  }
+
+  public void zoomOut() {
+    updateZoom(Math.max(1.0f, this.zoom - 0.2f));
+  }
+
   @Override
   public void mouseWheelMoved(final MouseWheelEvent e) {
     if (e.isControlDown()) {

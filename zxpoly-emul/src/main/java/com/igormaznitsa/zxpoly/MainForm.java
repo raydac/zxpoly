@@ -204,6 +204,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenuBar menuBar;
   private JMenu menuCatcher;
   private JMenu menuFile;
+  private JMenu menuView;
+  private JMenuItem menuViewZoomIn;
+  private JMenuItem menuViewZoomOut;
   private JMenuItem menuFileExit;
   private JMenuItem menuFileFlushDiskChanges;
   private JMenuItem menuFileLoadSnapshot;
@@ -1122,6 +1125,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuFileLoadSnapshot = new JMenuItem();
     menuFileLoadPoke = new JMenuItem();
     menuFileLoadTap = new JMenuItem();
+    menuView = new JMenu();
+    menuViewZoomIn = new JMenuItem();
+    menuViewZoomOut = new JMenuItem();
     menuLoadDrive = new JMenu();
     menuFileSelectDiskA = new JMenuItem();
     menuFileSelectDiskB = new JMenuItem();
@@ -1249,6 +1255,15 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
 
+    menuView.setText("View");
+
+    menuViewZoomIn.setText("Zoom In");
+    menuViewZoomIn.addActionListener(e -> this.board.getVideoController().zoomIn());
+    menuViewZoomOut.setText("Zoom Out");
+    menuViewZoomOut.addActionListener(e -> this.board.getVideoController().zoomOut());
+    menuView.add(menuViewZoomIn);
+    menuView.add(menuViewZoomOut);
+
     menuFileLoadSnapshot.setIcon(new ImageIcon(
         getClass().getResource("/com/igormaznitsa/zxpoly/icons/snapshot.png"))); // NOI18N
     menuFileLoadSnapshot.setText("Load Snapshot");
@@ -1322,6 +1337,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuFileExit.addActionListener(this::menuFileExitActionPerformed);
     menuFile.add(menuFileExit);
 
+
     menuBar.add(menuFile);
 
     menuTap.setText("Tape");
@@ -1359,6 +1375,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuTap.add(menuTapGotoBlock);
 
     menuBar.add(menuTap);
+    menuBar.add(menuView);
 
     menuService.setText("Service");
 
