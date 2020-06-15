@@ -274,7 +274,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   public boolean onKeyEvent(final KeyEvent evt) {
-    if (evt.isControlDown()) {
+    if (evt.isControlDown() && evt.getKeyCode() != KeyEvent.VK_SPACE) {
       return false;
     }
 
