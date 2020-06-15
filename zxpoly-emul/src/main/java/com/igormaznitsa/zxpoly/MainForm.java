@@ -112,6 +112,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu.Separator;
 import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
@@ -205,6 +206,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenu menuCatcher;
   private JMenu menuFile;
   private JMenu menuView;
+  private JMenu menuViewZoom;
   private JMenuItem menuViewZoomIn;
   private JMenuItem menuViewZoomOut;
   private JMenuItem menuFileExit;
@@ -1126,6 +1128,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuFileLoadPoke = new JMenuItem();
     menuFileLoadTap = new JMenuItem();
     menuView = new JMenu();
+    menuViewZoom = new JMenu();
     menuViewZoomIn = new JMenuItem();
     menuViewZoomOut = new JMenuItem();
     menuLoadDrive = new JMenu();
@@ -1259,10 +1262,19 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuViewZoomIn.setText("Zoom In");
     menuViewZoomIn.addActionListener(e -> this.board.getVideoController().zoomIn());
+    menuViewZoomIn
+        .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, KeyEvent.CTRL_DOWN_MASK));
     menuViewZoomOut.setText("Zoom Out");
     menuViewZoomOut.addActionListener(e -> this.board.getVideoController().zoomOut());
-    menuView.add(menuViewZoomIn);
-    menuView.add(menuViewZoomOut);
+    menuViewZoomOut
+        .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, KeyEvent.CTRL_DOWN_MASK));
+
+    menuViewZoom.setText("Zoom");
+
+    menuViewZoom.add(menuViewZoomIn);
+    menuViewZoom.add(menuViewZoomOut);
+
+    menuView.add(menuViewZoom);
 
     menuFileLoadSnapshot.setIcon(new ImageIcon(
         getClass().getResource("/com/igormaznitsa/zxpoly/icons/snapshot.png"))); // NOI18N

@@ -274,6 +274,10 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   public boolean onKeyEvent(final KeyEvent evt) {
+    if (evt.isControlDown()) {
+      return false;
+    }
+
     final boolean pressed;
     switch (evt.getID()) {
       case KeyEvent.KEY_PRESSED:
