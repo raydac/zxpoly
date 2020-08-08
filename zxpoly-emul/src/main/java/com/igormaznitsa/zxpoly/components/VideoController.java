@@ -1050,24 +1050,33 @@ public final class VideoController extends JComponent
       }
     } else {
       final TvFilter[] tvFilters = filterChain.getFilterChain();
-      BufferedImage processingImage;
+      BufferedImage postprocessedImage;
       lockBuffer();
       try {
-        processingImage = tvFilters[0].apply(this.bufferImage, zoom, true);
+        postprocessedImage = tvFilters[0].apply(this.bufferImage, zoom, true);
       } finally {
         unlockBuffer();
       }
       for (int i = 1; i < tvFilters.length; i++) {
-        processingImage = tvFilters[i].apply(processingImage, zoom, false);
+        postprocessedImage = tvFilters[i].apply(postprocessedImage, zoom, false);
       }
       if (zoom == 1.0f) {
-        gfx.drawImage(processingImage, null, x, y);
+        gfx.drawImage(postprocessedImage, null, x, y);
       } else {
-        final float nzoom = Math.max(1.0f, zoom);
-        gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-        gfx.drawImage(processingImage, x, y, Math.round(SCREEN_WIDTH * nzoom),
-            Math.round(SCREEN_HEIGHT * nzoom), null);
+        final boolean sizeChangedDuringPostprocessing =
+            postprocessedImage.getWidth() != this.bufferImage.getWidth();
+
+        if (sizeChangedDuringPostprocessing) {
+          gfx.drawImage(postprocessedImage, null, x, y);
+        } else {
+          final float normalizedZoom = Math.max(1.0f, zoom);
+          gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+          gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+
+          gfx.drawImage(postprocessedImage, x, y, Math.round(SCREEN_WIDTH * normalizedZoom),
+              Math.round(SCREEN_HEIGHT * normalizedZoom), null);
+        }
+
       }
     }
   }

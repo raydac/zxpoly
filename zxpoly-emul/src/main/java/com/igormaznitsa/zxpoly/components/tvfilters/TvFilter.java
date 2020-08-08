@@ -9,5 +9,5 @@ public interface TvFilter {
   BufferedImage SHARED_FILTER_BUFFER = new BufferedImage(512, 384, BufferedImage.TYPE_INT_ARGB);
   Graphics2D SHARED_FILTER_BUFFER_GFX = (Graphics2D) SHARED_FILTER_BUFFER.getGraphics();
 
-  BufferedImage apply(BufferedImage imageArgb512x384, float zoom, boolean makeCopy);
+  BufferedImage apply(BufferedImage imageArgb512x384, float zoom, boolean workOverCopy);
 }
