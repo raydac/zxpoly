@@ -7,6 +7,10 @@
 
 # Changelog
 
+- __2.0.7 (SNAPSHOT)__
+  - added support of Covox on port #FB
+  - added explicit menu items to scale screen
+
 - __2.0.6 (13-jun-2020)__
   - minor improvements in Spec256 emulation
   - added support of POK trainers
