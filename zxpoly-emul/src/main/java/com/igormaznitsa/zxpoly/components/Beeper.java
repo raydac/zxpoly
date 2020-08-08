@@ -34,6 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,6 +48,26 @@ public class Beeper {
   private static final Logger LOGGER = Logger.getLogger("Beeper");
   private static final boolean LOG_RAW_SOUND = false;
   private static final int SND_FREQ = 44100;
+
+  public static final int NUMBER_OF_LEVELS = 8;
+  public static final byte[] LEVELS = new byte[NUMBER_OF_LEVELS];
+
+  public static final int CHANNELS = 8;
+
+  static {
+    //----- init sound level table
+    LEVELS[0b000] = 0;
+    LEVELS[0b001] = 17; // 6.5%
+    LEVELS[0b010] = 46; // 18%
+    LEVELS[0b011] = 65; // 25.4%
+    LEVELS[0b100] = (byte) 204; // 80%
+    LEVELS[0b101] = (byte) 223; // 87%
+    LEVELS[0b110] = (byte) 238; // 93%
+    LEVELS[0b111] = (byte) 255; // 100%
+    //-------------------------------
+  }
+
+  private final AtomicLong channels = new AtomicLong(0L);
 
   public static final AudioFormat AUDIO_FORMAT = new AudioFormat(
       PCM_SIGNED,
@@ -94,6 +115,7 @@ public class Beeper {
   }
 
   public void reset() {
+    this.clearChannels();
     this.activeInternalBeeper.get().reset();
   }
 
@@ -117,8 +139,29 @@ public class Beeper {
     return this.activeInternalBeeper.get() == NULL_BEEPER;
   }
 
-  public void updateState(boolean intSignal, long machineCycleInInt, int portFeD4D3) {
-    this.activeInternalBeeper.get().updateState(intSignal, machineCycleInInt, portFeD4D3);
+  public void setChannelValue(final int channel, final int level256) {
+    long newValue;
+    long oldValue;
+    do {
+      oldValue = this.channels.get();
+      newValue =
+          (oldValue & ~(0xFFL << (8 * channel))) | ((long) (level256 & 0XFF) << (8 * channel));
+    } while (!this.channels.compareAndSet(oldValue, newValue));
+  }
+
+  private int mixChannelsAsSignedByte() {
+    long value = this.channels.get();
+    int mixed = 0;
+    for (int i = 0; i < CHANNELS; i++) {
+      mixed += value & 0xFF;
+      value >>>= 8;
+    }
+    return Math.min(mixed, 255) - 128;
+  }
+
+  public void updateState(boolean intSignal, long machineCycleInInt) {
+    this.activeInternalBeeper.get()
+        .updateState(intSignal, machineCycleInInt, this.mixChannelsAsSignedByte());
   }
 
   public boolean isActive() {
@@ -131,6 +174,15 @@ public class Beeper {
 
   public AudioFormat getAudioFormat() {
     return AUDIO_FORMAT;
+  }
+
+  public void clearChannels() {
+    long value = 0L;
+    for (int i = 0; i < CHANNELS; i++) {
+      value |= LEVELS[0];
+      value <<= 8;
+    }
+    this.channels.set(value);
   }
 
   private interface IBeeper {
@@ -150,7 +202,6 @@ public class Beeper {
 
   private static final class InternalBeeper implements IBeeper, Runnable {
 
-    private static final int NUMBER_OF_LEVELS = 8;
     private static final int SAMPLES_PER_INT = SND_FREQ / 50;
     private static final int SND_BUFFER_LENGTH =
         SAMPLES_PER_INT * AUDIO_FORMAT.getChannels() * AUDIO_FORMAT.getSampleSizeInBits() / 8;
@@ -158,7 +209,6 @@ public class Beeper {
     private final BlockingQueue<byte[]> soundDataQueue = new ArrayBlockingQueue<>(5);
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
-    private final byte[] LEVELS = new byte[NUMBER_OF_LEVELS];
     private volatile boolean working = true;
     private final AtomicReference<FloatControl> gainControl = new AtomicReference<>();
 
@@ -196,17 +246,6 @@ public class Beeper {
     }
 
     private InternalBeeper(final SourceSoundPort sourceSoundPort) {
-      //----- init sound level table
-      LEVELS[0b000] = Byte.MIN_VALUE;
-      LEVELS[0b001] = Byte.MIN_VALUE + 17; // 6.5%
-      LEVELS[0b010] = Byte.MIN_VALUE + 46; // 18%
-      LEVELS[0b011] = Byte.MIN_VALUE + 65; // 25.4%
-      LEVELS[0b100] = Byte.MIN_VALUE + 204; // 80%
-      LEVELS[0b101] = Byte.MIN_VALUE + 223; // 87%
-      LEVELS[0b110] = Byte.MIN_VALUE + 238; // 93%
-      LEVELS[0b111] = Byte.MAX_VALUE;
-      //-------------------------------
-
       this.sourceDataLine = sourceSoundPort.asSourceDataLine();
       final Line.Info lineInfo = this.sourceDataLine.getLineInfo();
       LOGGER.info("Got sound data line: " + lineInfo.toString());
@@ -229,7 +268,7 @@ public class Beeper {
         final int level
     ) {
       if (this.working) {
-        final byte value = LEVELS[level];
+        final byte value = (byte) level;
         int position = ((int) ((machineCyclesInInt * SAMPLES_PER_INT + MCYCLES_PER_INT / 2)
             / MCYCLES_PER_INT)) * 4;
 

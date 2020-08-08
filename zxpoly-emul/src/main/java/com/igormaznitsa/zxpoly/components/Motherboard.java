@@ -71,7 +71,7 @@ public final class Motherboard implements ZxPolyConstants {
   private final Beeper beeper;
   private final RomData romData;
 
-  public Motherboard(final RomData rom) {
+  public Motherboard(final RomData rom, final boolean enableCovoxFb) {
     if (rom == null) {
       throw new NullPointerException("ROM must not be null");
     }
@@ -93,6 +93,12 @@ public final class Motherboard implements ZxPolyConstants {
     this.video = new VideoController(this);
     iodevices.add(video);
     iodevices.add(new KempstonMouse(this));
+
+    if (enableCovoxFb) {
+      LOGGER.info("Covox #FB is enabled and added among IO devices");
+      iodevices.add(new CovoxFb(this));
+    }
+
     this.ioDevices = iodevices.toArray(new IoDevice[0]);
     this.ioDevicesPreStep = Arrays.stream(this.ioDevices)
         .filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_PRESTEP) != 0)
@@ -398,9 +404,10 @@ public final class Motherboard implements ZxPolyConstants {
           throw new Error("Unexpected board mode: " + this.boardMode);
       }
 
-      final int audioLevel =
-          (this.video.getPortFE() >> 2 & 0b110) | (this.keyboard.isTapeIn() ? 1 : 0);
-      this.beeper.updateState(wallclockInt, initialMachineCycleCounter, audioLevel);
+      final int audioLevel = Beeper.LEVELS[
+          (this.video.getPortFE() >> 2 & 0b110) | (this.keyboard.isTapeIn() ? 1 : 0)];
+      this.beeper.setChannelValue(0, audioLevel);
+      this.beeper.updateState(wallclockInt, initialMachineCycleCounter);
 
       final long spentMachineCycles =
           modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
@@ -442,13 +449,15 @@ public final class Motherboard implements ZxPolyConstants {
         }
       }
     } else {
-      this.beeper.updateState(virtualInt, MCYCLES_PER_INT, 0);
+      this.beeper.setChannelValue(0, Beeper.LEVELS[0]);
+      this.beeper.updateState(virtualInt, MCYCLES_PER_INT);
     }
     return result;
   }
 
   public void dryIntTickOnWallClockTime(final long calculatedMachineCycles) {
-    this.beeper.updateState(true, calculatedMachineCycles, 0);
+    this.beeper.clearChannels();
+    this.beeper.updateState(true, calculatedMachineCycles);
   }
 
   public void syncSpec256GpuStates() {

@@ -316,7 +316,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     }
 
-    this.board = new Motherboard(BASE_ROM);
+    this.board = new Motherboard(BASE_ROM, AppOptions.getInstance().isCovoxFb());
     this.board.setBoardMode(BoardMode.ZXPOLY, true);
     this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() != BoardMode.ZXPOLY);
     this.menuOptionsTurbo.setSelected(this.turboMode);
@@ -1769,9 +1769,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
               JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
         optionsPanel.getData().store();
         JOptionPane
-            .showMessageDialog(this, "Some options will be applied only after emulator restart",
-                "Restart may required",
-                JOptionPane.INFORMATION_MESSAGE);
+            .showMessageDialog(this, "Some options will be activated only after emulator restart!",
+                "Restart may required!",
+                JOptionPane.WARNING_MESSAGE);
       }
     } finally {
       this.turnZxKeyboardOn();

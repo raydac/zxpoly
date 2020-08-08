@@ -111,76 +111,87 @@ public final class AppOptions {
         preferences.putInt(Option.STREAM_PORT.name(), port & 0xFFFF);
     }
 
-    public synchronized int getFrameRate() {
-        return preferences.getInt(Option.STREAM_FRAMERATE.name(), 25);
+  public synchronized int getFrameRate() {
+    return preferences.getInt(Option.STREAM_FRAMERATE.name(), 25);
+  }
+
+  public synchronized void setFrameRate(final int value) {
+    preferences.putInt(Option.STREAM_FRAMERATE.name(), Math.max(1, Math.min(50, value)));
+  }
+
+  public synchronized String getFfmpegPath() {
+    return preferences
+        .get(Option.STREAM_FFMPEGPATH.name(), SystemUtils.IS_OS_WINDOWS ? "ffmpeg.exe" : "ffmpeg");
+  }
+
+  public synchronized void setFfmpegPath(final String path) {
+    preferences.put(Option.STREAM_FFMPEGPATH.name(),
+        path == null ? (SystemUtils.IS_OS_WINDOWS ? "ffmpeg.exe" : "ffmpeg") : path);
+  }
+
+  public synchronized boolean isGrabSound() {
+    return preferences.getBoolean(Option.STREAM_GRABSOUND.name(), false);
+  }
+
+  public synchronized void setGrabSound(final boolean value) {
+    preferences.putBoolean(Option.STREAM_GRABSOUND.name(), value);
+  }
+
+  public synchronized boolean isCovoxFb() {
+    return preferences.getBoolean(Option.COVOXFB.name(), false);
+  }
+
+  public synchronized void setCovoxFb(final boolean value) {
+    preferences.putBoolean(Option.COVOXFB.name(), value);
+  }
+
+  public synchronized String getActiveRom() {
+    return preferences.get(Option.ROMPATH.name(), AppOptions.TEST_ROM);
+  }
+
+  public synchronized void setActiveRom(final String romPath) {
+    preferences.put(Option.ROMPATH.name(), romPath);
+  }
+
+  public synchronized int getIntBetweenFrames() {
+    return preferences.getInt(Option.INTBETWEENFRAMES.name(), 3);
+  }
+
+  public synchronized void setIntBetweenFrames(final int value) {
+    preferences.putInt(Option.INTBETWEENFRAMES.name(), Math.max(0, value));
+  }
+
+  public synchronized void flush() throws BackingStoreException {
+    preferences.flush();
+  }
+
+  public synchronized File getAppConfigFolder() {
+    String folder = System.getenv("APPDATA");
+    if (folder == null) {
+      folder = System.getProperty("user.home", FileUtils.getTempDirectoryPath());
     }
 
-    public synchronized void setFrameRate(final int value) {
-        preferences.putInt(Option.STREAM_FRAMERATE.name(), Math.max(1, Math.min(50, value)));
+    final File configFolder = new File(folder, APP_FOLDER_NAME);
+    if (!configFolder.exists()) {
+      if (configFolder.mkdirs()) {
+        LOGGER.info("Created config folder: " + configFolder);
+      } else {
+        LOGGER.warning("Can't create config folder: " + configFolder);
+      }
     }
+    return configFolder;
+  }
 
-    public synchronized String getFfmpegPath() {
-        return preferences.get(Option.STREAM_FFMPEGPATH.name(), SystemUtils.IS_OS_WINDOWS ? "ffmpeg.exe" : "ffmpeg");
-    }
-
-    public synchronized void setFfmpegPath(final String path) {
-        preferences.put(Option.STREAM_FFMPEGPATH.name(), path == null ? (SystemUtils.IS_OS_WINDOWS ? "ffmpeg.exe" : "ffmpeg") : path);
-    }
-
-    public synchronized boolean isGrabSound() {
-        return preferences.getBoolean(Option.STREAM_GRABSOUND.name(), false);
-    }
-
-    public synchronized void setGrabSound(final boolean value) {
-        preferences.putBoolean(Option.STREAM_GRABSOUND.name(), value);
-    }
-
-    public synchronized String getActiveRom() {
-        return preferences.get(Option.ROMPATH.name(), AppOptions.TEST_ROM);
-    }
-
-    public synchronized void setActiveRom(final String romPath) {
-        preferences.put(Option.ROMPATH.name(), romPath);
-    }
-
-    public synchronized int getIntBetweenFrames() {
-        return preferences.getInt(Option.INTBETWEENFRAMES.name(), 3);
-    }
-
-    public synchronized void setIntBetweenFrames(final int value) {
-        preferences.putInt(Option.INTBETWEENFRAMES.name(), Math.max(0, value));
-    }
-
-    public synchronized void flush() throws BackingStoreException {
-        preferences.flush();
-    }
-
-    public synchronized File getAppConfigFolder() {
-        String folder = System.getenv("APPDATA");
-        if (folder == null) {
-            folder = System.getProperty("user.home", FileUtils.getTempDirectoryPath());
-        }
-
-        final File configFolder = new File(folder, APP_FOLDER_NAME);
-        if (!configFolder.exists()) {
-            if (configFolder.mkdirs()) {
-                LOGGER.info("Created config folder: " + configFolder);
-            } else {
-                LOGGER.warning("Can't create config folder: " + configFolder);
-            }
-        }
-        return configFolder;
-    }
-
-    public enum Option {
-        STREAM_FFMPEGPATH,
-        STREAM_GRABSOUND,
-        STREAM_ADDR,
-        STREAM_PORT,
-        STREAM_FRAMERATE,
-        ROMPATH,
-        INTBETWEENFRAMES,
-        LAST_SELECTED_AUDIO_DEVICE
-    }
+  public enum Option {
+    STREAM_FFMPEGPATH,
+    STREAM_GRABSOUND,
+    STREAM_ADDR,
+    STREAM_PORT,
+    STREAM_FRAMERATE,
+    ROMPATH,
+    COVOXFB,
+    INTBETWEENFRAMES,
+    LAST_SELECTED_AUDIO_DEVICE
+  }
 
 }
