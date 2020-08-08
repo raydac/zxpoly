@@ -20,6 +20,8 @@ package com.igormaznitsa.zxpoly.components;
 import static java.util.Arrays.fill;
 
 
+import com.igormaznitsa.zxpoly.components.tvfilters.TvFilter;
+import com.igormaznitsa.zxpoly.components.tvfilters.TvFilterChain;
 import com.igormaznitsa.zxpoly.formats.Spec256Arch;
 import com.igormaznitsa.zxpoly.utils.Utils;
 import java.awt.AlphaComposite;
@@ -50,13 +52,6 @@ public final class VideoController extends JComponent
 
   public static final int SCREEN_WIDTH = 512;
   public static final int SCREEN_HEIGHT = 384;
-
-  private static final int PREFERRED_BORDER_WIDTH = 8;
-
-  private static final Dimension MINIMUM_SIZE =
-      new Dimension(SCREEN_WIDTH + (PREFERRED_BORDER_WIDTH << 1),
-          SCREEN_HEIGHT + (PREFERRED_BORDER_WIDTH << 1));
-
   public static final Image IMAGE_ZXKEYS = Utils.loadIcon("zxkeys.png");
   public static final long MCYCLES_PER_INT = 20000000L / (1000000000L / Motherboard.CPU_FREQ);
   public static final int[] PALETTE_ZXPOLY = new int[] {
@@ -96,10 +91,13 @@ public final class VideoController extends JComponent
       new Color(255, 255, 0),
       new Color(255, 255, 255)
   };
-
   public static final int[] PALETTE_SPEC256 = Utils.readRawPalette(
       VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/spec256.raw.pal"),
       true);
+  private static final int PREFERRED_BORDER_WIDTH = 8;
+  private static final Dimension MINIMUM_SIZE =
+      new Dimension(SCREEN_WIDTH + (PREFERRED_BORDER_WIDTH << 1),
+          SCREEN_HEIGHT + (PREFERRED_BORDER_WIDTH << 1));
   private static final int[] PALETTE_ALIGNED_ZXPOLY =
       Utils.alignPaletteColors(PALETTE_ZXPOLY, PALETTE_SPEC256);
 
@@ -121,8 +119,8 @@ public final class VideoController extends JComponent
   private final int[] bufferImageRgbData;
   private final ZxPolyModule[] modules;
   private final byte[] borderLineColors = new byte[BORDER_LINES];
-  private long changedBorderLines = 0L;
   private final byte[] lastRenderedZxData = new byte[0x1B00];
+  private long changedBorderLines = 0L;
   private volatile int currentVideoMode = VIDEOMODE_ZXPOLY_256x192_FLASH_MASK;
   private Dimension size = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
   private volatile float zoom = 1.0f;
@@ -130,6 +128,7 @@ public final class VideoController extends JComponent
   private volatile boolean trapMouse = false;
   private volatile boolean enableTrapMouse = false;
   private volatile boolean showZxKeyboardLayout = false;
+  private TvFilterChain tvFilterChain = TvFilterChain.NONE;
 
   public VideoController(final Motherboard board) {
     super();
@@ -226,7 +225,7 @@ public final class VideoController extends JComponent
     final ZxPolyModule sourceModule = modules[0];
     int offset = 0;
     int aoffset = 0;
-    int coordY = 0;
+    int coordY;
     for (int i = 0; i < 0x1800; i++) {
       if ((i & 0x1F) == 0) {
         // the first byte in the line
@@ -324,7 +323,7 @@ public final class VideoController extends JComponent
     final ZxPolyModule sourceModule = modules[0];
     int offset = 0;
     int aoffset = 0;
-    int coordY = 0;
+    int coordY;
     for (int i = 0; i < 0x1800; i++) {
       if ((i & 0x1F) == 0) {
         // the first byte in the line
@@ -439,8 +438,8 @@ public final class VideoController extends JComponent
           final int presentedPixelData = lastRenderedGfxData[i] & 0xFF;
           int pixelData = sourceModule.readVideo(i);
 
-          if (allowAlreadyRenderedCheck && presentedPixelData == pixelData &&
-              presentedAttribute == inkPaperColor) {
+          if (allowAlreadyRenderedCheck && presentedPixelData == pixelData
+              && presentedAttribute == inkPaperColor) {
             offset += 16;
           } else {
             lastRenderedGfxData[i] = (byte) pixelData;
@@ -837,6 +836,14 @@ public final class VideoController extends JComponent
     return -1;
   }
 
+  public TvFilterChain getTvFilterChain() {
+    return tvFilterChain;
+  }
+
+  public void setTvFilterChain(final TvFilterChain chain) {
+    this.tvFilterChain = chain == null ? TvFilterChain.NONE : chain;
+  }
+
   public void setShowZxKeyboardLayout(final boolean show) {
     this.showZxKeyboardLayout = show;
   }
@@ -945,7 +952,7 @@ public final class VideoController extends JComponent
     if (xoff > 0 || yoff > 0) {
       drawBorder(g2, width, height);
     }
-    this.drawBuffer(g2, xoff, yoff, this.zoom);
+    this.drawBuffer(g2, xoff, yoff, this.zoom, this.tvFilterChain);
 
     if (this.trapMouse) {
       g2.drawImage(MOUSE_TRAPPED, 2, 2, null);
@@ -1008,8 +1015,7 @@ public final class VideoController extends JComponent
       final int bufferLen = buffer.length;
       final byte[] result = new byte[bufferLen * 3];
       int outIndex = 0;
-      for (int i = 0; i < bufferLen; i++) {
-        final int argb = buffer[i];
+      for (final int argb : buffer) {
         result[outIndex++] = (byte) (argb >> 16);
         result[outIndex++] = (byte) (argb >> 8);
         result[outIndex++] = (byte) argb;
@@ -1020,20 +1026,49 @@ public final class VideoController extends JComponent
     }
   }
 
-  public void drawBuffer(final Graphics2D gfx, final int x, final int y, final float zoom) {
-    lockBuffer();
-    try {
+  public void drawBuffer(
+      final Graphics2D gfx,
+      final int x,
+      final int y,
+      final float zoom,
+      final TvFilterChain filterChain
+  ) {
+    if (filterChain.isEmpty()) {
+      lockBuffer();
+      try {
+        if (zoom == 1.0f) {
+          gfx.drawImage(this.bufferImage, null, x, y);
+        } else {
+          final float nzoom = Math.max(1.0f, zoom);
+          gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+          gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+          gfx.drawImage(this.bufferImage, x, y, Math.round(SCREEN_WIDTH * nzoom),
+              Math.round(SCREEN_HEIGHT * nzoom), null);
+        }
+      } finally {
+        unlockBuffer();
+      }
+    } else {
+      final TvFilter[] tvFilters = filterChain.getFilterChain();
+      BufferedImage processingImage;
+      lockBuffer();
+      try {
+        processingImage = tvFilters[0].apply(this.bufferImage, zoom, true);
+      } finally {
+        unlockBuffer();
+      }
+      for (int i = 1; i < tvFilters.length; i++) {
+        processingImage = tvFilters[i].apply(processingImage, zoom, false);
+      }
       if (zoom == 1.0f) {
-        gfx.drawImage(this.bufferImage, null, x, y);
+        gfx.drawImage(processingImage, null, x, y);
       } else {
         final float nzoom = Math.max(1.0f, zoom);
         gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-        gfx.drawImage(this.bufferImage, x, y, Math.round(SCREEN_WIDTH * nzoom),
+        gfx.drawImage(processingImage, x, y, Math.round(SCREEN_WIDTH * nzoom),
             Math.round(SCREEN_HEIGHT * nzoom), null);
       }
-    } finally {
-      unlockBuffer();
     }
   }
 
@@ -1269,13 +1304,13 @@ public final class VideoController extends JComponent
     return this.zoom;
   }
 
-  public int getScrYForZXScr(final int zxY) {
+  public int getScrYForZxScr(final int zxY) {
     final int height = getHeight();
     final int yoff = (height - this.size.height) / 2;
     return (zxY * Math.round(this.zoom * 2)) + yoff;
   }
 
-  public int getZXScrY(final int compoY) {
+  public int getZxScrY(final int compoY) {
     final int height = getHeight();
     final int yoff = (height - this.size.height) / 2;
 
@@ -1283,7 +1318,7 @@ public final class VideoController extends JComponent
     return Math.max(0x00, Math.min(191, result));
   }
 
-  public int getZXScrX(final int compoX) {
+  public int getZxScrX(final int compoX) {
     final int width = getWidth();
     final int xoff = (width - this.size.width) / 2;
 
@@ -1291,7 +1326,7 @@ public final class VideoController extends JComponent
     return Math.max(0x00, Math.min(0xFF, result));
   }
 
-  public int getScrXForZXScr(final int zxX) {
+  public int getScrXForZxScr(final int zxX) {
     final int width = getWidth();
     final int xoff = (width - this.size.width) / 2;
     return (zxX * Math.round(this.zoom * 2)) + xoff;
