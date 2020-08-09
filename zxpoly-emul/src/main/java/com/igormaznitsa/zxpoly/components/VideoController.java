@@ -1050,17 +1050,18 @@ public final class VideoController extends JComponent
         unlockBuffer();
       }
     } else {
+      final int borderArgbColor = PALETTE_ZXPOLY[this.borderLineColors[BORDER_LINES - 1]];
       final Rectangle area;
       final TvFilter[] tvFilters = filterChain.getFilterChain();
       BufferedImage postprocessedImage;
       lockBuffer();
       try {
-        postprocessedImage = tvFilters[0].apply(this.bufferImage, zoom, true);
+        postprocessedImage = tvFilters[0].apply(this.bufferImage, zoom, borderArgbColor, true);
       } finally {
         unlockBuffer();
       }
       for (int i = 1; i < tvFilters.length; i++) {
-        postprocessedImage = tvFilters[i].apply(postprocessedImage, zoom, false);
+        postprocessedImage = tvFilters[i].apply(postprocessedImage, zoom, borderArgbColor, false);
       }
       if (zoom == 1.0f) {
         area = new Rectangle(x, y, 512, 384);

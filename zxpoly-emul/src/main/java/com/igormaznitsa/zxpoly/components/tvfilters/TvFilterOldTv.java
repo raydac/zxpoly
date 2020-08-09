@@ -3,13 +3,11 @@ package com.igormaznitsa.zxpoly.components.tvfilters;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 
-public final class TvFilterTvScreen implements TvFilter {
+public final class TvFilterOldTv implements TvFilter {
 
-  private static final TvFilterTvScreen INSTANCE = new TvFilterTvScreen();
-
-  private TvFilterTvScreen() {
-
-  }
+  private static final TvFilterOldTv INSTANCE = new TvFilterOldTv();
+  private final BufferedImage bufferImage =
+      new BufferedImage(512, 384, BufferedImage.TYPE_INT_ARGB);
 
   private static int rgb2y(final int r, final int g, final int b) {
     return (2449 * r + 4809 * g + 934 * b + 1024) >> 11;
@@ -30,19 +28,29 @@ public final class TvFilterTvScreen implements TvFilter {
     return (r << 16) | (g << 8) | b;
   }
 
-  public static TvFilterTvScreen getInstance() {
+  private final int[] bufferImageRaster =
+      ((DataBufferInt) bufferImage.getRaster().getDataBuffer()).getData();
+
+  private TvFilterOldTv() {
+
+  }
+
+  public static TvFilterOldTv getInstance() {
     return INSTANCE;
   }
 
   @Override
-  public BufferedImage apply(BufferedImage srcImageArgb512x384, float zoom,
-                             boolean firstInChain) {
+  public BufferedImage apply(
+      final BufferedImage srcImageArgb512x384,
+      final float zoom,
+      final int argbBorder,
+      boolean firstInChain
+  ) {
     final BufferedImage image;
     final int[] argbBuffer;
     if (firstInChain) {
-      image = new BufferedImage(srcImageArgb512x384.getWidth(), srcImageArgb512x384.getHeight(),
-          BufferedImage.TYPE_INT_ARGB);
-      argbBuffer = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+      image = bufferImage;
+      argbBuffer = bufferImageRaster;
       System
           .arraycopy(((DataBufferInt) srcImageArgb512x384.getRaster().getDataBuffer()).getData(), 0,
               argbBuffer, 0, argbBuffer.length);
@@ -51,14 +59,22 @@ public final class TvFilterTvScreen implements TvFilter {
       argbBuffer = ((DataBufferInt) srcImageArgb512x384.getRaster().getDataBuffer()).getData();
     }
 
+    final int brdrR = (argbBorder >> 16) & 0xFF;
+    final int brdrG = (argbBorder >> 8) & 0xFF;
+    final int brdrB = argbBorder & 0xFF;
+
+    final int borderY = rgb2y(brdrR, brdrG, brdrB);
+    final int borderU = rgb2u(brdrR, brdrG, brdrB);
+    final int borderV = rgb2v(brdrR, brdrG, brdrB);
+
     final int width = image.getWidth();
     final int height = image.getHeight();
 
     for (int y = 0; y < height; y++) {
       final int offset = y * width;
-      int pu = 0;
-      int pv = 0;
-      int py = 0;
+      int pu = borderU;
+      int pv = borderV;
+      int py = borderY;
 
       final boolean yodd = (y & 1) != 0;
 
@@ -83,9 +99,9 @@ public final class TvFilterTvScreen implements TvFilter {
 
         final int resultRgb;
         if (xodd) {
-          resultRgb = yuv2rgb(yc, uc, vc);
-        } else {
           resultRgb = yuv2rgb(yc, (pu + uc) / 2, (pv + vc) / 2);
+        } else {
+          resultRgb = yuv2rgb(yc, uc, vc);
         }
         pu = (pu + uc * 2) / 3;
         pv = (pv + vc * 2) / 3;

@@ -33,6 +33,7 @@ public final class TvFilterGrayscale implements TvFilter {
   public BufferedImage apply(
       final BufferedImage srcImageArgb512x384,
       float zoom,
+      final int argbBorder,
       final boolean firstInChain
   ) {
     final int[] src = ((DataBufferInt) srcImageArgb512x384.getRaster().getDataBuffer()).getData();

@@ -3,7 +3,7 @@ package com.igormaznitsa.zxpoly.components.tvfilters;
 public enum TvFilterChain {
   NONE("None", new TvFilter[0]),
   GRAYSCALE("Grayscale", new TvFilter[] {TvFilterGrayscale.getInstance()}),
-  SCANLINES("TV Screen", new TvFilter[] {TvFilterTvScreen.getInstance()});
+  SCANLINES("Old TV", new TvFilter[] {TvFilterOldTv.getInstance()});
 
   private final String text;
   private final TvFilter[] filterChain;

@@ -13,6 +13,7 @@ public interface TvFilter {
   default BufferedImage apply(
       final BufferedImage srcImageArgb512x384,
       final float zoom,
+      final int argbBorderColor,
       final boolean firstInChain
   ) {
     return srcImageArgb512x384;
