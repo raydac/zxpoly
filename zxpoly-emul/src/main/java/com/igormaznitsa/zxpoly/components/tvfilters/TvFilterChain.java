@@ -5,7 +5,8 @@ import java.awt.Color;
 public enum TvFilterChain {
   NONE("None", new TvFilter[0]),
   GRAYSCALE("Grayscale", new TvFilter[] {TvFilterGrayscale.getInstance()}),
-  SCANLINES("Old TV", new TvFilter[] {TvFilterOldTv.getInstance()});
+  SCANLINES("Old TV", new TvFilter[] {TvFilterOldTv.getInstance()}),
+  GAUSSIAN("Gaussian blur", new TvFilter[] {TvFilterGaussian.getInstance()});
 
   private final String text;
   private final TvFilter[] filterChain;

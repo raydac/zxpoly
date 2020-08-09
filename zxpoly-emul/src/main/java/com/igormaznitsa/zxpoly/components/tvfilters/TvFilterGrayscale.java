@@ -67,11 +67,11 @@ public final class TvFilterGrayscale implements TvFilter {
       final boolean firstInChain
   ) {
     final int[] src = ((DataBufferInt) srcImageArgb512x384.getRaster().getDataBuffer()).getData();
-    final int[] dst = ((DataBufferInt) SHARED_FILTER_BUFFER.getRaster().getDataBuffer()).getData();
+    final int[] dst = SHARED_BUFFER_RASTER;
 
     fastArgbToGrayscale(src, dst);
 
-    return SHARED_FILTER_BUFFER;
+    return SHARED_BUFFER;
   }
 
 }

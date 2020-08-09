@@ -6,8 +6,10 @@ import java.awt.image.DataBufferInt;
 public final class TvFilterOldTv implements TvFilter {
 
   private static final TvFilterOldTv INSTANCE = new TvFilterOldTv();
-  private final BufferedImage bufferImage =
-      new BufferedImage(512, 384, BufferedImage.TYPE_INT_ARGB);
+
+  private TvFilterOldTv() {
+
+  }
 
   private static int rgb2y(final int r, final int g, final int b) {
     return (2449 * r + 4809 * g + 934 * b + 1024) >> 11;
@@ -28,13 +30,6 @@ public final class TvFilterOldTv implements TvFilter {
     return (r << 16) | (g << 8) | b;
   }
 
-  private final int[] bufferImageRaster =
-      ((DataBufferInt) bufferImage.getRaster().getDataBuffer()).getData();
-
-  private TvFilterOldTv() {
-
-  }
-
   public static TvFilterOldTv getInstance() {
     return INSTANCE;
   }
@@ -49,8 +44,8 @@ public final class TvFilterOldTv implements TvFilter {
     final BufferedImage image;
     final int[] argbBuffer;
     if (firstInChain) {
-      image = bufferImage;
-      argbBuffer = bufferImageRaster;
+      image = SHARED_BUFFER;
+      argbBuffer = SHARED_BUFFER_RASTER;
       System
           .arraycopy(((DataBufferInt) srcImageArgb512x384.getRaster().getDataBuffer()).getData(), 0,
               argbBuffer, 0, argbBuffer.length);
