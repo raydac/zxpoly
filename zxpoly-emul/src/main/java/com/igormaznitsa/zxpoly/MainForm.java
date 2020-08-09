@@ -210,7 +210,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenu menuFile;
   private JMenu menuView;
   private JMenu menuViewZoom;
-  private JMenu menuViewTvFilter;
+  private JMenu menuViewVideoFilter;
   private JMenuItem menuViewZoomIn;
   private JMenuItem menuViewZoomOut;
   private JMenuItem menuFileExit;
@@ -1130,7 +1130,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuFileLoadTap = new JMenuItem();
     menuView = new JMenu();
     menuViewZoom = new JMenu();
-    menuViewTvFilter = new JMenu();
+    menuViewVideoFilter = new JMenu();
     menuViewZoomIn = new JMenuItem();
     menuViewZoomOut = new JMenuItem();
     menuLoadDrive = new JMenu();
@@ -1278,7 +1278,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuView.add(menuViewZoom);
 
-    menuViewTvFilter.setText("TV filter");
+    menuViewVideoFilter.setText("Video filter");
     final ButtonGroup tvFilterGroup = new ButtonGroup();
     for (final TvFilterChain chain : TvFilterChain.values()) {
       final JRadioButtonMenuItem tvFilterMenuItem =
@@ -1289,10 +1289,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           this.board.getVideoController().setTvFilterChain(chain);
         }
       });
-      menuViewTvFilter.add(tvFilterMenuItem);
+      menuViewVideoFilter.add(tvFilterMenuItem);
     }
 
-    menuView.add(menuViewTvFilter);
+    menuView.add(menuViewVideoFilter);
 
     menuFileLoadSnapshot.setIcon(new ImageIcon(
         getClass().getResource("/com/igormaznitsa/zxpoly/icons/snapshot.png"))); // NOI18N

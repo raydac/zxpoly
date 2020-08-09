@@ -30,9 +30,12 @@ public final class TvFilterGrayscale implements TvFilter {
   }
 
   @Override
-  public BufferedImage apply(final BufferedImage imageArgb512x384, float zoom,
-                             boolean workOverCopy) {
-    final int[] src = ((DataBufferInt) imageArgb512x384.getRaster().getDataBuffer()).getData();
+  public BufferedImage apply(
+      final BufferedImage srcImageArgb512x384,
+      float zoom,
+      final boolean firstInChain
+  ) {
+    final int[] src = ((DataBufferInt) srcImageArgb512x384.getRaster().getDataBuffer()).getData();
     final int[] dst = ((DataBufferInt) SHARED_FILTER_BUFFER.getRaster().getDataBuffer()).getData();
 
     fastArgbToGrayscale(src, dst);

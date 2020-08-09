@@ -1042,6 +1042,7 @@ public final class VideoController extends JComponent
           final float nzoom = Math.max(1.0f, zoom);
           gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
           gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+
           gfx.drawImage(this.bufferImage, x, y, Math.round(SCREEN_WIDTH * nzoom),
               Math.round(SCREEN_HEIGHT * nzoom), null);
         }
@@ -1049,6 +1050,7 @@ public final class VideoController extends JComponent
         unlockBuffer();
       }
     } else {
+      final Rectangle area;
       final TvFilter[] tvFilters = filterChain.getFilterChain();
       BufferedImage postprocessedImage;
       lockBuffer();
@@ -1061,6 +1063,7 @@ public final class VideoController extends JComponent
         postprocessedImage = tvFilters[i].apply(postprocessedImage, zoom, false);
       }
       if (zoom == 1.0f) {
+        area = new Rectangle(x, y, 512, 384);
         gfx.drawImage(postprocessedImage, null, x, y);
       } else {
         final boolean sizeChangedDuringPostprocessing =
@@ -1068,15 +1071,22 @@ public final class VideoController extends JComponent
 
         if (sizeChangedDuringPostprocessing) {
           gfx.drawImage(postprocessedImage, null, x, y);
+          area = new Rectangle(x, y, 512, 384);
         } else {
           final float normalizedZoom = Math.max(1.0f, zoom);
           gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
           gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 
-          gfx.drawImage(postprocessedImage, x, y, Math.round(SCREEN_WIDTH * normalizedZoom),
-              Math.round(SCREEN_HEIGHT * normalizedZoom), null);
-        }
+          area = new Rectangle(x, y, Math.round(SCREEN_WIDTH * normalizedZoom),
+              Math.round(SCREEN_HEIGHT * normalizedZoom));
 
+          gfx.drawImage(postprocessedImage, x, y, area.width,
+              area.height, null);
+        }
+      }
+
+      for (final TvFilter filter : tvFilters) {
+        filter.apply(gfx, area, zoom);
       }
     }
   }
