@@ -8,7 +8,8 @@
 # Changelog
 
 - __2.0.7 (SNAPSHOT)__
-  - added support of Covox on port #FB
+  - added video filters [#1](https://github.com/raydac/zxpoly/issues/1)
+  - added support of Covox on port `#FB`
   - added explicit menu items to scale screen
 
 - __2.0.6 (13-jun-2020)__
