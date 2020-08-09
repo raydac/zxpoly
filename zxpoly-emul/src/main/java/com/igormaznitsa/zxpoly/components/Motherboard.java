@@ -44,6 +44,7 @@ public final class Motherboard implements ZxPolyConstants {
   private static final Logger LOGGER = Logger.getLogger("MB");
 
   private static final int SPEC256_GFX_CORES = 8;
+  private static final int SPEC256_16_GFX_CORES = 5;
 
   private final ZxPolyModule[] modules;
   private final Z80[] spec256GfxCores;
@@ -374,25 +375,15 @@ public final class Motherboard implements ZxPolyConstants {
           modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
         }
         break;
-        case SPEC256_16: {
-          final ZxPolyModule masterModule = modules[0];
-          final Z80 mainCpu = masterModule.getCpu();
-          masterModule.saveInternalCopyForGfx();
-          final int syncRegRecord = this.gfxSyncRegsRecord;
-          for (int i = 0; i < 5; i++) {
-            final Z80 gfxCore = this.spec256GfxCores[i];
-            gfxCore.alignRegisterValuesWith(mainCpu, syncRegRecord);
-            masterModule.stepWithGfxCpu(i + 1, gfxCore, signalReset, virtualInt);
-          }
-          masterModule.step(signalReset, virtualInt, resetStatisticsAtModules);
-        }
-        break;
+        case SPEC256_16:
         case SPEC256: {
+          final int cores =
+              this.boardMode == BoardMode.SPEC256_16 ? SPEC256_16_GFX_CORES : SPEC256_GFX_CORES;
           final ZxPolyModule masterModule = modules[0];
           final Z80 mainCpu = masterModule.getCpu();
           masterModule.saveInternalCopyForGfx();
           final int syncRegRecord = this.gfxSyncRegsRecord;
-          for (int i = 0; i < SPEC256_GFX_CORES; i++) {
+          for (int i = 0; i < cores; i++) {
             final Z80 gfxCore = this.spec256GfxCores[i];
             gfxCore.alignRegisterValuesWith(mainCpu, syncRegRecord);
             masterModule.stepWithGfxCpu(i + 1, gfxCore, signalReset, virtualInt);
@@ -582,9 +573,9 @@ public final class Motherboard implements ZxPolyConstants {
           result |= data;
           if (prevResult != result) {
             LOGGER.log(Level.WARNING,
-                "Detected IO collision during read: " + firstDetectedActiveDevice + ", " +
-                    device.getName() + " port #" +
-                    Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
+                "Detected IO collision during read: " + firstDetectedActiveDevice + ", "
+                    + device.getName() + " port #"
+                    + Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
           }
         }
       }

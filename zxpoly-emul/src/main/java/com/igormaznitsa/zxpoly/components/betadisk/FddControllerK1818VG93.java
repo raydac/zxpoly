@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 
 public final class FddControllerK1818VG93 {
 
+  public static final int STAT_RECORDT = 0x20;
   static final int ADDR_COMMAND_STATE = 0;
   static final int ADDR_TRACK = 1;
   static final int ADDR_SECTOR = 2;
@@ -38,7 +39,6 @@ public final class FddControllerK1818VG93 {
   private static final int STAT_TRK00_OR_LOST = 0x04;
   private static final int STAT_CRCERR = 0x08;
   private static final int STAT_NOTFOUND = 0x10;
-  public static final int STAT_RECORDT = 0x20;
   private static final int STAT_HEADL = 0x20;
   private static final int STAT_WRFAULT = 0x20;
   private static final int STAT_WRITEPROTECT = 0x40;
@@ -56,6 +56,7 @@ public final class FddControllerK1818VG93 {
   private final int[] registers = new int[6];
   private final AtomicReference<TrDosDisk> trdosDisk = new AtomicReference<>();
   private final Logger logger;
+  private final Wallclock wallclock = new Wallclock();
   private TrDosDisk.Sector sector;
   private int counter;
   private int extraCounter;
@@ -71,7 +72,6 @@ public final class FddControllerK1818VG93 {
   private long operationTimeOutCycles;
   private volatile long lastBusyOnTime;
   private Object tempAuxiliaryObject;
-  private final Wallclock wallclock = new Wallclock();
 
   public FddControllerK1818VG93(final Logger logger) {
     this.logger = logger;
