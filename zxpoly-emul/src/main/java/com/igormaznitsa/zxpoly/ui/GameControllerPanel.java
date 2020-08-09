@@ -5,8 +5,8 @@ import static java.util.stream.Collectors.toList;
 
 
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
-import com.igormaznitsa.zxpoly.components.gadapter.Gadapter;
-import com.igormaznitsa.zxpoly.components.gadapter.GadapterType;
+import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapter;
+import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterType;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -34,7 +34,7 @@ public final class GameControllerPanel extends JPanel {
         .sorted(comparing(Controller::getName))
         .collect(toList());
 
-    final List<Gadapter> activeGadapters = module.getActiveGadapters();
+    final List<GameControllerAdapter> activeGameControllerAdapters = module.getActiveGadapters();
 
     final GridBagConstraints constraints = new GridBagConstraints(
         0,
@@ -50,23 +50,27 @@ public final class GameControllerPanel extends JPanel {
         0);
 
     for (final Controller c : controllers) {
-      final GadapterRecord newRecord = new GadapterRecord(c, activeGadapters);
+      final GadapterRecord newRecord = new GadapterRecord(c, activeGameControllerAdapters);
       this.add(newRecord, constraints);
     }
   }
 
-  public List<Gadapter> getSelected() {
-    final List<Gadapter> result = new ArrayList<>();
+  public List<GameControllerAdapter> getSelected() {
+    final List<GameControllerAdapter> result = new ArrayList<>();
 
-    final Set<GadapterType> alreadySelected = new HashSet<>();
+    final Set<GameControllerAdapterType> alreadySelected = new HashSet<>();
 
     for (final java.awt.Component c : this.getComponents()) {
       if (c instanceof GadapterRecord) {
         final GadapterRecord record = (GadapterRecord) c;
-        final GadapterType gadapterType = (GadapterType) record.type.getSelectedItem();
-        if (record.selected.isSelected() && gadapterType != GadapterType.NONE && !alreadySelected.contains(gadapterType)) {
-          result.add(module.makeGadapter(record.controller, gadapterType));
-          alreadySelected.add(gadapterType);
+        final GameControllerAdapterType gameControllerAdapterType =
+            (GameControllerAdapterType) record.type.getSelectedItem();
+        if (record.selected.isSelected() &&
+            gameControllerAdapterType != GameControllerAdapterType.NONE &&
+            !alreadySelected.contains(
+                gameControllerAdapterType)) {
+          result.add(module.makeGadapter(record.controller, gameControllerAdapterType));
+          alreadySelected.add(gameControllerAdapterType);
         }
       }
     }
@@ -76,17 +80,20 @@ public final class GameControllerPanel extends JPanel {
   private static final class GadapterRecord extends JPanel {
     private final JCheckBox selected;
     private final JLabel name;
-    private final JComboBox<GadapterType> type;
+    private final JComboBox<GameControllerAdapterType> type;
     private final Controller controller;
 
-    GadapterRecord(final Controller controller, final List<Gadapter> activeGadapters) {
+    GadapterRecord(final Controller controller,
+                   final List<GameControllerAdapter> activeGameControllerAdapters) {
       super(new GridBagLayout());
       this.controller = controller;
       this.selected = new JCheckBox();
       this.name = new JLabel(controller.getName());
-      this.type = new JComboBox<>(GadapterType.values());
+      this.type = new JComboBox<>(GameControllerAdapterType.values());
 
-      final Optional<Gadapter> activeForController = activeGadapters.stream().filter(x -> x.getController() == controller).findFirst();
+      final Optional<GameControllerAdapter> activeForController =
+          activeGameControllerAdapters.stream().filter(x -> x.getController() == controller)
+              .findFirst();
 
       if (activeForController.isPresent()) {
         this.selected.setSelected(true);

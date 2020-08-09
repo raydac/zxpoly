@@ -1,6 +1,6 @@
 package com.igormaznitsa.zxpoly.components.gadapter;
 
-public enum GadapterType {
+public enum GameControllerAdapterType {
   NONE(""),
   KEMPSTON("Kempston"),
   INTERFACEII_PLAYER1("InterfaceII Player1"),
@@ -8,7 +8,7 @@ public enum GadapterType {
 
   private final String description;
 
-  GadapterType(final String description) {
+  GameControllerAdapterType(final String description) {
     this.description = description;
   }
 

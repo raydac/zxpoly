@@ -3,12 +3,13 @@ package com.igormaznitsa.zxpoly.components.gadapter;
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
 import net.java.games.input.Controller;
 
-public class GadapterInterface2 extends Gadapter {
+public class GameControllerAdapterInterface2 extends GameControllerAdapter {
 
   private final int playerIndex;
 
-  public GadapterInterface2(final int index, KeyboardKempstonAndTapeIn keyboardModule, Controller controller) {
-    super(keyboardModule, controller, GadapterType.INTERFACEII_PLAYER1);
+  public GameControllerAdapterInterface2(final int index, KeyboardKempstonAndTapeIn keyboardModule,
+                                         Controller controller) {
+    super(keyboardModule, controller, GameControllerAdapterType.INTERFACEII_PLAYER1);
     this.playerIndex = index;
   }
 

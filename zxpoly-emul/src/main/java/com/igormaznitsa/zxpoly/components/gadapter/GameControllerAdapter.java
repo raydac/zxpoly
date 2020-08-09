@@ -5,13 +5,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
 
-public abstract class Gadapter implements Runnable {
+public abstract class GameControllerAdapter implements Runnable {
   protected final KeyboardKempstonAndTapeIn parent;
   private final Controller controller;
-  private final GadapterType destination;
+  private final GameControllerAdapterType destination;
   private final AtomicReference<Thread> controllerThread = new AtomicReference<>();
 
-  Gadapter(final KeyboardKempstonAndTapeIn keyboardModule, final Controller controller, final GadapterType destination) {
+  GameControllerAdapter(final KeyboardKempstonAndTapeIn keyboardModule, final Controller controller,
+                        final GameControllerAdapterType destination) {
     this.parent = keyboardModule;
     this.controller = controller;
     this.destination = destination;
@@ -21,7 +22,7 @@ public abstract class Gadapter implements Runnable {
     return this.controller;
   }
 
-  public GadapterType getType() {
+  public GameControllerAdapterType getType() {
     return this.destination;
   }
 
@@ -68,7 +69,6 @@ public abstract class Gadapter implements Runnable {
         if (!this.controller.poll()) {
           break;
         }
-
         float buttonAccum = 0.0f;
         boolean buttonDetected = false;
         for (final Component c : this.controller.getComponents()) {

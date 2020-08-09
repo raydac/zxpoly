@@ -3,10 +3,11 @@ package com.igormaznitsa.zxpoly.components.gadapter;
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
 import net.java.games.input.Controller;
 
-public class GadapterKempston extends Gadapter {
+public class GameControllerAdapterKempston extends GameControllerAdapter {
 
-  public GadapterKempston(KeyboardKempstonAndTapeIn keyboardModule, Controller controller) {
-    super(keyboardModule, controller, GadapterType.KEMPSTON);
+  public GameControllerAdapterKempston(KeyboardKempstonAndTapeIn keyboardModule,
+                                       Controller controller) {
+    super(keyboardModule, controller, GameControllerAdapterType.KEMPSTON);
   }
 
   @Override

@@ -20,10 +20,10 @@ package com.igormaznitsa.zxpoly.components;
 import static net.java.games.input.ControllerEnvironment.getDefaultEnvironment;
 
 
-import com.igormaznitsa.zxpoly.components.gadapter.Gadapter;
-import com.igormaznitsa.zxpoly.components.gadapter.GadapterInterface2;
-import com.igormaznitsa.zxpoly.components.gadapter.GadapterKempston;
-import com.igormaznitsa.zxpoly.components.gadapter.GadapterType;
+import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapter;
+import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterInterface2;
+import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterKempston;
+import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterType;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,7 +102,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private final Motherboard board;
   private final AtomicReference<TapeFileReader> tap = new AtomicReference<>();
   private final List<Controller> detectedControllers;
-  private final List<Gadapter> activeGadapters = new CopyOnWriteArrayList<>();
+  private final List<GameControllerAdapter> activeGameControllerAdapters =
+      new CopyOnWriteArrayList<>();
   private volatile long keyboardLines = 0L;
   private volatile long bufferKeyboardLines = 0L;
   private volatile int kempstonSignals = 0;
@@ -138,39 +139,40 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   public void disposeAllActiveGadapters() {
-    this.activeGadapters.forEach(Gadapter::dispose);
-    this.activeGadapters.clear();
+    this.activeGameControllerAdapters.forEach(GameControllerAdapter::dispose);
+    this.activeGameControllerAdapters.clear();
   }
 
-  public Gadapter makeGadapter(final Controller controller, final GadapterType type) {
+  public GameControllerAdapter makeGadapter(final Controller controller,
+                                            final GameControllerAdapterType type) {
     switch (type) {
       case KEMPSTON:
-        return new GadapterKempston(this, controller);
+        return new GameControllerAdapterKempston(this, controller);
       case INTERFACEII_PLAYER1:
-        return new GadapterInterface2(0, this, controller);
+        return new GameControllerAdapterInterface2(0, this, controller);
       case INTERFACEII_PLAYER2:
-        return new GadapterInterface2(1, this, controller);
+        return new GameControllerAdapterInterface2(1, this, controller);
       default:
         throw new Error("Unexpected destination: " + type);
     }
   }
 
-  public List<Gadapter> getActiveGadapters() {
-    synchronized (this.activeGadapters) {
-      return new ArrayList<>(this.activeGadapters);
+  public List<GameControllerAdapter> getActiveGadapters() {
+    synchronized (this.activeGameControllerAdapters) {
+      return new ArrayList<>(this.activeGameControllerAdapters);
     }
   }
 
-  public void setActiveGadapters(final List<Gadapter> adapters) {
-    this.activeGadapters.forEach(Gadapter::dispose);
-    if (!this.activeGadapters.isEmpty()) {
+  public void setActiveGadapters(final List<GameControllerAdapter> adapters) {
+    this.activeGameControllerAdapters.forEach(GameControllerAdapter::dispose);
+    if (!this.activeGameControllerAdapters.isEmpty()) {
       throw new Error("Detected non-disposed controller");
     }
     adapters.forEach(x -> {
       LOGGER.info("Registering adapter: " + x);
-      this.activeGadapters.addAll(adapters);
+      this.activeGameControllerAdapters.addAll(adapters);
     });
-    this.activeGadapters.forEach(Gadapter::start);
+    this.activeGameControllerAdapters.forEach(GameControllerAdapter::start);
   }
 
   private boolean isControllerTypeAllowed(final Controller.Type type) {
@@ -699,8 +701,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     this.keyboardLines = state;
   }
 
-  public void notifyUnregisterGadapter(final Gadapter adapter) {
+  public void notifyUnregisterGadapter(final GameControllerAdapter adapter) {
     LOGGER.info("Unregistering adpater: " + adapter);
-    this.activeGadapters.remove(adapter);
+    this.activeGameControllerAdapters.remove(adapter);
   }
 }

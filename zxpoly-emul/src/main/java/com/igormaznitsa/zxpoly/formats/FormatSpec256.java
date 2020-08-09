@@ -125,7 +125,7 @@ public class FormatSpec256 extends Snapshot {
     }
 
     final boolean modeSpec256colors16 =
-        !"0".equals(findPropertys(archive, "GFXColors16", dbItem, "0"));
+        !"0".equals(findProperty(archive, "GFXColors16", dbItem, "0"));
 
     LOGGER.info("Archive: " + archive);
     final SNAParser parser = archive.getParsedSna();
@@ -240,30 +240,30 @@ public class FormatSpec256 extends Snapshot {
       VideoController.setGfxBack(null);
     }
 
-    board.setGfxAlignParams(findPropertys(archive, "zxpAlignRegs", dbItem, "1PSsT"));
+    board.setGfxAlignParams(findProperty(archive, "zxpAlignRegs", dbItem, "1PSsT"));
 
     VideoController
-        .setGfxBackOverFF(!"0".equals(findPropertys(archive, "BkOverFF", dbItem, "0")));
+        .setGfxBackOverFF(!"0".equals(findProperty(archive, "BkOverFF", dbItem, "0")));
 
     VideoController
         .setGfxHideSameInkPaper(
-            !"0".equals(findPropertys(archive, "HideSameInkPaper", dbItem, "1")));
+            !"0".equals(findProperty(archive, "HideSameInkPaper", dbItem, "1")));
 
     VideoController.setGfxDownColorsMixed(
-        safeParseInt(findPropertys(archive, "DownColorsMixed", dbItem, "0"), 0));
+        safeParseInt(findProperty(archive, "DownColorsMixed", dbItem, "0"), 0));
 
     VideoController.setGfxUpColorsMixed(
-        safeParseInt(findPropertys(archive, "UpColorsMixed", dbItem, "64"), 64));
+        safeParseInt(findProperty(archive, "UpColorsMixed", dbItem, "64"), 64));
 
     VideoController
         .setGfxPaper00InkFF(!"0".equals(
-            findPropertys(archive, "Paper00InkFF", dbItem, bkg.isPresent() ? "0" : "1")));
+            findProperty(archive, "Paper00InkFF", dbItem, bkg.isPresent() ? "0" : "1")));
 
     board.syncSpec256GpuStates();
   }
 
-  private String findPropertys(final Spec256Arch arch, final String name, final BaseItem baseItem,
-                               final String dflt) {
+  private String findProperty(final Spec256Arch arch, final String name, final BaseItem baseItem,
+                              final String dflt) {
     return arch.getProperties()
         .getProperty(name,
             baseItem == null ? dflt : baseItem.findProperty(name, dflt));
