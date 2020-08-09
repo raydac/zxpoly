@@ -18,12 +18,12 @@ public final class TvFilterGrayscale implements TvFilter {
     int index = src.length;
     while (--index >= 0) {
       final int argb = src[index];
-      final int a = (argb >> 24) & 0xFF;
-      final int r = (argb >> 16) & 0xFF;
-      final int g = (argb >> 8) & 0xFF;
+      final int a = (argb >>> 24) & 0xFF;
+      final int r = (argb >>> 16) & 0xFF;
+      final int g = (argb >>> 8) & 0xFF;
       final int b = argb & 0xFF;
 
-      final int y = Math.min(Math.round(r * 0.299f + g * 0.587f + b * 0.114f), 255);
+      final int y = Math.min(Math.round(r * 0.4047f + g * 0.5913f + b * 0.2537f), 255);
 
       dst[index] = (a << 24) | (y << 16) | (y << 8) | y;
     }
