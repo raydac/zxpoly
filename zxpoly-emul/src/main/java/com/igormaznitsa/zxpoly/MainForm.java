@@ -1285,6 +1285,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           new JRadioButtonMenuItem(chain.getText(), chain == TvFilterChain.NONE);
       tvFilterGroup.add(tvFilterMenuItem);
       tvFilterMenuItem.addActionListener(e -> {
+        this.menuActionAnimatedGIF.setEnabled(chain == TvFilterChain.NONE);
         if (tvFilterMenuItem.isSelected()) {
           this.board.getVideoController().setTvFilterChain(chain);
         }
@@ -1899,6 +1900,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         if (result != JOptionPane.OK_OPTION) {
           return;
         }
+        this.menuViewVideoFilter.setEnabled(false);
         this.lastAnimGifOptions = panel.getValue();
         try {
           if (this.board.getBoardMode() == BoardMode.SPEC256) {
@@ -1909,6 +1911,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
                 this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
           }
         } catch (IOException ex) {
+          this.menuViewVideoFilter.setEnabled(true);
           LOGGER.log(Level.SEVERE, "Can't create GIF encoder", ex);
           return;
         }
@@ -1919,6 +1922,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           LOGGER.info("Animated GIF recording has been started");
         }
       } else {
+        this.menuViewVideoFilter.setEnabled(true);
         closeAnimationSave();
         if (this.currentAnimationEncoder.compareAndSet(encoder, null)) {
           this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);

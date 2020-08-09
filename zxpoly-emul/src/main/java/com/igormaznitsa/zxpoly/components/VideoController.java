@@ -1249,18 +1249,16 @@ public final class VideoController extends JComponent
   }
 
   public RenderedImage makeCopyOfCurrentPicture() {
-    this.lockBuffer();
+    final BufferedImage result =
+        new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(),
+            BufferedImage.TYPE_INT_RGB);
+    final Graphics2D gfx = result.createGraphics();
     try {
-      final BufferedImage result =
-          new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(),
-              BufferedImage.TYPE_INT_RGB);
-      final Graphics g = result.getGraphics();
-      g.drawImage(this.bufferImage, 0, 0, this);
-      g.dispose();
-      return result;
+      drawBuffer(gfx, 0, 0, 1.0f, this.tvFilterChain);
     } finally {
-      this.unlockBuffer();
+      gfx.dispose();
     }
+    return result;
   }
 
   @Override
