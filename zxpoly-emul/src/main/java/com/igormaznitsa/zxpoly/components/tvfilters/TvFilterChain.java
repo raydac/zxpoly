@@ -1,5 +1,7 @@
 package com.igormaznitsa.zxpoly.components.tvfilters;
 
+import java.awt.Color;
+
 public enum TvFilterChain {
   NONE("None", new TvFilter[0]),
   GRAYSCALE("Grayscale", new TvFilter[] {TvFilterGrayscale.getInstance()}),
@@ -19,6 +21,17 @@ public enum TvFilterChain {
 
   public boolean isEmpty() {
     return this.filterChain.length == 0;
+  }
+
+  public Color applyBorderColor(final Color borderColor) {
+    if (this.filterChain.length == 0) {
+      return borderColor;
+    }
+    Color result = borderColor;
+    for (final TvFilter f : this.filterChain) {
+      result = f.applyBorderColor(result);
+    }
+    return result;
   }
 
   public TvFilter[] getFilterChain() {

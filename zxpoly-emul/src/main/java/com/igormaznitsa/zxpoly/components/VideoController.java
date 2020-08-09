@@ -923,14 +923,15 @@ public final class VideoController extends JComponent
       final float lineHeight = Math.max(2, (float) height / BORDER_LINES);
       float y = 0.0f;
       final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
+
       for (final byte c : this.borderLineColors) {
-        g.setColor(PALETTE_ZXPOLY_COLORS[c]);
+        g.setColor(this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[c]));
         rectangle.y = y;
         g.fill(rectangle);
         y += lineHeight;
       }
     } else {
-      g.setColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]);
+      g.setColor(this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]));
       g.fill(new Rectangle2D.Float(0.0f, 0.0f, width, height));
     }
     this.changedBorderLines = 0L;
