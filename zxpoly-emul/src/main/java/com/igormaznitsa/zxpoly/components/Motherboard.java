@@ -95,6 +95,8 @@ public final class Motherboard implements ZxPolyConstants {
     iodevices.add(video);
     iodevices.add(new KempstonMouse(this));
 
+    iodevices.add(new ZxAy8910(this));
+
     if (enableCovoxFb) {
       LOGGER.info("Covox #FB is enabled and added among IO devices");
       iodevices.add(new CovoxFb(this));

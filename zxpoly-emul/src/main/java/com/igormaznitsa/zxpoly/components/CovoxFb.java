@@ -17,12 +17,12 @@ public final class CovoxFb implements IoDevice {
 
   @Override
   public int readIo(ZxPolyModule module, int port) {
-    return 0;
+    return -1;
   }
 
   @Override
   public void writeIo(ZxPolyModule module, int port, int value) {
-    if ((port & 0b100) == 0) {
+    if (!module.isTrdosActive() && (port & 0b100) == 0) {
       this.beeper.setChannelValue(1, value);
     }
   }
