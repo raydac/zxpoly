@@ -19,6 +19,8 @@ public class ZxAy8910 implements IoDevice {
   private int ioPortA;
   private int ioPortB;
 
+  private static final int AY_BASE_FREQ_HZ = 1773500;
+
   public ZxAy8910(final Motherboard motherboard) {
     this.motherboard = motherboard;
   }
