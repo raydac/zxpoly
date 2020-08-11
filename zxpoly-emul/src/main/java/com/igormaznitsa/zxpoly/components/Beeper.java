@@ -153,7 +153,7 @@ public class Beeper {
     long value = this.channels.get();
     int mixed = 0;
     for (int i = 0; i < CHANNELS; i++) {
-      mixed += value & 0xFF;
+      mixed = Math.max(mixed, (int) value & 0xFF);
       value >>>= 8;
     }
     return Math.min(mixed, 255) - 128;

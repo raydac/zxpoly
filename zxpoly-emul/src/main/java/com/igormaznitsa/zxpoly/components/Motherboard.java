@@ -400,7 +400,6 @@ public final class Motherboard implements ZxPolyConstants {
       final int audioLevel = Beeper.LEVELS[
           (this.video.getPortFE() >> 2 & 0b110) | (this.keyboard.isTapeIn() ? 1 : 0)];
       this.beeper.setChannelValue(0, audioLevel);
-      this.beeper.updateState(wallclockInt, initialMachineCycleCounter);
 
       final long spentMachineCycles =
           modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
@@ -408,6 +407,8 @@ public final class Motherboard implements ZxPolyConstants {
       for (final IoDevice device : this.ioDevicesPostStep) {
         device.postStep(spentMachineCycles);
       }
+
+      this.beeper.updateState(wallclockInt, initialMachineCycleCounter);
 
       final int curTriggers = this.triggers;
 

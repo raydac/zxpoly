@@ -146,6 +146,6 @@ public class ZxAy8910 implements IoDevice {
 
   @Override
   public int getNotificationFlags() {
-    return NOTIFICATION_NONE;
+    return NOTIFICATION_POSTSTEP;
   }
 }
