@@ -54,6 +54,15 @@ public class Beeper {
 
   public static final int CHANNELS = 8;
 
+  public static final int CHANNEL_BEEPER = 0;
+  public static final int CHANNEL_COVOX = 1;
+  public static final int CHANNEL_AY_A = 2;
+  public static final int CHANNEL_AY_B = 3;
+  public static final int CHANNEL_AY_C = 4;
+  public static final int CHANNEL_RESERV_0 = 5;
+  public static final int CHANNEL_RESERV_1 = 6;
+  public static final int CHANNEL_RESERV_2 = 7;
+
   static {
     //----- init sound level table
     LEVELS[0b000] = 0;

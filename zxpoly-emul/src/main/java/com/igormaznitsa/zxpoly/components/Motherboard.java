@@ -17,6 +17,7 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import static com.igormaznitsa.zxpoly.components.Beeper.CHANNEL_BEEPER;
 import static com.igormaznitsa.zxpoly.components.VideoController.MCYCLES_PER_INT;
 import static java.lang.Math.min;
 
@@ -399,7 +400,7 @@ public final class Motherboard implements ZxPolyConstants {
 
       final int audioLevel = Beeper.LEVELS[
           (this.video.getPortFE() >> 2 & 0b110) | (this.keyboard.isTapeIn() ? 1 : 0)];
-      this.beeper.setChannelValue(0, audioLevel);
+      this.beeper.setChannelValue(CHANNEL_BEEPER, audioLevel);
 
       final long spentMachineCycles =
           modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
@@ -443,7 +444,7 @@ public final class Motherboard implements ZxPolyConstants {
         }
       }
     } else {
-      this.beeper.setChannelValue(0, Beeper.LEVELS[0]);
+      this.beeper.setChannelValue(CHANNEL_BEEPER, Beeper.LEVELS[0]);
       this.beeper.updateState(virtualInt, MCYCLES_PER_INT);
     }
     return result;

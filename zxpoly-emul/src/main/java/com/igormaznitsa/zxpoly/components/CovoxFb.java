@@ -1,5 +1,7 @@
 package com.igormaznitsa.zxpoly.components;
 
+import static com.igormaznitsa.zxpoly.components.Beeper.CHANNEL_COVOX;
+
 public final class CovoxFb implements IoDevice {
 
   private final Motherboard motherboard;
@@ -23,7 +25,7 @@ public final class CovoxFb implements IoDevice {
   @Override
   public void writeIo(ZxPolyModule module, int port, int value) {
     if (!module.isTrdosActive() && (port & 0b100) == 0) {
-      this.beeper.setChannelValue(1, value);
+      this.beeper.setChannelValue(CHANNEL_COVOX, value);
     }
   }
 
