@@ -162,7 +162,7 @@ public class Beeper {
     long value = this.channels.get();
     int mixed = 0;
     for (int i = 0; i < CHANNELS; i++) {
-      mixed = Math.max(mixed, (int) value & 0xFF);
+      mixed += (int) value & 0xFF;
       value >>>= 8;
     }
     return Math.min(mixed, 255) - 128;
@@ -342,6 +342,7 @@ public class Beeper {
       final OutputStream logStream = makeLogStream(new File("./"));
       try {
         this.sourceDataLine.open(AUDIO_FORMAT, SND_BUFFER_LENGTH * 5);
+        this.sourceDataLine.write(new byte[SND_BUFFER_LENGTH], 0, SND_BUFFER_LENGTH);
         if (this.sourceDataLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
           final FloatControl gainControl =
               (FloatControl) this.sourceDataLine.getControl(FloatControl.Type.MASTER_GAIN);

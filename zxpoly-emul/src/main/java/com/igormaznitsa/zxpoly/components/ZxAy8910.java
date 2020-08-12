@@ -5,7 +5,7 @@ import java.util.Arrays;
 public class ZxAy8910 implements IoDevice {
 
   private static final int[] AMPLITUDE_VALUES;
-  private static final int MACHINE_CYCLES_PER_ATICK = 8;
+  private static final int MACHINE_CYCLES_PER_ATICK = 16;
 
   static {
     final double maxAmplitude = 240.0d;
