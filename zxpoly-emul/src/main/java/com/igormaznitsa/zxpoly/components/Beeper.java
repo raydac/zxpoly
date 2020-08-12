@@ -342,7 +342,6 @@ public class Beeper {
       final OutputStream logStream = makeLogStream(new File("./"));
       try {
         this.sourceDataLine.open(AUDIO_FORMAT, SND_BUFFER_LENGTH * 5);
-        this.sourceDataLine.write(new byte[SND_BUFFER_LENGTH], 0, SND_BUFFER_LENGTH);
         if (this.sourceDataLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
           final FloatControl gainControl =
               (FloatControl) this.sourceDataLine.getControl(FloatControl.Type.MASTER_GAIN);

@@ -6,9 +6,10 @@ public class ZxAy8910 implements IoDevice {
 
   private static final int[] AMPLITUDE_VALUES;
   private static final int MACHINE_CYCLES_PER_ATICK = 16;
+  private static final int ATICKS_IN_ENVELOPE_STEP = 16;
 
   static {
-    final double maxAmplitude = 240.0d;
+    final double maxAmplitude = 200.0d;
     AMPLITUDE_VALUES = Arrays.stream(new double[] {
         0.0000d, 0.0137d, 0.0205d, 0.0291d, 0.0423d, 0.0618d, 0.0847d, 0.1369d,
         0.1691d, 0.2647d, 0.3527d, 0.4499d, 0.5704d, 0.6873d, 0.8482d, 1.0000d
@@ -38,7 +39,6 @@ public class ZxAy8910 implements IoDevice {
   private boolean hiC;
   private boolean hiN;
   private int rng;
-  private static final int AUDIOTICKS_FOR_ENVELOPE_STEP = 16;
   private int envelopeValue;
   private boolean envelopeFirstHalf;
 
@@ -273,9 +273,9 @@ public class ZxAy8910 implements IoDevice {
   private void processEnvelope(final int audioTicks) {
     this.envelopeAudioTicks += audioTicks;
     final int detectedSteps;
-    if (this.envelopeAudioTicks > AUDIOTICKS_FOR_ENVELOPE_STEP) {
-      detectedSteps = this.envelopeAudioTicks / AUDIOTICKS_FOR_ENVELOPE_STEP;
-      this.envelopeAudioTicks %= AUDIOTICKS_FOR_ENVELOPE_STEP;
+    if (this.envelopeAudioTicks > ATICKS_IN_ENVELOPE_STEP) {
+      detectedSteps = this.envelopeAudioTicks / ATICKS_IN_ENVELOPE_STEP;
+      this.envelopeAudioTicks %= ATICKS_IN_ENVELOPE_STEP;
     } else {
       detectedSteps = 0;
     }
@@ -438,25 +438,22 @@ public class ZxAy8910 implements IoDevice {
 
     if ((mixer & 0b000001) == 0 || noiseA) {
       final boolean level = this.hiA ^ (noiseA && this.hiN);
-      final int amplitude = level ?
-          AMPLITUDE_VALUES[(this.amplitudeA & 0x10) == 0 ? this.amplitudeA : this.envelopeValue] :
-          AMPLITUDE_VALUES[0];
+      int amplitude = level ? AMPLITUDE_VALUES[this.amplitudeA & 0xF] : AMPLITUDE_VALUES[0];
+      amplitude = (this.amplitudeA & 0x10) == 0 ? amplitude : (amplitude * this.envelopeValue) / 15;
       this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_A, amplitude);
     }
 
     if ((mixer & 0b000010) == 0 || noiseB) {
       final boolean level = this.hiB ^ (noiseB && this.hiN);
-      final int amplitude = level ?
-          AMPLITUDE_VALUES[(this.amplitudeB & 0x10) == 0 ? this.amplitudeB : this.envelopeValue] :
-          AMPLITUDE_VALUES[0];
+      int amplitude = level ? AMPLITUDE_VALUES[this.amplitudeB & 0xF] : AMPLITUDE_VALUES[0];
+      amplitude = (this.amplitudeB & 0x10) == 0 ? amplitude : (amplitude * this.envelopeValue) / 15;
       this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_B, amplitude);
     }
 
     if ((mixer & 0b000100) == 0 || noiseC) {
       final boolean level = this.hiC ^ (noiseC && this.hiN);
-      final int amplitude = level ?
-          AMPLITUDE_VALUES[(this.amplitudeC & 0x10) == 0 ? this.amplitudeC : this.envelopeValue] :
-          AMPLITUDE_VALUES[0];
+      int amplitude = level ? AMPLITUDE_VALUES[this.amplitudeC & 0xF] : AMPLITUDE_VALUES[0];
+      amplitude = (this.amplitudeC & 0x10) == 0 ? amplitude : (amplitude * this.envelopeValue) / 15;
       this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_C, amplitude);
     }
   }
