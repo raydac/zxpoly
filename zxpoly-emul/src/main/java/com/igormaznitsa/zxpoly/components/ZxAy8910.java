@@ -4,10 +4,19 @@ import java.util.Arrays;
 
 public class ZxAy8910 implements IoDevice {
 
+  private static final int[] AMPLITUDE_VALUES;
+  private static final int MACHINE_CYCLES_PER_ATICK = 8;
+
+  static {
+    final double maxAmplitude = 240.0d;
+    AMPLITUDE_VALUES = Arrays.stream(new double[] {
+        0.0000d, 0.0137d, 0.0205d, 0.0291d, 0.0423d, 0.0618d, 0.0847d, 0.1369d,
+        0.1691d, 0.2647d, 0.3527d, 0.4499d, 0.5704d, 0.6873d, 0.8482d, 1.0000d
+    }).map(x -> Math.min(255, Math.round(x * maxAmplitude))).mapToInt(x -> (int) x).toArray();
+  }
+
   private final Motherboard motherboard;
-
   private int addressLatch;
-
   private int tonePeriodA;
   private int amplitudeA;
   private int tonePeriodB;
@@ -20,23 +29,14 @@ public class ZxAy8910 implements IoDevice {
   private int envelopeMode;
   private int ioPortA;
   private int ioPortB;
-
-  private static final int[] AMPLITUDE_VALUES;
-
-  static {
-    final double maxAmplitude = 240.0d;
-    AMPLITUDE_VALUES = Arrays.stream(new double[] {
-        0.0000d, 0.0137d, 0.0205d, 0.0291d, 0.0423d, 0.0618d, 0.0847d, 0.1369d,
-        0.1691d, 0.2647d, 0.3527d, 0.4499d, 0.5704d, 0.6873d, 0.8482d, 1.0000d
-    }).map(x -> Math.min(255, Math.round(x * maxAmplitude))).mapToInt(x -> (int) x).toArray();
-  }
-
   private int counterA;
   private int counterB;
   private int counterC;
   private boolean hiA;
   private boolean hiB;
   private boolean hiC;
+
+  private long machineCycleCounter;
 
   public ZxAy8910(final Motherboard motherboard) {
     this.motherboard = motherboard;
@@ -100,10 +100,27 @@ public class ZxAy8910 implements IoDevice {
           case 15: {
             return this.ioPortB;
           }
+          default:
+            throw new Error("Unexpected");
         }
       }
     }
     return -1;
+  }
+
+  private void initCounterA() {
+    this.counterA = this.tonePeriodA;
+    this.hiA = true;
+  }
+
+  private void initCounterB() {
+    this.counterA = this.tonePeriodA;
+    this.hiA = true;
+  }
+
+  private void inicCounterC() {
+    this.counterA = this.tonePeriodA;
+    this.hiA = true;
   }
 
   @Override
@@ -118,7 +135,7 @@ public class ZxAy8910 implements IoDevice {
           }
           break;
           case 1: {
-            this.tonePeriodA = (this.tonePeriodA & 0xFF) | (value << 8);
+            this.tonePeriodA = (this.tonePeriodA & 0xFF) | ((value & 0xF) << 8);
           }
           break;
           case 2: {
@@ -126,7 +143,7 @@ public class ZxAy8910 implements IoDevice {
           }
           break;
           case 3: {
-            this.tonePeriodB = (this.tonePeriodB & 0xFF) | (value << 8);
+            this.tonePeriodB = (this.tonePeriodB & 0xFF) | ((value & 0xF) << 8);
           }
           break;
           case 4: {
@@ -134,7 +151,7 @@ public class ZxAy8910 implements IoDevice {
           }
           break;
           case 5: {
-            this.tonePeriodC = (this.tonePeriodC & 0xFF) | (value << 8);
+            this.tonePeriodC = (this.tonePeriodC & 0xFF) | ((value & 0xF) << 8);
           }
           break;
           case 6: {
@@ -147,14 +164,23 @@ public class ZxAy8910 implements IoDevice {
           break;
           case 8: {
             this.amplitudeA = value & 0x1F;
+            if (this.amplitudeA != 0) {
+              this.initCounterA();
+            }
           }
           break;
           case 9: {
             this.amplitudeB = value & 0x1F;
+            if (this.amplitudeB != 0) {
+              this.initCounterB();
+            }
           }
           break;
           case 10: {
             this.amplitudeC = value & 0x1F;
+            if (this.amplitudeC != 0) {
+              this.inicCounterC();
+            }
           }
           break;
           case 11: {
@@ -177,68 +203,80 @@ public class ZxAy8910 implements IoDevice {
             this.ioPortB = value;
           }
           break;
+          default:
+            throw new Error("Unexpected");
         }
       }
     }
   }
 
   @Override
-  public void preStep(boolean signalReset, boolean virtualIntTick, boolean wallclockInt) {
-
+  public void preStep(boolean signalReset, boolean virtualIntTick, boolean wallClockInt) {
+    if (signalReset) {
+      this.doReset();
+    }
   }
 
-  private void processPeriods(final int diffTicks) {
-    this.counterA -= diffTicks;
-    this.counterB -= diffTicks;
-    this.counterC -= diffTicks;
+  private boolean isActiveA() {
+    return this.tonePeriodA != 0;
+  }
 
-    if (this.tonePeriodA == 0) {
-      this.counterA = 0;
-      this.hiA = false;
-    } else {
+  private boolean isActiveB() {
+    return this.tonePeriodB != 0;
+  }
+
+  private boolean isActiveC() {
+    return this.tonePeriodC != 0;
+  }
+
+  private void processPeriods(final int audioTicks) {
+    if (this.isActiveA()) {
+      this.counterA -= audioTicks;
       if (this.counterA == 0) {
         this.counterA = this.tonePeriodA;
         this.hiA = !this.hiA;
       } else if (this.counterA < 0) {
-        do {
-          this.hiA = !this.hiA;
-          this.counterA += this.tonePeriodA;
-        } while (this.counterA <= 0);
+        int changes = Math.abs(this.counterA + this.tonePeriodA - 1) / this.tonePeriodA;
+        this.hiA = ((changes & 1) == 0) == this.hiA;
+        this.counterA += changes * this.tonePeriodA;
       }
+    } else {
+      this.counterA = 0;
+      this.hiA = false;
     }
 
-    if (this.tonePeriodB == 0) {
-      this.counterB = 0;
-      this.hiB = false;
-    } else {
+    if (this.isActiveB()) {
+      this.counterB -= audioTicks;
       if (this.counterB == 0) {
         this.counterB = this.tonePeriodB;
         this.hiB = !this.hiB;
       } else if (this.counterB < 0) {
-        do {
-          this.hiB = !this.hiB;
-          this.counterB += this.tonePeriodB;
-        } while (this.counterB <= 0);
+        int changes = Math.abs(this.counterB + this.tonePeriodB - 1) / this.tonePeriodB;
+        this.hiB = ((changes & 1) == 0) == this.hiB;
+        this.counterB += changes * this.tonePeriodB;
       }
+    } else {
+      this.counterB = 0;
+      this.hiB = false;
     }
 
-    if (this.tonePeriodC == 0) {
-      this.counterC = 0;
-      this.hiC = false;
-    } else {
+    if (this.isActiveC()) {
+      this.counterC -= audioTicks;
       if (this.counterC == 0) {
         this.counterC = this.tonePeriodC;
         this.hiC = !this.hiC;
       } else if (this.counterC < 0) {
-        do {
-          this.hiB = !this.hiC;
-          this.counterC += this.tonePeriodC;
-        } while (this.counterC <= 0);
+        int changes = Math.abs(this.counterC + this.tonePeriodC - 1) / this.tonePeriodC;
+        this.hiC = ((changes & 1) == 0) == this.hiC;
+        this.counterC += changes * this.tonePeriodC;
       }
+    } else {
+      this.counterC = 0;
+      this.hiC = false;
     }
   }
 
-  private void doOutput() {
+  private void mixOutputSignals() {
     this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_A,
         this.hiA ? AMPLITUDE_VALUES[this.amplitudeA & 0xF] : AMPLITUDE_VALUES[0]);
     this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_B,
@@ -249,9 +287,15 @@ public class ZxAy8910 implements IoDevice {
 
   @Override
   public void postStep(final long spentMachineCyclesForStep) {
-    final int periodTicks = Math.max(1, (int) (spentMachineCyclesForStep >>> 3));
-    processPeriods(periodTicks);
-    this.doOutput();
+    this.machineCycleCounter += spentMachineCyclesForStep;
+
+    if (this.machineCycleCounter >= MACHINE_CYCLES_PER_ATICK) {
+      final int audioTicks = (int) (this.machineCycleCounter / MACHINE_CYCLES_PER_ATICK);
+      this.machineCycleCounter %= MACHINE_CYCLES_PER_ATICK;
+      processPeriods(audioTicks);
+    }
+
+    this.mixOutputSignals();
   }
 
   @Override
@@ -289,6 +333,6 @@ public class ZxAy8910 implements IoDevice {
 
   @Override
   public int getNotificationFlags() {
-    return NOTIFICATION_POSTSTEP;
+    return NOTIFICATION_POSTSTEP | NOTIFICATION_PRESTEP;
   }
 }
