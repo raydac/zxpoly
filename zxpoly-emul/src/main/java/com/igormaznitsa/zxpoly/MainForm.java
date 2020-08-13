@@ -899,6 +899,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuFileResetActionPerformed(ActionEvent evt) {
+    this.board
+        .setBoardMode(this.menuOptionsZX128Mode.isSelected() ? BoardMode.ZX128 : BoardMode.ZXPOLY,
+            false);
     this.board.resetAndRestoreRom(BASE_ROM);
   }
 
