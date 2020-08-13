@@ -31,6 +31,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -49,8 +50,9 @@ public class Beeper {
   private static final boolean LOG_RAW_SOUND = false;
   private static final int SND_FREQ = 44100;
 
-  public static final int NUMBER_OF_LEVELS = 8;
-  public static final byte[] LEVELS = new byte[NUMBER_OF_LEVELS];
+  public static final int[] LEVELS;
+
+  public static final int MAX_AMPLITUDE = 256 / 8;
 
   public static final int CHANNELS = 8;
 
@@ -64,16 +66,8 @@ public class Beeper {
   public static final int CHANNEL_RESERV_2 = 7;
 
   static {
-    //----- init sound level table
-    LEVELS[0b000] = 0;
-    LEVELS[0b001] = 17; // 6.5%
-    LEVELS[0b010] = 46; // 18%
-    LEVELS[0b011] = 65; // 25.4%
-    LEVELS[0b100] = (byte) 204; // 80%
-    LEVELS[0b101] = (byte) 223; // 87%
-    LEVELS[0b110] = (byte) 238; // 93%
-    LEVELS[0b111] = (byte) 255; // 100%
-    //-------------------------------
+    LEVELS = Arrays.stream(new double[] {0.0d, 0.065d, 0.18d, 0.254d, 0.80d, 0.87d, 0.93d, 1.0d})
+        .mapToInt(d -> Math.min(255, (int) Math.round(d * MAX_AMPLITUDE))).toArray();
   }
 
   private final AtomicLong channels = new AtomicLong(0L);
@@ -231,7 +225,7 @@ public class Beeper {
     private void initMasterGain() {
       final FloatControl gainControl = this.gainControl.get();
       if (gainControl != null) {
-        gainControl.setValue(-20.0f); // 50%
+        gainControl.setValue(-10.0f);
       }
     }
 
@@ -302,7 +296,7 @@ public class Beeper {
     public void reset() {
       if (this.working) {
         LOGGER.info("Reseting");
-        fill(this.soundBuffer, LEVELS[0]);
+        fill(this.soundBuffer, (byte) LEVELS[0]);
       }
     }
 
