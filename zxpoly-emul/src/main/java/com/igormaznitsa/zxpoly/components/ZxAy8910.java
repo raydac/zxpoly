@@ -40,10 +40,10 @@ public class ZxAy8910 implements IoDevice {
   private boolean hiN;
   private int rng;
   private int envelopeValue;
-  private boolean envelopeFirstHalf;
+  private boolean envelopeFirstPart;
 
   private long machineCycleCounter;
-  private int envelopeAudioTicks;
+  private int envelopeStepCounter;
 
   public ZxAy8910(final Motherboard motherboard) {
     this.motherboard = motherboard;
@@ -192,10 +192,12 @@ public class ZxAy8910 implements IoDevice {
           break;
           case 11: {
             this.envelopePeriod = (this.envelopePeriod & 0xFF00) | value;
+            initEnvelope();
           }
           break;
           case 12: {
             this.envelopePeriod = (this.envelopePeriod & 0x00FF) | (value << 8);
+            initEnvelope();
           }
           break;
           case 13: {
@@ -267,20 +269,36 @@ public class ZxAy8910 implements IoDevice {
     } else {
       this.envelopeValue = 0;
     }
-    this.envelopeFirstHalf = true;
+    this.envelopeFirstPart = true;
+    this.envelopeStepCounter = this.envelopePeriod >> 4;
   }
 
   private void processEnvelope(final int audioTicks) {
-    this.envelopeAudioTicks += audioTicks;
-    final int detectedSteps;
-    if (this.envelopeAudioTicks > ATICKS_IN_ENVELOPE_STEP) {
-      detectedSteps = this.envelopeAudioTicks / ATICKS_IN_ENVELOPE_STEP;
-      this.envelopeAudioTicks %= ATICKS_IN_ENVELOPE_STEP;
-    } else {
-      detectedSteps = 0;
+    if (this.envelopePeriod == 0) {
+      this.envelopeValue = 15;
+      return;
     }
 
-    if (detectedSteps > 0) {
+    this.envelopeStepCounter -= audioTicks;
+    final int steps;
+    if (this.envelopeStepCounter > 0) {
+      steps = 0;
+    } else {
+      if (this.envelopeStepCounter == 0) {
+        steps = 1;
+        this.envelopeStepCounter = this.envelopePeriod >> 4;
+      } else {
+        final int perStep = this.envelopePeriod >> 4;
+        if (perStep == 0) {
+          steps = Math.abs(this.envelopeStepCounter);
+        } else {
+          steps = Math.max(1, (this.envelopePeriod + perStep + 1) / perStep);
+        }
+      }
+      this.envelopeStepCounter = this.envelopePeriod >> 4;
+    }
+
+    if (steps > 0) {
       switch (this.envelopeMode & 0xF) {
         case 0b0001:
         case 0b0010:
@@ -288,8 +306,8 @@ public class ZxAy8910 implements IoDevice {
         case 0b1001:
         case 0b0000: { // \____
           if (this.envelopeValue > 0) {
-            this.envelopeValue = Math.max(this.envelopeValue - detectedSteps, 0);
-            this.envelopeFirstHalf = this.envelopeValue == 0;
+            this.envelopeValue = Math.max(this.envelopeValue - steps, 0);
+            this.envelopeFirstPart = this.envelopeValue == 0;
           }
         }
         break;
@@ -297,74 +315,74 @@ public class ZxAy8910 implements IoDevice {
         case 0b0101:
         case 0b0110:
         case 0b0111: { // /|____
-          if (this.envelopeFirstHalf && this.envelopeValue < 15) {
-            this.envelopeValue = Math.min(15, this.envelopeValue + detectedSteps);
-            this.envelopeFirstHalf = this.envelopeValue < 15;
+          if (this.envelopeFirstPart && this.envelopeValue < 15) {
+            this.envelopeValue = Math.min(15, this.envelopeValue + steps);
+            this.envelopeFirstPart = this.envelopeValue < 15;
           }
         }
         break;
         case 0b1000: { // \|\|\|\|\|
-          if (this.envelopeFirstHalf) {
-            this.envelopeValue = Math.max(0, this.envelopeValue - detectedSteps);
-            this.envelopeFirstHalf = this.envelopeValue > 0;
+          if (this.envelopeFirstPart) {
+            this.envelopeValue = Math.max(0, this.envelopeValue - steps);
+            this.envelopeFirstPart = this.envelopeValue > 0;
           } else {
             this.envelopeValue = 15;
-            this.envelopeFirstHalf = true;
+            this.envelopeFirstPart = true;
           }
         }
         break;
         case 0b1010: { // \/\/\/\/\/
-          if (this.envelopeFirstHalf) {
-            this.envelopeValue = Math.max(0, this.envelopeValue - detectedSteps);
-            this.envelopeFirstHalf = this.envelopeValue > 0;
+          if (this.envelopeFirstPart) {
+            this.envelopeValue = Math.max(0, this.envelopeValue - steps);
+            this.envelopeFirstPart = this.envelopeValue > 0;
           } else {
-            this.envelopeValue = Math.min(15, this.envelopeValue + detectedSteps);
-            this.envelopeFirstHalf = this.envelopeValue == 15;
+            this.envelopeValue = Math.min(15, this.envelopeValue + steps);
+            this.envelopeFirstPart = this.envelopeValue == 15;
           }
         }
         break;
         case 0b1011: { // \|--------
-          if (this.envelopeFirstHalf) {
-            this.envelopeValue = Math.max(0, this.envelopeValue - detectedSteps);
-            this.envelopeFirstHalf = this.envelopeValue > 0;
+          if (this.envelopeFirstPart) {
+            this.envelopeValue = Math.max(0, this.envelopeValue - steps);
+            this.envelopeFirstPart = this.envelopeValue > 0;
           } else {
             this.envelopeValue = 15;
           }
         }
         break;
         case 0b1100: { // /|/|/|/|/|/|
-          if (this.envelopeFirstHalf) {
-            this.envelopeValue = Math.min(15, this.envelopeValue + detectedSteps);
-            this.envelopeFirstHalf = this.envelopeValue < 15;
+          if (this.envelopeFirstPart) {
+            this.envelopeValue = Math.min(15, this.envelopeValue + steps);
+            this.envelopeFirstPart = this.envelopeValue < 15;
           } else {
             this.envelopeValue = 0;
-            this.envelopeFirstHalf = true;
+            this.envelopeFirstPart = true;
           }
         }
         break;
         case 0b1101: { // /----------
-          if (this.envelopeFirstHalf) {
-            this.envelopeValue = Math.min(15, this.envelopeValue + detectedSteps);
-            this.envelopeFirstHalf = this.envelopeValue < 15;
+          if (this.envelopeFirstPart) {
+            this.envelopeValue = Math.min(15, this.envelopeValue + steps);
+            this.envelopeFirstPart = this.envelopeValue < 15;
           } else {
             this.envelopeValue = 15;
           }
         }
         break;
         case 0b1110: { // /\/\/\/\/\/\
-          if (this.envelopeFirstHalf) {
-            this.envelopeValue = Math.min(15, this.envelopeValue + detectedSteps);
-            this.envelopeFirstHalf = this.envelopeValue < 15;
+          if (this.envelopeFirstPart) {
+            this.envelopeValue = Math.min(15, this.envelopeValue + steps);
+            this.envelopeFirstPart = this.envelopeValue < 15;
           } else {
-            this.envelopeValue = Math.max(0, this.envelopeValue - detectedSteps);
-            this.envelopeFirstHalf = this.envelopeValue == 0;
+            this.envelopeValue = Math.max(0, this.envelopeValue - steps);
+            this.envelopeFirstPart = this.envelopeValue == 0;
           }
         }
         break;
         case 0b1111: { // /|__________
-          if (this.envelopeFirstHalf) {
-            this.envelopeValue = Math.min(15, this.envelopeValue + detectedSteps);
-            this.envelopeFirstHalf = this.envelopeValue < 15;
+          if (this.envelopeFirstPart) {
+            this.envelopeValue = Math.min(15, this.envelopeValue + steps);
+            this.envelopeFirstPart = this.envelopeValue < 15;
           } else {
             this.envelopeValue = 0;
           }
