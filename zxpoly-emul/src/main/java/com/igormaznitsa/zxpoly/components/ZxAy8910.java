@@ -6,7 +6,23 @@ public class ZxAy8910 implements IoDevice {
 
   private static final int[] AMPLITUDE_VALUES;
   private static final int MACHINE_CYCLES_PER_ATICK = 16;
-  private static final int ATICKS_IN_ENVELOPE_STEP = 16;
+
+  private static final int REG_TONE_PERIOD_A_FINE = 0x00;
+  private static final int REG_TONE_PERIOD_A_ROUGH = 0x01;
+  private static final int REG_TONE_PERIOD_B_FINE = 0x02;
+  private static final int REG_TONE_PERIOD_B_ROUGH = 0x03;
+  private static final int REG_TONE_PERIOD_C_FINE = 0x04;
+  private static final int REG_TONE_PERIOD_C_ROUGH = 0x05;
+  private static final int REG_NOISE_PERIOD = 0x06;
+  private static final int REG_MIXER_CTRL = 0x07;
+  private static final int REG_AMPL_A = 0x08;
+  private static final int REG_AMPL_B = 0x09;
+  private static final int REG_AMPL_C = 0x0A;
+  private static final int REG_ENV_PERIOD_FINE = 0x0B;
+  private static final int REG_ENV_PERIOD_ROUGH = 0x0C;
+  private static final int REG_ENV_SHAPE = 0x0D;
+  private static final int REG_IO_A = 0x0E;
+  private static final int REG_IO_B = 0x0F;
 
   static {
     AMPLITUDE_VALUES = Arrays.stream(new double[] {
@@ -56,59 +72,61 @@ public class ZxAy8910 implements IoDevice {
 
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
-    if (!module.isTrdosActive()) {
-      if (port == 0xBFFD) {
-        switch (this.addressLatch & 0xF) {
-          case 0: {
+    if (!module.isTrdosActive() && (port & 2) == 0) {
+      if ((port & 0xC0FF) == 0xC0FD) {
+        switch (this.addressLatch) {
+          case REG_TONE_PERIOD_A_FINE: {
             return this.tonePeriodA & 0xFF;
           }
-          case 1: {
+          case REG_TONE_PERIOD_A_ROUGH: {
             return (this.tonePeriodA >> 8) & 0xF;
           }
-          case 2: {
+          case REG_TONE_PERIOD_B_FINE: {
             return this.tonePeriodB & 0xFF;
           }
-          case 3: {
+          case REG_TONE_PERIOD_B_ROUGH: {
             return (this.tonePeriodB >> 8) & 0xF;
           }
-          case 4: {
+          case REG_TONE_PERIOD_C_FINE: {
             return this.tonePeriodC & 0xFF;
           }
-          case 5: {
+          case REG_TONE_PERIOD_C_ROUGH: {
             return (this.tonePeriodC >> 8) & 0xF;
           }
-          case 6: {
+          case REG_NOISE_PERIOD: {
             return this.noisePeriod;
           }
-          case 7: {
+          case REG_MIXER_CTRL: {
             return this.mixerReg;
           }
-          case 8: {
+          case REG_AMPL_A: {
             return this.amplitudeA;
           }
-          case 9: {
+          case REG_AMPL_B: {
             return this.amplitudeB;
           }
-          case 10: {
+          case REG_AMPL_C: {
             return this.amplitudeC;
           }
-          case 11: {
+          case REG_ENV_PERIOD_FINE: {
             return this.envelopePeriod & 0xFF;
           }
-          case 12: {
+          case REG_ENV_PERIOD_ROUGH: {
             return (this.envelopePeriod >> 8) & 0xFF;
           }
-          case 13: {
+          case REG_ENV_SHAPE: {
             return this.envelopeMode;
           }
-          case 14: {
+          case REG_IO_A: {
             return this.ioPortA;
           }
-          case 15: {
+          case REG_IO_B: {
             return this.ioPortB;
           }
-          default:
-            throw new Error("Unexpected");
+          default: {
+            // IGNORE
+          }
+          break;
         }
       }
     }
@@ -121,100 +139,103 @@ public class ZxAy8910 implements IoDevice {
   }
 
   private void initCounterB() {
-    this.counterA = this.tonePeriodA;
-    this.hiA = true;
+    this.counterB = this.tonePeriodB;
+    this.hiB = true;
   }
 
   private void initCounterC() {
-    this.counterA = this.tonePeriodA;
-    this.hiA = true;
+    this.counterC = this.tonePeriodC;
+    this.hiC = true;
   }
 
   @Override
   public void writeIo(final ZxPolyModule module, final int port, final int value) {
-    if (!module.isTrdosActive()) {
-      if (port == 0xFFFD) {
+    if (!module.isTrdosActive() & (port & 2) == 0) {
+      if ((port & 0xC0FF) == 0xC0FD) {
         this.addressLatch = value;
-      } else if (port == 0xBFFD) {
-        switch (this.addressLatch & 0xF) {
-          case 0: {
+      } else if ((port & 0xC000) == 0x8000) {
+        switch (this.addressLatch) {
+          case REG_TONE_PERIOD_A_FINE: {
             this.tonePeriodA = (this.tonePeriodA & 0xF00) | value;
           }
           break;
-          case 1: {
+          case REG_TONE_PERIOD_A_ROUGH: {
             this.tonePeriodA = (this.tonePeriodA & 0xFF) | ((value & 0xF) << 8);
           }
           break;
-          case 2: {
+          case REG_TONE_PERIOD_B_FINE: {
             this.tonePeriodB = (this.tonePeriodB & 0xF00) | value;
           }
           break;
-          case 3: {
+          case REG_TONE_PERIOD_B_ROUGH: {
             this.tonePeriodB = (this.tonePeriodB & 0xFF) | ((value & 0xF) << 8);
           }
           break;
-          case 4: {
+          case REG_TONE_PERIOD_C_FINE: {
             this.tonePeriodC = (this.tonePeriodC & 0xF00) | value;
           }
           break;
-          case 5: {
+          case REG_TONE_PERIOD_C_ROUGH: {
             this.tonePeriodC = (this.tonePeriodC & 0xFF) | ((value & 0xF) << 8);
           }
           break;
-          case 6: {
+          case REG_NOISE_PERIOD: {
             this.noisePeriod = value & 0x1F;
           }
           break;
-          case 7: {
+          case REG_MIXER_CTRL: {
             this.mixerReg = value;
           }
           break;
-          case 8: {
+          case REG_AMPL_A: {
             this.amplitudeA = value & 0x1F;
             if (this.amplitudeA != 0) {
               this.initCounterA();
             }
           }
           break;
-          case 9: {
+          case REG_AMPL_B: {
             this.amplitudeB = value & 0x1F;
             if (this.amplitudeB != 0) {
               this.initCounterB();
             }
           }
           break;
-          case 10: {
+          case REG_AMPL_C: {
             this.amplitudeC = value & 0x1F;
             if (this.amplitudeC != 0) {
               this.initCounterC();
             }
           }
           break;
-          case 11: {
+          case REG_ENV_PERIOD_FINE: {
             this.envelopePeriod = (this.envelopePeriod & 0xFF00) | value;
             initEnvelope();
           }
           break;
-          case 12: {
+          case REG_ENV_PERIOD_ROUGH: {
             this.envelopePeriod = (this.envelopePeriod & 0x00FF) | (value << 8);
             initEnvelope();
           }
           break;
-          case 13: {
+          case REG_ENV_SHAPE: {
             this.envelopeMode = value & 0xF;
             this.initEnvelope();
           }
           break;
-          case 14: {
+          case REG_IO_A: {
             this.ioPortA = value;
           }
           break;
-          case 15: {
+          case REG_IO_B: {
             this.ioPortB = value;
           }
           break;
-          default:
-            throw new Error("Unexpected");
+          default: {
+            // IGNORE
+          }
+          ;
+          break;
         }
       }
     }
