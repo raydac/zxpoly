@@ -24,6 +24,19 @@ public class ZxAy8910 implements IoDevice {
   private static final int REG_IO_A = 0x0E;
   private static final int REG_IO_B = 0x0F;
 
+  private static final int MIX_NOISE_A = 0b001000;
+  private static final int MIX_NOISE_B = 0b010000;
+  private static final int MIX_NOISE_C = 0b100000;
+
+  private static final int MIX_TONE_A = 0b000001;
+  private static final int MIX_TONE_B = 0b000010;
+  private static final int MIX_TOME_C = 0b000100;
+
+  private static final int SIGNAL_N = 0b1000;
+  private static final int SIGNAL_C = 0b0100;
+  private static final int SIGNAL_B = 0b0010;
+  private static final int SIGNAL_A = 0b0001;
+
   static {
     AMPLITUDE_VALUES = Arrays.stream(new double[] {
         0.0000d, 0.0137d, 0.0205d, 0.0291d, 0.0423d, 0.0618d, 0.0847d, 0.1369d,
@@ -50,10 +63,7 @@ public class ZxAy8910 implements IoDevice {
   private int counterB;
   private int counterC;
   private int counterN;
-  private boolean hiA;
-  private boolean hiB;
-  private boolean hiC;
-  private boolean hiN;
+  private int signalNCBA;
   private int rng;
   private int envelopeValue;
   private boolean envelopeFirstPart;
@@ -135,17 +145,17 @@ public class ZxAy8910 implements IoDevice {
 
   private void initCounterA() {
     this.counterA = this.tonePeriodA;
-    this.hiA = true;
+    this.signalNCBA |= SIGNAL_A;
   }
 
   private void initCounterB() {
     this.counterB = this.tonePeriodB;
-    this.hiB = true;
+    this.signalNCBA |= SIGNAL_B;
   }
 
   private void initCounterC() {
     this.counterC = this.tonePeriodC;
-    this.hiC = true;
+    this.signalNCBA |= SIGNAL_C;
   }
 
   @Override
@@ -154,7 +164,7 @@ public class ZxAy8910 implements IoDevice {
       if ((port & 0xC0FF) == 0xC0FD) {
         this.addressLatch = value;
       } else if ((port & 0xC000) == 0x8000) {
-        switch (this.addressLatch) {
+        switch (this.addressLatch & 0xF) {
           case REG_TONE_PERIOD_A_FINE: {
             this.tonePeriodA = (this.tonePeriodA & 0xF00) | value;
           }
@@ -234,7 +244,6 @@ public class ZxAy8910 implements IoDevice {
           default: {
             // IGNORE
           }
-          ;
           break;
         }
       }
@@ -263,7 +272,7 @@ public class ZxAy8910 implements IoDevice {
   private void doRndNoise(int counts) {
     do {
       if (((rng + 1) & 0x02) != 0) {
-        this.hiN = !this.hiN;
+        this.signalNCBA ^= SIGNAL_N;
       }
       if ((this.rng & 0x01) != 0) {
         this.rng ^= 0x24000;
@@ -427,87 +436,83 @@ public class ZxAy8910 implements IoDevice {
       this.counterA -= audioTicks;
       if (this.counterA == 0) {
         this.counterA = this.tonePeriodA;
-        this.hiA = !this.hiA;
+        this.signalNCBA ^= SIGNAL_A;
       } else if (this.counterA < 0) {
         int periods = (Math.abs(this.counterA) + this.tonePeriodA - 1) / this.tonePeriodA;
-        this.hiA = ((periods & 1) == 0) == this.hiA;
+        this.signalNCBA =
+            ((periods & 1) == 0) ? this.signalNCBA | SIGNAL_A : this.signalNCBA & ~SIGNAL_A;
         this.counterA += periods * this.tonePeriodA;
       }
     } else {
       this.counterA = 0;
-      this.hiA = false;
+      this.signalNCBA &= ~SIGNAL_A;
     }
 
     if (this.isActiveB()) {
       this.counterB -= audioTicks;
       if (this.counterB == 0) {
         this.counterB = this.tonePeriodB;
-        this.hiB = !this.hiB;
+        this.signalNCBA ^= SIGNAL_B;
       } else if (this.counterB < 0) {
         int periods = (Math.abs(this.counterB) + this.tonePeriodB - 1) / this.tonePeriodB;
-        this.hiB = ((periods & 1) == 0) == this.hiB;
+        this.signalNCBA =
+            ((periods & 1) == 0) ? this.signalNCBA | SIGNAL_B : this.signalNCBA & ~SIGNAL_B;
         this.counterB += periods * this.tonePeriodB;
       }
     } else {
       this.counterB = 0;
-      this.hiB = false;
+      this.signalNCBA &= ~SIGNAL_B;
     }
 
     if (this.isActiveC()) {
       this.counterC -= audioTicks;
       if (this.counterC == 0) {
         this.counterC = this.tonePeriodC;
-        this.hiC = !this.hiC;
+        this.signalNCBA ^= SIGNAL_C;
       } else if (this.counterC < 0) {
         int periods = (Math.abs(this.counterC) + this.tonePeriodC - 1) / this.tonePeriodC;
-        this.hiC = ((periods & 1) == 0) == this.hiC;
+        this.signalNCBA =
+            ((periods & 1) == 0) ? this.signalNCBA | SIGNAL_C : this.signalNCBA & ~SIGNAL_C;
         this.counterC += periods * this.tonePeriodC;
       }
     } else {
       this.counterC = 0;
-      this.hiC = false;
+      this.signalNCBA &= ~SIGNAL_C;
     }
   }
 
   private void mixOutputSignals() {
     final int mixer = this.mixerReg;
+    final int ncba = this.signalNCBA;
 
-    final boolean noiseA = (mixer & 0b001000) == 0;
-    final boolean noiseB = (mixer & 0b010000) == 0;
-    final boolean noiseC = (mixer & 0b100000) == 0;
+    final int n = ncba >> 3;
 
-    final boolean toneA = (mixer & 0b000001) == 0;
-    final boolean toneB = (mixer & 0b000010) == 0;
-    final boolean toneC = (mixer & 0b000100) == 0;
+    final int a = (ncba | mixer) & (n | (mixer >> 3)) & 1;
+    final int b = ((ncba | mixer) >> 1) & (n | (mixer >> 4)) & 1;
+    final int c = ((ncba | mixer) >> 2) & (n | (mixer >> 5)) & 1;
 
-    if (noiseA || toneA) {
-      final boolean level = (!toneA || this.hiA) && (!noiseA || hiN);
-      int amplitude = level ? AMPLITUDE_VALUES[this.amplitudeA & 0xF] : AMPLITUDE_VALUES[0];
-      amplitude = (this.amplitudeA & 0x10) == 0 ? amplitude : (amplitude * this.envelopeValue) / 15;
-      this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_A, amplitude);
-    } else {
+    if (this.amplitudeA > 0xF) {
       this.motherboard.getBeeper()
-          .setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_VALUES[this.amplitudeA & 0xF]);
+          .setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_VALUES[a == 0 ? 0 : this.envelopeValue]);
+    } else {
+      this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_A,
+          AMPLITUDE_VALUES[a == 0 ? 0 : this.amplitudeA & 0xF]);
     }
 
-    if (noiseB || toneB) {
-      final boolean level = (!toneB || this.hiB) && (!noiseB || hiN);
-      int amplitude = level ? AMPLITUDE_VALUES[this.amplitudeB & 0xF] : AMPLITUDE_VALUES[0];
-      amplitude = (this.amplitudeB & 0x10) == 0 ? amplitude : (amplitude * this.envelopeValue) / 15;
-      this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_B, amplitude);
+    if (this.amplitudeB > 0xF) {
+      this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_B,
+          AMPLITUDE_VALUES[b == 0 ? 0 : this.envelopeValue]);
     } else {
-      this.motherboard.getBeeper()
-          .setChannelValue(Beeper.CHANNEL_AY_B, AMPLITUDE_VALUES[this.amplitudeB & 0xF]);
+      this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_B,
+          AMPLITUDE_VALUES[b == 0 ? 0 : this.amplitudeB & 0xF]);
     }
 
-    if (noiseC || toneC) {
-      final boolean level = (!toneC || this.hiC) && (!noiseC || hiN);
-      int amplitude = level ? AMPLITUDE_VALUES[this.amplitudeC & 0xF] : AMPLITUDE_VALUES[0];
-      amplitude = (this.amplitudeC & 0x10) == 0 ? amplitude : (amplitude * this.envelopeValue) / 15;
-      this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_C, amplitude);
+    if (this.amplitudeC > 0xF) {
+      this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_C,
+          AMPLITUDE_VALUES[c == 0 ? 0 : this.envelopeValue]);
     } else {
-      this.motherboard.getBeeper()
-          .setChannelValue(Beeper.CHANNEL_AY_C, AMPLITUDE_VALUES[this.amplitudeC & 0xF]);
+      this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_C,
+          AMPLITUDE_VALUES[c == 0 ? 0 : this.amplitudeC & 0xF]);
     }
   }
 
@@ -537,10 +542,7 @@ public class ZxAy8910 implements IoDevice {
     this.counterC = 0;
     this.counterN = 1;
 
-    this.hiA = false;
-    this.hiB = false;
-    this.hiC = false;
-    this.hiN = false;
+    this.signalNCBA = 0;
 
     this.tonePeriodA = 1;
     this.tonePeriodB = 1;
