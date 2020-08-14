@@ -5,7 +5,7 @@ import java.util.Arrays;
 public class ZxAy8910 implements IoDevice {
 
   private static final int[] AMPLITUDE_VALUES;
-  private static final int MACHINE_CYCLES_PER_ATICK = 16;
+  private static final int MACHINE_CYCLES_PER_ATICK = 32;
 
   private static final int REG_TONE_PERIOD_A_FINE = 0x00;
   private static final int REG_TONE_PERIOD_A_ROUGH = 0x01;
@@ -65,11 +65,11 @@ public class ZxAy8910 implements IoDevice {
   private int counterN;
   private int signalNCBA;
   private int rng;
-  private int envelopeValue;
+  private int envValue;
   private boolean envelopeFirstPart;
 
   private long machineCycleCounter;
-  private int envelopeStepCounter;
+  private int counterE;
 
   public ZxAy8910(final Motherboard motherboard) {
     this.motherboard = motherboard;
@@ -144,26 +144,27 @@ public class ZxAy8910 implements IoDevice {
   }
 
   private void initCounterA() {
-    this.counterA = this.tonePeriodA;
+    this.counterA = this.tonePeriodA >> 1;
     this.signalNCBA |= SIGNAL_A;
   }
 
   private void initCounterB() {
-    this.counterB = this.tonePeriodB;
+    this.counterB = this.tonePeriodB >> 1;
     this.signalNCBA |= SIGNAL_B;
   }
 
   private void initCounterC() {
-    this.counterC = this.tonePeriodC;
+    this.counterC = this.tonePeriodC >> 1;
     this.signalNCBA |= SIGNAL_C;
   }
 
   @Override
-  public void writeIo(final ZxPolyModule module, final int port, final int value) {
+  public void writeIo(final ZxPolyModule module, final int port, int value) {
     if (!module.isTrdosActive() & (port & 2) == 0) {
       if ((port & 0xC0FF) == 0xC0FD) {
         this.addressLatch = value;
       } else if ((port & 0xC000) == 0x8000) {
+        value &= 0xFF;
         switch (this.addressLatch & 0xF) {
           case REG_TONE_PERIOD_A_FINE: {
             this.tonePeriodA = (this.tonePeriodA & 0xF00) | value;
@@ -300,37 +301,32 @@ public class ZxAy8910 implements IoDevice {
 
   private void initEnvelope() {
     if ((this.envelopeMode & 0b0100) == 0) {
-      this.envelopeValue = 15;
+      this.envValue = 15;
     } else {
-      this.envelopeValue = 0;
+      this.envValue = 0;
     }
     this.envelopeFirstPart = true;
-    this.envelopeStepCounter = this.envelopePeriod >> 4;
+    this.counterE = this.envelopePeriod;
   }
 
   private void processEnvelope(final int audioTicks) {
-    if (this.envelopePeriod == 0) {
-      this.envelopeValue = 15;
-      return;
-    }
-
-    this.envelopeStepCounter -= audioTicks;
+    this.counterE -= audioTicks;
     final int steps;
-    if (this.envelopeStepCounter > 0) {
+    if (this.counterE > 0) {
       steps = 0;
     } else {
-      if (this.envelopeStepCounter == 0) {
+      if (this.counterE == 0) {
         steps = 1;
-        this.envelopeStepCounter = this.envelopePeriod >> 4;
+        this.counterE = this.envelopePeriod;
       } else {
-        final int perStep = this.envelopePeriod >> 4;
+        final int perStep = this.envelopePeriod;
         if (perStep == 0) {
-          steps = Math.abs(this.envelopeStepCounter);
+          steps = Math.abs(this.counterE);
         } else {
           steps = Math.max(1, (this.envelopePeriod + perStep + 1) / perStep);
         }
       }
-      this.envelopeStepCounter = this.envelopePeriod >> 4;
+      this.counterE = this.envelopePeriod;
     }
 
     if (steps > 0) {
@@ -340,86 +336,80 @@ public class ZxAy8910 implements IoDevice {
         case 0b0011:
         case 0b1001:
         case 0b0000: { // \____
-          if (this.envelopeValue > 0) {
-            this.envelopeValue = Math.max(this.envelopeValue - steps, 0);
-            this.envelopeFirstPart = this.envelopeValue == 0;
+          if (this.envValue > 0) {
+            this.envValue = Math.max(this.envValue - steps, 0);
+            this.envelopeFirstPart = this.envValue > 0;
           }
         }
         break;
         case 0b0100:
+        case 0b1111:
         case 0b0101:
         case 0b0110:
         case 0b0111: { // /|____
-          if (this.envelopeFirstPart && this.envelopeValue < 15) {
-            this.envelopeValue = Math.min(15, this.envelopeValue + steps);
-            this.envelopeFirstPart = this.envelopeValue < 15;
+          if (this.envelopeFirstPart) {
+            this.envValue = Math.min(15, this.envValue + steps);
+            this.envelopeFirstPart = this.envValue < 15;
+          } else {
+            this.envValue = 0;
           }
         }
         break;
         case 0b1000: { // \|\|\|\|\|
           if (this.envelopeFirstPart) {
-            this.envelopeValue = Math.max(0, this.envelopeValue - steps);
-            this.envelopeFirstPart = this.envelopeValue > 0;
+            this.envValue = Math.max(0, this.envValue - steps);
+            this.envelopeFirstPart = this.envValue > 0;
           } else {
-            this.envelopeValue = 15;
+            this.envValue = 15;
             this.envelopeFirstPart = true;
           }
         }
         break;
         case 0b1010: { // \/\/\/\/\/
           if (this.envelopeFirstPart) {
-            this.envelopeValue = Math.max(0, this.envelopeValue - steps);
-            this.envelopeFirstPart = this.envelopeValue > 0;
+            this.envValue = Math.max(0, this.envValue - steps);
+            this.envelopeFirstPart = this.envValue > 0;
           } else {
-            this.envelopeValue = Math.min(15, this.envelopeValue + steps);
-            this.envelopeFirstPart = this.envelopeValue == 15;
+            this.envValue = Math.min(15, this.envValue + steps);
+            this.envelopeFirstPart = this.envValue == 15;
           }
         }
         break;
         case 0b1011: { // \|--------
           if (this.envelopeFirstPart) {
-            this.envelopeValue = Math.max(0, this.envelopeValue - steps);
-            this.envelopeFirstPart = this.envelopeValue > 0;
+            this.envValue = Math.max(0, this.envValue - steps);
+            this.envelopeFirstPart = this.envValue > 0;
           } else {
-            this.envelopeValue = 15;
+            this.envValue = 15;
           }
         }
         break;
         case 0b1100: { // /|/|/|/|/|/|
           if (this.envelopeFirstPart) {
-            this.envelopeValue = Math.min(15, this.envelopeValue + steps);
-            this.envelopeFirstPart = this.envelopeValue < 15;
+            this.envValue = Math.min(15, this.envValue + steps);
+            this.envelopeFirstPart = this.envValue < 15;
           } else {
-            this.envelopeValue = 0;
+            this.envValue = 0;
             this.envelopeFirstPart = true;
           }
         }
         break;
         case 0b1101: { // /----------
           if (this.envelopeFirstPart) {
-            this.envelopeValue = Math.min(15, this.envelopeValue + steps);
-            this.envelopeFirstPart = this.envelopeValue < 15;
+            this.envValue = Math.min(15, this.envValue + steps);
+            this.envelopeFirstPart = this.envValue < 15;
           } else {
-            this.envelopeValue = 15;
+            this.envValue = 15;
           }
         }
         break;
         case 0b1110: { // /\/\/\/\/\/\
           if (this.envelopeFirstPart) {
-            this.envelopeValue = Math.min(15, this.envelopeValue + steps);
-            this.envelopeFirstPart = this.envelopeValue < 15;
+            this.envValue = Math.min(15, this.envValue + steps);
+            this.envelopeFirstPart = this.envValue < 15;
           } else {
-            this.envelopeValue = Math.max(0, this.envelopeValue - steps);
-            this.envelopeFirstPart = this.envelopeValue == 0;
-          }
-        }
-        break;
-        case 0b1111: { // /|__________
-          if (this.envelopeFirstPart) {
-            this.envelopeValue = Math.min(15, this.envelopeValue + steps);
-            this.envelopeFirstPart = this.envelopeValue < 15;
-          } else {
-            this.envelopeValue = 0;
+            this.envValue = Math.max(0, this.envValue - steps);
+            this.envelopeFirstPart = this.envValue == 0;
           }
         }
         break;
@@ -435,13 +425,13 @@ public class ZxAy8910 implements IoDevice {
     if (this.isActiveA()) {
       this.counterA -= audioTicks;
       if (this.counterA == 0) {
-        this.counterA = this.tonePeriodA;
+        this.counterA = this.tonePeriodA >> 1;
         this.signalNCBA ^= SIGNAL_A;
       } else if (this.counterA < 0) {
         int periods = (Math.abs(this.counterA) + this.tonePeriodA - 1) / this.tonePeriodA;
         this.signalNCBA =
             ((periods & 1) == 0) ? this.signalNCBA | SIGNAL_A : this.signalNCBA & ~SIGNAL_A;
-        this.counterA += periods * this.tonePeriodA;
+        this.counterA += periods * (this.tonePeriodA >> 1);
       }
     } else {
       this.counterA = 0;
@@ -451,13 +441,13 @@ public class ZxAy8910 implements IoDevice {
     if (this.isActiveB()) {
       this.counterB -= audioTicks;
       if (this.counterB == 0) {
-        this.counterB = this.tonePeriodB;
+        this.counterB = this.tonePeriodB >> 1;
         this.signalNCBA ^= SIGNAL_B;
       } else if (this.counterB < 0) {
         int periods = (Math.abs(this.counterB) + this.tonePeriodB - 1) / this.tonePeriodB;
         this.signalNCBA =
             ((periods & 1) == 0) ? this.signalNCBA | SIGNAL_B : this.signalNCBA & ~SIGNAL_B;
-        this.counterB += periods * this.tonePeriodB;
+        this.counterB += periods * (this.tonePeriodB >> 1);
       }
     } else {
       this.counterB = 0;
@@ -467,13 +457,13 @@ public class ZxAy8910 implements IoDevice {
     if (this.isActiveC()) {
       this.counterC -= audioTicks;
       if (this.counterC == 0) {
-        this.counterC = this.tonePeriodC;
+        this.counterC = this.tonePeriodC >> 1;
         this.signalNCBA ^= SIGNAL_C;
       } else if (this.counterC < 0) {
         int periods = (Math.abs(this.counterC) + this.tonePeriodC - 1) / this.tonePeriodC;
         this.signalNCBA =
             ((periods & 1) == 0) ? this.signalNCBA | SIGNAL_C : this.signalNCBA & ~SIGNAL_C;
-        this.counterC += periods * this.tonePeriodC;
+        this.counterC += periods * (this.tonePeriodC >> 1);
       }
     } else {
       this.counterC = 0;
@@ -493,7 +483,7 @@ public class ZxAy8910 implements IoDevice {
 
     if (this.amplitudeA > 0xF) {
       this.motherboard.getBeeper()
-          .setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_VALUES[a == 0 ? 0 : this.envelopeValue]);
+          .setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_VALUES[a == 0 ? 0 : this.envValue]);
     } else {
       this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_A,
           AMPLITUDE_VALUES[a == 0 ? 0 : this.amplitudeA & 0xF]);
@@ -501,7 +491,7 @@ public class ZxAy8910 implements IoDevice {
 
     if (this.amplitudeB > 0xF) {
       this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_B,
-          AMPLITUDE_VALUES[b == 0 ? 0 : this.envelopeValue]);
+          AMPLITUDE_VALUES[b == 0 ? 0 : this.envValue]);
     } else {
       this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_B,
           AMPLITUDE_VALUES[b == 0 ? 0 : this.amplitudeB & 0xF]);
@@ -509,7 +499,7 @@ public class ZxAy8910 implements IoDevice {
 
     if (this.amplitudeC > 0xF) {
       this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_C,
-          AMPLITUDE_VALUES[c == 0 ? 0 : this.envelopeValue]);
+          AMPLITUDE_VALUES[c == 0 ? 0 : this.envValue]);
     } else {
       this.motherboard.getBeeper().setChannelValue(Beeper.CHANNEL_AY_C,
           AMPLITUDE_VALUES[c == 0 ? 0 : this.amplitudeC & 0xF]);
