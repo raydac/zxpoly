@@ -5,7 +5,7 @@ import java.util.Arrays;
 public class ZxAy8910 implements IoDevice {
 
   private static final int[] AMPLITUDE_VALUES;
-  private static final int MACHINE_CYCLES_PER_AUDIOTICK = 32;
+  private static final int MACHINE_CYCLES_PER_AUDIOTICK = 16;
 
   private static final int REG_TONE_PERIOD_A_FINE = 0x00;
   private static final int REG_TONE_PERIOD_A_ROUGH = 0x01;
@@ -51,6 +51,7 @@ public class ZxAy8910 implements IoDevice {
   private int noisePeriod;
   private int mixerReg;
   private int envelopePeriod;
+  private int envelopePeriodReal;
   private int envelopeMode;
   private int ioPortA;
   private int ioPortB;
@@ -144,22 +145,21 @@ public class ZxAy8910 implements IoDevice {
   }
 
   private void initCounterB() {
-    this.counterB = this.tonePeriodB >> 1;
+    this.counterB = this.tonePeriodB;
     this.signalNcba |= SIGNAL_B;
   }
 
   private void initCounterC() {
-    this.counterC = this.tonePeriodC >> 1;
+    this.counterC = this.tonePeriodC;
     this.signalNcba |= SIGNAL_C;
   }
 
   @Override
-  public void writeIo(final ZxPolyModule module, final int port, int value) {
+  public void writeIo(final ZxPolyModule module, final int port, final int value) {
     if (!module.isTrdosActive() & (port & 2) == 0) {
       if ((port & 0xC0FF) == 0xC0FD) {
         this.addressLatch = value;
       } else if ((port & 0xC000) == 0x8000) {
-        value &= 0xFF;
         switch (this.addressLatch & 0xF) {
           case REG_TONE_PERIOD_A_FINE: {
             this.tonePeriodA = (this.tonePeriodA & 0xF00) | value;
@@ -216,11 +216,13 @@ public class ZxAy8910 implements IoDevice {
           break;
           case REG_ENV_PERIOD_FINE: {
             this.envelopePeriod = (this.envelopePeriod & 0xFF00) | value;
+            this.envelopePeriodReal = this.envelopePeriod == 0 ? 2 : this.envelopePeriod << 1;
             initEnvelope();
           }
           break;
           case REG_ENV_PERIOD_ROUGH: {
             this.envelopePeriod = (this.envelopePeriod & 0x00FF) | (value << 8);
+            this.envelopePeriodReal = this.envelopePeriod == 0 ? 2 : this.envelopePeriod << 1;
             initEnvelope();
           }
           break;
@@ -251,18 +253,6 @@ public class ZxAy8910 implements IoDevice {
     if (signalReset) {
       this.doReset();
     }
-  }
-
-  private boolean isActiveA() {
-    return this.tonePeriodA != 0;
-  }
-
-  private boolean isActiveB() {
-    return this.tonePeriodB != 0;
-  }
-
-  private boolean isActiveC() {
-    return this.tonePeriodC != 0;
   }
 
   private void doRndNoise(int counts) {
@@ -301,7 +291,7 @@ public class ZxAy8910 implements IoDevice {
       this.envValue = ENV_MIN;
     }
     this.envFirstHalf = true;
-    this.counterE = this.envelopePeriod;
+    this.counterE = this.envelopePeriodReal;
   }
 
   private void processEnvelope(final int audioTicks) {
@@ -312,33 +302,33 @@ public class ZxAy8910 implements IoDevice {
     } else {
       if (this.counterE == 0) {
         steps = 1;
-        this.counterE = this.envelopePeriod;
+        this.counterE = this.envelopePeriodReal;
       } else {
-        final int perStep = this.envelopePeriod;
+        final int perStep = this.envelopePeriodReal;
         if (perStep == 0) {
           steps = Math.abs(this.counterE);
         } else {
-          steps = Math.max(1, (this.envelopePeriod + perStep + 1) / perStep);
+          steps = Math.max(1, (Math.abs(this.counterE) + (perStep - 1)) / perStep);
         }
       }
-      this.counterE = this.envelopePeriod;
+      this.counterE = this.envelopePeriodReal;
     }
 
     if (steps > 0) {
       switch (this.envelopeMode & 0xF) {
+        case 0b0000:
         case 0b0001:
         case 0b0010:
         case 0b0011:
-        case 0b1001:
-        case 0b0000: { // \____
+        case 0b1001: { // \____
           if (this.envValue > ENV_MIN) {
             this.envValue = Math.max(this.envValue - steps, ENV_MIN);
             this.envFirstHalf = this.envValue > ENV_MIN;
           }
         }
         break;
-        case 0b0100:
         case 0b1111:
+        case 0b0100:
         case 0b0101:
         case 0b0110:
         case 0b0111: { // /|____
@@ -417,48 +407,48 @@ public class ZxAy8910 implements IoDevice {
   private void processPeriods(final int audioTicks) {
     this.processNoiseGen(audioTicks);
 
-    if (this.isActiveA()) {
+    if (this.tonePeriodA != 0) {
       this.counterA -= audioTicks;
       if (this.counterA == 0) {
-        this.counterA = this.tonePeriodA >> 1;
+        this.counterA = this.tonePeriodA;
         this.signalNcba ^= SIGNAL_A;
       } else if (this.counterA < 0) {
         int periods = (Math.abs(this.counterA) + this.tonePeriodA - 1) / this.tonePeriodA;
         this.signalNcba =
             ((periods & 1) == 0) ? this.signalNcba | SIGNAL_A : this.signalNcba & ~SIGNAL_A;
-        this.counterA += periods * (this.tonePeriodA >> 1);
+        this.counterA += periods * this.tonePeriodA;
       }
     } else {
       this.counterA = 0;
       this.signalNcba &= ~SIGNAL_A;
     }
 
-    if (this.isActiveB()) {
+    if (this.tonePeriodB != 0) {
       this.counterB -= audioTicks;
       if (this.counterB == 0) {
-        this.counterB = this.tonePeriodB >> 1;
+        this.counterB = this.tonePeriodB;
         this.signalNcba ^= SIGNAL_B;
       } else if (this.counterB < 0) {
         int periods = (Math.abs(this.counterB) + this.tonePeriodB - 1) / this.tonePeriodB;
         this.signalNcba =
             ((periods & 1) == 0) ? this.signalNcba | SIGNAL_B : this.signalNcba & ~SIGNAL_B;
-        this.counterB += periods * (this.tonePeriodB >> 1);
+        this.counterB += periods * this.tonePeriodB;
       }
     } else {
       this.counterB = 0;
       this.signalNcba &= ~SIGNAL_B;
     }
 
-    if (this.isActiveC()) {
+    if (this.tonePeriodC != 0) {
       this.counterC -= audioTicks;
       if (this.counterC == 0) {
-        this.counterC = this.tonePeriodC >> 1;
+        this.counterC = this.tonePeriodC;
         this.signalNcba ^= SIGNAL_C;
       } else if (this.counterC < 0) {
         int periods = (Math.abs(this.counterC) + this.tonePeriodC - 1) / this.tonePeriodC;
         this.signalNcba =
             ((periods & 1) == 0) ? this.signalNcba | SIGNAL_C : this.signalNcba & ~SIGNAL_C;
-        this.counterC += periods * (this.tonePeriodC >> 1);
+        this.counterC += periods * this.tonePeriodC;
       }
     } else {
       this.counterC = 0;
@@ -515,11 +505,12 @@ public class ZxAy8910 implements IoDevice {
 
     this.signalNcba = 0;
 
-    this.tonePeriodA = 1;
-    this.tonePeriodB = 1;
-    this.tonePeriodC = 1;
+    this.tonePeriodA = 0;
+    this.tonePeriodB = 0;
+    this.tonePeriodC = 0;
 
     this.envelopePeriod = 0;
+    this.envelopePeriodReal = 2;
 
     this.amplitudeA = 0;
     this.amplitudeB = 0;
@@ -530,7 +521,7 @@ public class ZxAy8910 implements IoDevice {
 
     this.noisePeriod = 0;
     this.envelopeMode = 0;
-    this.mixerReg = 0xFF;
+    this.mixerReg = 0;
 
     this.rng = 1;
 
