@@ -5,7 +5,7 @@ import java.util.Arrays;
 public class ZxAy8910 implements IoDevice {
 
   private static final int[] AMPLITUDE_VALUES;
-  private static final int MACHINE_CYCLES_PER_AUDIOTICK = 16;
+  private static final int MACHINE_CYCLES_PER_ATICK = 16;
 
   private static final int REG_TONE_PERIOD_A_FINE = 0x00;
   private static final int REG_TONE_PERIOD_A_ROUGH = 0x01;
@@ -32,10 +32,7 @@ public class ZxAy8910 implements IoDevice {
   private static final int ENV_MIN = 0;
   private static final int ENV_MAX = 15;
 
-  private static final int ENV_CONTINUE = 0b1000;
-  private static final int ENV_ATTACK = 0b0100;
-  private static final int ENV_ALTERNATE = 0b0010;
-  private static final int ENV_HOLD = 0b0001;
+  private static final int ENV_FLAG_ATTACK = 0b0100;
 
   private int lastVa;
   private int lastVb;
@@ -260,7 +257,7 @@ public class ZxAy8910 implements IoDevice {
   }
 
   private void initEnvelope() {
-    if ((this.envelopeMode & ENV_ATTACK) == 0) {
+    if ((this.envelopeMode & ENV_FLAG_ATTACK) == 0) {
       this.curEnv = ENV_MAX;
     } else {
       this.curEnv = ENV_MIN;
@@ -440,9 +437,9 @@ public class ZxAy8910 implements IoDevice {
   public void postStep(final long spentMachineCyclesForStep) {
     this.machineCycleCounter += spentMachineCyclesForStep;
 
-    if (this.machineCycleCounter >= MACHINE_CYCLES_PER_AUDIOTICK) {
-      final int audioTicks = (int) (this.machineCycleCounter / MACHINE_CYCLES_PER_AUDIOTICK);
-      this.machineCycleCounter %= MACHINE_CYCLES_PER_AUDIOTICK;
+    if (this.machineCycleCounter >= MACHINE_CYCLES_PER_ATICK) {
+      final int audioTicks = (int) (this.machineCycleCounter / MACHINE_CYCLES_PER_ATICK);
+      this.machineCycleCounter %= MACHINE_CYCLES_PER_ATICK;
       processPeriods(audioTicks);
       processEnvelope(audioTicks);
     }
