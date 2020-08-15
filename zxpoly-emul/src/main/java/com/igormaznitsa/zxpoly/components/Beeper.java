@@ -159,6 +159,11 @@ public class Beeper {
       mixed += (int) value & 0xFF;
       value >>>= 8;
     }
+
+    if (mixed > 0xFF) {
+      LOGGER.warning("Detected overloading: " + mixed);
+    }
+
     return Math.min(mixed, 255) - 128;
   }
 

@@ -37,6 +37,10 @@ public class ZxAy8910 implements IoDevice {
   private static final int ENV_ALTERNATE = 0b0010;
   private static final int ENV_HOLD = 0b0001;
 
+  private int lastVa;
+  private int lastVb;
+  private int lastVc;
+
   static {
     AMPLITUDE_VALUES = Arrays.stream(new double[] {
         0.0000d, 0.0137d, 0.0205d, 0.0291d, 0.0423d, 0.0618d, 0.0847d, 0.1369d,
@@ -55,7 +59,7 @@ public class ZxAy8910 implements IoDevice {
   private int tonePeriodC;
   private int amplitudeC;
   private int noisePeriod;
-  private int mixerReg;
+  private int mixerControl;
   private int envelopePeriod;
   private int envelopePeriodReal;
   private int envelopeMode;
@@ -109,7 +113,7 @@ public class ZxAy8910 implements IoDevice {
             return this.noisePeriod;
           }
           case REG_MIXER_CTRL: {
-            return this.mixerReg;
+            return this.mixerControl;
           }
           case REG_AMPL_A: {
             return this.amplitudeA;
@@ -183,7 +187,7 @@ public class ZxAy8910 implements IoDevice {
           }
           break;
           case REG_TONE_PERIOD_B_FINE: {
-            this.tonePeriodB = (this.tonePeriodB & 0xF00) | value;
+            this.tonePeriodB = (this.tonePeriodB & 0x0F00) | value;
             initCounterB();
           }
           break;
@@ -193,7 +197,7 @@ public class ZxAy8910 implements IoDevice {
           }
           break;
           case REG_TONE_PERIOD_C_FINE: {
-            this.tonePeriodC = (this.tonePeriodC & 0xF00) | value;
+            this.tonePeriodC = (this.tonePeriodC & 0x0F00) | value;
             initCounterC();
           }
           break;
@@ -208,7 +212,7 @@ public class ZxAy8910 implements IoDevice {
           }
           break;
           case REG_MIXER_CTRL: {
-            this.mixerReg = value;
+            this.mixerControl = value;
             this.initEnvelope();
           }
           break;
@@ -428,7 +432,7 @@ public class ZxAy8910 implements IoDevice {
   }
 
   private void mixOutputSignals() {
-    final int mixer = this.mixerReg;
+    final int mixer = this.mixerControl;
     final int ncba = this.signalNcba;
 
     final int n = ncba >> 3;
@@ -439,18 +443,23 @@ public class ZxAy8910 implements IoDevice {
     final int b = (mixedCba >> 1) & (n | (mixer >> 4)) & 1;
     final int c = (mixedCba >> 2) & (n | (mixer >> 5)) & 1;
 
+    final int va = (AMPLITUDE_VALUES[a == 0 ? 0 :
+        this.amplitudeA > 0xF ? this.curEnv : this.amplitudeA] + this.lastVa) / 2;
+    final int vb = (AMPLITUDE_VALUES[b == 0 ? 0 :
+        this.amplitudeB > 0xF ? this.curEnv : this.amplitudeB] + this.lastVb) / 2;
+    final int vc = (AMPLITUDE_VALUES[c == 0 ? 0 :
+        this.amplitudeC > 0xF ? this.curEnv : this.amplitudeC] + this.lastVc) / 2;
+
     this.motherboard.getBeeper()
-        .setChannelValue(Beeper.CHANNEL_AY_A,
-            AMPLITUDE_VALUES[a == 0 ? 0 :
-                this.amplitudeA > 0xF ? this.curEnv : this.amplitudeA]);
+        .setChannelValue(Beeper.CHANNEL_AY_A, va);
     this.motherboard.getBeeper()
-        .setChannelValue(Beeper.CHANNEL_AY_B,
-            AMPLITUDE_VALUES[b == 0 ? 0 :
-                this.amplitudeB > 0xF ? this.curEnv : this.amplitudeB]);
+        .setChannelValue(Beeper.CHANNEL_AY_B, vb);
     this.motherboard.getBeeper()
-        .setChannelValue(Beeper.CHANNEL_AY_C,
-            AMPLITUDE_VALUES[c == 0 ? 0 :
-                this.amplitudeC > 0xF ? this.curEnv : this.amplitudeC]);
+        .setChannelValue(Beeper.CHANNEL_AY_C, vc);
+
+    this.lastVa = va;
+    this.lastVb = vb;
+    this.lastVc = vc;
   }
 
   @Override
@@ -497,9 +506,13 @@ public class ZxAy8910 implements IoDevice {
 
     this.noisePeriod = 0;
     this.envelopeMode = 0;
-    this.mixerReg = 0;
+    this.mixerControl = 0;
 
     this.rng = 1;
+
+    this.lastVa = AMPLITUDE_VALUES[0];
+    this.lastVb = AMPLITUDE_VALUES[0];
+    this.lastVc = AMPLITUDE_VALUES[0];
 
     this.initEnvelope();
   }
