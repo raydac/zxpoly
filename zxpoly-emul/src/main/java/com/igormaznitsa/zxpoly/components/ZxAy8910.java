@@ -29,6 +29,9 @@ public class ZxAy8910 implements IoDevice {
   private static final int SIGNAL_B = 0b0010;
   private static final int SIGNAL_A = 0b0001;
 
+  private static final int ENV_MIN = 0;
+  private static final int ENV_MAX = 15;
+
   static {
     AMPLITUDE_VALUES = Arrays.stream(new double[] {
         0.0000d, 0.0137d, 0.0205d, 0.0291d, 0.0423d, 0.0618d, 0.0847d, 0.1369d,
@@ -58,7 +61,7 @@ public class ZxAy8910 implements IoDevice {
   private int signalNcba;
   private int rng;
   private int envValue;
-  private boolean envelopeFirstPart;
+  private boolean envFirstHalf;
 
   private long machineCycleCounter;
   private int counterE;
@@ -293,11 +296,11 @@ public class ZxAy8910 implements IoDevice {
 
   private void initEnvelope() {
     if ((this.envelopeMode & 0b0100) == 0) {
-      this.envValue = 15;
+      this.envValue = ENV_MAX;
     } else {
-      this.envValue = 0;
+      this.envValue = ENV_MIN;
     }
-    this.envelopeFirstPart = true;
+    this.envFirstHalf = true;
     this.counterE = this.envelopePeriod;
   }
 
@@ -328,9 +331,9 @@ public class ZxAy8910 implements IoDevice {
         case 0b0011:
         case 0b1001:
         case 0b0000: { // \____
-          if (this.envValue > 0) {
-            this.envValue = Math.max(this.envValue - steps, 0);
-            this.envelopeFirstPart = this.envValue > 0;
+          if (this.envValue > ENV_MIN) {
+            this.envValue = Math.max(this.envValue - steps, ENV_MIN);
+            this.envFirstHalf = this.envValue > ENV_MIN;
           }
         }
         break;
@@ -339,69 +342,69 @@ public class ZxAy8910 implements IoDevice {
         case 0b0101:
         case 0b0110:
         case 0b0111: { // /|____
-          if (this.envelopeFirstPart) {
-            this.envValue = Math.min(15, this.envValue + steps);
-            this.envelopeFirstPart = this.envValue < 15;
+          if (this.envFirstHalf) {
+            this.envValue = Math.min(ENV_MAX, this.envValue + steps);
+            this.envFirstHalf = this.envValue < ENV_MAX;
           } else {
-            this.envValue = 0;
+            this.envValue = ENV_MIN;
           }
         }
         break;
         case 0b1000: { // \|\|\|\|\|
-          if (this.envelopeFirstPart) {
-            this.envValue = Math.max(0, this.envValue - steps);
-            this.envelopeFirstPart = this.envValue > 0;
+          if (this.envFirstHalf) {
+            this.envValue = Math.max(ENV_MIN, this.envValue - steps);
+            this.envFirstHalf = this.envValue > ENV_MIN;
           } else {
-            this.envValue = 15;
-            this.envelopeFirstPart = true;
+            this.envValue = ENV_MAX;
+            this.envFirstHalf = true;
           }
         }
         break;
         case 0b1010: { // \/\/\/\/\/
-          if (this.envelopeFirstPart) {
-            this.envValue = Math.max(0, this.envValue - steps);
-            this.envelopeFirstPart = this.envValue > 0;
+          if (this.envFirstHalf) {
+            this.envValue = Math.max(ENV_MIN, this.envValue - steps);
+            this.envFirstHalf = this.envValue > ENV_MIN;
           } else {
-            this.envValue = Math.min(15, this.envValue + steps);
-            this.envelopeFirstPart = this.envValue == 15;
+            this.envValue = Math.min(ENV_MAX, this.envValue + steps);
+            this.envFirstHalf = this.envValue == ENV_MAX;
           }
         }
         break;
         case 0b1011: { // \|--------
-          if (this.envelopeFirstPart) {
+          if (this.envFirstHalf) {
             this.envValue = Math.max(0, this.envValue - steps);
-            this.envelopeFirstPart = this.envValue > 0;
+            this.envFirstHalf = this.envValue > ENV_MIN;
           } else {
-            this.envValue = 15;
+            this.envValue = ENV_MAX;
           }
         }
         break;
         case 0b1100: { // /|/|/|/|/|/|
-          if (this.envelopeFirstPart) {
-            this.envValue = Math.min(15, this.envValue + steps);
-            this.envelopeFirstPart = this.envValue < 15;
+          if (this.envFirstHalf) {
+            this.envValue = Math.min(ENV_MAX, this.envValue + steps);
+            this.envFirstHalf = this.envValue < ENV_MAX;
           } else {
-            this.envValue = 0;
-            this.envelopeFirstPart = true;
+            this.envValue = ENV_MIN;
+            this.envFirstHalf = true;
           }
         }
         break;
         case 0b1101: { // /----------
-          if (this.envelopeFirstPart) {
-            this.envValue = Math.min(15, this.envValue + steps);
-            this.envelopeFirstPart = this.envValue < 15;
+          if (this.envFirstHalf) {
+            this.envValue = Math.min(ENV_MAX, this.envValue + steps);
+            this.envFirstHalf = this.envValue < ENV_MAX;
           } else {
-            this.envValue = 15;
+            this.envValue = ENV_MAX;
           }
         }
         break;
         case 0b1110: { // /\/\/\/\/\/\
-          if (this.envelopeFirstPart) {
-            this.envValue = Math.min(15, this.envValue + steps);
-            this.envelopeFirstPart = this.envValue < 15;
+          if (this.envFirstHalf) {
+            this.envValue = Math.min(ENV_MAX, this.envValue + steps);
+            this.envFirstHalf = this.envValue < ENV_MAX;
           } else {
-            this.envValue = Math.max(0, this.envValue - steps);
-            this.envelopeFirstPart = this.envValue == 0;
+            this.envValue = Math.max(ENV_MIN, this.envValue - steps);
+            this.envFirstHalf = this.envValue == ENV_MIN;
           }
         }
         break;
