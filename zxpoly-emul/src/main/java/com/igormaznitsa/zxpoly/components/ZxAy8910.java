@@ -140,7 +140,7 @@ public class ZxAy8910 implements IoDevice {
   }
 
   private void initCounterA() {
-    this.counterA = this.tonePeriodA >> 1;
+    this.counterA = this.tonePeriodA;
     this.signalNcba |= SIGNAL_A;
   }
 
@@ -195,23 +195,17 @@ public class ZxAy8910 implements IoDevice {
           break;
           case REG_AMPL_A: {
             this.amplitudeA = value & 0x1F;
-            if (this.amplitudeA != 0) {
-              this.initCounterA();
-            }
+            this.initCounterA();
           }
           break;
           case REG_AMPL_B: {
             this.amplitudeB = value & 0x1F;
-            if (this.amplitudeB != 0) {
-              this.initCounterB();
-            }
+            this.initCounterB();
           }
           break;
           case REG_AMPL_C: {
             this.amplitudeC = value & 0x1F;
-            if (this.amplitudeC != 0) {
-              this.initCounterC();
-            }
+            this.initCounterC();
           }
           break;
           case REG_ENV_PERIOD_FINE: {
@@ -255,32 +249,23 @@ public class ZxAy8910 implements IoDevice {
     }
   }
 
-  private void doRndNoise(int counts) {
-    do {
-      if (((rng + 1) & 0x02) != 0) {
-        this.signalNcba ^= SIGNAL_N;
-      }
-      if ((this.rng & 0x01) != 0) {
-        this.rng ^= 0x24000;
-      }
-      this.rng >>>= 1;
-    } while (--counts > 0);
+  private void doRndNoise() {
+    if (((rng + 1) & 0x02) != 0) {
+      this.signalNcba ^= SIGNAL_N;
+    }
+    if ((this.rng & 0x01) != 0) {
+      this.rng ^= 0x24000;
+    }
+    this.rng >>>= 1;
   }
 
   private void processNoiseGen(final int audioTicks) {
     final int realNoisePeriod = this.noisePeriod == 0 ? 1 : this.noisePeriod;
 
     this.counterN -= audioTicks;
-    if (this.counterN == 0) {
+    if (this.counterN <= 0) {
       this.counterN = realNoisePeriod;
-      this.doRndNoise(1);
-    } else if (this.counterN < 0) {
-      int changes = Math.abs(this.counterN + realNoisePeriod - 1) / realNoisePeriod;
-      this.doRndNoise(changes);
-      this.counterN += changes * realNoisePeriod;
-      if (this.counterN == 0) {
-        this.counterN = 1;
-      }
+      this.doRndNoise();
     }
   }
 
@@ -409,50 +394,24 @@ public class ZxAy8910 implements IoDevice {
 
     if (this.tonePeriodA != 0) {
       this.counterA -= audioTicks;
-      if (this.counterA == 0) {
+      if (this.counterA <= 0) {
         this.counterA = this.tonePeriodA;
         this.signalNcba ^= SIGNAL_A;
-      } else if (this.counterA < 0) {
-        int periods = (Math.abs(this.counterA) + this.tonePeriodA - 1) / this.tonePeriodA;
-        this.signalNcba =
-            ((periods & 1) == 0) ? this.signalNcba | SIGNAL_A : this.signalNcba & ~SIGNAL_A;
-        this.counterA += periods * this.tonePeriodA;
       }
-    } else {
-      this.counterA = 0;
-      this.signalNcba &= ~SIGNAL_A;
     }
-
     if (this.tonePeriodB != 0) {
       this.counterB -= audioTicks;
-      if (this.counterB == 0) {
+      if (this.counterB <= 0) {
         this.counterB = this.tonePeriodB;
         this.signalNcba ^= SIGNAL_B;
-      } else if (this.counterB < 0) {
-        int periods = (Math.abs(this.counterB) + this.tonePeriodB - 1) / this.tonePeriodB;
-        this.signalNcba =
-            ((periods & 1) == 0) ? this.signalNcba | SIGNAL_B : this.signalNcba & ~SIGNAL_B;
-        this.counterB += periods * this.tonePeriodB;
       }
-    } else {
-      this.counterB = 0;
-      this.signalNcba &= ~SIGNAL_B;
     }
-
     if (this.tonePeriodC != 0) {
       this.counterC -= audioTicks;
-      if (this.counterC == 0) {
+      if (this.counterC <= 0) {
         this.counterC = this.tonePeriodC;
         this.signalNcba ^= SIGNAL_C;
-      } else if (this.counterC < 0) {
-        int periods = (Math.abs(this.counterC) + this.tonePeriodC - 1) / this.tonePeriodC;
-        this.signalNcba =
-            ((periods & 1) == 0) ? this.signalNcba | SIGNAL_C : this.signalNcba & ~SIGNAL_C;
-        this.counterC += periods * this.tonePeriodC;
       }
-    } else {
-      this.counterC = 0;
-      this.signalNcba &= ~SIGNAL_C;
     }
   }
 
@@ -468,13 +427,16 @@ public class ZxAy8910 implements IoDevice {
 
     this.motherboard.getBeeper()
         .setChannelValue(Beeper.CHANNEL_AY_A,
-            AMPLITUDE_VALUES[a == 0 ? 0 : this.amplitudeA > 0xF ? this.envValue : this.amplitudeA]);
+            AMPLITUDE_VALUES[a == 0 ? 0 :
+                this.amplitudeA > 0xF ? this.envValue : this.amplitudeA]);
     this.motherboard.getBeeper()
         .setChannelValue(Beeper.CHANNEL_AY_B,
-            AMPLITUDE_VALUES[b == 0 ? 0 : this.amplitudeB > 0xF ? this.envValue : this.amplitudeB]);
+            AMPLITUDE_VALUES[b == 0 ? 0 :
+                this.amplitudeB > 0xF ? this.envValue : this.amplitudeB]);
     this.motherboard.getBeeper()
         .setChannelValue(Beeper.CHANNEL_AY_C,
-            AMPLITUDE_VALUES[c == 0 ? 0 : this.amplitudeC > 0xF ? this.envValue : this.amplitudeC]);
+            AMPLITUDE_VALUES[c == 0 ? 0 :
+                this.amplitudeC > 0xF ? this.envValue : this.amplitudeC]);
   }
 
   @Override
