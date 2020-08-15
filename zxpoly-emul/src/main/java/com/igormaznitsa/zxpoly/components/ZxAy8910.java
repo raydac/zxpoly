@@ -146,22 +146,22 @@ public class ZxAy8910 implements IoDevice {
   }
 
   private void initCounterA() {
-    this.counterA = this.tonePeriodA;
+    this.counterA = 0;
     this.signalNcba |= SIGNAL_A;
   }
 
   private void initCounterN() {
-    this.counterN = this.noisePeriod;
+    this.counterN = 0;
     this.signalNcba |= SIGNAL_N;
   }
 
   private void initCounterB() {
-    this.counterB = this.tonePeriodB;
+    this.counterB = 0;
     this.signalNcba |= SIGNAL_B;
   }
 
   private void initCounterC() {
-    this.counterC = this.tonePeriodC;
+    this.counterC = 0;
     this.signalNcba |= SIGNAL_C;
   }
 
@@ -276,10 +276,9 @@ public class ZxAy8910 implements IoDevice {
   }
 
   private void processNoiseGen(final int audioTicks) {
-    this.counterN -= audioTicks;
-    if (this.counterN <= 0) {
-      this.counterN = this.noisePeriod == 0 ? 1 : this.noisePeriod;
-      this.counterN <<= 1;
+    this.counterN += audioTicks;
+    if (this.counterN >= this.noisePeriod) {
+      this.counterN = 0;
       this.doRndNoise();
     }
   }
@@ -409,26 +408,22 @@ public class ZxAy8910 implements IoDevice {
   private void processPeriods(final int audioTicks) {
     this.processNoiseGen(audioTicks);
 
-    if (this.tonePeriodA != 0) {
-      this.counterA -= audioTicks;
-      if (this.counterA <= 0) {
-        this.counterA = this.tonePeriodA;
-        this.signalNcba ^= SIGNAL_A;
-      }
+    this.counterA += audioTicks;
+    if (this.counterA >= this.tonePeriodA) {
+      this.counterA = 0;
+      this.signalNcba ^= SIGNAL_A;
     }
-    if (this.tonePeriodB != 0) {
-      this.counterB -= audioTicks;
-      if (this.counterB <= 0) {
-        this.counterB = this.tonePeriodB;
-        this.signalNcba ^= SIGNAL_B;
-      }
+
+    this.counterB += audioTicks;
+    if (this.counterB >= this.tonePeriodB) {
+      this.counterB = 0;
+      this.signalNcba ^= SIGNAL_B;
     }
-    if (this.tonePeriodC != 0) {
-      this.counterC -= audioTicks;
-      if (this.counterC <= 0) {
-        this.counterC = this.tonePeriodC;
-        this.signalNcba ^= SIGNAL_C;
-      }
+
+    this.counterC += audioTicks;
+    if (this.counterC >= this.tonePeriodC) {
+      this.counterC = 0;
+      this.signalNcba ^= SIGNAL_C;
     }
   }
 
@@ -438,9 +433,11 @@ public class ZxAy8910 implements IoDevice {
 
     final int n = ncba >> 3;
 
-    final int a = (ncba | mixer) & (n | (mixer >> 3)) & 1;
-    final int b = ((ncba | mixer) >> 1) & (n | (mixer >> 4)) & 1;
-    final int c = ((ncba | mixer) >> 2) & (n | (mixer >> 5)) & 1;
+    final int mixedCba = ncba | mixer;
+
+    final int a = mixedCba & (n | (mixer >> 3)) & 1;
+    final int b = (mixedCba >> 1) & (n | (mixer >> 4)) & 1;
+    final int c = (mixedCba >> 2) & (n | (mixer >> 5)) & 1;
 
     this.motherboard.getBeeper()
         .setChannelValue(Beeper.CHANNEL_AY_A,
