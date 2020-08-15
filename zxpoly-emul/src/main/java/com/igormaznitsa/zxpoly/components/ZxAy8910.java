@@ -214,17 +214,14 @@ public class ZxAy8910 implements IoDevice {
           break;
           case REG_AMPL_A: {
             this.amplitudeA = value & 0x1F;
-            this.initCounterA();
           }
           break;
           case REG_AMPL_B: {
             this.amplitudeB = value & 0x1F;
-            this.initCounterB();
           }
           break;
           case REG_AMPL_C: {
             this.amplitudeC = value & 0x1F;
-            this.initCounterC();
           }
           break;
           case REG_ENV_PERIOD_FINE: {
