@@ -7,10 +7,12 @@
 
 # Changelog
 
-- __2.0.7 (SNAPSHOT)__
+- __2.0.7 (16-aug-2020)__
+  - added support for AY-3-8910
   - added video filters [#1](https://github.com/raydac/zxpoly/issues/1)
-  - added support of Covox on port `#FB`
+  - added support of Covox on port #FB
   - added explicit menu items to scale screen
+  - minor bugfixing and refactoring
 
 - __2.0.6 (13-jun-2020)__
   - minor improvements in Spec256 emulation
@@ -21,11 +23,6 @@
   - improved ubuntu desktop icon script
   - refactoring
   - added MPEG TS streaming, requires [FFMpeg](https://ffmpeg.org/) (beta)
-  
-- __2.0.5 (14-mar-2020)__
-  - improved beeper to render playing TAP sound
-  - GraalVM CE 20.0.0 as embedded JDK image
-  - added support for gamepads and joysticks (through Jinput library)
  
 # Introduction
 I am a ZX-Spectrum fan since 1989. ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from mono-system to poly-system.   

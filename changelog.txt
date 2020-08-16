@@ -1,7 +1,9 @@
-- __2.0.7 (SNAPSHOT)__
+- __2.0.7 (16-aug-2020)__
+  - added support for AY-3-8910
   - added video filters [#1](https://github.com/raydac/zxpoly/issues/1)
   - added support of Covox on port #FB
   - added explicit menu items to scale screen
+  - minor bugfixing and refactoring
 
 _ __2.0.6 (13-jun-2020)__
   - minor improvements in Spec256 emulation
