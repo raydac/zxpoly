@@ -44,8 +44,8 @@ Keyboard plays role of ZX-Keyboard (ALT = SS, SHIFT = CS, CTRL+WHEEL = scaling),
  - Disks: .TRD, .SCL
 
 # Prebuilt versions
-The pre-built versions of the emulator and sprite editor can be downloaded from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.0.6).   
-The emulator is written in Java and its JAR file can be started just through command line `java -jar zxpoly-emul-2.0.6.jar`   
+The pre-built versions of the emulator and sprite editor can be downloaded from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.0.7).   
+The emulator is written in Java and its JAR file can be started just through command line `java -jar zxpoly-emul-2.0.7.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in **File->Options->Active ROM**, the ROM will be downloaded from one of remote network resources.   
 ![Test-ROM](docs/screenshots/testromscr1.png)
 
