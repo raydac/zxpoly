@@ -85,8 +85,8 @@ public class ZxAy8910 implements IoDevice {
 
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
-    if (!module.isTrdosActive() && (port & 2) == 0) {
-      if ((port & 0xC0FF) == 0xC0FD) {
+    if ((port & 2) == 0) {
+      if ((port & 0xC000) == 0x8000) {
         switch (this.addressLatch) {
           case REG_TONE_PERIOD_A_FINE: {
             return this.tonePeriodA & 0xFF;
@@ -148,7 +148,7 @@ public class ZxAy8910 implements IoDevice {
 
   @Override
   public void writeIo(final ZxPolyModule module, final int port, final int value) {
-    if (!module.isTrdosActive() & (port & 2) == 0) {
+    if ((port & 2) == 0) {
       if ((port & 0xC0FF) == 0xC0FD) {
         this.addressLatch = value;
       } else if ((port & 0xC000) == 0x8000) {
