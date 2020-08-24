@@ -58,7 +58,6 @@ public class ZxAy8910 implements IoDevice {
   private int noisePeriod;
   private int mixerControl;
   private int envelopePeriod;
-  private int envelopePeriodReal;
   private int envelopeMode;
   private int ioPortA;
   private int ioPortB;
@@ -199,19 +198,14 @@ public class ZxAy8910 implements IoDevice {
           break;
           case REG_ENV_PERIOD_FINE: {
             this.envelopePeriod = (this.envelopePeriod & 0xFF00) | value;
-            this.envelopePeriodReal = this.envelopePeriod == 0 ? 2 : this.envelopePeriod << 1;
-            initEnvelope();
           }
           break;
           case REG_ENV_PERIOD_ROUGH: {
             this.envelopePeriod = (this.envelopePeriod & 0x00FF) | (value << 8);
-            this.envelopePeriodReal = this.envelopePeriod == 0 ? 2 : this.envelopePeriod << 1;
-            initEnvelope();
           }
           break;
           case REG_ENV_SHAPE: {
             this.envelopeMode = value & 0xF;
-            this.initEnvelope();
           }
           break;
           case REG_IO_A: {
@@ -256,37 +250,10 @@ public class ZxAy8910 implements IoDevice {
     }
   }
 
-  private void initEnvelope() {
-    if ((this.envelopeMode & ENV_FLAG_ATTACK) == 0) {
-      this.curEnv = ENV_MAX;
-    } else {
-      this.curEnv = ENV_MIN;
-    }
-    this.envFirstHalf = true;
-    this.counterE = this.envelopePeriodReal;
-  }
-
   private void processEnvelope(final int audioTicks) {
-    this.counterE -= audioTicks;
-    final int steps;
-    if (this.counterE > 0) {
-      steps = 0;
-    } else {
-      if (this.counterE == 0) {
-        steps = 1;
-        this.counterE = this.envelopePeriodReal;
-      } else {
-        final int perStep = this.envelopePeriodReal;
-        if (perStep == 0) {
-          steps = Math.abs(this.counterE);
-        } else {
-          steps = Math.max(1, (Math.abs(this.counterE) + (perStep - 1)) / perStep);
-        }
-      }
-      this.counterE = this.envelopePeriodReal;
-    }
-
-    if (steps > 0) {
+    this.counterE += audioTicks;
+    if (this.counterE >= (this.envelopePeriod == 0 ? 2 : this.envelopePeriod << 1)) {
+      this.counterE = 0;
       switch (this.envelopeMode) {
         case 0b0000:
         case 0b0001:
@@ -294,7 +261,7 @@ public class ZxAy8910 implements IoDevice {
         case 0b0011:
         case 0b1001: { // \____
           if (this.envFirstHalf) {
-            this.curEnv = Math.max(this.curEnv - steps, ENV_MIN);
+            this.curEnv = Math.max(this.curEnv - 1, ENV_MIN);
             this.envFirstHalf = this.curEnv > ENV_MIN;
           } else {
             this.curEnv = ENV_MIN;
@@ -307,7 +274,7 @@ public class ZxAy8910 implements IoDevice {
         case 0b0110:
         case 0b0111: { // /|____
           if (this.envFirstHalf) {
-            this.curEnv = Math.min(ENV_MAX, this.curEnv + steps);
+            this.curEnv = Math.min(ENV_MAX, this.curEnv + 1);
             this.envFirstHalf = this.curEnv < ENV_MAX;
           } else {
             this.curEnv = ENV_MIN;
@@ -316,7 +283,7 @@ public class ZxAy8910 implements IoDevice {
         break;
         case 0b1000: { // \|\|\|\|\|
           if (this.envFirstHalf) {
-            this.curEnv = Math.max(ENV_MIN, this.curEnv - steps);
+            this.curEnv = Math.max(ENV_MIN, this.curEnv - 1);
             this.envFirstHalf = this.curEnv > ENV_MIN;
           } else {
             this.curEnv = ENV_MAX;
@@ -326,17 +293,17 @@ public class ZxAy8910 implements IoDevice {
         break;
         case 0b1010: { // \/\/\/\/\/
           if (this.envFirstHalf) {
-            this.curEnv = Math.max(ENV_MIN, this.curEnv - steps);
+            this.curEnv = Math.max(ENV_MIN, this.curEnv - 1);
             this.envFirstHalf = this.curEnv > ENV_MIN;
           } else {
-            this.curEnv = Math.min(ENV_MAX, this.curEnv + steps);
+            this.curEnv = Math.min(ENV_MAX, this.curEnv + 1);
             this.envFirstHalf = this.curEnv == ENV_MAX;
           }
         }
         break;
         case 0b1011: { // \|--------
           if (this.envFirstHalf) {
-            this.curEnv = Math.max(ENV_MIN, this.curEnv - steps);
+            this.curEnv = Math.max(ENV_MIN, this.curEnv - 1);
             this.envFirstHalf = this.curEnv > ENV_MIN;
           } else {
             this.curEnv = ENV_MAX;
@@ -345,7 +312,7 @@ public class ZxAy8910 implements IoDevice {
         break;
         case 0b1100: { // /|/|/|/|/|/|
           if (this.envFirstHalf) {
-            this.curEnv = Math.min(ENV_MAX, this.curEnv + steps);
+            this.curEnv = Math.min(ENV_MAX, this.curEnv + 1);
             this.envFirstHalf = this.curEnv < ENV_MAX;
           } else {
             this.curEnv = ENV_MIN;
@@ -355,7 +322,7 @@ public class ZxAy8910 implements IoDevice {
         break;
         case 0b1101: { // /----------
           if (this.envFirstHalf) {
-            this.curEnv = Math.min(ENV_MAX, this.curEnv + steps);
+            this.curEnv = Math.min(ENV_MAX, this.curEnv + 1);
             this.envFirstHalf = this.curEnv < ENV_MAX;
           } else {
             this.curEnv = ENV_MAX;
@@ -364,10 +331,10 @@ public class ZxAy8910 implements IoDevice {
         break;
         case 0b1110: { // /\/\/\/\/\/\
           if (this.envFirstHalf) {
-            this.curEnv = Math.min(ENV_MAX, this.curEnv + steps);
+            this.curEnv = Math.min(ENV_MAX, this.curEnv + 1);
             this.envFirstHalf = this.curEnv < ENV_MAX;
           } else {
-            this.curEnv = Math.max(ENV_MIN, this.curEnv - steps);
+            this.curEnv = Math.max(ENV_MIN, this.curEnv - 1);
             this.envFirstHalf = this.curEnv == ENV_MIN;
           }
         }
@@ -466,7 +433,6 @@ public class ZxAy8910 implements IoDevice {
     this.tonePeriodC = 0;
 
     this.envelopePeriod = 0;
-    this.envelopePeriodReal = 2;
 
     this.amplitudeA = 0;
     this.amplitudeB = 0;
@@ -484,8 +450,6 @@ public class ZxAy8910 implements IoDevice {
     this.lastVa = AMPLITUDE_VALUES[0];
     this.lastVb = AMPLITUDE_VALUES[0];
     this.lastVc = AMPLITUDE_VALUES[0];
-
-    this.initEnvelope();
   }
 
   @Override
