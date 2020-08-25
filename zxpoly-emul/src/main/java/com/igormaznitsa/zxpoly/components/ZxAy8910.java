@@ -218,6 +218,7 @@ public class ZxAy8910 implements IoDevice {
             this.enfAttack = (value & ENV_FLAG_ATTACK) != 0;
             this.enfHold = (value & ENV_FLAG_HOLD) != 0;
             this.enfCont = (value & ENV_FLAG_CONT) != 0;
+            this.envIndexCounter = 0;
           }
           break;
           case REG_IO_A: {
@@ -245,13 +246,9 @@ public class ZxAy8910 implements IoDevice {
   }
 
   private void doRndNoise() {
-    if (((rng + 1) & 0x02) != 0) {
-      this.signalNcba ^= SIGNAL_N;
-    }
-    if ((this.rng & 0x01) != 0) {
-      this.rng ^= 0x24000;
-    }
-    this.rng >>>= 1;
+    this.rng = (this.rng >> 1) ^ (((this.signalNcba >>> 3) & 1) == 0 ? 0x10004 : 0);
+    this.signalNcba =
+        (this.rng & 1) == 0 ? this.signalNcba & ~SIGNAL_N : this.signalNcba | SIGNAL_N;
   }
 
   private void processNoiseGen(final int audioTicks) {
@@ -267,26 +264,29 @@ public class ZxAy8910 implements IoDevice {
 
     if (this.counterE >= (this.envelopePeriod == 0 ? 2 : this.envelopePeriod << 1)) {
       this.counterE = 0;
-      this.envIndexCounter++;
 
-      final int eCounter = this.envIndexCounter & 31;
-      this.envIndexCounter = eCounter;
+      if (this.envIndexCounter >= 0) {
+        this.envIndexCounter++;
 
-      final int result;
+        final int eCounter = this.envIndexCounter & 31;
+        this.envIndexCounter = eCounter;
 
-      if (eCounter < 16) {
-        result = enfAttack ? eCounter : (ENV_MAX - eCounter);
-      } else if (eCounter == 16 && (!enfCont || enfHold)) {
-        result = enfCont && (enfAttack ^ enfAlter) ? ENV_MAX : ENV_MIN;
-        this.envIndexCounter = -1;
-      } else if (eCounter == 16 && !enfAlter) {
-        this.envIndexCounter = 0;
-        result = enfAttack ? ENV_MIN : ENV_MAX;
-      } else {
-        result = enfAttack ? ENV_MAX - eCounter : eCounter;
+        final int result;
+
+        if (eCounter < 16) {
+          result = enfAttack ? eCounter : (ENV_MAX - eCounter);
+        } else if (eCounter == 16 && (!enfCont || enfHold)) {
+          result = enfCont && (enfAttack ^ enfAlter) ? ENV_MAX : ENV_MIN;
+          this.envIndexCounter = -1;
+        } else if (eCounter == 16 && !enfAlter) {
+          this.envIndexCounter = 0;
+          result = enfAttack ? ENV_MIN : ENV_MAX;
+        } else {
+          result = enfAttack ? ENV_MAX - eCounter : eCounter;
+        }
+
+        this.envelopeIndex = result & 15;
       }
-
-      this.envelopeIndex = result & 15;
     }
   }
 
