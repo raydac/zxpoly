@@ -32,7 +32,15 @@ public class ZxAy8910 implements IoDevice {
   private static final int ENV_MIN = 0;
   private static final int ENV_MAX = 15;
 
+  private static final int ENV_FLAG_HOLD = 0b0001;
+  private static final int ENV_FLAG_ALTR = 0b0010;
   private static final int ENV_FLAG_ATTACK = 0b0100;
+  private static final int ENV_FLAG_CONT = 0b1000;
+
+  private boolean enfAttack = false;
+  private boolean enfAlter = false;
+  private boolean enfCont = false;
+  private boolean enfHold = false;
 
   private int lastVa;
   private int lastVb;
@@ -67,11 +75,11 @@ public class ZxAy8910 implements IoDevice {
   private int counterN;
   private int signalNcba;
   private int rng;
-  private int curEnv;
-  private boolean envFirstHalf;
 
   private long machineCycleCounter;
   private int counterE;
+  private int envIndexCounter;
+  private int envelopeIndex;
 
   public ZxAy8910(final Motherboard motherboard) {
     this.motherboard = motherboard;
@@ -206,6 +214,10 @@ public class ZxAy8910 implements IoDevice {
           break;
           case REG_ENV_SHAPE: {
             this.envelopeMode = value & 0xF;
+            this.enfAlter = (value & ENV_FLAG_ALTR) != 0;
+            this.enfAttack = (value & ENV_FLAG_ATTACK) != 0;
+            this.enfHold = (value & ENV_FLAG_HOLD) != 0;
+            this.enfCont = (value & ENV_FLAG_CONT) != 0;
           }
           break;
           case REG_IO_A: {
@@ -250,98 +262,31 @@ public class ZxAy8910 implements IoDevice {
     }
   }
 
-  private void processEnvelope(final int audioTicks) {
+  private void calcEnvelopeIndex(final int audioTicks) {
     this.counterE += audioTicks;
+
     if (this.counterE >= (this.envelopePeriod == 0 ? 2 : this.envelopePeriod << 1)) {
       this.counterE = 0;
-      switch (this.envelopeMode) {
-        case 0b0000:
-        case 0b0001:
-        case 0b0010:
-        case 0b0011:
-        case 0b1001: { // \____
-          if (this.envFirstHalf) {
-            this.curEnv = Math.max(this.curEnv - 1, ENV_MIN);
-            this.envFirstHalf = this.curEnv > ENV_MIN;
-          } else {
-            this.curEnv = ENV_MIN;
-          }
-        }
-        break;
-        case 0b1111:
-        case 0b0100:
-        case 0b0101:
-        case 0b0110:
-        case 0b0111: { // /|____
-          if (this.envFirstHalf) {
-            this.curEnv = Math.min(ENV_MAX, this.curEnv + 1);
-            this.envFirstHalf = this.curEnv < ENV_MAX;
-          } else {
-            this.curEnv = ENV_MIN;
-          }
-        }
-        break;
-        case 0b1000: { // \|\|\|\|\|
-          if (this.envFirstHalf) {
-            this.curEnv = Math.max(ENV_MIN, this.curEnv - 1);
-            this.envFirstHalf = this.curEnv > ENV_MIN;
-          } else {
-            this.curEnv = ENV_MAX;
-            this.envFirstHalf = true;
-          }
-        }
-        break;
-        case 0b1010: { // \/\/\/\/\/
-          if (this.envFirstHalf) {
-            this.curEnv = Math.max(ENV_MIN, this.curEnv - 1);
-            this.envFirstHalf = this.curEnv > ENV_MIN;
-          } else {
-            this.curEnv = Math.min(ENV_MAX, this.curEnv + 1);
-            this.envFirstHalf = this.curEnv == ENV_MAX;
-          }
-        }
-        break;
-        case 0b1011: { // \|--------
-          if (this.envFirstHalf) {
-            this.curEnv = Math.max(ENV_MIN, this.curEnv - 1);
-            this.envFirstHalf = this.curEnv > ENV_MIN;
-          } else {
-            this.curEnv = ENV_MAX;
-          }
-        }
-        break;
-        case 0b1100: { // /|/|/|/|/|/|
-          if (this.envFirstHalf) {
-            this.curEnv = Math.min(ENV_MAX, this.curEnv + 1);
-            this.envFirstHalf = this.curEnv < ENV_MAX;
-          } else {
-            this.curEnv = ENV_MIN;
-            this.envFirstHalf = true;
-          }
-        }
-        break;
-        case 0b1101: { // /----------
-          if (this.envFirstHalf) {
-            this.curEnv = Math.min(ENV_MAX, this.curEnv + 1);
-            this.envFirstHalf = this.curEnv < ENV_MAX;
-          } else {
-            this.curEnv = ENV_MAX;
-          }
-        }
-        break;
-        case 0b1110: { // /\/\/\/\/\/\
-          if (this.envFirstHalf) {
-            this.curEnv = Math.min(ENV_MAX, this.curEnv + 1);
-            this.envFirstHalf = this.curEnv < ENV_MAX;
-          } else {
-            this.curEnv = Math.max(ENV_MIN, this.curEnv - 1);
-            this.envFirstHalf = this.curEnv == ENV_MIN;
-          }
-        }
-        break;
-        default:
-          throw new Error("Unexpected");
+      this.envIndexCounter++;
+
+      final int eCounter = this.envIndexCounter & 31;
+      this.envIndexCounter = eCounter;
+
+      final int result;
+
+      if (eCounter < 16) {
+        result = enfAttack ? eCounter : (ENV_MAX - eCounter);
+      } else if (eCounter == 16 && (!enfCont || enfHold)) {
+        result = enfCont && (enfAttack ^ enfAlter) ? ENV_MAX : ENV_MIN;
+        this.envIndexCounter = -1;
+      } else if (eCounter == 16 && !enfAlter) {
+        this.envIndexCounter = 0;
+        result = enfAttack ? ENV_MIN : ENV_MAX;
+      } else {
+        result = enfAttack ? ENV_MAX - eCounter : eCounter;
       }
+
+      this.envelopeIndex = result & 15;
     }
   }
 
@@ -379,14 +324,12 @@ public class ZxAy8910 implements IoDevice {
     final int b = (mixedCba >> 1) & (n | (nmask >> 1)) & 1;
     final int c = (mixedCba >> 2) & (n | (nmask >> 2)) & 1;
 
-    final int envAmpl = this.curEnv;
-
     final int va = (AMPLITUDE_VALUES[a == 0 ? 0 :
-        this.amplitudeA > 0xF ? envAmpl : this.amplitudeA] + this.lastVa) / 2;
+        this.amplitudeA > 0xF ? this.envelopeIndex : this.amplitudeA] + this.lastVa) / 2;
     final int vb = (AMPLITUDE_VALUES[b == 0 ? 0 :
-        this.amplitudeB > 0xF ? envAmpl : this.amplitudeB] + this.lastVb) / 2;
+        this.amplitudeB > 0xF ? this.envelopeIndex : this.amplitudeB] + this.lastVb) / 2;
     final int vc = (AMPLITUDE_VALUES[c == 0 ? 0 :
-        this.amplitudeC > 0xF ? envAmpl : this.amplitudeC] + this.lastVc) / 2;
+        this.amplitudeC > 0xF ? this.envelopeIndex : this.amplitudeC] + this.lastVc) / 2;
 
     this.motherboard.getBeeper()
         .setChannelValue(Beeper.CHANNEL_AY_A, va);
@@ -408,9 +351,8 @@ public class ZxAy8910 implements IoDevice {
       final int audioTicks = (int) (this.machineCycleCounter / MACHINE_CYCLES_PER_ATICK);
       this.machineCycleCounter %= MACHINE_CYCLES_PER_ATICK;
       processPeriods(audioTicks);
-      processEnvelope(audioTicks);
+      calcEnvelopeIndex(audioTicks);
     }
-
     this.mixOutputSignals();
   }
 
@@ -424,6 +366,7 @@ public class ZxAy8910 implements IoDevice {
     this.counterA = 0;
     this.counterB = 0;
     this.counterC = 0;
+    this.counterE = 0;
     this.counterN = 1;
 
     this.signalNcba = 0;
@@ -443,8 +386,14 @@ public class ZxAy8910 implements IoDevice {
 
     this.noisePeriod = 0;
     this.envelopeMode = 0;
-    this.mixerControl = 0;
+    this.envIndexCounter = 0;
+    this.enfAlter = false;
+    this.enfAttack = false;
+    this.enfCont = false;
+    this.enfHold = false;
+    this.envelopeIndex = 0;
 
+    this.mixerControl = 0;
     this.rng = 1;
 
     this.lastVa = AMPLITUDE_VALUES[0];
