@@ -246,7 +246,7 @@ public class ZxAy8910 implements IoDevice {
   }
 
   private void doRndNoise() {
-    this.rng = (this.rng >> 1) ^ (((this.signalNcba >>> 3) & 1) == 0 ? 0x10004 : 0);
+    this.rng = (this.rng >> 1) ^ (((this.signalNcba >> 3) & 1) == 0 ? 0x10004 : 0);
     this.signalNcba =
         (this.rng & 1) == 0 ? this.signalNcba & ~SIGNAL_N : this.signalNcba | SIGNAL_N;
   }
