@@ -33,19 +33,20 @@ public class OptionsPanel extends javax.swing.JPanel {
 
   private static final Logger LOGGER = Logger.getLogger("Options");
 
-  // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JCheckBox checkCovoxFb;
-  private javax.swing.JLabel jLabel8;
+  private javax.swing.JCheckBox checkTurboSound;
+  private javax.swing.JLabel labelCovoxFb;
+  private javax.swing.JLabel labelTurboSound;
   private javax.swing.JCheckBox checkGrabSound;
   private javax.swing.JComboBox<String> comboNetAdddr;
   private javax.swing.JComboBox<String> comboRomSource;
-  private javax.swing.JLabel jLabel1;
-  private javax.swing.JLabel jLabel2;
-  private javax.swing.JLabel jLabel3;
-  private javax.swing.JLabel jLabel4;
-  private javax.swing.JLabel jLabel5;
-  private javax.swing.JLabel jLabel6;
-  private javax.swing.JLabel jLabel7;
+  private javax.swing.JLabel labelFfMpegPath;
+  private javax.swing.JLabel labelNetInterface;
+  private javax.swing.JLabel labelPort;
+  private javax.swing.JLabel labelSound;
+  private javax.swing.JLabel labelRomSource;
+  private javax.swing.JLabel labelIntFrame;
+  private javax.swing.JLabel labelFrameRate;
   private javax.swing.JPanel jPanel1;
   private javax.swing.JPanel jPanel2;
   private javax.swing.JSpinner spinnerFramesPerSec;
@@ -102,51 +103,52 @@ public class OptionsPanel extends javax.swing.JPanel {
   }
 
   @SuppressWarnings("unchecked")
-  // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
     java.awt.GridBagConstraints gridBagConstraints;
 
     jPanel1 = new javax.swing.JPanel();
-    jLabel1 = new javax.swing.JLabel();
-    jLabel2 = new javax.swing.JLabel();
+    labelFfMpegPath = new javax.swing.JLabel();
+    labelNetInterface = new javax.swing.JLabel();
     textFfmpegPath = new javax.swing.JTextField();
     comboNetAdddr = new javax.swing.JComboBox<>();
-    jLabel3 = new javax.swing.JLabel();
+    labelPort = new javax.swing.JLabel();
     spinnerPort = new javax.swing.JSpinner();
-    jLabel4 = new javax.swing.JLabel();
+    labelSound = new javax.swing.JLabel();
     checkGrabSound = new javax.swing.JCheckBox();
-    jLabel7 = new javax.swing.JLabel();
+    labelFrameRate = new javax.swing.JLabel();
     spinnerFramesPerSec = new javax.swing.JSpinner();
     jPanel2 = new javax.swing.JPanel();
-    jLabel5 = new javax.swing.JLabel();
-    jLabel6 = new javax.swing.JLabel();
+    labelRomSource = new javax.swing.JLabel();
+    labelIntFrame = new javax.swing.JLabel();
     comboRomSource = new javax.swing.JComboBox<>();
     spinnerIntFrame = new javax.swing.JSpinner();
-    jLabel8 = new javax.swing.JLabel();
+    labelCovoxFb = new javax.swing.JLabel();
     checkCovoxFb = new javax.swing.JCheckBox();
+    labelTurboSound = new javax.swing.JLabel();
+    checkTurboSound = new javax.swing.JCheckBox();
 
     setLayout(new java.awt.GridBagLayout());
 
     jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Streaming"));
     jPanel1.setLayout(new java.awt.GridBagLayout());
 
-    jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-    jLabel1.setText("FFmpeg path:");
+    labelFfMpegPath.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelFfMpegPath.setText("FFmpeg path:");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 0;
     gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-    jPanel1.add(jLabel1, gridBagConstraints);
+    jPanel1.add(labelFfMpegPath, gridBagConstraints);
 
-    jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-    jLabel2.setText("Net.interface:");
+    labelNetInterface.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelNetInterface.setText("Net.interface:");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 1;
     gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-    jPanel1.add(jLabel2, gridBagConstraints);
+    jPanel1.add(labelNetInterface, gridBagConstraints);
 
     textFfmpegPath.setColumns(24);
     gridBagConstraints = new java.awt.GridBagConstraints();
@@ -155,22 +157,21 @@ public class OptionsPanel extends javax.swing.JPanel {
     gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
     jPanel1.add(textFfmpegPath, gridBagConstraints);
 
-    comboNetAdddr.setModel(new javax.swing.DefaultComboBoxModel<>(
-        new String[] {"Item 1", "Item 2", "Item 3", "Item 4"}));
+    comboNetAdddr.setModel(new javax.swing.DefaultComboBoxModel<>());
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 1;
     gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
     jPanel1.add(comboNetAdddr, gridBagConstraints);
 
-    jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-    jLabel3.setText("Port:");
+    labelPort.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelPort.setText("Port:");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 2;
     gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-    jPanel1.add(jLabel3, gridBagConstraints);
+    jPanel1.add(labelPort, gridBagConstraints);
 
     spinnerPort.setModel(new javax.swing.SpinnerNumberModel(0, 0, 65535, 1));
     gridBagConstraints = new java.awt.GridBagConstraints();
@@ -179,27 +180,27 @@ public class OptionsPanel extends javax.swing.JPanel {
     gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
     jPanel1.add(spinnerPort, gridBagConstraints);
 
-    jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-    jLabel4.setText("Sound:");
+    labelSound.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelSound.setText("Sound:");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 4;
     gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-    jPanel1.add(jLabel4, gridBagConstraints);
+    jPanel1.add(labelSound, gridBagConstraints);
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 4;
     gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
     jPanel1.add(checkGrabSound, gridBagConstraints);
 
-    jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-    jLabel7.setText("Frame rate:");
+    labelFrameRate.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelFrameRate.setText("Frame rate:");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 3;
     gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    jPanel1.add(jLabel7, gridBagConstraints);
+    jPanel1.add(labelFrameRate, gridBagConstraints);
 
     spinnerFramesPerSec.setModel(new javax.swing.SpinnerNumberModel(25, 1, 50, 1));
     gridBagConstraints = new java.awt.GridBagConstraints();
@@ -217,24 +218,23 @@ public class OptionsPanel extends javax.swing.JPanel {
     jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Generat"));
     jPanel2.setLayout(new java.awt.GridBagLayout());
 
-    jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-    jLabel5.setText("ROM source:");
+    labelRomSource.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelRomSource.setText("ROM source:");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 0;
     gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    jPanel2.add(jLabel5, gridBagConstraints);
+    jPanel2.add(labelRomSource, gridBagConstraints);
 
-    jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-    jLabel6.setText("INT/Frame:");
+    labelIntFrame.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelIntFrame.setText("INT/Frame:");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 1;
     gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    jPanel2.add(jLabel6, gridBagConstraints);
+    jPanel2.add(labelIntFrame, gridBagConstraints);
 
-    comboRomSource.setModel(new javax.swing.DefaultComboBoxModel<>(
-        new String[] {"Item 1", "Item 2", "Item 3", "Item 4"}));
+    comboRomSource.setModel(new javax.swing.DefaultComboBoxModel<>());
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 0;
@@ -248,16 +248,30 @@ public class OptionsPanel extends javax.swing.JPanel {
     gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
     jPanel2.add(spinnerIntFrame, gridBagConstraints);
 
-    jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-    jLabel8.setText("Covox (#FB):");
+    labelTurboSound.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelTurboSound.setText("TurboSound (NedoPC):");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 2;
     gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    jPanel2.add(jLabel8, gridBagConstraints);
+    jPanel2.add(labelTurboSound, gridBagConstraints);
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 2;
+    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+    jPanel2.add(checkTurboSound, gridBagConstraints);
+
+    labelCovoxFb.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelCovoxFb.setText("Covox (#FB):");
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 3;
+    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    jPanel2.add(labelCovoxFb, gridBagConstraints);
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 3;
     gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
     jPanel2.add(checkCovoxFb, gridBagConstraints);
@@ -267,7 +281,7 @@ public class OptionsPanel extends javax.swing.JPanel {
     gridBagConstraints.gridy = 1;
     gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
     add(jPanel2, gridBagConstraints);
-  }// </editor-fold>//GEN-END:initComponents
+  }
 
   public static final class DataContainer {
 
@@ -279,6 +293,7 @@ public class OptionsPanel extends javax.swing.JPanel {
     public final int intPerFrame;
     public final int frameRate;
     public final boolean covoxFb;
+    public final boolean turboSound;
 
     public DataContainer() {
       this.activeRom = AppOptions.getInstance().getActiveRom();
@@ -289,6 +304,7 @@ public class OptionsPanel extends javax.swing.JPanel {
       this.ffmpegPath = AppOptions.getInstance().getFfmpegPath();
       this.frameRate = AppOptions.getInstance().getFrameRate();
       this.covoxFb = AppOptions.getInstance().isCovoxFb();
+      this.turboSound = AppOptions.getInstance().isTurboSound();
     }
 
     public DataContainer(final OptionsPanel optionsPanel) {
@@ -302,6 +318,7 @@ public class OptionsPanel extends javax.swing.JPanel {
       this.inetAddress = optionsPanel.comboNetAdddr.getSelectedItem().toString();
       this.frameRate = (Integer) optionsPanel.spinnerFramesPerSec.getValue();
       this.covoxFb = optionsPanel.checkCovoxFb.isSelected();
+      this.turboSound = optionsPanel.checkTurboSound.isSelected();
     }
 
     public void store() {
@@ -313,6 +330,7 @@ public class OptionsPanel extends javax.swing.JPanel {
       AppOptions.getInstance().setPort(this.port);
       AppOptions.getInstance().setAddress(this.inetAddress);
       AppOptions.getInstance().setFrameRate(this.frameRate);
+      AppOptions.getInstance().setTurboSound(this.turboSound);
       try {
         AppOptions.getInstance().flush();
       } catch (BackingStoreException ex) {
@@ -321,5 +339,4 @@ public class OptionsPanel extends javax.swing.JPanel {
     }
 
   }
-  // End of variables declaration//GEN-END:variables
 }

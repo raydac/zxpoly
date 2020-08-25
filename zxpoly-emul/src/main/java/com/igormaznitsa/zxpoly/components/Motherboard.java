@@ -26,6 +26,7 @@ import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.snd.CovoxFb;
+import com.igormaznitsa.zxpoly.components.snd.TurboSoundNedoPc;
 import com.igormaznitsa.zxpoly.components.snd.Zx128Ay8910;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,7 +76,11 @@ public final class Motherboard implements ZxPolyConstants {
   private final Beeper beeper;
   private final RomData romData;
 
-  public Motherboard(final RomData rom, final boolean enableCovoxFb) {
+  public Motherboard(
+      final RomData rom,
+      final boolean enableCovoxFb,
+      final boolean useTurboSound
+  ) {
     if (rom == null) {
       throw new NullPointerException("ROM must not be null");
     }
@@ -98,7 +103,13 @@ public final class Motherboard implements ZxPolyConstants {
     iodevices.add(video);
     iodevices.add(new KempstonMouse(this));
 
-    iodevices.add(new Zx128Ay8910(this));
+    if (useTurboSound) {
+      LOGGER.info("TurboSound activated as AY");
+      iodevices.add(new TurboSoundNedoPc(this));
+    } else {
+      iodevices.add(new Zx128Ay8910(this));
+    }
+
 
     if (enableCovoxFb) {
       LOGGER.info("Covox #FB is enabled and added among IO devices");

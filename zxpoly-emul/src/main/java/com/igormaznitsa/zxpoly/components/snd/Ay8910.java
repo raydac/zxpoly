@@ -314,11 +314,13 @@ public final class Ay8910 {
   public void reset() {
     this.addressLatch = 0;
 
-    this.counterA = 0;
-    this.counterB = 0;
-    this.counterC = 0;
-    this.counterE = 0;
-    this.counterN = 1;
+    final int ctrOffset = (int) (System.nanoTime() & 0x0F);
+
+    this.counterA = ctrOffset;
+    this.counterB = ctrOffset;
+    this.counterC = ctrOffset;
+    this.counterE = ctrOffset;
+    this.counterN = ctrOffset;
 
     this.signalNcba = 0;
 

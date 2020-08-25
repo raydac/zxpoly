@@ -320,7 +320,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     }
 
-    this.board = new Motherboard(BASE_ROM, AppOptions.getInstance().isCovoxFb());
+    this.board = new Motherboard(BASE_ROM, AppOptions.getInstance().isCovoxFb(),
+        AppOptions.getInstance().isTurboSound());
     this.board.setBoardMode(BoardMode.ZXPOLY, true);
     this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() != BoardMode.ZXPOLY);
     this.menuOptionsTurbo.setSelected(this.turboMode);

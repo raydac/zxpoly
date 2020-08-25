@@ -5,22 +5,35 @@ import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 
-public final class Zx128Ay8910 implements IoDevice, AySounder {
+public final class TurboSoundNedoPc implements IoDevice, AySounder {
 
   private final Motherboard motherboard;
-  private final Ay8910 ay8910;
   private final Beeper beeper;
 
-  public Zx128Ay8910(final Motherboard motherboard) {
+  private final Ay8910 chipAy0;
+  private final Ay8910 chipAy1;
+
+  private Ay8910 selectedChip;
+
+  public TurboSoundNedoPc(final Motherboard motherboard) {
     this.motherboard = motherboard;
-    this.ay8910 = new Ay8910(this::onAyLevels);
     this.beeper = this.motherboard.getBeeper();
+    this.chipAy0 = new Ay8910(this::onLevels0);
+    this.chipAy1 = new Ay8910(this::onLevels1);
+
+    this.doReset();
   }
 
-  private void onAyLevels(final Ay8910 ay, final int levelA, final int levelB, final int levelC) {
+  private void onLevels0(final Ay8910 ay, final int levelA, final int levelB, final int levelC) {
     this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_VALUES[levelA]);
     this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AMPLITUDE_VALUES[levelB]);
     this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AMPLITUDE_VALUES[levelC]);
+  }
+
+  private void onLevels1(final Ay8910 ay, final int levelA, final int levelB, final int levelC) {
+    this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_0, AMPLITUDE_VALUES[levelA]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_1, AMPLITUDE_VALUES[levelB]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_2, AMPLITUDE_VALUES[levelC]);
   }
 
   @Override
@@ -31,7 +44,7 @@ public final class Zx128Ay8910 implements IoDevice, AySounder {
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
     if ((port & 2) == 0 && (port & 0x8000) == 0x8000) {
-      return this.ay8910.readData();
+      return this.selectedChip.readData();
     }
     return -1;
   }
@@ -40,15 +53,24 @@ public final class Zx128Ay8910 implements IoDevice, AySounder {
   public void writeIo(final ZxPolyModule module, final int port, final int value) {
     if ((port & 2) == 0) {
       if ((port & 0xC000) == 0xC000) {
-        this.ay8910.writeAddress(value);
+        if (value == 0xFF) {
+          this.selectedChip = this.chipAy0;
+        } else if (value == 0xFE) {
+          this.selectedChip = this.chipAy1;
+        }
+        this.selectedChip.writeAddress(value);
       } else if ((port & 0xC000) == 0x8000) {
-        this.ay8910.writeData(value);
+        this.selectedChip.writeData(value);
       }
     }
   }
 
   @Override
-  public void preStep(boolean signalReset, boolean virtualIntTick, boolean wallClockInt) {
+  public void preStep(
+      final boolean signalReset,
+      final boolean virtualIntTick,
+      final boolean wallclockInt
+  ) {
     if (signalReset) {
       this.doReset();
     }
@@ -56,17 +78,20 @@ public final class Zx128Ay8910 implements IoDevice, AySounder {
 
   @Override
   public void postStep(final long spentMachineCyclesForStep) {
-    this.ay8910.step(spentMachineCyclesForStep);
+    this.chipAy0.step(spentMachineCyclesForStep);
+    this.chipAy1.step(spentMachineCyclesForStep);
   }
 
   @Override
   public String getName() {
-    return "Zx128AY-8910";
+    return "TurboSound-NedoPc";
   }
 
   @Override
   public void doReset() {
-    this.ay8910.reset();
+    this.selectedChip = this.chipAy0;
+    this.chipAy0.reset();
+    this.chipAy1.reset();
   }
 
   @Override
