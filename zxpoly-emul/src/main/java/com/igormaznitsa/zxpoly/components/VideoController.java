@@ -94,7 +94,7 @@ public final class VideoController extends JComponent
   public static final int[] PALETTE_SPEC256 = Utils.readRawPalette(
       VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/spec256.raw.pal"),
       true);
-  private static final int PREFERRED_BORDER_WIDTH = 8;
+  private static final int PREFERRED_BORDER_WIDTH = 64;
   private static final Dimension MINIMUM_SIZE =
       new Dimension(SCREEN_WIDTH + (PREFERRED_BORDER_WIDTH << 1),
           SCREEN_HEIGHT + (PREFERRED_BORDER_WIDTH << 1));
@@ -104,7 +104,7 @@ public final class VideoController extends JComponent
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
-  private static final int BORDER_LINES = 37;
+  private static final int BORDER_LINES = 40;
   private static final long MCYCLES_PER_BORDER_LINE = MCYCLES_PER_INT / BORDER_LINES;
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private static volatile boolean gfxBackOverFF = false;
