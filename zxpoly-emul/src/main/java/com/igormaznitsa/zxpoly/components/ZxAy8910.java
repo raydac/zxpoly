@@ -1,6 +1,7 @@
 package com.igormaznitsa.zxpoly.components;
 
 import java.util.Arrays;
+import java.util.Random;
 
 public class ZxAy8910 implements IoDevice {
 
@@ -46,6 +47,8 @@ public class ZxAy8910 implements IoDevice {
   private int lastVb;
   private int lastVc;
 
+  private final Random rnd = new Random(System.nanoTime());
+
   static {
     AMPLITUDE_VALUES = Arrays.stream(new double[] {
         0.0000d, 0.0137d, 0.0205d, 0.0291d, 0.0423d, 0.0618d, 0.0847d, 0.1369d,
@@ -74,7 +77,6 @@ public class ZxAy8910 implements IoDevice {
   private int counterC;
   private int counterN;
   private int signalNcba;
-  private int rng;
 
   private long machineCycleCounter;
   private int counterE;
@@ -246,9 +248,8 @@ public class ZxAy8910 implements IoDevice {
   }
 
   private void doRndNoise() {
-    this.rng = (this.rng >> 1) ^ (((this.signalNcba >> 3) & 1) == 0 ? 0x10004 : 0);
     this.signalNcba =
-        (this.rng & 1) == 0 ? this.signalNcba & ~SIGNAL_N : this.signalNcba | SIGNAL_N;
+        this.rnd.nextBoolean() ? this.signalNcba & ~SIGNAL_N : this.signalNcba | SIGNAL_N;
   }
 
   private void processNoiseGen(final int audioTicks) {
@@ -394,7 +395,6 @@ public class ZxAy8910 implements IoDevice {
     this.envelopeIndex = 0;
 
     this.mixerControl = 0;
-    this.rng = 1;
 
     this.lastVa = AMPLITUDE_VALUES[0];
     this.lastVb = AMPLITUDE_VALUES[0];
