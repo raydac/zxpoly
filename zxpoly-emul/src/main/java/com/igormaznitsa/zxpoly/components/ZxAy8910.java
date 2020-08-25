@@ -253,7 +253,7 @@ public class ZxAy8910 implements IoDevice {
 
   private void processNoiseGen(final int audioTicks) {
     this.counterN += audioTicks;
-    if (this.counterN >= this.noisePeriod) {
+    if (this.counterN >= (this.noisePeriod == 0 ? 1 : this.noisePeriod)) {
       this.counterN = 0;
       this.doRndNoise();
     }
@@ -294,19 +294,19 @@ public class ZxAy8910 implements IoDevice {
     this.processNoiseGen(audioTicks);
 
     this.counterA += audioTicks;
-    if (this.counterA >= this.tonePeriodA) {
+    if (this.counterA >= (this.tonePeriodA == 0 ? 1 : this.tonePeriodA)) {
       this.counterA = 0;
       this.signalNcba ^= SIGNAL_A;
     }
 
     this.counterB += audioTicks;
-    if (this.counterB >= this.tonePeriodB) {
+    if (this.counterB >= (this.tonePeriodB == 0 ? 1 : this.tonePeriodB)) {
       this.counterB = 0;
       this.signalNcba ^= SIGNAL_B;
     }
 
     this.counterC += audioTicks;
-    if (this.counterC >= this.tonePeriodC) {
+    if (this.counterC >= (this.tonePeriodC == 0 ? 1 : this.tonePeriodC)) {
       this.counterC = 0;
       this.signalNcba ^= SIGNAL_C;
     }
