@@ -94,62 +94,60 @@ public class ZxAy8910 implements IoDevice {
 
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
-    if ((port & 2) == 0) {
-      if ((port & 0xC000) == 0x8000) {
-        switch (this.addressLatch) {
-          case REG_TONE_PERIOD_A_FINE: {
-            return this.tonePeriodA & 0xFF;
-          }
-          case REG_TONE_PERIOD_A_ROUGH: {
-            return (this.tonePeriodA >> 8) & 0xF;
-          }
-          case REG_TONE_PERIOD_B_FINE: {
-            return this.tonePeriodB & 0xFF;
-          }
-          case REG_TONE_PERIOD_B_ROUGH: {
-            return (this.tonePeriodB >> 8) & 0xF;
-          }
-          case REG_TONE_PERIOD_C_FINE: {
-            return this.tonePeriodC & 0xFF;
-          }
-          case REG_TONE_PERIOD_C_ROUGH: {
-            return (this.tonePeriodC >> 8) & 0xF;
-          }
-          case REG_NOISE_PERIOD: {
-            return this.noisePeriod;
-          }
-          case REG_MIXER_CTRL: {
-            return this.mixerControl;
-          }
-          case REG_AMPL_A: {
-            return this.amplitudeA;
-          }
-          case REG_AMPL_B: {
-            return this.amplitudeB;
-          }
-          case REG_AMPL_C: {
-            return this.amplitudeC;
-          }
-          case REG_ENV_PERIOD_FINE: {
-            return this.envelopePeriod & 0xFF;
-          }
-          case REG_ENV_PERIOD_ROUGH: {
-            return (this.envelopePeriod >> 8) & 0xFF;
-          }
-          case REG_ENV_SHAPE: {
-            return this.envelopeMode;
-          }
-          case REG_IO_A: {
-            return this.ioPortA;
-          }
-          case REG_IO_B: {
-            return this.ioPortB;
-          }
-          default: {
-            // IGNORE
-          }
-          break;
+    if ((port & 0xFF) == 0xFD) {
+      switch (this.addressLatch & 0xF) {
+        case REG_TONE_PERIOD_A_FINE: {
+          return this.tonePeriodA & 0xFF;
         }
+        case REG_TONE_PERIOD_A_ROUGH: {
+          return (this.tonePeriodA >> 8) & 0xF;
+        }
+        case REG_TONE_PERIOD_B_FINE: {
+          return this.tonePeriodB & 0xFF;
+        }
+        case REG_TONE_PERIOD_B_ROUGH: {
+          return (this.tonePeriodB >> 8) & 0xF;
+        }
+        case REG_TONE_PERIOD_C_FINE: {
+          return this.tonePeriodC & 0xFF;
+        }
+        case REG_TONE_PERIOD_C_ROUGH: {
+          return (this.tonePeriodC >> 8) & 0xF;
+        }
+        case REG_NOISE_PERIOD: {
+          return this.noisePeriod;
+        }
+        case REG_MIXER_CTRL: {
+          return this.mixerControl;
+        }
+        case REG_AMPL_A: {
+          return this.amplitudeA;
+        }
+        case REG_AMPL_B: {
+          return this.amplitudeB;
+        }
+        case REG_AMPL_C: {
+          return this.amplitudeC;
+        }
+        case REG_ENV_PERIOD_FINE: {
+          return this.envelopePeriod & 0xFF;
+        }
+        case REG_ENV_PERIOD_ROUGH: {
+          return (this.envelopePeriod >> 8) & 0xFF;
+        }
+        case REG_ENV_SHAPE: {
+          return this.envelopeMode;
+        }
+        case REG_IO_A: {
+          return this.ioPortA;
+        }
+        case REG_IO_B: {
+          return this.ioPortB;
+        }
+        default: {
+          // IGNORE
+        }
+        break;
       }
     }
     return -1;
@@ -157,8 +155,8 @@ public class ZxAy8910 implements IoDevice {
 
   @Override
   public void writeIo(final ZxPolyModule module, final int port, final int value) {
-    if ((port & 2) == 0) {
-      if ((port & 0xC0FF) == 0xC0FD) {
+    if ((port & 0xFF) == 0xFD) {
+      if ((port & 0x4000) == 0x4000) {
         this.addressLatch = value;
       } else if ((port & 0xC000) == 0x8000) {
         switch (this.addressLatch & 0xF) {
