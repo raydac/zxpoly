@@ -94,6 +94,7 @@ public class OptionsPanel extends javax.swing.JPanel {
   private void fillByDataContainer(final DataContainer data) {
     this.checkGrabSound.setSelected(data.grabSound);
     this.checkCovoxFb.setSelected(data.covoxFb);
+    this.checkTurboSound.setSelected(data.turboSound);
     this.spinnerPort.setValue(data.port);
     this.spinnerIntFrame.setValue(data.intPerFrame);
     this.textFfmpegPath.setText(data.ffmpegPath);
