@@ -32,9 +32,9 @@ public final class TurboSoundNedoPc implements IoDevice, AySounder {
   }
 
   private void onLevels0(final Ay8910 ay, final int levelA, final int levelB, final int levelC) {
-    final int a = (levelA + this.lastA0) / 2;
-    final int b = (levelB + this.lastB0) / 2;
-    final int c = (levelC + this.lastC0) / 2;
+    final int a = levelA > 4 ? (levelA + this.lastA0) / 2 : levelA;
+    final int b = levelB > 4 ? (levelB + this.lastB0) / 2 : levelB;
+    final int c = levelC > 4 ? (levelC + this.lastC0) / 2 : levelC;
     this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_VALUES[a]);
     this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AMPLITUDE_VALUES[b]);
     this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AMPLITUDE_VALUES[c]);
@@ -44,12 +44,12 @@ public final class TurboSoundNedoPc implements IoDevice, AySounder {
   }
 
   private void onLevels1(final Ay8910 ay, final int levelA, final int levelB, final int levelC) {
-    final int a = (levelA + this.lastA1) / 2;
-    final int b = (levelB + this.lastB1) / 2;
-    final int c = (levelC + this.lastC1) / 2;
-    this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_0, AMPLITUDE_VALUES[levelA]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_1, AMPLITUDE_VALUES[levelB]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_2, AMPLITUDE_VALUES[levelC]);
+    final int a = levelA > 4 ? (levelA + this.lastA1) / 2 : levelA;
+    final int b = levelB > 4 ? (levelB + this.lastB1) / 2 : levelB;
+    final int c = levelC > 4 ? (levelC + this.lastC1) / 2 : levelC;
+    this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_0, AMPLITUDE_VALUES[a]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_1, AMPLITUDE_VALUES[b]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_2, AMPLITUDE_VALUES[c]);
     this.lastA1 = a;
     this.lastB1 = b;
     this.lastC1 = c;

@@ -22,9 +22,9 @@ public final class Zx128Ay8910 implements IoDevice, AySounder {
   }
 
   private void onAyLevels(final Ay8910 ay, final int levelA, final int levelB, final int levelC) {
-    final int a = (levelA + lastA) / 2;
-    final int b = (levelB + lastB) / 2;
-    final int c = (levelC + lastC) / 2;
+    final int a = levelA > 4 ? (levelA + lastA) / 2 : levelA;
+    final int b = levelB > 4 ? (levelB + lastB) / 2 : levelB;
+    final int c = levelC > 4 ? (levelC + lastC) / 2 : levelC;
     this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_VALUES[a]);
     this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AMPLITUDE_VALUES[b]);
     this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AMPLITUDE_VALUES[c]);

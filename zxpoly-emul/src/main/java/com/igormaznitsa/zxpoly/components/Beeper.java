@@ -168,9 +168,11 @@ public class Beeper {
       LOGGER.warning("Detected overloading: " + mixed);
     }
 
-    this.lastMixedValue = (this.lastMixedValue + (Math.min(mixed, 255) - 128)) / 2;
+    mixed = Math.min(255, mixed);
 
-    return this.lastMixedValue;
+    this.lastMixedValue = mixed > 31 ? (this.lastMixedValue + mixed) / 2 : mixed;
+
+    return this.lastMixedValue - 128;
   }
 
   public void updateState(boolean intSignal, long machineCycleInInt) {
