@@ -53,8 +53,6 @@ public final class Beeper {
   public static final int AMPLITUDE_MAX = 255;
   public static final int AMPLITUDE_MIN = 0;
 
-  public static final int CHANNELS = 8;
-
   public static final int CHANNEL_BEEPER = 0;
   public static final int CHANNEL_COVOX = 1;
   public static final int CHANNEL_AY_A = 2;
@@ -254,33 +252,40 @@ public final class Beeper {
       this.thread.setDaemon(true);
     }
 
-    private static void fillShort(final byte[] array, int fromIndex, final int toIndex,
-                                  final int value) {
-      final byte low = (byte) value;
-      final byte high = (byte) (value >> 8);
+    private static void fillSndBuffer(final byte[] sndBuffer, int fromIndex,
+                                      final int value) {
+      if (value == 0) {
+        fill(sndBuffer, fromIndex, SND_BUFFER_LENGTH, (byte) 0);
+      } else {
+        final byte low = (byte) value;
+        final byte high = (byte) (value >> 8);
 
-      while (fromIndex < toIndex) {
-        array[fromIndex++] = low;
-        array[fromIndex++] = high;
+        while (fromIndex < SND_BUFFER_LENGTH) {
+          sndBuffer[fromIndex++] = low;
+          sndBuffer[fromIndex++] = high;
+        }
       }
 
     }
 
-    private static void fillShort(final byte[] array, final int value) {
-      final byte low = (byte) value;
-      final byte high = (byte) (value >> 8);
-      int index = array.length - 1;
-      while (index > 0) {
-        array[index--] = high;
-        array[index--] = low;
+    private static void fillSndBuffer(final byte[] array, final int value) {
+      if (value == 0) {
+        fill(array, (byte) 0);
+      } else {
+        final byte low = (byte) value;
+        final byte high = (byte) (value >> 8);
+        int index = array.length;
+        while (index > 0) {
+          array[--index] = high;
+          array[--index] = low;
+        }
       }
-
     }
 
     private void blink(final int value) {
       if (this.working) {
         this.soundDataQueue.offer(this.soundBuffer.clone());
-        fillShort(this.soundBuffer, value);
+        fillSndBuffer(this.soundBuffer, value);
       }
     }
 
@@ -307,16 +312,12 @@ public final class Beeper {
 
         if (wallclockIntSignal) {
           blink(level);
-          fillShort(this.soundBuffer,
-              0,
-              SND_BUFFER_LENGTH,
-              level);
+          fillSndBuffer(this.soundBuffer, level);
         }
 
         if (position <= SND_BUFFER_LENGTH) {
-          fillShort(this.soundBuffer,
+          fillSndBuffer(this.soundBuffer,
               position,
-              SND_BUFFER_LENGTH,
               level);
         }
       }
@@ -325,7 +326,7 @@ public final class Beeper {
     @Override
     public void reset() {
       if (this.working) {
-        LOGGER.info("Reseting");
+        LOGGER.info("Reset");
         fill(this.soundBuffer, (byte) AMPLITUDE_MIN);
       }
     }
