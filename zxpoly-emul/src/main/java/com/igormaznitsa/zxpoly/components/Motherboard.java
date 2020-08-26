@@ -17,6 +17,7 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import static com.igormaznitsa.zxpoly.components.Beeper.BEEPER_LEVELS;
 import static com.igormaznitsa.zxpoly.components.Beeper.CHANNEL_BEEPER;
 import static com.igormaznitsa.zxpoly.components.VideoController.MCYCLES_PER_INT;
 import static java.lang.Math.min;
@@ -411,9 +412,13 @@ public final class Motherboard implements ZxPolyConstants {
           throw new Error("Unexpected board mode: " + this.boardMode);
       }
 
-      final int audioLevel = Beeper.LEVELS[
-          (this.video.getPortFE() >> 2 & 0b110) | (this.keyboard.isTapeIn() ? 1 : 0)];
-      this.beeper.setChannelValue(CHANNEL_BEEPER, audioLevel);
+      final int feValue = this.video.getPortFE();
+      final int levelTapeOut = BEEPER_LEVELS[((feValue >> 3) & 1) == 0 ? 0 : 5];
+      final int levelSpeaker = BEEPER_LEVELS[((feValue >> 4) & 1) == 0 ? 0 : 6];
+      final int levelTapeIn = BEEPER_LEVELS[this.keyboard.isTapeIn() ? 4 : 0];
+
+      this.beeper.setChannelValue(CHANNEL_BEEPER,
+          Math.min(255, levelSpeaker + levelTapeIn + levelTapeOut));
 
       final long spentMachineCycles =
           modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
@@ -457,7 +462,7 @@ public final class Motherboard implements ZxPolyConstants {
         }
       }
     } else {
-      this.beeper.setChannelValue(CHANNEL_BEEPER, Beeper.LEVELS[0]);
+      this.beeper.setChannelValue(CHANNEL_BEEPER, Beeper.BEEPER_LEVELS[0]);
       this.beeper.updateState(virtualInt, MCYCLES_PER_INT);
     }
     return result;

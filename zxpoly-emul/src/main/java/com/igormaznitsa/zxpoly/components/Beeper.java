@@ -50,7 +50,7 @@ public class Beeper {
   private static final boolean LOG_RAW_SOUND = false;
   private static final int SND_FREQ = 44100;
 
-  public static final int[] LEVELS;
+  public static final int[] BEEPER_LEVELS;
 
   public static final int MAX_AMPLITUDE = 256 / 8;
 
@@ -66,11 +66,14 @@ public class Beeper {
   public static final int CHANNEL_RESERV_2 = 7;
 
   static {
-    LEVELS = Arrays.stream(new double[] {0.0d, 0.065d, 0.18d, 0.254d, 0.80d, 0.87d, 0.93d, 1.0d})
-        .mapToInt(d -> Math.min(255, (int) Math.round(d * MAX_AMPLITUDE))).toArray();
+    BEEPER_LEVELS =
+        Arrays.stream(new double[] {0.0d, 0.065d, 0.18d, 0.254d, 0.80d, 0.87d, 0.93d, 1.0d})
+            .mapToInt(d -> Math.min(255, (int) Math.round(d * MAX_AMPLITUDE))).toArray();
   }
 
   private final AtomicLong channels = new AtomicLong(0L);
+
+  private int lastMixedValue = 0;
 
   public static final AudioFormat AUDIO_FORMAT = new AudioFormat(
       PCM_SIGNED,
@@ -118,6 +121,7 @@ public class Beeper {
   }
 
   public void reset() {
+    this.lastMixedValue = 0;
     this.clearChannels();
     this.activeInternalBeeper.get().reset();
   }
@@ -164,7 +168,9 @@ public class Beeper {
       LOGGER.warning("Detected overloading: " + mixed);
     }
 
-    return Math.min(mixed, 255) - 128;
+    this.lastMixedValue = (this.lastMixedValue + (Math.min(mixed, 255) - 128)) / 2;
+
+    return this.lastMixedValue;
   }
 
   public void updateState(boolean intSignal, long machineCycleInInt) {
@@ -187,7 +193,7 @@ public class Beeper {
   public void clearChannels() {
     long value = 0L;
     for (int i = 0; i < CHANNELS; i++) {
-      value |= LEVELS[0];
+      value |= BEEPER_LEVELS[0];
       value <<= 8;
     }
     this.channels.set(value);
@@ -301,7 +307,7 @@ public class Beeper {
     public void reset() {
       if (this.working) {
         LOGGER.info("Reseting");
-        fill(this.soundBuffer, (byte) LEVELS[0]);
+        fill(this.soundBuffer, (byte) BEEPER_LEVELS[0]);
       }
     }
 

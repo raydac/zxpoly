@@ -11,6 +11,10 @@ public final class Zx128Ay8910 implements IoDevice, AySounder {
   private final Ay8910 ay8910;
   private final Beeper beeper;
 
+  private int lastA;
+  private int lastB;
+  private int lastC;
+
   public Zx128Ay8910(final Motherboard motherboard) {
     this.motherboard = motherboard;
     this.ay8910 = new Ay8910(this::onAyLevels);
@@ -18,9 +22,15 @@ public final class Zx128Ay8910 implements IoDevice, AySounder {
   }
 
   private void onAyLevels(final Ay8910 ay, final int levelA, final int levelB, final int levelC) {
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_VALUES[levelA]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AMPLITUDE_VALUES[levelB]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AMPLITUDE_VALUES[levelC]);
+    final int a = (levelA + lastA) / 2;
+    final int b = (levelB + lastB) / 2;
+    final int c = (levelC + lastC) / 2;
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_VALUES[a]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AMPLITUDE_VALUES[b]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AMPLITUDE_VALUES[c]);
+    this.lastA = a;
+    this.lastB = b;
+    this.lastC = c;
   }
 
   @Override
@@ -66,6 +76,9 @@ public final class Zx128Ay8910 implements IoDevice, AySounder {
 
   @Override
   public void doReset() {
+    this.lastA = 0;
+    this.lastB = 0;
+    this.lastC = 0;
     this.ay8910.reset();
   }
 

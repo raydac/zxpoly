@@ -15,6 +15,13 @@ public final class TurboSoundNedoPc implements IoDevice, AySounder {
 
   private Ay8910 selectedChip;
 
+  private int lastA0;
+  private int lastB0;
+  private int lastC0;
+  private int lastA1;
+  private int lastB1;
+  private int lastC1;
+
   public TurboSoundNedoPc(final Motherboard motherboard) {
     this.motherboard = motherboard;
     this.beeper = this.motherboard.getBeeper();
@@ -25,15 +32,27 @@ public final class TurboSoundNedoPc implements IoDevice, AySounder {
   }
 
   private void onLevels0(final Ay8910 ay, final int levelA, final int levelB, final int levelC) {
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_VALUES[levelA]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AMPLITUDE_VALUES[levelB]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AMPLITUDE_VALUES[levelC]);
+    final int a = (levelA + this.lastA0) / 2;
+    final int b = (levelB + this.lastB0) / 2;
+    final int c = (levelC + this.lastC0) / 2;
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_VALUES[a]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AMPLITUDE_VALUES[b]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AMPLITUDE_VALUES[c]);
+    this.lastA0 = a;
+    this.lastB0 = b;
+    this.lastC0 = c;
   }
 
   private void onLevels1(final Ay8910 ay, final int levelA, final int levelB, final int levelC) {
+    final int a = (levelA + this.lastA1) / 2;
+    final int b = (levelB + this.lastB1) / 2;
+    final int c = (levelC + this.lastC1) / 2;
     this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_0, AMPLITUDE_VALUES[levelA]);
     this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_1, AMPLITUDE_VALUES[levelB]);
     this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_2, AMPLITUDE_VALUES[levelC]);
+    this.lastA1 = a;
+    this.lastB1 = b;
+    this.lastC1 = c;
   }
 
   @Override
@@ -90,6 +109,12 @@ public final class TurboSoundNedoPc implements IoDevice, AySounder {
   @Override
   public void doReset() {
     this.selectedChip = this.chipAy0;
+    this.lastA0 = 0;
+    this.lastB0 = 0;
+    this.lastC0 = 0;
+    this.lastA1 = 0;
+    this.lastB1 = 0;
+    this.lastC1 = 0;
     this.chipAy0.reset();
     this.chipAy1.reset();
   }
