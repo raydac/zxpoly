@@ -15,13 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.igormaznitsa.zxpoly.components;
+package com.igormaznitsa.zxpoly.components.video;
 
 import static java.util.Arrays.fill;
 
 
-import com.igormaznitsa.zxpoly.components.tvfilters.TvFilter;
-import com.igormaznitsa.zxpoly.components.tvfilters.TvFilterChain;
+import com.igormaznitsa.zxpoly.components.BoardMode;
+import com.igormaznitsa.zxpoly.components.IoDevice;
+import com.igormaznitsa.zxpoly.components.Motherboard;
+import com.igormaznitsa.zxpoly.components.ZxPolyConstants;
+import com.igormaznitsa.zxpoly.components.ZxPolyModule;
+import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter;
+import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilterChain;
 import com.igormaznitsa.zxpoly.formats.Spec256Arch;
 import com.igormaznitsa.zxpoly.utils.Utils;
 import java.awt.AlphaComposite;

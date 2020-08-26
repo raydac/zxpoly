@@ -17,18 +17,20 @@
 
 package com.igormaznitsa.zxpoly.components;
 
-import static com.igormaznitsa.zxpoly.components.Beeper.BEEPER_LEVELS;
-import static com.igormaznitsa.zxpoly.components.Beeper.CHANNEL_BEEPER;
-import static com.igormaznitsa.zxpoly.components.VideoController.MCYCLES_PER_INT;
+import static com.igormaznitsa.zxpoly.components.snd.Beeper.BEEPER_LEVELS;
+import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
+import static com.igormaznitsa.zxpoly.components.video.VideoController.MCYCLES_PER_INT;
 import static java.lang.Math.min;
 
 
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
+import com.igormaznitsa.zxpoly.components.snd.Beeper;
 import com.igormaznitsa.zxpoly.components.snd.CovoxFb;
 import com.igormaznitsa.zxpoly.components.snd.TurboSoundNedoPc;
 import com.igormaznitsa.zxpoly.components.snd.Zx128Ay8910;
+import com.igormaznitsa.zxpoly.components.video.VideoController;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -413,9 +415,9 @@ public final class Motherboard implements ZxPolyConstants {
       }
 
       final int feValue = this.video.getPortFE();
-      final int levelTapeOut = BEEPER_LEVELS[((feValue >> 3) & 1) == 0 ? 0 : 5];
-      final int levelSpeaker = BEEPER_LEVELS[((feValue >> 4) & 1) == 0 ? 0 : 6];
-      final int levelTapeIn = BEEPER_LEVELS[this.keyboard.isTapeIn() ? 4 : 0];
+      final int levelTapeOut = BEEPER_LEVELS[((feValue >> 3) & 1) == 0 ? 0 : 4];
+      final int levelSpeaker = BEEPER_LEVELS[((feValue >> 4) & 1) == 0 ? 0 : 7];
+      final int levelTapeIn = BEEPER_LEVELS[this.keyboard.isTapeIn() ? 3 : 0];
 
       this.beeper.setChannelValue(CHANNEL_BEEPER,
           Math.min(255, levelSpeaker + levelTapeIn + levelTapeOut));

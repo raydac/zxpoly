@@ -1,7 +1,7 @@
 package com.igormaznitsa.zxpoly.streamer;
 
-import com.igormaznitsa.zxpoly.components.Beeper;
-import com.igormaznitsa.zxpoly.components.SourceSoundPort;
+import com.igormaznitsa.zxpoly.components.snd.Beeper;
+import com.igormaznitsa.zxpoly.components.snd.SourceSoundPort;
 import com.igormaznitsa.zxpoly.utils.Wallclock;
 import java.util.Arrays;
 import javax.sound.sampled.AudioFormat;

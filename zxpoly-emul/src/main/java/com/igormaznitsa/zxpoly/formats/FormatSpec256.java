@@ -19,9 +19,9 @@ package com.igormaznitsa.zxpoly.formats;
 
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.Motherboard;
-import com.igormaznitsa.zxpoly.components.VideoController;
 import com.igormaznitsa.zxpoly.components.ZxPolyConstants;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
+import com.igormaznitsa.zxpoly.components.video.VideoController;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;

@@ -17,6 +17,7 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import com.igormaznitsa.zxpoly.components.video.VideoController;
 import java.awt.AWTException;
 import java.awt.Point;
 import java.awt.Robot;

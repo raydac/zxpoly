@@ -1,6 +1,6 @@
-package com.igormaznitsa.zxpoly.components.tvfilters;
+package com.igormaznitsa.zxpoly.components.video.tvfilters;
 
-import com.igormaznitsa.zxpoly.components.VideoController;
+import com.igormaznitsa.zxpoly.components.video.VideoController;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;

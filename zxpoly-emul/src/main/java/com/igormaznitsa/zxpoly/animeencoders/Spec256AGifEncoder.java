@@ -22,7 +22,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
 import com.igormaznitsa.zxpoly.MainForm;
-import com.igormaznitsa.zxpoly.components.VideoController;
+import com.igormaznitsa.zxpoly.components.video.VideoController;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;

@@ -1,4 +1,4 @@
-package com.igormaznitsa.zxpoly.components.tvfilters;
+package com.igormaznitsa.zxpoly.components.video.tvfilters;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;

@@ -3,7 +3,7 @@ package com.igormaznitsa.zxpoly.components.snd;
 import java.util.Objects;
 import java.util.Random;
 
-public final class Ay8910 {
+public final class Ay8910Chip {
 
   private static final int MACHINE_CYCLES_PER_ATICK = 16;
 
@@ -65,7 +65,7 @@ public final class Ay8910 {
   private int envIndexCounter;
   private int envelopeIndex;
 
-  public Ay8910(final Ay8910SignalConsumer signalConsumer) {
+  public Ay8910Chip(final Ay8910SignalConsumer signalConsumer) {
     this.signalConsumer = Objects.requireNonNull(signalConsumer);
   }
 
@@ -351,7 +351,7 @@ public final class Ay8910 {
 
   @FunctionalInterface
   public interface Ay8910SignalConsumer {
-    void onAy8910Levels(Ay8910 ay, int levelA, int levelB, int levelC);
+    void onAy8910Levels(Ay8910Chip ay, int levelA, int levelB, int levelC);
   }
 
 }

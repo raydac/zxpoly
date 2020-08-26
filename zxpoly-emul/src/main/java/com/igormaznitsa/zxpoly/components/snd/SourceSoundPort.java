@@ -1,12 +1,18 @@
 
-package com.igormaznitsa.zxpoly.components;
+package com.igormaznitsa.zxpoly.components.snd;
 
-import javax.sound.sampled.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.Line;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.Mixer;
+import javax.sound.sampled.SourceDataLine;
 
 public class SourceSoundPort implements Comparable<SourceSoundPort>{
   private final UUID uuid = UUID.randomUUID();

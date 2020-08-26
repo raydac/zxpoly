@@ -15,9 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.igormaznitsa.zxpoly.components;
+package com.igormaznitsa.zxpoly.components.snd;
 
-import static com.igormaznitsa.zxpoly.components.VideoController.MCYCLES_PER_INT;
+import static com.igormaznitsa.zxpoly.components.video.VideoController.MCYCLES_PER_INT;
 import static java.lang.Long.toHexString;
 import static java.lang.String.format;
 import static java.util.Arrays.fill;
@@ -44,15 +44,14 @@ import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.SourceDataLine;
 
-public class Beeper {
+public final class Beeper {
 
   private static final Logger LOGGER = Logger.getLogger("Beeper");
   private static final boolean LOG_RAW_SOUND = false;
   private static final int SND_FREQ = 44100;
 
-  public static final int[] BEEPER_LEVELS;
-
-  public static final int MAX_AMPLITUDE = 256 / 8;
+  public static final int AMPLITUDE_MAX = 255;
+  public static final int AMPLITUDE_MIN = 0;
 
   public static final int CHANNELS = 8;
 
@@ -65,15 +64,15 @@ public class Beeper {
   public static final int CHANNEL_RESERV_1 = 6;
   public static final int CHANNEL_RESERV_2 = 7;
 
+  public static final int[] BEEPER_LEVELS;
+
   static {
     BEEPER_LEVELS =
         Arrays.stream(new double[] {0.0d, 0.065d, 0.18d, 0.254d, 0.80d, 0.87d, 0.93d, 1.0d})
-            .mapToInt(d -> Math.min(255, (int) Math.round(d * MAX_AMPLITUDE))).toArray();
+            .mapToInt(d -> Math.min(255, (int) Math.round(d * AMPLITUDE_MAX))).toArray();
   }
 
   private final AtomicLong channels = new AtomicLong(0L);
-
-  private int lastMixedValue = 0;
 
   public static final AudioFormat AUDIO_FORMAT = new AudioFormat(
       PCM_SIGNED,
@@ -121,7 +120,6 @@ public class Beeper {
   }
 
   public void reset() {
-    this.lastMixedValue = 0;
     this.clearChannels();
     this.activeInternalBeeper.get().reset();
   }
@@ -159,20 +157,11 @@ public class Beeper {
   private int mixChannelsAsSignedByte() {
     long value = this.channels.get();
     int mixed = 0;
-    for (int i = 0; i < CHANNELS; i++) {
+    while (value != 0) {
       mixed += (int) value & 0xFF;
       value >>>= 8;
     }
-
-    if (mixed > 0xFF) {
-      LOGGER.warning("Detected overloading: " + mixed);
-    }
-
-    mixed = Math.min(255, mixed);
-
-    this.lastMixedValue = mixed > 31 ? (this.lastMixedValue + mixed) / 2 : mixed;
-
-    return this.lastMixedValue - 128;
+    return (mixed << 5) - 32768;
   }
 
   public void updateState(boolean intSignal, long machineCycleInInt) {
@@ -193,12 +182,7 @@ public class Beeper {
   }
 
   public void clearChannels() {
-    long value = 0L;
-    for (int i = 0; i < CHANNELS; i++) {
-      value |= BEEPER_LEVELS[0];
-      value <<= 8;
-    }
-    this.channels.set(value);
+    this.channels.set(0);
   }
 
   private interface IBeeper {
@@ -270,46 +254,33 @@ public class Beeper {
       this.thread.setDaemon(true);
     }
 
-    private void blink(final byte fillByte) {
+    private static void fillShort(final byte[] array, int fromIndex, final int toIndex,
+                                  final int value) {
+      final byte low = (byte) value;
+      final byte high = (byte) (value >> 8);
+
+      while (fromIndex < toIndex) {
+        array[fromIndex++] = low;
+        array[fromIndex++] = high;
+      }
+
+    }
+
+    private static void fillShort(final byte[] array, final int value) {
+      final byte low = (byte) value;
+      final byte high = (byte) (value >> 8);
+      int index = array.length - 1;
+      while (index > 0) {
+        array[index--] = high;
+        array[index--] = low;
+      }
+
+    }
+
+    private void blink(final int value) {
       if (this.working) {
         this.soundDataQueue.offer(this.soundBuffer.clone());
-        fill(this.soundBuffer, fillByte);
-      }
-    }
-
-    @Override
-    public void updateState(
-        boolean wallclockIntSignal,
-        long machineCyclesInInt,
-        final int level
-    ) {
-      if (this.working) {
-        final byte value = (byte) level;
-        int position = ((int) ((machineCyclesInInt * SAMPLES_PER_INT + MCYCLES_PER_INT / 2)
-            / MCYCLES_PER_INT)) * 4;
-
-        if (wallclockIntSignal) {
-          blink(value);
-          fill(this.soundBuffer,
-              0,
-              SND_BUFFER_LENGTH,
-              value);
-        }
-
-        if (position <= SND_BUFFER_LENGTH) {
-          fill(this.soundBuffer,
-              position,
-              SND_BUFFER_LENGTH,
-              value);
-        }
-      }
-    }
-
-    @Override
-    public void reset() {
-      if (this.working) {
-        LOGGER.info("Reseting");
-        fill(this.soundBuffer, (byte) BEEPER_LEVELS[0]);
+        fillShort(this.soundBuffer, value);
       }
     }
 
@@ -322,6 +293,41 @@ public class Beeper {
           format.getEncoding() == PCM_SIGNED ? "SGN" : "USGN",
           format.isBigEndian() ? "bge" : "lte",
           dataFormat.format(new Date()));
+    }
+
+    @Override
+    public void updateState(
+        boolean wallclockIntSignal,
+        long machineCyclesInInt,
+        final int level
+    ) {
+      if (this.working) {
+        int position = ((int) ((machineCyclesInInt * SAMPLES_PER_INT + MCYCLES_PER_INT / 2)
+            / MCYCLES_PER_INT)) * 4;
+
+        if (wallclockIntSignal) {
+          blink(level);
+          fillShort(this.soundBuffer,
+              0,
+              SND_BUFFER_LENGTH,
+              level);
+        }
+
+        if (position <= SND_BUFFER_LENGTH) {
+          fillShort(this.soundBuffer,
+              position,
+              SND_BUFFER_LENGTH,
+              level);
+        }
+      }
+    }
+
+    @Override
+    public void reset() {
+      if (this.working) {
+        LOGGER.info("Reseting");
+        fill(this.soundBuffer, (byte) AMPLITUDE_MIN);
+      }
     }
 
     private OutputStream makeLogStream(final File folder) {

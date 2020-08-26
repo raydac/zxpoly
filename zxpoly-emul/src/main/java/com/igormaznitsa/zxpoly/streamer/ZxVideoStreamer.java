@@ -1,7 +1,7 @@
 package com.igormaznitsa.zxpoly.streamer;
 
-import com.igormaznitsa.zxpoly.components.Beeper;
-import com.igormaznitsa.zxpoly.components.VideoController;
+import com.igormaznitsa.zxpoly.components.snd.Beeper;
+import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.utils.Utils;
 import com.igormaznitsa.zxpoly.utils.Wallclock;
 import java.net.InetAddress;

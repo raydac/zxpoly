@@ -1,9 +1,8 @@
 package com.igormaznitsa.zxpoly.components.snd;
 
-import static com.igormaznitsa.zxpoly.components.Beeper.CHANNEL_COVOX;
+import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_COVOX;
 
 
-import com.igormaznitsa.zxpoly.components.Beeper;
 import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;

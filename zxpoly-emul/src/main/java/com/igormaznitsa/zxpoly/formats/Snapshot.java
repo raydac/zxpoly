@@ -23,8 +23,8 @@ import static java.util.Arrays.stream;
 
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.Motherboard;
-import com.igormaznitsa.zxpoly.components.VideoController;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
+import com.igormaznitsa.zxpoly.components.video.VideoController;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
