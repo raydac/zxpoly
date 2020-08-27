@@ -33,8 +33,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -46,13 +44,8 @@ import javax.sound.sampled.SourceDataLine;
 
 public final class Beeper {
 
-  private static final Logger LOGGER = Logger.getLogger("Beeper");
-  private static final boolean LOG_RAW_SOUND = false;
-  private static final int SND_FREQ = 44100;
-
   public static final int AMPLITUDE_MAX = 255;
   public static final int AMPLITUDE_MIN = 0;
-
   public static final int CHANNEL_BEEPER = 0;
   public static final int CHANNEL_COVOX = 1;
   public static final int CHANNEL_AY_A = 2;
@@ -61,17 +54,10 @@ public final class Beeper {
   public static final int CHANNEL_RESERV_0 = 5;
   public static final int CHANNEL_RESERV_1 = 6;
   public static final int CHANNEL_RESERV_2 = 7;
-
   public static final int[] BEEPER_LEVELS;
-
-  static {
-    BEEPER_LEVELS =
-        Arrays.stream(new double[] {0.0d, 0.065d, 0.18d, 0.254d, 0.80d, 0.87d, 0.93d, 1.0d})
-            .mapToInt(d -> Math.min(255, (int) Math.round(d * AMPLITUDE_MAX))).toArray();
-  }
-
-  private final AtomicLong channels = new AtomicLong(0L);
-
+  private static final Logger LOGGER = Logger.getLogger("Beeper");
+  private static final boolean LOG_RAW_SOUND = false;
+  private static final int SND_FREQ = 44100;
   public static final AudioFormat AUDIO_FORMAT = new AudioFormat(
       PCM_SIGNED,
       SND_FREQ,
@@ -81,8 +67,6 @@ public final class Beeper {
       SND_FREQ,
       false
   );
-
-
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
     public void updateState(boolean intSignal, long machineCycleInInt, int level) {
@@ -112,6 +96,13 @@ public final class Beeper {
     }
   };
 
+  static {
+    BEEPER_LEVELS =
+        Arrays.stream(new double[] {0.0d, 0.065d, 0.18d, 0.254d, 0.80d, 0.87d, 0.93d, 1.0d})
+            .mapToInt(d -> Math.min(255, (int) Math.round(d * AMPLITUDE_MAX))).toArray();
+  }
+
+  private final AtomicLong channels = new AtomicLong(0L);
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
 
   public Beeper() {
@@ -155,8 +146,8 @@ public final class Beeper {
   private int mixChannelsAsSignedByte() {
     long value = this.channels.get();
     int mixed = 0;
-    while (value != 0) {
-      mixed += (int) value & 0xFF;
+    while (value != 0L) {
+      mixed += ((int) value) & 0xFF;
       value >>>= 8;
     }
     return (mixed << 5) - 32768;
@@ -198,50 +189,43 @@ public final class Beeper {
     void reset();
   }
 
+  private static final class TwoElementByteArrayQueue {
+
+    private final AtomicReference<byte[]> blockA = new AtomicReference<>();
+    private final AtomicReference<byte[]> blockB = new AtomicReference<>();
+
+    public TwoElementByteArrayQueue() {
+    }
+
+    public void offer(final byte[] array) {
+      if (!blockA.compareAndSet(null, array)) {
+        blockB.set(array);
+      }
+    }
+
+    public byte[] take() {
+      byte[] a = blockA.getAndSet(null);
+      if (a == null) {
+        return blockB.getAndSet(null);
+      } else {
+        blockA.compareAndSet(null, blockB.getAndSet(null));
+        return a;
+      }
+    }
+
+  }
+
   private static final class InternalBeeper implements IBeeper, Runnable {
 
     private static final int SAMPLES_PER_INT = SND_FREQ / 50;
     private static final int SND_BUFFER_LENGTH =
         SAMPLES_PER_INT * AUDIO_FORMAT.getChannels() * AUDIO_FORMAT.getSampleSizeInBits() / 8;
     private final byte[] soundBuffer = new byte[SND_BUFFER_LENGTH];
-    private final BlockingQueue<byte[]> soundDataQueue = new ArrayBlockingQueue<>(5);
+    private final TwoElementByteArrayQueue soundDataQueue = new TwoElementByteArrayQueue();
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
-    private volatile boolean working = true;
     private final AtomicReference<FloatControl> gainControl = new AtomicReference<>();
-
-    @Override
-    public void start() {
-      if (this.thread != null && this.working) {
-        this.thread.start();
-      }
-    }
-
-    private void initMasterGain() {
-      final FloatControl gainControl = this.gainControl.get();
-      if (gainControl != null) {
-        gainControl.setValue(-10.0f);
-      }
-    }
-
-    @Override
-    public float getMasterGain() {
-      final FloatControl gainControl = this.gainControl.get();
-      if (gainControl == null || !this.working) {
-        return -1.0f;
-      } else {
-        return gainControl.getValue();
-      }
-    }
-
-    @Override
-    public void setMasterGain(final float valueInDb) {
-      final FloatControl gainControl = this.gainControl.get();
-      if (gainControl != null && this.working) {
-        gainControl.setValue(
-            Math.max(gainControl.getMinimum(), Math.min(gainControl.getMaximum(), valueInDb)));
-      }
-    }
+    private volatile boolean working = true;
 
     private InternalBeeper(final SourceSoundPort sourceSoundPort) {
       this.sourceDataLine = sourceSoundPort.asSourceDataLine();
@@ -279,6 +263,39 @@ public final class Beeper {
           array[--index] = high;
           array[--index] = low;
         }
+      }
+    }
+
+    @Override
+    public void start() {
+      if (this.thread != null && this.working) {
+        this.thread.start();
+      }
+    }
+
+    private void initMasterGain() {
+      final FloatControl gainControl = this.gainControl.get();
+      if (gainControl != null) {
+        gainControl.setValue(-10.0f);
+      }
+    }
+
+    @Override
+    public float getMasterGain() {
+      final FloatControl gainControl = this.gainControl.get();
+      if (gainControl == null || !this.working) {
+        return -1.0f;
+      } else {
+        return gainControl.getValue();
+      }
+    }
+
+    @Override
+    public void setMasterGain(final float valueInDb) {
+      final FloatControl gainControl = this.gainControl.get();
+      if (gainControl != null && this.working) {
+        gainControl.setValue(
+            Math.max(gainControl.getMinimum(), Math.min(gainControl.getMaximum(), valueInDb)));
       }
     }
 
@@ -378,15 +395,14 @@ public final class Beeper {
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
           final byte[] dataBlock = soundDataQueue.take();
-          if (LOG_RAW_SOUND && logStream != null) {
-            logStream.write(dataBlock);
+          if (dataBlock != null) {
+            if (LOG_RAW_SOUND && logStream != null) {
+              logStream.write(dataBlock);
+            }
+            this.flushDataIntoLine(dataBlock);
           }
-          this.flushDataIntoLine(dataBlock);
         }
         LOGGER.info("Main loop completed");
-      } catch (InterruptedException ex) {
-        LOGGER.info("Interruption");
-        Thread.currentThread().interrupt();
       } catch (Exception ex) {
         LOGGER.log(Level.WARNING, "Error in sound line work: " + ex);
       } finally {
