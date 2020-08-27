@@ -189,27 +189,30 @@ public final class Beeper {
     void reset();
   }
 
-  private static final class TwoElementByteArrayQueue {
+  private static final class ByteArrayQueue {
+
+    private final int size;
+    private final byte[][] pipe;
 
     private final AtomicReference<byte[]> blockA = new AtomicReference<>();
     private final AtomicReference<byte[]> blockB = new AtomicReference<>();
 
-    public TwoElementByteArrayQueue() {
+    public ByteArrayQueue(final int size) {
+      this.size = size;
+      this.pipe = new byte[size][];
     }
 
     public void offer(final byte[] array) {
-      if (!blockA.compareAndSet(null, array)) {
-        blockB.set(array);
+      synchronized (this.pipe) {
+        this.pipe[this.size - 1] = array;
       }
     }
 
-    public byte[] take() {
-      byte[] a = blockA.getAndSet(null);
-      if (a == null) {
-        return blockB.getAndSet(null);
-      } else {
-        blockA.compareAndSet(null, blockB.getAndSet(null));
-        return a;
+    public byte[] pipeStep() {
+      synchronized (this.pipe) {
+        final byte[] result = this.pipe[0];
+        System.arraycopy(this.pipe, 1, this.pipe, 0, this.size - 1);
+        return result;
       }
     }
 
@@ -221,7 +224,7 @@ public final class Beeper {
     private static final int SND_BUFFER_LENGTH =
         SAMPLES_PER_INT * AUDIO_FORMAT.getChannels() * AUDIO_FORMAT.getSampleSizeInBits() / 8;
     private final byte[] soundBuffer = new byte[SND_BUFFER_LENGTH];
-    private final TwoElementByteArrayQueue soundDataQueue = new TwoElementByteArrayQueue();
+    private final ByteArrayQueue soundDataQueue = new ByteArrayQueue(5);
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
     private final AtomicReference<FloatControl> gainControl = new AtomicReference<>();
@@ -394,7 +397,7 @@ public final class Beeper {
         LOGGER.info("Sound line started");
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
-          final byte[] dataBlock = soundDataQueue.take();
+          final byte[] dataBlock = soundDataQueue.pipeStep();
           if (dataBlock != null) {
             if (LOG_RAW_SOUND && logStream != null) {
               logStream.write(dataBlock);
