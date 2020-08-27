@@ -189,7 +189,7 @@ public final class Beeper {
     void reset();
   }
 
-  private static final class ByteArrayQueue {
+  private static final class ByteArrayPipe {
 
     private final int size;
     private final byte[][] pipe;
@@ -197,7 +197,7 @@ public final class Beeper {
     private final AtomicReference<byte[]> blockA = new AtomicReference<>();
     private final AtomicReference<byte[]> blockB = new AtomicReference<>();
 
-    public ByteArrayQueue(final int size) {
+    public ByteArrayPipe(final int size) {
       this.size = size;
       this.pipe = new byte[size][];
     }
@@ -224,7 +224,7 @@ public final class Beeper {
     private static final int SND_BUFFER_LENGTH =
         SAMPLES_PER_INT * AUDIO_FORMAT.getChannels() * AUDIO_FORMAT.getSampleSizeInBits() / 8;
     private final byte[] soundBuffer = new byte[SND_BUFFER_LENGTH];
-    private final ByteArrayQueue soundDataQueue = new ByteArrayQueue(5);
+    private final ByteArrayPipe soundDataQueue = new ByteArrayPipe(5);
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
     private final AtomicReference<FloatControl> gainControl = new AtomicReference<>();
