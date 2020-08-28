@@ -325,8 +325,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     final int oldCpuState = this.cpu.getState();
     this.cpu.step(0,
-        Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.intCounter > 0 ? Z80.SIGNAL_IN_nINT : 0) ^
-            sigWait ^ (this.nmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
+        Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.intCounter > 0 ? Z80.SIGNAL_IN_nINT : 0)
+            ^ sigWait ^ (this.nmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
     final int newCpuState = this.cpu.getState();
 
     final boolean isHaltDetected =

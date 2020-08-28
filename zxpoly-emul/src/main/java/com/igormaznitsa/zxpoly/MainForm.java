@@ -606,10 +606,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             virtualIntTick = false;
           }
 
+          final boolean executionEnabled =
+              inTurboMode || !allMcyclesInIntCompleted || virtualIntTick;
+
           final int detectedTriggers = this.board.step(
               virtualIntTick,
               wallclockInt,
-              inTurboMode || !allMcyclesInIntCompleted || virtualIntTick);
+              executionEnabled);
 
           if (wallclockInt) {
             this.videoStreamer.onWallclockInt();
