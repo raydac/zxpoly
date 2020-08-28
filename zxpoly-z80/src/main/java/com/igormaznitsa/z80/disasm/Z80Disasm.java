@@ -24,10 +24,6 @@ import java.util.List;
 
 public final class Z80Disasm {
 
-  private Z80Disasm() {
-  }
-
-
   private static final Z80Instruction[] NO_PREFIXED;
   private static final Z80Instruction[] CB_PREFIXED;
   private static final Z80Instruction[] DD_PREFIXED;
@@ -101,8 +97,14 @@ public final class Z80Disasm {
     FDCB_PREFIXED = fdcbPrefixed.toArray(new Z80Instruction[fdcbPrefixed.size()]);
   }
 
-  public static List<Z80Instruction> decodeList(final MemoryAccessProvider memoryAccessProvider, final List<Z80Instruction> container, final int offset, final int instructionsToDecode) {
-    final List<Z80Instruction> result = container == null ? new ArrayList<Z80Instruction>() : container;
+  private Z80Disasm() {
+  }
+
+  public static List<Z80Instruction> decodeList(final MemoryAccessProvider memoryAccessProvider,
+                                                final List<Z80Instruction> container,
+                                                final int offset, final int instructionsToDecode) {
+    final List<Z80Instruction> result =
+        container == null ? new ArrayList<Z80Instruction>() : container;
 
     int off = offset;
 
@@ -123,7 +125,8 @@ public final class Z80Disasm {
     return result;
   }
 
-  public static Z80Instruction decodeInstruction(final MemoryAccessProvider memoryAccessProvider, final int offset) {
+  public static Z80Instruction decodeInstruction(final MemoryAccessProvider memoryAccessProvider,
+                                                 final int offset) {
     final Z80Instruction[] arraytofind;
 
     int off = offset;
@@ -133,11 +136,13 @@ public final class Z80Disasm {
         arraytofind = CB_PREFIXED;
         break;
       case 0xDD: {
-        arraytofind = (memoryAccessProvider.readAddress(off) & 0xFF) == 0xCB ? DDCB_PREFIXED : DD_PREFIXED;
+        arraytofind =
+            (memoryAccessProvider.readAddress(off) & 0xFF) == 0xCB ? DDCB_PREFIXED : DD_PREFIXED;
       }
       break;
       case 0xFD: {
-        arraytofind = (memoryAccessProvider.readAddress(off) & 0xFF) == 0xCB ? FDCB_PREFIXED : FD_PREFIXED;
+        arraytofind =
+            (memoryAccessProvider.readAddress(off) & 0xFF) == 0xCB ? FDCB_PREFIXED : FD_PREFIXED;
       }
       break;
       default:

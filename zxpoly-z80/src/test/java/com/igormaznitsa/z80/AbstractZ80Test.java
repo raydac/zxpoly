@@ -58,7 +58,8 @@ public abstract class AbstractZ80Test {
   }
 
   public void assertMemory(final int address, final int value) {
-    assertEquals("The Memory value at " + address + " must be " + value, value, this.memory[address] & 0xFF);
+    assertEquals("The Memory value at " + address + " must be " + value, value,
+        this.memory[address] & 0xFF);
   }
 
   public void assertMemory(final int address, final int... value) {
@@ -76,7 +77,8 @@ public abstract class AbstractZ80Test {
     return this.executeCommand(null, code);
   }
 
-  public Z80 executeRepeatingBlockCommand(final Z80State state, final TestBus testBus, final int... code) {
+  public Z80 executeRepeatingBlockCommand(final Z80State state, final TestBus testBus,
+                                          final int... code) {
     for (int i = 0; i < code.length; i++) {
       testBus.writeMemory(null, 111, i, (byte) code[i]);
     }

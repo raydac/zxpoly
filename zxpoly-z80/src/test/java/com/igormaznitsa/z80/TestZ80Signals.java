@@ -178,7 +178,8 @@ public class TestZ80Signals extends AbstractZ80Test {
     assertEquals(0x38, cpu.getRegister(Z80.REG_PC));
     assertEquals(0xFFFD, cpu.getRegister(Z80.REG_SP));
     assertEquals(0x06, tb.readMemory(cpu, 111, cpu.getRegister(Z80.REG_SP), false, false) & 0xFF);
-    assertEquals(0x00, tb.readMemory(cpu, 111, cpu.getRegister(Z80.REG_SP) + 1, false, false) & 0xFF);
+    assertEquals(0x00,
+        tb.readMemory(cpu, 111, cpu.getRegister(Z80.REG_SP) + 1, false, false) & 0xFF);
   }
 
   @Test

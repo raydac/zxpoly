@@ -143,6 +143,44 @@ public final class Z80 {
     this.machineCycles = 3L;
   }
 
+  /**
+   * Make full copy of state of the source CPU. NB! pointer to bus will be
+   * copied!
+   *
+   * @param cpu source CPU which state should be copied, must not be null
+   */
+  public Z80(final Z80 cpu) {
+    this.prefix = cpu.prefix;
+    this.resetCycle = cpu.resetCycle;
+    this.iff1 = cpu.iff1;
+    this.iff2 = cpu.iff2;
+    this.im = cpu.im;
+    this.regI = cpu.regI;
+    this.regIX = cpu.regIX;
+    this.regIY = cpu.regIY;
+    this.regPC = cpu.regPC;
+    this.regR = cpu.regR;
+    this.regSP = cpu.regSP;
+    this.regW = cpu.regW;
+    this.regZ = cpu.regZ;
+    this.regWalt = cpu.regWalt;
+    this.regZalt = cpu.regZalt;
+    System.arraycopy(cpu.regSet, 0, this.regSet, 0, cpu.regSet.length);
+    System.arraycopy(cpu.altRegSet, 0, this.altRegSet, 0, cpu.altRegSet.length);
+    this.lastM1InstructionByte = cpu.lastM1InstructionByte;
+    this.lastInstructionByte = cpu.lastInstructionByte;
+    this.machineCycles = cpu.machineCycles;
+    this.cbDisplacementByte = cpu.cbDisplacementByte;
+    this.outSignals = cpu.outSignals;
+    this.prevINSignals = cpu.prevINSignals;
+    this.interruptAllowedForStep = cpu.interruptAllowedForStep;
+    this.detectedINT = cpu.detectedINT;
+    this.detectedNMI = cpu.detectedNMI;
+    this.insideBlockInstruction = cpu.insideBlockInstruction;
+    this.insideBlockInstructionPrev = cpu.insideBlockInstructionPrev;
+    this.bus = cpu.bus;
+  }
+
   private static int extractX(final int cmndByte) {
     return cmndByte >>> 6;
   }
@@ -161,6 +199,38 @@ public final class Z80 {
 
   private static int extractQ(final int cmndByte) {
     return (cmndByte >>> 3) & 1;
+  }
+
+  /**
+   * Parse string with id of registers and prepare bit vector for it.
+   * main set: <b>A,F,B,C,D,E,H,L,1(F without C)</b>
+   * alt.set: <b>sa,f,b,c,d,e,h,l,0(F' without C)</b>
+   * special: <b>T(use PTR reg values from main CPU)</b>
+   * index: <b>X(high byte IX), x(lower byte IX),Y(high byte IY), y(lower byte IY)</b>
+   * spec: <b>P(PC),S(high byte SP),s(lower byte SP)</b>
+   *
+   * @param regs string where each char means register or its part
+   * @return formed bit vector
+   * @see #alignRegisterValuesWith(Z80, int)
+   * @since 2.0.1
+   */
+  public static int parseAndPackRegAlignValue(final String regs) {
+    final String allowedPositions = "AFBCDEHLXxYy10PSsafbcdehl";
+    final String trimmed = regs.trim();
+    int result = 0;
+    for (final char c : trimmed.toCharArray()) {
+      if (c == 'T') {
+        continue;
+      }
+      final int index = allowedPositions.indexOf(c);
+      if (index < 0) {
+        throw new IllegalArgumentException(
+            "Unexpected char: " + c + " expected one from '" + allowedPositions + "'");
+      } else {
+        result |= 1 << index;
+      }
+    }
+    return result;
   }
 
   public Z80 fillByState(final Z80 src) {
@@ -231,38 +301,6 @@ public final class Z80 {
 
   public int getPrevINSignals() {
     return this.prevINSignals;
-  }
-
-  /**
-   * Parse string with id of registers and prepare bit vector for it.
-   * main set: <b>A,F,B,C,D,E,H,L,1(F without C)</b>
-   * alt.set: <b>sa,f,b,c,d,e,h,l,0(F' without C)</b>
-   * special: <b>T(use PTR reg values from main CPU)</b>
-   * index: <b>X(high byte IX), x(lower byte IX),Y(high byte IY), y(lower byte IY)</b>
-   * spec: <b>P(PC),S(high byte SP),s(lower byte SP)</b>
-   *
-   * @param regs string where each char means register or its part
-   * @return formed bit vector
-   * @see #alignRegisterValuesWith(Z80, int)
-   * @since 2.0.1
-   */
-  public static int parseAndPackRegAlignValue(final String regs) {
-    final String allowedPositions = "AFBCDEHLXxYy10PSsafbcdehl";
-    final String trimmed = regs.trim();
-    int result = 0;
-    for (final char c : trimmed.toCharArray()) {
-      if (c == 'T') {
-        continue;
-      }
-      final int index = allowedPositions.indexOf(c);
-      if (index < 0) {
-        throw new IllegalArgumentException(
-            "Unexpected char: " + c + " expected one from '" + allowedPositions + "'");
-      } else {
-        result |= 1 << index;
-      }
-    }
-    return result;
   }
 
   public int getPC() {
@@ -602,44 +640,6 @@ public final class Z80 {
         throw new Error("Unexpected condition");
     }
     return result;
-  }
-
-  /**
-   * Make full copy of state of the source CPU. NB! pointer to bus will be
-   * copied!
-   *
-   * @param cpu source CPU which state should be copied, must not be null
-   */
-  public Z80(final Z80 cpu) {
-    this.prefix = cpu.prefix;
-    this.resetCycle = cpu.resetCycle;
-    this.iff1 = cpu.iff1;
-    this.iff2 = cpu.iff2;
-    this.im = cpu.im;
-    this.regI = cpu.regI;
-    this.regIX = cpu.regIX;
-    this.regIY = cpu.regIY;
-    this.regPC = cpu.regPC;
-    this.regR = cpu.regR;
-    this.regSP = cpu.regSP;
-    this.regW = cpu.regW;
-    this.regZ = cpu.regZ;
-    this.regWalt = cpu.regWalt;
-    this.regZalt = cpu.regZalt;
-    System.arraycopy(cpu.regSet, 0, this.regSet, 0, cpu.regSet.length);
-    System.arraycopy(cpu.altRegSet, 0, this.altRegSet, 0, cpu.altRegSet.length);
-    this.lastM1InstructionByte = cpu.lastM1InstructionByte;
-    this.lastInstructionByte = cpu.lastInstructionByte;
-    this.machineCycles = cpu.machineCycles;
-    this.cbDisplacementByte = cpu.cbDisplacementByte;
-    this.outSignals = cpu.outSignals;
-    this.prevINSignals = cpu.prevINSignals;
-    this.interruptAllowedForStep = cpu.interruptAllowedForStep;
-    this.detectedINT = cpu.detectedINT;
-    this.detectedNMI = cpu.detectedNMI;
-    this.insideBlockInstruction = cpu.insideBlockInstruction;
-    this.insideBlockInstructionPrev = cpu.insideBlockInstructionPrev;
-    this.bus = cpu.bus;
   }
 
   private int _readPtr(final int ctx, final int reg, final int origValue) {

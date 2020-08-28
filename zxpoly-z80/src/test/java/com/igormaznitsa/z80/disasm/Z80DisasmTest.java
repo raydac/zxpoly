@@ -30,11 +30,16 @@ public class Z80DisasmTest {
 
   @Test
   public void testDecodeList() {
-    final ByteArrayMemoryAccessProvider memoryProvider = new ByteArrayMemoryAccessProvider(new byte[] {
-        (byte) 0xBB, (byte) 0x6D, (byte) 0xEF, (byte) 0x40, (byte) 0x45, (byte) 0x21, (byte) 0x00, (byte) 0x00, (byte) 0x22,
-        (byte) 0x4B, (byte) 0x84, (byte) 0x21, (byte) 0xA8, (byte) 0x9D, (byte) 0xEF, (byte) 0x0A, (byte) 0x45, (byte) 0xEF,
-        (byte) 0x2E, (byte) 0x45, (byte) 0xC9, (byte) 0x48, (byte) 0x65, (byte) 0x6C, (byte) 0x6C, (byte) 0x6F, (byte) 0x20,
-        (byte) 0x77, (byte) 0x6F, (byte) 0x72, (byte) 0x6C, (byte) 0x64, (byte) 0x21, (byte) 0x00});
+    final ByteArrayMemoryAccessProvider memoryProvider =
+        new ByteArrayMemoryAccessProvider(new byte[] {
+            (byte) 0xBB, (byte) 0x6D, (byte) 0xEF, (byte) 0x40, (byte) 0x45, (byte) 0x21,
+            (byte) 0x00, (byte) 0x00, (byte) 0x22,
+            (byte) 0x4B, (byte) 0x84, (byte) 0x21, (byte) 0xA8, (byte) 0x9D, (byte) 0xEF,
+            (byte) 0x0A, (byte) 0x45, (byte) 0xEF,
+            (byte) 0x2E, (byte) 0x45, (byte) 0xC9, (byte) 0x48, (byte) 0x65, (byte) 0x6C,
+            (byte) 0x6C, (byte) 0x6F, (byte) 0x20,
+            (byte) 0x77, (byte) 0x6F, (byte) 0x72, (byte) 0x6C, (byte) 0x64, (byte) 0x21,
+            (byte) 0x00});
     final List<Z80Instruction> list = Z80Disasm.decodeList(memoryProvider, null, 0, 26);
 
     assertEquals(26, list.size());

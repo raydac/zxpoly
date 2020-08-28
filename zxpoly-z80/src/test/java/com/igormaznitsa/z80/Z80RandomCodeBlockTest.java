@@ -48,7 +48,8 @@ public class Z80RandomCodeBlockTest {
     }
     final long milliseconds = System.currentTimeMillis() - starttime;
     final long tactsWouldBeAtStandard = 4000 * milliseconds;
-    final long speed = Math.round(((double) cpu.getMachineCycles() / (double) tactsWouldBeAtStandard) * 100d);
+    final long speed =
+        Math.round(((double) cpu.getMachineCycles() / (double) tactsWouldBeAtStandard) * 100d);
 
     assertEquals(Z80.SIGNAL_OUT_ALL_INACTIVE, cpu.getState() & 0xFFFF);
   }

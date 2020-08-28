@@ -70,11 +70,19 @@ public class Z80InstructionTest {
     final Z80Instruction ins = new Z80Instruction("FD36 d n   LD (IY+d),n");
     assertEquals(4, ins.getLength());
     assertEquals(2, ins.getFixedPartLength());
-    assertArrayEquals(new int[] {0xFD, 0x36, Z80Instruction.SPEC_INDEX, Z80Instruction.SPEC_UNSIGNED_BYTE}, ins.getInstructionCodes());
+    assertArrayEquals(
+        new int[] {0xFD, 0x36, Z80Instruction.SPEC_INDEX, Z80Instruction.SPEC_UNSIGNED_BYTE},
+        ins.getInstructionCodes());
 
-    assertEquals("LD (IY+#46),#12", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xFD, (byte) 0x36, (byte) 0x46, 0x12}), 0, -1));
-    assertEquals("LD (IY-#01),#12", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xFD, (byte) 0x36, (byte) 0xFF, 0x12}), 0, -1));
-    assertNull(ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xFD, (byte) 0x37, (byte) -15, 8}), 0, -1));
+    assertEquals("LD (IY+#46),#12", ins.decode(
+        new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xFD, (byte) 0x36, (byte) 0x46, 0x12}),
+        0, -1));
+    assertEquals("LD (IY-#01),#12", ins.decode(
+        new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xFD, (byte) 0x36, (byte) 0xFF, 0x12}),
+        0, -1));
+    assertNull(ins.decode(
+        new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xFD, (byte) 0x37, (byte) -15, 8}), 0,
+        -1));
   }
 
   @Test
@@ -84,12 +92,23 @@ public class Z80InstructionTest {
     assertEquals(1, ins.getFixedPartLength());
     assertArrayEquals(new int[] {0x10, Z80Instruction.SPEC_OFFSET}, ins.getInstructionCodes());
 
-    assertEquals("DJNZ PC-#08", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x10, (byte) 0xF6}), 0, -1));
-    assertEquals("DJNZ #0002", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x10, (byte) 0x00}), 0, 0));
-    assertEquals("DJNZ #4000", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x10, (byte) 0xFE}), 0, 0x4000));
-    assertEquals("DJNZ PC+#81", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x10, (byte) 0x7F}), 0, -1));
-    assertEquals("DJNZ #4081", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x10, (byte) 0x7F}), 0, 0x4000));
-    assertEquals("DJNZ #0000", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x10, (byte) 0xFE}), 0, 0x0000));
+    assertEquals("DJNZ PC-#08",
+        ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x10, (byte) 0xF6}), 0,
+            -1));
+    assertEquals("DJNZ #0002",
+        ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x10, (byte) 0x00}), 0, 0));
+    assertEquals("DJNZ #4000",
+        ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x10, (byte) 0xFE}), 0,
+            0x4000));
+    assertEquals("DJNZ PC+#81",
+        ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x10, (byte) 0x7F}), 0,
+            -1));
+    assertEquals("DJNZ #4081",
+        ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x10, (byte) 0x7F}), 0,
+            0x4000));
+    assertEquals("DJNZ #0000",
+        ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x10, (byte) 0xFE}), 0,
+            0x0000));
   }
 
   @Test
@@ -97,13 +116,23 @@ public class Z80InstructionTest {
     final Z80Instruction ins = new Z80Instruction("E4 nn      CALL PO,nn");
     assertEquals(3, ins.getLength());
     assertEquals(1, ins.getFixedPartLength());
-    assertArrayEquals(new int[] {0xE4, Z80Instruction.SPEC_UNSIGNED_WORD}, ins.getInstructionCodes());
+    assertArrayEquals(new int[] {0xE4, Z80Instruction.SPEC_UNSIGNED_WORD},
+        ins.getInstructionCodes());
 
-    assertEquals("CALL PO,#1234", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xE4, (byte) 0x34, (byte) 0x12}), 0, -1));
-    assertEquals("CALL PO,#0000", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xE4, (byte) 0x00, (byte) 0x00}), 0, -1));
-    assertEquals("CALL PO,#0001", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xE4, (byte) 0x01, (byte) 0x00}), 0, -1));
-    assertEquals("CALL PO,#E434", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xE4, (byte) 0x34}), 0, -1));
-    assertEquals("CALL PO,#E4E4", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xE4}), 0, -1));
+    assertEquals("CALL PO,#1234", ins.decode(
+        new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xE4, (byte) 0x34, (byte) 0x12}), 0,
+        -1));
+    assertEquals("CALL PO,#0000", ins.decode(
+        new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xE4, (byte) 0x00, (byte) 0x00}), 0,
+        -1));
+    assertEquals("CALL PO,#0001", ins.decode(
+        new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xE4, (byte) 0x01, (byte) 0x00}), 0,
+        -1));
+    assertEquals("CALL PO,#E434",
+        ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xE4, (byte) 0x34}), 0,
+            -1));
+    assertEquals("CALL PO,#E4E4",
+        ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0xE4}), 0, -1));
   }
 
   @Test
@@ -113,10 +142,17 @@ public class Z80InstructionTest {
     assertEquals(1, ins.getFixedPartLength());
     assertArrayEquals(new int[] {0x18, Z80Instruction.SPEC_OFFSET}, ins.getInstructionCodes());
 
-    assertEquals("JR PC-#01", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x18, (byte) 0xFD}), 0, -1));
-    assertEquals("JR #3FFF", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x18, (byte) 0xFD}), 0, 0x4000));
-    assertEquals("JR #4004", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x18, (byte) 0x02}), 0, 0x4000));
-    assertEquals("JR PC+#1A", ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x18}), 0, -1));
+    assertEquals("JR PC-#01",
+        ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x18, (byte) 0xFD}), 0,
+            -1));
+    assertEquals("JR #3FFF",
+        ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x18, (byte) 0xFD}), 0,
+            0x4000));
+    assertEquals("JR #4004",
+        ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x18, (byte) 0x02}), 0,
+            0x4000));
+    assertEquals("JR PC+#1A",
+        ins.decode(new ByteArrayMemoryAccessProvider(new byte[] {(byte) 0x18}), 0, -1));
   }
 
 }
