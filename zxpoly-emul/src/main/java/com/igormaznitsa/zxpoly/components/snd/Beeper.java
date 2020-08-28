@@ -191,27 +191,28 @@ public final class Beeper {
 
   private static final class ByteArrayPipe {
 
-    private final int size;
+    private final int length;
     private final byte[][] pipe;
 
     private final AtomicReference<byte[]> blockA = new AtomicReference<>();
     private final AtomicReference<byte[]> blockB = new AtomicReference<>();
 
-    public ByteArrayPipe(final int size) {
-      this.size = size;
-      this.pipe = new byte[size][];
+    public ByteArrayPipe(final int len) {
+      this.length = len;
+      this.pipe = new byte[len][];
     }
 
     public void offer(final byte[] array) {
       synchronized (this.pipe) {
-        this.pipe[this.size - 1] = array;
+        this.pipe[this.length - 1] = array;
       }
     }
 
     public byte[] pipeStep() {
       synchronized (this.pipe) {
         final byte[] result = this.pipe[0];
-        System.arraycopy(this.pipe, 1, this.pipe, 0, this.size - 1);
+        System.arraycopy(this.pipe, 1, this.pipe, 0, this.length - 1);
+        this.pipe[this.length - 1] = null;
         return result;
       }
     }
