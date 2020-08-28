@@ -2346,13 +2346,13 @@ public final class Z80 {
 
   private void doIM(final int y) {
     switch (y) {
-      //---- mode ED 4E and ED 6E
-      case 5:
-      case 1:
-        //--------
       case 4:
       case 0:
         this.im = 0;
+        return;
+      case 5:
+      case 1:
+        this.im = this.im == 0 ? 1 : 0;
         return;
       case 6:
       case 2:
@@ -2362,9 +2362,8 @@ public final class Z80 {
       case 3:
         this.im = 2;
         return;
-      default:
-        throw new Error("unexpected IM index:" + y);
     }
+    throw new Error("unexpected IM index [" + y + ']');
   }
 
   private void doLD_I_A() {
