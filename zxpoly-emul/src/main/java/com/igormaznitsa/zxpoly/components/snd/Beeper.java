@@ -33,6 +33,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -189,43 +191,13 @@ public final class Beeper {
     void reset();
   }
 
-  private static final class ByteArrayPipe {
-
-    private final int length;
-    private final byte[][] pipe;
-
-    private final AtomicReference<byte[]> blockA = new AtomicReference<>();
-    private final AtomicReference<byte[]> blockB = new AtomicReference<>();
-
-    public ByteArrayPipe(final int len) {
-      this.length = len;
-      this.pipe = new byte[len][];
-    }
-
-    public void offer(final byte[] array) {
-      synchronized (this.pipe) {
-        this.pipe[this.length - 1] = array;
-      }
-    }
-
-    public byte[] pipeStep() {
-      synchronized (this.pipe) {
-        final byte[] result = this.pipe[0];
-        System.arraycopy(this.pipe, 1, this.pipe, 0, this.length - 1);
-        this.pipe[this.length - 1] = null;
-        return result;
-      }
-    }
-
-  }
-
   private static final class InternalBeeper implements IBeeper, Runnable {
 
     private static final int SAMPLES_PER_INT = SND_FREQ / 50;
     private static final int SND_BUFFER_LENGTH =
         SAMPLES_PER_INT * AUDIO_FORMAT.getChannels() * AUDIO_FORMAT.getSampleSizeInBits() / 8;
     private final byte[] soundBuffer = new byte[SND_BUFFER_LENGTH];
-    private final ByteArrayPipe soundDataQueue = new ByteArrayPipe(5);
+    private final BlockingQueue<byte[]> soundDataQueue = new ArrayBlockingQueue<>(5);
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
     private final AtomicReference<FloatControl> gainControl = new AtomicReference<>();
@@ -398,12 +370,16 @@ public final class Beeper {
         LOGGER.info("Sound line started");
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
-          final byte[] dataBlock = soundDataQueue.pipeStep();
-          if (dataBlock != null) {
-            if (LOG_RAW_SOUND && logStream != null) {
-              logStream.write(dataBlock);
+          try {
+            final byte[] dataBlock = soundDataQueue.take();
+            if (dataBlock != null) {
+              if (LOG_RAW_SOUND && logStream != null) {
+                logStream.write(dataBlock);
+              }
+              this.flushDataIntoLine(dataBlock);
             }
-            this.flushDataIntoLine(dataBlock);
+          } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
           }
         }
         LOGGER.info("Main loop completed");
