@@ -491,8 +491,8 @@ public final class Z80 {
       break;
       case 2: {
         final int address = _readmem16(ctx,
-            ((_readSpecRegValue(ctx, REG_I, this.regI) & 0xFF) << 8) |
-                (this.bus.onCPURequestDataLines(this, ctx) & 0xFF));
+            ((_readSpecRegValue(ctx, REG_I, this.regI) & 0xFF) << 8)
+                | (this.bus.onCPURequestDataLines(this, ctx) & 0xFF));
         _call(ctx, address);
         this.machineCycles++;
       }
@@ -1004,8 +1004,8 @@ public final class Z80 {
    */
   public void nextInstruction(final int ctx, final boolean signalRESET, final boolean signalNMI,
                               final boolean signalNT) {
-    int flag = (signalNT ? 0 : SIGNAL_IN_nINT) | (signalNMI ? 0 : SIGNAL_IN_nNMI) |
-        (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
+    int flag = (signalNT ? 0 : SIGNAL_IN_nINT) | (signalNMI ? 0 : SIGNAL_IN_nNMI)
+        | (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
     while (step(ctx, flag)) {
       flag = SIGNAL_IN_ALL_INACTIVE;
     }
@@ -1505,8 +1505,8 @@ public final class Z80 {
       }
       break;
       default:
-        throw new Error("Illegal prefix state [0x" +
-            Integer.toHexString(this.prefix).toUpperCase(Locale.ENGLISH) + ']');
+        throw new Error("Illegal prefix state [0x"
+            + Integer.toHexString(this.prefix).toUpperCase(Locale.ENGLISH) + ']');
     }
 
     return commandCompleted;
