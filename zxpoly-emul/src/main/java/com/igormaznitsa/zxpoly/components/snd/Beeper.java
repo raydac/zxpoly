@@ -110,10 +110,7 @@ public final class Beeper {
   public Beeper() {
   }
 
-  public void reset() {
-    this.clearChannels();
-    this.activeInternalBeeper.get().reset();
-  }
+  private int lastMixedValue = 0;
 
   public void setSourceSoundPort(final SourceSoundPort soundPort) {
     if (soundPort == null) {
@@ -145,6 +142,12 @@ public final class Beeper {
     } while (!this.channels.compareAndSet(oldValue, newValue));
   }
 
+  public void reset() {
+    this.lastMixedValue = 0;
+    this.clearChannels();
+    this.activeInternalBeeper.get().reset();
+  }
+
   private int mixChannelsAsSignedByte() {
     long value = this.channels.get();
     int mixed = 0;
@@ -152,7 +155,8 @@ public final class Beeper {
       mixed += ((int) value) & 0xFF;
       value >>>= 8;
     }
-    return (mixed << 5) - 32768;
+    this.lastMixedValue = (this.lastMixedValue + (mixed << 5)) >> 1;
+    return this.lastMixedValue - 32768;
   }
 
   public void updateState(boolean intSignal, long machineCycleInInt) {
