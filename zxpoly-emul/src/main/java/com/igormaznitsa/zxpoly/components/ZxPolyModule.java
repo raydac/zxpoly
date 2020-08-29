@@ -475,12 +475,10 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
         final int address_h = address >>> 8;
 
-        if (address_h == 0x3D && !activeRom128) {
-          // turn on the TR-DOS ROM Section
-          this.trdosRomActive = true;
-        } else if (this.trdosRomActive && address_h >= 0x40) {
-          // turn off the TR-DOS ROM Section
-          this.trdosRomActive = false;
+        if (this.trdosRomActive) {
+          this.trdosRomActive = address_h < 0x40;
+        } else {
+          this.trdosRomActive = !activeRom128 && address_h == 0x3D;
         }
       }
 

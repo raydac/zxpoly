@@ -30,7 +30,7 @@ public final class Zx128Ay8910 implements IoDevice, AySounder {
 
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
-    if ((port & 2) == 0 && (port & 0x8000) == 0x8000) {
+    if (!module.isTrdosActive() && (port & 2) == 0 && (port & 0x8000) == 0x8000) {
       return this.ay8910.readData();
     }
     return -1;
@@ -38,7 +38,7 @@ public final class Zx128Ay8910 implements IoDevice, AySounder {
 
   @Override
   public void writeIo(final ZxPolyModule module, final int port, final int value) {
-    if ((port & 2) == 0) {
+    if (!module.isTrdosActive() && (port & 2) == 0) {
       if ((port & 0xC000) == 0xC000) {
         this.ay8910.writeAddress(value);
       } else if ((port & 0xC000) == 0x8000) {
