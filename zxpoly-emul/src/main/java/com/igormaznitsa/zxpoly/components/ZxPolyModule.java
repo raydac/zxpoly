@@ -472,7 +472,6 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
       if (m1) {
         this.lastM1Address = address;
-
         final int address_h = address >>> 8;
 
         if (this.trdosRomActive) {
@@ -481,6 +480,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
           this.trdosRomActive = !activeRom128 && address_h == 0x3D;
         }
       }
+
 
       if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
         if (m1 && this.board.is3D00NotLocked() && this.registerReadingCounter == 0) {
