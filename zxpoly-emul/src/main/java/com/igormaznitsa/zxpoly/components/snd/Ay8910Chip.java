@@ -63,7 +63,7 @@ public final class Ay8910Chip {
   private long machineCycleCounter;
   private int counterE;
   private int envIndexCounter;
-  private int envelopeIndex;
+  private int envelopeVolume;
 
   public Ay8910Chip(final Ay8910SignalConsumer signalConsumer) {
     this.signalConsumer = Objects.requireNonNull(signalConsumer);
@@ -138,6 +138,7 @@ public final class Ay8910Chip {
         this.enfHold = (value & ENV_FLAG_HOLD) != 0;
         this.enfCont = (value & ENV_FLAG_CONT) != 0;
         this.envIndexCounter = 0;
+        this.envelopeVolume = this.enfAttack ? ENV_MIN : ENV_MAX;
       }
       break;
       case REG_IO_A: {
@@ -231,26 +232,28 @@ public final class Ay8910Chip {
       this.counterE = 0;
 
       if (this.envIndexCounter >= 0) {
-        this.envIndexCounter++;
+        int count = this.envIndexCounter;
 
-        final int eCounter = this.envIndexCounter & 31;
-        this.envIndexCounter = eCounter;
+        count++;
+        count &= 31;
 
-        final int result;
+        final int envIndex;
 
-        if (eCounter < 16) {
-          result = enfAttack ? eCounter : (ENV_MAX - eCounter);
-        } else if (eCounter == 16 && (!enfCont || enfHold)) {
-          result = enfCont && (enfAttack ^ enfAlter) ? ENV_MAX : ENV_MIN;
-          this.envIndexCounter = -1;
-        } else if (eCounter == 16 && !enfAlter) {
-          this.envIndexCounter = 0;
-          result = enfAttack ? ENV_MIN : ENV_MAX;
+        if (count < 16) {
+          envIndex = enfAttack ? count : (ENV_MAX - count);
+        } else if (count == 16 && (!enfCont || enfHold)) {
+          envIndex = enfCont && (enfAttack ^ enfAlter) ? ENV_MAX : ENV_MIN;
+          count = -1;
+        } else if (count == 16 && !enfAlter) {
+          count = 0;
+          envIndex = enfAttack ? ENV_MIN : ENV_MAX;
         } else {
-          result = enfAttack ? ENV_MAX - eCounter : eCounter;
+          envIndex = enfAttack ? ENV_MIN : ENV_MAX;
         }
 
-        this.envelopeIndex = result & 15;
+        this.envIndexCounter = count;
+
+        this.envelopeVolume = envIndex & 15;
       }
     }
   }
@@ -290,11 +293,11 @@ public final class Ay8910Chip {
     final int c = (mixedCba >> 2) & (n | (nmask >> 2)) & 1;
 
     final int va = a == 0 ? 0 :
-        this.amplitudeA > 0xF ? this.envelopeIndex : this.amplitudeA;
+        this.amplitudeA > 0xF ? this.envelopeVolume : this.amplitudeA;
     final int vb = b == 0 ? 0 :
-        this.amplitudeB > 0xF ? this.envelopeIndex : this.amplitudeB;
+        this.amplitudeB > 0xF ? this.envelopeVolume : this.amplitudeB;
     final int vc = c == 0 ? 0 :
-        this.amplitudeC > 0xF ? this.envelopeIndex : this.amplitudeC;
+        this.amplitudeC > 0xF ? this.envelopeVolume : this.amplitudeC;
 
     this.signalConsumer.onAy8910Levels(this, va, vb, vc);
   }
@@ -344,7 +347,7 @@ public final class Ay8910Chip {
     this.enfAttack = false;
     this.enfCont = false;
     this.enfHold = false;
-    this.envelopeIndex = 0;
+    this.envelopeVolume = 0;
 
     this.mixerControl = 0;
   }
