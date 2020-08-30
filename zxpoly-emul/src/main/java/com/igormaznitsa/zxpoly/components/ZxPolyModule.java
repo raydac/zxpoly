@@ -859,7 +859,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
           }
         }
       } else {
-        if (port == PORTw_ZX128) {
+        if ((port & 0b1000_0000_0000_0010) ==
+            0) { // only A15 and A1 in use to detect #7FFD in non ZX-Poly mode
           write7FFD(val, false);
         } else {
           this.board.writeBusIo(this, port, val);
