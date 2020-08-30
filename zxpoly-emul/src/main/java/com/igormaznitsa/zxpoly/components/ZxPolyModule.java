@@ -474,7 +474,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         this.lastM1Address = address;
         final int address_h = address >>> 8;
 
-        if (this.trdosRomActive) {
+        if (!this.trdosRomActive) {
           this.trdosRomActive = address_h < 0x40;
         } else {
           this.trdosRomActive = !activeRom128 && address_h == 0x3D;
