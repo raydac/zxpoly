@@ -1,70 +1,78 @@
 <html>
-  <head>
+<head>
     <title>About</title>
     <meta charset="UTF-8">
-  </head>
-  <body>
-  <h2>ZX-Poly platform emulator</h2>
-  <b>Version: </b>2.0.8<br>
-  <b>Author: </b><a href="http://www.igormaznitsa.com">Igor Maznitsa</a><br>
-  <b>Project page: </b> <a href="https://github.com/raydac/zxpoly">https://github.com/raydac/zxpoly</a><br>
-  <p>
-      ZX-Poly is attempt to jump over ZX-Spectrum limits and get way to have graphics without atribute clash. The
-      idea of the platform was developed by Igor Maznitsa in april 1994. The first emulator was developed in 1998 and
-      the current emulator was developed in 2014 to prove the idea.
-      <br><br>
-      By default the emulator works in ZX-Poly mode, you can move it into ZX-128 mode through <b>Options->ZX-Mode</b>
-      menu item.
-  </p>
-  <h3>License</h3>
-  The emulator is published under <a href="http://www.gnu.org/licenses/gpl.html">GNU GPL3 license</a>
-  <h3>Supported formats</h3>
-  <ol>
-      <li>Snapshots: Z80, ZXP, SNA, ZIP (Spec256 SNA)</li>
-      <li>Disk format: TRD, SCL</li>
-      <li>Tape format: TAP</li>
-  </ol>
-  <h3>Emulated components</h3>
-  <p>
-  <ol>
-      <li>ZX-Spectrum keyboard (<b>SHIFT = CAPS SHIFT</b>, <b>ALT = SYMBOL SHIFT</b>)</li>
-      <li>Beta-disk interface</li>
-      <li>Kempston mouse (one click by mouse on the emulator form - trap mouse, ESC - free mouse)</li>
-      <li>Kempston joystick (emulated by cursor keys of keypad!)</li>
-      <li>Tape (only reading)</li>
-      <li>Beeper (by default is turned off, can be enabled through <b>Options->Beeper</b>)</li>
-  </ol>
-  </p>
-  <h3>Game controller support</h3>
-  <p>
-      Since 2.0.5, gamepad and joysticks are supported. Menu <b>Service-&gt;Game controllers</b> opens window where you
-      can activate found game controller and assign it to emulate either kempston or interfaceII. Support of game
-      controllers provided through JInput library and sometime it work not well in detection of new conected devices, so
-      I recommend restart emulator after game controller connect.<br>
-      Emulator uses only X and Y as position parameters and all buttons recognized as Fire.
-  </p>
-  <h3>Keyboard shortcuts</h3>
-  <ul>
-      <li>F1 - this info</li>
-      <li>F3 - turbo mode</li>
-      <li>F4 - play/pause TAP file if loaded</li>
-      <li>F5 - show keyboard layout</li>
-      <li>F8 - make screenshot</li>
-      <li>F12- reset</li>
-      <li>CTRL+mouse wheel - screen scale</li>
-  </ul>
-  <h3>System properties</h3>
-  Emulator supports two system properties:
-  <ul>
-      <li><b>zxpoly.rom.path</b> contains ROM file path</li>
-      <li><b>zxpoly.int.ticks</b> number of INT ticks between screen refresh request</li>
-  </ul>
-  <h3>Emulation of Spec256</h3>
-  Since 2.0.1 version, the emulator provides minimalistic support for <a
-          href="http://www.emulatronia.com/emusdaqui/spec256/index-eng.htm">Spec256</a> games. <a
-          href="http://www.emulatronia.com/emusdaqui/spec256/index-eng.htm">Spec256</a> games must be zipped and contain
-  SNA file in its archive. Because emulation based on multiple (9) working in-parallel CPU (instead virtual 64 bit CPU
-  in the
-  original emulator), some games can work not well and they need some extra tuning on register synchronization level.
-  </body>
+</head>
+<body>
+<h2>ZX-Poly platform emulator</h2>
+<b>Version: </b>2.0.8<br>
+<b>Author: </b><a href="http://www.igormaznitsa.com">Igor Maznitsa</a><br>
+<b>Project page: </b> <a href="https://github.com/raydac/zxpoly">https://github.com/raydac/zxpoly</a><br>
+<p>
+    ZX-Poly is attempt to jump over ZX-Spectrum limits and get way to have graphics without atribute clash. The
+    idea of the platform was developed by Igor Maznitsa in april 1994. The first emulator was developed in 1998 and
+    the current emulator was developed in 2014 to prove the idea.
+    <br><br>
+    By default the emulator works in ZX-Poly mode, you can move it into ZX-128 mode through <b>Options->ZX-Mode</b>
+    menu item.
+</p>
+<h3>License</h3>
+The emulator is published under <a href="http://www.gnu.org/licenses/gpl.html">GNU GPL3 license</a>
+<h3>Supported formats</h3>
+<ol>
+    <li>Snapshots: Z80, ZXP, SNA, ZIP (Spec256 SNA)</li>
+    <li>Disk format: TRD, SCL</li>
+    <li>Tape format: TAP</li>
+</ol>
+<h3>Emulated components</h3>
+<p>
+<ol>
+    <li>ZX-Spectrum keyboard (<b>SHIFT = CAPS SHIFT</b>, <b>ALT = SYMBOL SHIFT</b>)</li>
+    <li>Beta-disk interface</li>
+    <li>Kempston mouse (one click by mouse on the emulator form - trap mouse, ESC - free mouse)</li>
+    <li>Kempston joystick (emulated by cursor keys of keypad!)</li>
+    <li>Tape (only reading)</li>
+    <li>Beeper (by default is turned off, can be enabled through <b>Options->Beeper</b>)</li>
+</ol>
+</p>
+<h3>Game controller support</h3>
+<p>
+    Since 2.0.5, gamepad and joysticks are supported. Menu <b>Service-&gt;Game controllers</b> opens window where you
+    can activate found game controller and assign it to emulate either kempston or interfaceII. Support of game
+    controllers provided through JInput library and sometime it work not well in detection of new conected devices, so
+    I recommend restart emulator after game controller connect.<br>
+    Emulator uses only X and Y as position parameters and all buttons recognized as Fire.
+</p>
+<h3>Keyboard shortcuts</h3>
+<ul>
+    <li>F1 - this info</li>
+    <li>F3 - turbo mode</li>
+    <li>F4 - play/pause TAP file if loaded</li>
+    <li>F5 - show keyboard layout</li>
+    <li>F8 - make screenshot</li>
+    <li>F12- reset</li>
+    <li>CTRL+mouse wheel - screen scale</li>
+</ul>
+<h3>Bootstrap ROM</h3>
+<p>
+    By default the emulator provides only the ZX-Poly test ROM, ZX-128 ROM can be selected and downloaded through <b>Preferences</b>
+    (restart required). But also you can form own ROM binary file and place it into the emulator's root folder as
+    '<b>bootstrap.rom</b>'. it can contain up to 3 16Kb pages (usually 0 - 128K, 1 - 48K, 2 - TR-DOS). The file will be
+    loaded
+    automatically on start.
+</p>
+<h3>System properties</h3>
+Emulator supports two system properties:
+<ul>
+    <li><b>zxpoly.rom.path</b> contains ROM resource path</li>
+    <li><b>zxpoly.int.ticks</b> number of INT ticks between screen refresh request</li>
+</ul>
+<h3>Emulation of Spec256</h3>
+Since 2.0.1 version, the emulator provides minimalistic support for <a
+        href="http://www.emulatronia.com/emusdaqui/spec256/index-eng.htm">Spec256</a> games. <a
+        href="http://www.emulatronia.com/emusdaqui/spec256/index-eng.htm">Spec256</a> games must be zipped and contain
+SNA file in its archive. Because emulation based on multiple (9) working in-parallel CPU (instead virtual 64 bit CPU
+in the
+original emulator), some games can work not well and they need some extra tuning on register synchronization level.
+</body>
 </html>

@@ -238,6 +238,6 @@ public class RomLoader {
       throw new IOException(ROM_TRDOS + " not found");
     }
 
-    return new RomData(url, rom48, rom128, romTrDos);
+    return new RomData(url, rom128, rom48, romTrDos);
   }
 }

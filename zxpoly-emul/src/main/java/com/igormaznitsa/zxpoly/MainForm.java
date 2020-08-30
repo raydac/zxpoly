@@ -87,6 +87,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -260,6 +261,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private javax.swing.JScrollPane scrollPanel;
   private File lastPokeFileFolder = null;
 
+  private static final String ROM_BOOTSTRAP_FILE_NAME = "bootstrap.rom";
+
   public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
 
@@ -307,12 +310,27 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     setIconImage(Utils.loadIcon("appico.png"));
 
+
+    byte[] bootstrapRom = null;
+    final File bootstrapRomFile = new File(ROM_BOOTSTRAP_FILE_NAME);
+    if (bootstrapRomFile.isFile()) {
+      LOGGER.info("Detected bootstrap ROM file: " + bootstrapRomFile.getAbsolutePath());
+      try {
+        bootstrapRom = FileUtils.readFileToByteArray(bootstrapRomFile);
+      } catch (IOException ex) {
+        LOGGER.log(Level.SEVERE, ex,
+            () -> "Can't load bootstrap rom: " + bootstrapRomFile.getAbsolutePath());
+        JOptionPane.showMessageDialog(this, "Can't load bootstrap rom: " + ex.getMessage());
+        System.exit(-1);
+      }
+    }
+
     try {
-      BASE_ROM = loadRom(romPath);
+      BASE_ROM = loadRom(romPath, bootstrapRom);
     } catch (Exception ex) {
       JOptionPane.showMessageDialog(this, "Can't load Spec128 ROM for error: " + ex.getMessage());
       try {
-        BASE_ROM = loadRom(null);
+        BASE_ROM = loadRom(null, bootstrapRom);
       } catch (Exception exx) {
         ex.printStackTrace();
         JOptionPane.showMessageDialog(this, "Can't load TEST ROM: " + ex.getMessage());
@@ -495,12 +513,25 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private RomData loadRom(final String romPath) throws Exception {
-    if (romPath != null) {
+  private RomData loadRom(final String romPath, final byte[] predefinedRomData) throws Exception {
+    if (predefinedRomData != null) {
+      LOGGER.warning("Provided predefined ROM data, length " + predefinedRomData.length + " bytes");
+      final byte[] normalized;
+      if (predefinedRomData.length < 0x4000 * 3) {
+        LOGGER.warning("Extend predefined ROM binary data to 3 ROM pages");
+        normalized = Arrays.copyOf(predefinedRomData, 0x4000 * 3);
+      } else if (predefinedRomData.length > 0x4000 * 3) {
+        LOGGER.warning("Cutting predefined ROM binary data to 3 ROM pages");
+        normalized = Arrays.copyOf(predefinedRomData, 0x4000 * 3);
+      } else {
+        normalized = predefinedRomData;
+      }
+      return new RomData("Predefined ROM binary", normalized);
+    } else if (romPath != null) {
       if (romPath.contains("://")) {
         try {
           final String cached =
-              "loaded_" + Integer.toHexString(romPath.hashCode()).toUpperCase(Locale.ENGLISH)
+              "loadedrom_" + Integer.toHexString(romPath.hashCode()).toUpperCase(Locale.ENGLISH)
                   + ".rom";
           final File cacheFolder = new File(AppOptions.getInstance().getAppConfigFolder(), "cache");
           final File cachedRom = new File(cacheFolder, cached);
