@@ -604,7 +604,7 @@ public final class Motherboard implements ZxPolyConstants {
         }
       }
 
-      if (result < 0) {
+      if (result < 0 && (port & 0xFF) == 0xFF) {
         // all IO devices in Z state, some simulation of "port FF"
         result = this.rnd.nextInt(100) > 90 ? 0xFF :
             this.modules[0].readVideo(0x1800 + rnd.nextInt(0x300));
