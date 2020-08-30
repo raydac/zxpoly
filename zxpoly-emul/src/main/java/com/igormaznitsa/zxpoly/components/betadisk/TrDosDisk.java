@@ -17,10 +17,12 @@
 
 package com.igormaznitsa.zxpoly.components.betadisk;
 
+import static java.util.Arrays.copyOf;
+
+
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Random;
 
 public class TrDosDisk {
@@ -35,10 +37,14 @@ public class TrDosDisk {
   private boolean writeProtect;
   private File srcFile;
   private SourceDataType type;
+
   public TrDosDisk() {
-    this(null, SourceDataType.TRD, new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
+    this(null, SourceDataType.TRD,
+        new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
   }
-  public TrDosDisk(final File srcFile, final SourceDataType type, final byte[] srcData, final boolean writeProtect) {
+
+  public TrDosDisk(final File srcFile, final SourceDataType type, final byte[] srcData,
+                   final boolean writeProtect) {
     this.srcFile = srcFile;
     this.type = type;
     this.sectors = new Sector[SECTORS_PER_TRACK * MAX_TRACKS_PER_SIDE * MAX_SIDES];
@@ -46,7 +52,9 @@ public class TrDosDisk {
 
     switch (type) {
       case SCL: {
-        if (srcData.length < 10 || !JBBPUtils.arrayStartsWith(srcData, "SINCLAIR".getBytes(StandardCharsets.US_ASCII)) || srcData.length < (9 + (0x100 + 14) * (srcData[8] & 0xFF))) {
+        if (srcData.length < 10 ||
+            !JBBPUtils.arrayStartsWith(srcData, "SINCLAIR".getBytes(StandardCharsets.US_ASCII)) ||
+            srcData.length < (9 + (0x100 + 14) * (srcData[8] & 0xFF))) {
           throw new RuntimeException("Not SCL file");
         }
         diskData = new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE];
@@ -62,25 +70,27 @@ public class TrDosDisk {
           throw new RuntimeException("The SCL image has non-standard number of blocks: " + size);
         } else {
           // make catalog area
-          int processedSectors = 0;
+          int totallySectors = 0;
           int sclPointer = 9 + 14 * items;
+
           int track00Pointer = 0x0000;
-          for (int itemIndex = 0; itemIndex < items; itemIndex++) {
-            final int catalogItemOffset = 9 + 14 * itemIndex;
-            System.arraycopy(srcData, catalogItemOffset, diskData, track00Pointer, 14);
-            final int lengthInSectors = srcData[catalogItemOffset + 13] & 0xFF;
+
+          for (int idx = 0; idx < items; idx++) {
+            final int catalogOffset = 9 + 14 * idx;
+            System.arraycopy(srcData, catalogOffset, diskData, track00Pointer, 14);
+            final int sizeInSectors = srcData[catalogOffset + 0xD] & 0xFF;
             track00Pointer += 14;
 
-            diskData[track00Pointer++] = (byte) decodeLogicalSectorIndex(diskPointer);
-            diskData[track00Pointer++] = (byte) decodeLogicalTrackIndex(diskPointer);
+            diskData[track00Pointer++] = (byte) extractLogicalSectorIndex(diskPointer);
+            diskData[track00Pointer++] = (byte) extractLogicalTrackIndex(diskPointer);
 
-            for (int s = 0; s < lengthInSectors; s++) {
+            for (int s = 0; s < sizeInSectors; s++) {
               System.arraycopy(srcData, sclPointer, diskData, diskPointer, SECTOR_SIZE);
 
               diskPointer += SECTOR_SIZE;
               sclPointer += SECTOR_SIZE;
             }
-            processedSectors += lengthInSectors;
+            totallySectors += sizeInSectors;
           }
           // system sector
           track00Pointer = 8 * SECTOR_SIZE; // logical sector 8
@@ -88,19 +98,23 @@ public class TrDosDisk {
 
           track00Pointer += 224; // empty
 
-          diskData[track00Pointer++] = (byte) decodeLogicalSectorIndex(diskPointer); // index of the first free sector
-          diskData[track00Pointer++] = (byte) decodeLogicalTrackIndex(diskPointer); // index of the first free track
+          diskData[track00Pointer++] =
+              (byte) extractLogicalSectorIndex(diskPointer); // index of the first free sector
+          diskData[track00Pointer++] =
+              (byte) extractLogicalTrackIndex(diskPointer); // index of the first free track
 
           diskData[track00Pointer++] = 0x10; // disk type
           diskData[track00Pointer++] = (byte) items; // number of files
 
-          final int freeSectors = (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK - SECTORS_PER_TRACK) - processedSectors;
+          final int freeSectors =
+              (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK - SECTORS_PER_TRACK)
+                  - totallySectors;
           diskData[track00Pointer++] = (byte) (freeSectors & 0xFF); // number of free sectors
           diskData[track00Pointer++] = (byte) (freeSectors >> 8);
 
           diskData[track00Pointer++] = 0x10; // ID of TRDOS
 
-          track00Pointer += 2;//not used
+          track00Pointer += 2; //not used
 
           //not used but filled by 32
           for (int e = 0; e < 9; e++) {
@@ -123,7 +137,10 @@ public class TrDosDisk {
       }
       break;
       case TRD: {
-        diskData = srcData.length >= (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE) ? srcData : Arrays.copyOf(srcData, MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
+        diskData =
+            srcData.length >= (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE)
+                ? srcData :
+                copyOf(srcData, MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
       }
       break;
       default:
@@ -133,27 +150,30 @@ public class TrDosDisk {
     this.writeProtect = writeProtect;
     this.data = diskData;
     for (int i = 0; i < diskData.length; i += SECTOR_SIZE) {
-      this.sectors[p++] = new Sector(this, decodeSide(i), decodePhysicalTrackIndex(i), decodePhysicalSectorIndex(i), i, diskData);
+      this.sectors[p++] =
+          new Sector(this, extractSideNumber(i), extractPhysicalTrackIndex(i),
+              extractPhysicalSectorIndex(i),
+              i, diskData);
     }
   }
 
-  public static int decodePhysicalTrackIndex(final int dataOffset) {
+  public static int extractPhysicalTrackIndex(final int dataOffset) {
     return dataOffset >> 13;
   }
 
-  public static int decodeSide(final int dataOffset) {
+  public static int extractSideNumber(final int dataOffset) {
     return (dataOffset >> 12) & 1;
   }
 
-  public static int decodeLogicalTrackIndex(final int dataOffset) {
+  public static int extractLogicalTrackIndex(final int dataOffset) {
     return dataOffset / (SECTOR_SIZE * SECTORS_PER_TRACK);
   }
 
-  public static int decodePhysicalSectorIndex(final int dataOffset) {
+  public static int extractPhysicalSectorIndex(final int dataOffset) {
     return ((dataOffset / SECTOR_SIZE) % SECTORS_PER_TRACK) + 1;
   }
 
-  public static int decodeLogicalSectorIndex(final int dataOffset) {
+  public static int extractLogicalSectorIndex(final int dataOffset) {
     return (dataOffset / SECTOR_SIZE) % SECTORS_PER_TRACK;
   }
 
@@ -165,7 +185,8 @@ public class TrDosDisk {
     return this.type;
   }
 
-  public void replaceSrcFile(final File newFile, final SourceDataType type, final boolean resetChangeFlag) {
+  public void replaceSrcFile(final File newFile, final SourceDataType type,
+                             final boolean resetChangeFlag) {
     this.srcFile = newFile;
     this.type = type;
 
@@ -242,7 +263,8 @@ public class TrDosDisk {
     Sector result = null;
 
     for (final Sector s : this.sectors) {
-      if (s.getSide() == side && s.getTrackNumber() == track && s.getSectorId() == physicalSectorIndex) {
+      if (s.getSide() == side && s.getTrackNumber() == track &&
+          s.getPhysicalIndex() == physicalSectorIndex) {
         result = s;
         break;
       }
@@ -278,15 +300,16 @@ public class TrDosDisk {
     private final byte[] data;
     private final int side;
     private final int track;
-    private final int sectorId;
+    private final int physicalIndex;
     private final int offset;
     private int crc;
     private boolean written;
 
-    private Sector(final TrDosDisk disk, final int side, final int track, final int sector, final int offset, final byte[] data) {
+    private Sector(final TrDosDisk disk, final int side, final int track, final int physicalIndex,
+                   final int offset, final byte[] data) {
       this.side = side;
       this.track = track;
-      this.sectorId = sector;
+      this.physicalIndex = physicalIndex;
       this.data = data;
       this.owner = disk;
       this.offset = offset;
@@ -298,7 +321,7 @@ public class TrDosDisk {
     }
 
     public boolean isLastOnTrack() {
-      return this.sectorId == SECTORS_PER_TRACK;
+      return this.physicalIndex == SECTORS_PER_TRACK;
     }
 
     public int getSide() {
@@ -309,8 +332,8 @@ public class TrDosDisk {
       return this.track;
     }
 
-    public int getSectorId() {
-      return this.sectorId;
+    public int getPhysicalIndex() {
+      return this.physicalIndex;
     }
 
     public int getCrc() {

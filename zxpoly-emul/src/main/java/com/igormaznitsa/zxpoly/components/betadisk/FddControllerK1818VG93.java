@@ -572,7 +572,7 @@ public final class FddControllerK1818VG93 {
                   }
                   break;
                   case 4: {// sector
-                    final int sectorId = this.sector.getSectorId();
+                    final int sectorId = this.sector.getPhysicalIndex();
                     provideReadData(sectorId);
                     setInternalFlag(STAT_DRQ);
                     this.extraCounter |= sectorId;
@@ -961,7 +961,7 @@ public final class FddControllerK1818VG93 {
 
       buffer.write(sector.getTrackNumber());
       buffer.write(sector.getSide());
-      buffer.write(sector.getSectorId());
+      buffer.write(sector.getPhysicalIndex());
 
       buffer.write(getSectorSizeCode(sector.size()));
       final int crc = sector.getCrc();
