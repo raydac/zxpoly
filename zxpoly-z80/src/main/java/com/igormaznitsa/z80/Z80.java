@@ -2329,19 +2329,21 @@ public final class Z80 {
   }
 
   private void doRETI(final int ctx) {
-    doRET(ctx);
-    this.iff1 = this.iff2;
+    this.iff1 =
+        this.iff2; // all RET(N/I) commands make copy
+    // see https://wwwold.fizyka.umk.pl/~jacek/zx/faq/reference/z80reference.htm
     this.insideBlockInstruction = this.insideBlockInstructionPrev;
     this.detectedINT = false;
+    doRET(ctx);
     this.bus.onRETI(this, ctx);
   }
 
   private void doRETN(final int ctx) {
-    doRET(ctx);
     this.iff1 = this.iff2;
     this.insideBlockInstruction = this.insideBlockInstructionPrev;
     this.detectedINT = false;
     this.detectedNMI = false;
+    doRET(ctx);
   }
 
   private void doIM(final int y) {
