@@ -655,7 +655,7 @@ public final class Motherboard implements ZxPolyConstants {
     return result;
   }
 
-  public synchronized void resetIoDevices() {
+  public void resetIoDevices() {
     final IoDevice[] devices = this.ioDevices;
     final int devicesNum = devices.length;
     for (int i = 0; i < devicesNum; i++) {
