@@ -39,10 +39,6 @@ public abstract class AbstractZ80Test {
     }
   }
 
-  public void assertTacts(final Z80 cpu, final long tacts) {
-    assertEquals("Tacts must be " + tacts, tacts, cpu.getMachineCycles() - 3);
-  }
-
   public void assertMemoryEmpty(final int since) {
     for (int i = since; i < 0x10000; i++) {
       if (this.memory[i] != 0) {
@@ -73,12 +69,13 @@ public abstract class AbstractZ80Test {
     assertEquals("F' must be the same", state.altF, cpu.getRegister(Z80.REG_F, true));
   }
 
-  public Z80 executeCommand(final int... code) {
+  public Pair<Z80, Integer> executeCommand(final int... code) {
     return this.executeCommand(null, code);
   }
 
-  public Z80 executeRepeatingBlockCommand(final Z80State state, final TestBus testBus,
-                                          final int... code) {
+  public Pair<Z80, Integer> executeRepeatingBlockCommand(final Z80State state,
+                                                         final TestBus testBus,
+                                                         final int... code) {
     for (int i = 0; i < code.length; i++) {
       testBus.writeMemory(null, 111, i, (byte) code[i]);
     }
@@ -90,17 +87,18 @@ public abstract class AbstractZ80Test {
 
     final int pc = cpu.getRegister(Z80.REG_PC);
 
+    int tstates = 0;
     do {
-      cpu.nextInstruction(111, false, false, false);
+      tstates += cpu.nextInstruction(111, false, false, false);
     }
     while (cpu.getRegister(Z80.REG_PC) == pc);
 
     assertEquals("PC must be at " + code.length, code.length, cpu.getRegister(Z80.REG_PC));
 
-    return cpu;
+    return Pair.of(cpu, tstates);
   }
 
-  public Z80 executeRepeatingBlockCommand(final Z80State state, final int... code) {
+  public Pair<Z80, Integer> executeRepeatingBlockCommand(final Z80State state, final int... code) {
     for (int i = 0; i < code.length; i++) {
       this.memory[i] = (byte) code[i];
     }
@@ -167,21 +165,23 @@ public abstract class AbstractZ80Test {
 
     final int pc = cpu.getRegister(Z80.REG_PC);
 
+    int tstates = 0;
     do {
-      cpu.nextInstruction(111, false, false, false);
+      tstates += cpu.nextInstruction(111, false, false, false);
     }
     while (cpu.getRegister(Z80.REG_PC) == pc);
 
     assertEquals("PC must be at " + code.length, code.length, cpu.getRegister(Z80.REG_PC));
 
-    return cpu;
+    return Pair.of(cpu, tstates);
   }
 
-  public Z80 executeCommand(final Z80State state, final int... code) {
+  public Pair<Z80, Integer> executeCommand(final Z80State state, final int... code) {
     return this.executeCommand(state, true, code);
   }
 
-  public Z80 executeCommand(final Z80State state, final boolean checkPC, final int... code) {
+  public Pair<Z80, Integer> executeCommand(final Z80State state, final boolean checkPC,
+                                           final int... code) {
 
     for (int i = 0; i < code.length; i++) {
       this.memory[i] = (byte) code[i];
@@ -248,13 +248,13 @@ public abstract class AbstractZ80Test {
       state.set(cpu);
     }
 
-    cpu.nextInstruction(111, false, false, false);
+    final int spentTstates = cpu.nextInstruction(111, false, false, false);
 
     if (checkPC) {
       assertEquals("PC must be at " + code.length, code.length, cpu.getRegister(Z80.REG_PC));
     }
 
-    return cpu;
+    return Pair.of(cpu, spentTstates);
   }
 
   public void assertFlagsExcludeReserved(final int etalon, final int valueToCheck) {

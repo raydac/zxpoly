@@ -118,7 +118,7 @@ public final class Z80 {
   private int regZ;
   private int regWalt;
   private int regZalt;
-  private long machineCycles;
+  private int tstates;
   private int lastM1InstructionByte = -1;
   private int lastInstructionByte = -1;
   private int cbDisplacementByte = -1;
@@ -140,7 +140,7 @@ public final class Z80 {
     _reset(0);
     _reset(1);
     _reset(2);
-    this.machineCycles = 3L;
+    this.tstates = 0;
   }
 
   /**
@@ -169,7 +169,7 @@ public final class Z80 {
     System.arraycopy(cpu.altRegSet, 0, this.altRegSet, 0, cpu.altRegSet.length);
     this.lastM1InstructionByte = cpu.lastM1InstructionByte;
     this.lastInstructionByte = cpu.lastInstructionByte;
-    this.machineCycles = cpu.machineCycles;
+    this.tstates = cpu.tstates;
     this.cbDisplacementByte = cpu.cbDisplacementByte;
     this.outSignals = cpu.outSignals;
     this.prevINSignals = cpu.prevINSignals;
@@ -253,7 +253,7 @@ public final class Z80 {
     System.arraycopy(src.altRegSet, 0, this.altRegSet, 0, src.altRegSet.length);
     this.lastM1InstructionByte = src.lastM1InstructionByte;
     this.lastInstructionByte = src.lastInstructionByte;
-    this.machineCycles = src.machineCycles;
+    this.tstates = src.tstates;
     this.cbDisplacementByte = src.cbDisplacementByte;
     this.outSignals = src.outSignals;
     this.prevINSignals = src.prevINSignals;
@@ -410,12 +410,8 @@ public final class Z80 {
     return this.bus;
   }
 
-  public long getMachineCycles() {
-    return this.machineCycles;
-  }
-
-  public void setMCycleCounter(final long value) {
-    this.machineCycles = Math.max(0L, value);
+  public long getStepTstates() {
+    return this.tstates;
   }
 
   public boolean isInsideBlockLoop() {
@@ -460,7 +456,7 @@ public final class Z80 {
     this.prefix = 0;
     this.outSignals = SIGNAL_OUT_ALL_INACTIVE;
 
-    this.machineCycles += 3;
+    this.tstates += 3;
   }
 
   private void _resetHalt() {
@@ -494,14 +490,14 @@ public final class Z80 {
             ((_readSpecRegValue(ctx, REG_I, this.regI) & 0xFF) << 8)
                 | (this.bus.onCPURequestDataLines(this, ctx) & 0xFF));
         _call(ctx, address);
-        this.machineCycles++;
+        this.tstates++;
       }
       break;
       default:
         throw new Error("Unexpected IM mode [" + this.im + ']');
     }
 
-    this.machineCycles += 6;
+    this.tstates += 6;
   }
 
   private void _rfsh() {
@@ -520,12 +516,12 @@ public final class Z80 {
     this.detectedNMI = false;
     this.detectedINT = false;
     _call(ctx, 0x66);
-    this.machineCycles += 5;
+    this.tstates += 5;
   }
 
   private void _writemem8(final int ctx, final int address, final byte value) {
     this.bus.writeMemory(this, ctx, address & 0xFFFF, value);
-    this.machineCycles += 3;
+    this.tstates += 3;
   }
 
   private int _readNextPcAddressedWord(final int ctx) {
@@ -558,17 +554,17 @@ public final class Z80 {
   }
 
   private int _readport(final int ctx, final int port) {
-    this.machineCycles += 4;
+    this.tstates += 4;
     return this.bus.readPort(this, ctx, port & 0xFFFF) & 0xFF;
   }
 
   private void _writeport(final int ctx, final int port, final int value) {
     this.bus.writePort(this, ctx, port & 0xFFFF, (byte) value);
-    this.machineCycles += 4;
+    this.tstates += 4;
   }
 
   private int _readmem8(final int ctx, final int address) {
-    this.machineCycles += 3;
+    this.tstates += 3;
     return this.bus.readMemory(this, ctx, address & 0xFFFF, false, false) & 0xFF;
   }
 
@@ -580,7 +576,7 @@ public final class Z80 {
     if (this.cbDisplacementByte < 0) {
       return readInstrOrPrefix(ctx, false);
     } else {
-      this.machineCycles -= 5;
+      this.tstates -= 5;
       return this.cbDisplacementByte;
     }
   }
@@ -593,7 +589,7 @@ public final class Z80 {
     final int result = this.bus.readMemory(this, ctx, pc, m1, true) & 0xFF;
     this.outSignals = this.outSignals | SIGNAL_OUT_nM1;
 
-    this.machineCycles += m1 ? 4 : 3;
+    this.tstates += m1 ? 4 : 3;
 
     if (m1) {
       this.lastM1InstructionByte = result;
@@ -761,13 +757,13 @@ public final class Z80 {
             return _readmem8(ctx, _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL)));
           }
           case 0xDD: {
-            this.machineCycles += 5;
+            this.tstates += 5;
             final int address = _readPtr(ctx, REG_IX, this.regIX) + (byte) _read_ixiy_d(ctx);
             this.setWZ(address, false);
             return _readmem8(ctx, address);
           }
           case 0xFD: {
-            this.machineCycles += 5;
+            this.tstates += 5;
             final int address = _readPtr(ctx, REG_IY, this.regIY) + (byte) _read_ixiy_d(ctx);
             this.setWZ(address, false);
             return _readmem8(ctx, address);
@@ -960,14 +956,14 @@ public final class Z80 {
             final int address = _readPtr(ctx, REG_IX, this.regIX) + (byte) value;
             _writemem8(ctx, address, (byte) readInstrOrPrefix(ctx, false));
             this.setWZ(address, false);
-            this.machineCycles += 2;
+            this.tstates += 2;
             return;
           }
           case 0xFD: {
             final int address = _readPtr(ctx, REG_IY, this.regIY) + (byte) value;
             _writemem8(ctx, address, (byte) readInstrOrPrefix(ctx, false));
             this.setWZ(address, false);
-            this.machineCycles += 2;
+            this.tstates += 2;
             return;
           }
         }
@@ -1001,14 +997,20 @@ public final class Z80 {
    * @param signalRESET true sends the RESET signal to the CPU
    * @param signalNMI   true sends the NMI signal to the CPU
    * @param signalNT    true sends the INT signal to the CPU
+   * @return spent machine cycles during execution
    */
-  public void nextInstruction(final int ctx, final boolean signalRESET, final boolean signalNMI,
-                              final boolean signalNT) {
+  public int nextInstruction(final int ctx, final boolean signalRESET, final boolean signalNMI,
+                             final boolean signalNT) {
     int flag = (signalNT ? 0 : SIGNAL_IN_nINT) | (signalNMI ? 0 : SIGNAL_IN_nNMI)
         | (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
+
+    int spentTstates = 0;
     while (step(ctx, flag)) {
       flag = SIGNAL_IN_ALL_INACTIVE;
+      spentTstates += this.getStepTstates();
     }
+    spentTstates += this.getStepTstates();
+    return spentTstates;
   }
 
   /**
@@ -1019,37 +1021,45 @@ public final class Z80 {
    * @param signalRESET true sends the RESET signal to the CPU
    * @param signalNMI   true sends the NMI signal to the CPU
    * @param signalNT    true sends the INT signal to the CPU
+   * @return spent machine cycles during execution
    */
-  public void nextInstruction_SkipBlockInstructions(final int ctx, final boolean signalRESET,
-                                                    final boolean signalNMI,
-                                                    final boolean signalNT) {
+  public int nextInstruction_SkipBlockInstructions(final int ctx, final boolean signalRESET,
+                                                   final boolean signalNMI,
+                                                   final boolean signalNT) {
     int flag = (signalNT ? 0 : SIGNAL_IN_nINT)
         | (signalNMI ? 0 : SIGNAL_IN_nNMI)
         | (signalRESET ? 0 : SIGNAL_IN_nRESET)
         | SIGNAL_IN_nWAIT;
+
+    int spentTstates = 0;
+
     while (step(ctx, flag) || this.insideBlockInstruction) {
       flag = SIGNAL_IN_ALL_INACTIVE;
+      spentTstates += this.getStepTstates();
     }
+    spentTstates += this.getStepTstates();
+    return spentTstates;
   }
 
   /**
    * Process one step.
    *
-   * @param ctx       context of method call, will be propagated to all sub-calls
-   * @param inSignals external signal states to be processes during the step.
+   * @param ctx             context of method call, will be propagated to all sub-calls
+   * @param incomingSignals external signal states to be processes during the step.
    * @return false if there is not any instruction under processing, true
    * otherwise
    */
-  public boolean step(final int ctx, final int inSignals) {
+  public boolean step(final int ctx, final int incomingSignals) {
+    this.tstates = 0;
     try {
       final boolean result;
       this.interruptAllowedForStep = true;
 
-      if ((inSignals & SIGNAL_IN_nWAIT) == 0) {
+      if ((incomingSignals & SIGNAL_IN_nWAIT) == 0) {
         // PROCESS nWAIT
-        this.machineCycles++;
+        this.tstates++;
         result = this.prefix != 0;
-      } else if ((inSignals & SIGNAL_IN_nRESET) == 0) {
+      } else if ((incomingSignals & SIGNAL_IN_nRESET) == 0) {
         // START RESET
         _reset(this.resetCycle++);
         result = false;
@@ -1062,10 +1072,10 @@ public final class Z80 {
 
           if (this.interruptAllowedForStep) {
             // Check interruptions
-            if ((inSignals & SIGNAL_IN_nNMI) == 0) {
+            if ((incomingSignals & SIGNAL_IN_nNMI) == 0) {
               // NMI
               _nmi(ctx);
-            } else if (this.iff1 && (inSignals & SIGNAL_IN_nINT) == 0) {
+            } else if (this.iff1 && (incomingSignals & SIGNAL_IN_nINT) == 0) {
               // INT
               _int(ctx);
             }
@@ -1077,7 +1087,7 @@ public final class Z80 {
 
       return result;
     } finally {
-      this.prevINSignals = inSignals;
+      this.prevINSignals = incomingSignals;
     }
   }
 
@@ -1536,11 +1546,11 @@ public final class Z80 {
 
   private void doDJNZ(final int ctx) {
     final int offset = (byte) readInstrOrPrefix(ctx, false);
-    this.machineCycles++;
+    this.tstates++;
     int b = _readSpecRegValue(ctx, REG_B, this.regSet[REG_B]) & 0xFF;
     if (--b != 0) {
       this.regPC = (this.regPC + offset) & 0xFFFF;
-      this.machineCycles += 5;
+      this.tstates += 5;
     }
     this.regSet[REG_B] = (byte) b;
   }
@@ -1549,7 +1559,7 @@ public final class Z80 {
     final int offset = (byte) readInstrOrPrefix(ctx, false);
     if (checkCondition(cc)) {
       this.regPC = (this.regPC + offset) & 0xFFFF;
-      this.machineCycles += 5;
+      this.tstates += 5;
     }
   }
 
@@ -1557,7 +1567,7 @@ public final class Z80 {
     final int offset = (byte) readInstrOrPrefix(ctx, false);
     this.regPC = (this.regPC + offset) & 0xFFFF;
     this.setWZ(this.regPC, false);
-    this.machineCycles += 5;
+    this.tstates += 5;
   }
 
   private void doLDRegPairByNextWord(final int ctx, final int p) {
@@ -1576,7 +1586,7 @@ public final class Z80 {
     this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_SZPV) | ((result >>> 8) & FLAG_XY) |
         ((c >>> 8) & FLAG_H) | ((c >>> (16 - FLAG_C_SHIFT))));
 
-    this.machineCycles += 7;
+    this.tstates += 7;
   }
 
   private void doADC_HL_RegPair(final int p) {
@@ -1596,7 +1606,7 @@ public final class Z80 {
     this.regSet[REG_F] = (byte) f;
     writeReg16(2, z);
 
-    this.machineCycles += 7;
+    this.tstates += 7;
   }
 
   private void doSBC_HL_RegPair(final int p) {
@@ -1619,7 +1629,7 @@ public final class Z80 {
     writeReg16(2, z);
     this.regSet[REG_F] = (byte) f;
 
-    this.machineCycles += 7;
+    this.tstates += 7;
   }
 
   private void writeReg8_forLdReg8Instruction(final int ctx, final int r, final int value) {
@@ -1672,13 +1682,13 @@ public final class Z80 {
             _writemem8(ctx,
                 _readPtr(ctx, REG_IX, this.regIX) + (byte) readInstrOrPrefix(ctx, false),
                 (byte) value);
-            this.machineCycles += 5;
+            this.tstates += 5;
             return;
           case 0xFD:
             _writemem8(ctx,
                 _readPtr(ctx, REG_IY, this.regIY) + (byte) readInstrOrPrefix(ctx, false),
                 (byte) value);
-            this.machineCycles += 5;
+            this.tstates += 5;
             return;
         }
       }
@@ -1743,7 +1753,7 @@ public final class Z80 {
         }
         return;
       case 6: { // (HL)
-        this.machineCycles += 1;
+        this.tstates += 1;
         switch (normalizedPrefix()) {
           case 0x00:
             _writemem8(ctx, _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL)),
@@ -1813,12 +1823,12 @@ public final class Z80 {
 
   private void doINCRegPair(final int p) {
     writeReg16(p, readReg16(p) + 1);
-    this.machineCycles += 2;
+    this.tstates += 2;
   }
 
   private void doDECRegPair(final int p) {
     writeReg16(p, readReg16(p) - 1);
-    this.machineCycles += 2;
+    this.tstates += 2;
   }
 
   private void doINCReg(final int ctx, final int y) {
@@ -1956,7 +1966,7 @@ public final class Z80 {
       this.setWZ(this.regPC, false);
       this.regSP = sp1 & 0xFFFF;
     }
-    this.machineCycles++;
+    this.tstates++;
   }
 
   private void doRET(final int ctx) {
@@ -1992,7 +2002,7 @@ public final class Z80 {
   }
 
   private void doLD_SP_HL(final int ctx) {
-    this.machineCycles += 2;
+    this.tstates += 2;
     setRegister(REG_SP, readHlPtr(ctx));
   }
 
@@ -2030,7 +2040,7 @@ public final class Z80 {
     _writemem8(ctx, stacktop, (byte) hl);
     _writemem8(ctx, stacktop + 1, (byte) (hl >> 8));
 
-    this.machineCycles += 3;
+    this.tstates += 3;
   }
 
   private void doEX_DE_HL() {
@@ -2064,7 +2074,7 @@ public final class Z80 {
     final int address = _readNextPcAddressedWord(ctx);
     if (checkCondition(y)) {
       _call(ctx, address);
-      this.machineCycles++;
+      this.tstates++;
     }
     this.setWZ(address, false);
   }
@@ -2073,14 +2083,14 @@ public final class Z80 {
     final int address = _readNextPcAddressedWord(ctx);
     this.setWZ(address, false);
     _call(ctx, address);
-    this.machineCycles++;
+    this.tstates++;
   }
 
   private void doPUSH(final int ctx, final int p) {
     final int address = _readPtr(ctx, REG_SP, this.getSP()) - 2;
     _writemem16(ctx, address, readReg16_2(p));
     setRegister(REG_SP, address);
-    this.machineCycles++;
+    this.tstates++;
   }
 
   private void doALU_A_Reg(final int ctx, final int op, final int reg) {
@@ -2181,7 +2191,7 @@ public final class Z80 {
   private void doRST(final int ctx, final int address) {
     _call(ctx, address);
     this.setWZ(address, false);
-    this.machineCycles++;
+    this.tstates++;
   }
 
   private int doRollShift(final int ctx, final int op, final int reg) {
@@ -2250,7 +2260,7 @@ public final class Z80 {
             (this.regSet[REG_F] & FLAG_C));
 
     if (reg == 6) {
-      this.machineCycles++;
+      this.tstates++;
     }
   }
 
@@ -2370,12 +2380,12 @@ public final class Z80 {
 
   private void doLD_I_A() {
     setRegister(REG_I, getRegister(REG_A));
-    this.machineCycles++;
+    this.tstates++;
   }
 
   private void doLD_R_A() {
     setRegister(REG_R, getRegister(REG_A));
-    this.machineCycles++;
+    this.tstates++;
   }
 
   private void doLD_A_I() {
@@ -2386,7 +2396,7 @@ public final class Z80 {
         (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0) |
         (this.regSet[REG_F] & FLAG_C));
 
-    this.machineCycles++;
+    this.tstates++;
   }
 
   private void doLD_A_R() {
@@ -2397,7 +2407,7 @@ public final class Z80 {
         (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0) |
         (this.regSet[REG_F] & FLAG_C));
 
-    this.machineCycles++;
+    this.tstates++;
   }
 
   private void doRRD(final int ctx) {
@@ -2412,7 +2422,7 @@ public final class Z80 {
     this.regSet[REG_A] = (byte) y;
     this.regSet[REG_F] = (byte) (FTABLE_SZYXP[y] | (this.regSet[REG_F] & FLAG_C));
 
-    this.machineCycles += 4;
+    this.tstates += 4;
   }
 
   private void doRLD(final int ctx) {
@@ -2427,7 +2437,7 @@ public final class Z80 {
     this.regSet[REG_A] = (byte) y;
     this.regSet[REG_F] = (byte) (FTABLE_SZYXP[y] | (this.regSet[REG_F] & FLAG_C));
 
-    this.machineCycles += 4;
+    this.tstates += 4;
   }
 
   private boolean doBLI(final int ctx, final int y, final int z) {
@@ -2525,7 +2535,7 @@ public final class Z80 {
     if ((this.regSet[REG_F] & FLAG_PV) != 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.setWZ(this.regPC + 1, false);
-      this.machineCycles += 5;
+      this.tstates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2545,7 +2555,7 @@ public final class Z80 {
     if ((flags & (FLAG_Z | FLAG_PV)) == FLAG_PV) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.setWZ(this.regPC + 1, false);
-      this.machineCycles += 5;
+      this.tstates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2568,7 +2578,7 @@ public final class Z80 {
     f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
     this.regSet[REG_F] = (byte) f;
 
-    this.machineCycles++;
+    this.tstates++;
   }
 
   private boolean doINIR(final int ctx) {
@@ -2576,7 +2586,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.machineCycles += 5;
+      this.tstates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2599,7 +2609,7 @@ public final class Z80 {
     f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
     this.regSet[REG_F] = (byte) f;
 
-    this.machineCycles++;
+    this.tstates++;
   }
 
   private boolean doINDR(final int ctx) {
@@ -2607,7 +2617,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.machineCycles += 5;
+      this.tstates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2636,7 +2646,7 @@ public final class Z80 {
 
     this.regSet[REG_F] = (byte) f;
 
-    this.machineCycles += 2;
+    this.tstates += 2;
   }
 
   private boolean doOTIR(final int ctx) {
@@ -2644,7 +2654,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.machineCycles += 5;
+      this.tstates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2670,7 +2680,7 @@ public final class Z80 {
     f |= bc != 0 ? FLAG_PV : 0;
     this.regSet[REG_F] = (byte) (f | FLAG_N | (this.regSet[REG_F] & FLAG_C));
 
-    this.machineCycles += 5;
+    this.tstates += 5;
   }
 
   private boolean doOTDR(final int ctx) {
@@ -2678,7 +2688,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.machineCycles += 5;
+      this.tstates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2701,7 +2711,7 @@ public final class Z80 {
     f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
     this.regSet[REG_F] = (byte) f;
 
-    this.machineCycles++;
+    this.tstates++;
   }
 
   private boolean doLDDR(final int ctx) {
@@ -2710,7 +2720,7 @@ public final class Z80 {
     if (this.getRegisterPair(REGPAIR_BC) != 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.setWZ(this.regPC + 1, false);
-      this.machineCycles += 5;
+      this.tstates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2733,7 +2743,7 @@ public final class Z80 {
     f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
     this.regSet[REG_F] = (byte) f;
 
-    this.machineCycles++;
+    this.tstates++;
   }
 
   private boolean doCPDR(final int ctx) {
@@ -2744,7 +2754,7 @@ public final class Z80 {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.setWZ(this.regPC + 1, false);
 
-      this.machineCycles += 5;
+      this.tstates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2852,7 +2862,7 @@ public final class Z80 {
 
     this.regSet[REG_F] = (byte) f;
 
-    this.machineCycles += 2;
+    this.tstates += 2;
   }
 
   private void doCPD(final int ctx) {
@@ -2874,7 +2884,7 @@ public final class Z80 {
     f |= bc != 0 ? FLAG_PV : 0;
     this.regSet[REG_F] = (byte) (f | FLAG_N | (this.regSet[REG_F] & FLAG_C));
 
-    this.machineCycles += 5;
+    this.tstates += 5;
   }
 
 }
