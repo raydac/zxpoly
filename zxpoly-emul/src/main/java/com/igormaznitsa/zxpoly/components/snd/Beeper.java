@@ -342,8 +342,7 @@ public final class Beeper {
     }
 
     private synchronized void flushDataIntoLine(final byte[] data) {
-      final int len = Math.min(this.sourceDataLine.available(), data.length);
-      this.sourceDataLine.write(data, data.length - len, len);
+      this.sourceDataLine.write(data, 0, Math.min(this.sourceDataLine.available(), data.length));
     }
 
     @Override
