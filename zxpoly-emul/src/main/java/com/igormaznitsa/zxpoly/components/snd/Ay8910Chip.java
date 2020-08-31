@@ -225,7 +225,7 @@ public final class Ay8910Chip {
     }
   }
 
-  private void calcEnvelopeIndex(final int audioTicks) {
+  private void updateEnvelopeVolume(final int audioTicks) {
     this.counterE += audioTicks;
 
     if (this.counterE >= (this.envelopePeriod == 0 ? 2 : this.envelopePeriod << 1)) {
@@ -248,7 +248,7 @@ public final class Ay8910Chip {
           count = 0;
           envIndex = enfAttack ? ENV_MIN : ENV_MAX;
         } else {
-          envIndex = enfAttack ? ENV_MIN : ENV_MAX;
+          envIndex = enfAttack ? ENV_MAX - count : count;
         }
 
         this.envIndexCounter = count;
@@ -293,11 +293,11 @@ public final class Ay8910Chip {
     final int c = (mixedCba >> 2) & (n | (nmask >> 2)) & 1;
 
     final int va = a == 0 ? 0 :
-        this.amplitudeA > 0xF ? this.envelopeVolume : this.amplitudeA;
+        (this.amplitudeA & 0x10) == 0 ? this.amplitudeA : this.envelopeVolume;
     final int vb = b == 0 ? 0 :
-        this.amplitudeB > 0xF ? this.envelopeVolume : this.amplitudeB;
+        (this.amplitudeB & 0x10) == 0 ? this.amplitudeB : this.envelopeVolume;
     final int vc = c == 0 ? 0 :
-        this.amplitudeC > 0xF ? this.envelopeVolume : this.amplitudeC;
+        (this.amplitudeC & 0x10) == 0 ? this.amplitudeC : this.envelopeVolume;
 
     this.signalConsumer.onAy8910Levels(this, va, vb, vc);
   }
@@ -309,7 +309,7 @@ public final class Ay8910Chip {
       final int audioTicks = (int) (this.machineCycleCounter / MACHINE_CYCLES_PER_ATICK);
       this.machineCycleCounter %= MACHINE_CYCLES_PER_ATICK;
       processPeriods(audioTicks);
-      calcEnvelopeIndex(audioTicks);
+      updateEnvelopeVolume(audioTicks);
     }
     this.mixOutputSignals();
   }
