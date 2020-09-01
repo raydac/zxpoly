@@ -321,7 +321,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     }
 
     sigWait = this.waitSignal ? Z80.SIGNAL_IN_nWAIT : 0;
-    curMcyclesNumber = this.cpu.getMachineCycles();
+    curMcyclesNumber = this.cpu.getStepTstates();
 
     final int oldCpuState = this.cpu.getState();
     this.cpu.step(0,
@@ -335,7 +335,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     final boolean cpuIsActive = (sigWait | sigReset) == 0 && !(isHaltDetected || doInt);
 
     this.mcyclesOfActivityBetweenInt +=
-        cpuIsActive ? Math.max(0L, this.cpu.getMachineCycles() - curMcyclesNumber) : -15000L;
+        cpuIsActive ? Math.max(0L, this.cpu.getStepTstates() - curMcyclesNumber) : -15000L;
     return isHaltDetected;
   }
 
@@ -883,7 +883,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public void preStep(final boolean signalReset, final boolean virtualIntTick,
+  public void preStep(final boolean signalReset, final boolean tstatesIntReached,
                       boolean wallclockInt) {
     if (signalReset) {
       setStateForSystemReset();
@@ -892,7 +892,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public void postStep(long spentMachineCyclesForStep) {
+  public void postStep(int spentTstates) {
   }
 
   private void prepareWaitSignal() {

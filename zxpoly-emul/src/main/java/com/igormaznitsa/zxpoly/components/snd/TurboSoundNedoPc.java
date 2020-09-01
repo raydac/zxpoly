@@ -69,7 +69,7 @@ public final class TurboSoundNedoPc implements IoDevice, AySounder {
   @Override
   public void preStep(
       final boolean signalReset,
-      final boolean virtualIntTick,
+      final boolean tstatesIntReached,
       final boolean wallclockInt
   ) {
     if (signalReset) {
@@ -78,9 +78,9 @@ public final class TurboSoundNedoPc implements IoDevice, AySounder {
   }
 
   @Override
-  public void postStep(final long spentMachineCyclesForStep) {
-    this.chipAy0.step(spentMachineCyclesForStep);
-    this.chipAy1.step(spentMachineCyclesForStep);
+  public void postStep(final int spentTstates) {
+    this.chipAy0.step(spentTstates);
+    this.chipAy1.step(spentTstates);
   }
 
   @Override

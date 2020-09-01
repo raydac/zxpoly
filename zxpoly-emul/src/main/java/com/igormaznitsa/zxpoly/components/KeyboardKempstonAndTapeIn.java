@@ -254,7 +254,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   @Override
-  public void preStep(final boolean signalReset, final boolean virtualIntTick, boolean wallclockInt) {
+  public void preStep(final boolean signalReset, final boolean tstatesIntReached,
+                      boolean wallclockInt) {
     if (signalReset) {
       doReset();
     }
@@ -560,10 +561,10 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   @Override
-  public void postStep(final long spentMachineCyclesForStep) {
+  public void postStep(final int spentTstates) {
     final TapeFileReader currentTap = this.getTap();
     if (currentTap != null) {
-      currentTap.updateForSpentMachineCycles(spentMachineCyclesForStep);
+      currentTap.updateForSpentMachineCycles(spentTstates);
     }
   }
 

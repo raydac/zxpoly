@@ -58,7 +58,7 @@ public final class VideoController extends JComponent
   public static final int SCREEN_WIDTH = 512;
   public static final int SCREEN_HEIGHT = 384;
   public static final Image IMAGE_ZXKEYS = Utils.loadIcon("zxkeys.png");
-  public static final long MCYCLES_PER_INT = 20000000L / (1000000000L / Motherboard.CPU_FREQ);
+  public static final int TSTATES_PER_INT = Motherboard.CPU_FREQ / 50;
   public static final int[] PALETTE_ZXPOLY = new int[] {
       0xFF000000,
       0xFF0000BE,
@@ -110,7 +110,7 @@ public final class VideoController extends JComponent
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
   private static final int BORDER_LINES = 40;
-  private static final long MCYCLES_PER_BORDER_LINE = MCYCLES_PER_INT / BORDER_LINES;
+  private static final long MCYCLES_PER_BORDER_LINE = TSTATES_PER_INT / BORDER_LINES;
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;
@@ -1289,7 +1289,7 @@ public final class VideoController extends JComponent
         this.portFEw = value & 0xFF;
 
         int borderLineIndex;
-        final long machineCycles = module.getCpu().getMachineCycles();
+        final long machineCycles = module.getCpu().getStepTstates();
         if (module.isMaster()) {
           borderLineIndex = (int) (machineCycles / MCYCLES_PER_BORDER_LINE);
         } else {
@@ -1309,7 +1309,7 @@ public final class VideoController extends JComponent
   }
 
   @Override
-  public void preStep(final boolean signalReset, final boolean virtualIntTick,
+  public void preStep(final boolean signalReset, final boolean tstatesIntReached,
                       boolean wallclockInt) {
     if (signalReset) {
       this.portFEw = 0x00;
@@ -1321,7 +1321,7 @@ public final class VideoController extends JComponent
   }
 
   @Override
-  public void postStep(long spentMachineCyclesForStep) {
+  public void postStep(int spentTstates) {
   }
 
   public float getZoom() {

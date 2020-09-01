@@ -35,12 +35,12 @@ public final class CovoxFb implements IoDevice {
   }
 
   @Override
-  public void preStep(boolean signalReset, boolean virtualIntTick, boolean wallclockInt) {
+  public void preStep(boolean signalReset, boolean tstatesIntReached, boolean wallclockInt) {
 
   }
 
   @Override
-  public void postStep(long spentMachineCyclesForStep) {
+  public void postStep(int spentTstates) {
 
   }
 

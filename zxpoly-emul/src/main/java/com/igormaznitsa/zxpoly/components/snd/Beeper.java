@@ -17,7 +17,7 @@
 
 package com.igormaznitsa.zxpoly.components.snd;
 
-import static com.igormaznitsa.zxpoly.components.video.VideoController.MCYCLES_PER_INT;
+import static com.igormaznitsa.zxpoly.components.video.VideoController.TSTATES_PER_INT;
 import static java.lang.Long.toHexString;
 import static java.lang.String.format;
 import static java.util.Arrays.fill;
@@ -66,7 +66,7 @@ public final class Beeper {
   );
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
-    public void updateState(boolean intSignal, long machineCycleInInt, int level) {
+    public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int level) {
     }
 
     @Override
@@ -169,9 +169,10 @@ public final class Beeper {
     return (mixed << 5) - 32768;
   }
 
-  public void updateState(boolean intSignal, long machineCycleInInt) {
+  public void updateState(final boolean tstatesInt, final boolean wallclockInt,
+                          final int spentTstates) {
     this.activeInternalBeeper.get()
-        .updateState(intSignal, machineCycleInInt, this.mixChannelsAsSignedByte());
+        .updateState(tstatesInt, wallclockInt, spentTstates, this.mixChannelsAsSignedByte());
   }
 
   public boolean isActive() {
@@ -199,7 +200,7 @@ public final class Beeper {
 
     void setMasterGain(float valueInDb);
 
-    void updateState(boolean intSignal, long machineCycleInInt, int level);
+    void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int level);
 
     void dispose();
 
@@ -270,23 +271,32 @@ public final class Beeper {
           dataFormat.format(new Date()));
     }
 
+    private int tstatesIntCounter = 0;
+
     @Override
     public void updateState(
-        boolean wallclockIntSignal,
-        long machineCyclesInInt,
+        boolean tstatesInt,
+        boolean wallclockInt,
+        int spentTstates,
         final int level
     ) {
       if (this.working) {
-        int position = ((int) ((machineCyclesInInt * SAMPLES_PER_INT + MCYCLES_PER_INT / 2)
-            / MCYCLES_PER_INT)) * 4;
+        tstatesIntCounter += spentTstates;
 
-        if (wallclockIntSignal) {
+        if (wallclockInt) {
           this.soundDataQueue.offer(SND_BUFFER.clone());
           fillSndBuffer(0, level);
         }
 
-        if (position <= SND_BUFFER_LENGTH) {
-          fillSndBuffer(position, level);
+        if (tstatesInt) {
+          tstatesIntCounter = 0;
+          fillSndBuffer(0, level);
+        } else {
+          final int position = ((spentTstates * SAMPLES_PER_INT + TSTATES_PER_INT / 2)
+              / TSTATES_PER_INT) * 4;
+          if (position < SND_BUFFER_LENGTH) {
+            fillSndBuffer(position, level);
+          }
         }
       }
     }

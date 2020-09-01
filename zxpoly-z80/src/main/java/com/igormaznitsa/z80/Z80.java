@@ -410,7 +410,7 @@ public final class Z80 {
     return this.bus;
   }
 
-  public long getStepTstates() {
+  public int getStepTstates() {
     return this.tstates;
   }
 

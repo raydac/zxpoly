@@ -132,7 +132,8 @@ public class BetaDiscInterface implements IoDevice {
   }
 
   @Override
-  public void preStep(final boolean signalReset, final boolean virtualIntTick, boolean wallclockInt) {
+  public void preStep(final boolean signalReset, final boolean tstatesIntReached,
+                      boolean wallclockInt) {
     if (signalReset) {
       doReset();
     }
@@ -148,8 +149,8 @@ public class BetaDiscInterface implements IoDevice {
   }
 
   @Override
-  public void postStep(final long spentMachineCyclesForStep) {
-    this.mcycleCounter = Math.abs(this.mcycleCounter + spentMachineCyclesForStep);
+  public void postStep(final int spentTstates) {
+    this.mcycleCounter = Math.abs(this.mcycleCounter + spentTstates);
   }
 
   @Override

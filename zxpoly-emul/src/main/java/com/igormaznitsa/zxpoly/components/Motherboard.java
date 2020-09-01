@@ -19,7 +19,7 @@ package com.igormaznitsa.zxpoly.components;
 
 import static com.igormaznitsa.zxpoly.components.snd.Beeper.BEEPER_LEVELS;
 import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
-import static com.igormaznitsa.zxpoly.components.video.VideoController.MCYCLES_PER_INT;
+import static com.igormaznitsa.zxpoly.components.video.VideoController.TSTATES_PER_INT;
 import static java.lang.Math.min;
 
 
@@ -42,7 +42,7 @@ import java.util.logging.Logger;
 @SuppressWarnings({"unused", "FieldCanBeLocal", "NonAtomicOperationOnVolatileField"})
 public final class Motherboard implements ZxPolyConstants {
 
-  public static final long CPU_FREQ = 3500000L;
+  public static final int CPU_FREQ = 3500000;
   public static final int TRIGGER_NONE = 0;
   public static final int TRIGGER_DIFF_MODULESTATES = 1;
   public static final int TRIGGER_DIFF_MEM_ADDR = 2;
@@ -269,7 +269,7 @@ public final class Motherboard implements ZxPolyConstants {
     this.modules[0].setGfxPtrFromMainCpu(registersToAlignOnStep.contains("T"));
   }
 
-  public int step(final boolean virtualInt,
+  public int step(final boolean tstatesIntReached,
                   final boolean wallclockInt,
                   final boolean executionEnabled) {
     this.localResetForAllModules = false;
@@ -283,7 +283,7 @@ public final class Motherboard implements ZxPolyConstants {
       if (this.statisticCounter <= 0) {
         for (int i = 0; i < 4; i++) {
           this.cpuLoad[i] = min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweenInt()
-              / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (MCYCLES_PER_INT));
+              / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (TSTATES_PER_INT));
         }
         this.statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
         resetStatisticsAtModules = true;
@@ -314,10 +314,8 @@ public final class Motherboard implements ZxPolyConstants {
       }
 
       for (final IoDevice device : this.ioDevicesPreStep) {
-        device.preStep(signalReset, virtualInt, wallclockInt);
+        device.preStep(signalReset, tstatesIntReached, wallclockInt);
       }
-
-      final long initialMachineCycleCounter = modules[0].getCpu().getMachineCycles();
 
       final BoardMode mode = this.getBoardMode();
 
@@ -330,40 +328,40 @@ public final class Motherboard implements ZxPolyConstants {
 
           switch ((int) System.nanoTime() & 0x3) {
             case 0: {
-              zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx0halt = modules[0].step(signalReset, wallclockInt, resetStatisticsAtModules);
               if (localResetForAllModules) {
                 return result;
               }
-              zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
-              zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
-              zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx3halt = modules[3].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx2halt = modules[2].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx1halt = modules[1].step(signalReset, wallclockInt, resetStatisticsAtModules);
             }
             break;
             case 1: {
-              zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
-              zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
-              zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx1halt = modules[1].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx2halt = modules[2].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx0halt = modules[0].step(signalReset, wallclockInt, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
-              zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx3halt = modules[3].step(signalReset, wallclockInt, resetStatisticsAtModules);
             }
             break;
             case 2: {
-              zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
-              zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx3halt = modules[3].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx0halt = modules[0].step(signalReset, wallclockInt, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
-              zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
-              zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx1halt = modules[1].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx2halt = modules[2].step(signalReset, wallclockInt, resetStatisticsAtModules);
             }
             break;
             case 3: {
-              zx2halt = modules[2].step(signalReset, virtualInt, resetStatisticsAtModules);
-              zx3halt = modules[3].step(signalReset, virtualInt, resetStatisticsAtModules);
-              zx1halt = modules[1].step(signalReset, virtualInt, resetStatisticsAtModules);
-              zx0halt = modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
+              zx2halt = modules[2].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx3halt = modules[3].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx1halt = modules[1].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx0halt = modules[0].step(signalReset, wallclockInt, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
@@ -391,7 +389,7 @@ public final class Motherboard implements ZxPolyConstants {
         }
         break;
         case ZX128: {
-          modules[0].step(signalReset, virtualInt, resetStatisticsAtModules);
+          modules[0].step(signalReset, wallclockInt, resetStatisticsAtModules);
         }
         break;
         case SPEC256_16:
@@ -405,14 +403,16 @@ public final class Motherboard implements ZxPolyConstants {
           for (int i = 0; i < cores; i++) {
             final Z80 gfxCore = this.spec256GfxCores[i];
             gfxCore.alignRegisterValuesWith(mainCpu, syncRegRecord);
-            masterModule.stepWithGfxCpu(i + 1, gfxCore, signalReset, virtualInt);
+            masterModule.stepWithGfxCpu(i + 1, gfxCore, signalReset, wallclockInt);
           }
-          masterModule.step(signalReset, virtualInt, resetStatisticsAtModules);
+          masterModule.step(signalReset, wallclockInt, resetStatisticsAtModules);
         }
         break;
         default:
           throw new Error("Unexpected board mode: " + this.boardMode);
       }
+
+      final int spentTstates = this.modules[0].getCpu().getStepTstates();
 
       final int feValue = this.video.getPortFE();
       final int levelTapeOut = BEEPER_LEVELS[((feValue >> 3) & 1) == 0 ? 0 : 4];
@@ -422,14 +422,11 @@ public final class Motherboard implements ZxPolyConstants {
       this.beeper.setChannelValue(CHANNEL_BEEPER,
           Math.min(255, levelSpeaker + levelTapeIn + levelTapeOut));
 
-      final long spentMachineCycles =
-          modules[0].getCpu().getMachineCycles() - initialMachineCycleCounter;
-
       for (final IoDevice device : this.ioDevicesPostStep) {
-        device.postStep(spentMachineCycles);
+        device.postStep(spentTstates);
       }
 
-      this.beeper.updateState(wallclockInt, initialMachineCycleCounter);
+      this.beeper.updateState(tstatesIntReached, wallclockInt, spentTstates);
 
       final int curTriggers = this.triggers;
 
@@ -463,16 +460,13 @@ public final class Motherboard implements ZxPolyConstants {
           }
         }
       }
-    } else {
-      this.beeper.setChannelValue(CHANNEL_BEEPER, Beeper.BEEPER_LEVELS[0]);
-      this.beeper.updateState(virtualInt, MCYCLES_PER_INT);
     }
     return result;
   }
 
-  public void dryIntTickOnWallClockTime(final long calculatedMachineCycles) {
+  public void dryIntTickOnWallClockTime() {
     this.beeper.clearChannels();
-    this.beeper.updateState(true, calculatedMachineCycles);
+    this.beeper.updateState(true, true, NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE);
   }
 
   public void syncSpec256GpuStates() {

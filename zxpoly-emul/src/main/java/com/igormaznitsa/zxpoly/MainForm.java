@@ -19,7 +19,7 @@ package com.igormaznitsa.zxpoly;
 
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
-import static com.igormaznitsa.zxpoly.components.video.VideoController.MCYCLES_PER_INT;
+import static com.igormaznitsa.zxpoly.components.video.VideoController.TSTATES_PER_INT;
 import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
 import static javax.swing.KeyStroke.getKeyStroke;
 
@@ -607,43 +607,38 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     int countdownToPaint = 0;
     int countdownToAnimationSave = 0;
 
+    int tstatesAtInt = 0;
+
     while (!Thread.currentThread().isInterrupted()) {
-      final long currentMachineCycleCounter = this.board.getMasterCpu().getMachineCycles();
-      long wallclockTime = this.wallclock.getTimeInMilliseconds();
+      final long wallclockTime = this.wallclock.getTimeInMilliseconds();
 
       if (stepSemaphor.tryLock()) {
         try {
           final boolean inTurboMode = this.turboMode;
-          final boolean allMcyclesInIntCompleted = currentMachineCycleCounter >= MCYCLES_PER_INT;
+          final boolean tstatesIntReached = tstatesAtInt >= TSTATES_PER_INT;
           final boolean wallclockInt = nextWallclockIntTime <= wallclockTime;
 
-          final boolean virtualIntTick;
           if (wallclockInt) {
             nextWallclockIntTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
-            if (allMcyclesInIntCompleted) {
-              this.board
-                  .getMasterCpu()
-                  .setMCycleCounter(currentMachineCycleCounter % MCYCLES_PER_INT);
-            }
             countdownToPaint--;
             countdownToAnimationSave--;
 
-            virtualIntTick = true;
-
-            if (!allMcyclesInIntCompleted) {
-              this.onSlownessDetected(MCYCLES_PER_INT - currentMachineCycleCounter);
+            if (!tstatesIntReached) {
+              this.onSlownessDetected(TSTATES_PER_INT - tstatesAtInt);
             }
-          } else {
-            virtualIntTick = false;
+
+            tstatesAtInt = 0;
           }
 
-          final boolean executionEnabled =
-              inTurboMode || !allMcyclesInIntCompleted || virtualIntTick;
+          final boolean executionEnabled = inTurboMode || !tstatesIntReached || wallclockInt;
 
           final int detectedTriggers = this.board.step(
-              virtualIntTick,
+              tstatesIntReached,
               wallclockInt,
               executionEnabled);
+
+          tstatesAtInt += executionEnabled ? this.board.getMasterCpu().getStepTstates() : 0;
+
 
           if (wallclockInt) {
             this.videoStreamer.onWallclockInt();
@@ -688,12 +683,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         if (timeDiff >= 0L) {
           nextWallclockIntTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
           this.videoStreamer.onWallclockInt();
-          this.board.dryIntTickOnWallClockTime(
-              timeDiff == 0 ? MCYCLES_PER_INT : Math.round(
-                  MCYCLES_PER_INT * ((double) (timeDiff + TIMER_INT_DELAY_MILLISECONDS / 2)
-                      / (double) TIMER_INT_DELAY_MILLISECONDS)
-              )
-          );
+          this.board.dryIntTickOnWallClockTime();
         }
       }
     }
@@ -701,7 +691,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   private void onSlownessDetected(final long nonCompletedMcycles) {
     LOGGER.warning(String.format("Slowness detected: %.02f%%",
-        (float) nonCompletedMcycles / (float) MCYCLES_PER_INT * 100.0f));
+        (float) nonCompletedMcycles / (float) TSTATES_PER_INT * 100.0f));
   }
 
   private void updateTracerWindowsForStep() {
