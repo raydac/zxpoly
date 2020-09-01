@@ -110,7 +110,7 @@ public final class VideoController extends JComponent
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
   private static final int BORDER_LINES = 40;
-  private static final long MCYCLES_PER_BORDER_LINE = TSTATES_PER_INT / BORDER_LINES;
+  private static final int TSTATES_PER_LINE = TSTATES_PER_INT / BORDER_LINES;
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;
@@ -134,6 +134,8 @@ public final class VideoController extends JComponent
   private volatile boolean enableTrapMouse = false;
   private volatile boolean showZxKeyboardLayout = false;
   private TvFilterChain tvFilterChain = TvFilterChain.NONE;
+
+  private int tstatesCounter = 0;
 
   public VideoController(final Motherboard board) {
     super();
@@ -925,7 +927,7 @@ public final class VideoController extends JComponent
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
     if (this.changedBorderLines != 0L) {
-      final float lineHeight = Math.max(2, (float) height / BORDER_LINES);
+      final float lineHeight = Math.max(1, (float) height / BORDER_LINES) + 1;
       float y = 0.0f;
       final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
 
@@ -1288,13 +1290,7 @@ public final class VideoController extends JComponent
       if ((zxPolyMode && (port & 0xFF) == 0xFE) || (!zxPolyMode && (port & 1) == 0)) {
         this.portFEw = value & 0xFF;
 
-        int borderLineIndex;
-        final long machineCycles = module.getCpu().getStepTstates();
-        if (module.isMaster()) {
-          borderLineIndex = (int) (machineCycles / MCYCLES_PER_BORDER_LINE);
-        } else {
-          borderLineIndex = (int) (machineCycles % BORDER_LINES);
-        }
+        int borderLineIndex = this.tstatesCounter / TSTATES_PER_LINE;
         if (borderLineIndex >= 0 && borderLineIndex < BORDER_LINES) {
           this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
           this.changedBorderLines |= 1L << borderLineIndex;
@@ -1305,7 +1301,7 @@ public final class VideoController extends JComponent
 
   @Override
   public int getNotificationFlags() {
-    return NOTIFICATION_PRESTEP;
+    return NOTIFICATION_PRESTEP | NOTIFICATION_POSTSTEP;
   }
 
   @Override
@@ -1313,6 +1309,9 @@ public final class VideoController extends JComponent
                       boolean wallclockInt) {
     if (signalReset) {
       this.portFEw = 0x00;
+    }
+    if (wallclockInt) {
+      this.tstatesCounter = 0;
     }
   }
 
@@ -1322,6 +1321,7 @@ public final class VideoController extends JComponent
 
   @Override
   public void postStep(int spentTstates) {
+    this.tstatesCounter += spentTstates;
   }
 
   public float getZoom() {

@@ -17,10 +17,8 @@
 
 package com.igormaznitsa.zxpoly.components.snd;
 
-import static com.igormaznitsa.zxpoly.components.video.VideoController.TSTATES_PER_INT;
 import static java.lang.Long.toHexString;
 import static java.lang.String.format;
-import static java.util.Arrays.fill;
 import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
 
 
@@ -34,7 +32,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.IntStream;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.Line;
@@ -54,16 +51,8 @@ public final class Beeper {
   public static final int[] BEEPER_LEVELS;
   private static final int NUM_BUFFERS = 5;
   private static final Logger LOGGER = Logger.getLogger("Beeper");
-  private static final int SND_FREQ = 44100;
-  public static final AudioFormat AUDIO_FORMAT = new AudioFormat(
-      PCM_SIGNED,
-      SND_FREQ,
-      16,
-      2,
-      4,
-      SND_FREQ,
-      false
-  );
+  public static final AudioFormat AUDIO_FORMAT = SndBufferContainer.AUDIO_FORMAT;
+
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
     public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int level) {
@@ -92,10 +81,6 @@ public final class Beeper {
 
     }
   };
-  private static final int SAMPLES_PER_INT = SND_FREQ / 50;
-  private static final int SND_BUFFER_LENGTH =
-      SAMPLES_PER_INT * AUDIO_FORMAT.getChannels() * AUDIO_FORMAT.getSampleSizeInBits() / 8;
-  private static final byte[] SND_BUFFER = new byte[SND_BUFFER_LENGTH];
 
   static {
     BEEPER_LEVELS =
@@ -107,21 +92,6 @@ public final class Beeper {
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
 
   public Beeper() {
-  }
-
-  private static void fillSndBuffer(int fromIndex, final int value) {
-    final byte low = (byte) value;
-    final byte high = (byte) (value >> 8);
-
-    if (low == high) {
-      fill(SND_BUFFER, fromIndex, SND_BUFFER_LENGTH, low);
-    } else {
-      while (fromIndex < SND_BUFFER_LENGTH) {
-        SND_BUFFER[fromIndex++] = low;
-        SND_BUFFER[fromIndex++] = high;
-      }
-    }
-
   }
 
   public void setSourceSoundPort(final SourceSoundPort soundPort) {
@@ -184,7 +154,7 @@ public final class Beeper {
   }
 
   public AudioFormat getAudioFormat() {
-    return AUDIO_FORMAT;
+    return SndBufferContainer.AUDIO_FORMAT;
   }
 
   public void clearChannels() {
@@ -219,8 +189,6 @@ public final class Beeper {
       this.sourceDataLine = sourceSoundPort.asSourceDataLine();
       final Line.Info lineInfo = this.sourceDataLine.getLineInfo();
       LOGGER.info("Got sound data line: " + lineInfo.toString());
-
-      fillSndBuffer(0, 0xFFFF);
 
       this.thread = new Thread(this, "zxp-beeper-thread-" + toHexString(System.nanoTime()));
       this.thread.setDaemon(true);
@@ -271,7 +239,7 @@ public final class Beeper {
           dataFormat.format(new Date()));
     }
 
-    private int tstatesIntCounter = 0;
+    private final SndBufferContainer sndBuffer = new SndBufferContainer();
 
     @Override
     public void updateState(
@@ -281,27 +249,12 @@ public final class Beeper {
         final int level
     ) {
       if (this.working) {
-        tstatesIntCounter += spentTstates;
-
         if (wallclockInt) {
-          tstatesIntCounter = 0;
-          this.soundDataQueue.offer(SND_BUFFER.clone());
-          fillSndBuffer(0, level);
+          this.soundDataQueue.offer(sndBuffer.makeClone(level));
+          sndBuffer.resetPosition();
         } else {
-          final int position = ((tstatesIntCounter * SAMPLES_PER_INT + TSTATES_PER_INT / 2)
-              / TSTATES_PER_INT) * 4;
-          if (position < SND_BUFFER_LENGTH) {
-            fillSndBuffer(position, level);
-          }
+          sndBuffer.setValue(spentTstates, level);
         }
-      }
-    }
-
-    @Override
-    public void reset() {
-      if (this.working) {
-        LOGGER.info("Reset");
-        fill(SND_BUFFER, (byte) 0xFF);
       }
     }
 
@@ -310,10 +263,21 @@ public final class Beeper {
     }
 
     @Override
+    public void reset() {
+      if (this.working) {
+        LOGGER.info("Reset");
+        sndBuffer.reset();
+      }
+    }
+
+    @Override
     public void run() {
       LOGGER.info("Starting thread");
       try {
-        this.sourceDataLine.open(AUDIO_FORMAT, SND_BUFFER_LENGTH * NUM_BUFFERS);
+        final int BUFF_LEN = sndBuffer.getLength() * NUM_BUFFERS;
+
+        this.sourceDataLine
+            .open(SndBufferContainer.AUDIO_FORMAT, BUFF_LEN);
         if (this.sourceDataLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
           final FloatControl gainControl =
               (FloatControl) this.sourceDataLine.getControl(FloatControl.Type.MASTER_GAIN);
@@ -330,8 +294,9 @@ public final class Beeper {
             this.sourceDataLine.getBufferSize())
         );
 
-        IntStream.range(0, NUM_BUFFERS)
-            .forEach(i -> this.sourceDataLine.write(SND_BUFFER, 0, SND_BUFFER_LENGTH));
+        final byte[] filling = new byte[BUFF_LEN];
+        Arrays.fill(filling, (byte) 0xFF);
+        this.sourceDataLine.write(filling, 0, BUFF_LEN);
 
         this.sourceDataLine.start();
 
