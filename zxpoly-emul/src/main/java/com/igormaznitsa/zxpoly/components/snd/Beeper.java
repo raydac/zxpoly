@@ -275,7 +275,7 @@ public final class Beeper {
 
     @Override
     public void updateState(
-        boolean tstatesInt,
+        boolean tstatesIntReached,
         boolean wallclockInt,
         int spentTstates,
         final int level
@@ -284,15 +284,11 @@ public final class Beeper {
         tstatesIntCounter += spentTstates;
 
         if (wallclockInt) {
+          tstatesIntCounter = 0;
           this.soundDataQueue.offer(SND_BUFFER.clone());
           fillSndBuffer(0, level);
-        }
-
-        if (tstatesInt) {
-          tstatesIntCounter = 0;
-          fillSndBuffer(0, level);
         } else {
-          final int position = ((spentTstates * SAMPLES_PER_INT + TSTATES_PER_INT / 2)
+          final int position = ((tstatesIntCounter * SAMPLES_PER_INT + TSTATES_PER_INT / 2)
               / TSTATES_PER_INT) * 4;
           if (position < SND_BUFFER_LENGTH) {
             fillSndBuffer(position, level);

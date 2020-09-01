@@ -607,7 +607,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     int countdownToPaint = 0;
     int countdownToAnimationSave = 0;
 
-    int tstatesAtInt = 0;
+    int tstates = 0;
 
     while (!Thread.currentThread().isInterrupted()) {
       final long wallclockTime = this.wallclock.getTimeInMilliseconds();
@@ -615,7 +615,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       if (stepSemaphor.tryLock()) {
         try {
           final boolean inTurboMode = this.turboMode;
-          final boolean tstatesIntReached = tstatesAtInt >= TSTATES_PER_INT;
+          final boolean tstatesIntReached = tstates >= TSTATES_PER_INT;
           final boolean wallclockInt = nextWallclockIntTime <= wallclockTime;
 
           if (wallclockInt) {
@@ -624,10 +624,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             countdownToAnimationSave--;
 
             if (!tstatesIntReached) {
-              this.onSlownessDetected(TSTATES_PER_INT - tstatesAtInt);
+              this.onSlownessDetected(TSTATES_PER_INT - tstates);
             }
 
-            tstatesAtInt = 0;
+            tstates = 0;
           }
 
           final boolean executionEnabled = inTurboMode || !tstatesIntReached || wallclockInt;
@@ -637,7 +637,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
               wallclockInt,
               executionEnabled);
 
-          tstatesAtInt += executionEnabled ? this.board.getMasterCpu().getStepTstates() : 0;
+          tstates += executionEnabled ? this.board.getMasterCpu().getStepTstates() : 0;
 
 
           if (wallclockInt) {
@@ -684,6 +684,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           nextWallclockIntTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
           this.videoStreamer.onWallclockInt();
           this.board.dryIntTickOnWallClockTime();
+          tstates = 0;
         }
       }
     }

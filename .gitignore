@@ -17,3 +17,5 @@
 .classpath
 .project
 .settings
+/zxpoly-emul/nb-configuration.xml
+/zxpoly-emul/nbactions.xml

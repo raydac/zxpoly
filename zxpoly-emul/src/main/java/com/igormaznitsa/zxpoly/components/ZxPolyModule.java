@@ -335,7 +335,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     final boolean cpuIsActive = (sigWait | sigReset) == 0 && !(isHaltDetected || doInt);
 
     this.mcyclesOfActivityBetweenInt +=
-        cpuIsActive ? Math.max(0L, this.cpu.getStepTstates() - curMcyclesNumber) : -15000L;
+        cpuIsActive ? this.cpu.getStepTstates() : -15000L;
     return isHaltDetected;
   }
 
