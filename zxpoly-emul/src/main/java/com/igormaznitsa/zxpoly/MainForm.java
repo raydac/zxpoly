@@ -600,8 +600,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   @Override
   public void run() {
-    final int intTicksBetweenInfoPanelUpdate = 20;
-
     long nextWallclockIntTime =
         this.wallclock.getTimeInMilliseconds() + TIMER_INT_DELAY_MILLISECONDS;
     int countdownToPaint = 0;
@@ -685,6 +683,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           this.videoStreamer.onWallclockInt();
           this.board.dryIntTickOnWallClockTime();
           tstates = 0;
+        } else {
+          tstates = TSTATES_PER_INT;
         }
       }
     }
