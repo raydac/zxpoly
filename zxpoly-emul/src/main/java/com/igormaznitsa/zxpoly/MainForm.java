@@ -308,8 +308,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     this.getInputContext().selectInputMethod(Locale.ENGLISH);
 
-    setIconImage(Utils.loadIcon("appico.png"));
-
+    this.setIconImage(Utils.loadIcon("appico.png"));
 
     byte[] bootstrapRom = null;
     final File bootstrapRomFile = new File(ROM_BOOTSTRAP_FILE_NAME);
@@ -338,9 +337,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     }
 
-    this.board = new Motherboard(BASE_ROM, AppOptions.getInstance().isCovoxFb(),
-        AppOptions.getInstance().isTurboSound());
-    this.board.setBoardMode(BoardMode.ZXPOLY, true);
+    this.board = new Motherboard(
+        BASE_ROM,
+        AppOptions.getInstance().getDefaultBoardMode(),
+        AppOptions.getInstance().isCovoxFb(),
+        AppOptions.getInstance().isTurboSound()
+    );
+    this.board.reset();
     this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() != BoardMode.ZXPOLY);
     this.menuOptionsTurbo.setSelected(this.turboMode);
 

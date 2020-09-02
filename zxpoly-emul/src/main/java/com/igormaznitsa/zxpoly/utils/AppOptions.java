@@ -17,8 +17,10 @@
 
 package com.igormaznitsa.zxpoly.utils;
 
+import com.igormaznitsa.zxpoly.components.BoardMode;
 import java.io.File;
 import java.net.InetAddress;
+import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -95,6 +97,19 @@ public final class AppOptions {
 
   public synchronized void setGrabSound(final boolean value) {
     preferences.putBoolean(Option.STREAM_GRABSOUND.name(), value);
+  }
+
+  public synchronized BoardMode getDefaultBoardMode() {
+    final String mode = preferences.get(Option.DEFAULT_MODE.name(), BoardMode.ZXPOLY.name());
+    try {
+      return BoardMode.valueOf(mode);
+    } catch (NoSuchElementException ex) {
+      return BoardMode.ZXPOLY;
+    }
+  }
+
+  public synchronized void setDefaultBoardMode(final BoardMode value) {
+    preferences.put(Option.DEFAULT_MODE.name(), value.name());
   }
 
   public synchronized boolean isCovoxFb() {
@@ -202,6 +217,7 @@ public final class AppOptions {
     STREAM_ADDR,
     STREAM_PORT,
     STREAM_FRAMERATE,
+    DEFAULT_MODE,
     ROMPATH,
     COVOXFB,
     TURBOSOUND,

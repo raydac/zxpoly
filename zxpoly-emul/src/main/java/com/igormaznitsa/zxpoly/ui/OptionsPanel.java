@@ -17,6 +17,7 @@
 
 package com.igormaznitsa.zxpoly.ui;
 
+import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.AppOptions.Rom;
 import java.net.InetAddress;
@@ -35,8 +36,10 @@ public class OptionsPanel extends javax.swing.JPanel {
 
   private javax.swing.JCheckBox checkCovoxFb;
   private javax.swing.JCheckBox checkTurboSound;
+  private javax.swing.JCheckBox checkZx128ByDefault;
   private javax.swing.JLabel labelCovoxFb;
   private javax.swing.JLabel labelTurboSound;
+  private javax.swing.JLabel labelZx128ByDefault;
   private javax.swing.JCheckBox checkGrabSound;
   private javax.swing.JComboBox<String> comboNetAdddr;
   private javax.swing.JComboBox<String> comboRomSource;
@@ -94,6 +97,7 @@ public class OptionsPanel extends javax.swing.JPanel {
   private void fillByDataContainer(final DataContainer data) {
     this.checkGrabSound.setSelected(data.grabSound);
     this.checkCovoxFb.setSelected(data.covoxFb);
+    this.checkZx128ByDefault.setSelected(data.zx128byDefault);
     this.checkTurboSound.setSelected(data.turboSound);
     this.spinnerPort.setValue(data.port);
     this.spinnerIntFrame.setValue(data.intPerFrame);
@@ -127,6 +131,8 @@ public class OptionsPanel extends javax.swing.JPanel {
     checkCovoxFb = new javax.swing.JCheckBox();
     labelTurboSound = new javax.swing.JLabel();
     checkTurboSound = new javax.swing.JCheckBox();
+    labelZx128ByDefault = new javax.swing.JLabel();
+    checkZx128ByDefault = new javax.swing.JCheckBox();
 
     setLayout(new java.awt.GridBagLayout());
 
@@ -277,6 +283,20 @@ public class OptionsPanel extends javax.swing.JPanel {
     gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
     jPanel2.add(checkCovoxFb, gridBagConstraints);
 
+    labelZx128ByDefault.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelZx128ByDefault.setText("Default ZX128:");
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 4;
+    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    jPanel2.add(labelZx128ByDefault, gridBagConstraints);
+    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 4;
+    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+    jPanel2.add(checkZx128ByDefault, gridBagConstraints);
+
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 1;
@@ -295,6 +315,7 @@ public class OptionsPanel extends javax.swing.JPanel {
     public final int frameRate;
     public final boolean covoxFb;
     public final boolean turboSound;
+    public final boolean zx128byDefault;
 
     public DataContainer() {
       this.activeRom = AppOptions.getInstance().getActiveRom();
@@ -306,6 +327,7 @@ public class OptionsPanel extends javax.swing.JPanel {
       this.frameRate = AppOptions.getInstance().getFrameRate();
       this.covoxFb = AppOptions.getInstance().isCovoxFb();
       this.turboSound = AppOptions.getInstance().isTurboSound();
+      this.zx128byDefault = AppOptions.getInstance().getDefaultBoardMode() != BoardMode.ZXPOLY;
     }
 
     public DataContainer(final OptionsPanel optionsPanel) {
@@ -320,6 +342,7 @@ public class OptionsPanel extends javax.swing.JPanel {
       this.frameRate = (Integer) optionsPanel.spinnerFramesPerSec.getValue();
       this.covoxFb = optionsPanel.checkCovoxFb.isSelected();
       this.turboSound = optionsPanel.checkTurboSound.isSelected();
+      this.zx128byDefault = optionsPanel.checkZx128ByDefault.isSelected();
     }
 
     public void store() {
@@ -332,6 +355,8 @@ public class OptionsPanel extends javax.swing.JPanel {
       AppOptions.getInstance().setAddress(this.inetAddress);
       AppOptions.getInstance().setFrameRate(this.frameRate);
       AppOptions.getInstance().setTurboSound(this.turboSound);
+      AppOptions.getInstance()
+          .setDefaultBoardMode(this.zx128byDefault ? BoardMode.ZX128 : BoardMode.ZXPOLY);
       try {
         AppOptions.getInstance().flush();
       } catch (BackingStoreException ex) {

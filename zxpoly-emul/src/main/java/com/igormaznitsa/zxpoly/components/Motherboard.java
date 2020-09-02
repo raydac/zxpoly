@@ -72,7 +72,7 @@ public final class Motherboard implements ZxPolyConstants {
   private int intCounter;
   private volatile boolean videoFlashState;
   private boolean localResetForAllModules;
-  private volatile BoardMode boardMode = BoardMode.ZXPOLY;
+  private volatile BoardMode boardMode;
   private int statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
   private volatile int gfxSyncRegsRecord = 0;
   private final Random rnd = new Random();
@@ -81,6 +81,7 @@ public final class Motherboard implements ZxPolyConstants {
 
   public Motherboard(
       final RomData rom,
+      final BoardMode boardMode,
       final boolean enableCovoxFb,
       final boolean useTurboSound
   ) {
@@ -94,6 +95,7 @@ public final class Motherboard implements ZxPolyConstants {
       iodevices.add(this.modules[i]);
     }
 
+    this.boardMode = boardMode;
     this.beeper = new Beeper();
     this.betaDisk = new BetaDiscInterface(this);
     this.romData = rom;
@@ -309,7 +311,7 @@ public final class Motherboard implements ZxPolyConstants {
       if (this.resetCounter > 0) {
         this.resetCounter--;
         if (this.resetCounter == 0) {
-          this.set3D00(0, true);
+          this.set3D00(this.boardMode == BoardMode.ZXPOLY ? 0 : PORTw_ZXPOLY_BLOCK, true);
         }
       }
 
