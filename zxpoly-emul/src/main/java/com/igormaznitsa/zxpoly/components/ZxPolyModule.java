@@ -811,8 +811,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
                 (reg0 & ZXPOLY_wREG0_MEMWR_DISABLED) == 0 ? 0 : PORTr_ZXPOLY_MEMDISABLED;
             final int ioDisabled =
                 (reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 ? 0 : PORTr_ZXPOLY_IODISABLED;
-            result = (byte) (this.moduleIndex | ((reg0 & 7) << 5) | outForCPU0 | memDisabled |
-                ioDisabled);
+            result = (byte) (this.moduleIndex | ((reg0 & 7) << 5) | outForCPU0 | memDisabled
+                | ioDisabled);
           }
         } else {
           result = (byte) this.board.readBusIo(this, port);
