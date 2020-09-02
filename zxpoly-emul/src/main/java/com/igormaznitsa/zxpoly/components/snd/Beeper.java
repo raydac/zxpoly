@@ -49,7 +49,6 @@ public final class Beeper {
   public static final int CHANNEL_RESERV_1 = 6;
   public static final int CHANNEL_RESERV_2 = 7;
   public static final int[] BEEPER_LEVELS;
-  private static final int NUM_BUFFERS = 5;
   private static final Logger LOGGER = Logger.getLogger("Beeper");
   public static final AudioFormat AUDIO_FORMAT = SndBufferContainer.AUDIO_FORMAT;
 
@@ -179,7 +178,8 @@ public final class Beeper {
 
   private static final class InternalBeeper implements IBeeper, Runnable {
 
-    private final BlockingQueue<byte[]> soundDataQueue = new ArrayBlockingQueue<>(NUM_BUFFERS);
+    private final BlockingQueue<byte[]> soundDataQueue =
+        new ArrayBlockingQueue<>(SndBufferContainer.BUFFERS_NUMBER);
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
     private final AtomicReference<FloatControl> gainControl = new AtomicReference<>();
@@ -191,6 +191,7 @@ public final class Beeper {
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
       this.thread = new Thread(this, "zxp-beeper-thread-" + toHexString(System.nanoTime()));
+      this.thread.setPriority(Thread.MAX_PRIORITY - 1);
       this.thread.setDaemon(true);
     }
 
@@ -250,7 +251,7 @@ public final class Beeper {
     ) {
       if (this.working) {
         if (wallclockInt) {
-          this.soundDataQueue.offer(sndBuffer.makeClone(level));
+          this.soundDataQueue.offer(sndBuffer.nextBuffer(level));
           sndBuffer.resetPosition();
         } else {
           sndBuffer.setValue(spentTstates, level);
@@ -274,10 +275,8 @@ public final class Beeper {
     public void run() {
       LOGGER.info("Starting thread");
       try {
-        final int allBufferLength = sndBuffer.getLength() * NUM_BUFFERS;
-
         this.sourceDataLine
-            .open(SndBufferContainer.AUDIO_FORMAT, allBufferLength);
+            .open(SndBufferContainer.AUDIO_FORMAT, this.sndBuffer.getLength() * 2);
         if (this.sourceDataLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
           final FloatControl gainControl =
               (FloatControl) this.sourceDataLine.getControl(FloatControl.Type.MASTER_GAIN);
@@ -294,9 +293,8 @@ public final class Beeper {
             this.sourceDataLine.getBufferSize())
         );
 
-        final byte[] filling = new byte[allBufferLength];
-        Arrays.fill(filling, (byte) 0xFF);
-        this.sourceDataLine.write(filling, 0, allBufferLength);
+        this.sndBuffer.writeCurrent(this.sourceDataLine);
+        this.sndBuffer.writeCurrent(this.sourceDataLine);
 
         this.sourceDataLine.start();
 
