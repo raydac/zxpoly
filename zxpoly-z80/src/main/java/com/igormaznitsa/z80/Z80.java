@@ -1586,8 +1586,9 @@ public final class Z80 {
     writeReg16(2, result);
 
     final int c = reg ^ value ^ result;
-    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_SZPV) | ((result >>> 8) & FLAG_XY) |
-        ((c >>> 8) & FLAG_H) | ((c >>> (16 - FLAG_C_SHIFT))));
+    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_SZPV)
+        | ((result >>> 8) & FLAG_XY)
+        | ((c >>> 8) & FLAG_H) | ((c >>> (16 - FLAG_C_SHIFT))));
 
     this.tstates += 7;
   }
