@@ -466,9 +466,10 @@ public final class Motherboard implements ZxPolyConstants {
     return result;
   }
 
-  public void dryIntTickOnWallClockTime() {
+  public void dryIntTickOnWallClockTime(final boolean tstatesIntReached, final boolean wallclockInt,
+                                        final int tstates) {
     this.beeper.clearChannels();
-    this.beeper.updateState(true, true, NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE);
+    this.beeper.updateState(tstatesIntReached, wallclockInt, tstates);
   }
 
   public void syncSpec256GpuStates() {

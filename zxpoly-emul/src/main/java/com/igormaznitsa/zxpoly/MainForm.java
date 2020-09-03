@@ -684,10 +684,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         if (timeDiff >= 0L) {
           nextWallclockIntTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
           this.videoStreamer.onWallclockInt();
-          this.board.dryIntTickOnWallClockTime();
+          this.board.dryIntTickOnWallClockTime(tstates >= TSTATES_PER_INT, true, tstates);
           tstates = 0;
         } else {
-          tstates = TSTATES_PER_INT;
+          if (tstates < TSTATES_PER_INT) {
+            tstates += 4;
+          }
+          this.board.dryIntTickOnWallClockTime(tstates >= TSTATES_PER_INT, true, tstates);
         }
       }
     }
