@@ -84,22 +84,24 @@ public final class Z80 {
 
   static {
     // fill tables SZYX and SZYXP
-    FTABLE_SZYX = new byte[256];
-    FTABLE_SZYXP = new byte[256];
+    FTABLE_SZYX = new byte[0x100];
+    FTABLE_SZYXP = new byte[0x100];
     for (int i = 0; i < 256; i++) {
-      FTABLE_SZYX[i] = (byte) ((i & (FLAG_S | FLAG_XY)) | (i == 0 ? FLAG_Z : 0));
+      final int szyx = i & (FLAG_X | FLAG_Y | FLAG_S);
 
-      boolean p = true;
+      FTABLE_SZYX[i] = (byte) szyx;
+
       int j = i;
-      while (j != 0) {
-        if ((j & 1) != 0) {
-          p = !p;
-        }
-        j >>= 1;
+      int parity = 0;
+      for (int k = 0; k < 8; k++) {
+        parity ^= (j & 1);
+        j >>>= 1;
       }
-      FTABLE_SZYXP[i] =
-          (byte) ((i & (FLAG_S | FLAG_XY)) | (i == 0 ? FLAG_Z : 0) | (p ? FLAG_PV : 0));
+
+      FTABLE_SZYXP[i] = (byte) (szyx | (parity != 0 ? 0 : FLAG_PV));
     }
+    FTABLE_SZYX[0] |= FLAG_Z;
+    FTABLE_SZYXP[0] |= FLAG_Z;
   }
 
   private final Z80CPUBus bus;
@@ -500,9 +502,9 @@ public final class Z80 {
     this.tstates += 6;
   }
 
-  private void _rfsh() {
-    final int rreg = this.getRegister(REG_R);
-    this.setRegister(REG_R, (rreg & 0x80) | ((rreg + 1) & 0x7F));
+  private void _incR() {
+    final int r = this.getRegister(REG_R);
+    this.setRegister(REG_R, (r & 0x80) | ((r + 1) & 0x7F));
   }
 
   public int getSP() {
@@ -1097,12 +1099,12 @@ public final class Z80 {
     boolean commandCompleted = true;
     this.insideBlockInstruction = false;
 
+    _incR();
+
     switch (this.prefix) {
       case 0xDD:
       case 0xFD:
       case 0x00: {
-        _rfsh();
-
         switch (extractX(commandByte)) {
           case 0: {
             final int z = extractZ(commandByte);
@@ -1271,6 +1273,7 @@ public final class Z80 {
                     break;
                   case 1:
                     this.prefix = (this.prefix << 8) | 0xCB;
+
                     this.cbDisplacementByte = -1;
                     commandCompleted = false;
                     break;
@@ -1632,6 +1635,19 @@ public final class Z80 {
     this.tstates += 7;
   }
 
+  private int getPrefixedHl() {
+    switch (normalizedPrefix()) {
+      case 0x00:
+        return this.getRegisterPair(REGPAIR_HL, false);
+      case 0xDD:
+        return this.getRegister(REG_IX, false);
+      case 0xFD:
+        return this.getRegister(REG_IY, false);
+      default:
+        throw new Error("Unexpected prefix");
+    }
+  }
+
   private void writeReg8_forLdReg8Instruction(final int ctx, final int r, final int value) {
     switch (r) {
       case 0:
@@ -1927,16 +1943,16 @@ public final class Z80 {
   }
 
   private void doSCF() {
-    int A = this.regSet[REG_A] & 0xFF;
-    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & FLAG_SZPV) | (A & FLAG_XY) | FLAG_C);
+    int a = this.regSet[REG_A];
+    int f = this.regSet[REG_F];
+    this.regSet[REG_F] = (byte) ((f & FLAG_SZPV) | (a & FLAG_XY) | FLAG_C);
   }
 
   private void doCCF() {
-    int A = this.regSet[REG_A] & 0xFF;
-    int c = this.regSet[REG_F] & FLAG_C;
+    int a = this.regSet[REG_A] & 0xFF;
+    int f = this.regSet[REG_F];
     this.regSet[REG_F] =
-        (byte) ((this.regSet[REG_F] & FLAG_SZPV) | (c << FLAG_H_SHIFT) | (A & FLAG_XY) |
-            (c ^ FLAG_C));
+        (byte) ((f & FLAG_SZPV) | ((f & FLAG_C) == 0 ? FLAG_C : FLAG_H) | (a & FLAG_XY));
   }
 
   private void doLDRegByReg(final int ctx, final int y, final int z) {
@@ -2027,8 +2043,8 @@ public final class Z80 {
 
   private void doIN_A_n(final int ctx) {
     this.regSet[REG_A] = (byte) _readport(ctx,
-        ((_portAddrFromReg(ctx, REG_A, this.regSet[REG_A]) & 0xFF) << 8) |
-            readInstrOrPrefix(ctx, false));
+        ((_portAddrFromReg(ctx, REG_A, this.regSet[REG_A]) & 0xFF) << 8)
+            | readInstrOrPrefix(ctx, false));
   }
 
   private void doEX_mSP_HL(final int ctx) {
@@ -2255,10 +2271,26 @@ public final class Z80 {
     final int val = readReg8(ctx, reg);
     final int x = val & (1 << bit);
 
-    this.regSet[REG_F] =
-        (byte) ((x == 0 ? (FLAG_Z | FLAG_PV) : 0) | (x & FLAG_S) | (this.regW & FLAG_XY) | FLAG_H |
-            (this.regSet[REG_F] & FLAG_C));
+    int f = this.regSet[REG_F];
 
+    final int forxy;
+    if (reg == 6) {
+      // (HL),(IX),(IY)
+      forxy = this.getPrefixedHl();
+    } else {
+      forxy = val;
+    }
+
+    f = (f & FLAG_C) | FLAG_H | (forxy & FLAG_XY);
+
+    if (x == 0) {
+      f |= FLAG_PV | FLAG_Z;
+    }
+
+    if (bit == 7 && (val & 0x80) != 0) {
+      f |= FLAG_S;
+    }
+    this.regSet[REG_F] = (byte) f;
     if (reg == 6) {
       this.tstates++;
     }
