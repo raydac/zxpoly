@@ -204,7 +204,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   private int readKeyboardAndTap(final int port, final TapeFileReader tapeFileReader) {
     final int tapbit = tapeFileReader == null ? 0 : tapeFileReader.getSignal() ? TAP_BIT : 0;
-    return getKbdValueForLines(port >>> 8) | tapbit;
+    return getKbdValueForLines(port >>> 8) | tapbit | 0xA0;
   }
 
   @Override
