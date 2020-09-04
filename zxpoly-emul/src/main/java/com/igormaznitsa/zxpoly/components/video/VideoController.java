@@ -17,6 +17,7 @@
 
 package com.igormaznitsa.zxpoly.components.video;
 
+import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
 import static java.util.Arrays.fill;
 
 
@@ -58,7 +59,6 @@ public final class VideoController extends JComponent
   public static final int SCREEN_WIDTH = 512;
   public static final int SCREEN_HEIGHT = 384;
   public static final Image IMAGE_ZXKEYS = Utils.loadIcon("zxkeys.png");
-  public static final int TSTATES_PER_INT = Motherboard.CPU_FREQ / 50;
   public static final int[] PALETTE_ZXPOLY = new int[] {
       0xFF000000,
       0xFF0000BE,

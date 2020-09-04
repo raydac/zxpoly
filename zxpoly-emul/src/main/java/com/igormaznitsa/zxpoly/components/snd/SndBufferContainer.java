@@ -1,6 +1,6 @@
 package com.igormaznitsa.zxpoly.components.snd;
 
-import static com.igormaznitsa.zxpoly.components.video.VideoController.TSTATES_PER_INT;
+import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
 import static java.util.Arrays.fill;
 import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
 

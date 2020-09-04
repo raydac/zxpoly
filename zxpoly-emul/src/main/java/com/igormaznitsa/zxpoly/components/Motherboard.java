@@ -19,7 +19,6 @@ package com.igormaznitsa.zxpoly.components;
 
 import static com.igormaznitsa.zxpoly.components.snd.Beeper.BEEPER_LEVELS;
 import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
-import static com.igormaznitsa.zxpoly.components.video.VideoController.TSTATES_PER_INT;
 import static java.lang.Math.min;
 
 
@@ -44,6 +43,7 @@ public final class Motherboard implements ZxPolyConstants {
 
   public static final int CPU_FREQ = 3546900;
   public static final int TSTATES_PER_LINE = 228;
+  public static final int TSTATES_PER_INT = 70908;
 
   public static final int TRIGGER_NONE = 0;
   public static final int TRIGGER_DIFF_MODULESTATES = 1;

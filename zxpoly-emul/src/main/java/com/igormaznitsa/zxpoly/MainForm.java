@@ -19,7 +19,7 @@ package com.igormaznitsa.zxpoly;
 
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
-import static com.igormaznitsa.zxpoly.components.video.VideoController.TSTATES_PER_INT;
+import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
 import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
 import static javax.swing.KeyStroke.getKeyStroke;
 
