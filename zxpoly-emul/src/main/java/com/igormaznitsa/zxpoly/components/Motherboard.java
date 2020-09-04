@@ -43,7 +43,8 @@ public final class Motherboard implements ZxPolyConstants {
 
   public static final int CPU_FREQ = 3546900;
   public static final int TSTATES_PER_LINE = 228;
-  public static final int TSTATES_PER_INT = 70908;
+  public static final int LINES_PER_FRAME = 311;
+  public static final int TSTATES_PER_INT = TSTATES_PER_LINE * LINES_PER_FRAME;
 
   public static final int TRIGGER_NONE = 0;
   public static final int TRIGGER_DIFF_MODULESTATES = 1;
