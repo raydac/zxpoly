@@ -106,6 +106,7 @@ public class TraceCpuForm extends javax.swing.JFrame implements MemoryAccessProv
 
   public TraceCpuForm(final MainForm mainForm, final Motherboard motherboard,
                       final int moduleIndex) {
+    super(mainForm.getGraphicsConfiguration());
     initComponents();
     this.moduleIndex = moduleIndex;
     this.mainForm = mainForm;
