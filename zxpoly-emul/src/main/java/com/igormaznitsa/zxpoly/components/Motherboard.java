@@ -42,7 +42,9 @@ import java.util.logging.Logger;
 @SuppressWarnings({"unused", "FieldCanBeLocal", "NonAtomicOperationOnVolatileField"})
 public final class Motherboard implements ZxPolyConstants {
 
-  public static final int CPU_FREQ = 3500000;
+  public static final int CPU_FREQ = 3546900;
+  public static final int TSTATES_PER_LINE = 228;
+
   public static final int TRIGGER_NONE = 0;
   public static final int TRIGGER_DIFF_MODULESTATES = 1;
   public static final int TRIGGER_DIFF_MEM_ADDR = 2;
