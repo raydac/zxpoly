@@ -837,6 +837,34 @@ public class TraceCpuForm extends javax.swing.JFrame implements MemoryAccessProv
     return this.moduleIndex;
   }
 
+
+  private String makeCodeLine(
+      final MemoryAccessProvider provider,
+      final int addr,
+      final int bytes
+  ) {
+    final StringBuilder result = new StringBuilder();
+    final String addrAsHex = Integer.toHexString(addr).toUpperCase(Locale.ENGLISH);
+    switch (addrAsHex.length()) {
+      case 3:
+        result.append('0');
+        break;
+      case 2:
+        result.append("00");
+        break;
+      case 1:
+        result.append("000");
+        break;
+    }
+    result.append(addrAsHex);
+    for (int i = 0; i < bytes; i++) {
+      result.append(' ')
+          .append(Integer.toHexString(provider.readAddress(addr + i) & 0xFF)
+              .toUpperCase(Locale.ENGLISH));
+    }
+    return result.toString();
+  }
+
   public void refreshViewState() {
     final int pc = this.module.getCpu().getPC();
 
@@ -851,13 +879,15 @@ public class TraceCpuForm extends javax.swing.JFrame implements MemoryAccessProv
 
       int address = pc;
 
+      model.addElement(makeCodeLine(this, pc - 9, 8));
+
       for (final Z80Instruction i : instructions) {
         model.addElement(makeInstructionLine(i, address));
         address += i == null ? 1 : i.getLength();
       }
 
       this.disasmList.setModel(model);
-      this.disasmList.setSelectedIndex(0);
+      this.disasmList.setSelectedIndex(1);
 
     }
     refreshRegisterValue();

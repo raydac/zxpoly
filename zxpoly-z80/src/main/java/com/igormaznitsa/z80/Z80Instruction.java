@@ -235,7 +235,7 @@ public final class Z80Instruction {
     }
   }
 
-  private static String indexToHex(final byte index) {
+  public static String indexToHex(final byte index) {
     String num = Integer.toHexString(Math.abs(index)).toUpperCase(Locale.ENGLISH);
     if (num.length() < 2) {
       num = '0' + num;
