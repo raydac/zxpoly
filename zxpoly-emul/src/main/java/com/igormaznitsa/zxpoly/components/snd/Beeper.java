@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -87,7 +86,7 @@ public final class Beeper {
             .mapToInt(d -> Math.min(AMPLITUDE_MAX, (int) Math.round(d * AMPLITUDE_MAX))).toArray();
   }
 
-  private final AtomicLong channels = new AtomicLong(0L);
+  private long channels = 0L;
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
 
   public Beeper() {
@@ -114,13 +113,9 @@ public final class Beeper {
   }
 
   public void setChannelValue(final int channel, final int level256) {
-    long newValue;
-    long oldValue;
-    do {
-      oldValue = this.channels.get();
-      newValue =
-          (oldValue & ~(0xFFL << (8 * channel))) | ((long) (level256 & 0XFF) << (8 * channel));
-    } while (!this.channels.compareAndSet(oldValue, newValue));
+    this.channels =
+        (this.channels & ~(0xFFL << (8 * channel))) | ((long) (level256 & 0XFF) << (8 * channel));
+    ;
   }
 
   public void reset() {
@@ -129,7 +124,7 @@ public final class Beeper {
   }
 
   private int mixChannelsAsSignedByte() {
-    long value = this.channels.get();
+    long value = this.channels;
     int mixed = 0;
     while (value != 0L) {
       mixed += ((int) value) & 0xFF;
@@ -157,7 +152,7 @@ public final class Beeper {
   }
 
   public void clearChannels() {
-    this.channels.set(0);
+    this.channels = 0L;
   }
 
 
