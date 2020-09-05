@@ -104,6 +104,8 @@ public final class Z80 {
     FTABLE_SZYXP[0] |= FLAG_Z;
   }
 
+  private int lastReadReg8MemPtr;
+
   private final Z80CPUBus bus;
   private final byte[] regSet = new byte[8];
   private final byte[] altRegSet = new byte[8];
@@ -756,17 +758,21 @@ public final class Z80 {
       case 6: { // (HL)
         switch (normalizedPrefix()) {
           case 0x00: {
-            return _readmem8(ctx, _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL)));
+            final int memptr = this.getRegisterPair(REGPAIR_HL);
+            this.lastReadReg8MemPtr = memptr;
+            return _readmem8(ctx, _readPtr(ctx, REGPAIR_HL, memptr));
           }
           case 0xDD: {
             this.tstates += 5;
             final int address = _readPtr(ctx, REG_IX, this.regIX) + (byte) _read_ixiy_d(ctx);
+            this.lastReadReg8MemPtr = address;
             this.setWZ(address, false);
             return _readmem8(ctx, address);
           }
           case 0xFD: {
             this.tstates += 5;
             final int address = _readPtr(ctx, REG_IY, this.regIY) + (byte) _read_ixiy_d(ctx);
+            this.lastReadReg8MemPtr = address;
             this.setWZ(address, false);
             return _readmem8(ctx, address);
           }
@@ -1636,19 +1642,6 @@ public final class Z80 {
     this.tstates += 7;
   }
 
-  private int getPrefixedHl() {
-    switch (normalizedPrefix()) {
-      case 0x00:
-        return this.getRegisterPair(REGPAIR_HL, false);
-      case 0xDD:
-        return this.getRegister(REG_IX, false);
-      case 0xFD:
-        return this.getRegister(REG_IY, false);
-      default:
-        throw new Error("Unexpected prefix");
-    }
-  }
-
   private void writeReg8_forLdReg8Instruction(final int ctx, final int r, final int value) {
     switch (r) {
       case 0:
@@ -2270,31 +2263,31 @@ public final class Z80 {
 
   private void doBIT(final int ctx, final int bit, final int reg) {
     final int val = readReg8(ctx, reg);
-    final int x = val & (1 << bit);
+    final int result = val & (1 << bit);
 
     int f = this.regSet[REG_F];
 
-    final int forxy;
+    final int h;
     if (reg == 6) {
+      this.tstates++;
       // (HL),(IX),(IY)
-      forxy = this.getPrefixedHl();
+      h = this.lastReadReg8MemPtr >> 8;
     } else {
-      forxy = val;
+      h = val;
     }
 
-    f = (f & FLAG_C) | FLAG_H | (forxy & FLAG_XY);
+    f = (f & FLAG_C) | FLAG_H | (h & FLAG_XY);
 
-    if (x == 0) {
+    // NB! Flag P/V is UNKNOWN in Z80 manual!
+    if (result == 0) {
       f |= FLAG_PV | FLAG_Z;
     }
 
+    // NB! in Z80 manual written that S flag in UNKNOWN
     if (bit == 7 && (val & 0x80) != 0) {
       f |= FLAG_S;
     }
     this.regSet[REG_F] = (byte) f;
-    if (reg == 6) {
-      this.tstates++;
-    }
   }
 
   private int doRES(final int ctx, final int bit, final int reg) {
