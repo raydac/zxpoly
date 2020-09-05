@@ -288,8 +288,10 @@ public final class Beeper {
             this.sourceDataLine.getBufferSize())
         );
 
-        this.sndBuffer.writeCurrent(this.sourceDataLine);
-        this.sndBuffer.writeCurrent(this.sourceDataLine);
+        byte[] empty = new byte[SndBufferContainer.BUFFERS_NUMBER * this.sndBuffer.getLength()];
+        Arrays.fill(empty, (byte) 0xFF);
+        this.sourceDataLine.write(empty, 0, empty.length);
+        empty = null;
 
         this.sourceDataLine.start();
 
