@@ -1943,10 +1943,12 @@ public final class Z80 {
   }
 
   private void doCCF() {
-    int a = this.regSet[REG_A] & 0xFF;
-    int f = this.regSet[REG_F];
+    int a = this.regSet[REG_A];
+    int f = this.regSet[REG_F] & 0xFF;
     this.regSet[REG_F] =
-        (byte) ((f & FLAG_SZPV) | ((f & FLAG_C) == 0 ? FLAG_C : FLAG_H) | (a & FLAG_XY));
+        (byte) ((f & FLAG_SZPV)
+            | ((f & FLAG_C) == 0 ? FLAG_C : FLAG_H)
+            | (a & FLAG_XY));
   }
 
   private void doLDRegByReg(final int ctx, final int y, final int z) {
