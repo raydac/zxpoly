@@ -24,6 +24,7 @@ import com.igormaznitsa.jbbp.utils.JBBPUtils;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
+import org.apache.commons.io.FilenameUtils;
 
 public class TrDosDisk {
 
@@ -96,14 +97,16 @@ public class TrDosDisk {
           track00Pointer = 8 * SECTOR_SIZE; // logical sector 8
           diskData[track00Pointer++] = 0x00; // must be zero
 
-          track00Pointer += 224; // empty
+          for (int i = 0; i < 224; i++) { // empty 224 bytes
+            diskData[track00Pointer++] = 0;
+          }
 
           diskData[track00Pointer++] =
               (byte) extractLogicalSectorIndex(diskPointer); // index of the first free sector
           diskData[track00Pointer++] =
               (byte) extractLogicalTrackIndex(diskPointer); // index of the first free track
 
-          diskData[track00Pointer++] = 0x10; // disk type
+          diskData[track00Pointer++] = 0x16; // disk type
           diskData[track00Pointer++] = (byte) items; // number of files
 
           final int freeSectors =
@@ -112,26 +115,38 @@ public class TrDosDisk {
           diskData[track00Pointer++] = (byte) (freeSectors & 0xFF); // number of free sectors
           diskData[track00Pointer++] = (byte) (freeSectors >> 8);
 
-          diskData[track00Pointer++] = 0x10; // ID of TRDOS
+          diskData[track00Pointer++] = 0x10; // sectors on track
 
-          track00Pointer += 2; //not used
+          // two zeros
+          diskData[track00Pointer++] = 0;
+          diskData[track00Pointer++] = 0;
 
-          //not used but filled by 32
+          // 9 spaces
           for (int e = 0; e < 9; e++) {
-            diskData[track00Pointer++] = 32;
+            diskData[track00Pointer++] = 0x20;
           }
 
-          track00Pointer++; // not used
+          // one zero
+          diskData[track00Pointer++] = 0;
 
-          diskData[track00Pointer++] = 0x00; // number of deleted files
+          // number of deleted files
+          diskData[track00Pointer++] = 0;
 
-          // name of disk, no more than 11 chars
-          for (final char ch : "SCLIMAGE".toCharArray()) {
-            diskData[track00Pointer++] = (byte) ch;
+          // name of disk
+          final String imageName =
+              srcFile == null ? "Unknown" : FilenameUtils.getBaseName(srcFile.getName());
+          for (int i = 0; i < Math.min(8, imageName.length()); i++) {
+            diskData[track00Pointer++] = (byte) imageName.charAt(i);
           }
-          //not used
+          if (imageName.length() < 8) {
+            for (int i = 0; i < 8 - imageName.length(); i++) {
+              diskData[track00Pointer++] = (byte) ' ';
+            }
+          }
+
+          // three zero byte, end of the sector
           for (int e = 0; e < 3; e++) {
-            diskData[track00Pointer++] = 0; //
+            diskData[track00Pointer++] = 0;
           }
         }
       }
