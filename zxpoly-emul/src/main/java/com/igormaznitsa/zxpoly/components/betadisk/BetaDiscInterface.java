@@ -34,7 +34,7 @@ public class BetaDiscInterface implements IoDevice {
   private final Motherboard board;
   private final FddControllerK1818VG93 vg93;
   private final AtomicReferenceArray<TrDosDisk> diskDrives = new AtomicReferenceArray<>(4);
-  private long mcycleCounter = 0L;
+  private long totalTstates = 0L;
   private int ffPort;
 
   public BetaDiscInterface(final Motherboard board) {
@@ -139,7 +139,7 @@ public class BetaDiscInterface implements IoDevice {
     }
 
     if ((this.ffPort & 0b00001000) != 0) {
-      this.vg93.step(this.mcycleCounter);
+      this.vg93.step(this.totalTstates);
     }
   }
 
@@ -150,12 +150,15 @@ public class BetaDiscInterface implements IoDevice {
 
   @Override
   public void postStep(final int spentTstates) {
-    this.mcycleCounter = Math.abs(this.mcycleCounter + spentTstates);
+    this.totalTstates += spentTstates;
+    if (this.totalTstates < 0L) {
+      this.totalTstates = 0L;
+    }
   }
 
   @Override
   public void doReset() {
-    this.mcycleCounter = 0L;
+    this.totalTstates = 0L;
     this.vg93.reset();
   }
 
