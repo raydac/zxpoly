@@ -2314,7 +2314,7 @@ public final class Z80 {
 
   private void doIN_C(final int ctx) {
     final int value =
-        _readport(ctx, _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC))) & 0xFF;
+        _readport(ctx, _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC)));
     this.regSet[REG_F] = (byte) (FTABLE_SZYXP[value] | (this.regSet[REG_F] & FLAG_C));
   }
 
@@ -2329,7 +2329,7 @@ public final class Z80 {
   private void doOUT_C(final int ctx) {
     final int port = _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
     this.setWZ(port + 1, false);
-    _writeport(ctx, port, 0x00);
+    _writeport(ctx, port, 0);
   }
 
   private void doOUT_C(final int ctx, final int y) {

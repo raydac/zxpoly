@@ -19,6 +19,9 @@ package com.igormaznitsa.z80;
 
 import static org.junit.Assert.assertFalse;
 
+
+import java.util.Arrays;
+
 public final class TestBus implements Z80CPUBus {
 
   private final byte[] memory = new byte[0x10000];
@@ -29,6 +32,10 @@ public final class TestBus implements Z80CPUBus {
   public TestBus(final int busState, final int address, final int... codes) {
     block(address, codes);
     this.dataBuSState = (byte) busState;
+  }
+
+  public void fillPortsBy(final byte value) {
+    Arrays.fill(ports, value);
   }
 
   public void block(final int address, final int... codes) {
@@ -97,5 +104,9 @@ public final class TestBus implements Z80CPUBus {
   public void onRETI(Z80 cpu, int ctx) {
     assertFalse("RETI flag must be reset", this.reti);
     this.reti = true;
+  }
+
+  public int getPortValue(final int port) {
+    return this.ports[port] & 0xFF;
   }
 }

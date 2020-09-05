@@ -284,7 +284,7 @@ public class OptionsPanel extends javax.swing.JPanel {
     jPanel2.add(checkCovoxFb, gridBagConstraints);
 
     labelZx128ByDefault.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-    labelZx128ByDefault.setText("Default ZX128:");
+    labelZx128ByDefault.setText("Default ZX Mode:");
     gridBagConstraints = new java.awt.GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 4;

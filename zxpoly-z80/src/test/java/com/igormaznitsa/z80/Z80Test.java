@@ -4897,6 +4897,20 @@ public class Z80Test extends AbstractZ80Test {
   }
 
   @Test
+  public void testCommanr_OUT_C_0() {
+    final TestBus tb = new TestBus(0, 0, 0xED, 0x71);
+    tb.fillPortsBy((byte) 0xFF);
+
+    final Z80 cpu = new Z80(tb);
+    cpu.setRegister(Z80.REG_B, 0x12);
+    cpu.setRegister(Z80.REG_C, 0x34);
+    assertEquals(12, cpu.nextInstruction(111, false, false, false));
+
+    assertEquals(0, tb.getPortValue(0x1234));
+
+  }
+
+  @Test
   public void testCommand_OUT_mn_A() {
     final TestBus tb = new TestBus(0, 0, 0xD3, 0x01);
 
