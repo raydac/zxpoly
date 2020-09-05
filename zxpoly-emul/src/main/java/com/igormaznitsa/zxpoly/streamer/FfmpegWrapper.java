@@ -100,7 +100,7 @@ public class FfmpegWrapper {
       args.add("2");
 
       args.add("-f");
-      args.add("s16be");
+      args.add("s16le");
 
       args.add("-i");
       args.add(this.srcAudio);
