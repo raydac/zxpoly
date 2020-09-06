@@ -136,6 +136,8 @@ public class BetaDiscInterface implements IoDevice {
                       boolean wallclockInt) {
     if (signalReset) {
       doReset();
+    } else {
+      this.vg93.step(this.totalTstates);
     }
   }
 
@@ -151,7 +153,6 @@ public class BetaDiscInterface implements IoDevice {
       this.totalTstates = 0L;
       this.vg93.reset();
     }
-    this.vg93.step(this.totalTstates);
   }
 
   @Override
