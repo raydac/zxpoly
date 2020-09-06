@@ -735,7 +735,14 @@ public final class FddControllerK1818VG93 {
             this.sectorPositioningCycles = -1L;
           }
 
-          if (!this.flagWaitDataRd) {
+          if (this.flagWaitDataRd) {
+            if (tstatesCounter > this.operationTimeOutCycles) {
+              setInternalFlag(STAT_TRK00_OR_LOST);
+            } else {
+              setInternalFlag(STAT_DRQ);
+              setInternalFlag(STAT_BUSY);
+            }
+          } else {
             if (this.counter >= this.sector.size()) {
               this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
               this.sectorPositioningCycles = Math.abs(tstatesCounter + TSTATES_SECTOR_POSITIONING);
@@ -761,13 +768,6 @@ public final class FddControllerK1818VG93 {
                   setInternalFlag(STAT_BUSY);
                 }
               }
-            }
-          } else {
-            if (tstatesCounter > this.operationTimeOutCycles) {
-              setInternalFlag(STAT_TRK00_OR_LOST);
-            } else {
-              setInternalFlag(STAT_DRQ);
-              setInternalFlag(STAT_BUSY);
             }
           }
         }
