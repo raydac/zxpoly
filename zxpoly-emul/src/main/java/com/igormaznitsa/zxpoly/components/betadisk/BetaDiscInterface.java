@@ -137,10 +137,6 @@ public class BetaDiscInterface implements IoDevice {
     if (signalReset) {
       doReset();
     }
-
-    if ((this.ffPort & 0b00001000) != 0) {
-      this.vg93.step(this.totalTstates);
-    }
   }
 
   @Override
@@ -153,7 +149,9 @@ public class BetaDiscInterface implements IoDevice {
     this.totalTstates += spentTstates;
     if (this.totalTstates < 0L) {
       this.totalTstates = 0L;
+      this.vg93.reset();
     }
+    this.vg93.step(this.totalTstates);
   }
 
   @Override
