@@ -465,8 +465,13 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
-  public byte readMemory(final Z80 cpu, final int ctx, final int address, final boolean m1,
-                         final boolean cmdOrPrefix) {
+  public byte readMemory(
+      final Z80 cpu,
+      final int ctx,
+      final int address,
+      final boolean m1,
+      final boolean cmdOrPrefix
+  ) {
     final byte result;
 
     if (ctx == 0) {
