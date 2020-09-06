@@ -300,11 +300,11 @@ public final class FddControllerK1818VG93 {
       }
       case 0b1000:
       case 0b1001: {
-        return "RD.SECTOR" + ((high & 1) == 0 ? "" : "(MULT)") + ' ' + addr;
+        return "RD.SECTOR" + ((high & 1) == 0 ? "(S)" : "(M)") + ' ' + addr;
       }
       case 0b1010:
       case 0b1011: {
-        return "WR.SECTOR" + ((high & 1) == 0 ? "" : "(MULT)") + ' ' + addr;
+        return "WR.SECTOR" + ((high & 1) == 0 ? "(S)" : "(M)") + ' ' + addr;
       }
       case 0b1100: {
         return "RD.ADDR";
