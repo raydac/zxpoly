@@ -10,7 +10,7 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.SourceDataLine;
 
 final class SndBufferContainer {
-  private static final int SND_FREQ = 44100;
+  private static final int SND_FREQ = 48000;
 
   static final AudioFormat AUDIO_FORMAT = new AudioFormat(
       PCM_SIGNED,

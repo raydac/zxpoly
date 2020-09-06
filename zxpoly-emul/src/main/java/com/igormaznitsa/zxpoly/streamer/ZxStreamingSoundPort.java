@@ -1,6 +1,8 @@
 package com.igormaznitsa.zxpoly.streamer;
 
-import com.igormaznitsa.zxpoly.components.snd.Beeper;
+import static com.igormaznitsa.zxpoly.components.snd.Beeper.AUDIO_FORMAT;
+
+
 import com.igormaznitsa.zxpoly.components.snd.SourceSoundPort;
 import java.util.Arrays;
 import javax.sound.sampled.AudioFormat;
@@ -12,13 +14,14 @@ import javax.sound.sampled.SourceDataLine;
 
 public final class ZxStreamingSoundPort extends SourceSoundPort implements SourceDataLine {
 
-  private static final int SAMPLES_PER_INT = (44100 * 2 * 2) / 50;
+  private static final int SAMPLES_PER_INT =
+      (Math.round(AUDIO_FORMAT.getSampleRate()) * 2 * 2) / 50;
   private final AudioFormat audioFormat;
   private final TcpWriter soundWriter;
 
   public ZxStreamingSoundPort(final TcpWriter soundWriter) {
     super(null, "zx-snd-grabber-port", null);
-    this.audioFormat = Beeper.AUDIO_FORMAT;
+    this.audioFormat = AUDIO_FORMAT;
     this.soundWriter = soundWriter;
   }
 

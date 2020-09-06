@@ -1,5 +1,8 @@
 package com.igormaznitsa.zxpoly.streamer;
 
+import static com.igormaznitsa.zxpoly.components.snd.Beeper.AUDIO_FORMAT;
+
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +87,8 @@ public class FfmpegWrapper {
     args.add("-i");
     args.add(this.srcVideo);
 
+    final String beeperSampleRate = Integer.toString(Math.round(AUDIO_FORMAT.getSampleRate()));
+
     if (this.srcAudio != null) {
       args.add("-thread_queue_size");
       args.add("1024");
@@ -94,7 +99,7 @@ public class FfmpegWrapper {
       args.add("-re");
 
       args.add("-ar");
-      args.add("44100");
+      args.add(beeperSampleRate);
 
       args.add("-ac");
       args.add("2");
@@ -111,7 +116,7 @@ public class FfmpegWrapper {
       args.add("320k");
 
       args.add("-af");
-      args.add("aresample=async=44100");
+      args.add("aresample=async=" + beeperSampleRate);
     }
 
     args.add("-preset:v");
@@ -123,7 +128,8 @@ public class FfmpegWrapper {
     args.add("libx264");
 
     args.add("-x264opts");
-    args.add(String.format("keyint=%1$d:min-keyint=%1$d:no-scenecut:nal-hrd=cbr:force-cfr=1", this.frameRate));
+    args.add(String
+        .format("keyint=%1$d:min-keyint=%1$d:no-scenecut:nal-hrd=cbr:force-cfr=1", this.frameRate));
 
     args.add("-vf");
     args.add("format=yuv420p,scale=pal:flags=fast_bilinear,fps=fps=30");
