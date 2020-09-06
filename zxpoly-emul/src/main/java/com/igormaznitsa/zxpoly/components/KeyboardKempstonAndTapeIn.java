@@ -41,55 +41,96 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   private static final Logger LOGGER = Logger.getLogger("InController");
 
-  private static final long ZXKEY_CS = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000001L;
-  private static final long ZXKEY_Z = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000010L;
-  private static final long ZXKEY_X = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000100L;
-  private static final long ZXKEY_C = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00001000L;
-  private static final long ZXKEY_V = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00010000L;
+  private static final long ZXKEY_CS =
+      0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000001L;
+  private static final long ZXKEY_Z =
+      0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000010L;
+  private static final long ZXKEY_X =
+      0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000100L;
+  private static final long ZXKEY_C =
+      0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00001000L;
+  private static final long ZXKEY_V =
+      0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00010000L;
 
-  private static final long ZXKEY_A = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000001_00000000L;
-  private static final long ZXKEY_S = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000010_00000000L;
-  private static final long ZXKEY_D = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000100_00000000L;
-  private static final long ZXKEY_F = 0b00000000_00000000_00000000_00000000_00000000_00000000_00001000_00000000L;
-  private static final long ZXKEY_G = 0b00000000_00000000_00000000_00000000_00000000_00000000_00010000_00000000L;
+  private static final long ZXKEY_A =
+      0b00000000_00000000_00000000_00000000_00000000_00000000_00000001_00000000L;
+  private static final long ZXKEY_S =
+      0b00000000_00000000_00000000_00000000_00000000_00000000_00000010_00000000L;
+  private static final long ZXKEY_D =
+      0b00000000_00000000_00000000_00000000_00000000_00000000_00000100_00000000L;
+  private static final long ZXKEY_F =
+      0b00000000_00000000_00000000_00000000_00000000_00000000_00001000_00000000L;
+  private static final long ZXKEY_G =
+      0b00000000_00000000_00000000_00000000_00000000_00000000_00010000_00000000L;
 
-  private static final long ZXKEY_Q = 0b00000000_00000000_00000000_00000000_00000000_00000001_00000000_00000000L;
-  private static final long ZXKEY_W = 0b00000000_00000000_00000000_00000000_00000000_00000010_00000000_00000000L;
-  private static final long ZXKEY_E = 0b00000000_00000000_00000000_00000000_00000000_00000100_00000000_00000000L;
-  private static final long ZXKEY_R = 0b00000000_00000000_00000000_00000000_00000000_00001000_00000000_00000000L;
-  private static final long ZXKEY_T = 0b00000000_00000000_00000000_00000000_00000000_00010000_00000000_00000000L;
+  private static final long ZXKEY_Q =
+      0b00000000_00000000_00000000_00000000_00000000_00000001_00000000_00000000L;
+  private static final long ZXKEY_W =
+      0b00000000_00000000_00000000_00000000_00000000_00000010_00000000_00000000L;
+  private static final long ZXKEY_E =
+      0b00000000_00000000_00000000_00000000_00000000_00000100_00000000_00000000L;
+  private static final long ZXKEY_R =
+      0b00000000_00000000_00000000_00000000_00000000_00001000_00000000_00000000L;
+  private static final long ZXKEY_T =
+      0b00000000_00000000_00000000_00000000_00000000_00010000_00000000_00000000L;
 
-  private static final long ZXKEY_1 = 0b00000000_00000000_00000000_00000000_00000001_00000000_00000000_00000000L;
-  private static final long ZXKEY_2 = 0b00000000_00000000_00000000_00000000_00000010_00000000_00000000_00000000L;
-  private static final long ZXKEY_3 = 0b00000000_00000000_00000000_00000000_00000100_00000000_00000000_00000000L;
-  private static final long ZXKEY_4 = 0b00000000_00000000_00000000_00000000_00001000_00000000_00000000_00000000L;
-  private static final long ZXKEY_5 = 0b00000000_00000000_00000000_00000000_00010000_00000000_00000000_00000000L;
+  private static final long ZXKEY_1 =
+      0b00000000_00000000_00000000_00000000_00000001_00000000_00000000_00000000L;
+  private static final long ZXKEY_2 =
+      0b00000000_00000000_00000000_00000000_00000010_00000000_00000000_00000000L;
+  private static final long ZXKEY_3 =
+      0b00000000_00000000_00000000_00000000_00000100_00000000_00000000_00000000L;
+  private static final long ZXKEY_4 =
+      0b00000000_00000000_00000000_00000000_00001000_00000000_00000000_00000000L;
+  private static final long ZXKEY_5 =
+      0b00000000_00000000_00000000_00000000_00010000_00000000_00000000_00000000L;
 
-  private static final long ZXKEY_0 = 0b00000000_00000000_00000000_00000001_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_9 = 0b00000000_00000000_00000000_00000010_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_8 = 0b00000000_00000000_00000000_00000100_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_7 = 0b00000000_00000000_00000000_00001000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_6 = 0b00000000_00000000_00000000_00010000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_0 =
+      0b00000000_00000000_00000000_00000001_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_9 =
+      0b00000000_00000000_00000000_00000010_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_8 =
+      0b00000000_00000000_00000000_00000100_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_7 =
+      0b00000000_00000000_00000000_00001000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_6 =
+      0b00000000_00000000_00000000_00010000_00000000_00000000_00000000_00000000L;
 
-  private static final long ZXKEY_P = 0b00000000_00000000_00000001_00000000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_O = 0b00000000_00000000_00000010_00000000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_I = 0b00000000_00000000_00000100_00000000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_U = 0b00000000_00000000_00001000_00000000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_Y = 0b00000000_00000000_00010000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_P =
+      0b00000000_00000000_00000001_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_O =
+      0b00000000_00000000_00000010_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_I =
+      0b00000000_00000000_00000100_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_U =
+      0b00000000_00000000_00001000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_Y =
+      0b00000000_00000000_00010000_00000000_00000000_00000000_00000000_00000000L;
 
-  private static final long ZXKEY_EN = 0b00000000_00000001_00000000_00000000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_L = 0b00000000_00000010_00000000_00000000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_K = 0b00000000_00000100_00000000_00000000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_J = 0b00000000_00001000_00000000_00000000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_H = 0b00000000_00010000_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_EN =
+      0b00000000_00000001_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_L =
+      0b00000000_00000010_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_K =
+      0b00000000_00000100_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_J =
+      0b00000000_00001000_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_H =
+      0b00000000_00010000_00000000_00000000_00000000_00000000_00000000_00000000L;
 
-  private static final long ZXKEY_SP = 0b00000001_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_SS = 0b00000010_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_M = 0b00000100_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_N = 0b00001000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
-  private static final long ZXKEY_B = 0b00010000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_SP =
+      0b00000001_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_SS =
+      0b00000010_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_M =
+      0b00000100_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_N =
+      0b00001000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+  private static final long ZXKEY_B =
+      0b00010000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
 
-  private static final long ZXKEY_NONE = 0b00011111_00011111_00011111_00011111_00011111_00011111_00011111_00011111L;
+  private static final long ZXKEY_NONE =
+      0b00011111_00011111_00011111_00011111_00011111_00011111_00011111_00011111L;
 
   private static final int KEMPSTON_RIGHT = 1;
   private static final int KEMPSTON_LEFT = 2;
@@ -109,13 +150,17 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private volatile int kempstonSignals = 0;
   private volatile int kempstonBuffer = 0;
 
-  public KeyboardKempstonAndTapeIn(final Motherboard board) {
+  private final boolean kempstonMouseAllowed;
+
+  public KeyboardKempstonAndTapeIn(final Motherboard board, final boolean kempstonMouseAllowed) {
     this.board = board;
+    this.kempstonMouseAllowed = kempstonMouseAllowed;
 
     if (getDefaultEnvironment().isSupported()) {
-      this.detectedControllers = new CopyOnWriteArrayList<>(Arrays.stream(getDefaultEnvironment().getControllers())
-          .filter(x -> isControllerTypeAllowed(x.getType()))
-          .collect(Collectors.toList()));
+      this.detectedControllers =
+          new CopyOnWriteArrayList<>(Arrays.stream(getDefaultEnvironment().getControllers())
+              .filter(x -> isControllerTypeAllowed(x.getType()))
+              .collect(Collectors.toList()));
       getDefaultEnvironment().addControllerListener(new ControllerListener() {
         @Override
         public void controllerRemoved(ControllerEvent controllerEvent) {
@@ -211,22 +256,30 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   public int readIo(final ZxPolyModule module, final int port) {
     int result = -1;
     if (!module.isTrdosActive()) {
-      final boolean zxPolyMode = module.getMotherboard().getBoardMode() == BoardMode.ZXPOLY;
+      final boolean inZxPolyMode = module.getMotherboard().getBoardMode() == BoardMode.ZXPOLY;
 
-      final int lowerPortByte = port & 0xFF;
+      final int lowPortAddr = port & 0xFF;
 
-      if ((lowerPortByte & 1) == 0) {
-        if (zxPolyMode) {
-          if (lowerPortByte == 0xFE) {
-            result = readKeyboardAndTap(port, this.getTap());
-          }
-        } else {
+      if ((lowPortAddr & 1) == 0) {
+        if (!inZxPolyMode || (inZxPolyMode && lowPortAddr == 0xFE)) {
           result = readKeyboardAndTap(port, this.getTap());
         }
       } else {
-        if ((zxPolyMode && lowerPortByte == 0x1F)
-            || (!zxPolyMode && (lowerPortByte & 0b100000) == 0)) {// KEMPSTON
-          result = this.kempstonBuffer;
+        // KEMPSTON JOYSTICK
+        if (inZxPolyMode) {
+          if (lowPortAddr == 0x1F) { // full decode
+            result = this.kempstonBuffer;
+          }
+        } else {
+          if (this.kempstonMouseAllowed) {
+            if (lowPortAddr == 0x1F) { // full decode
+              result = this.kempstonBuffer;
+            }
+          } else {
+            if ((lowPortAddr & 0b100000) == 0) { // partial decode
+              result = this.kempstonBuffer;
+            }
+          }
         }
       }
     }
@@ -580,37 +633,43 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   public void doKempstonCenterX() {
     int state = this.kempstonSignals;
-    state = state & ~(KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT | KeyboardKempstonAndTapeIn.KEMPSTON_LEFT);
+    state = state &
+        ~(KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT | KeyboardKempstonAndTapeIn.KEMPSTON_LEFT);
     this.kempstonSignals = state;
   }
 
   public void doKempstonCenterY() {
     int state = this.kempstonSignals;
-    state = state & ~(KeyboardKempstonAndTapeIn.KEMPSTON_UP | KeyboardKempstonAndTapeIn.KEMPSTON_DOWN);
+    state =
+        state & ~(KeyboardKempstonAndTapeIn.KEMPSTON_UP | KeyboardKempstonAndTapeIn.KEMPSTON_DOWN);
     this.kempstonSignals = state;
   }
 
   public void doKempstonLeft() {
     int state = this.kempstonSignals;
-    state = KeyboardKempstonAndTapeIn.KEMPSTON_LEFT | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT);
+    state = KeyboardKempstonAndTapeIn.KEMPSTON_LEFT |
+        (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT);
     this.kempstonSignals = state;
   }
 
   public void doKempstonUp() {
     int state = this.kempstonSignals;
-    state = KeyboardKempstonAndTapeIn.KEMPSTON_UP | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_DOWN);
+    state =
+        KeyboardKempstonAndTapeIn.KEMPSTON_UP | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_DOWN);
     this.kempstonSignals = state;
   }
 
   public void doKempstonRight() {
     int state = this.kempstonSignals;
-    state = KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_LEFT);
+    state = KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT |
+        (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_LEFT);
     this.kempstonSignals = state;
   }
 
   public void doKempstonDown() {
     int state = this.kempstonSignals;
-    state = KeyboardKempstonAndTapeIn.KEMPSTON_DOWN | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_UP);
+    state =
+        KeyboardKempstonAndTapeIn.KEMPSTON_DOWN | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_UP);
     this.kempstonSignals = state;
   }
 

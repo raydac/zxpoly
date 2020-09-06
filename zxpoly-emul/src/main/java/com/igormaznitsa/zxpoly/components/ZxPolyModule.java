@@ -267,8 +267,11 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     this.localInt = true;
   }
 
-  public boolean step(final boolean signalReset, final boolean commonInt,
-                      final boolean resetStatistic) {
+  public boolean step(
+      final boolean signalReset,
+      final boolean commonInt,
+      final boolean resetStatistic
+  ) {
     final boolean doInt;
     final boolean doNmi;
 

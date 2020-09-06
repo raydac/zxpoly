@@ -86,7 +86,8 @@ public final class Motherboard implements ZxPolyConstants {
       final RomData rom,
       final BoardMode boardMode,
       final boolean enableCovoxFb,
-      final boolean useTurboSound
+      final boolean useTurboSound,
+      final boolean allowKempstonMouse
   ) {
     if (rom == null) {
       throw new NullPointerException("ROM must not be null");
@@ -105,7 +106,7 @@ public final class Motherboard implements ZxPolyConstants {
 
     iodevices.add(this.betaDisk);
 
-    this.keyboard = new KeyboardKempstonAndTapeIn(this);
+    this.keyboard = new KeyboardKempstonAndTapeIn(this, allowKempstonMouse);
     iodevices.add(keyboard);
     this.video = new VideoController(this);
     iodevices.add(video);
@@ -281,6 +282,8 @@ public final class Motherboard implements ZxPolyConstants {
 
     final boolean resetStatisticsAtModules;
 
+    final boolean intToCpu = wallclockInt;
+
     int result = TRIGGER_NONE;
 
     if (wallclockInt) {
@@ -333,40 +336,40 @@ public final class Motherboard implements ZxPolyConstants {
 
           switch ((int) System.nanoTime() & 0x3) {
             case 0: {
-              zx0halt = modules[0].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx0halt = modules[0].step(signalReset, intToCpu, resetStatisticsAtModules);
               if (localResetForAllModules) {
                 return result;
               }
-              zx3halt = modules[3].step(signalReset, wallclockInt, resetStatisticsAtModules);
-              zx2halt = modules[2].step(signalReset, wallclockInt, resetStatisticsAtModules);
-              zx1halt = modules[1].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx3halt = modules[3].step(signalReset, intToCpu, resetStatisticsAtModules);
+              zx2halt = modules[2].step(signalReset, intToCpu, resetStatisticsAtModules);
+              zx1halt = modules[1].step(signalReset, intToCpu, resetStatisticsAtModules);
             }
             break;
             case 1: {
-              zx1halt = modules[1].step(signalReset, wallclockInt, resetStatisticsAtModules);
-              zx2halt = modules[2].step(signalReset, wallclockInt, resetStatisticsAtModules);
-              zx0halt = modules[0].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx1halt = modules[1].step(signalReset, intToCpu, resetStatisticsAtModules);
+              zx2halt = modules[2].step(signalReset, intToCpu, resetStatisticsAtModules);
+              zx0halt = modules[0].step(signalReset, intToCpu, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
-              zx3halt = modules[3].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx3halt = modules[3].step(signalReset, intToCpu, resetStatisticsAtModules);
             }
             break;
             case 2: {
-              zx3halt = modules[3].step(signalReset, wallclockInt, resetStatisticsAtModules);
-              zx0halt = modules[0].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx3halt = modules[3].step(signalReset, intToCpu, resetStatisticsAtModules);
+              zx0halt = modules[0].step(signalReset, intToCpu, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
-              zx1halt = modules[1].step(signalReset, wallclockInt, resetStatisticsAtModules);
-              zx2halt = modules[2].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx1halt = modules[1].step(signalReset, intToCpu, resetStatisticsAtModules);
+              zx2halt = modules[2].step(signalReset, intToCpu, resetStatisticsAtModules);
             }
             break;
             case 3: {
-              zx2halt = modules[2].step(signalReset, wallclockInt, resetStatisticsAtModules);
-              zx3halt = modules[3].step(signalReset, wallclockInt, resetStatisticsAtModules);
-              zx1halt = modules[1].step(signalReset, wallclockInt, resetStatisticsAtModules);
-              zx0halt = modules[0].step(signalReset, wallclockInt, resetStatisticsAtModules);
+              zx2halt = modules[2].step(signalReset, intToCpu, resetStatisticsAtModules);
+              zx3halt = modules[3].step(signalReset, intToCpu, resetStatisticsAtModules);
+              zx1halt = modules[1].step(signalReset, intToCpu, resetStatisticsAtModules);
+              zx0halt = modules[0].step(signalReset, intToCpu, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
@@ -394,7 +397,7 @@ public final class Motherboard implements ZxPolyConstants {
         }
         break;
         case ZX128: {
-          modules[0].step(signalReset, wallclockInt, resetStatisticsAtModules);
+          modules[0].step(signalReset, intToCpu, resetStatisticsAtModules);
         }
         break;
         case SPEC256_16:
@@ -408,9 +411,9 @@ public final class Motherboard implements ZxPolyConstants {
           for (int i = 0; i < cores; i++) {
             final Z80 gfxCore = this.spec256GfxCores[i];
             gfxCore.alignRegisterValuesWith(mainCpu, syncRegRecord);
-            masterModule.stepWithGfxCpu(i + 1, gfxCore, signalReset, wallclockInt);
+            masterModule.stepWithGfxCpu(i + 1, gfxCore, signalReset, intToCpu);
           }
-          masterModule.step(signalReset, wallclockInt, resetStatisticsAtModules);
+          masterModule.step(signalReset, intToCpu, resetStatisticsAtModules);
         }
         break;
         default:

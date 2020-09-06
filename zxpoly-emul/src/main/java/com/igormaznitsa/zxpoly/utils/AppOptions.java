@@ -120,6 +120,14 @@ public final class AppOptions {
     preferences.putBoolean(Option.COVOXFB.name(), value);
   }
 
+  public synchronized boolean isKempstonMouseAllowed() {
+    return preferences.getBoolean(Option.KEMPSTON_MOUSE_ALLOWED.name(), true);
+  }
+
+  public synchronized void setKempstonMouseAllowed(final boolean value) {
+    preferences.putBoolean(Option.KEMPSTON_MOUSE_ALLOWED.name(), value);
+  }
+
   public synchronized void setTurboSound(final boolean value) {
     preferences.putBoolean(Option.TURBOSOUND.name(), value);
   }
@@ -222,7 +230,8 @@ public final class AppOptions {
     COVOXFB,
     TURBOSOUND,
     INTBETWEENFRAMES,
-    LAST_SELECTED_AUDIO_DEVICE
+    LAST_SELECTED_AUDIO_DEVICE,
+    KEMPSTON_MOUSE_ALLOWED
   }
 
 }

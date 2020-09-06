@@ -337,11 +337,19 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     }
 
+    final boolean allowKempstonMouse = AppOptions.getInstance().isKempstonMouseAllowed();
+
+    if (!allowKempstonMouse) {
+      this.menuOptionsEnableTrapMouse.setEnabled(false);
+      this.menuOptionsEnableTrapMouse.setVisible(false);
+    }
+
     this.board = new Motherboard(
         BASE_ROM,
         AppOptions.getInstance().getDefaultBoardMode(),
         AppOptions.getInstance().isCovoxFb(),
-        AppOptions.getInstance().isTurboSound()
+        AppOptions.getInstance().isTurboSound(),
+        allowKempstonMouse
     );
     this.board.reset();
     this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() != BoardMode.ZXPOLY);
