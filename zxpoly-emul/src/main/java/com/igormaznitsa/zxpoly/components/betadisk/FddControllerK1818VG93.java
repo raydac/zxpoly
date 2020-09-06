@@ -17,6 +17,11 @@
 
 package com.igormaznitsa.zxpoly.components.betadisk;
 
+import static com.igormaznitsa.zxpoly.components.Motherboard.CPU_FREQ;
+import static java.time.Duration.ofMillis;
+import static java.time.Duration.ofSeconds;
+
+
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk.Sector;
 import com.igormaznitsa.zxpoly.utils.Wallclock;
 import java.io.ByteArrayOutputStream;
@@ -28,7 +33,6 @@ import java.util.logging.Logger;
 
 public final class FddControllerK1818VG93 {
 
-  public static final int STAT_RECORDT = 0x20;
   static final int ADDR_COMMAND_STATE = 0;
   static final int ADDR_TRACK = 1;
   static final int ADDR_SECTOR = 2;
@@ -43,12 +47,12 @@ public final class FddControllerK1818VG93 {
   private static final int STAT_WRFAULT = 0x20;
   private static final int STAT_WRITEPROTECT = 0x40;
   private static final int ST_NOTREADY = 0x80;
-  private static final long CYCLE_NANOSECOND = 286L;
-  private static final long CYCLES_FOR_BUFFER_VALID = 120L;
-  // number of cycles to read-write byte to-from disk
-  private static final long CYCLES_FOR_NEXT_TRACK = 15000000L / CYCLE_NANOSECOND;
-  // number of cycles to move head to next track
-  private static final long CYCLES_SECTOR_POSITION = CYCLES_FOR_BUFFER_VALID;
+  private static final long TSTATE_NANOSECOND_LENGTH =
+      Math.round((double) ofSeconds(1).toNanos() / (double) CPU_FREQ);
+  private static final long TSTATES_HEAD_TO_NEXT_TRACK =
+      ofMillis(12).toNanos() / TSTATE_NANOSECOND_LENGTH;
+  private static final long TSTATES_PER_BUFFER_VALID = 128L;
+  private static final long TSTATES_SECTOR_POSITIONING = TSTATES_PER_BUFFER_VALID;
   private static final int REG_COMMAND = 0x00;
   private static final int REG_STATUS = 0x01;
   private static final int REG_TRACK = 0x02;
@@ -320,7 +324,7 @@ public final class FddControllerK1818VG93 {
     }
   }
 
-  public void step(final long tstates) {
+  public void step(final long tstatesCounter) {
     final TrDosDisk thefloppy = this.trdosDisk.get();
     if (thefloppy == null) {
       setInternalFlag(ST_NOTREADY);
@@ -334,42 +338,42 @@ public final class FddControllerK1818VG93 {
       this.firstCommandStep = false;
       switch (command >>> 4) {
         case 0b0000:
-          cmdRestore(tstates, command, first);
+          cmdRestore(tstatesCounter, command, first);
           break;
         case 0b0001:
-          cmdSeek(tstates, command, first);
+          cmdSeek(tstatesCounter, command, first);
           break;
         case 0b0010:
         case 0b0011:
-          cmdStep(tstates, command, first);
+          cmdStep(tstatesCounter, command, first);
           break;
         case 0b0100:
         case 0b0101:
-          cmdStepIn(tstates, command, first);
+          cmdStepIn(tstatesCounter, command, first);
           break;
         case 0b0110:
         case 0b0111:
-          cmdStepOut(tstates, command, first);
+          cmdStepOut(tstatesCounter, command, first);
           break;
         case 0b1000:
         case 0b1001:
-          cmdReadSector(tstates, command, first);
+          cmdReadSector(tstatesCounter, command, first);
           break;
         case 0b1010:
         case 0b1011:
-          cmdWriteSector(tstates, command, first);
+          cmdWriteSector(tstatesCounter, command, first);
           break;
         case 0b1100:
-          cmdReadAddress(tstates, command, first);
+          cmdReadAddress(tstatesCounter, command, first);
           break;
         case 0b1101:
-          cmdForceInterrupt(tstates, command, first);
+          cmdForceInterrupt(tstatesCounter, command, first);
           break;
         case 0b1110:
-          cmdReadTrack(tstates, command, first);
+          cmdReadTrack(tstatesCounter, command, first);
           break;
         case 0b1111:
-          cmdWriteTrack(tstates, command, first);
+          cmdWriteTrack(tstatesCounter, command, first);
           break;
         default:
           throw new Error("Unexpected value");
@@ -400,7 +404,8 @@ public final class FddControllerK1818VG93 {
     this.flagWaitDataWr = false;
   }
 
-  private void cmdForceInterrupt(final long tstates, final int command, final boolean start) {
+  private void cmdForceInterrupt(final long tstatesCounter, final int command,
+                                 final boolean start) {
     final TrDosDisk thedisk = this.trdosDisk.get();
     resetStatus(false);
 
@@ -418,7 +423,7 @@ public final class FddControllerK1818VG93 {
     }
   }
 
-  private void cmdRestore(final long tstates, final int command, final boolean start) {
+  private void cmdRestore(final long tstatesCounter, final int command, final boolean start) {
     final TrDosDisk thedisk = this.trdosDisk.get();
 
     resetStatus(false);
@@ -461,7 +466,7 @@ public final class FddControllerK1818VG93 {
     }
   }
 
-  private void cmdSeek(final long tstates, final int command, final boolean start) {
+  private void cmdSeek(final long tstatesCounter, final int command, final boolean start) {
     resetStatus(false);
 
     final TrDosDisk curDisk = this.trdosDisk.get();
@@ -474,7 +479,7 @@ public final class FddControllerK1818VG93 {
       setInternalFlag(ST_NOTREADY);
     } else {
       if (start) {
-        this.operationTimeOutCycles = tstates + CYCLES_FOR_NEXT_TRACK;
+        this.operationTimeOutCycles = tstatesCounter + TSTATES_HEAD_TO_NEXT_TRACK;
       }
 
       if (curDisk.isWriteProtect()) {
@@ -482,36 +487,38 @@ public final class FddControllerK1818VG93 {
       }
 
       if (this.registers[REG_TRACK] != this.registers[REG_DATA_WR]) {
-        if (tstates > this.operationTimeOutCycles) {
+        if (tstatesCounter >= this.operationTimeOutCycles) {
           if (this.registers[REG_TRACK] < this.registers[REG_DATA_WR]) {
             this.registers[REG_TRACK]++;
           } else {
             this.registers[REG_TRACK]--;
           }
-          this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_NEXT_TRACK);
+          logger.info("FDD head moved to track " + this.registers[REG_TRACK] + ", target track is "
+              + this.registers[REG_DATA_WR]);
+          this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_HEAD_TO_NEXT_TRACK);
         }
       }
 
-      boolean end = this.registers[REG_TRACK] == this.registers[REG_DATA_WR];
+      boolean completed = this.registers[REG_TRACK] == this.registers[REG_DATA_WR];
 
       this.sector = curDisk.findRandomSector(this.head, this.registers[REG_TRACK]);
 
       if (this.sector == null) {
         setInternalFlag(STAT_NOTFOUND);
-        end = true;
+        completed = true;
       } else {
         if (!this.sector.isCrcOk()) {
           setInternalFlag(STAT_CRCERR);
         }
       }
 
-      if (!end) {
+      if (!completed) {
         setInternalFlag(STAT_BUSY);
       }
     }
   }
 
-  private void cmdReadAddress(final long tstates, final int command, final boolean start) {
+  private void cmdReadAddress(final long tstatesCounter, final int command, final boolean start) {
     resetStatus(true);
 
     final TrDosDisk thedisk = this.trdosDisk.get();
@@ -529,7 +536,7 @@ public final class FddControllerK1818VG93 {
         }
 
         this.counter = 6;
-        this.sectorPositioningCycles = Math.abs(tstates + CYCLES_SECTOR_POSITION);
+        this.sectorPositioningCycles = Math.abs(tstatesCounter + TSTATES_SECTOR_POSITIONING);
 
         this.extraCounter = 0;
       }
@@ -542,19 +549,19 @@ public final class FddControllerK1818VG93 {
         setInternalFlag(STAT_NOTFOUND);
         resetDataRegisters();
       } else {
-        if (tstates < this.sectorPositioningCycles) {
+        if (tstatesCounter < this.sectorPositioningCycles) {
           setInternalFlag(STAT_BUSY);
         } else {
           if (this.sectorPositioningCycles >= 0L) {
             this.sectorPositioningCycles = -1L;
-            this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_BUFFER_VALID);
+            this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
           }
 
           if (!this.sector.isCrcOk()) {
             setInternalFlag(STAT_CRCERR);
           } else {
             if (!this.flagWaitDataRd) {
-              this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_BUFFER_VALID);
+              this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
               if (this.counter > 0) {
                 switch (this.counter) {
                   case 6: {// track
@@ -621,7 +628,7 @@ public final class FddControllerK1818VG93 {
                 }
               }
             } else {
-              if (tstates > this.operationTimeOutCycles) {
+              if (tstatesCounter > this.operationTimeOutCycles) {
                 setInternalFlag(STAT_TRK00_OR_LOST);
               } else {
                 setInternalFlag(STAT_DRQ);
@@ -634,7 +641,7 @@ public final class FddControllerK1818VG93 {
     }
   }
 
-  private void cmdStep(final long tstates, final int command, final boolean start) {
+  private void cmdStep(final long tstatesCounter, final int command, final boolean start) {
     final TrDosDisk thedisk = this.trdosDisk.get();
 
     resetStatus(false);
@@ -644,7 +651,7 @@ public final class FddControllerK1818VG93 {
       setInternalFlag(ST_NOTREADY);
     } else {
       if (start) {
-        this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_BUFFER_VALID);
+        this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
       }
 
       if ((command & 0b00001000) != 0) {
@@ -657,7 +664,7 @@ public final class FddControllerK1818VG93 {
         setInternalFlag(STAT_CRCERR);
       }
 
-      if (tstates < this.operationTimeOutCycles) {
+      if (tstatesCounter < this.operationTimeOutCycles) {
         setInternalFlag(STAT_BUSY);
       } else {
         int curtrack = this.registers[REG_TRACK];
@@ -683,17 +690,17 @@ public final class FddControllerK1818VG93 {
     }
   }
 
-  private void cmdStepIn(final long tstates, final int command, final boolean start) {
+  private void cmdStepIn(final long tstatesCounter, final int command, final boolean start) {
     this.outwardStepDirection = false;
-    cmdStep(tstates, command, start);
+    cmdStep(tstatesCounter, command, start);
   }
 
-  private void cmdStepOut(final long tstates, final int command, final boolean start) {
+  private void cmdStepOut(final long tstatesCounter, final int command, final boolean start) {
     this.outwardStepDirection = true;
-    cmdStep(tstates, command, start);
+    cmdStep(tstatesCounter, command, start);
   }
 
-  private void cmdReadSector(final long tstates, final int command, final boolean start) {
+  private void cmdReadSector(final long tstatesCounter, final int command, final boolean start) {
     final boolean multiSectors = (command & 0b100000) != 0;
     final int sideNumber = (command >>> 3) & 1;
     final boolean doCheckSide = (command & 2) != 0;
@@ -716,22 +723,22 @@ public final class FddControllerK1818VG93 {
       } else {
         if (start) {
           this.counter = 0;
-          this.sectorPositioningCycles = Math.abs(tstates + CYCLES_SECTOR_POSITION);
+          this.sectorPositioningCycles = Math.abs(tstatesCounter + TSTATES_SECTOR_POSITIONING);
         }
 
-        if (tstates < this.sectorPositioningCycles) {
+        if (tstatesCounter < this.sectorPositioningCycles) {
           setInternalFlag(STAT_BUSY);
         } else {
           if (this.sectorPositioningCycles >= 0L) {
             // start reading of first byte
-            this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_BUFFER_VALID);
+            this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
             this.sectorPositioningCycles = -1L;
           }
 
           if (!this.flagWaitDataRd) {
             if (this.counter >= this.sector.size()) {
               this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
-              this.sectorPositioningCycles = Math.abs(tstates + CYCLES_SECTOR_POSITION);
+              this.sectorPositioningCycles = Math.abs(tstatesCounter + TSTATES_SECTOR_POSITIONING);
               if (multiSectors) {
                 if (!this.sector.isLastOnTrack()) {
                   this.counter = 0;
@@ -740,15 +747,15 @@ public final class FddControllerK1818VG93 {
               }
             } else {
               final int data = this.sector.readByte(this.counter++);
-              this.sectorPositioningCycles = Math.abs(tstates + CYCLES_SECTOR_POSITION);
+              this.sectorPositioningCycles = Math.abs(tstatesCounter + TSTATES_SECTOR_POSITIONING);
 
               if (data < 0) {
                 setInternalFlag(STAT_TRK00_OR_LOST);
               } else {
-                if (tstates > this.operationTimeOutCycles) {
+                if (tstatesCounter > this.operationTimeOutCycles) {
                   setInternalFlag(STAT_TRK00_OR_LOST);
                 } else {
-                  this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_BUFFER_VALID);
+                  this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
                   provideReadData(data);
                   setInternalFlag(STAT_DRQ);
                   setInternalFlag(STAT_BUSY);
@@ -756,7 +763,7 @@ public final class FddControllerK1818VG93 {
               }
             }
           } else {
-            if (tstates > this.operationTimeOutCycles) {
+            if (tstatesCounter > this.operationTimeOutCycles) {
               setInternalFlag(STAT_TRK00_OR_LOST);
             } else {
               setInternalFlag(STAT_DRQ);
@@ -768,7 +775,7 @@ public final class FddControllerK1818VG93 {
     }
   }
 
-  private void cmdWriteSector(final long tstates, final int command, final boolean start) {
+  private void cmdWriteSector(final long tstatesCounter, final int command, final boolean start) {
     final boolean multiOp = (command & 0x10) != 0;
     final int softSide = (command >>> 3) & 1;
     final boolean doCheckSide = (command & 1) != 0;
@@ -797,15 +804,15 @@ public final class FddControllerK1818VG93 {
       if (start) {
         this.counter = 0;
         this.flagWaitDataWr = true;
-        this.sectorPositioningCycles = Math.abs(tstates + CYCLES_SECTOR_POSITION);
+        this.sectorPositioningCycles = Math.abs(tstatesCounter + TSTATES_SECTOR_POSITIONING);
       }
 
-      if (tstates < this.sectorPositioningCycles) {
+      if (tstatesCounter < this.sectorPositioningCycles) {
         setInternalFlag(STAT_BUSY);
       } else {
         if (this.sectorPositioningCycles >= 0L) {
           // start reading of first byte
-          this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_BUFFER_VALID);
+          this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
           this.sectorPositioningCycles = -1L;
         }
 
@@ -813,7 +820,7 @@ public final class FddControllerK1818VG93 {
           this.flagWaitDataWr = true;
           if (this.counter >= this.sector.size()) {
             this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
-            this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_BUFFER_VALID);
+            this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
             if (multiOp) {
               if (!this.sector.isLastOnTrack()) {
                 this.counter = 0;
@@ -821,11 +828,11 @@ public final class FddControllerK1818VG93 {
               }
             }
           } else {
-            if (tstates > this.operationTimeOutCycles) {
+            if (tstatesCounter > this.operationTimeOutCycles) {
               resetDataRegisters();
               setInternalFlag(STAT_NOTFOUND);
             } else {
-              this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_BUFFER_VALID);
+              this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
               if (!this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
                 setInternalFlag(STAT_WRFAULT);
               } else {
@@ -837,7 +844,7 @@ public final class FddControllerK1818VG93 {
             }
           }
         } else {
-          if (tstates > this.operationTimeOutCycles) {
+          if (tstatesCounter > this.operationTimeOutCycles) {
             setInternalFlag(STAT_TRK00_OR_LOST);
           }
           setInternalFlag(STAT_DRQ);
@@ -847,7 +854,7 @@ public final class FddControllerK1818VG93 {
     }
   }
 
-  private void cmdReadTrack(final long tstates, final int command, final boolean start) {
+  private void cmdReadTrack(final long tstatesCounter, final int command, final boolean start) {
     resetStatus(true);
 
     final TrDosDisk currentDisk = this.trdosDisk.get();
@@ -861,11 +868,11 @@ public final class FddControllerK1818VG93 {
         helper.prepareTrackForRead(this.head, this.registers[REG_TRACK]);
 
         this.tempAuxiliaryObject = helper;
-        this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_BUFFER_VALID);
+        this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
       }
 
       if (!this.flagWaitDataRd) {
-        this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_BUFFER_VALID);
+        this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
 
         final TrackHelper helper = (TrackHelper) this.tempAuxiliaryObject;
 
@@ -878,7 +885,7 @@ public final class FddControllerK1818VG93 {
           }
         }
       } else {
-        if (tstates > this.operationTimeOutCycles) {
+        if (tstatesCounter > this.operationTimeOutCycles) {
           setInternalFlag(STAT_TRK00_OR_LOST);
         }
         setInternalFlag(STAT_DRQ);
@@ -887,7 +894,7 @@ public final class FddControllerK1818VG93 {
     }
   }
 
-  private void cmdWriteTrack(final long tstates, final int command, final boolean start) {
+  private void cmdWriteTrack(final long tstatesCounter, final int command, final boolean start) {
     resetStatus(false);
 
     final TrDosDisk currentDisk = this.trdosDisk.get();
@@ -897,14 +904,14 @@ public final class FddControllerK1818VG93 {
     } else {
       if (start) {
         this.counter = 0;
-        this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_BUFFER_VALID);
+        this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
         this.flagWaitDataWr = true;
         this.tempAuxiliaryObject = this.mfmModulation ? new MFMTrackHelper(this.getDisk()) :
             new FMTracHelper(this.getDisk());
       }
 
       if (!this.flagWaitDataWr) {
-        this.operationTimeOutCycles = Math.abs(tstates + CYCLES_FOR_BUFFER_VALID);
+        this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
         this.flagWaitDataWr = true;
 
         final int data = this.registers[REG_DATA_WR] & 0xFF;
@@ -920,7 +927,7 @@ public final class FddControllerK1818VG93 {
           }
         }
       } else {
-        if (tstates > this.operationTimeOutCycles) {
+        if (tstatesCounter > this.operationTimeOutCycles) {
           setInternalFlag(STAT_TRK00_OR_LOST);
         }
         setInternalFlag(STAT_DRQ);
@@ -1062,8 +1069,8 @@ public final class FddControllerK1818VG93 {
     abstract void prepareTrackForRead(int headIndex, int trackIndex);
 
     int readNextTrackData() {
-      return this.trackBytePosition < this.trackTotalBytes ?
-          this.trackReadBuffer[this.trackBytePosition++] : -1;
+      return this.trackBytePosition < this.trackTotalBytes
+          ? this.trackReadBuffer[this.trackBytePosition++] : -1;
     }
 
     boolean isCompleted() {
