@@ -2420,9 +2420,9 @@ public final class Z80 {
     final int value = getRegister(REG_I);
     setRegister(REG_A, value);
 
-    this.regSet[REG_F] = (byte) (FTABLE_SZYX[value] |
-        (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0) |
-        (this.regSet[REG_F] & FLAG_C));
+    this.regSet[REG_F] = (byte) (FTABLE_SZYX[value]
+        | (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0)
+        | (this.regSet[REG_F] & FLAG_C));
 
     this.tstates++;
   }
@@ -2431,9 +2431,9 @@ public final class Z80 {
     final int value = getRegister(REG_R);
     setRegister(REG_A, value);
 
-    this.regSet[REG_F] = (byte) (FTABLE_SZYX[value] |
-        (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0) |
-        (this.regSet[REG_F] & FLAG_C));
+    this.regSet[REG_F] = (byte) (FTABLE_SZYX[value]
+        | (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0)
+        | (this.regSet[REG_F] & FLAG_C));
 
     this.tstates++;
   }
