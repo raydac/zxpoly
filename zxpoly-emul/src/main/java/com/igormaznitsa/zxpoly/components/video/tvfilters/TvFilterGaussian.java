@@ -38,8 +38,8 @@ public class TvFilterGaussian implements TvFilter {
         for (int f = 0, pixelIndex = y * RASTER_WIDTH + x;
              f < FILTER.length;
              pixelIndex += PIXEL_INDEX_OFFSET) {
-          for (int fx = 0; fx < FILTER_WIDTH; fx++, pixelIndex++, f++) {
-            final int srcArgb = src[pixelIndex];
+          for (int fx = 0; fx < FILTER_WIDTH; fx++, f++) {
+            final int srcArgb = src[pixelIndex++];
             final int filterFactor = FILTER[f];
             r += ((srcArgb >>> 16) & 0xFF) * filterFactor;
             g += ((srcArgb >>> 8) & 0xFF) * filterFactor;
@@ -56,8 +56,8 @@ public class TvFilterGaussian implements TvFilter {
   }
 
   private static void blur(
-      final byte[] src,
-      final byte[] out) {
+      final byte[] rgbSrc,
+      final byte[] rgbOut) {
 
     for (int h = RASTER_HEIGHT - FILTER.length / FILTER_WIDTH + 1, w =
          RASTER_WIDTH - FILTER_WIDTH + 1, y = 0; y < h; y++) {
@@ -68,12 +68,11 @@ public class TvFilterGaussian implements TvFilter {
         for (int f = 0, pixelIndex = y * RASTER_WIDTH * 3 + x * 3;
              f < FILTER.length;
              pixelIndex += (PIXEL_INDEX_OFFSET * 3)) {
-          for (int fx = 0; fx < FILTER_WIDTH; fx++, pixelIndex += 3, f++) {
+          for (int fx = 0; fx < FILTER_WIDTH; fx++, f++) {
             final int filterFactor = FILTER[f];
-            int startPos = pixelIndex;
-            r += (src[startPos++] & 0xFF) * filterFactor;
-            g += (src[startPos++] & 0xFF) * filterFactor;
-            b += (src[startPos] & 0xFF) * filterFactor;
+            r += (rgbSrc[pixelIndex++] & 0xFF) * filterFactor;
+            g += (rgbSrc[pixelIndex++] & 0xFF) * filterFactor;
+            b += (rgbSrc[pixelIndex++] & 0xFF) * filterFactor;
           }
         }
         r /= FILTER_SUM;
@@ -81,9 +80,9 @@ public class TvFilterGaussian implements TvFilter {
         b /= FILTER_SUM;
 
         int outIndex = (x + CENTER_OFFSET_X) * 3 + (y + CENTER_OFFSET_Y) * RASTER_WIDTH * 3;
-        out[outIndex++] = (byte) r;
-        out[outIndex++] = (byte) g;
-        out[outIndex] = (byte) b;
+        rgbOut[outIndex++] = (byte) r;
+        rgbOut[outIndex++] = (byte) g;
+        rgbOut[outIndex] = (byte) b;
       }
     }
   }
