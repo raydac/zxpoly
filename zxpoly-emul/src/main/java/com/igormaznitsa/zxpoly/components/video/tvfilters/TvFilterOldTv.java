@@ -2,6 +2,7 @@ package com.igormaznitsa.zxpoly.components.video.tvfilters;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.util.Arrays;
 
 public final class TvFilterOldTv implements TvFilter {
 
@@ -107,5 +108,68 @@ public final class TvFilterOldTv implements TvFilter {
     }
 
     return image;
+  }
+
+  @Override
+  public byte[] apply(
+      boolean forceCopy,
+      byte[] rgbArray512x384,
+      int argbBorder
+  ) {
+    final byte[] rgbBuffer =
+        forceCopy ? Arrays.copyOf(rgbArray512x384, rgbArray512x384.length) : rgbArray512x384;
+
+
+    final int brdrR = (argbBorder >> 16) & 0xFF;
+    final int brdrG = (argbBorder >> 8) & 0xFF;
+    final int brdrB = argbBorder & 0xFF;
+
+    final int borderY = rgb2y(brdrR, brdrG, brdrB);
+    final int borderU = rgb2u(brdrR, brdrG, brdrB);
+    final int borderV = rgb2v(brdrR, brdrG, brdrB);
+
+    for (int y = 0; y < RASTER_HEIGHT; y++) {
+      final int offset = y * 512 * 3;
+      int pu = borderU;
+      int pv = borderV;
+      int py = borderY;
+
+      final boolean yodd = (y & 1) != 0;
+
+      for (int x = 0; x < RASTER_WIDTH; x++) {
+        final boolean xodd = (x & 1) != 0;
+
+        final int pos = offset + x * 3;
+        int r = rgbBuffer[pos] & 0xFF;
+        int g = rgbBuffer[pos + 1] & 0xFF;
+        int b = rgbBuffer[pos + 2] & 0xFF;
+
+        int yc = rgb2y(r, g, b);
+        final int uc = rgb2u(r, g, b);
+        final int vc = rgb2v(r, g, b);
+
+        if (yodd) {
+          yc = Math.round(0.87f * yc);
+        }
+
+        yc = (yc + py) / 2;
+
+        final int resultRgb;
+        if (xodd) {
+          resultRgb = yuv2rgb(yc, (pu + uc) / 2, (pv + vc) / 2);
+        } else {
+          resultRgb = yuv2rgb(yc, uc, vc);
+        }
+        pu = (pu + uc * 2) / 3;
+        pv = (pv + vc * 2) / 3;
+        py = yc;
+
+        rgbBuffer[pos] = (byte) (resultRgb >> 16);
+        rgbBuffer[pos + 1] = (byte) (resultRgb >> 8);
+        rgbBuffer[pos + 2] = (byte) resultRgb;
+      }
+    }
+
+    return rgbBuffer;
   }
 }

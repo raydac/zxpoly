@@ -1,5 +1,9 @@
 package com.igormaznitsa.zxpoly.streamer;
 
+import static com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter.RASTER_HEIGHT;
+import static com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter.RASTER_WIDTH;
+
+
 import com.igormaznitsa.zxpoly.components.snd.Beeper;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.utils.Utils;
@@ -225,11 +229,13 @@ public final class ZxVideoStreamer {
     }
   }
 
+  private final byte[] rgbArray = new byte[RASTER_WIDTH * RASTER_HEIGHT * 3];
+
   public void onWallclockInt() {
     if (this.internalEntitiesStarted) {
       final long wallclockTime = this.wallclock.getTimeInMilliseconds();
       if (wallclockTime >= timeNextFrame) {
-        this.videoWriter.write(this.videoController.grabRgb());
+        this.videoWriter.write(this.videoController.grabRgb(this.rgbArray));
         timeNextFrame = wallclockTime + this.delayBetweenFrameGrab;
       }
     }

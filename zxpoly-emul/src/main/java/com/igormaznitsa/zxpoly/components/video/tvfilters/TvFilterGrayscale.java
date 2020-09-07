@@ -4,6 +4,7 @@ import com.igormaznitsa.zxpoly.components.video.VideoController;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 public final class TvFilterGrayscale implements TvFilter {
@@ -33,6 +34,30 @@ public final class TvFilterGrayscale implements TvFilter {
 
   private static int rgb2y(final int r, final int g, final int b) {
     return Math.min(Math.round(r * 0.4047f + g * 0.5913f + b * 0.2537f), 255);
+  }
+
+  @Override
+  public byte[] apply(
+      boolean forceCopy,
+      byte[] rgbArray512x384,
+      int argbBorderColor
+  ) {
+    final byte[] result =
+        forceCopy ? Arrays.copyOf(rgbArray512x384, rgbArray512x384.length) : rgbArray512x384;
+    int index = result.length;
+    while (--index > 0) {
+      int base = index;
+      final int b = result[index--] & 0xFF;
+      final int g = result[index--] & 0xFF;
+      final int r = result[index] & 0xFF;
+
+      final byte y = (byte) rgb2y(r, g, b);
+
+      result[base--] = y;
+      result[base--] = y;
+      result[base] = y;
+    }
+    return result;
   }
 
   private static void fastArgbToGrayscale(final int[] src, final int[] dst) {

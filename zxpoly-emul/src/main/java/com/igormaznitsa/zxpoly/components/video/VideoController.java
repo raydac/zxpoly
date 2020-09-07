@@ -1016,22 +1016,30 @@ public final class VideoController extends JComponent
     }
   }
 
-  public byte[] grabRgb() {
+  public byte[] grabRgb(final byte[] array) {
     lockBuffer();
+    byte[] result;
     try {
       final int[] buffer = this.bufferImageRgbData;
       final int bufferLen = buffer.length;
-      final byte[] result = new byte[bufferLen * 3];
+      result = array == null ? new byte[bufferLen * 3] : array;
       int outIndex = 0;
       for (final int argb : buffer) {
         result[outIndex++] = (byte) (argb >> 16);
         result[outIndex++] = (byte) (argb >> 8);
         result[outIndex++] = (byte) argb;
       }
-      return result;
     } finally {
       unlockBuffer();
     }
+
+    if (this.tvFilterChain != null) {
+      final int argbBorderColor = PALETTE_ZXPOLY[this.portFEw & 7];
+      for (final TvFilter f : this.tvFilterChain.getFilterChain()) {
+        result = f.apply(false, result, argbBorderColor);
+      }
+    }
+    return result;
   }
 
   public void drawBuffer(

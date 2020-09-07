@@ -12,6 +12,9 @@ public interface TvFilter {
   int[] SHARED_BUFFER_RASTER =
       ((DataBufferInt) SHARED_BUFFER.getRaster().getDataBuffer()).getData();
 
+  int RASTER_WIDTH = 512;
+  int RASTER_HEIGHT = 384;
+
 
   default Color applyBorderColor(final Color borderColor) {
     return borderColor;
@@ -24,6 +27,14 @@ public interface TvFilter {
       final boolean firstInChain
   ) {
     return srcImageArgb512x384;
+  }
+
+  default byte[] apply(
+      final boolean forceCopy,
+      final byte[] rgbArray512x384,
+      final int argbBorderColor
+  ) {
+    return rgbArray512x384;
   }
 
   default void apply(

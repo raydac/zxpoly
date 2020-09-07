@@ -2,13 +2,12 @@ package com.igormaznitsa.zxpoly.components.video.tvfilters;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class TvFilterGaussian implements TvFilter {
   private static final TvFilterGaussian INSTANCE = new TvFilterGaussian();
 
-  private static final int RASTER_WIDTH = 512;
-  private static final int RASTER_HEIGHT = 384;
   private static final int[] FILTER = new int[] {1, 2, 1, 2, 4, 2, 1, 2, 1};
   private static final int FILTER_SUM = IntStream.of(FILTER).sum();
   private static final int FILTER_WIDTH = 3;
@@ -16,6 +15,7 @@ public class TvFilterGaussian implements TvFilter {
   private static final int CENTER_OFFSET_Y = FILTER.length / FILTER_WIDTH / 2;
   private static final int PIXEL_INDEX_OFFSET = RASTER_WIDTH - FILTER_WIDTH;
   private final int[] blurBuffer = new int[RASTER_WIDTH * RASTER_HEIGHT];
+  private final byte[] blurByteBuffer = new byte[RASTER_WIDTH * RASTER_HEIGHT * 3];
 
   private TvFilterGaussian() {
 
@@ -29,7 +29,6 @@ public class TvFilterGaussian implements TvFilter {
       final int[] src,
       final int[] out) {
 
-    // apply filter
     for (int h = RASTER_HEIGHT - FILTER.length / FILTER_WIDTH + 1, w =
          RASTER_WIDTH - FILTER_WIDTH + 1, y = 0; y < h; y++) {
       for (int x = 0; x < w; x++) {
@@ -54,6 +53,52 @@ public class TvFilterGaussian implements TvFilter {
             (r << 16) | (g << 8) | b | 0xFF000000;
       }
     }
+  }
+
+  private static void blur(
+      final byte[] src,
+      final byte[] out) {
+
+    for (int h = RASTER_HEIGHT - FILTER.length / FILTER_WIDTH + 1, w =
+         RASTER_WIDTH - FILTER_WIDTH + 1, y = 0; y < h; y++) {
+      for (int x = 0; x < w; x++) {
+        int r = 0;
+        int g = 0;
+        int b = 0;
+        for (int f = 0, pixelIndex = y * RASTER_WIDTH * 3 + x * 3;
+             f < FILTER.length;
+             pixelIndex += (PIXEL_INDEX_OFFSET * 3)) {
+          for (int fx = 0; fx < FILTER_WIDTH; fx++, pixelIndex += 3, f++) {
+            final int filterFactor = FILTER[f];
+            int startPos = pixelIndex;
+            r += (src[startPos++] & 0xFF) * filterFactor;
+            g += (src[startPos++] & 0xFF) * filterFactor;
+            b += (src[startPos] & 0xFF) * filterFactor;
+          }
+        }
+        r /= FILTER_SUM;
+        g /= FILTER_SUM;
+        b /= FILTER_SUM;
+
+        int outIndex = (x + CENTER_OFFSET_X) * 3 + (y + CENTER_OFFSET_Y) * RASTER_WIDTH * 3;
+        out[outIndex++] = (byte) r;
+        out[outIndex++] = (byte) g;
+        out[outIndex] = (byte) b;
+      }
+    }
+  }
+
+  @Override
+  public byte[] apply(
+      boolean forceCopy,
+      byte[] rgbArray512x384,
+      int argbBorderColor
+  ) {
+    final byte[] result =
+        forceCopy ? Arrays.copyOf(rgbArray512x384, rgbArray512x384.length) : rgbArray512x384;
+    blur(result, this.blurByteBuffer);
+    System.arraycopy(blurByteBuffer, 0, result, 0, blurBuffer.length);
+    return result;
   }
 
   @Override
