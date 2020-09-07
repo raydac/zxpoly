@@ -25,8 +25,9 @@ final class SndBufferContainer {
   public static final int BUFFERS_NUMBER = 5;
 
   private static final int SAMPLES_PER_INT = SND_FREQ / 50;
-  private static final int SND_BUFFER_LENGTH =
+  public static final int SND_BUFFER_INT_LEN =
       SAMPLES_PER_INT * AUDIO_FORMAT.getChannels() * AUDIO_FORMAT.getSampleSizeInBits() / 8;
+  public static final int SND_BUFFER_LEN = SND_BUFFER_INT_LEN + (SND_BUFFER_INT_LEN / 2);
   private final byte[][] allSndBuffers;
   private byte[] soundBuffer;
   private int bufferIndex;
@@ -37,18 +38,18 @@ final class SndBufferContainer {
   public SndBufferContainer() {
     this.allSndBuffers = new byte[BUFFERS_NUMBER][];
     for (int i = 0; i < BUFFERS_NUMBER; i++) {
-      this.allSndBuffers[i] = new byte[SND_BUFFER_LENGTH];
+      this.allSndBuffers[i] = new byte[SND_BUFFER_LEN];
       Arrays.fill(this.allSndBuffers[i], (byte) 0xFF);
     }
     this.soundBuffer = this.allSndBuffers[this.bufferIndex];
   }
 
   public void writeCurrent(final SourceDataLine line) {
-    line.write(this.soundBuffer, 0, SND_BUFFER_LENGTH);
+    line.write(this.soundBuffer, 0, SND_BUFFER_INT_LEN);
   }
 
   public byte[] nextBuffer(final int fillLevel) {
-    if (this.lastWrittenPosition < SND_BUFFER_LENGTH - 4) {
+    if (this.lastWrittenPosition < SND_BUFFER_LEN - 4) {
       this.fillCurrentSndBuffer(this.lastWrittenPosition, fillLevel);
     }
     final byte[] result = this.soundBuffer;
@@ -71,7 +72,7 @@ final class SndBufferContainer {
     int position = ((tstatesIntCounter * SAMPLES_PER_INT + TSTATES_PER_INT / 2)
         / TSTATES_PER_INT) * 4;
 
-    if (position < SND_BUFFER_LENGTH) {
+    if (position < SND_BUFFER_LEN) {
       if (position - this.lastWrittenPosition < 8) {
         final byte low = (byte) level;
         final byte high = (byte) (level >> 8);
@@ -91,17 +92,13 @@ final class SndBufferContainer {
     final byte high = (byte) (value >> 8);
 
     if (low == high) {
-      fill(this.soundBuffer, fromIndex, SND_BUFFER_LENGTH, low);
+      fill(this.soundBuffer, fromIndex, SND_BUFFER_LEN, low);
     } else {
-      while (fromIndex < SND_BUFFER_LENGTH) {
+      while (fromIndex < SND_BUFFER_LEN) {
         this.soundBuffer[fromIndex++] = low;
         this.soundBuffer[fromIndex++] = high;
       }
     }
-  }
-
-  public int getLength() {
-    return SND_BUFFER_LENGTH;
   }
 
   public void reset() {

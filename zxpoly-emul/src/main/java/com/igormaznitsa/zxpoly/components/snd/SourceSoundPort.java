@@ -14,7 +14,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
 
-public class SourceSoundPort implements Comparable<SourceSoundPort>{
+public class SourceSoundPort implements Comparable<SourceSoundPort> {
   private final UUID uuid = UUID.randomUUID();
   private final String name;
   private final Mixer mixer;
@@ -35,7 +35,7 @@ public class SourceSoundPort implements Comparable<SourceSoundPort>{
     boolean result = false;
     if (info instanceof DataLine.Info) {
       result = Stream.of(((DataLine.Info) info).getFormats())
-          .anyMatch(x -> format.matches(x));
+          .anyMatch(format::matches);
     }
     return result;
   }
@@ -59,7 +59,6 @@ public class SourceSoundPort implements Comparable<SourceSoundPort>{
   public static List<SourceSoundPort> findForFormat(final AudioFormat format) {
     final List<SourceSoundPort> result = new ArrayList<>();
     final Mixer.Info[] mixers = AudioSystem.getMixerInfo();
-    int counter = 1;
     for (final Mixer.Info mixerInfo : mixers) {
       try (Mixer mixer = AudioSystem.getMixer(mixerInfo)) {
         try {
@@ -68,7 +67,6 @@ public class SourceSoundPort implements Comparable<SourceSoundPort>{
           continue;
         }
         final Line.Info[] sourceLineInfo = mixer.getSourceLineInfo();
-        int lineCounter = 1;
         for (final Line.Info lineInfo : sourceLineInfo) {
           try {
             final Line line = mixer.getLine(lineInfo);
