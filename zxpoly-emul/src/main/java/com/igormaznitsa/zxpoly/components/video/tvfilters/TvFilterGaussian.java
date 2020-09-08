@@ -13,9 +13,10 @@ public class TvFilterGaussian implements TvFilter {
   private static final int FILTER_WIDTH = 3;
   private static final int CENTER_OFFSET_X = FILTER_WIDTH / 2;
   private static final int CENTER_OFFSET_Y = FILTER.length / FILTER_WIDTH / 2;
-  private static final int PIXEL_INDEX_OFFSET = RASTER_WIDTH - FILTER_WIDTH;
-  private final int[] blurBuffer = new int[RASTER_WIDTH * RASTER_HEIGHT];
-  private final byte[] blurByteBuffer = new byte[RASTER_WIDTH * RASTER_HEIGHT * 3];
+  private static final int PIXEL_INDEX_OFFSET_ARGB_INT = RASTER_WIDTH_ARGB_INT - FILTER_WIDTH;
+  private static final int PIXEL_INDEX_OFFSET_RGB_BYTE = RASTER_WIDTH_RGB_BYTE - FILTER_WIDTH * 3;
+  private final int[] blurBuffer = new int[RASTER_WIDTH_ARGB_INT * RASTER_HEIGHT];
+  private final byte[] blurByteBuffer = new byte[RASTER_WIDTH_ARGB_INT * RASTER_HEIGHT * 3];
 
   private TvFilterGaussian() {
 
@@ -30,17 +31,17 @@ public class TvFilterGaussian implements TvFilter {
       final int[] out) {
 
     for (int h = RASTER_HEIGHT - FILTER.length / FILTER_WIDTH + 1, w =
-         RASTER_WIDTH - FILTER_WIDTH + 1, y = 0; y < h; y++) {
+         RASTER_WIDTH_ARGB_INT - FILTER_WIDTH + 1, y = 0; y < h; y++) {
       for (int x = 0; x < w; x++) {
         int r = 0;
         int g = 0;
         int b = 0;
-        for (int f = 0, pixelIndex = y * RASTER_WIDTH + x;
+        for (int f = 0, pixelIndex = y * RASTER_WIDTH_ARGB_INT + x;
              f < FILTER.length;
-             pixelIndex += PIXEL_INDEX_OFFSET) {
+             pixelIndex += PIXEL_INDEX_OFFSET_ARGB_INT) {
           for (int fx = 0; fx < FILTER_WIDTH; fx++, f++) {
-            final int srcArgb = src[pixelIndex++];
             final int filterFactor = FILTER[f];
+            final int srcArgb = src[pixelIndex++];
             r += ((srcArgb >>> 16) & 0xFF) * filterFactor;
             g += ((srcArgb >>> 8) & 0xFF) * filterFactor;
             b += (srcArgb & 0xFF) * filterFactor;
@@ -49,7 +50,7 @@ public class TvFilterGaussian implements TvFilter {
         r /= FILTER_SUM;
         g /= FILTER_SUM;
         b /= FILTER_SUM;
-        out[x + CENTER_OFFSET_X + (y + CENTER_OFFSET_Y) * RASTER_WIDTH] =
+        out[x + CENTER_OFFSET_X + (y + CENTER_OFFSET_Y) * RASTER_WIDTH_ARGB_INT] =
             (r << 16) | (g << 8) | b | 0xFF000000;
       }
     }
@@ -60,14 +61,16 @@ public class TvFilterGaussian implements TvFilter {
       final byte[] rgbOut) {
 
     for (int h = RASTER_HEIGHT - FILTER.length / FILTER_WIDTH + 1, w =
-         RASTER_WIDTH - FILTER_WIDTH + 1, y = 0; y < h; y++) {
-      for (int x = 0; x < w; x++) {
+         RASTER_WIDTH_RGB_BYTE - FILTER_WIDTH * 3 + 3, y = 0;
+         y < h;
+         y++) {
+      for (int x = 0; x < w; x += 3) {
         int r = 0;
         int g = 0;
         int b = 0;
-        for (int f = 0, pixelIndex = y * RASTER_WIDTH * 3 + x * 3;
+        for (int f = 0, pixelIndex = y * RASTER_WIDTH_RGB_BYTE + x;
              f < FILTER.length;
-             pixelIndex += (PIXEL_INDEX_OFFSET * 3)) {
+             pixelIndex += PIXEL_INDEX_OFFSET_RGB_BYTE) {
           for (int fx = 0; fx < FILTER_WIDTH; fx++, f++) {
             final int filterFactor = FILTER[f];
             r += (rgbSrc[pixelIndex++] & 0xFF) * filterFactor;
@@ -79,7 +82,7 @@ public class TvFilterGaussian implements TvFilter {
         g /= FILTER_SUM;
         b /= FILTER_SUM;
 
-        int outIndex = (x + CENTER_OFFSET_X) * 3 + (y + CENTER_OFFSET_Y) * RASTER_WIDTH * 3;
+        int outIndex = x + CENTER_OFFSET_X * 3 + (y + CENTER_OFFSET_Y) * RASTER_WIDTH_RGB_BYTE;
         rgbOut[outIndex++] = (byte) r;
         rgbOut[outIndex++] = (byte) g;
         rgbOut[outIndex] = (byte) b;
@@ -95,8 +98,9 @@ public class TvFilterGaussian implements TvFilter {
   ) {
     final byte[] result =
         forceCopy ? Arrays.copyOf(rgbArray512x384, rgbArray512x384.length) : rgbArray512x384;
+    System.arraycopy(result, 0, this.blurByteBuffer, 0, result.length);
     blur(result, this.blurByteBuffer);
-    System.arraycopy(blurByteBuffer, 0, result, 0, blurBuffer.length);
+    System.arraycopy(blurByteBuffer, 0, result, 0, blurByteBuffer.length);
     return result;
   }
 

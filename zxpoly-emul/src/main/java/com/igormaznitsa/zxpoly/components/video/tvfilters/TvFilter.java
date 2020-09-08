@@ -12,8 +12,9 @@ public interface TvFilter {
   int[] SHARED_BUFFER_RASTER =
       ((DataBufferInt) SHARED_BUFFER.getRaster().getDataBuffer()).getData();
 
-  int RASTER_WIDTH = 512;
-  int RASTER_HEIGHT = 384;
+  final int RASTER_WIDTH_ARGB_INT = 512;
+  final int RASTER_WIDTH_RGB_BYTE = RASTER_WIDTH_ARGB_INT * 3;
+  final int RASTER_HEIGHT = 384;
 
 
   default Color applyBorderColor(final Color borderColor) {

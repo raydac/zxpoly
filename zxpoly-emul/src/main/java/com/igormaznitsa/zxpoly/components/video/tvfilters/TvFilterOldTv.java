@@ -136,7 +136,7 @@ public final class TvFilterOldTv implements TvFilter {
 
       final boolean yodd = (y & 1) != 0;
 
-      for (int x = 0; x < RASTER_WIDTH; x++) {
+      for (int x = 0; x < RASTER_WIDTH_ARGB_INT; x++) {
         final boolean xodd = (x & 1) != 0;
 
         final int pos = offset + x * 3;
