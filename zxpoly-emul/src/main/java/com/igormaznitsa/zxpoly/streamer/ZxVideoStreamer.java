@@ -7,12 +7,13 @@ import static com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter.RASTER
 import com.igormaznitsa.zxpoly.components.snd.Beeper;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.utils.Utils;
-import com.igormaznitsa.zxpoly.utils.Wallclock;
+import com.igormaznitsa.zxpoly.utils.WallclockTimer;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,15 +27,14 @@ public final class ZxVideoStreamer {
 
   private final AtomicBoolean started = new AtomicBoolean();
   private final Consumer<ZxVideoStreamer> endWorkConsumer;
-  private final Wallclock wallclock = new Wallclock();
+  private final WallclockTimer wallclock = new WallclockTimer(Duration.ofMillis(20));
   private volatile TcpWriter videoWriter;
   private volatile TcpWriter soundWriter;
   private volatile FfmpegWrapper ffmpegWrapper;
   private volatile ZxStreamingSoundPort soudPort;
   private volatile InternalHttpServer internalHttp;
   private volatile Beeper beeper;
-  private volatile long delayBetweenFrameGrab;
-  private long timeNextFrame;
+  private volatile Duration delayBetweenFrameGrab;
   private volatile boolean internalEntitiesStarted;
 
   public ZxVideoStreamer(
@@ -88,7 +88,8 @@ public final class ZxVideoStreamer {
     this.videoWriter =
         new TcpWriter("tcp-video-writer", 2, InetAddress.getLoopbackAddress(), 0);
 
-    this.delayBetweenFrameGrab = (1000L + frameRate / 2) / frameRate;
+    this.delayBetweenFrameGrab = Duration.ofMillis((1000L + frameRate / 2) / frameRate);
+    this.wallclock.next(this.delayBetweenFrameGrab);
 
     if (this.beeper == null) {
       this.soundWriter = null;
@@ -233,10 +234,10 @@ public final class ZxVideoStreamer {
 
   public void onWallclockInt() {
     if (this.internalEntitiesStarted) {
-      final long wallclockTime = this.wallclock.getTimeInMilliseconds();
-      if (wallclockTime >= timeNextFrame) {
+      if (this.wallclock.completed()) {
+        this.wallclock.next(this.delayBetweenFrameGrab);
         this.videoWriter.write(this.videoController.grabRgb(this.rgbArray));
-        timeNextFrame = wallclockTime + this.delayBetweenFrameGrab;
+        this.wallclock.next();
       }
     }
   }

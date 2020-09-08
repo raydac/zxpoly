@@ -23,7 +23,6 @@ import static java.time.Duration.ofSeconds;
 
 
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk.Sector;
-import com.igormaznitsa.zxpoly.utils.Wallclock;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -32,6 +31,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class FddControllerK1818VG93 {
+
+  private static final long DELAY_FDD_MOTOR_ON_MS = 2000L;
 
   static final int ADDR_COMMAND_STATE = 0;
   static final int ADDR_TRACK = 1;
@@ -62,7 +63,6 @@ public final class FddControllerK1818VG93 {
   private final int[] registers = new int[6];
   private final AtomicReference<TrDosDisk> trdosDisk = new AtomicReference<>();
   private final Logger logger;
-  private final Wallclock wallclock = new Wallclock();
   private TrDosDisk.Sector sector;
   private int counter;
   private int extraCounter;
@@ -112,7 +112,7 @@ public final class FddControllerK1818VG93 {
 
   private void setInternalFlag(final int flags) {
     if ((flags & STAT_BUSY) != 0) {
-      this.lastBusyOnTime = this.wallclock.getTimeInMilliseconds();
+      this.lastBusyOnTime = System.currentTimeMillis();
     }
     registers[REG_STATUS] |= flags;
   }
@@ -937,7 +937,7 @@ public final class FddControllerK1818VG93 {
   }
 
   public boolean isMotorOn() {
-    return (this.wallclock.getTimeInMilliseconds() - this.lastBusyOnTime) < 200L;
+    return (System.currentTimeMillis() - this.lastBusyOnTime) < DELAY_FDD_MOTOR_ON_MS;
   }
 
   private static abstract class TrackHelper {
@@ -1032,13 +1032,13 @@ public final class FddControllerK1818VG93 {
               this.disk.findSector(this.headIndex, this.trackIndex, this.sectorIndex);
           if (sector == null) {
             throw new IOException(
-                "Can't find sector: " + this.trackIndex + ':' + this.headIndex + ':' +
-                    this.sectorIndex);
+                "Can't find sector: " + this.trackIndex + ':' + this.headIndex + ':'
+                    + this.sectorIndex);
           }
           if (!sector.writeByte(this.dataByteIndex, dataByte)) {
             throw new IOException(
-                "Can't write " + this.dataByteIndex + " byte to sector: " + this.trackIndex + ':' +
-                    this.headIndex + ':' + this.sectorIndex);
+                "Can't write " + this.dataByteIndex + " byte to sector: " + this.trackIndex + ':'
+                    + this.headIndex + ':' + this.sectorIndex);
           }
           this.expectedData--;
           this.dataByteIndex++;

@@ -61,7 +61,7 @@ import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.JHtmlLabel;
 import com.igormaznitsa.zxpoly.utils.RomLoader;
 import com.igormaznitsa.zxpoly.utils.Utils;
-import com.igormaznitsa.zxpoly.utils.Wallclock;
+import com.igormaznitsa.zxpoly.utils.WallclockTimer;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
@@ -87,6 +87,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -128,8 +129,8 @@ import org.apache.commons.io.FilenameUtils;
 
 public final class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
 
-  public static final long TIMER_INT_DELAY_MILLISECONDS = 20L;
   public static final Logger LOGGER = Logger.getLogger("UI");
+  public static final Duration TIMER_INT_DELAY_MILLISECONDS = Duration.ofMillis(20);
   private static final Icon ICO_MOUSE = new ImageIcon(Utils.loadIcon("mouse.png"));
   private static final Icon ICO_MOUSE_DIS =
       UIManager.getLookAndFeel().getDisabledIcon(null, ICO_MOUSE);
@@ -168,7 +169,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
   private final Motherboard board;
   private final ZxVideoStreamer videoStreamer;
-  private final Wallclock wallclock = new Wallclock();
+  private final WallclockTimer wallclock = new WallclockTimer(TIMER_INT_DELAY_MILLISECONDS);
   private final Runnable traceWindowsUpdater = new Runnable() {
 
     @Override
@@ -611,24 +612,21 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   @Override
   public void run() {
-    long nextWallclockIntTime =
-        this.wallclock.getTimeInMilliseconds() + TIMER_INT_DELAY_MILLISECONDS;
+    this.wallclock.next();
     int countdownToPaint = 0;
     int countdownToAnimationSave = 0;
 
     int tstates = 0;
 
     while (!Thread.currentThread().isInterrupted()) {
-      final long wallclockTime = this.wallclock.getTimeInMilliseconds();
-
       if (stepSemaphor.tryLock()) {
         try {
           final boolean inTurboMode = this.turboMode;
           final boolean tstatesIntReached = tstates >= TSTATES_PER_INT;
-          final boolean wallclockInt = nextWallclockIntTime <= wallclockTime;
+          final boolean wallclockInt = this.wallclock.completed();
 
           if (wallclockInt) {
-            nextWallclockIntTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
+            this.wallclock.next();
             countdownToPaint--;
             countdownToAnimationSave--;
 
@@ -688,9 +686,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           updateTracerWindowsForStep();
         }
       } else {
-        final long timeDiff = wallclockTime - nextWallclockIntTime;
-        if (timeDiff >= 0L) {
-          nextWallclockIntTime = wallclockTime + TIMER_INT_DELAY_MILLISECONDS;
+        if (this.wallclock.completed()) {
+          this.wallclock.next();
           this.videoStreamer.onWallclockInt();
           this.board.dryIntTickOnWallClockTime(tstates >= TSTATES_PER_INT, true, tstates);
           tstates = 0;

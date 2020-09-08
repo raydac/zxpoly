@@ -38,9 +38,12 @@ public final class ZxPolyAGifEncoder implements AnimationEncoder {
   private final byte[] indexBuffer = new byte[VideoController.SCREEN_WIDTH * VideoController.SCREEN_HEIGHT];
 
   public ZxPolyAGifEncoder(final File file, final int frameRate, final boolean loop) throws IOException {
-    this.stream = new JBBPBitOutputStream(new BufferedOutputStream(new FileOutputStream(file), 0xFFFF));
-    this.intsBetweenFrames = (int) (1000 / MainForm.TIMER_INT_DELAY_MILLISECONDS) / frameRate;
-    this.frameDelay = (int) (this.intsBetweenFrames * MainForm.TIMER_INT_DELAY_MILLISECONDS) / 10;
+    this.stream =
+        new JBBPBitOutputStream(new BufferedOutputStream(new FileOutputStream(file), 0xFFFF));
+    this.intsBetweenFrames =
+        (int) (1000 / MainForm.TIMER_INT_DELAY_MILLISECONDS.toMillis()) / frameRate;
+    this.frameDelay =
+        (int) (this.intsBetweenFrames * MainForm.TIMER_INT_DELAY_MILLISECONDS.toMillis()) / 10;
 
     this.stream.write(new byte[] {0x47, 0x49, 0x46, 0x38, 0x39, 0x61});
     this.stream.writeShort(VideoController.SCREEN_WIDTH, JBBPByteOrder.LITTLE_ENDIAN);
