@@ -2,12 +2,12 @@ package com.igormaznitsa.zxpoly.utils;
 
 import java.time.Duration;
 
-public final class WallclockTimer {
+public final class Timer {
 
   private final long delay;
   private long timeout = -1L;
 
-  public WallclockTimer(final Duration delay) {
+  public Timer(final Duration delay) {
     this.delay = delay.toNanos();
   }
 
@@ -20,6 +20,6 @@ public final class WallclockTimer {
   }
 
   public boolean completed() {
-    return System.nanoTime() > this.timeout;
+    return System.nanoTime() >= this.timeout;
   }
 }

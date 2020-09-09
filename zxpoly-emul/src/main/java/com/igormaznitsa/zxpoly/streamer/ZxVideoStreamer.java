@@ -6,8 +6,8 @@ import static com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter.RASTER
 
 import com.igormaznitsa.zxpoly.components.snd.Beeper;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
+import com.igormaznitsa.zxpoly.utils.Timer;
 import com.igormaznitsa.zxpoly.utils.Utils;
-import com.igormaznitsa.zxpoly.utils.WallclockTimer;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -27,7 +27,7 @@ public final class ZxVideoStreamer {
 
   private final AtomicBoolean started = new AtomicBoolean();
   private final Consumer<ZxVideoStreamer> endWorkConsumer;
-  private final WallclockTimer wallclock = new WallclockTimer(Duration.ofMillis(20));
+  private final Timer wallclock = new Timer(Duration.ofMillis(20));
   private volatile TcpWriter videoWriter;
   private volatile TcpWriter soundWriter;
   private volatile FfmpegWrapper ffmpegWrapper;

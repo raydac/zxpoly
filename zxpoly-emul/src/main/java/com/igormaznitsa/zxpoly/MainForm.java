@@ -60,8 +60,8 @@ import com.igormaznitsa.zxpoly.ui.SelectTapPosDialog;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.JHtmlLabel;
 import com.igormaznitsa.zxpoly.utils.RomLoader;
+import com.igormaznitsa.zxpoly.utils.Timer;
 import com.igormaznitsa.zxpoly.utils.Utils;
-import com.igormaznitsa.zxpoly.utils.WallclockTimer;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
@@ -121,7 +121,6 @@ import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
@@ -171,7 +170,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
   private final Motherboard board;
   private final ZxVideoStreamer videoStreamer;
-  private final WallclockTimer wallclock = new WallclockTimer(TIMER_INT_DELAY_MILLISECONDS);
+  private final Timer wallclock = new Timer(TIMER_INT_DELAY_MILLISECONDS);
   private final Runnable traceWindowsUpdater = new Runnable() {
 
     @Override
@@ -437,7 +436,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       mainCpuThread.start();
 
 
-      final Timer infobarUpdateTimer = new Timer(1000, action -> updateInfobar());
+      final javax.swing.Timer infobarUpdateTimer =
+          new javax.swing.Timer(1000, action -> updateInfobar());
       infobarUpdateTimer.setRepeats(true);
       infobarUpdateTimer.setInitialDelay(1000);
       infobarUpdateTimer.start();
