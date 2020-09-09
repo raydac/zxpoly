@@ -71,6 +71,7 @@ import java.awt.GridBagConstraints;
 import java.awt.Image;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -91,6 +92,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -179,7 +181,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         if (form != null) {
           final Z80 cpu = board.getModules()[index++].getCpu();
           if (cpu.getPrefixInProcessing() == 0 && !cpu.isInsideBlockLoop()) {
-            form.refreshViewState();
+            form.refresh();
           }
         }
       }
@@ -2197,10 +2199,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void deactivateTracerForCPUModule(final int index) {
-    TraceCpuForm form = this.cpuTracers[index];
-    if (form != null) {
-      form.dispose();
-    }
+    Arrays.stream(this.cpuTracers)
+        .filter(Objects::nonNull)
+        .forEach(Window::dispose);
   }
 
   private void updateTracerCheckBoxes() {

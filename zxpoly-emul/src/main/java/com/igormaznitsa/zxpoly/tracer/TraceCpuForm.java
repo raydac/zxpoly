@@ -1,20 +1,3 @@
-/*
- * Copyright (C) 2014-2019 Igor Maznitsa
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package com.igormaznitsa.zxpoly.tracer;
 
 import com.igormaznitsa.z80.MemoryAccessProvider;
@@ -24,109 +7,243 @@ import com.igormaznitsa.z80.disasm.Z80Disasm;
 import com.igormaznitsa.zxpoly.MainForm;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.Locale;
+import javax.swing.Box;
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import org.apache.commons.lang3.StringUtils;
 
-@SuppressWarnings("unchecked")
-public class TraceCpuForm extends javax.swing.JFrame implements MemoryAccessProvider {
+public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
 
   private final MainForm mainForm;
   private final Motherboard motherboard;
   private final ZxPolyModule module;
   private final int moduleIndex;
+  private final JCheckBox checkBoxC;
+  private final JCheckBox checkBoxF3;
+  private final JCheckBox checkBoxF5;
+  private final JCheckBox checkBoxH;
+  private final JCheckBox checkBoxIFF1;
+  private final JCheckBox checkBoxIFF2;
+  private final JCheckBox checkBoxN;
+  private final JCheckBox checkBoxPV;
+  private final JCheckBox checkBoxS;
+  private final JCheckBox checkBoxZ;
+  private final JList<String> disasmList;
+  private final HexValue2Field fieldAltRegA;
+  private final HexValue2Field fieldAltRegB;
+  private final HexValue2Field fieldAltRegC;
+  private final HexValue2Field fieldAltRegD;
+  private final HexValue2Field fieldAltRegE;
+  private final HexValue2Field fieldAltRegF;
+  private final HexValue2Field fieldAltRegH;
+  private final HexValue2Field fieldAltRegL;
+  private final HexValue2Field fieldI;
+  private final HexValue2Field fieldIM;
+  private final HexValue4Field fieldIX;
+  private final HexValue4Field fieldIY;
+  private final HexValue4Field fieldPC;
+  private final HexValue2Field fieldR;
+  private final HexValue2Field fieldRegA;
+  private final HexValue2Field fieldRegB;
+  private final HexValue2Field fieldRegC;
+  private final HexValue2Field fieldRegD;
+  private final HexValue2Field fieldRegE;
+  private final HexValue2Field fieldRegF;
+  private final HexValue2Field fieldRegH;
+  private final HexValue2Field fieldRegL;
+  private final HexValue4Field fieldSP;
+  private final JPanel panelAltSet;
+  private final JPanel panelOthers;
+  private final JPanel panelFlags;
+  private final JPanel panelMainSet;
   private final StringBuilder buffer = new StringBuilder(32);
-
   private boolean changeEnabled = true;
-  private javax.swing.JButton buttonMemory;
-  private javax.swing.JCheckBox checkBoxC;
-  private javax.swing.JCheckBox checkBoxF3;
-  private javax.swing.JCheckBox checkBoxF5;
-  private javax.swing.JCheckBox checkBoxH;
-  private javax.swing.JCheckBox checkBoxIFF1;
-  private javax.swing.JCheckBox checkBoxIFF2;
-  private javax.swing.JCheckBox checkBoxN;
-  private javax.swing.JCheckBox checkBoxPV;
-  private javax.swing.JCheckBox checkBoxS;
-  private javax.swing.JCheckBox checkBoxZ;
-  private javax.swing.JList disasmList;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegA;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegB;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegC;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegD;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegE;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegF;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegH;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldAltRegL;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldIM;
-  private com.igormaznitsa.zxpoly.tracer.HexValue4Field fieldIX;
-  private com.igormaznitsa.zxpoly.tracer.HexValue4Field fieldIY;
-  private com.igormaznitsa.zxpoly.tracer.HexValue4Field fieldPC;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldR;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegA;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegB;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegC;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegD;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegE;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegF;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegH;
-  private com.igormaznitsa.zxpoly.tracer.HexValue2Field fieldRegL;
-  private com.igormaznitsa.zxpoly.tracer.HexValue4Field fieldSP;
-  private javax.swing.JLabel jLabel1;
-  private javax.swing.JLabel jLabel10;
-  private javax.swing.JLabel jLabel11;
-  private javax.swing.JLabel jLabel12;
-  private javax.swing.JLabel jLabel13;
-  private javax.swing.JLabel jLabel14;
-  private javax.swing.JLabel jLabel15;
-  private javax.swing.JLabel jLabel16;
-  private javax.swing.JLabel jLabel17;
-  private javax.swing.JLabel jLabel18;
-  private javax.swing.JLabel jLabel19;
-  private javax.swing.JLabel jLabel2;
-  private javax.swing.JLabel jLabel20;
-  private javax.swing.JLabel jLabel21;
-  private javax.swing.JLabel jLabel22;
-  private javax.swing.JLabel jLabel3;
-  private javax.swing.JLabel jLabel4;
-  private javax.swing.JLabel jLabel5;
-  private javax.swing.JLabel jLabel6;
-  private javax.swing.JLabel jLabel7;
-  private javax.swing.JLabel jLabel8;
-  private javax.swing.JLabel jLabel9;
-  private javax.swing.JPanel jPanel3;
-  private javax.swing.JPanel panelAltRegSet;
-  private javax.swing.JPanel panelCommonRegisters;
-  private javax.swing.JPanel panelFlags;
-  private javax.swing.JPanel panelRegSet;
 
   public TraceCpuForm(final MainForm mainForm, final Motherboard motherboard,
                       final int moduleIndex) {
     super(mainForm.getGraphicsConfiguration());
-    initComponents();
-    this.moduleIndex = moduleIndex;
+
+    this.setLocation(mainForm.getLocation());
+
     this.mainForm = mainForm;
     this.motherboard = motherboard;
-    this.module = this.motherboard.getModules()[moduleIndex];
-    this.setTitle("Tracing module #" + moduleIndex);
+    this.moduleIndex = moduleIndex;
+    this.module = motherboard.getModules()[this.moduleIndex];
 
+    this.checkBoxC = new JCheckBox();
+    this.checkBoxF3 = new JCheckBox();
+    this.checkBoxF5 = new JCheckBox();
+    this.checkBoxH = new JCheckBox();
+    this.checkBoxIFF1 = new JCheckBox("IFF1");
+    this.checkBoxIFF2 = new JCheckBox("IFF2");
+    this.checkBoxN = new JCheckBox();
+    this.checkBoxPV = new JCheckBox();
+    this.checkBoxS = new JCheckBox();
+    this.checkBoxZ = new JCheckBox();
+    this.disasmList = new JList();
+    this.disasmList.setPreferredSize(new Dimension(
+        this.disasmList.getFontMetrics(this.disasmList.getFont())
+            .stringWidth(StringUtils.repeat('@', 24)), 128));
+
+    this.fieldAltRegA = new HexValue2Field();
+    this.fieldAltRegB = new HexValue2Field();
+    this.fieldAltRegC = new HexValue2Field();
+    this.fieldAltRegD = new HexValue2Field();
+    this.fieldAltRegE = new HexValue2Field();
+    this.fieldAltRegF = new HexValue2Field();
+    this.fieldAltRegH = new HexValue2Field();
+    this.fieldAltRegL = new HexValue2Field();
+    this.fieldIM = new HexValue2Field();
+    this.fieldI = new HexValue2Field();
+    this.fieldIX = new HexValue4Field();
+    this.fieldIY = new HexValue4Field();
+    this.fieldPC = new HexValue4Field();
+    this.fieldR = new HexValue2Field();
+    this.fieldRegA = new HexValue2Field();
+    this.fieldRegB = new HexValue2Field();
+    this.fieldRegC = new HexValue2Field();
+    this.fieldRegD = new HexValue2Field();
+    this.fieldRegE = new HexValue2Field();
+    this.fieldRegF = new HexValue2Field();
+    this.fieldRegH = new HexValue2Field();
+    this.fieldRegL = new HexValue2Field();
+    this.fieldSP = new HexValue4Field();
+
+    this.panelMainSet = this.makePanelMainSet();
+    this.panelAltSet = this.makePanelAltSet();
+    this.panelOthers = this.makePanelOthers();
+    this.panelFlags = this.makePanelFlags();
+
+    final JPanel mainPanel = new JPanel(new GridBagLayout());
+    final GridBagConstraints gbc = new GridBagConstraints();
+    gbc.fill = GridBagConstraints.BOTH;
+    gbc.anchor = GridBagConstraints.CENTER;
+    gbc.insets = new Insets(0, 0, 0, 0);
+    gbc.ipadx = 0;
+    gbc.ipady = 0;
+    gbc.weightx = 1;
+    gbc.weighty = 1;
+
+    final JPanel disasmPanel = new JPanel(new BorderLayout());
+    disasmPanel.add(this.disasmList, BorderLayout.CENTER);
+    disasmPanel.setBorder(new TitledBorder("Disassembler"));
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+    gbc.gridwidth = 1;
+    gbc.gridheight = 4;
+    gbc.weightx = 1000;
+    gbc.weighty = 1000;
+    gbc.fill = GridBagConstraints.BOTH;
+    mainPanel.add(disasmPanel, gbc);
+    gbc.weightx = 1;
+    gbc.weighty = 1;
+
+    gbc.gridx = 1;
+    gbc.gridy = 0;
+    gbc.gridwidth = 2;
+    gbc.gridheight = 1;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    mainPanel.add(this.panelFlags, gbc);
+
+    gbc.gridx = 1;
+    gbc.gridy = 1;
+    gbc.gridwidth = 1;
+    gbc.gridheight = 1;
+    gbc.fill = GridBagConstraints.BOTH;
+    mainPanel.add(this.panelMainSet, gbc);
+
+    gbc.gridx = 2;
+    gbc.gridy = 1;
+    gbc.gridwidth = 1;
+    gbc.gridheight = 1;
+    gbc.fill = GridBagConstraints.BOTH;
+    mainPanel.add(this.panelAltSet, gbc);
+
+    gbc.gridx = 1;
+    gbc.gridy = 2;
+    gbc.gridwidth = 2;
+    gbc.gridheight = 1;
+    gbc.weighty = 1;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    mainPanel.add(this.panelOthers, gbc);
+
+    gbc.gridx = 1;
+    gbc.gridy = 3;
+    gbc.gridwidth = 2;
+    gbc.gridheight = 1;
+    gbc.weighty = 1000;
+    gbc.fill = GridBagConstraints.BOTH;
+    mainPanel.add(Box.createVerticalGlue(), gbc);
+
+    final JButton buttonMemory = new JButton("Change memory");
+    buttonMemory.addActionListener(e ->
+        new MemoryDialog(this, true, this.module).setVisible(true));
+
+    final JButton buttonSetIFF1 = new JButton("Set IFF1");
+    buttonSetIFF1.addActionListener(e ->
+        this.module.getCpu().setIFF(true, true));
+
+    final JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    buttonsPanel.add(buttonMemory);
+    buttonsPanel.add(buttonSetIFF1);
+
+    gbc.gridx = 0;
+    gbc.gridy = 4;
+    gbc.gridwidth = 3;
+    gbc.gridheight = 1;
+    gbc.weighty = 1;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    mainPanel.add(buttonsPanel, gbc);
+
+    final JPanel contentPanel = new JPanel(new BorderLayout());
+    contentPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
+    contentPanel.add(mainPanel, BorderLayout.CENTER);
+
+    this.setTitle("CPU Module#" + this.moduleIndex);
+    this.setResizable(true);
     this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    this.setContentPane(contentPanel);
 
-    if (this.changeEnabled) {
-      this.changeEnabled = false;
-      setEnableForComponentsOfPanel(this.panelAltRegSet, this.changeEnabled);
-      setEnableForComponentsOfPanel(this.panelCommonRegisters, this.changeEnabled);
-      setEnableForComponentsOfPanel(this.panelFlags, this.changeEnabled);
-      setEnableForComponentsOfPanel(this.panelRegSet, this.changeEnabled);
-    }
+    this.pack();
 
-    this.setLocationByPlatform(true);
+    this.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowActivated(WindowEvent e) {
+        TraceCpuForm.this.mainForm.onTracerActivated(TraceCpuForm.this);
+      }
 
-    pack();
+      @Override
+      public void windowClosed(WindowEvent e) {
+        TraceCpuForm.this.mainForm.onTracerDeactivated(TraceCpuForm.this);
+      }
+    });
+
+
+  }
+
+  private static JLabel makeCntrLabel(final String text) {
+    final JLabel result = new JLabel(text);
+    result.setHorizontalAlignment(JLabel.CENTER);
+    return result;
   }
 
   private static void int2hex4(final StringBuilder buffer, final int value) {
@@ -139,704 +256,201 @@ public class TraceCpuForm extends javax.swing.JFrame implements MemoryAccessProv
     buffer.append(str);
   }
 
-  @SuppressWarnings("unchecked")
-  private void initComponents() {
-
-    panelFlags = new javax.swing.JPanel();
-    checkBoxS = new javax.swing.JCheckBox();
-    checkBoxZ = new javax.swing.JCheckBox();
-    checkBoxF5 = new javax.swing.JCheckBox();
-    checkBoxH = new javax.swing.JCheckBox();
-    checkBoxF3 = new javax.swing.JCheckBox();
-    checkBoxPV = new javax.swing.JCheckBox();
-    checkBoxN = new javax.swing.JCheckBox();
-    checkBoxC = new javax.swing.JCheckBox();
-    panelRegSet = new javax.swing.JPanel();
-    jLabel1 = new javax.swing.JLabel();
-    jLabel2 = new javax.swing.JLabel();
-    jLabel3 = new javax.swing.JLabel();
-    jLabel4 = new javax.swing.JLabel();
-    jLabel5 = new javax.swing.JLabel();
-    jLabel6 = new javax.swing.JLabel();
-    fieldRegA = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    fieldRegC = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    fieldRegD = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    fieldRegE = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    fieldRegB = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    fieldRegF = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    jLabel19 = new javax.swing.JLabel();
-    fieldRegH = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    jLabel20 = new javax.swing.JLabel();
-    fieldRegL = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    panelCommonRegisters = new javax.swing.JPanel();
-    fieldPC = new com.igormaznitsa.zxpoly.tracer.HexValue4Field();
-    jLabel7 = new javax.swing.JLabel();
-    fieldSP = new com.igormaznitsa.zxpoly.tracer.HexValue4Field();
-    jLabel8 = new javax.swing.JLabel();
-    jLabel9 = new javax.swing.JLabel();
-    fieldIX = new com.igormaznitsa.zxpoly.tracer.HexValue4Field();
-    jLabel10 = new javax.swing.JLabel();
-    fieldIY = new com.igormaznitsa.zxpoly.tracer.HexValue4Field();
-    jLabel11 = new javax.swing.JLabel();
-    jLabel12 = new javax.swing.JLabel();
-    fieldR = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    fieldIM = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    checkBoxIFF1 = new javax.swing.JCheckBox();
-    checkBoxIFF2 = new javax.swing.JCheckBox();
-    panelAltRegSet = new javax.swing.JPanel();
-    jLabel13 = new javax.swing.JLabel();
-    jLabel14 = new javax.swing.JLabel();
-    jLabel15 = new javax.swing.JLabel();
-    jLabel16 = new javax.swing.JLabel();
-    jLabel17 = new javax.swing.JLabel();
-    jLabel18 = new javax.swing.JLabel();
-    fieldAltRegA = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    fieldAltRegC = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    fieldAltRegD = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    fieldAltRegE = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    fieldAltRegB = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    fieldAltRegF = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    jLabel21 = new javax.swing.JLabel();
-    fieldAltRegH = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    jLabel22 = new javax.swing.JLabel();
-    fieldAltRegL = new com.igormaznitsa.zxpoly.tracer.HexValue2Field();
-    jPanel3 = new javax.swing.JPanel();
-    disasmList = new javax.swing.JList();
-    buttonMemory = new javax.swing.JButton();
-
-    setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-    setResizable(false);
-    addWindowListener(new java.awt.event.WindowAdapter() {
-      @Override
-      public void windowClosed(java.awt.event.WindowEvent evt) {
-        formWindowClosed(evt);
-      }
-
-      @Override
-      public void windowActivated(java.awt.event.WindowEvent evt) {
-        formWindowActivated(evt);
-      }
-    });
-
-    panelFlags.setBorder(javax.swing.BorderFactory.createTitledBorder("Flags"));
-
-    checkBoxS.setText("S");
-    checkBoxS.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    checkBoxS.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-    panelFlags.add(checkBoxS);
-
-    checkBoxZ.setText("Z");
-    checkBoxZ.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    checkBoxZ.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-    checkBoxZ.addActionListener(this::checkBoxZActionPerformed);
-    panelFlags.add(checkBoxZ);
-
-    checkBoxF5.setText("F5");
-    checkBoxF5.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    checkBoxF5.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-    panelFlags.add(checkBoxF5);
-
-    checkBoxH.setText("H");
-    checkBoxH.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    checkBoxH.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-    panelFlags.add(checkBoxH);
-
-    checkBoxF3.setText("F3");
-    checkBoxF3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    checkBoxF3.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-    panelFlags.add(checkBoxF3);
-
-    checkBoxPV.setText("P/V");
-    checkBoxPV.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    checkBoxPV.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-    panelFlags.add(checkBoxPV);
-
-    checkBoxN.setText("N");
-    checkBoxN.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    checkBoxN.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-    panelFlags.add(checkBoxN);
-
-    checkBoxC.setText("C");
-    checkBoxC.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    checkBoxC.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
-    panelFlags.add(checkBoxC);
-
-    panelRegSet.setBorder(javax.swing.BorderFactory.createTitledBorder("Reg.set"));
-
-    jLabel1.setText("A:");
-
-    jLabel2.setText("F:");
-
-    jLabel3.setText("B:");
-
-    jLabel4.setText("C:");
-
-    jLabel5.setText("D:");
-
-    jLabel6.setText("E:");
-
-    fieldRegA.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldRegA.setText("FF");
-    fieldRegA.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    fieldRegC.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldRegC.setText("FF");
-    fieldRegC.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    fieldRegD.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldRegD.setText("FF");
-    fieldRegD.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    fieldRegE.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldRegE.setText("FF");
-    fieldRegE.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    fieldRegB.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldRegB.setText("FF");
-    fieldRegB.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    fieldRegF.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldRegF.setText("FF");
-    fieldRegF.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    jLabel19.setText("H:");
-
-    fieldRegH.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldRegH.setText("FF");
-    fieldRegH.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    jLabel20.setText("L:");
-
-    fieldRegL.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldRegL.setText("FF");
-    fieldRegL.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    javax.swing.GroupLayout panelRegSetLayout = new javax.swing.GroupLayout(panelRegSet);
-    panelRegSet.setLayout(panelRegSetLayout);
-    panelRegSetLayout.setHorizontalGroup(
-        panelRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelRegSetLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(
-                    panelRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(panelRegSetLayout.createSequentialGroup()
-                            .addGroup(panelRegSetLayout
-                                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jLabel6)
-                                .addComponent(jLabel5)
-                                .addComponent(jLabel19)
-                                .addComponent(jLabel20))
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addGroup(panelRegSetLayout
-                                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(fieldRegD, javax.swing.GroupLayout.DEFAULT_SIZE, 35,
-                                    Short.MAX_VALUE)
-                                .addComponent(fieldRegE, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(fieldRegH, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(fieldRegL, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                        .addGroup(panelRegSetLayout.createSequentialGroup()
-                            .addGroup(panelRegSetLayout
-                                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jLabel2)
-                                .addComponent(jLabel1))
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addGroup(panelRegSetLayout
-                                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING,
-                                    false)
-                                .addComponent(fieldRegA, javax.swing.GroupLayout.DEFAULT_SIZE, 36,
-                                    Short.MAX_VALUE)
-                                .addComponent(fieldRegF, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                        .addGroup(panelRegSetLayout.createSequentialGroup()
-                            .addComponent(jLabel3)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(fieldRegB, javax.swing.GroupLayout.PREFERRED_SIZE, 41,
-                                javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(panelRegSetLayout.createSequentialGroup()
-                            .addComponent(jLabel4)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(fieldRegC, javax.swing.GroupLayout.PREFERRED_SIZE, 41,
-                                javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(24, Short.MAX_VALUE))
-    );
-
-    panelRegSetLayout
-        .linkSize(javax.swing.SwingConstants.HORIZONTAL, fieldRegA, fieldRegB, fieldRegC, fieldRegD,
-            fieldRegE, fieldRegF);
-
-    panelRegSetLayout.setVerticalGroup(
-        panelRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelRegSetLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(
-                    panelRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                        .addComponent(jLabel1)
-                        .addComponent(fieldRegA, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE,
-                            javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(
-                    panelRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                        .addComponent(jLabel2)
-                        .addComponent(fieldRegF, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE,
-                            javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(
-                    panelRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                        .addComponent(jLabel3)
-                        .addComponent(fieldRegB, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE,
-                            javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(
-                    panelRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                        .addComponent(jLabel4)
-                        .addComponent(fieldRegC, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE,
-                            javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(
-                    panelRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                        .addComponent(jLabel5)
-                        .addComponent(fieldRegD, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE,
-                            javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(
-                    panelRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                        .addComponent(jLabel6)
-                        .addComponent(fieldRegE, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE,
-                            javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(
-                    panelRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                        .addComponent(jLabel19)
-                        .addComponent(fieldRegH, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE,
-                            javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(
-                    panelRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                        .addComponent(jLabel20)
-                        .addComponent(fieldRegL, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE,
-                            javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-    );
-
-    panelCommonRegisters
-        .setBorder(javax.swing.BorderFactory.createTitledBorder("Common registers"));
-
-    fieldPC.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldPC.setText("FFFF");
-    fieldPC.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    jLabel7.setText("PC:");
-
-    fieldSP.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldSP.setText("FFFF");
-    fieldSP.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    jLabel8.setText("SP:");
-
-    jLabel9.setText("IX:");
-
-    fieldIX.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldIX.setText("FFFF");
-    fieldIX.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    jLabel10.setText("IY:");
-
-    fieldIY.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldIY.setText("FFFF");
-    fieldIY.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    jLabel11.setText("R:");
-
-    jLabel12.setText("I:");
-
-    fieldR.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldR.setText("FF");
-    fieldR.setToolTipText("");
-    fieldR.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    fieldIM.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldIM.setText("FF");
-    fieldIM.setToolTipText("");
-    fieldIM.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    checkBoxIFF1.setText("IFF1");
-
-    checkBoxIFF2.setText("IFF2");
-
-    javax.swing.GroupLayout panelCommonRegistersLayout =
-        new javax.swing.GroupLayout(panelCommonRegisters);
-    panelCommonRegisters.setLayout(panelCommonRegistersLayout);
-    panelCommonRegistersLayout.setHorizontalGroup(
-        panelCommonRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelCommonRegistersLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(panelCommonRegistersLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(panelCommonRegistersLayout.createSequentialGroup()
-                        .addComponent(checkBoxIFF1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(checkBoxIFF2))
-                    .addGroup(panelCommonRegistersLayout.createSequentialGroup()
-                        .addGroup(panelCommonRegistersLayout
-                            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(panelCommonRegistersLayout
-                                .createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addComponent(jLabel12)
-                                .addGroup(panelCommonRegistersLayout.createSequentialGroup()
-                                    .addComponent(jLabel7)
-                                    .addPreferredGap(
-                                        javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(fieldPC, javax.swing.GroupLayout.PREFERRED_SIZE,
-                                        58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(
-                                        javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(jLabel11)))
-                            .addGroup(panelCommonRegistersLayout.createSequentialGroup()
-                                .addGroup(panelCommonRegistersLayout
-                                    .createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(jLabel9)
-                                    .addComponent(jLabel8)
-                                    .addComponent(jLabel10))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(panelCommonRegistersLayout
-                                    .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(fieldIX, javax.swing.GroupLayout.PREFERRED_SIZE,
-                                        58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(fieldIY, javax.swing.GroupLayout.PREFERRED_SIZE,
-                                        58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(fieldSP, javax.swing.GroupLayout.PREFERRED_SIZE,
-                                        58, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(panelCommonRegistersLayout
-                            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(fieldR, javax.swing.GroupLayout.PREFERRED_SIZE, 67,
-                                javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(fieldIM, javax.swing.GroupLayout.PREFERRED_SIZE, 67,
-                                javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-    );
-    panelCommonRegistersLayout.setVerticalGroup(
-        panelCommonRegistersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelCommonRegistersLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(panelCommonRegistersLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(fieldPC, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel7)
-                    .addComponent(jLabel11)
-                    .addComponent(fieldR, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelCommonRegistersLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(fieldSP, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel8)
-                    .addComponent(jLabel12)
-                    .addComponent(fieldIM, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelCommonRegistersLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(fieldIX, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel9))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelCommonRegistersLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(fieldIY, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel10))
-                .addGap(18, 18, 18)
-                .addGroup(panelCommonRegistersLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(checkBoxIFF1)
-                    .addComponent(checkBoxIFF2))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-    );
-
-    panelAltRegSet.setBorder(javax.swing.BorderFactory.createTitledBorder("Alt.reg.set"));
-
-    jLabel13.setText("A:");
-
-    jLabel14.setText("F:");
-
-    jLabel15.setText("B:");
-
-    jLabel16.setText("C:");
-
-    jLabel17.setText("D:");
-
-    jLabel18.setText("E:");
-
-    fieldAltRegA.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldAltRegA.setText("FF");
-    fieldAltRegA.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    fieldAltRegC.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldAltRegC.setText("FF");
-    fieldAltRegC.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    fieldAltRegD.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldAltRegD.setText("FF");
-    fieldAltRegD.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    fieldAltRegE.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldAltRegE.setText("FF");
-    fieldAltRegE.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    fieldAltRegB.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldAltRegB.setText("FF");
-    fieldAltRegB.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    fieldAltRegF.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldAltRegF.setText("FF");
-    fieldAltRegF.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    jLabel21.setText("H:");
-
-    fieldAltRegH.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldAltRegH.setText("FF");
-    fieldAltRegH.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    jLabel22.setText("L:");
-
-    fieldAltRegL.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-    fieldAltRegL.setText("FF");
-    fieldAltRegL.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-
-    javax.swing.GroupLayout panelAltRegSetLayout = new javax.swing.GroupLayout(panelAltRegSet);
-    panelAltRegSet.setLayout(panelAltRegSetLayout);
-    panelAltRegSetLayout.setHorizontalGroup(
-        panelAltRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelAltRegSetLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(panelAltRegSetLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(panelAltRegSetLayout.createSequentialGroup()
-                        .addGroup(panelAltRegSetLayout
-                            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel18)
-                            .addComponent(jLabel17)
-                            .addComponent(jLabel21)
-                            .addComponent(jLabel22))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(panelAltRegSetLayout
-                            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(fieldAltRegD, javax.swing.GroupLayout.DEFAULT_SIZE, 35,
-                                Short.MAX_VALUE)
-                            .addComponent(fieldAltRegE, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(fieldAltRegH, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(fieldAltRegL, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(panelAltRegSetLayout.createSequentialGroup()
-                        .addGroup(panelAltRegSetLayout
-                            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel14)
-                            .addComponent(jLabel13))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(panelAltRegSetLayout
-                            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(fieldAltRegA, javax.swing.GroupLayout.DEFAULT_SIZE, 36,
-                                Short.MAX_VALUE)
-                            .addComponent(fieldAltRegF, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(panelAltRegSetLayout.createSequentialGroup()
-                        .addComponent(jLabel15)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(fieldAltRegB, javax.swing.GroupLayout.PREFERRED_SIZE, 41,
-                            javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(panelAltRegSetLayout.createSequentialGroup()
-                        .addComponent(jLabel16)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(fieldAltRegC, javax.swing.GroupLayout.PREFERRED_SIZE, 41,
-                            javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(24, Short.MAX_VALUE))
-    );
-
-    panelAltRegSetLayout
-        .linkSize(javax.swing.SwingConstants.HORIZONTAL, fieldAltRegA, fieldAltRegB, fieldAltRegC,
-            fieldAltRegD, fieldAltRegE, fieldAltRegF);
-
-    panelAltRegSetLayout.setVerticalGroup(
-        panelAltRegSetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelAltRegSetLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(panelAltRegSetLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(jLabel13)
-                    .addComponent(fieldAltRegA, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelAltRegSetLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(jLabel14)
-                    .addComponent(fieldAltRegF, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelAltRegSetLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(jLabel15)
-                    .addComponent(fieldAltRegB, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelAltRegSetLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(jLabel16)
-                    .addComponent(fieldAltRegC, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelAltRegSetLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(jLabel17)
-                    .addComponent(fieldAltRegD, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelAltRegSetLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(jLabel18)
-                    .addComponent(fieldAltRegE, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelAltRegSetLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(jLabel21)
-                    .addComponent(fieldAltRegH, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelAltRegSetLayout
-                    .createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(jLabel22)
-                    .addComponent(fieldAltRegL, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-    );
-
-    jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Disassembled"));
-    jPanel3.setLayout(new java.awt.BorderLayout());
-
-    disasmList.setFont(new java.awt.Font("Courier 10 Pitch", 0, 14)); // NOI18N
-    jPanel3.add(disasmList, java.awt.BorderLayout.CENTER);
-
-    buttonMemory.setText("Memory");
-    buttonMemory.addActionListener(this::buttonMemoryActionPerformed);
-
-    javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-    getContentPane().setLayout(layout);
-    layout.setHorizontalGroup(
-        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(5, 5, 5)
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 356,
-                    javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(panelFlags, javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(panelCommonRegisters, javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING,
-                        layout.createSequentialGroup()
-                            .addGap(0, 0, Short.MAX_VALUE)
-                            .addGroup(layout
-                                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING,
-                                    layout.createSequentialGroup()
-                                        .addComponent(panelRegSet,
-                                            javax.swing.GroupLayout.PREFERRED_SIZE,
-                                            javax.swing.GroupLayout.DEFAULT_SIZE,
-                                            javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(
-                                            javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(panelAltRegSet,
-                                            javax.swing.GroupLayout.PREFERRED_SIZE,
-                                            javax.swing.GroupLayout.DEFAULT_SIZE,
-                                            javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addComponent(buttonMemory,
-                                    javax.swing.GroupLayout.Alignment.TRAILING))))
-                .addGap(5, 5, 5))
-    );
-
-    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, panelAltRegSet, panelRegSet);
-
-    layout.setVerticalGroup(
-        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(panelFlags, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE,
-                            javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout
-                            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(panelRegSet, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(panelAltRegSet, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(panelCommonRegisters, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE,
-                            javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED,
-                            javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(buttonMemory)))
-                .addGap(13, 13, 13))
-    );
-
-    pack();
+  private JPanel makePanelFlags() {
+    final JPanel result = new JPanel(new GridLayout(2, 8, 8, 8));
+
+    result.setBorder(new TitledBorder("Flags"));
+
+    result.add(makeCntrLabel("S"));
+    result.add(makeCntrLabel("Z"));
+    result.add(makeCntrLabel("F5"));
+    result.add(makeCntrLabel("H"));
+    result.add(makeCntrLabel("F3"));
+    result.add(makeCntrLabel("P/V"));
+    result.add(makeCntrLabel("N"));
+    result.add(makeCntrLabel("C"));
+
+    this.checkBoxS.setHorizontalAlignment(JCheckBox.CENTER);
+    this.checkBoxC.setHorizontalAlignment(JCheckBox.CENTER);
+    this.checkBoxF3.setHorizontalAlignment(JCheckBox.CENTER);
+    this.checkBoxF5.setHorizontalAlignment(JCheckBox.CENTER);
+    this.checkBoxH.setHorizontalAlignment(JCheckBox.CENTER);
+    this.checkBoxN.setHorizontalAlignment(JCheckBox.CENTER);
+    this.checkBoxZ.setHorizontalAlignment(JCheckBox.CENTER);
+    this.checkBoxPV.setHorizontalAlignment(JCheckBox.CENTER);
+
+    result.add(this.checkBoxS);
+    result.add(this.checkBoxZ);
+    result.add(this.checkBoxF5);
+    result.add(this.checkBoxH);
+    result.add(this.checkBoxF3);
+    result.add(this.checkBoxPV);
+    result.add(this.checkBoxN);
+    result.add(this.checkBoxC);
+
+    result.doLayout();
+
+    return result;
   }
 
-  private void checkBoxZActionPerformed(java.awt.event.ActionEvent evt) {
+  private JPanel makePanelOthers() {
+    final JPanel result = new JPanel(new GridBagLayout());
+    result.setBorder(new TitledBorder("Others"));
+
+    final GridBagConstraints gbc = new GridBagConstraints();
+    gbc.fill = GridBagConstraints.NONE;
+    gbc.gridx = 0;
+    gbc.gridy = GridBagConstraints.RELATIVE;
+    gbc.anchor = GridBagConstraints.EAST;
+
+    result.add(new JLabel("PC:"), gbc);
+    result.add(new JLabel("SP:"), gbc);
+    result.add(new JLabel("IX:"), gbc);
+    result.add(new JLabel("IY:"), gbc);
+
+    gbc.gridx = 1;
+    gbc.gridy = GridBagConstraints.RELATIVE;
+    gbc.anchor = GridBagConstraints.WEST;
+
+    result.add(this.fieldPC, gbc);
+    result.add(this.fieldSP, gbc);
+    result.add(this.fieldIX, gbc);
+    result.add(this.fieldIY, gbc);
+
+    gbc.gridx = 2;
+    gbc.gridy = GridBagConstraints.RELATIVE;
+    gbc.anchor = GridBagConstraints.EAST;
+    gbc.insets = new Insets(0, 16, 0, 0);
+
+    result.add(new JLabel("R:"), gbc);
+    result.add(new JLabel("I:"), gbc);
+    result.add(new JLabel("IM:"), gbc);
+
+    gbc.gridx = 3;
+    gbc.gridy = GridBagConstraints.RELATIVE;
+    gbc.anchor = GridBagConstraints.WEST;
+    gbc.insets = new Insets(0, 0, 0, 0);
+
+    result.add(this.fieldR, gbc);
+    result.add(this.fieldI, gbc);
+    result.add(this.fieldI, gbc);
+    result.add(this.fieldIM, gbc);
+
+    gbc.gridx = 0;
+    gbc.gridy = 4;
+    gbc.gridwidth = 4;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+
+    final JPanel flagsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    flagsPanel.add(this.checkBoxIFF1);
+    flagsPanel.add(this.checkBoxIFF2);
+
+    result.add(flagsPanel, gbc);
+
+    return result;
   }
 
-  private void formWindowClosed(java.awt.event.WindowEvent evt) {
-    this.mainForm.onTracerDeactivated(this);
+  private JPanel makePanelAltSet() {
+    final JPanel result = new JPanel(new GridBagLayout());
+    result.setBorder(new TitledBorder("Alt set"));
+
+    final GridBagConstraints gbc = new GridBagConstraints();
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+
+    gbc.gridx = 0;
+    gbc.gridy = GridBagConstraints.RELATIVE;
+    gbc.fill = GridBagConstraints.BOTH;
+    gbc.anchor = GridBagConstraints.EAST;
+
+    result.add(new JLabel("A':"), gbc);
+    result.add(new JLabel("B':"), gbc);
+    result.add(new JLabel("C':"), gbc);
+    result.add(new JLabel("D':"), gbc);
+    result.add(new JLabel("E':"), gbc);
+    result.add(new JLabel("H':"), gbc);
+    result.add(new JLabel("L':"), gbc);
+
+    gbc.gridx = 1;
+    gbc.gridy = GridBagConstraints.RELATIVE;
+    gbc.fill = GridBagConstraints.BOTH;
+    gbc.anchor = GridBagConstraints.WEST;
+
+    result.add(this.fieldAltRegA, gbc);
+    result.add(this.fieldAltRegB, gbc);
+    result.add(this.fieldAltRegC, gbc);
+    result.add(this.fieldAltRegD, gbc);
+    result.add(this.fieldAltRegE, gbc);
+    result.add(this.fieldAltRegH, gbc);
+    result.add(this.fieldAltRegL, gbc);
+    return result;
   }
 
-  private void formWindowActivated(java.awt.event.WindowEvent evt) {
-    this.mainForm.onTracerActivated(this);
-  }
+  private JPanel makePanelMainSet() {
+    final JPanel result = new JPanel(new GridBagLayout());
+    result.setBorder(new TitledBorder("Main set"));
 
-  private void buttonMemoryActionPerformed(java.awt.event.ActionEvent evt) {
-    new MemoryDialog(this, true, this.module).setVisible(true);
+    final GridBagConstraints gbc = new GridBagConstraints();
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+
+    gbc.gridx = 0;
+    gbc.gridy = GridBagConstraints.RELATIVE;
+    gbc.fill = GridBagConstraints.BOTH;
+    gbc.anchor = GridBagConstraints.EAST;
+
+    result.add(new JLabel("A:"), gbc);
+    result.add(new JLabel("B:"), gbc);
+    result.add(new JLabel("C:"), gbc);
+    result.add(new JLabel("D:"), gbc);
+    result.add(new JLabel("E:"), gbc);
+    result.add(new JLabel("H:"), gbc);
+    result.add(new JLabel("L:"), gbc);
+
+    gbc.gridx = 1;
+    gbc.gridy = GridBagConstraints.RELATIVE;
+    gbc.fill = GridBagConstraints.BOTH;
+    gbc.anchor = GridBagConstraints.WEST;
+
+    result.add(this.fieldRegA, gbc);
+    result.add(this.fieldRegB, gbc);
+    result.add(this.fieldRegC, gbc);
+    result.add(this.fieldRegD, gbc);
+    result.add(this.fieldRegE, gbc);
+    result.add(this.fieldRegH, gbc);
+    result.add(this.fieldRegL, gbc);
+    return result;
   }
 
   public int getModuleIndex() {
     return this.moduleIndex;
   }
 
+  public void refresh() {
+    final int pc = this.module.getCpu().getPC();
+
+    if (this.module.isActiveRegistersAsMemorySource()) {
+      final DefaultListModel<String> model = new DefaultListModel<>();
+      model.addElement("Registers as data source!");
+      this.disasmList.setModel(model);
+    } else {
+      final int lines = this.disasmList.getHeight() / this.disasmList.getFont().getSize();
+
+      final List<Z80Instruction> instructions = Z80Disasm.decodeList(this, null, pc, lines);
+      final DefaultListModel<String> model = new DefaultListModel<>();
+      int address = pc;
+
+      model.addElement(this.makeCodeLine(this, pc - 9, 8));
+
+      for (final Z80Instruction i : instructions) {
+        model.addElement(this.makeInstructionLine(i, address));
+        address += i == null ? 1 : i.getLength();
+      }
+
+      this.disasmList.setModel(model);
+      this.disasmList.setSelectedIndex(1);
+
+    }
+    this.refreshRegisterValue();
+  }
 
   private String makeCodeLine(
       final MemoryAccessProvider provider,
@@ -865,32 +479,19 @@ public class TraceCpuForm extends javax.swing.JFrame implements MemoryAccessProv
     return result.toString();
   }
 
-  public void refreshViewState() {
-    final int pc = this.module.getCpu().getPC();
+  private String makeInstructionLine(final Z80Instruction instruction, final int address) {
+    this.buffer.setLength(0);
 
-    if (this.module.isActiveRegistersAsMemorySource()) {
-      final DefaultListModel model = new DefaultListModel();
-      model.addElement("Registers as data source!");
-      this.disasmList.setModel(model);
+    int2hex4(this.buffer, address);
+    this.buffer.append("    ");
+
+    if (instruction == null) {
+      this.buffer.append("---");
     } else {
-      final List<Z80Instruction> instructions = Z80Disasm.decodeList(this, null, pc, 28);
-
-      final DefaultListModel model = new DefaultListModel();
-
-      int address = pc;
-
-      model.addElement(makeCodeLine(this, pc - 9, 8));
-
-      for (final Z80Instruction i : instructions) {
-        model.addElement(makeInstructionLine(i, address));
-        address += i == null ? 1 : i.getLength();
-      }
-
-      this.disasmList.setModel(model);
-      this.disasmList.setSelectedIndex(1);
-
+      this.buffer.append(instruction.decode(this, address, address));
     }
-    refreshRegisterValue();
+
+    return this.buffer.toString();
   }
 
   private void setEnableForComponentsOfPanel(final JPanel panel, final boolean flag) {
@@ -899,17 +500,20 @@ public class TraceCpuForm extends javax.swing.JFrame implements MemoryAccessProv
         ((AbstractHexValueField) c).setEditable(flag);
       } else if (c instanceof JCheckBox) {
         c.setEnabled(flag);
+      } else if (c instanceof JPanel) {
+        this.setEnableForComponentsOfPanel((JPanel) c, flag);
       }
+
     }
   }
 
   private void refreshRegisterValue() {
     if (this.changeEnabled) {
       this.changeEnabled = false;
-      setEnableForComponentsOfPanel(this.panelAltRegSet, this.changeEnabled);
-      setEnableForComponentsOfPanel(this.panelCommonRegisters, this.changeEnabled);
+      setEnableForComponentsOfPanel(this.panelAltSet, this.changeEnabled);
+      setEnableForComponentsOfPanel(this.panelOthers, this.changeEnabled);
       setEnableForComponentsOfPanel(this.panelFlags, this.changeEnabled);
-      setEnableForComponentsOfPanel(this.panelRegSet, this.changeEnabled);
+      setEnableForComponentsOfPanel(this.panelMainSet, this.changeEnabled);
     }
 
     final Z80 cpu = this.module.getCpu();
@@ -917,7 +521,8 @@ public class TraceCpuForm extends javax.swing.JFrame implements MemoryAccessProv
     this.fieldSP.setValue(cpu.getSP());
     this.fieldIX.setValue(cpu.getRegister(Z80.REG_IX));
     this.fieldIY.setValue(cpu.getRegister(Z80.REG_IY));
-    this.fieldIM.setValue(cpu.getRegister(Z80.REG_I));
+    this.fieldI.setValue(cpu.getRegister(Z80.REG_I));
+    this.fieldIM.setValue(cpu.getIM());
     this.fieldR.setValue(cpu.getRegister(Z80.REG_R));
 
     final int regf = cpu.getRegister(Z80.REG_F);
@@ -954,23 +559,10 @@ public class TraceCpuForm extends javax.swing.JFrame implements MemoryAccessProv
 
   }
 
-  private String makeInstructionLine(final Z80Instruction instruction, final int address) {
-    this.buffer.setLength(0);
-
-    int2hex4(this.buffer, address);
-    this.buffer.append("    ");
-
-    if (instruction == null) {
-      this.buffer.append("---");
-    } else {
-      this.buffer.append(instruction.decode(this, address, address));
-    }
-
-    return this.buffer.toString();
-  }
 
   @Override
   public byte readAddress(final int address) {
     return this.module.readMemory(this.module.getCpu(), 0, address & 0xFFFF, false, false);
   }
+
 }

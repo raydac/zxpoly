@@ -17,29 +17,49 @@
 
 package com.igormaznitsa.zxpoly.tracer;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Objects;
 import javax.swing.JFormattedTextField;
 
 public abstract class AbstractHexValueField extends JFormattedTextField {
 
   protected static final String ALLOWED_CHARS = "0123456789abcdefABCDEF";
   protected int intValue;
+  private Color lastForeground;
+
+  private Color changeColor = Color.DARK_GRAY;
 
   public AbstractHexValueField() {
     super();
+    this.setForeground(Color.LIGHT_GRAY);
+
+    this.lastForeground = this.getForeground();
+    this.setFont(new Font(Font.MONOSPACED, Font.PLAIN, this.getFont().getSize()));
 
     this.addKeyListener(new KeyAdapter() {
 
       @Override
       public void keyTyped(final KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_DELETE || e.getKeyCode() == KeyEvent.VK_BACK_SPACE || ALLOWED_CHARS.indexOf(e.getKeyChar()) < 0) {
+        if (e.getKeyCode() == KeyEvent.VK_DELETE || e.getKeyCode() == KeyEvent.VK_BACK_SPACE ||
+            ALLOWED_CHARS.indexOf(e.getKeyChar()) < 0) {
           e.consume();
         }
       }
 
     });
+
+
+  }
+
+  public Color getChangeColor() {
+    return this.changeColor;
+  }
+
+  public void setChangeColor(Color color) {
+    this.changeColor = Objects.requireNonNull(color);
   }
 
   public void setValue(int value) {
@@ -47,10 +67,11 @@ public abstract class AbstractHexValueField extends JFormattedTextField {
 
     if (this.intValue != value) {
       this.intValue = value;
-      this.setFont(getFont().deriveFont(Font.BOLD));
+      this.lastForeground = this.getForeground();
+      this.setForeground(this.changeColor);
       refreshTextValue();
     } else {
-      this.setFont(getFont().deriveFont(Font.PLAIN));
+      this.setForeground(this.lastForeground);
     }
   }
 
