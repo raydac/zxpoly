@@ -30,11 +30,10 @@ public abstract class AbstractHexValueField extends JFormattedTextField {
   protected int intValue;
   private Color lastForeground;
 
-  private Color changeColor = Color.DARK_GRAY;
+  private Color changeColor = Color.RED;
 
   public AbstractHexValueField() {
     super();
-    this.setForeground(Color.LIGHT_GRAY);
 
     this.lastForeground = this.getForeground();
     this.setFont(new Font(Font.MONOSPACED, Font.PLAIN, this.getFont().getSize()));
