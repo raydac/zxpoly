@@ -426,7 +426,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     SwingUtilities.invokeLater(() -> {
       final Thread mainCpuThread = new Thread(this, "zx-poly-main-cpu-thread");
-      mainCpuThread.setPriority(Thread.MAX_PRIORITY);
       mainCpuThread.setDaemon(true);
       mainCpuThread.setUncaughtExceptionHandler((t, e) -> {
         LOGGER.severe("Detected exception in main thread, stopping application, see logs");

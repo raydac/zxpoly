@@ -19,13 +19,9 @@ package com.igormaznitsa.zxpoly.components.snd;
 
 import static java.lang.Long.toHexString;
 import static java.lang.String.format;
-import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
 
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
@@ -54,16 +50,6 @@ public final class Beeper {
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
     public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int level) {
-    }
-
-    @Override
-    public float getMasterGain() {
-      return -1.0f;
-    }
-
-    @Override
-    public void setMasterGain(float valueInDb) {
-
     }
 
     @Override
@@ -115,7 +101,6 @@ public final class Beeper {
   public void setChannelValue(final int channel, final int level256) {
     this.channels =
         (this.channels & ~(0xFFL << (8 * channel))) | ((long) (level256 & 0XFF) << (8 * channel));
-    ;
   }
 
   public void reset() {
@@ -160,10 +145,6 @@ public final class Beeper {
 
     void start();
 
-    float getMasterGain();
-
-    void setMasterGain(float valueInDb);
-
     void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int level);
 
     void dispose();
@@ -186,7 +167,6 @@ public final class Beeper {
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
       this.thread = new Thread(this, "zxp-beeper-thread-" + toHexString(System.nanoTime()));
-      this.thread.setPriority(Thread.MAX_PRIORITY - 1);
       this.thread.setDaemon(true);
     }
 
@@ -196,43 +176,6 @@ public final class Beeper {
       if (this.thread != null && this.working) {
         this.thread.start();
       }
-    }
-
-    private void initMasterGain() {
-      final FloatControl gainControl = this.gainControl.get();
-      if (gainControl != null) {
-        gainControl.setValue(-10.0f);
-      }
-    }
-
-    @Override
-    public float getMasterGain() {
-      final FloatControl gainControl = this.gainControl.get();
-      if (gainControl == null || !this.working) {
-        return -1.0f;
-      } else {
-        return gainControl.getValue();
-      }
-    }
-
-    @Override
-    public void setMasterGain(final float valueInDb) {
-      final FloatControl gainControl = this.gainControl.get();
-      if (gainControl != null && this.working) {
-        gainControl.setValue(
-            Math.max(gainControl.getMinimum(), Math.min(gainControl.getMaximum(), valueInDb)));
-      }
-    }
-
-    private String makeFileNameForFormat(final AudioFormat format) {
-      final DateFormat dataFormat = new SimpleDateFormat("hhmmss");
-
-      return format("bpr_hz%d_ch%d_%s_%s_%s.raw",
-          (int) format.getSampleRate(),
-          format.getChannels(),
-          format.getEncoding() == PCM_SIGNED ? "SGN" : "USGN",
-          format.isBigEndian() ? "bge" : "lte",
-          dataFormat.format(new Date()));
     }
 
     private final SndBufferContainer sndBuffer = new SndBufferContainer();
@@ -254,7 +197,7 @@ public final class Beeper {
       }
     }
 
-    private synchronized void flushDataIntoLine(final byte[] data) {
+    private synchronized void writeToLine(final byte[] data) {
       this.sourceDataLine.write(data, 0, Math.min(this.sourceDataLine.available(), data.length));
     }
 
@@ -282,7 +225,6 @@ public final class Beeper {
         } else {
           LOGGER.warning("Master gain control is not supported");
         }
-        this.initMasterGain();
 
         LOGGER.info(format(
             "Sound line opened, buffer size is %d byte(s)",
@@ -301,7 +243,7 @@ public final class Beeper {
         while (this.working && !Thread.currentThread().isInterrupted()) {
           try {
             final byte[] dataBlock = soundDataQueue.take();
-            this.flushDataIntoLine(dataBlock);
+            this.writeToLine(dataBlock);
           } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
           }
