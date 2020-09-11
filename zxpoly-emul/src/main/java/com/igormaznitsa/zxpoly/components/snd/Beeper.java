@@ -242,17 +242,20 @@ public final class Beeper {
         LOGGER.log(Level.WARNING, "Error in sound line work: " + ex);
       } finally {
         try {
-          this.sourceDataLine.stop();
-          LOGGER.info("Line stopped");
-        } catch (Exception ex) {
-          LOGGER.warning("Exception in source line stop: " + ex.getMessage());
+          this.sourceDataLine.drain();
         } finally {
           try {
-            this.sourceDataLine.flush();
-            this.sourceDataLine.close();
-            LOGGER.info("Line closed");
+            this.sourceDataLine.stop();
+            LOGGER.info("Line stopped");
           } catch (Exception ex) {
-            LOGGER.warning("Exception in source line close: " + ex.getMessage());
+            LOGGER.warning("Exception in source line stop: " + ex.getMessage());
+          } finally {
+            try {
+              this.sourceDataLine.close();
+              LOGGER.info("Line closed");
+            } catch (Exception ex) {
+              LOGGER.warning("Exception in source line close: " + ex.getMessage());
+            }
           }
         }
         LOGGER.info("Thread stopped");

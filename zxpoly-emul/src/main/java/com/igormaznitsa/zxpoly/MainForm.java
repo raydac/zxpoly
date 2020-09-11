@@ -1573,7 +1573,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsEnableTrapMouse.addActionListener(this::menuOptionsEnableTrapMouseActionPerformed);
     menuOptions.add(menuOptionsEnableTrapMouse);
 
-    menuOptionsEnableSpeaker.setText("Beeper");
+    menuOptionsEnableSpeaker.setText("Sound");
     menuOptionsEnableSpeaker.setToolTipText("Turn on beeper sound");
     menuOptionsEnableSpeaker.setIcon(new ImageIcon(
         getClass().getResource("/com/igormaznitsa/zxpoly/icons/speaker.png"))); // NOI18N
