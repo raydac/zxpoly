@@ -22,6 +22,7 @@ import static com.igormaznitsa.z80.Utils.toHexByte;
 import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
 import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
 import static javax.swing.KeyStroke.getKeyStroke;
+import static org.apache.commons.lang3.StringUtils.repeat;
 
 
 import com.igormaznitsa.z80.Z80;
@@ -127,7 +128,6 @@ import javax.swing.event.MenuListener;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 
 public final class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
 
@@ -476,20 +476,23 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     final JComboBox<SourceSoundPort> comboBox =
         new JComboBox<>(variants.toArray(new SourceSoundPort[0]));
-    comboBox.setPrototypeDisplayValue(
-        new SourceSoundPort(null, StringUtils.repeat('#', 40), null));
     comboBox.addActionListener(x -> {
       comboBox.setToolTipText(comboBox.getSelectedItem().toString());
     });
     comboBox.setToolTipText(comboBox.getSelectedItem().toString());
 
+    int maxStringLen = 0;
     int index = -1;
     for (int i = 0; i < comboBox.getItemCount(); i++) {
-      if (comboBox.getItemAt(i).toString().equals(previouslySelectedDevice)) {
+      final String str = comboBox.getItemAt(i).toString();
+      if (str.equals(previouslySelectedDevice)) {
         index = i;
-        break;
       }
+      maxStringLen = Math.max(maxStringLen, str.length());
     }
+
+    comboBox.setPrototypeDisplayValue(
+        new SourceSoundPort(null, repeat('#', Math.min(40, maxStringLen)), null));
 
     comboBox.setSelectedIndex(Math.max(0, index));
 
