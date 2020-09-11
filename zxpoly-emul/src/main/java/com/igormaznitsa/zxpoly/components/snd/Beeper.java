@@ -165,7 +165,6 @@ public final class Beeper {
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
       this.thread = new Thread(this, "zxp-beeper-thread-" + toHexString(System.nanoTime()));
-      this.thread.setPriority(Thread.MAX_PRIORITY - 1);
       this.thread.setDaemon(true);
     }
 
@@ -231,11 +230,9 @@ public final class Beeper {
         LOGGER.info("Sound line started");
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
-          try {
-            final byte[] dataBlock = soundDataQueue.take();
+          final byte[] dataBlock = soundDataQueue.poll();
+          if (dataBlock != null) {
             this.writeToLine(dataBlock);
-          } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
           }
         }
         LOGGER.info("Main loop completed");
