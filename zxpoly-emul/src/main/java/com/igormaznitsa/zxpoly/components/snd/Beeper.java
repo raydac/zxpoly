@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.SourceDataLine;
 
@@ -158,7 +157,6 @@ public final class Beeper {
         new ArrayBlockingQueue<>(SndBufferContainer.BUFFERS_NUMBER);
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
-    private final AtomicReference<FloatControl> gainControl = new AtomicReference<>();
     private volatile boolean working = true;
 
     private InternalBeeper(final SourceSoundPort sourceSoundPort) {
@@ -216,15 +214,6 @@ public final class Beeper {
         this.sourceDataLine
             .open(SndBufferContainer.AUDIO_FORMAT,
                 SndBufferContainer.SND_BUFFER_INT_LEN * SndBufferContainer.BUFFERS_NUMBER);
-        if (this.sourceDataLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
-          final FloatControl gainControl =
-              (FloatControl) this.sourceDataLine.getControl(FloatControl.Type.MASTER_GAIN);
-          LOGGER.info(format("Got master gain control %f..%f", gainControl.getMinimum(),
-              gainControl.getMaximum()));
-          this.gainControl.set(gainControl);
-        } else {
-          LOGGER.warning("Master gain control is not supported");
-        }
 
         LOGGER.info(format(
             "Sound line opened, buffer size is %d byte(s)",

@@ -27,7 +27,8 @@ final class SndBufferContainer {
   private static final int SAMPLES_PER_INT = SND_FREQ / 50;
   public static final int SND_BUFFER_INT_LEN =
       SAMPLES_PER_INT * AUDIO_FORMAT.getChannels() * AUDIO_FORMAT.getSampleSizeInBits() / 8;
-  public static final int SND_BUFFER_LEN = SND_BUFFER_INT_LEN + (SND_BUFFER_INT_LEN / 4);
+  public static final int SND_BUFFER_LEN =
+      SND_BUFFER_INT_LEN + (((SND_BUFFER_INT_LEN / 4 + 3) >> 2) << 2);
   private final byte[][] allSndBuffers;
   private byte[] soundBuffer;
   private int bufferIndex;
