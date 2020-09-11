@@ -127,6 +127,7 @@ import javax.swing.event.MenuListener;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public final class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
 
@@ -476,7 +477,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     final JComboBox<SourceSoundPort> comboBox =
         new JComboBox<>(variants.toArray(new SourceSoundPort[0]));
     comboBox.setPrototypeDisplayValue(
-        new SourceSoundPort(null, "some very long device name to be shown", null));
+        new SourceSoundPort(null, StringUtils.repeat('#', 40), null));
     comboBox.addActionListener(x -> {
       comboBox.setToolTipText(comboBox.getSelectedItem().toString());
     });
