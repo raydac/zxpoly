@@ -7,6 +7,20 @@
 
 # Changelog
 
+__2.1.0 (12-sep-2020)__
+ - improved internal timing
+ - base sound synthesizer frequency increased to 48000 Hz  
+ - added item `Kempston mouse allowed` into `Preferences`, by default active
+ - added item `Default ZX128` into `Preferences` to activate ZXMode just on start of the emulator
+ - __improved decode of `#7FFD` port in ZX-mode to increase compatibility__
+ - added support of loading ROM from local `bootstrap.rom` file placed in emulator folder
+ - __added support of TurboSound (NedoPC version)__
+ - embedded GraalVM updated to 20.2.0
+ - __improved Z80 emulation__
+ - __improved emulation of AY8910__ 
+ - improved decoding of AY8910 port
+ - refactoring
+
 - __2.0.7 (16-aug-2020)__
   - added support for AY-3-8910
   - added video filters [#1](https://github.com/raydac/zxpoly/issues/1)
@@ -14,15 +28,9 @@
   - added explicit menu items to scale screen
   - minor bugfixing and refactoring
 
-- __2.0.6 (13-jun-2020)__
-  - minor improvements in Spec256 emulation
-  - added support of POK trainers
-  - added support of Spec256 container export into editor
-  - added dialog to choose sound device for beeper if several devices detected
-  - GraalVM CE updated to 20.1.0
-  - improved ubuntu desktop icon script
-  - refactoring
-  - added MPEG TS streaming, requires [FFMpeg](https://ffmpeg.org/) (beta)
+full [change log](changelog.txt)
+
+__NB! The emulator has been developed as proof of concept of ZX-Poly and by default it starts in ZX-Poly mode, if you need ZX-Spectrum 128 mode then activate it through options!__
  
 # Introduction
 I am a ZX-Spectrum fan since 1989. ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from mono-system to poly-system.   
