@@ -21,7 +21,7 @@ __2.1.0 (12-sep-2020)__
  - improved decoding of AY8910 port
  - refactoring
 
-- __2.0.7 (16-aug-2020)__
+__2.0.7 (16-aug-2020)__
   - added support for AY-3-8910
   - added video filters [#1](https://github.com/raydac/zxpoly/issues/1)
   - added support of Covox on port #FB
