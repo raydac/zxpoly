@@ -79,6 +79,7 @@ public abstract class AbstractTcpSingleThreadServer {
 
   public void start() {
     final Thread thread = new Thread(this::doWork, this.id + '-' + this.hashCode());
+    thread.setPriority(Thread.MAX_PRIORITY - 1);
     thread.setDaemon(true);
     if (this.currentThread.compareAndSet(null, thread)) {
       this.stopped = false;
@@ -124,11 +125,11 @@ public abstract class AbstractTcpSingleThreadServer {
         try {
           socket = serverSocket.accept();
           socket.setSoLinger(false, 0);
-          socket.setSoTimeout((int)TimeUnit.SECONDS.toMillis(5));
+          socket.setSoTimeout((int) TimeUnit.SECONDS.toMillis(5));
           socket.setReuseAddress(true);
           socket.setTcpNoDelay(true);
           socket.setKeepAlive(true);
-          socket.setPerformancePreferences(0,1, 0);
+          socket.setPerformancePreferences(0, 1, 0);
         } catch (Exception ex) {
           this.listeners.forEach(x -> x.onClientError(this, ex));
           break;
