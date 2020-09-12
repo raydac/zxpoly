@@ -7,12 +7,14 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AbstractTcpSingleThreadServer {
-  protected final PreemptiveBuffer buffer;
+  protected final BlockingQueue<byte[]> buffer;
 
   public String getId() {
     return this.id;
@@ -58,7 +60,7 @@ public abstract class AbstractTcpSingleThreadServer {
       final int port
   ) {
     this.id = id;
-    this.buffer = new PreemptiveBuffer(bufferSize);
+    this.buffer = new ArrayBlockingQueue<>(bufferSize);
     this.address = address;
     this.port = port;
   }
@@ -81,13 +83,11 @@ public abstract class AbstractTcpSingleThreadServer {
     if (this.currentThread.compareAndSet(null, thread)) {
       this.stopped = false;
       thread.start();
-      this.buffer.start();
     }
   }
 
   public void stop() {
     this.stopped = true;
-    this.buffer.suspend();
     final Thread thread = this.currentThread.getAndSet(null);
     if (thread != null) {
       thread.interrupt();

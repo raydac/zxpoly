@@ -73,6 +73,18 @@ public final class AppOptions {
     return preferences.getBoolean(Option.TURBOSOUND.name(), false);
   }
 
+  public synchronized void setTurboSound(final boolean value) {
+    preferences.putBoolean(Option.TURBOSOUND.name(), value);
+  }
+
+  public synchronized boolean isSoundTurnedOn() {
+    return preferences.getBoolean(Option.SOUND_TURNED_ON.name(), false);
+  }
+
+  public synchronized void setSoundTurnedOn(final boolean value) {
+    preferences.putBoolean(Option.SOUND_TURNED_ON.name(), value);
+  }
+
   public synchronized int getFrameRate() {
     return preferences.getInt(Option.STREAM_FRAMERATE.name(), 25);
   }
@@ -128,8 +140,41 @@ public final class AppOptions {
     preferences.putBoolean(Option.KEMPSTON_MOUSE_ALLOWED.name(), value);
   }
 
-  public synchronized void setTurboSound(final boolean value) {
-    preferences.putBoolean(Option.TURBOSOUND.name(), value);
+  public synchronized String getActiveRom() {
+    return preferences.get(Option.ROMPATH.name(), AppOptions.TEST_ROM);
+  }
+
+  public synchronized void setActiveRom(final String romPath) {
+    preferences.put(Option.ROMPATH.name(), romPath);
+  }
+
+  public synchronized int getIntBetweenFrames() {
+    return preferences.getInt(Option.INTBETWEENFRAMES.name(), 3);
+  }
+
+  public synchronized void setIntBetweenFrames(final int value) {
+    preferences.putInt(Option.INTBETWEENFRAMES.name(), Math.max(0, value));
+  }
+
+  public synchronized void flush() throws BackingStoreException {
+    preferences.flush();
+  }
+
+  public synchronized File getAppConfigFolder() {
+    String folder = System.getenv("APPDATA");
+    if (folder == null) {
+      folder = System.getProperty("user.home", FileUtils.getTempDirectoryPath());
+    }
+
+    final File configFolder = new File(folder, APP_FOLDER_NAME);
+    if (!configFolder.exists()) {
+      if (configFolder.mkdirs()) {
+        LOGGER.info("Created config folder: " + configFolder);
+      } else {
+        LOGGER.warning("Can't create config folder: " + configFolder);
+      }
+    }
+    return configFolder;
   }
 
   public enum Rom {
@@ -182,43 +227,6 @@ public final class AppOptions {
     }
   }
 
-  public synchronized String getActiveRom() {
-    return preferences.get(Option.ROMPATH.name(), AppOptions.TEST_ROM);
-  }
-
-  public synchronized void setActiveRom(final String romPath) {
-    preferences.put(Option.ROMPATH.name(), romPath);
-  }
-
-  public synchronized int getIntBetweenFrames() {
-    return preferences.getInt(Option.INTBETWEENFRAMES.name(), 3);
-  }
-
-  public synchronized void setIntBetweenFrames(final int value) {
-    preferences.putInt(Option.INTBETWEENFRAMES.name(), Math.max(0, value));
-  }
-
-  public synchronized void flush() throws BackingStoreException {
-    preferences.flush();
-  }
-
-  public synchronized File getAppConfigFolder() {
-    String folder = System.getenv("APPDATA");
-    if (folder == null) {
-      folder = System.getProperty("user.home", FileUtils.getTempDirectoryPath());
-    }
-
-    final File configFolder = new File(folder, APP_FOLDER_NAME);
-    if (!configFolder.exists()) {
-      if (configFolder.mkdirs()) {
-        LOGGER.info("Created config folder: " + configFolder);
-      } else {
-        LOGGER.warning("Can't create config folder: " + configFolder);
-      }
-    }
-    return configFolder;
-  }
-
   public enum Option {
     STREAM_FFMPEGPATH,
     STREAM_GRABSOUND,
@@ -231,6 +239,7 @@ public final class AppOptions {
     TURBOSOUND,
     INTBETWEENFRAMES,
     LAST_SELECTED_AUDIO_DEVICE,
+    SOUND_TURNED_ON,
     KEMPSTON_MOUSE_ALLOWED
   }
 

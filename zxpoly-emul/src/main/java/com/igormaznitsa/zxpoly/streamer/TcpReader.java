@@ -22,7 +22,7 @@ public class TcpReader extends AbstractTcpSingleThreadServer {
   }
 
   public void write(final byte[] data) {
-    this.buffer.put(data);
+    this.buffer.offer(data);
   }
 
   @Override
@@ -42,6 +42,6 @@ public class TcpReader extends AbstractTcpSingleThreadServer {
   }
 
   public byte[] read() {
-    return this.buffer.next();
+    return this.buffer.poll();
   }
 }

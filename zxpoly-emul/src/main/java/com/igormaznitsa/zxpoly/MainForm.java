@@ -419,6 +419,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         }
     );
 
+    if (AppOptions.getInstance().isSoundTurnedOn()) {
+      this.activateSoundIfPossible();
+    }
+
     updateTapeMenu();
 
     pack();
@@ -469,10 +473,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private Optional<SourceSoundPort> showSelectSoundLineDialog(
-      final List<SourceSoundPort> variants) {
+      final List<SourceSoundPort> variants, final String previouslySelected,
+      final boolean showDialog) {
     assertUiThread();
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.TRAILING));
-    final String previouslySelectedDevice = AppOptions.getInstance().getLastSelectedAudioDevice();
 
     final JComboBox<SourceSoundPort> comboBox =
         new JComboBox<>(variants.toArray(new SourceSoundPort[0]));
@@ -485,48 +489,62 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     int index = -1;
     for (int i = 0; i < comboBox.getItemCount(); i++) {
       final String str = comboBox.getItemAt(i).toString();
-      if (str.equals(previouslySelectedDevice)) {
+      if (str.equals(previouslySelected)) {
         index = i;
       }
       maxStringLen = Math.max(maxStringLen, str.length());
     }
 
-    comboBox.setPrototypeDisplayValue(
-        new SourceSoundPort(null, repeat('#', Math.min(40, maxStringLen)), null));
+    if (showDialog) {
 
-    comboBox.setSelectedIndex(Math.max(0, index));
+      comboBox.setPrototypeDisplayValue(
+          new SourceSoundPort(null, repeat('#', Math.min(40, maxStringLen)), null));
 
-    panel.add(new JLabel("Sound device:"));
-    panel.add(comboBox);
-    if (JOptionPane.showConfirmDialog(
-        this,
-        panel,
-        "Select sound device",
-        JOptionPane.OK_CANCEL_OPTION,
-        JOptionPane.PLAIN_MESSAGE
-    ) == JOptionPane.OK_OPTION) {
-      final SourceSoundPort selected = (SourceSoundPort) comboBox.getSelectedItem();
-      AppOptions.getInstance().setLastSelectedAudioDevice(selected.toString());
-      return Optional.ofNullable(selected);
+      comboBox.setSelectedIndex(Math.max(0, index));
+
+      panel.add(new JLabel("Sound device:"));
+      panel.add(comboBox);
+      if (JOptionPane.showConfirmDialog(
+          this,
+          panel,
+          "Select sound device",
+          JOptionPane.OK_CANCEL_OPTION,
+          JOptionPane.PLAIN_MESSAGE
+      ) == JOptionPane.OK_OPTION) {
+        final SourceSoundPort selected = (SourceSoundPort) comboBox.getSelectedItem();
+        return Optional.of(selected);
+      } else {
+        return Optional.empty();
+      }
     } else {
-      return Optional.empty();
+      return index < 0 ? Optional.empty() :
+          Optional.of(comboBox.getItemAt(index));
     }
-
   }
 
-  private Optional<SourceSoundPort> findAudioLine(final AudioFormat audioFormat) {
+  private Optional<SourceSoundPort> findAudioLine(final AudioFormat audioFormat,
+                                                  final boolean interactive) {
     final List<SourceSoundPort> foundPorts = SourceSoundPort.findForFormat(audioFormat);
     LOGGER.info("Detected audio source lines: " + foundPorts);
     if (foundPorts.isEmpty()) {
-      JOptionPane
-          .showMessageDialog(this, "There is no detected audio devices!", "Can't find audio device",
-              JOptionPane.WARNING_MESSAGE);
+      if (interactive) {
+        JOptionPane
+            .showMessageDialog(this, "There is no detected audio devices!",
+                "Can't find audio device",
+                JOptionPane.WARNING_MESSAGE);
+      }
       return Optional.empty();
     } else {
       if (foundPorts.size() == 1) {
         return Optional.of(foundPorts.get(0));
       } else {
-        return this.showSelectSoundLineDialog(foundPorts);
+        final Optional<SourceSoundPort> result = this.showSelectSoundLineDialog(foundPorts,
+            AppOptions.getInstance().getLastSelectedAudioDevice(), interactive);
+        if (interactive) {
+          result.ifPresent(sourceSoundPort -> AppOptions.getInstance()
+              .setLastSelectedAudioDevice(sourceSoundPort.toString()));
+        }
+        return result;
       }
     }
   }
@@ -891,12 +909,23 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
+  private void activateSoundIfPossible() {
+    final Optional<SourceSoundPort> port =
+        this.findAudioLine(this.board.getBeeper().getAudioFormat(), false);
+    if (port.isPresent()) {
+      this.board.getBeeper().setSourceSoundPort(port.get());
+      this.menuOptionsEnableSpeaker.setSelected(!this.board.getBeeper().isNullBeeper());
+    } else {
+      this.menuOptionsEnableSpeaker.setSelected(false);
+    }
+  }
+
   private void menuOptionsEnableSpeakerActionPerformed(final ActionEvent actionEvent) {
     this.stepSemaphor.lock();
     try {
       if (this.menuOptionsEnableSpeaker.isSelected()) {
         final Optional<SourceSoundPort> port =
-            this.findAudioLine(this.board.getBeeper().getAudioFormat());
+            this.findAudioLine(this.board.getBeeper().getAudioFormat(), true);
         if (port.isPresent()) {
           this.board.getBeeper().setSourceSoundPort(port.get());
           if (this.board.getBeeper().isNullBeeper()) {
@@ -908,6 +937,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       } else {
         this.board.getBeeper().setSourceSoundPort(null);
       }
+      AppOptions.getInstance().setSoundTurnedOn(this.menuOptionsEnableSpeaker.isSelected());
     } finally {
       this.stepSemaphor.unlock();
     }

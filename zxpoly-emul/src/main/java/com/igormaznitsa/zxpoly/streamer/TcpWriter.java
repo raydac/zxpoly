@@ -15,15 +15,15 @@ public class TcpWriter extends AbstractTcpSingleThreadServer {
     super(id, bufferSize, address, port);
   }
 
-  public synchronized void write(final byte[] data) {
-    this.buffer.put(data);
+  public void write(final byte[] data) {
+    this.buffer.offer(data);
   }
 
   @Override
   protected void doBusiness(Socket socket) throws Exception {
     final OutputStream outStream = socket.getOutputStream();
     while (!this.isStopped() && !Thread.currentThread().isInterrupted()) {
-      final byte[] next = this.buffer.next();
+      final byte[] next = this.buffer.poll();
       if (next != null) {
         outStream.write(next);
       }
