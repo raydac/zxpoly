@@ -23,7 +23,7 @@ public interface ZxPolyConstants {
   int PORTw_ZX128_INTCPU0 = 0x80;
   int PORTw_ZX128_ROMRAM = 0x40;
   int PORTw_ZX128_LOCK = 0x20;
-  int PORTw_ZX128_ROM = 0x10;
+  int PORTw_ZX128_48ROM = 0x10;
   int PORTw_ZX128_SCREEN = 0x08;
   int PORTw_ZX128_RAMPAGE_MASK = 0x7;
 
