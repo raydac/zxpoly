@@ -196,7 +196,7 @@ public final class Beeper {
       }
     }
 
-    private synchronized void writeToLine(final byte[] data) {
+    private void writeToLine(final byte[] data) {
       this.sourceDataLine.write(data, 0, Math.min(this.sourceDataLine.available(), data.length));
     }
 
