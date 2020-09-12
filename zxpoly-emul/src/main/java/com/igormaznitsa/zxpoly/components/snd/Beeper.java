@@ -21,9 +21,8 @@ import static java.lang.Long.toHexString;
 import static java.lang.String.format;
 
 
+import com.igormaznitsa.zxpoly.streamer.PreemptiveBuffer;
 import java.util.Arrays;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -153,8 +152,8 @@ public final class Beeper {
 
   private static final class InternalBeeper implements IBeeper, Runnable {
 
-    private final BlockingQueue<byte[]> soundDataQueue =
-        new ArrayBlockingQueue<>(SndBufferContainer.BUFFERS_NUMBER);
+    private final PreemptiveBuffer soundDataQueue =
+        new PreemptiveBuffer(SndBufferContainer.BUFFERS_NUMBER);
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
     private volatile boolean working = true;
@@ -187,7 +186,7 @@ public final class Beeper {
     ) {
       if (this.working) {
         if (wallclockInt) {
-          this.soundDataQueue.offer(sndBuffer.nextBuffer(level));
+          this.soundDataQueue.put(sndBuffer.nextBuffer(level));
           sndBuffer.resetPosition();
         } else {
           sndBuffer.setValue(spentTstates, level);
@@ -203,7 +202,8 @@ public final class Beeper {
     public void reset() {
       if (this.working) {
         LOGGER.info("Reset");
-        sndBuffer.reset();
+        this.soundDataQueue.clear();
+        this.sndBuffer.reset();
       }
     }
 
@@ -230,7 +230,7 @@ public final class Beeper {
         LOGGER.info("Sound line started");
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
-          final byte[] dataBlock = soundDataQueue.poll();
+          final byte[] dataBlock = soundDataQueue.next();
           if (dataBlock != null) {
             this.writeToLine(dataBlock);
           }
