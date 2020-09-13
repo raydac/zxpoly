@@ -37,4 +37,6 @@ public interface Z80CPUBus {
   byte onCPURequestDataLines(Z80 cpu, int ctx);
 
   void onRETI(Z80 cpu, int ctx);
+
+  void onInterrupt(Z80 cpu, int ctx, boolean nmi);
 }

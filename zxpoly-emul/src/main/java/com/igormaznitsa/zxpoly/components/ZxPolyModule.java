@@ -891,6 +891,11 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   @Override
+  public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
+
+  }
+
+  @Override
   public void preStep(final boolean signalReset, final boolean tstatesIntReached,
                       boolean wallclockInt) {
     if (signalReset) {

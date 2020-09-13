@@ -106,6 +106,11 @@ public abstract class AbstractZ80Test {
     final Z80CPUBus bus = new Z80CPUBus() {
 
       @Override
+      public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
+
+      }
+
+      @Override
       public int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg) {
         return valueInReg;
       }
@@ -235,6 +240,12 @@ public abstract class AbstractZ80Test {
         fail("Unsupported here");
         return 0;
       }
+
+      @Override
+      public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
+
+      }
+
 
       @Override
       public void onRETI(Z80 cpu, int ctx) {

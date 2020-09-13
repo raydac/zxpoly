@@ -76,6 +76,11 @@ public class Z80Test extends AbstractZ80Test {
       }
 
       @Override
+      public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
+
+      }
+
+      @Override
       public void onRETI(Z80 cpu, int ctx) {
       }
     });
@@ -5518,6 +5523,11 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = new Z80(new Z80CPUBus() {
 
       @Override
+      public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
+
+      }
+
+      @Override
       public int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg) {
         return valueInReg;
       }
@@ -5599,6 +5609,11 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testIntProcessing_IM1() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
+
+      @Override
+      public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
+
+      }
 
       @Override
       public int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg) {
@@ -5693,6 +5708,11 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testIntProcessing_IM2() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
+
+      @Override
+      public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
+
+      }
 
       @Override
       public int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg) {
@@ -5806,6 +5826,11 @@ public class Z80Test extends AbstractZ80Test {
       @Override
       public int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg) {
         return valueInReg;
+      }
+
+      @Override
+      public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
+
       }
 
       @Override

@@ -480,6 +480,8 @@ public final class Z80 {
 
     this.detectedINT = false;
 
+    this.bus.onInterrupt(this, ctx, false);
+
     switch (this.im) {
       case 0: {
         _step(ctx, this.bus.onCPURequestDataLines(this, ctx) & 0xFF);
@@ -514,6 +516,8 @@ public final class Z80 {
   }
 
   private void _nmi(final int ctx) {
+    this.bus.onInterrupt(this, ctx, true);
+
     _resetHalt();
     this.insideBlockInstructionPrev = this.insideBlockInstruction;
     this.iff1 = false;
@@ -572,8 +576,17 @@ public final class Z80 {
     return this.bus.readMemory(this, ctx, address & 0xFFFF, false, false) & 0xFF;
   }
 
+  private int _readmem8withM1(final int ctx, final int address) {
+    this.tstates += 3;
+    return this.bus.readMemory(this, ctx, address & 0xFFFF, true, false) & 0xFF;
+  }
+
   private int _readmem16(final int ctx, final int address) {
     return _readmem8(ctx, address) | (_readmem8(ctx, address + 1) << 8);
+  }
+
+  private int _readmem16withM1(final int ctx, final int address) {
+    return _readmem8withM1(ctx, address) | (_readmem8withM1(ctx, address + 1) << 8);
   }
 
   private int _read_ixiy_d(final int ctx) {

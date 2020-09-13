@@ -106,6 +106,11 @@ public final class TestBus implements Z80CPUBus {
     this.reti = true;
   }
 
+  @Override
+  public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
+
+  }
+
   public int getPortValue(final int port) {
     return this.ports[port] & 0xFF;
   }
