@@ -10,25 +10,24 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.SourceDataLine;
 
 final class SndBufferContainer {
-  private static final int SND_FREQ = 48000;
-
-  static final AudioFormat AUDIO_FORMAT = new AudioFormat(
-      PCM_SIGNED,
-      SND_FREQ,
-      16,
-      2,
-      4,
-      SND_FREQ,
-      false
-  );
+  public static final int SND_FREQ = 48000;
+  public static final int FRAME_SIZE = 4;
+  public static final int SND_BUFFER_LEN = SND_BUFFER_INT_LEN;
 
   public static final int BUFFERS_NUMBER = 5;
 
   private static final int SAMPLES_PER_INT = SND_FREQ / 50;
   public static final int SND_BUFFER_INT_LEN =
       SAMPLES_PER_INT * AUDIO_FORMAT.getChannels() * AUDIO_FORMAT.getSampleSizeInBits() / 8;
-  public static final int SND_BUFFER_LEN =
-      SND_BUFFER_INT_LEN + (((SND_BUFFER_INT_LEN / 4 + 3) >> 2) << 2);
+  static final AudioFormat AUDIO_FORMAT = new AudioFormat(
+      PCM_SIGNED,
+      SND_FREQ,
+      16,
+      2,
+      FRAME_SIZE,
+      SND_FREQ,
+      false
+  );
   private final byte[][] allSndBuffers;
   private byte[] soundBuffer;
   private int bufferIndex;
@@ -50,8 +49,8 @@ final class SndBufferContainer {
   }
 
   public byte[] nextBuffer(final int fillLevel) {
-    if (this.lastWrittenPosition < SND_BUFFER_LEN - 4) {
-      this.fillCurrentSndBuffer(this.lastWrittenPosition, fillLevel);
+    if (this.lastWrittenPosition < SND_BUFFER_LEN - FRAME_SIZE) {
+      this.fillCurrentSndBuffer(this.lastWrittenPosition, SND_BUFFER_INT_LEN, fillLevel);
     }
     final byte[] result = this.soundBuffer;
     this.bufferIndex++;
@@ -59,7 +58,6 @@ final class SndBufferContainer {
       this.bufferIndex = 0;
     }
     this.soundBuffer = this.allSndBuffers[this.bufferIndex];
-    this.fillCurrentSndBuffer(0, fillLevel);
     return result;
   }
 
@@ -82,22 +80,22 @@ final class SndBufferContainer {
         this.soundBuffer[position++] = low;
         this.soundBuffer[position++] = high;
       } else {
-        fillCurrentSndBuffer(position, level);
+        fillCurrentSndBuffer(this.lastWrittenPosition, position + FRAME_SIZE, level);
       }
       this.lastWrittenPosition = position;
     }
   }
 
-  private void fillCurrentSndBuffer(int fromIndex, final int value) {
+  private void fillCurrentSndBuffer(int fromInclusive, final int toExclusive, final int value) {
     final byte low = (byte) value;
     final byte high = (byte) (value >> 8);
 
     if (low == high) {
-      fill(this.soundBuffer, fromIndex, SND_BUFFER_LEN, low);
+      fill(this.soundBuffer, fromInclusive, SND_BUFFER_LEN, low);
     } else {
-      while (fromIndex < SND_BUFFER_LEN) {
-        this.soundBuffer[fromIndex++] = low;
-        this.soundBuffer[fromIndex++] = high;
+      while (fromInclusive < toExclusive) {
+        this.soundBuffer[fromInclusive++] = low;
+        this.soundBuffer[fromInclusive++] = high;
       }
     }
   }
