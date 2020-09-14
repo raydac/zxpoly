@@ -215,7 +215,7 @@ public final class Beeper {
       try {
         this.sourceDataLine
             .open(SndBufferContainer.AUDIO_FORMAT,
-                SndBufferContainer.SND_BUFFER_INT_LEN * SndBufferContainer.BUFFERS_NUMBER);
+                SndBufferContainer.SND_BUFFER_SIZE * SndBufferContainer.BUFFERS_NUMBER);
 
         LOGGER.info(format(
             "Sound line opened, buffer size is %d byte(s)",
@@ -223,7 +223,7 @@ public final class Beeper {
         );
 
         byte[] empty =
-            new byte[SndBufferContainer.BUFFERS_NUMBER * SndBufferContainer.SND_BUFFER_INT_LEN];
+            new byte[SndBufferContainer.BUFFERS_NUMBER * SndBufferContainer.SND_BUFFER_SIZE];
         Arrays.fill(empty, (byte) 0xFF);
         this.sourceDataLine.write(empty, 0, empty.length);
 

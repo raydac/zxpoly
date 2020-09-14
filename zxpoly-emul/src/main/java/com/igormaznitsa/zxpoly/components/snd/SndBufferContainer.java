@@ -12,22 +12,21 @@ import javax.sound.sampled.SourceDataLine;
 final class SndBufferContainer {
   public static final int SND_FREQ = 48000;
   public static final int FRAME_SIZE = 4;
-  public static final int SND_BUFFER_LEN = SND_BUFFER_INT_LEN;
+  public static final int CHANNELS_NUM = 2;
+  public static final int SAMPLE_SIZE_BITS = 16;
 
   public static final int BUFFERS_NUMBER = 5;
-
-  private static final int SAMPLES_PER_INT = SND_FREQ / 50;
-  public static final int SND_BUFFER_INT_LEN =
-      SAMPLES_PER_INT * AUDIO_FORMAT.getChannels() * AUDIO_FORMAT.getSampleSizeInBits() / 8;
   static final AudioFormat AUDIO_FORMAT = new AudioFormat(
       PCM_SIGNED,
       SND_FREQ,
-      16,
-      2,
+      SAMPLE_SIZE_BITS,
+      CHANNELS_NUM,
       FRAME_SIZE,
       SND_FREQ,
       false
   );
+  private static final int SAMPLES_PER_INT = SND_FREQ / 50;
+  public static final int SND_BUFFER_SIZE = SAMPLES_PER_INT * FRAME_SIZE;
   private final byte[][] allSndBuffers;
   private byte[] soundBuffer;
   private int bufferIndex;
@@ -38,19 +37,19 @@ final class SndBufferContainer {
   public SndBufferContainer() {
     this.allSndBuffers = new byte[BUFFERS_NUMBER][];
     for (int i = 0; i < BUFFERS_NUMBER; i++) {
-      this.allSndBuffers[i] = new byte[SND_BUFFER_LEN];
+      this.allSndBuffers[i] = new byte[SND_BUFFER_SIZE];
       Arrays.fill(this.allSndBuffers[i], (byte) 0xFF);
     }
     this.soundBuffer = this.allSndBuffers[this.bufferIndex];
   }
 
   public void writeCurrent(final SourceDataLine line) {
-    line.write(this.soundBuffer, 0, SND_BUFFER_INT_LEN);
+    line.write(this.soundBuffer, 0, SND_BUFFER_SIZE);
   }
 
   public byte[] nextBuffer(final int fillLevel) {
-    if (this.lastWrittenPosition < SND_BUFFER_LEN - FRAME_SIZE) {
-      this.fillCurrentSndBuffer(this.lastWrittenPosition, SND_BUFFER_INT_LEN, fillLevel);
+    if (this.lastWrittenPosition < SND_BUFFER_SIZE - FRAME_SIZE) {
+      this.fillCurrentSndBuffer(this.lastWrittenPosition, SND_BUFFER_SIZE, fillLevel);
     }
     final byte[] result = this.soundBuffer;
     this.bufferIndex++;
@@ -71,7 +70,7 @@ final class SndBufferContainer {
     int position = ((tstatesIntCounter * SAMPLES_PER_INT + TSTATES_PER_INT / 2)
         / TSTATES_PER_INT) * 4;
 
-    if (position < SND_BUFFER_LEN) {
+    if (position < SND_BUFFER_SIZE) {
       if (position - this.lastWrittenPosition < 8) {
         final byte low = (byte) level;
         final byte high = (byte) (level >> 8);
@@ -91,7 +90,7 @@ final class SndBufferContainer {
     final byte high = (byte) (value >> 8);
 
     if (low == high) {
-      fill(this.soundBuffer, fromInclusive, SND_BUFFER_LEN, low);
+      fill(this.soundBuffer, fromInclusive, SND_BUFFER_SIZE, low);
     } else {
       while (fromInclusive < toExclusive) {
         this.soundBuffer[fromInclusive++] = low;
