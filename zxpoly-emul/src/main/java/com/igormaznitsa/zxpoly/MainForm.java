@@ -2201,6 +2201,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       close = true;
     }
 
+    AppOptions.getInstance().setSoundTurnedOn(this.menuOptionsEnableSpeaker.isSelected());
+
     this.board.dispose();
 
     if (close) {
