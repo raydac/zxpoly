@@ -43,6 +43,7 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
   private final JCheckBox checkBoxH;
   private final JCheckBox checkBoxIFF1;
   private final JCheckBox checkBoxIFF2;
+  private final JCheckBox checkBoxTrDos;
   private final JCheckBox checkBoxN;
   private final JCheckBox checkBoxPV;
   private final JCheckBox checkBoxS;
@@ -95,6 +96,7 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
     this.checkBoxH = new JCheckBox();
     this.checkBoxIFF1 = new JCheckBox("IFF1");
     this.checkBoxIFF2 = new JCheckBox("IFF2");
+    this.checkBoxTrDos = new JCheckBox("TrDos");
     this.checkBoxN = new JCheckBox();
     this.checkBoxPV = new JCheckBox();
     this.checkBoxS = new JCheckBox();
@@ -344,6 +346,7 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
     final JPanel flagsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     flagsPanel.add(this.checkBoxIFF1);
     flagsPanel.add(this.checkBoxIFF2);
+    flagsPanel.add(this.checkBoxTrDos);
 
     result.add(flagsPanel, gbc);
 
@@ -538,6 +541,7 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
 
     this.checkBoxIFF1.setSelected(cpu.isIFF1());
     this.checkBoxIFF2.setSelected(cpu.isIFF2());
+    this.checkBoxTrDos.setSelected(this.module.isTrdosActive());
 
     this.fieldRegA.setValue(cpu.getRegister(Z80.REG_A));
     this.fieldRegF.setValue(cpu.getRegister(Z80.REG_F));

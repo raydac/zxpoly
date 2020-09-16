@@ -1888,6 +1888,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuTraceCpu0ActionPerformed(ActionEvent evt) {
     if (this.menuTraceCpu0.isSelected()) {
       activateTracerForCPUModule(0);
+      this.board.getBeeper().setSourceSoundPort(null);
     } else {
       deactivateTracerForCPUModule(0);
     }
@@ -1896,6 +1897,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuTraceCpu1ActionPerformed(ActionEvent evt) {
     if (this.menuTraceCpu1.isSelected()) {
       activateTracerForCPUModule(1);
+      this.board.getBeeper().setSourceSoundPort(null);
     } else {
       deactivateTracerForCPUModule(1);
     }
@@ -1904,6 +1906,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuTraceCpu2ActionPerformed(ActionEvent evt) {
     if (this.menuTraceCpu2.isSelected()) {
       activateTracerForCPUModule(2);
+      this.board.getBeeper().setSourceSoundPort(null);
     } else {
       deactivateTracerForCPUModule(2);
     }
@@ -1912,6 +1915,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void menuTraceCpu3ActionPerformed(ActionEvent evt) {
     if (this.menuTraceCpu3.isSelected()) {
       activateTracerForCPUModule(3);
+      this.board.getBeeper().setSourceSoundPort(null);
     } else {
       deactivateTracerForCPUModule(3);
     }
