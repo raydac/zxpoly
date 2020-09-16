@@ -71,6 +71,7 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
   private final HexValue2Field fieldRegF;
   private final HexValue2Field fieldRegH;
   private final HexValue2Field fieldRegL;
+  private final HexValue2Field field7FFD;
   private final HexValue4Field fieldSP;
   private final JPanel panelAltSet;
   private final JPanel panelOthers;
@@ -128,6 +129,7 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
     this.fieldRegF = new HexValue2Field();
     this.fieldRegH = new HexValue2Field();
     this.fieldRegL = new HexValue2Field();
+    this.field7FFD = new HexValue2Field();
     this.fieldSP = new HexValue4Field();
 
     this.panelMainSet = this.makePanelMainSet();
@@ -327,6 +329,7 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
     result.add(new JLabel("R:"), gbc);
     result.add(new JLabel("I:"), gbc);
     result.add(new JLabel("IM:"), gbc);
+    result.add(new JLabel("7FFD:"), gbc);
 
     gbc.gridx = 3;
     gbc.gridy = GridBagConstraints.RELATIVE;
@@ -337,6 +340,7 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
     result.add(this.fieldI, gbc);
     result.add(this.fieldI, gbc);
     result.add(this.fieldIM, gbc);
+    result.add(this.field7FFD, gbc);
 
     gbc.gridx = 0;
     gbc.gridy = 4;
@@ -542,6 +546,8 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
     this.checkBoxIFF1.setSelected(cpu.isIFF1());
     this.checkBoxIFF2.setSelected(cpu.isIFF2());
     this.checkBoxTrDos.setSelected(this.module.isTrdosActive());
+
+    this.field7FFD.setValue(this.module.read7FFD());
 
     this.fieldRegA.setValue(cpu.getRegister(Z80.REG_A));
     this.fieldRegF.setValue(cpu.getRegister(Z80.REG_F));
