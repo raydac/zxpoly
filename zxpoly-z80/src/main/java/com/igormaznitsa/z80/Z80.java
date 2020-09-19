@@ -2496,7 +2496,7 @@ public final class Z80 {
             doINI(ctx);
             break;
           case 3:
-            doOUTI(ctx);
+            doOUTI_OUTD(ctx, true);
             break;
           default:
             throw new Error("Unexpected Z index [" + z + ']');
@@ -2515,7 +2515,7 @@ public final class Z80 {
             doIND(ctx);
             break;
           case 3:
-            doOUTD(ctx);
+            doOUTI_OUTD(ctx, false);
             break;
           default:
             throw new Error("Unexpected Z index [" + z + ']');
@@ -2691,7 +2691,7 @@ public final class Z80 {
   }
 
   private boolean doOTIR(final int ctx) {
-    doOUTI(ctx);
+    doOUTI_OUTD(ctx, true);
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
@@ -2725,7 +2725,7 @@ public final class Z80 {
   }
 
   private boolean doOTDR(final int ctx) {
-    doOUTD(ctx);
+    doOUTI_OUTD(ctx, false);
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
@@ -2734,25 +2734,6 @@ public final class Z80 {
       loopNonCompleted = false;
     }
     return loopNonCompleted;
-  }
-
-  private void doOUTI(final int ctx) {
-    final int bc = _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
-    int hl = _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL));
-    int x = _readmem8(ctx, hl++);
-    _writeport(ctx, bc, x);
-    final int b = ((bc >>> 8) - 1) & 0xFF;
-    this.regSet[REG_B] = (byte) b;
-    this.setWZ(this.getRegisterPair(REGPAIR_BC) + 1, false);
-    setRegisterPair(REGPAIR_HL, hl);
-
-    int f = FTABLE_SZYX[b] | (x >> (7 - FLAG_N_SHIFT));
-    x += hl & 0xff;
-    f |= (x & 0x0100) != 0 ? FLAG_HC : 0;
-    f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
-    this.regSet[REG_F] = (byte) f;
-
-    this.tstates++;
   }
 
   private boolean doLDDR(final int ctx) {
@@ -2768,20 +2749,23 @@ public final class Z80 {
     return loopNonCompleted;
   }
 
-  private void doOUTD(final int ctx) {
+  private void doOUTI_OUTD(final int ctx, final boolean inc) {
+    final int delta = inc ? 1 : -1;
+
     final int bc = _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
     int hl = _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL));
-    int x = _readmem8(ctx, hl--);
-    _writeport(ctx, bc, x);
+    final int outitemp = _readmem8(ctx, hl);
+    hl += delta;
+    _writeport(ctx, bc, outitemp);
     final int b = ((bc >>> 8) - 1) & 0xFF;
     this.regSet[REG_B] = (byte) b;
     this.setWZ(this.getRegisterPair(REGPAIR_BC) + 1, false);
     setRegisterPair(REGPAIR_HL, hl);
 
-    int f = FTABLE_SZYX[b] | (x >> (7 - FLAG_N_SHIFT));
-    x += hl & 0xff;
-    f |= (x & 0x0100) != 0 ? FLAG_HC : 0;
-    f |= FTABLE_SZYXP[(x & 0x07) ^ b] & FLAG_PV;
+    final int outitemp2 = (outitemp + (hl & 0xf)) & 0xFF;
+    final int f = FTABLE_SZYX[b] | ((outitemp & 0x80) == 0 ? 0 : FLAG_N)
+        | (outitemp2 < outitemp ? FLAG_HC : 0)
+        | (FTABLE_SZYXP[(outitemp2 & 0x07) ^ b] & FLAG_PV);
     this.regSet[REG_F] = (byte) f;
 
     this.tstates++;
