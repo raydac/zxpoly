@@ -186,7 +186,6 @@ public class Z80FuseTest {
 
       @Override
       public void writePort(Z80 cpu, int ctx, int port, byte data) {
-        System.out.println(format("%n0x%X ===> port 0x%X ", data & 0xFF, port));
         areaIoWr[port] = data;
       }
 
@@ -214,8 +213,9 @@ public class Z80FuseTest {
 
     final int resultTstates = executeForTstates(cpu, test.getRight().tstates);
     if (resultTstates < 0) {
-      System.err.println(
+      System.out.println(
           format("%nDetected negative CPU tstates for %s: %d", test.getLeft().name, resultTstates));
+      ok.set(false);
     }
 
 
@@ -241,7 +241,7 @@ public class Z80FuseTest {
           }
         });
 
-    if (!checkCpuState(cpu, test.getRight(), false, true, true)) {
+    if (!checkCpuState(cpu, test.getRight(), true, true, true)) {
       ok.set(false);
     }
 

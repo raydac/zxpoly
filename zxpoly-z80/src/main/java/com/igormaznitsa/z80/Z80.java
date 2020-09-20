@@ -610,6 +610,9 @@ public final class Z80 {
 
     if (m1) {
       this.lastM1InstructionByte = result;
+      if ((this.prefix & 0xFF00) == 0) {
+        _incR();
+      }
     }
 
     this.lastInstructionByte = result;
@@ -1117,8 +1120,6 @@ public final class Z80 {
 
     boolean commandCompleted = true;
     this.insideBlockInstruction = false;
-
-    _incR();
 
     switch (this.prefix) {
       case 0xDD:
