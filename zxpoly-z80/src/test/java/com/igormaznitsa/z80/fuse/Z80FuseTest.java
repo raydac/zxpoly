@@ -230,6 +230,17 @@ public class Z80FuseTest {
           }
         });
 
+    test.getRight().actions.stream()
+        .filter(x -> x.type == InfoExpected.ActionType.MW)
+        .forEach(x -> {
+          if (x.data != (areaRam[x.address] & 0xFF)) {
+            System.out.println(
+                format("%nDetected non-correct value 0x%X in RAM 0x%X, expected 0x%X",
+                    (areaRam[x.address] & 0xFF), x.address, x.data));
+            ok.set(false);
+          }
+        });
+
     if (!checkCpuState(cpu, test.getRight(), false, true, true)) {
       ok.set(false);
     }
