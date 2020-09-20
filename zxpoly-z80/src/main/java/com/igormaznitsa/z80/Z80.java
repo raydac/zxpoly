@@ -1385,11 +1385,7 @@ public final class Z80 {
             }
             break;
             case 1: {
-              if (this.prefix == 0xDDCB || this.prefix == 0xFDCB) {
-                doBIT(ctx, y, 6);
-              } else {
-                doBIT(ctx, y, z);
-              }
+              doBIT(ctx, y, 6);
             }
             break;
             case 2: {
