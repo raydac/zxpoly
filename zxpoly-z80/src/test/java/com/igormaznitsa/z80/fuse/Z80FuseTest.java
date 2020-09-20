@@ -207,115 +207,119 @@ public class Z80FuseTest {
           format("Detected negative CPU tstates for %s: %d", test.getLeft().name, resultTstates));
     }
 
-    return checkCpuState(cpu, test.getRight(), false);
+    return checkCpuState(cpu, test.getRight(), true);
   }
 
   private boolean checkCpuState(final Z80 cpu, final InfoExpected expected, boolean logError) {
     boolean result = true;
     if (cpu.getRegister(Z80.REG_PC) != expected.pc) {
       if (logError) {
-        System.err
-            .println(format("PC expected 0x%x <> 0x%x", expected.pc, cpu.getRegister(Z80.REG_PC)));
+        System.out
+            .println(
+                format("%nPC expected 0x%X <> 0x%X", expected.pc, cpu.getRegister(Z80.REG_PC)));
       }
       result = false;
     }
     if (cpu.getRegister(Z80.REG_SP) != expected.sp) {
       if (logError) {
-        System.err
-            .println(format("SP expected 0x%x <> 0x%x", expected.sp, cpu.getRegister(Z80.REG_SP)));
+        System.out
+            .println(
+                format("%nSP expected 0x%X <> 0x%X", expected.sp, cpu.getRegister(Z80.REG_SP)));
       }
       result = false;
     }
     if (cpu.getIM() != expected.im) {
       if (logError) {
-        System.err.println(format("IM expected 0x%x <> 0x%x", expected.im, cpu.getIM()));
+        System.out.println(format("%nIM expected 0x%X <> 0x%X", expected.im, cpu.getIM()));
       }
       result = false;
     }
     if (cpu.getRegister(Z80.REG_I) != expected.i) {
       if (logError) {
-        System.err
-            .println(format("I expected 0x%x <> 0x%x", expected.i, cpu.getRegister(Z80.REG_I)));
+        System.out
+            .println(format("%nI expected 0x%X <> 0x%X", expected.i, cpu.getRegister(Z80.REG_I)));
       }
       result = false;
     }
     if (cpu.getRegister(Z80.REG_R) != expected.r) {
       if (logError) {
-        System.err
-            .println(format("R expected 0x%x <> 0x%x", expected.r, cpu.getRegister(Z80.REG_R)));
+        System.out
+            .println(format("%nR expected 0x%X <> 0x%X", expected.r, cpu.getRegister(Z80.REG_R)));
       }
       result = false;
     }
     if (cpu.getRegister(Z80.REG_IX) != expected.ix) {
       if (logError) {
-        System.err
-            .println(format("IX expected 0x%x <> 0x%x", expected.ix, cpu.getRegister(Z80.REG_IX)));
+        System.out
+            .println(
+                format("%nIX expected 0x%X <> 0x%X", expected.ix, cpu.getRegister(Z80.REG_IX)));
       }
       result = false;
     }
     if (cpu.getRegister(Z80.REG_IY) != expected.iy) {
       if (logError) {
-        System.err
-            .println(format("IY expected 0x%x <> 0x%x", expected.ix, cpu.getRegister(Z80.REG_IY)));
+        System.out
+            .println(
+                format("%nIY expected 0x%X <> 0x%X", expected.ix, cpu.getRegister(Z80.REG_IY)));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_AF, false) != expected.af) {
       if (logError) {
-        System.err.println(
-            format("AF expected 0x%x <> 0x%x", expected.af,
+        System.out.println(
+            format("%nAF expected 0x%X <> 0x%X", expected.af,
                 cpu.getRegisterPair(Z80.REGPAIR_AF, false)));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_BC, false) != expected.bc) {
       if (logError) {
-        System.err.println(
-            format("BC expected 0x%x <> 0x%x", expected.bc,
+        System.out.println(
+            format("%nBC expected 0x%X <> 0x%X", expected.bc,
                 cpu.getRegisterPair(Z80.REGPAIR_BC, false)));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_DE, false) != expected.de) {
       if (logError) {
-        System.err.println(
-            format("DE expected 0x%x <> 0x%x", expected.de,
+        System.out.println(
+            format("%nDE expected 0x%X <> 0x%X", expected.de,
                 cpu.getRegisterPair(Z80.REGPAIR_DE, false)));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_HL, false) != expected.hl) {
       if (logError) {
-        System.err.println(
-            format("HL expected 0x%x <> 0x%x", expected.hl,
+        System.out.println(
+            format("%nHL expected 0x%X <> 0x%X", expected.hl,
                 cpu.getRegisterPair(Z80.REGPAIR_HL, false)));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_AF, true) != expected.altAf) {
       if (logError) {
-        System.err.println(format("AF' expected 0x%x <> 0x%x", expected.altAf,
+        System.out.println(format("%nAF' expected 0x%X <> 0x%X", expected.altAf,
             cpu.getRegisterPair(Z80.REGPAIR_AF, true)));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_BC, true) != expected.altBc) {
       if (logError) {
-        System.err.println(format("BC' expected 0x%x <> 0x%x", expected.altBc,
+        System.out.println(format("%nBC' expected 0x%X <> 0x%X", expected.altBc,
             cpu.getRegisterPair(Z80.REGPAIR_BC, true)));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_DE, true) != expected.altDe) {
       if (logError) {
-        System.err.println(format("DE' expected 0x%x <> 0x%x", expected.altDe,
+        System.out.println(format("%nDE' expected 0x%X <> 0x%X", expected.altDe,
             cpu.getRegisterPair(Z80.REGPAIR_DE, true)));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_HL, true) != expected.altHl) {
       if (logError) {
-        System.err.println(format("HL' expected 0x%x <> 0x%x", expected.altHl,
+        System.out.println(format("%nHL' expected 0x%X <> 0x%X", expected.altHl,
             cpu.getRegisterPair(Z80.REGPAIR_HL, true)));
       }
       result = false;
