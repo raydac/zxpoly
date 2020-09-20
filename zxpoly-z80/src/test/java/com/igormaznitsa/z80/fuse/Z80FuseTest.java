@@ -20,10 +20,9 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -98,11 +97,7 @@ public class Z80FuseTest {
     final AtomicInteger counterOk = new AtomicInteger(0);
     final AtomicInteger counterFail = new AtomicInteger(0);
 
-    final Set<String> ignoredTests = new HashSet<>();
-
     testList.stream()
-//        .filter(x -> "eda3_05".equals(x.getLeft().name))
-        .filter(x -> !ignoredTests.contains(x.getLeft().name))
         .forEach(test -> {
           printTestHeader(test);
           final boolean ok = this.doTest(test);
@@ -191,6 +186,7 @@ public class Z80FuseTest {
 
       @Override
       public void writePort(Z80 cpu, int ctx, int port, byte data) {
+        System.out.println(format("%n0x%X ===> port 0x%X ", data & 0xFF, port));
         areaIoWr[port] = data;
       }
 
@@ -213,13 +209,32 @@ public class Z80FuseTest {
 
     fillCpu(cpu, test.getLeft());
 
+
+    final AtomicBoolean ok = new AtomicBoolean(true);
+
     final int resultTstates = executeForTstates(cpu, test.getRight().tstates);
     if (resultTstates < 0) {
       System.err.println(
-          format("Detected negative CPU tstates for %s: %d", test.getLeft().name, resultTstates));
+          format("%nDetected negative CPU tstates for %s: %d", test.getLeft().name, resultTstates));
     }
 
-    return checkCpuState(cpu, test.getRight(), false, true, true);
+
+    test.getRight().actions.stream()
+        .filter(x -> x.type == InfoExpected.ActionType.PW)
+        .forEach(x -> {
+          if (x.data != (areaIoWr[x.address] & 0xFF)) {
+            System.out.println(
+                format("%nDetected non-correct value 0x%X in port 0x%X, expected 0x%X",
+                    (areaIoWr[x.address] & 0xFF), x.address, x.data));
+            ok.set(false);
+          }
+        });
+
+    if (!checkCpuState(cpu, test.getRight(), false, true, true)) {
+      ok.set(false);
+    }
+
+    return ok.get();
   }
 
   private boolean checkCpuState(

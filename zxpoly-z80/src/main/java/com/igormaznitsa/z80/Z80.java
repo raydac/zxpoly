@@ -2742,10 +2742,10 @@ public final class Z80 {
     final int bc = _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
     int hl = _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL));
     final int outitemp = _readmem8(ctx, hl);
-    final int b = ((bc >>> 8) - 1) & 0xFF;
-    this.regSet[REG_B] = (byte) b;
     this.setWZ(this.getRegisterPair(REGPAIR_BC) + delta, false);
-    _writeport(ctx, bc, outitemp);
+    final int b = ((bc >>> 8) - 1) & 0xFF;
+    _writeport(ctx, (b << 8) | (bc & 0xFF), outitemp);
+    this.regSet[REG_B] = (byte) b;
 
     hl += delta;
     setRegisterPair(REGPAIR_HL, hl);

@@ -5003,7 +5003,7 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(16, cpu.nextInstruction(111, false, false, false));
 
     assertEquals(0x02, cpu.getRegister(Z80.REG_PC));
-    assertEquals(0x59, tb.readPort(cpu, 111, 0x1007) & 0xFF);
+    assertEquals(0x59, tb.readPort(cpu, 111, 0x0F07) & 0xFF);
     assertEquals(0x0F, cpu.getRegister(Z80.REG_B));
     assertEquals(0x07, cpu.getRegister(Z80.REG_C));
     assertEquals(0x1001, cpu.getRegisterPair(Z80.REGPAIR_HL));
@@ -5027,9 +5027,9 @@ public class Z80Test extends AbstractZ80Test {
 
     final Pair<Z80, Integer> cpu = executeRepeatingBlockCommand(state, tb, 0xED, 0xB3);
 
-    assertEquals(0x51, tb.readPort(cpu.getLeft(), 111, 0x0307) & 0xFF);
-    assertEquals(0xA9, tb.readPort(cpu.getLeft(), 111, 0x0207) & 0xFF);
-    assertEquals(0x03, tb.readPort(cpu.getLeft(), 111, 0x0107) & 0xFF);
+    assertEquals(0x51, tb.readPort(cpu.getLeft(), 111, 0x0207) & 0xFF);
+    assertEquals(0xA9, tb.readPort(cpu.getLeft(), 111, 0x0107) & 0xFF);
+    assertEquals(0x03, tb.readPort(cpu.getLeft(), 111, 0x0007) & 0xFF);
 
     assertEquals(0x1003, cpu.getLeft().getRegisterPair(Z80.REGPAIR_HL));
     assertEquals(0x0007, cpu.getLeft().getRegisterPair(Z80.REGPAIR_BC));
@@ -5053,7 +5053,7 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(16, cpu.nextInstruction(111, false, false, false));
 
     assertEquals(0x02, cpu.getRegister(Z80.REG_PC));
-    assertEquals(0x59, tb.readPort(cpu, 111, 0x1007) & 0xFF);
+    assertEquals(0x59, tb.readPort(cpu, 111, 0x0F07) & 0xFF);
     assertEquals(0x0F, cpu.getRegister(Z80.REG_B));
     assertEquals(0x07, cpu.getRegister(Z80.REG_C));
     assertEquals(0x0FFF, cpu.getRegisterPair(Z80.REGPAIR_HL));
@@ -5077,9 +5077,9 @@ public class Z80Test extends AbstractZ80Test {
 
     final Pair<Z80, Integer> cpu = executeRepeatingBlockCommand(state, tb, 0xED, 0xBB);
 
-    assertEquals(0x51, tb.readPort(cpu.getLeft(), 111, 0x0307) & 0xFF);
-    assertEquals(0xA9, tb.readPort(cpu.getLeft(), 111, 0x0207) & 0xFF);
-    assertEquals(0x03, tb.readPort(cpu.getLeft(), 111, 0x0107) & 0xFF);
+    assertEquals(0x51, tb.readPort(cpu.getLeft(), 111, 0x0207) & 0xFF);
+    assertEquals(0xA9, tb.readPort(cpu.getLeft(), 111, 0x0107) & 0xFF);
+    assertEquals(0x03, tb.readPort(cpu.getLeft(), 111, 0x0007) & 0xFF);
 
     assertEquals(0x0FFD, cpu.getLeft().getRegisterPair(Z80.REGPAIR_HL));
     assertEquals(0x0007, cpu.getLeft().getRegisterPair(Z80.REGPAIR_BC));
