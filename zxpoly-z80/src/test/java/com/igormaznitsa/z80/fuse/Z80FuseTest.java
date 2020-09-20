@@ -207,11 +207,13 @@ public class Z80FuseTest {
           format("Detected negative CPU tstates for %s: %d", test.getLeft().name, resultTstates));
     }
 
-    return checkCpuState(cpu, test.getRight(), true);
+    return checkCpuState(cpu, test.getRight(), false, true);
   }
 
-  private boolean checkCpuState(final Z80 cpu, final InfoExpected expected, boolean logError) {
+  private boolean checkCpuState(final Z80 cpu, final InfoExpected expected, final boolean checkR,
+                                final boolean logError) {
     boolean result = true;
+
     if (cpu.getRegister(Z80.REG_PC) != expected.pc) {
       if (logError) {
         System.out
@@ -241,7 +243,7 @@ public class Z80FuseTest {
       }
       result = false;
     }
-    if (cpu.getRegister(Z80.REG_R) != expected.r) {
+    if (checkR && cpu.getRegister(Z80.REG_R) != expected.r) {
       if (logError) {
         System.out
             .println(format("%nR expected 0x%X <> 0x%X", expected.r, cpu.getRegister(Z80.REG_R)));
