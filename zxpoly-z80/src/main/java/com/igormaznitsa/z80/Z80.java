@@ -599,18 +599,20 @@ public final class Z80 {
   }
 
   private int readInstrOrPrefix(final int ctx, final boolean m1) {
+    final boolean nonDisplacementByte = (this.prefix & 0xFF00) == 0;
+
     final int pc = this.regPC;
     this.regPC = (this.regPC + 1) & 0xFFFF;
     this.outSignals =
         (m1 ? this.outSignals & (~SIGNAL_OUT_nM1) : this.outSignals | SIGNAL_OUT_nM1) & 0xFF;
-    final int result = this.bus.readMemory(this, ctx, pc, m1, true) & 0xFF;
+    final int result = this.bus.readMemory(this, ctx, pc, m1 && nonDisplacementByte, true) & 0xFF;
     this.outSignals = this.outSignals | SIGNAL_OUT_nM1;
 
     this.tstates += m1 ? 4 : 3;
 
     if (m1) {
       this.lastM1InstructionByte = result;
-      if ((this.prefix & 0xFF00) == 0) {
+      if (nonDisplacementByte) {
         _incR();
       }
     }
