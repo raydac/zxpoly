@@ -95,7 +95,7 @@ public abstract class AbstractZ80Test {
 
     assertEquals("PC must be at " + code.length, code.length, cpu.getRegister(Z80.REG_PC));
 
-    return Pair.of(cpu, tstates);
+    return Pair.pairOf(cpu, tstates);
   }
 
   public Pair<Z80, Integer> executeRepeatingBlockCommand(final Z80State state, final int... code) {
@@ -178,7 +178,7 @@ public abstract class AbstractZ80Test {
 
     assertEquals("PC must be at " + code.length, code.length, cpu.getRegister(Z80.REG_PC));
 
-    return Pair.of(cpu, tstates);
+    return Pair.pairOf(cpu, tstates);
   }
 
   public Pair<Z80, Integer> executeCommand(final Z80State state, final int... code) {
@@ -265,7 +265,7 @@ public abstract class AbstractZ80Test {
       assertEquals("PC must be at " + code.length, code.length, cpu.getRegister(Z80.REG_PC));
     }
 
-    return Pair.of(cpu, spentTstates);
+    return Pair.pairOf(cpu, spentTstates);
   }
 
   public void assertFlagsExcludeReserved(final int etalon, final int valueToCheck) {
