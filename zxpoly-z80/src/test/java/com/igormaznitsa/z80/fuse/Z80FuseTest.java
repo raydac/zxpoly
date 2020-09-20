@@ -20,8 +20,10 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -96,7 +98,11 @@ public class Z80FuseTest {
     final AtomicInteger counterOk = new AtomicInteger(0);
     final AtomicInteger counterFail = new AtomicInteger(0);
 
+    final Set<String> ignoredTests = new HashSet<>();
+
     testList.stream()
+//        .filter(x -> "eda3_05".equals(x.getLeft().name))
+        .filter(x -> !ignoredTests.contains(x.getLeft().name))
         .forEach(test -> {
           printTestHeader(test);
           final boolean ok = this.doTest(test);
@@ -140,6 +146,12 @@ public class Z80FuseTest {
     final byte[] areaRam = new byte[0xFFFF];
     final byte[] areaIoRd = new byte[0xFFFF];
     final byte[] areaIoWr = new byte[0xFFFF];
+
+    test.getRight().actions.stream()
+        .filter(x -> x.type == InfoExpected.ActionType.PR)
+        .forEach(x -> {
+          areaIoRd[x.address] = (byte) x.data;
+        });
 
     final Z80 cpu = new Z80(new Z80CPUBus() {
       @Override
@@ -207,12 +219,19 @@ public class Z80FuseTest {
           format("Detected negative CPU tstates for %s: %d", test.getLeft().name, resultTstates));
     }
 
-    return checkCpuState(cpu, test.getRight(), false, true);
+    return checkCpuState(cpu, test.getRight(), false, true, true);
   }
 
-  private boolean checkCpuState(final Z80 cpu, final InfoExpected expected, final boolean checkR,
-                                final boolean logError) {
+  private boolean checkCpuState(
+      final Z80 cpu,
+      final InfoExpected expected,
+      final boolean checkR,
+      final boolean onlyDocumentedFlags,
+      final boolean logError
+  ) {
     boolean result = true;
+
+    final int afMask = onlyDocumentedFlags ? 0b11111111_11010111 : 0xFFFF;
 
     if (cpu.getRegister(Z80.REG_PC) != expected.pc) {
       if (logError) {
@@ -266,11 +285,11 @@ public class Z80FuseTest {
       }
       result = false;
     }
-    if (cpu.getRegisterPair(Z80.REGPAIR_AF, false) != expected.af) {
+    if ((cpu.getRegisterPair(Z80.REGPAIR_AF, false) & afMask) != (expected.af & afMask)) {
       if (logError) {
         System.out.println(
-            format("%nAF expected 0x%X <> 0x%X", expected.af,
-                cpu.getRegisterPair(Z80.REGPAIR_AF, false)));
+            format("%nAF expected 0x%X <> 0x%X", (expected.af & afMask),
+                (cpu.getRegisterPair(Z80.REGPAIR_AF, false) & afMask)));
       }
       result = false;
     }
@@ -298,10 +317,10 @@ public class Z80FuseTest {
       }
       result = false;
     }
-    if (cpu.getRegisterPair(Z80.REGPAIR_AF, true) != expected.altAf) {
+    if ((cpu.getRegisterPair(Z80.REGPAIR_AF, true) & afMask) != (expected.altAf & afMask)) {
       if (logError) {
-        System.out.println(format("%nAF' expected 0x%X <> 0x%X", expected.altAf,
-            cpu.getRegisterPair(Z80.REGPAIR_AF, true)));
+        System.out.println(format("%nAF' expected 0x%X <> 0x%X", (expected.altAf & afMask),
+            (cpu.getRegisterPair(Z80.REGPAIR_AF, true) & afMask)));
       }
       result = false;
     }
