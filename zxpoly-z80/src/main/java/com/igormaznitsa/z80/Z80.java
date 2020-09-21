@@ -118,10 +118,6 @@ public final class Z80 {
   private int regPC;
   private int regI;
   private int regR;
-  private int regW;
-  private int regZ;
-  private int regWalt;
-  private int regZalt;
   private int tstates;
   private int lastM1InstructionByte = -1;
   private int lastInstructionByte = -1;
@@ -170,10 +166,6 @@ public final class Z80 {
     this.regPC = cpu.regPC;
     this.regR = cpu.regR;
     this.regSP = cpu.regSP;
-    this.regW = cpu.regW;
-    this.regZ = cpu.regZ;
-    this.regWalt = cpu.regWalt;
-    this.regZalt = cpu.regZalt;
     System.arraycopy(cpu.regSet, 0, this.regSet, 0, cpu.regSet.length);
     System.arraycopy(cpu.altRegSet, 0, this.altRegSet, 0, cpu.altRegSet.length);
     this.lastM1InstructionByte = cpu.lastM1InstructionByte;
@@ -254,10 +246,6 @@ public final class Z80 {
     this.regPC = src.regPC;
     this.regR = src.regR;
     this.regSP = src.regSP;
-    this.regW = src.regW;
-    this.regZ = src.regZ;
-    this.regWalt = src.regWalt;
-    this.regZalt = src.regZalt;
     System.arraycopy(src.regSet, 0, this.regSet, 0, src.regSet.length);
     System.arraycopy(src.altRegSet, 0, this.altRegSet, 0, src.altRegSet.length);
     this.lastM1InstructionByte = src.lastM1InstructionByte;
@@ -272,20 +260,6 @@ public final class Z80 {
     this.insideBlockInstruction = src.insideBlockInstruction;
     this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
     return this;
-  }
-
-  public int getWZ(final boolean alt) {
-    return alt ? (this.regWalt << 8) | this.regZalt : (this.regW << 8) | this.regZ;
-  }
-
-  public void setWZ(final int value, final boolean alt) {
-    if (alt) {
-      this.regWalt = (value >> 8) & 0xFF;
-      this.regZalt = value & 0xFF;
-    } else {
-      this.regW = (value >> 8) & 0xFF;
-      this.regZ = value & 0xFF;
-    }
   }
 
   public int getIM() {
@@ -794,14 +768,12 @@ public final class Z80 {
             this.tstates += 5;
             final int address = _readPtr(ctx, REG_IX, this.regIX) + (byte) _read_ixiy_d(ctx);
             this.lastReadReg8MemPtr = address;
-            this.setWZ(address, false);
             return _readmem8(ctx, address);
           }
           case 0xFD: {
             this.tstates += 5;
             final int address = _readPtr(ctx, REG_IY, this.regIY) + (byte) _read_ixiy_d(ctx);
             this.lastReadReg8MemPtr = address;
-            this.setWZ(address, false);
             return _readmem8(ctx, address);
           }
         }
@@ -991,14 +963,12 @@ public final class Z80 {
           case 0xDD: {
             final int address = _readPtr(ctx, REG_IX, this.regIX) + (byte) value;
             _writemem8(ctx, address, (byte) readInstrOrPrefix(ctx, false));
-            this.setWZ(address, false);
             this.tstates += 2;
             return;
           }
           case 0xFD: {
             final int address = _readPtr(ctx, REG_IY, this.regIY) + (byte) value;
             _writemem8(ctx, address, (byte) readInstrOrPrefix(ctx, false));
-            this.setWZ(address, false);
             this.tstates += 2;
             return;
           }
@@ -1605,7 +1575,6 @@ public final class Z80 {
   private void doJR(final int ctx) {
     final int offset = (byte) readInstrOrPrefix(ctx, false);
     this.regPC = (this.regPC + offset) & 0xFFFF;
-    this.setWZ(this.regPC, false);
     this.tstates += 5;
   }
 
@@ -1618,7 +1587,6 @@ public final class Z80 {
     final int reg = readReg16(2);
     final int value = readReg16(p);
     final int result = reg + value;
-    this.setWZ(reg + 1, iff1);
     writeReg16(2, result);
 
     final int c = reg ^ value ^ result;
@@ -1636,7 +1604,6 @@ public final class Z80 {
     final int y = readReg16(p);
 
     final int z = x + y + (this.regSet[REG_F] & FLAG_C);
-    this.setWZ(x + 1, false);
 
     int c = x ^ y ^ z;
     int f = (z & 0xffff) != 0 ? (z >> 8) & FLAG_SYX : FLAG_Z;
@@ -1658,8 +1625,6 @@ public final class Z80 {
 
     final int z = x - y - (this.regSet[REG_F] & FLAG_C);
     int c = x ^ y ^ z;
-
-    this.setWZ(x + 1, iff1);
 
     int f = FLAG_N;
     f |= (z & 0xffff) != 0 ? (z >>> 8) & FLAG_SYX : FLAG_Z;
@@ -1826,43 +1791,34 @@ public final class Z80 {
   private void doLD_mNN_HL(final int ctx) {
     final int addr = _readNextPcAddressedWord(ctx);
     _writemem16(ctx, addr, readReg16(2));
-    this.setWZ(addr + 1, false);
   }
 
   private void doLD_mNN_A(final int ctx) {
     final int address = _readNextPcAddressedWord(ctx);
     final byte a = this.regSet[REG_A];
-    this.regW = a & 0xFF;
-    this.regZ = (address + 1) & 0xFF;
     this._writemem8(ctx, address, a);
   }
 
   private void doLD_mBC_A(final int ctx) {
     final int address = _readPtr(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
     final byte a = this.regSet[REG_A];
-    this.regW = a & 0xFF;
-    this.regZ = (address + 1) & 0xFF;
     this._writemem8(ctx, address, a);
   }
 
   private void doLD_mDE_A(final int ctx) {
     final int address = _readPtr(ctx, REGPAIR_DE, this.getRegisterPair(REGPAIR_DE));
     final byte a = this.regSet[REG_A];
-    this.regW = a & 0xFF;
-    this.regZ = (address + 1) & 0xFF;
     this._writemem8(ctx, address, a);
   }
 
   private void doLD_HL_mem(final int ctx) {
     final int addr = _readmem16(ctx, _readNextPcAddressedWord(ctx));
     writeReg16(2, addr);
-    this.setWZ(addr + 1, false);
   }
 
   private void doLD_A_mem(final int ctx) {
     final int address = _readNextPcAddressedWord(ctx);
     setRegister(REG_A, _readmem8(ctx, address));
-    this.setWZ(address + 1, false);
   }
 
   private void doINCRegPair(final int p) {
@@ -2023,7 +1979,6 @@ public final class Z80 {
       final int sp = _readPtr(ctx, REG_SP, this.getSP());
       int sp1 = sp + 1;
       this.regPC = _readmem8(ctx, sp) | (_readmem8(ctx, sp1++) << 8);
-      this.setWZ(this.regPC, false);
       this.regSP = sp1 & 0xFFFF;
     }
     this.tstates++;
@@ -2033,7 +1988,6 @@ public final class Z80 {
     final int sp = _readPtr(ctx, REG_SP, this.getSP());
     int sp1 = sp + 1;
     this.regPC = _readmem8(ctx, sp) | (_readmem8(ctx, sp1++) << 8);
-    this.setWZ(this.regPC, false);
     this.regSP = sp1 & 0xFFFF;
   }
 
@@ -2049,12 +2003,6 @@ public final class Z80 {
       this.regSet[i] = this.altRegSet[i];
       this.altRegSet[i] = b;
     }
-    int w = this.regW;
-    int z = this.regZ;
-    this.regW = this.regWalt;
-    this.regZ = this.regZalt;
-    this.regWalt = w;
-    this.regZalt = z;
   }
 
   private void doJP_HL(final int ctx) {
@@ -2071,12 +2019,10 @@ public final class Z80 {
     if (checkCondition(cc)) {
       this.regPC = address;
     }
-    this.setWZ(address, false);
   }
 
   private void doJP(final int ctx) {
     this.regPC = _readNextPcAddressedWord(ctx);
-    this.setWZ(this.regPC, false);
   }
 
   private void doOUTnA(final int ctx) {
@@ -2095,7 +2041,6 @@ public final class Z80 {
     final int stacktop = _readPtr(ctx, REG_SP, this.getSP());
     final int hl = readReg16(2);
     final int value = _readmem8(ctx, stacktop) | (_readmem8(ctx, stacktop + 1) << 8);
-    this.setWZ(value, false);
     writeReg16(2, value);
     _writemem8(ctx, stacktop, (byte) hl);
     _writemem8(ctx, stacktop + 1, (byte) (hl >> 8));
@@ -2136,12 +2081,10 @@ public final class Z80 {
       _call(ctx, address);
       this.tstates++;
     }
-    this.setWZ(address, false);
   }
 
   private void doCALL(final int ctx) {
     final int address = _readNextPcAddressedWord(ctx);
-    this.setWZ(address, false);
     _call(ctx, address);
     this.tstates++;
   }
@@ -2251,7 +2194,6 @@ public final class Z80 {
 
   private void doRST(final int ctx, final int address) {
     _call(ctx, address);
-    this.setWZ(address, false);
     this.tstates++;
   }
 
@@ -2383,28 +2325,22 @@ public final class Z80 {
 
   private void doOUT_C(final int ctx) {
     final int port = _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
-    this.setWZ(port + 1, false);
     _writeport(ctx, port, 0);
   }
 
   private void doOUT_C(final int ctx, final int y) {
     final int port = _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
     _writeport(ctx, port, readReg8(ctx, y));
-    if (y == 7) { // reg A
-      this.setWZ(port + 1, false);
-    }
   }
 
   private void doLD_mNN_RegP(final int ctx, final int p) {
     final int addr = _readNextPcAddressedWord(ctx);
     _writemem16(ctx, addr, readReg16(p));
-    this.setWZ(addr + 1, false);
   }
 
   private void doLD_RegP_mNN(final int ctx, final int p) {
     final int addr = _readmem16(ctx, _readNextPcAddressedWord(ctx));
     writeReg16(p, addr);
-    this.setWZ(addr + 1, false);
   }
 
   private void doNEG() {
@@ -2498,7 +2434,6 @@ public final class Z80 {
 
   private void doRRD(final int ctx) {
     int hl = _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL));
-    this.setWZ(hl + 1, false);
     final int A = this.regSet[REG_A] & 0xFF;
     int x = _readmem8(ctx, hl);
     int y = (A & 0xf0) << 8;
@@ -2515,7 +2450,6 @@ public final class Z80 {
 
   private void doRLD(final int ctx) {
     int hl = _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL));
-    this.setWZ(hl + 1, false);
     final int A = this.regSet[REG_A] & 0xFF;
     int x = _readmem8(ctx, hl);
     int y = (A & 0xf0) << 8;
@@ -2616,7 +2550,6 @@ public final class Z80 {
   private void doLD_A_mBC(final int ctx) {
     final int addr = _readPtr(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
     setRegister(REG_A, _readmem8(ctx, addr));
-    this.setWZ(addr + 1, false);
   }
 
   private boolean doLDIR(final int ctx) {
@@ -2624,7 +2557,6 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_PV) != 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.setWZ(this.regPC + 1, false);
       this.tstates += 5;
     } else {
       loopNonCompleted = false;
@@ -2635,7 +2567,6 @@ public final class Z80 {
   private void doLD_A_mDE(final int ctx) {
     final int addr = _readPtr(ctx, REGPAIR_DE, this.getRegisterPair(REGPAIR_DE));
     setRegister(REG_A, _readmem8(ctx, addr));
-    this.setWZ(addr + 1, false);
   }
 
   private boolean doCPIR(final int ctx) {
@@ -2644,7 +2575,6 @@ public final class Z80 {
     final int flags = this.regSet[REG_F];
     if ((flags & (FLAG_Z | FLAG_PV)) == FLAG_PV) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.setWZ(this.regPC + 1, false);
       this.tstates += 5;
     } else {
       loopNonCompleted = false;
@@ -2657,7 +2587,6 @@ public final class Z80 {
 
     int hl = _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL));
     final int bc = _portAddrFromReg(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC));
-    this.setWZ(bc + delta, false);
     final int initemp = _readport(ctx, bc);
     _writemem8(ctx, hl, (byte) initemp);
     hl += delta;
@@ -2746,7 +2675,6 @@ public final class Z80 {
     setRegisterPair(REGPAIR_HL, hl);
     final int bc = _readSpecRegPairValue(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC)) - 1;
     setRegisterPair(REGPAIR_BC, bc);
-    this.setWZ(this.getWZ(false) + 1, false);
 
     int f = (a ^ n ^ z) & FLAG_H;
     n = z - (f >>> FLAG_H_SHIFT);
@@ -2778,7 +2706,6 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if (this.getRegisterPair(REGPAIR_BC) != 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.setWZ(this.regPC + 1, false);
       this.tstates += 5;
     } else {
       loopNonCompleted = false;
@@ -2792,7 +2719,6 @@ public final class Z80 {
     final int bc = _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
     int hl = _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL));
     final int outitemp = _readmem8(ctx, hl);
-    this.setWZ(this.getRegisterPair(REGPAIR_BC) + delta, false);
     final int b = ((bc >>> 8) - 1) & 0xFF;
     _writeport(ctx, (b << 8) | (bc & 0xFF), outitemp);
     this.regSet[REG_B] = (byte) b;
@@ -2817,7 +2743,6 @@ public final class Z80 {
     final int flags = this.regSet[REG_F];
     if ((flags & (FLAG_Z | FLAG_PV)) == FLAG_PV) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.setWZ(this.regPC + 1, false);
 
       this.tstates += 5;
     } else {
@@ -2891,12 +2816,6 @@ public final class Z80 {
     if (this.regR != other.regR) {
       return false;
     }
-    if (this.regW != other.regW || this.regWalt != other.regWalt) {
-      return false;
-    }
-    if (this.regZ != other.regZ || this.regZalt != other.regZalt) {
-      return false;
-    }
     if (compareExe && (this.lastM1InstructionByte != other.lastM1InstructionByte ||
         this.lastInstructionByte != other.lastInstructionByte)) {
       return false;
@@ -2938,8 +2857,6 @@ public final class Z80 {
     setRegisterPair(REGPAIR_HL, hl);
     final int bc = _readSpecRegPairValue(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC)) - 1;
     setRegisterPair(REGPAIR_BC, bc);
-
-    this.setWZ(this.getWZ(false) - 1, false);
 
     int f = (a ^ n ^ z) & FLAG_H;
     n = z - (f >>> FLAG_H_SHIFT);

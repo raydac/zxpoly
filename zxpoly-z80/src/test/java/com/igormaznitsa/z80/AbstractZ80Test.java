@@ -305,9 +305,6 @@ public abstract class AbstractZ80Test {
       this.H = cpu.getRegister(Z80.REG_H, false);
       this.L = cpu.getRegister(Z80.REG_L, false);
 
-      this.WZ = cpu.getWZ(false);
-      this.altWZ = cpu.getWZ(true);
-
       this.altA = cpu.getRegister(Z80.REG_A, true);
       this.altF = cpu.getRegister(Z80.REG_F, true);
       this.altB = cpu.getRegister(Z80.REG_B, true);
@@ -336,9 +333,6 @@ public abstract class AbstractZ80Test {
       cpu.setRegister(Z80.REG_E, this.E, false);
       cpu.setRegister(Z80.REG_H, this.H, false);
       cpu.setRegister(Z80.REG_L, this.L, false);
-
-      cpu.setWZ(this.WZ, false);
-      cpu.setWZ(this.altWZ, true);
 
       cpu.setRegister(Z80.REG_A, this.altA, true);
       cpu.setRegister(Z80.REG_F, this.altF, true);

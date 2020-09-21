@@ -954,8 +954,6 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(0x60, cpu.getLeft().getRegister(Z80.REG_L, true));
     assertEquals(2, cpu.getLeft().getRegister(Z80.REG_A, true));
     assertEquals(5, cpu.getLeft().getRegister(Z80.REG_F, true));
-    assertEquals(0x1234, cpu.getLeft().getWZ(true));
-    assertEquals(0x4321, cpu.getLeft().getWZ(false));
     assertEquals(4, cpu.getRight().intValue());
   }
 
