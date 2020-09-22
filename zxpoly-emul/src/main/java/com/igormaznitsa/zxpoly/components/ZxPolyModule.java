@@ -542,7 +542,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         result = (byte) this.romData.get().readAdress(address + 0x8000);
       } else {
         result =
-            this.gfxRom[((valueAt7FFD >> 4) & 1) * GFX_PAGE_SIZE + (address << 3) + gfxCoreIndex];
+            this.gfxRom[(((valueAt7FFD >> 4) & 1) ^ 1) * GFX_PAGE_SIZE + (address << 3) +
+                gfxCoreIndex];
       }
     } else {
       final int page;
