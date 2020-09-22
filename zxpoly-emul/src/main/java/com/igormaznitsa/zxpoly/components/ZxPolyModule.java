@@ -71,11 +71,9 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   private final byte[] gfxRam;
   private final byte[] gfxRom;
 
-  private int gfxPort7FFD;
   private boolean gfxWaitSignal;
   private int gfxIntCounter;
   private int gfxNmiCounter;
-  private boolean gfxTrDosRomActive;
 
   private static final int GFX_PAGE_SIZE = 0x4000 * 8;
 
@@ -105,11 +103,9 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   void saveInternalCopyForGfx() {
-    this.gfxPort7FFD = this.port7FFD.get();
     this.gfxWaitSignal = this.waitSignal;
     this.gfxIntCounter = this.intCounter;
     this.gfxNmiCounter = this.nmiCounter;
-    this.gfxTrDosRomActive = this.trdosRomActive;
   }
 
   public boolean isGfxPtrFromMainCpu() {
@@ -358,7 +354,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   public long readGfxVideo(final int videoOffset) {
     int offset;
-    if ((this.gfxPort7FFD & PORTw_ZX128_SCREEN) == 0) {
+    if ((this.port7FFD.get() & PORTw_ZX128_SCREEN) == 0) {
       // RAM 5
       offset = 5 * GFX_PAGE_SIZE + (videoOffset << 3);
     } else {
@@ -383,7 +379,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   public long readGfxVideo16(final int videoOffset) {
     int offset;
-    if ((this.gfxPort7FFD & PORTw_ZX128_SCREEN) == 0) {
+    if ((this.port7FFD.get() & PORTw_ZX128_SCREEN) == 0) {
       // RAM 5
       offset = 5 * GFX_PAGE_SIZE + (videoOffset << 3);
     } else {
@@ -474,14 +470,14 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   ) {
     final byte result;
 
-    if (ctx == 0) {
-      final int value7FFD = this.port7FFD.get();
+    final int valueAt7ffd = this.port7FFD.get();
 
+    if (ctx == 0) {
       if (m1) {
         this.lastM1Address = address;
         final int address_h = address >>> 8;
 
-        final boolean basic48selected = (value7FFD & PORTw_ZX128_48ROM) != 0;
+        final boolean basic48selected = (valueAt7ffd & PORTw_ZX128_48ROM) != 0;
 
         if (this.trdosRomActive) {
           this.trdosRomActive = address_h < 0x40;
@@ -513,27 +509,23 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
             this.activeRegisterReading = false;
           }
         } else {
-          result = memoryByteForAddress(value7FFD, this.trdosRomActive, address);
+          result = memoryByteForAddress(valueAt7ffd, this.trdosRomActive, address);
         }
       } else {
-        result = memoryByteForAddress(value7FFD, this.trdosRomActive, address);
+        result = memoryByteForAddress(valueAt7ffd, this.trdosRomActive, address);
       }
     } else {
-      if (address < 0x4000) {
-        // ROM area
-        result = readGfxMemory(ctx - 1, this.gfxPort7FFD, this.gfxTrDosRomActive, address);
-      } else if (cmdOrPrefix) {
-        // read command from non-changed memory area
-        result = memoryByteForAddress(this.gfxPort7FFD, this.gfxTrDosRomActive, address);
+      if (cmdOrPrefix) {
+        result = memoryByteForAddress(valueAt7ffd, this.trdosRomActive, address);
       } else {
-        result = readGfxMemory(ctx - 1, this.gfxPort7FFD, this.gfxTrDosRomActive, address);
+        result = readGfxMemory(ctx - 1, valueAt7ffd, this.trdosRomActive, address);
       }
     }
     return result;
   }
 
   public byte readGfxMemory(final int gfxCoreIndex,
-                            final int valueAt7FFD,
+                            final int valueAt7ffd,
                             final boolean trdosRomActive,
                             final int address) {
     final byte result;
@@ -541,9 +533,9 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       if (trdosRomActive) {
         result = (byte) this.romData.get().readAdress(address + 0x8000);
       } else {
-        result =
-            this.gfxRom[(((valueAt7FFD >> 4) & 1) ^ 1) * GFX_PAGE_SIZE + (address << 3)
-                + gfxCoreIndex];
+        final int addrAtGfxRomArea =
+            gfxCoreIndex + (address << 3) + ((valueAt7ffd >> 4) & 1) * GFX_PAGE_SIZE;
+        result = this.gfxRom[addrAtGfxRomArea];
       }
     } else {
       final int page;
@@ -555,7 +547,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         page = 2;
         offsetInPage = address - 0x8000;
       } else {
-        page = valueAt7FFD & 7;
+        page = valueAt7ffd & 7;
         offsetInPage = address - 0xC000;
       }
       result = this.gfxRam[page * GFX_PAGE_SIZE + (offsetInPage << 3) + gfxCoreIndex];
@@ -623,16 +615,16 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     final byte result;
     if (address < 0x4000) {
-      if ((valueAt7FFD & PORTw_ZX128_ROMRAM) != 0) {
-        //RAM0
-        result = (byte) this.board.readRam(this, ramAddress);
-      } else {
+      if ((valueAt7FFD & PORTw_ZX128_ROMRAM) == 0) {
         if (trDosActive) {
           result = (byte) this.romData.get().readAdress(address + 0x8000);
         } else {
           result =
               (byte) this.romData.get().readAdress(address + ((valueAt7FFD >> 4) & 1) * 0x4000);
         }
+      } else {
+        //RAM0
+        result = (byte) this.board.readRam(this, ramAddress);
       }
     } else {
       result = (byte) this.board.readRam(this, ramAddress);
@@ -742,7 +734,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         }
       }
     } else {
-      this.writeGfxMemory(ctx - 1, this.gfxPort7FFD, address, val);
+      this.writeGfxMemory(ctx - 1, this.port7FFD.get(), address, val);
     }
   }
 

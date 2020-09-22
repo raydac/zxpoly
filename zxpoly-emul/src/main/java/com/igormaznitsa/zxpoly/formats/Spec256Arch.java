@@ -77,7 +77,7 @@ public class Spec256Arch {
         } else {
           Matcher matcher = ROM_ABC_PATTERN.matcher(name);
           if (matcher.find()) {
-            final int romPageIndex = matcher.group(1).charAt(0) == 'a' ? 1 : 0;
+            final int romPageIndex = matcher.group(1).charAt(0) == 'a' ? 0 : 1;
             final byte[] read = readData(zipFile, entry);
             if (read.length > 0) {
               romPages.add(
@@ -91,7 +91,17 @@ public class Spec256Arch {
             if (matcher.find()) {
               final byte[] read = readData(zipFile, entry);
               if (read.length > 0) {
-                final int romPageIndex = Integer.parseInt(matcher.group(1));
+                final int romPageIndex;
+                switch (Integer.parseInt(matcher.group(1))) {
+                  case 0:
+                    romPageIndex = 1;
+                    break;
+                  case 1:
+                    romPageIndex = 0;
+                    break;
+                  default:
+                    throw new Error("Detected unexpected ROM page index: " + matcher.group(1));
+                }
                 romPages.add(
                     new Spec256GfxPage(
                         romPageIndex,
