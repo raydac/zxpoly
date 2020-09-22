@@ -766,15 +766,15 @@ public final class Z80 {
           }
           case 0xDD: {
             this.tstates += 5;
-            final int address = _readPtr(ctx, REG_IX, this.regIX) + (byte) _read_ixiy_d(ctx);
-            this.lastReadReg8MemPtr = address;
-            return _readmem8(ctx, address);
+            final int memptr = _readPtr(ctx, REG_IX, this.regIX) + (byte) _read_ixiy_d(ctx);
+            this.lastReadReg8MemPtr = memptr;
+            return _readmem8(ctx, memptr);
           }
           case 0xFD: {
             this.tstates += 5;
-            final int address = _readPtr(ctx, REG_IY, this.regIY) + (byte) _read_ixiy_d(ctx);
-            this.lastReadReg8MemPtr = address;
-            return _readmem8(ctx, address);
+            final int memptr = _readPtr(ctx, REG_IY, this.regIY) + (byte) _read_ixiy_d(ctx);
+            this.lastReadReg8MemPtr = memptr;
+            return _readmem8(ctx, memptr);
           }
         }
       }
