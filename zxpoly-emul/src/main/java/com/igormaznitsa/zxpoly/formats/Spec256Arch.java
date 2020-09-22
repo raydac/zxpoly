@@ -77,7 +77,7 @@ public class Spec256Arch {
         } else {
           Matcher matcher = ROM_ABC_PATTERN.matcher(name);
           if (matcher.find()) {
-            final int romPageIndex = matcher.group(1).charAt(0) == 'a' ? 0 : 1;
+            final int romPageIndex = Character.toLowerCase(matcher.group(1).charAt(0)) - 'a';
             final byte[] read = readData(zipFile, entry);
             if (read.length > 0) {
               romPages.add(
