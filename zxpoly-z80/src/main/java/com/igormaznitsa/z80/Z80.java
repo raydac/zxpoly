@@ -569,10 +569,6 @@ public final class Z80 {
     return _readmem8(ctx, address) | (_readmem8(ctx, address + 1) << 8);
   }
 
-  private int _readmem16withM1(final int ctx, final int address) {
-    return _readmem8withM1(ctx, address) | (_readmem8withM1(ctx, address + 1) << 8);
-  }
-
   private int _read_ixiy_d(final int ctx) {
     if (this.cbDisplacementByte < 0) {
       return readInstrOrPrefix(ctx, false);
@@ -760,9 +756,9 @@ public final class Z80 {
       case 6: { // (HL)
         switch (normalizedPrefix()) {
           case 0x00: {
-            final int memptr = this.getRegisterPair(REGPAIR_HL);
+            final int memptr = _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL));
             this.lastReadReg8MemPtr = memptr;
-            return _readmem8(ctx, _readPtr(ctx, REGPAIR_HL, memptr));
+            return _readmem8(ctx, memptr);
           }
           case 0xDD: {
             this.tstates += 5;
