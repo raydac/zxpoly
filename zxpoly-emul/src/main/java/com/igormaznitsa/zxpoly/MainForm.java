@@ -1759,9 +1759,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             this.keyboardAndTapeModule.getTap().removeActionListener(this);
           }
 
-          final TapeSource tapfile = TapeSourceFactory.getSource(selectedTapFile);
-          tapfile.addActionListener(this);
-          this.keyboardAndTapeModule.setTap(tapfile);
+          final TapeSource source = TapeSourceFactory.makeSource(selectedTapFile);
+          source.addActionListener(this);
+          this.keyboardAndTapeModule.setTap(source);
         } catch (Exception ex) {
           LOGGER.log(Level.SEVERE, "Can't read " + selectedTapFile, ex);
           JOptionPane.showMessageDialog(this, "Can't load TAP file", ex.getMessage(),

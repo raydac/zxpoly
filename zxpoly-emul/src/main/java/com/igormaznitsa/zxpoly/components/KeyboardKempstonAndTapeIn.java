@@ -26,12 +26,14 @@ import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterKempston
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterType;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import net.java.games.input.Controller;
@@ -249,7 +251,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   private int readKeyboardAndTap(final int port, final TapeSource tapeFileReader) {
-    final int tapbit = tapeFileReader == null ? 0 : tapeFileReader.getSignal() ? TAP_BIT : 0;
+    final int tapbit = tapeFileReader == null ? 0 : this.isTapeIn() ? TAP_BIT : 0;
     return getKbdValueForLines(port >>> 8) | tapbit | 0xA0;
   }
 
@@ -629,13 +631,22 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   public boolean isTapeIn() {
     final TapeSource reader = this.tap.get();
-    return reader != null && reader.getSignal();
+    if (reader == null) {
+      return false;
+    } else {
+      try {
+        return reader.isHi();
+      } catch (IOException ex) {
+        LOGGER.log(Level.FINEST, "Can't get signal level from tape source", ex);
+        return false;
+      }
+    }
   }
 
   public void doKempstonCenterX() {
     int state = this.kempstonSignals;
-    state = state &
-        ~(KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT | KeyboardKempstonAndTapeIn.KEMPSTON_LEFT);
+    state = state
+        & ~(KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT | KeyboardKempstonAndTapeIn.KEMPSTON_LEFT);
     this.kempstonSignals = state;
   }
 

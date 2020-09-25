@@ -8,18 +8,22 @@ import java.io.InputStream;
 import java.util.Locale;
 import org.apache.commons.io.FilenameUtils;
 
-public class TapeSourceFactory {
+public final class TapeSourceFactory {
 
-  public static TapeSource getSource(File selectedTapFile) throws IOException {
+  private TapeSourceFactory() {
+
+  }
+
+  public static TapeSource makeSource(File selectedTapFile) throws IOException {
     final String extension = FilenameUtils.getExtension(selectedTapFile.getName()).toLowerCase(
         Locale.ENGLISH);
     if (extension.equals("tap")) {
       try (final InputStream inputStream = new BufferedInputStream(
           new FileInputStream(selectedTapFile))) {
-        return new TapeFileReader(selectedTapFile.getName(), inputStream);
+        return new ReaderTap(selectedTapFile.getName(), inputStream);
       }
     } else if (extension.equals("wav")) {
-      return new WavFileReader(selectedTapFile.getName(), selectedTapFile);
+      return new ReaderWav(selectedTapFile.getName(), selectedTapFile);
     } else {
       throw new IllegalArgumentException("Unsupported tape container: " + extension);
     }

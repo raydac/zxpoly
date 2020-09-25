@@ -5,9 +5,11 @@ import java.io.IOException;
 import javax.swing.ListModel;
 
 public interface TapeSource {
-  boolean getSignal();
+  boolean isHi() throws IOException;
 
   void updateForSpentMachineCycles(long spentTstates);
+
+  void dispose();
 
   boolean isPlaying();
 

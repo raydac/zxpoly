@@ -43,7 +43,7 @@ import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataListener;
 
-final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>, TapeSource {
+final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
 
   private static final Logger LOGGER = Logger.getLogger("TAP");
 
@@ -69,7 +69,7 @@ final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>, TapeSo
   private int buffered;
   private int controlChecksum;
 
-  public TapeFileReader(final String name, final InputStream tap) throws IOException {
+  public ReaderTap(final String name, final InputStream tap) throws IOException {
     this.name = name;
     final TapFormatParser tapParser = new TapFormatParser().read(new JBBPBitInputStream(tap));
     if (tapParser.getTAPBLOCK().length == 0) {
@@ -98,6 +98,11 @@ final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>, TapeSo
   @Override
   public boolean isNavigable() {
     return true;
+  }
+
+  @Override
+  public void dispose() {
+
   }
 
   public void addActionListener(final ActionListener l) {
@@ -218,7 +223,7 @@ final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>, TapeSo
     }
   }
 
-  public synchronized boolean getSignal() {
+  public synchronized boolean isHi() throws IOException {
     return this.signalInState;
   }
 
