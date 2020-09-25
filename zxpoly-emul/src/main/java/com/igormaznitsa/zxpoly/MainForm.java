@@ -622,15 +622,23 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   private void updateTapeMenu() {
     final TapeSource reader = this.keyboardAndTapeModule.getTap();
+
+    final boolean navigable;
     if (reader == null) {
       this.menuTap.setEnabled(false);
       this.menuTapPlay.setSelected(false);
       this.menuTapExportAs.setEnabled(false);
+      navigable = false;
     } else {
       this.menuTap.setEnabled(true);
       this.menuTapPlay.setSelected(reader.isPlaying());
       this.menuTapExportAs.setEnabled(true);
+      navigable = reader.isNavigable();
     }
+
+    this.menuTapGotoBlock.setEnabled(navigable);
+    this.menuTapNextBlock.setEnabled(navigable);
+    this.menuTapPrevBlock.setEnabled(navigable);
 
   }
 

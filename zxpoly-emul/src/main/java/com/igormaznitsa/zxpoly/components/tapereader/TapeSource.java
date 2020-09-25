@@ -17,6 +17,8 @@ public interface TapeSource {
 
   boolean rewindToPrevBlock();
 
+  boolean isNavigable();
+
   void stopPlay();
 
   boolean startPlay();
