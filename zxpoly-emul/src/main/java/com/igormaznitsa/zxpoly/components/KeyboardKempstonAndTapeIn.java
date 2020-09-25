@@ -24,6 +24,7 @@ import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapter;
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterInterface2;
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterKempston;
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterType;
+import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -141,7 +142,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private static final int TAP_BIT = 0b01000000;
 
   private final Motherboard board;
-  private final AtomicReference<TapeFileReader> tap = new AtomicReference<>();
+  private final AtomicReference<TapeSource> tap = new AtomicReference<>();
   private final List<Controller> detectedControllers;
   private final List<GameControllerAdapter> activeGameControllerAdapters =
       new CopyOnWriteArrayList<>();
@@ -247,7 +248,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     return result;
   }
 
-  private int readKeyboardAndTap(final int port, final TapeFileReader tapeFileReader) {
+  private int readKeyboardAndTap(final int port, final TapeSource tapeFileReader) {
     final int tapbit = tapeFileReader == null ? 0 : tapeFileReader.getSignal() ? TAP_BIT : 0;
     return getKbdValueForLines(port >>> 8) | tapbit | 0xA0;
   }
@@ -321,11 +322,11 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     return "Keyboard";
   }
 
-  public TapeFileReader getTap() {
+  public TapeSource getTap() {
     return this.tap.get();
   }
 
-  public void setTap(final TapeFileReader tap) {
+  public void setTap(final TapeSource tap) {
     this.tap.set(tap);
   }
 
@@ -615,7 +616,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   @Override
   public void postStep(final int spentTstates) {
-    final TapeFileReader currentTap = this.getTap();
+    final TapeSource currentTap = this.getTap();
     if (currentTap != null) {
       currentTap.updateForSpentMachineCycles(spentTstates);
     }
@@ -627,7 +628,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   public boolean isTapeIn() {
-    final TapeFileReader reader = this.tap.get();
+    final TapeSource reader = this.tap.get();
     return reader != null && reader.getSignal();
   }
 

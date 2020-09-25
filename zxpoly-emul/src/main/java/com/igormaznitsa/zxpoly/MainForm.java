@@ -35,11 +35,12 @@ import com.igormaznitsa.zxpoly.components.KempstonMouse;
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.RomData;
-import com.igormaznitsa.zxpoly.components.TapeFileReader;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk;
 import com.igormaznitsa.zxpoly.components.snd.Beeper;
 import com.igormaznitsa.zxpoly.components.snd.SourceSoundPort;
+import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
+import com.igormaznitsa.zxpoly.components.tapereader.TapeSourceFactory;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilterChain;
 import com.igormaznitsa.zxpoly.formats.FormatSNA;
@@ -80,7 +81,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -454,7 +454,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     if (panelIndicators.isVisible()) {
       labelTurbo.setStatus(turboMode);
 
-      final TapeFileReader tapeFileReader = keyboardAndTapeModule.getTap();
+      final TapeSource tapeFileReader = keyboardAndTapeModule.getTap();
       labelTapeUsage.setStatus(tapeFileReader != null && tapeFileReader.isPlaying());
       labelMouseUsage.setStatus(board.getVideoController().isHoldMouse());
       labelDiskUsage.setStatus(board.getBetaDiskInterface().isActive());
@@ -621,7 +621,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void updateTapeMenu() {
-    final TapeFileReader reader = this.keyboardAndTapeModule.getTap();
+    final TapeSource reader = this.keyboardAndTapeModule.getTap();
     if (reader == null) {
       this.menuTap.setEnabled(false);
       this.menuTapPlay.setSelected(false);
@@ -1723,7 +1723,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuTapGotoBlockActionPerformed(ActionEvent evt) {
-    final TapeFileReader currentReader = this.keyboardAndTapeModule.getTap();
+    final TapeSource currentReader = this.keyboardAndTapeModule.getTap();
     if (currentReader != null) {
       currentReader.stopPlay();
       updateTapeMenu();
@@ -1744,13 +1744,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
       if (selectedTapFile != null) {
         this.lastTapFolder = selectedTapFile.getParentFile();
-        try (InputStream in = new BufferedInputStream(new FileInputStream(selectedTapFile))) {
+        try {
 
           if (this.keyboardAndTapeModule.getTap() != null) {
             this.keyboardAndTapeModule.getTap().removeActionListener(this);
           }
 
-          final TapeFileReader tapfile = new TapeFileReader(selectedTapFile.getAbsolutePath(), in);
+          final TapeSource tapfile = TapeSourceFactory.getSource(selectedTapFile);
           tapfile.addActionListener(this);
           this.keyboardAndTapeModule.setTap(tapfile);
         } catch (Exception ex) {
@@ -1803,7 +1803,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuTapPrevBlockActionPerformed(ActionEvent evt) {
-    final TapeFileReader tap = this.keyboardAndTapeModule.getTap();
+    final TapeSource tap = this.keyboardAndTapeModule.getTap();
     if (tap != null) {
       tap.rewindToPrevBlock();
     }
@@ -1811,7 +1811,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuTapNextBlockActionPerformed(ActionEvent evt) {
-    final TapeFileReader tap = this.keyboardAndTapeModule.getTap();
+    final TapeSource tap = this.keyboardAndTapeModule.getTap();
     if (tap != null) {
       tap.rewindToNextBlock();
     }
@@ -1819,7 +1819,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuTapeRewindToStartActionPerformed(ActionEvent evt) {
-    final TapeFileReader tap = this.keyboardAndTapeModule.getTap();
+    final TapeSource tap = this.keyboardAndTapeModule.getTap();
     if (tap != null) {
       tap.rewindToStart();
     }
@@ -2316,7 +2316,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   @Override
   public void actionPerformed(final ActionEvent e) {
-    if (e.getSource() instanceof TapeFileReader) {
+    if (e.getSource() instanceof TapeSource) {
       updateTapeMenu();
     }
   }

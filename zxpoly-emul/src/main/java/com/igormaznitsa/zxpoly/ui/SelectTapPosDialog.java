@@ -17,7 +17,7 @@
 
 package com.igormaznitsa.zxpoly.ui;
 
-import com.igormaznitsa.zxpoly.components.TapeFileReader;
+import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
 import java.awt.Font;
 import javax.swing.ListSelectionModel;
 
@@ -33,14 +33,14 @@ public class SelectTapPosDialog extends javax.swing.JDialog {
   private javax.swing.JScrollPane jScrollPane1;
   private javax.swing.JList tapBlockList;
 
-  public SelectTapPosDialog(final java.awt.Frame parent, final TapeFileReader tap) {
+  public SelectTapPosDialog(final java.awt.Frame parent, final TapeSource tap) {
     super(parent, true);
     this.setTitle(tap.getName());
     tap.stopPlay();
     initComponents();
-    this.tapBlockList.setModel(tap);
+    this.tapBlockList.setModel(tap.getBlockListModel());
     this.tapBlockList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    this.tapBlockList.setSelectedIndex(tap.getCurrent().getIndex());
+    this.tapBlockList.setSelectedIndex(tap.getCurrentBlockIndex());
     this.setLocationRelativeTo(parent);
   }
 

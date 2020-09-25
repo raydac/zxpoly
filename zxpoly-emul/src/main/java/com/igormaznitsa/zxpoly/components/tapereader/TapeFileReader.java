@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.igormaznitsa.zxpoly.components;
+package com.igormaznitsa.zxpoly.components.tapereader;
 
 import static com.igormaznitsa.jbbp.io.JBBPOut.BeginBin;
 import static java.lang.Integer.toHexString;
@@ -24,6 +24,7 @@ import static java.lang.Integer.toHexString;
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
+import com.igormaznitsa.zxpoly.components.TapFormatParser;
 import com.igormaznitsa.zxpoly.components.TapFormatParser.TAPBLOCK;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -42,7 +43,7 @@ import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataListener;
 
-public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> {
+final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>, TapeSource {
 
   private static final Logger LOGGER = Logger.getLogger("TAP");
 
@@ -128,10 +129,12 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
     }
   }
 
+  @Override
   public synchronized boolean isPlaying() {
     return this.state != State.STOPPED;
   }
 
+  @Override
   public synchronized boolean startPlay() {
     if (this.state != State.STOPPED && this.current == null) {
       this.state = State.STOPPED;
@@ -145,6 +148,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
     return true;
   }
 
+  @Override
   public synchronized void stopPlay() {
     this.counterMain = -1L;
     this.state = State.STOPPED;
@@ -188,6 +192,7 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
     return toNextBlock();
   }
 
+  @Override
   public synchronized boolean rewindToPrevBlock() {
     stopPlay();
     if (this.current == null) {
@@ -311,6 +316,17 @@ public final class TapeFileReader implements ListModel<TapeFileReader.TapBlock> 
     return result;
   }
 
+  @Override
+  public int getCurrentBlockIndex() {
+    return this.current.index;
+  }
+
+  @Override
+  public ListModel getBlockListModel() {
+    return this;
+  }
+
+  @Override
   public synchronized void updateForSpentMachineCycles(final long machineCycles) {
     if (this.state != State.STOPPED) {
       final TapBlock block = this.current;
