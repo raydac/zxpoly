@@ -135,6 +135,11 @@ final class TapeFileReader implements ListModel<TapeFileReader.TapBlock>, TapeSo
   }
 
   @Override
+  public boolean canGenerateWav() {
+    return true;
+  }
+
+  @Override
   public synchronized boolean isPlaying() {
     return this.state != State.STOPPED;
   }

@@ -33,6 +33,8 @@ public interface TapeSource {
 
   int getCurrentBlockIndex();
 
+  boolean canGenerateWav();
+
   String getName();
 
   ListModel getBlockListModel();

@@ -632,7 +632,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     } else {
       this.menuTap.setEnabled(true);
       this.menuTapPlay.setSelected(reader.isPlaying());
-      this.menuTapExportAs.setEnabled(true);
+      this.menuTapExportAs.setEnabled(reader.canGenerateWav());
       navigable = reader.isNavigable();
     }
 
@@ -1749,7 +1749,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     try {
       this.turnZxKeyboardOff();
       final File selectedTapFile =
-          chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter());
+          chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter(),
+              new WavFileFilter());
       if (selectedTapFile != null) {
         this.lastTapFolder = selectedTapFile.getParentFile();
         try {
@@ -2388,7 +2389,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private static class WavFileFilter extends FileFilter {
 
     @Override
-    public boolean accept(File f) {
+    public boolean accept(final File f) {
       return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".wav");
     }
 

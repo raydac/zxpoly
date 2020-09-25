@@ -18,6 +18,8 @@ public class TapeSourceFactory {
           new FileInputStream(selectedTapFile))) {
         return new TapeFileReader(selectedTapFile.getName(), inputStream);
       }
+    } else if (extension.equals("wav")) {
+      return new WavFileReader(selectedTapFile.getName(), selectedTapFile);
     } else {
       throw new IllegalArgumentException("Unsupported tape container: " + extension);
     }
