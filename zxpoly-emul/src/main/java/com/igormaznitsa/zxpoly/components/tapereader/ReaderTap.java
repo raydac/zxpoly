@@ -223,7 +223,7 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
     }
   }
 
-  public synchronized boolean isHi() throws IOException {
+  public synchronized boolean isHi() {
     return this.signalInState;
   }
 

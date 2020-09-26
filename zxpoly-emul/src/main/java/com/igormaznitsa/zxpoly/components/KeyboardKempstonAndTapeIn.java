@@ -26,14 +26,12 @@ import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterKempston
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterType;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import net.java.games.input.Controller;
@@ -634,12 +632,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     if (reader == null) {
       return false;
     } else {
-      try {
-        return reader.isHi();
-      } catch (IOException ex) {
-        LOGGER.log(Level.FINEST, "Can't get signal level from tape source", ex);
-        return false;
-      }
+      return reader.isHi();
     }
   }
 

@@ -40,7 +40,7 @@ public class ReaderWav implements TapeSource {
   }
 
   @Override
-  public boolean isHi() throws IOException {
+  public boolean isHi() {
     if (this.playing) {
       try {
         final float value = this.wavFile.readAtPosition(this.tstateCounter.get());

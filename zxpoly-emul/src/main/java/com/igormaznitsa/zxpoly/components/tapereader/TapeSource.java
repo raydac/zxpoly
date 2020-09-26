@@ -5,7 +5,7 @@ import java.io.IOException;
 import javax.swing.ListModel;
 
 public interface TapeSource {
-  boolean isHi() throws IOException;
+  boolean isHi();
 
   void updateForSpentMachineCycles(long spentTstates);
 
