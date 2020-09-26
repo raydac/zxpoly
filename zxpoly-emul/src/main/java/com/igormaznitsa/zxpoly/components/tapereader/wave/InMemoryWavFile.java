@@ -47,8 +47,8 @@ public final class InMemoryWavFile {
       this.blockAlign = readShort(randomAccessFile);
       this.bitsPerSample = readShort(randomAccessFile);
 
-      if (this.audioFormat != 1) {
-        throw new IOException("Only integer PCM format is supported: " + this.audioFormat);
+      if (this.audioFormat != 1 && this.audioFormat != 3) {
+        throw new IOException("Only PCM format is supported: " + this.audioFormat);
       }
 
       if (this.bitsPerSample != 8 && this.bitsPerSample != 16 && this.bitsPerSample != 24 &&
@@ -125,35 +125,41 @@ public final class InMemoryWavFile {
     return this.bitsPerSample;
   }
 
-  private int readUnsignedByteAt(final long pos) {
-    return this.wavData[(int) pos] & 0xFF;
+  private float readUnsignedByteAt(final long pos) {
+    return (float) this.wavData[(int) pos] / (float) 0xFF;
   }
 
-  private int readSignedShort(final long pos) {
+  private float readSignedShort(final long pos) {
     int p = (int) pos;
     final int a = this.wavData[p++] & 0xFF;
-    final int b = this.wavData[p] & 0xFF;
-    return (short) ((b << 8) | a);
+    final int b = this.wavData[p];
+    return (float) ((b << 8) | a) / (float) 0x7FFF;
   }
 
-  private int readPcm24(final long pos) {
+  private float readPcm24(final long pos) {
     int p = (int) pos;
     final int a = this.wavData[p++] & 0xFF;
     final int b = this.wavData[p++] & 0xFF;
     final int c = this.wavData[p];
-    return (c << 16) | (b << 8) | a;
+    return (float) ((c << 16) | (b << 8) | a) / (float) 0x7FFFFF;
   }
 
-  private int readPcm32(final long pos) {
+  private float readPcm32(final long pos) {
     int p = (int) pos;
     final int a = this.wavData[p++] & 0xFF;
     final int b = this.wavData[p++] & 0xFF;
     final int c = this.wavData[p++] & 0xFF;
     final int d = this.wavData[p];
-    return (d << 24) | (c << 16) | (b << 8) | a;
+    int result = (d << 24) | (c << 16) | (b << 8) | a;
+
+    if (this.audioFormat == 3) {
+      return Float.intBitsToFloat(result);
+    } else {
+      return (float) result / (float) Integer.MAX_VALUE;
+    }
   }
 
-  public long readAtPosition(final long tstatePosition) {
+  public float readAtPosition(final long tstatePosition) {
     long blockPosition =
         Math.round(this.tstatesPerBlock * tstatePosition) * this.blockAlign;
 
@@ -171,9 +177,9 @@ public final class InMemoryWavFile {
           throw new Error("Unexpected bitness");
       }
     } else {
-      long result = 0;
+      float result = 0;
       for (int i = 0; i < this.numChannels; i++) {
-        final int next;
+        final float next;
         switch (this.bitsPerSample) {
           case 8:
             next = this.readUnsignedByteAt(blockPosition);
@@ -193,6 +199,7 @@ public final class InMemoryWavFile {
         result += next;
         blockPosition += this.blockAlign;
       }
+      result /= this.numChannels;
       return result;
     }
   }
@@ -219,5 +226,9 @@ public final class InMemoryWavFile {
 
   public int getAudioFormat() {
     return this.audioFormat;
+  }
+
+  public int size() {
+    return this.wavData.length;
   }
 }

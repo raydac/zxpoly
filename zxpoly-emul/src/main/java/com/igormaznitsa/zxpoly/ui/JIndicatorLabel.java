@@ -8,17 +8,24 @@ import javax.swing.SwingUtilities;
 public class JIndicatorLabel extends JLabel {
   private final Icon active;
   private final Icon inactive;
-  private final String tooltipActive;
-  private final String tooltipInactive;
+  private String tooltipActive;
+  private String tooltipInactive;
 
   private final AtomicBoolean status = new AtomicBoolean(false);
 
-  public JIndicatorLabel(final Icon active, final Icon inactive, final String tooltipActive, final String tooltipInactive) {
+  public JIndicatorLabel(final Icon active, final Icon inactive, final String tooltipActive,
+                         final String tooltipInactive) {
     super();
     this.active = active;
     this.inactive = inactive;
     this.tooltipActive = tooltipActive;
     this.tooltipInactive = tooltipInactive;
+    updateForState();
+  }
+
+  public void setTooltips(final String active, final String inactive) {
+    this.tooltipActive = active;
+    this.tooltipInactive = inactive;
     updateForState();
   }
 

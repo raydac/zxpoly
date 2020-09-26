@@ -37,6 +37,14 @@ public interface TapeSource {
 
   boolean canGenerateWav();
 
+  boolean isSensitivitySupported();
+
+  float getSensitivity();
+
+  void setSensitivity(float bias);
+
+  int size();
+
   String getName();
 
   ListModel getBlockListModel();

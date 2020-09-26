@@ -1204,7 +1204,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         new JIndicatorLabel(ICO_MOUSE, ICO_MOUSE_DIS, "Mouse is catched", "Mouse is not active");
     labelZX128 = new JIndicatorLabel(ICO_ZX128, ICO_ZX128_DIS, "ZX mode is ON", "ZX mode is OFF");
     labelTapeUsage =
-        new JIndicatorLabel(ICO_TAPE, ICO_TAPE_DIS, "Reading tape", "No IO tape operations");
+        new JIndicatorLabel(ICO_TAPE, ICO_TAPE_DIS, "Reading", "None");
     labelDiskUsage = new JIndicatorLabel(ICO_DISK, ICO_DISK_DIS, "Some disk operation is active",
         "No IO disk operations");
     menuBar = new JMenuBar();
@@ -1762,6 +1762,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           final TapeSource source = TapeSourceFactory.makeSource(selectedTapFile);
           source.addActionListener(this);
           this.keyboardAndTapeModule.setTap(source);
+          LOGGER.info("Loaded TAP, total data size " + source.size() + " bytes");
+          this.labelTapeUsage.setTooltips("Reading " + source.getName(), source.getName());
         } catch (Exception ex) {
           LOGGER.log(Level.SEVERE, "Can't read " + selectedTapFile + ": " + ex.getMessage(), ex);
           showMessageDialog(this, ex.getMessage(), "Error TAP loading",

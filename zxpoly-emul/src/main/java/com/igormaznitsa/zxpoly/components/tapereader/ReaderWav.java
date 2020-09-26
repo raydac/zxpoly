@@ -20,6 +20,8 @@ public class ReaderWav implements TapeSource {
   private final List<ActionListener> actionListeners = new CopyOnWriteArrayList<>();
   private volatile boolean playing;
 
+  private volatile float bias = 0.01f;
+
   public ReaderWav(final String name, final File file) throws IOException {
     this.name = name;
     this.wavFile = new InMemoryWavFile(file, Motherboard.TSTATES_PER_INT * 50);
@@ -41,23 +43,8 @@ public class ReaderWav implements TapeSource {
   public boolean isHi() throws IOException {
     if (this.playing) {
       try {
-        final long value = this.wavFile.readAtPosition(this.tstateCounter.get());
-        switch (this.wavFile.getBitsPerSample()) {
-          case 8: {
-            return value > 0x7F;
-          }
-          case 16: {
-            return value > (Short.MAX_VALUE / 2);
-          }
-          case 24: {
-            return value > (0x7FFFFF / 2);
-          }
-          case 32: {
-            return value > (Integer.MAX_VALUE / 2);
-          }
-          default:
-            throw new Error("Unexpected bitness");
-        }
+        final float value = this.wavFile.readAtPosition(this.tstateCounter.get());
+        return value > this.bias;
       } catch (ArrayIndexOutOfBoundsException ex) {
         this.stopPlay();
         return false;
@@ -65,6 +52,26 @@ public class ReaderWav implements TapeSource {
     } else {
       return false;
     }
+  }
+
+  @Override
+  public boolean isSensitivitySupported() {
+    return true;
+  }
+
+  @Override
+  public float getSensitivity() {
+    return this.bias;
+  }
+
+  @Override
+  public void setSensitivity(float bias) {
+    this.bias = Math.max(0.0f, Math.min(bias, 1.0f));
+  }
+
+  @Override
+  public int size() {
+    return this.wavFile.size();
   }
 
   private void fireActionListeners(final int id, final String command) {

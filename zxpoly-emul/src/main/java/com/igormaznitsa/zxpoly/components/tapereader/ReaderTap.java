@@ -492,6 +492,27 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
     }
   }
 
+
+  @Override
+  public boolean isSensitivitySupported() {
+    return false;
+  }
+
+  @Override
+  public float getSensitivity() {
+    return 0.0f;
+  }
+
+  @Override
+  public void setSensitivity(float bias) {
+
+  }
+
+  @Override
+  public int size() {
+    return this.tapBlockList.stream().mapToInt(TapBlock::size).sum();
+  }
+
   @Override
   public int getSize() {
     return this.tapBlockList.size();
@@ -586,6 +607,10 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
         }
       }
       return this.name;
+    }
+
+    public int size() {
+      return this.data.length;
     }
 
     public TapBlock findFirst() {
