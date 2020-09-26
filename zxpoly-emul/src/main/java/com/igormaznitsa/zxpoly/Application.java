@@ -31,7 +31,7 @@ import org.apache.commons.lang3.SystemUtils;
 public class Application {
 
   public static final String APP_TITLE = "ZX-Poly emulator";
-  public static final String APP_VERSION = "v 2.1.1";
+  public static final String APP_VERSION = "v 2.1.2";
 
   private static void setGnomeAppTitle() {
     try {
