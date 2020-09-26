@@ -7,15 +7,22 @@
 
 # Changelog
 
+__2.1.1 (26-sep-2020)__
+
+- added support of reading WAV files through TAPE
+- improved Z80 emulation
+- refactoring
+
 __2.1.0 (12-sep-2020)__
- - improved internal timing
- - base sound synthesizer frequency increased to 48000 Hz  
- - added item `Kempston mouse allowed` into `Preferences`, by default active
- - added item `Default ZX128` into `Preferences` to activate ZXMode just on start of the emulator
- - __improved decode of `#7FFD` port in ZX-mode to increase compatibility__
- - added support of loading ROM from local `bootstrap.rom` file placed in emulator folder
- - __added support of TurboSound (NedoPC version)__
- - embedded GraalVM updated to 20.2.0
+
+- improved internal timing
+- base sound synthesizer frequency increased to 48000 Hz
+- added item `Kempston mouse allowed` into `Preferences`, by default active
+- added item `Default ZX128` into `Preferences` to activate ZXMode just on start of the emulator
+- __improved decode of `#7FFD` port in ZX-mode to increase compatibility__
+- added support of loading ROM from local `bootstrap.rom` file placed in emulator folder
+- __added support of TurboSound (NedoPC version)__
+- embedded GraalVM updated to 20.2.0
  - __improved Z80 emulation__
  - __improved emulation of AY8910__ 
  - improved decoding of AY8910 port

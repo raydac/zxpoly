@@ -1,3 +1,8 @@
+__2.1.1 (26-sep-2020)__
+ - added support of reading WAV files through TAPE
+ - improved Z80 emulation
+ - refactoring
+
 __2.1.0 (12-sep-2020)__
  - improved internal timing
  - base sound synthesizer frequency increased to 48000 Hz
