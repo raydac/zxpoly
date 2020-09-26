@@ -1,6 +1,7 @@
 __2.1.1 (26-sep-2020)__
  - added support of reading WAV files through TAPE
  - improved Z80 emulation
+ - fixed ROM work in Spec256 mode
  - refactoring
 
 __2.1.0 (12-sep-2020)__
