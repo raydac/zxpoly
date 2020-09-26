@@ -41,11 +41,22 @@ public class ReaderWav implements TapeSource {
   public boolean isHi() throws IOException {
     if (this.playing) {
       try {
-        final int value = this.wavFile.readAtPosition(this.tstateCounter.get());
-        if (this.wavFile.getBitsPerSample() == 8) {
-          return value > 127;
-        } else {
-          return value > (Short.MAX_VALUE / 2);
+        final long value = this.wavFile.readAtPosition(this.tstateCounter.get());
+        switch (this.wavFile.getBitsPerSample()) {
+          case 8: {
+            return value > 0x7F;
+          }
+          case 16: {
+            return value > (Short.MAX_VALUE / 2);
+          }
+          case 24: {
+            return value > (0x7FFFFF / 2);
+          }
+          case 32: {
+            return value > (Integer.MAX_VALUE / 2);
+          }
+          default:
+            throw new Error("Unexpected bitness");
         }
       } catch (ArrayIndexOutOfBoundsException ex) {
         this.stopPlay();

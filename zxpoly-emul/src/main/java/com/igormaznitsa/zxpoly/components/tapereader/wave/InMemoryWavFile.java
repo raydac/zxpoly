@@ -21,14 +21,14 @@ public final class InMemoryWavFile {
       final long fileSize = file.length();
 
       if (!is("RIFF", readChunkId(randomAccessFile))) {
-        throw new IOException("It is not RIFF");
+        throw new IOException("It is not RIFF container");
       }
       final int chunkSize = readInt(randomAccessFile);
       if (chunkSize < 36) {
-        throw new IOException("Looks like wrong WAV file length");
+        throw new IOException("Wrong container length in WAV file");
       }
       if (!is("WAVE", readChunkId(randomAccessFile))) {
-        throw new IOException("It is not WAVE");
+        throw new IOException("It is not WAV file");
       }
 
       final long startSubchunksPos = randomAccessFile.getFilePointer();
@@ -47,10 +47,14 @@ public final class InMemoryWavFile {
       this.blockAlign = readShort(randomAccessFile);
       this.bitsPerSample = readShort(randomAccessFile);
 
-      if (this.bitsPerSample != 8 && this.bitsPerSample != 16) {
+      if (this.audioFormat != 1) {
+        throw new IOException("Only integer PCM format is supported: " + this.audioFormat);
+      }
+
+      if (this.bitsPerSample != 8 && this.bitsPerSample != 16 && this.bitsPerSample != 24 &&
+          this.bitsPerSample != 32) {
         throw new IOException(
-            "Unsupported format of WAV file, allowed only 8 bit and 16 bit per sample: "
-                + this.bitsPerSample);
+            "Unsupported bit sample size: " + this.bitsPerSample);
       }
 
       if (!posToChunk(randomAccessFile, "data", startSubchunksPos, fileSize)) {
@@ -129,21 +133,64 @@ public final class InMemoryWavFile {
     int p = (int) pos;
     final int a = this.wavData[p++] & 0xFF;
     final int b = this.wavData[p] & 0xFF;
-    return (short) ((a << 8) | b);
+    return (short) ((b << 8) | a);
   }
 
-  public int readAtPosition(final long tstatePosition) throws IOException {
+  private int readPcm24(final long pos) {
+    int p = (int) pos;
+    final int a = this.wavData[p++] & 0xFF;
+    final int b = this.wavData[p++] & 0xFF;
+    final int c = this.wavData[p];
+    return (c << 16) | (b << 8) | a;
+  }
+
+  private int readPcm32(final long pos) {
+    int p = (int) pos;
+    final int a = this.wavData[p++] & 0xFF;
+    final int b = this.wavData[p++] & 0xFF;
+    final int c = this.wavData[p++] & 0xFF;
+    final int d = this.wavData[p];
+    return (d << 24) | (c << 16) | (b << 8) | a;
+  }
+
+  public long readAtPosition(final long tstatePosition) {
     long blockPosition =
         Math.round(this.tstatesPerBlock * tstatePosition) * this.blockAlign;
 
     if (this.numChannels == 1) {
-      return this.blockAlign == 1 ? this.readUnsignedByteAt(blockPosition) :
-          this.readSignedShort(blockPosition);
+      switch (this.bitsPerSample) {
+        case 8:
+          return this.readUnsignedByteAt(blockPosition);
+        case 16:
+          return this.readSignedShort(blockPosition);
+        case 24:
+          return this.readPcm24(blockPosition);
+        case 32:
+          return this.readPcm32(blockPosition);
+        default:
+          throw new Error("Unexpected bitness");
+      }
     } else {
-      int result = 0;
+      long result = 0;
       for (int i = 0; i < this.numChannels; i++) {
-        result += this.blockAlign == 1 ? this.readUnsignedByteAt(blockPosition) :
-            this.readSignedShort(blockPosition);
+        final int next;
+        switch (this.bitsPerSample) {
+          case 8:
+            next = this.readUnsignedByteAt(blockPosition);
+            break;
+          case 16:
+            next = this.readSignedShort(blockPosition);
+            break;
+          case 24:
+            next = this.readPcm24(blockPosition);
+            break;
+          case 32:
+            next = this.readPcm32(blockPosition);
+            break;
+          default:
+            throw new Error("Unexpected bitness");
+        }
+        result += next;
         blockPosition += this.blockAlign;
       }
       return result;

@@ -21,6 +21,7 @@ import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
 import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
 import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
+import static javax.swing.JOptionPane.showMessageDialog;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static org.apache.commons.lang3.StringUtils.repeat;
 
@@ -322,7 +323,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       } catch (IOException ex) {
         LOGGER.log(Level.SEVERE, ex,
             () -> "Can't load bootstrap rom: " + bootstrapRomFile.getAbsolutePath());
-        JOptionPane.showMessageDialog(this, "Can't load bootstrap rom: " + ex.getMessage());
+        showMessageDialog(this, "Can't load bootstrap rom: " + ex.getMessage());
         System.exit(-1);
       }
     }
@@ -330,12 +331,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     try {
       BASE_ROM = loadRom(romPath, bootstrapRom);
     } catch (Exception ex) {
-      JOptionPane.showMessageDialog(this, "Can't load Spec128 ROM for error: " + ex.getMessage());
+      showMessageDialog(this, "Can't load Spec128 ROM for error: " + ex.getMessage());
       try {
         BASE_ROM = loadRom(null, bootstrapRom);
       } catch (Exception exx) {
         ex.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Can't load TEST ROM: " + ex.getMessage());
+        showMessageDialog(this, "Can't load TEST ROM: " + ex.getMessage());
         System.exit(-1);
       }
     }
@@ -528,10 +529,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     LOGGER.info("Detected audio source lines: " + foundPorts);
     if (foundPorts.isEmpty()) {
       if (interactive) {
-        JOptionPane
-            .showMessageDialog(this, "There is no detected audio devices!",
-                "Can't find audio device",
-                JOptionPane.WARNING_MESSAGE);
+        showMessageDialog(this, "There is no detected audio devices!",
+            "Can't find audio device",
+            JOptionPane.WARNING_MESSAGE);
       }
       return Optional.empty();
     } else {
@@ -836,14 +836,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
       if ((triggered & Motherboard.TRIGGER_DIFF_MODULESTATES) != 0) {
         this.menuTriggerModuleCPUDesync.setSelected(false);
-        JOptionPane.showMessageDialog(MainForm.this, "Detected desync of module CPUs\n"
+        showMessageDialog(MainForm.this, "Detected desync of module CPUs\n"
                 + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false),
             "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
 
       if ((triggered & Motherboard.TRIGGER_DIFF_MEM_ADDR) != 0) {
         this.menuTriggerDiffMem.setSelected(false);
-        JOptionPane.showMessageDialog(MainForm.this,
+        showMessageDialog(MainForm.this,
             "Detected memory cell difference " + toHex(this.board.getMemTriggerAddress()) + "\n"
                 + makeInfoStringForRegister(cpuModuleStates, lastM1Address,
                 getCellContentForAddress(this.board.getMemTriggerAddress()), Z80.REG_PC, false),
@@ -852,7 +852,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
       if ((triggered & Motherboard.TRIGGER_DIFF_EXE_CODE) != 0) {
         this.menuTriggerExeCodeDiff.setSelected(false);
-        JOptionPane.showMessageDialog(MainForm.this, "Detected EXE code difference\n"
+        showMessageDialog(MainForm.this, "Detected EXE code difference\n"
                 + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false),
             "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
@@ -905,7 +905,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
               AppOptions.getInstance().getFrameRate()
           );
         } catch (Exception ex) {
-          JOptionPane.showMessageDialog(this, ex.getMessage(), "Error",
+          showMessageDialog(this, ex.getMessage(), "Error",
               JOptionPane.ERROR_MESSAGE);
           this.menuOptionsEnableVideoStream.setSelected(false);
         }
@@ -955,10 +955,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.stepSemaphor.lock();
     try {
       if (!this.keyboardAndTapeModule.isControllerEngineAllowed()) {
-        JOptionPane.showMessageDialog(this, "Can't init game controller engine!", "Error",
+        showMessageDialog(this, "Can't init game controller engine!", "Error",
             JOptionPane.ERROR_MESSAGE);
       } else if (this.keyboardAndTapeModule.getDetectedControllers().isEmpty()) {
-        JOptionPane.showMessageDialog(this,
+        showMessageDialog(this,
             "Can't find any game controller. Try restart the emulator if controller already connected.",
             "Can't find game controllers", JOptionPane.WARNING_MESSAGE);
       } else {
@@ -1072,7 +1072,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
               "Loaded drive " + diskName + " by floppy image file " + selectedFile);
         } catch (IOException ex) {
           LOGGER.log(Level.WARNING, "Can't read Floppy image file [" + selectedFile + ']', ex);
-          JOptionPane.showMessageDialog(this, "Can't read Floppy image file", "Error",
+          showMessageDialog(this, "Can't read Floppy image file", "Error",
               JOptionPane.ERROR_MESSAGE);
         }
       }
@@ -1118,7 +1118,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             SwingUtilities.invokeLater(() -> menuFileOptions.doClick());
           }
         });
-        JOptionPane.showMessageDialog(MainForm.this, label, "ZX-Spectrum ROM 128 image is required",
+        showMessageDialog(MainForm.this, label, "ZX-Spectrum ROM 128 image is required",
             JOptionPane.WARNING_MESSAGE);
         return;
       }
@@ -1174,7 +1174,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         } catch (Exception ex) {
           ex.printStackTrace();
           LOGGER.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
-          JOptionPane.showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']',
+          showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']',
               "Error", JOptionPane.ERROR_MESSAGE);
         }
       }
@@ -1686,7 +1686,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           selectedTrainer.apply(this, selectedFile, this.board);
         } catch (Exception ex) {
           LOGGER.log(Level.WARNING, "Error during trainer processing: " + ex.getMessage(), ex);
-          JOptionPane.showMessageDialog(this, ex.getMessage(), "Can't read or parse file",
+          showMessageDialog(this, ex.getMessage(), "Can't read or parse file",
               JOptionPane.ERROR_MESSAGE);
         }
       }
@@ -1763,8 +1763,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           source.addActionListener(this);
           this.keyboardAndTapeModule.setTap(source);
         } catch (Exception ex) {
-          LOGGER.log(Level.SEVERE, "Can't read " + selectedTapFile, ex);
-          JOptionPane.showMessageDialog(this, "Can't load TAP file", ex.getMessage(),
+          LOGGER.log(Level.SEVERE, "Can't read " + selectedTapFile + ": " + ex.getMessage(), ex);
+          showMessageDialog(this, ex.getMessage(), "Error TAP loading",
               JOptionPane.ERROR_MESSAGE);
         } finally {
           updateTapeMenu();
@@ -1794,7 +1794,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     } catch (Exception ex) {
       LOGGER.log(Level.WARNING, "Can't export as WAV", ex);
-      JOptionPane.showMessageDialog(this, "Can't export as WAV", ex.getMessage(),
+      showMessageDialog(this, "Can't export as WAV", ex.getMessage(),
           JOptionPane.ERROR_MESSAGE);
     } finally {
       this.turnZxKeyboardOn();
@@ -1853,7 +1853,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         FileUtils.writeByteArrayToFile(pngFile, buffer.toByteArray());
       }
     } catch (IOException ex) {
-      JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error",
+      showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error",
           JOptionPane.ERROR_MESSAGE);
       LOGGER.log(Level.SEVERE, "Can't make screenshot", ex);
     } finally {
@@ -1872,10 +1872,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           .showConfirmDialog(this, optionsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION,
               JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
         optionsPanel.getData().store();
-        JOptionPane
-            .showMessageDialog(this, "Some options will be activated only after emulator restart!",
-                "Restart may required!",
-                JOptionPane.WARNING_MESSAGE);
+        showMessageDialog(this, "Some options will be activated only after emulator restart!",
+            "Restart may required!",
+            JOptionPane.WARNING_MESSAGE);
       }
     } finally {
       this.turnZxKeyboardOn();
@@ -1959,7 +1958,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         FileUtils.writeByteArrayToFile(pngFile, buffer.toByteArray());
       }
     } catch (IOException ex) {
-      JOptionPane.showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error",
+      showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error",
           JOptionPane.ERROR_MESSAGE);
       LOGGER.log(Level.SEVERE, "Can't make screenshot", ex);
     } finally {
@@ -2063,14 +2062,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           try {
             final int addr = panel.extractAddressFromText();
             if (addr < 0 || addr > 0xFFFF) {
-              JOptionPane.showMessageDialog(MainForm.this, "Error address must be in #0000...#FFFF",
+              showMessageDialog(MainForm.this, "Error address must be in #0000...#FFFF",
                   "Error address", JOptionPane.ERROR_MESSAGE);
             } else {
               this.board.setMemTriggerAddress(addr);
               this.board.setTrigger(Motherboard.TRIGGER_DIFF_MEM_ADDR);
             }
           } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(MainForm.this,
+            showMessageDialog(MainForm.this,
                 "Error address format, use # for hexadecimal address (example #AA00)",
                 "Error address", JOptionPane.ERROR_MESSAGE);
           }
@@ -2131,7 +2130,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         } catch (Exception ex) {
           ex.printStackTrace();
           LOGGER.log(Level.WARNING, "Can't save snapshot file [" + ex.getMessage() + ']', ex);
-          JOptionPane.showMessageDialog(this, "Can't save snapshot file [" + ex.getMessage() + ']',
+          showMessageDialog(this, "Can't save snapshot file [" + ex.getMessage() + ']',
               "Error", JOptionPane.ERROR_MESSAGE);
         }
       }
@@ -2185,9 +2184,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
                   + destFile.getAbsolutePath());
             } catch (IOException ex) {
               LOGGER.warning("Can't write disk for error: " + ex.getMessage());
-              JOptionPane
-                  .showMessageDialog(this, "Can't save disk for IO error: " + ex.getMessage(),
-                      "Error", JOptionPane.ERROR_MESSAGE);
+              showMessageDialog(this, "Can't save disk for IO error: " + ex.getMessage(),
+                  "Error", JOptionPane.ERROR_MESSAGE);
             }
           }
         }
