@@ -37,11 +37,11 @@ public interface TapeSource {
 
   boolean canGenerateWav();
 
-  boolean isSensitivitySupported();
+  boolean isThresholdAllowed();
 
-  float getSensitivity();
+  float getThreshold();
 
-  void setSensitivity(float bias);
+  void setThreshold(float threshold);
 
   int size();
 

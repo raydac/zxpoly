@@ -21,6 +21,7 @@ import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
 import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
 import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
+import static javax.swing.JOptionPane.showConfirmDialog;
 import static javax.swing.JOptionPane.showMessageDialog;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static org.apache.commons.lang3.StringUtils.repeat;
@@ -106,6 +107,7 @@ import javax.sound.sampled.AudioFormat;
 import javax.swing.Box;
 import javax.swing.Box.Filler;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
@@ -120,6 +122,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu.Separator;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
+import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -250,6 +253,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenuItem menuTapExportAsWav;
   private JMenuItem menuTapGotoBlock;
   private JMenuItem menuTapNextBlock;
+  private JMenuItem menuTapThreshold;
   private JCheckBoxMenuItem menuTapPlay;
   private JMenuItem menuTapPrevBlock;
   private JMenuItem menuTapeRewindToStart;
@@ -505,7 +509,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
       panel.add(new JLabel("Sound device:"));
       panel.add(comboBox);
-      if (JOptionPane.showConfirmDialog(
+      if (showConfirmDialog(
           this,
           panel,
           "Select sound device",
@@ -624,22 +628,26 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     final TapeSource reader = this.keyboardAndTapeModule.getTap();
 
     final boolean navigable;
+    final boolean sensitivity;
     if (reader == null) {
       this.menuTap.setEnabled(false);
       this.menuTapPlay.setSelected(false);
       this.menuTapExportAs.setEnabled(false);
       navigable = false;
+      sensitivity = false;
     } else {
       this.menuTap.setEnabled(true);
       this.menuTapPlay.setSelected(reader.isPlaying());
       this.menuTapExportAs.setEnabled(reader.canGenerateWav());
       navigable = reader.isNavigable();
+      sensitivity = reader.isThresholdAllowed();
     }
 
     this.menuTapGotoBlock.setEnabled(navigable);
     this.menuTapNextBlock.setEnabled(navigable);
     this.menuTapPrevBlock.setEnabled(navigable);
 
+    this.menuTapThreshold.setEnabled(sensitivity);
   }
 
   @Override
@@ -881,7 +889,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       if (this.menuOptionsEnableVideoStream.isSelected()) {
         if (AppOptions.getInstance().isGrabSound()
             && !this.board.getBeeper().isNullBeeper()
-            && JOptionPane.showConfirmDialog(this,
+            && showConfirmDialog(this,
             "Beeper should be turned off for video sound. Ok?",
             "Beeper deactivation", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE)
             != JOptionPane.OK_OPTION) {
@@ -964,7 +972,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       } else {
         final GameControllerPanel gameControllerPanel =
             new GameControllerPanel(this.keyboardAndTapeModule);
-        if (JOptionPane.showConfirmDialog(
+        if (showConfirmDialog(
             this,
             gameControllerPanel,
             "Detected game controllers",
@@ -1053,9 +1061,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             }
             selectedFile = new File(selectedFile.getParentFile(), name);
             if (!selectedFile.isFile()) {
-              if (JOptionPane
-                  .showConfirmDialog(this, "Create TRD file: " + selectedFile.getName() + "?",
-                      "Create TRD file", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+              if (showConfirmDialog(this, "Create TRD file: " + selectedFile.getName() + "?",
+                  "Create TRD file", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                 LOGGER.log(Level.INFO, "Creating TRD disk: " + selectedFile.getAbsolutePath());
                 FileUtils.writeByteArrayToFile(selectedFile, new TrDosDisk().getDiskData());
               } else {
@@ -1232,6 +1239,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuTapPrevBlock = new JMenuItem();
     menuTapPlay = new JCheckBoxMenuItem();
     menuTapNextBlock = new JMenuItem();
+    menuTapThreshold = new JMenuItem();
     menuTapGotoBlock = new JMenuItem();
     menuService = new JMenu();
     menuFileReset = new JMenuItem();
@@ -1489,6 +1497,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuTapGotoBlock.addActionListener(this::menuTapGotoBlockActionPerformed);
     menuTap.add(menuTapGotoBlock);
 
+    menuTapThreshold.setIcon(new ImageIcon(
+        getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_sens.png")));
+    menuTapThreshold.setText("Signal threshold");
+    menuTapThreshold.addActionListener(this::menuTapThresholdyActionPerformed);
+    menuTap.add(menuTapThreshold);
+
     menuBar.add(menuTap);
     menuBar.add(menuView);
 
@@ -1662,6 +1676,26 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     setJMenuBar(menuBar);
 
     pack();
+  }
+
+  private void menuTapThresholdyActionPerformed(final ActionEvent actionEvent) {
+    final TapeSource source = this.keyboardAndTapeModule.getTap();
+    if (source != null) {
+      final JSlider slider = new JSlider();
+      slider.setMajorTickSpacing(100);
+      slider.setMinorTickSpacing(10);
+      slider.setPaintLabels(false);
+      slider.setPaintTrack(true);
+      slider.setSnapToTicks(true);
+      slider.setPaintTicks(true);
+      slider
+          .setModel(new DefaultBoundedRangeModel((int) (source.getThreshold() * 1000), 0, 0, 1000));
+
+      if (showConfirmDialog(this, slider, "Tape signal threshold", JOptionPane.OK_CANCEL_OPTION,
+          JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+        source.setThreshold((float) slider.getValue() / 1000);
+      }
+    }
   }
 
   private void menuFileLoadPokeActionPerformed(ActionEvent evt) {
@@ -1870,9 +1904,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     try {
       this.turnZxKeyboardOff();
       final OptionsPanel optionsPanel = new OptionsPanel(null);
-      if (JOptionPane
-          .showConfirmDialog(this, optionsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION,
-              JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+      if (showConfirmDialog(this, optionsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION,
+          JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
         optionsPanel.getData().store();
         showMessageDialog(this, "Some options will be activated only after emulator restart!",
             "Restart may required!",
@@ -1985,7 +2018,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       AnimationEncoder encoder = this.currentAnimationEncoder.get();
       if (encoder == null) {
         final AnimatedGifTunePanel panel = new AnimatedGifTunePanel(this.lastAnimGifOptions);
-        final int result = JOptionPane.showConfirmDialog(this, panel, "Options for Animated GIF",
+        final int result = showConfirmDialog(this, panel, "Options for Animated GIF",
             JOptionPane.OK_CANCEL_OPTION);
         if (result != JOptionPane.OK_OPTION) {
           return;
@@ -2059,7 +2092,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     try {
       if (this.menuTriggerDiffMem.isSelected()) {
         final AddressPanel panel = new AddressPanel(this.board.getMemTriggerAddress());
-        if (JOptionPane.showConfirmDialog(MainForm.this, panel, "Triggering address",
+        if (showConfirmDialog(MainForm.this, panel, "Triggering address",
             JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
           try {
             final int addr = panel.extractAddressFromText();
@@ -2114,12 +2147,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
                 selected.getName() + '.' + selectedFilter.getExtension());
           }
 
-          if (selected.isFile() && JOptionPane
-              .showConfirmDialog(
-                  this,
-                  String.format("Do you want override file '%s'?", selected.getName()),
-                  "Found existing file",
-                  JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+          if (selected.isFile() && showConfirmDialog(
+              this,
+              String.format("Do you want override file '%s'?", selected.getName()),
+              "Found existing file",
+              JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
             return;
           }
 
@@ -2154,7 +2186,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     for (int i = 0; i < 4; i++) {
       final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
       if (disk != null && disk.isChanged()) {
-        final int result = JOptionPane.showConfirmDialog(this,
+        final int result = showConfirmDialog(this,
             "Do you want flush disk data '" + disk.getSrcFile().getName() + "' ?", "Disk changed",
             JOptionPane.YES_NO_CANCEL_OPTION);
         if (result == JOptionPane.CANCEL_OPTION) {
@@ -2205,9 +2237,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     boolean close = false;
 
     if (hasChangedDisk) {
-      if (JOptionPane
-          .showConfirmDialog(this, "Emulator has unsaved disks, do you realy want to close it?",
-              "Detected unsaved data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+      if (showConfirmDialog(this, "Emulator has unsaved disks, do you realy want to close it?",
+          "Detected unsaved data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
         close = true;
       }
     } else {

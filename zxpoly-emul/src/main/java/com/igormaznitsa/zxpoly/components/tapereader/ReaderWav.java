@@ -55,18 +55,18 @@ public class ReaderWav implements TapeSource {
   }
 
   @Override
-  public boolean isSensitivitySupported() {
+  public boolean isThresholdAllowed() {
     return true;
   }
 
   @Override
-  public float getSensitivity() {
+  public float getThreshold() {
     return this.bias;
   }
 
   @Override
-  public void setSensitivity(float bias) {
-    this.bias = Math.max(0.0f, Math.min(bias, 1.0f));
+  public void setThreshold(float threshold) {
+    this.bias = Math.max(0.0f, Math.min(threshold, 1.0f));
   }
 
   @Override

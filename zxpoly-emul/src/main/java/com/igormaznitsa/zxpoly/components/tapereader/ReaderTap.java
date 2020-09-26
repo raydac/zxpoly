@@ -430,8 +430,8 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
         break;
         case DATA: {
           if (this.counterMain < 0L) {
-            LOGGER.log(Level.INFO, "DATA (len=#" +
-                toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH) + ')');
+            LOGGER.log(Level.INFO, "DATA (len=#"
+                + toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH) + ')');
             this.counterMain = 0L;
             loadDataByteToRead(block.data[(int) this.counterMain++]);
           } else {
@@ -449,13 +449,13 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
         case CHECKSUM: {
           if (this.counterMain < 0L) {
             LOGGER.log(Level.INFO,
-                "CHK (xor=#" + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH) +
-                    ')');
+                "CHK (xor=#" + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)
+                    + ')');
             if ((block.checksum & 0xFF) != (this.controlChecksum & 0xFF)) {
-              LOGGER.log(Level.WARNING, "Different XOR sum : at file #" +
-                  toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH) +
-                  ", calculated #" +
-                  toHexString(this.controlChecksum & 0xFF).toUpperCase(Locale.ENGLISH));
+              LOGGER.log(Level.WARNING, "Different XOR sum : at file #"
+                  + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)
+                  + ", calculated #"
+                  + toHexString(this.controlChecksum & 0xFF).toUpperCase(Locale.ENGLISH));
             }
             this.counterMain = 0L;
             loadDataByteToRead(block.checksum & 0xFF);
@@ -494,17 +494,17 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
 
 
   @Override
-  public boolean isSensitivitySupported() {
+  public boolean isThresholdAllowed() {
     return false;
   }
 
   @Override
-  public float getSensitivity() {
+  public float getThreshold() {
     return 0.0f;
   }
 
   @Override
-  public void setSensitivity(float bias) {
+  public void setThreshold(float threshold) {
 
   }
 
