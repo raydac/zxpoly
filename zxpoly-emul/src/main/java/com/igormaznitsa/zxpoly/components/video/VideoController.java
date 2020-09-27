@@ -489,9 +489,9 @@ public final class VideoController extends JComponent
       final int zxPolyVideoMode,
       final ZxPolyModule[] modules,
       final int[] pixelRgbBuffer,
-      final byte[] lastRenderedGfxData,
+      final byte[] preRenderedBuffer,
       final boolean flashActive,
-      final boolean allowAlreadyRenderedCheck
+      final boolean forceRender
   ) {
     switch (zxPolyVideoMode) {
       case VIDEOMODE_ZX48_CPU0:
@@ -512,18 +512,16 @@ public final class VideoController extends JComponent
 
           final int attrOffset = aoffset++;
 
-          final int prerenderedAttribute = lastRenderedGfxData[ZXSPEC_PIXEL_AREA_SIZE + i] & 0xFF;
+          final int preRenderedAttr = preRenderedBuffer[ZXSPEC_PIXEL_AREA_SIZE + i] & 0xFF;
           final int attrData = sourceModule.readVideo(attrOffset);
 
-          final int presentedPixelData = lastRenderedGfxData[i] & 0xFF;
-          int pixelData = sourceModule.readVideo(i);
+          final int preRenderedPixels = preRenderedBuffer[i] & 0xFF;
+          int videoPixels = sourceModule.readVideo(i);
 
-          if (allowAlreadyRenderedCheck
-              && presentedPixelData == pixelData
-              && prerenderedAttribute == (attrData & 0x7F)
+          if (forceRender
+              || preRenderedPixels != videoPixels
+              || preRenderedAttr != (attrData & 0x7F)
           ) {
-            offset += 16;
-          } else {
             final int newPreRenderedAttr;
             if ((attrData & 0x80) == 0) {
               newPreRenderedAttr = (attrData & 0x7F);
@@ -533,16 +531,16 @@ public final class VideoController extends JComponent
                   | ((attrData & 7) << 3) : attrData & 0x7F;
             }
 
-            lastRenderedGfxData[i] = (byte) pixelData;
-            lastRenderedGfxData[ZXSPEC_PIXEL_AREA_SIZE + i] = (byte) newPreRenderedAttr;
+            preRenderedBuffer[i] = (byte) videoPixels;
+            preRenderedBuffer[ZXSPEC_PIXEL_AREA_SIZE + i] = (byte) newPreRenderedAttr;
 
             final int inkColor = extractInkColor(attrData, flashActive);
             final int paperColor = extractPaperColor(attrData, flashActive);
 
             int x = 8;
             while (x-- > 0) {
-              final int color = (pixelData & 0x80) == 0 ? paperColor : inkColor;
-              pixelData <<= 1;
+              final int color = (videoPixels & 0x80) == 0 ? paperColor : inkColor;
+              videoPixels <<= 1;
 
               pixelRgbBuffer[offset++] = color;
               pixelRgbBuffer[offset] = color;
@@ -551,6 +549,8 @@ public final class VideoController extends JComponent
               pixelRgbBuffer[offset] = color;
               offset -= SCREEN_WIDTH - 2;
             }
+          } else {
+            offset += 16;
           }
         }
       }
@@ -1105,7 +1105,7 @@ public final class VideoController extends JComponent
             this.bufferImageRgbData,
             this.lastRenderedZxData,
             this.board.isFlashActive(),
-            true
+            false
         );
       }
       break;
@@ -1279,7 +1279,7 @@ public final class VideoController extends JComponent
           this.bufferImageRgbData,
           this.lastRenderedZxData,
           this.board.isFlashActive(),
-          false
+          true
       );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
@@ -1294,7 +1294,7 @@ public final class VideoController extends JComponent
           this.bufferImageRgbData,
           this.lastRenderedZxData,
           this.board.isFlashActive(),
-          false
+          true
       );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
@@ -1309,7 +1309,7 @@ public final class VideoController extends JComponent
           this.bufferImageRgbData,
           this.lastRenderedZxData,
           this.board.isFlashActive(),
-          false
+          true
       );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
@@ -1324,7 +1324,7 @@ public final class VideoController extends JComponent
           this.bufferImageRgbData,
           this.lastRenderedZxData,
           this.board.isFlashActive(),
-          false
+          true
       );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
@@ -1339,7 +1339,7 @@ public final class VideoController extends JComponent
           this.bufferImageRgbData,
           this.lastRenderedZxData,
           this.board.isFlashActive(),
-          false
+          true
       );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
