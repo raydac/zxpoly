@@ -55,9 +55,10 @@ Keyboard plays role of ZX-Keyboard (ALT = SS, SHIFT = CS, CTRL+WHEEL = scaling),
 ![The Main Window of the Emulator](docs/screenshots/pidentity48.png)
 
 # Supported snapshot formats
- - Snapshots: .Z80, .SNA, .ZXP (ZX-Poly snapshot format), ZIP (Spec256 with SNA inside)
- - Tape: .TAP (allows export to WAV file)
- - Disks: .TRD, .SCL
+
+- Snapshots: .Z80, .SNA, .ZXP (ZX-Poly snapshot format), ZIP (Spec256 with SNA inside)
+- Tape: .TAP (allows export to WAV file), .WAV
+- Disks: .TRD, .SCL
 
 # Prebuilt versions
 The pre-built versions of the emulator and sprite editor can be downloaded
