@@ -127,7 +127,7 @@ public final class VideoController extends JComponent
   private final int[] bufferImageRgbData;
   private final ZxPolyModule[] modules;
   private final byte[] borderLineColors = new byte[BORDER_LINES];
-  private final byte[] lastRenderedZxData = new byte[ZXSPEC_PIXEL_AREA_SIZE << 1];
+  private final short[] lastRenderedZxData = new short[ZXSPEC_PIXEL_AREA_SIZE];
 
   private long changedBorderLines = 0L;
   private volatile int currentVideoMode = VIDEOMODE_ZXPOLY_256x192_FLASH_MASK;
@@ -415,14 +415,13 @@ public final class VideoController extends JComponent
   private static void fillDataBufferForZxSpectrum128Mode(
       final ZxPolyModule[] modules,
       final int[] pixelRgbBuffer,
-      final byte[] preRenderedBuffer,
+      final short[] preRenderedBuffer,
       final boolean flashActive
   ) {
     final ZxPolyModule mainModule = modules[0];
     final byte[] heap = mainModule.getMotherboard().getHeapRam();
 
     final int videoRamHeapOffset;
-    final int pagePrerenderOffset;
     if ((mainModule.read7FFD() & PORTw_ZX128_SCREEN) == 0) {
       // RAM 5
       videoRamHeapOffset = mainModule.getHeapOffset() + 0x14000;
@@ -443,14 +442,12 @@ public final class VideoController extends JComponent
 
       final int attrOffset = aoffset++;
 
-      final int preRenderedAttr = preRenderedBuffer[ZXSPEC_PIXEL_AREA_SIZE + i] & 0xFF;
+      final int preRenderedData = preRenderedBuffer[i] & 0xFFFF;
       final int currentAttr = heap[videoRamHeapOffset + attrOffset];
 
-      final int preRenderedPixels = preRenderedBuffer[i];
-      int currentPixels = heap[videoRamHeapOffset + i];
+      int currentPixels = heap[videoRamHeapOffset + i] & 0xFF;
 
-      if (preRenderedPixels == currentPixels
-          && preRenderedAttr == (currentAttr & 0x7F)) {
+      if (preRenderedData == ((currentPixels << 8) | (currentAttr & 0x7F))) {
         offset += 16;
       } else {
 
@@ -463,8 +460,7 @@ public final class VideoController extends JComponent
               | ((currentAttr & 7) << 3) : currentAttr & 0x7F;
         }
 
-        preRenderedBuffer[i] = (byte) currentPixels;
-        preRenderedBuffer[ZXSPEC_PIXEL_AREA_SIZE + i] = (byte) newPreRenderedAttr;
+        preRenderedBuffer[i] = (short) ((currentPixels << 8) | newPreRenderedAttr);
 
         final int inkColor = extractInkColor(currentAttr, flashActive);
         final int paperColor = extractPaperColor(currentAttr, flashActive);
@@ -489,7 +485,7 @@ public final class VideoController extends JComponent
       final int zxPolyVideoMode,
       final ZxPolyModule[] modules,
       final int[] pixelRgbBuffer,
-      final byte[] preRenderedBuffer,
+      final short[] preRenderedBuffer,
       final boolean flashActive,
       final boolean forceRender
   ) {
@@ -512,15 +508,13 @@ public final class VideoController extends JComponent
 
           final int attrOffset = aoffset++;
 
-          final int preRenderedAttr = preRenderedBuffer[ZXSPEC_PIXEL_AREA_SIZE + i] & 0xFF;
+          final int preRenderedData = preRenderedBuffer[i] & 0xFFFF;
           final int attrData = sourceModule.readVideo(attrOffset);
 
-          final int preRenderedPixels = preRenderedBuffer[i] & 0xFF;
           int videoPixels = sourceModule.readVideo(i);
 
           if (forceRender
-              || preRenderedPixels != videoPixels
-              || preRenderedAttr != (attrData & 0x7F)
+              || preRenderedData != ((videoPixels << 8) | (attrData & 0x7F))
           ) {
             final int newPreRenderedAttr;
             if ((attrData & 0x80) == 0) {
@@ -531,8 +525,7 @@ public final class VideoController extends JComponent
                   | ((attrData & 7) << 3) : attrData & 0x7F;
             }
 
-            preRenderedBuffer[i] = (byte) videoPixels;
-            preRenderedBuffer[ZXSPEC_PIXEL_AREA_SIZE + i] = (byte) newPreRenderedAttr;
+            preRenderedBuffer[i] = (short) ((videoPixels << 8) | newPreRenderedAttr);
 
             final int inkColor = extractInkColor(attrData, flashActive);
             final int paperColor = extractPaperColor(attrData, flashActive);
