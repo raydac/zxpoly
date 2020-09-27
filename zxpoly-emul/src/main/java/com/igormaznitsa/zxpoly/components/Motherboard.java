@@ -669,4 +669,8 @@ public final class Motherboard implements ZxPolyConstants {
   public void dispose() {
     this.beeper.dispose();
   }
+
+  public byte[] getHeapRam() {
+    return this.ram;
+  }
 }
