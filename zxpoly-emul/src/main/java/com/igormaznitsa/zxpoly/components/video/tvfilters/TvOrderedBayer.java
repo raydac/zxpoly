@@ -7,19 +7,24 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 
-public final class TvOrdered4x4Bayer implements TvFilter {
+public final class TvOrderedBayer implements TvFilter {
 
-  private static final int THRESHOLD = 128;
+  private static final int THRESHOLD = 132;
 
   private static final int MATRIX[][] = {
-      {1, 9, 3, 11},
-      {13, 5, 15, 7},
-      {4, 12, 2, 10},
-      {16, 8, 14, 6}};
+      {0, 48, 12, 60, 3, 51, 15, 63},
+      {32, 16, 44, 28, 35, 19, 47, 31},
+      {8, 56, 4, 52, 11, 59, 7, 55},
+      {40, 24, 36, 20, 43, 27, 39, 23},
+      {2, 50, 14, 62, 1, 49, 13, 61},
+      {34, 18, 46, 30, 33, 17, 45, 29},
+      {10, 58, 6, 54, 9, 57, 5, 53},
+      {42, 26, 38, 22, 41, 25, 37, 21}
+  };
 
-  private static final TvOrdered4x4Bayer INSTANCE = new TvOrdered4x4Bayer();
+  private static final TvOrderedBayer INSTANCE = new TvOrderedBayer();
 
-  public static TvOrdered4x4Bayer getInstance() {
+  public static TvOrderedBayer getInstance() {
     return INSTANCE;
   }
 
@@ -27,7 +32,7 @@ public final class TvOrdered4x4Bayer implements TvFilter {
     final int r = (argb >> 16) & 0xFF;
     final int g = (argb >> 8) & 0xFF;
     final int b = argb & 0xFF;
-    return Math.min(Math.round(r * 0.4047f + g * 0.5913f + b * 0.2537f), 0xFF);
+    return Math.min(Math.round(r * 0.3747f + g * 0.5013f + b * 0.3737f), 0xFF);
   }
 
   @Override
@@ -44,14 +49,13 @@ public final class TvOrdered4x4Bayer implements TvFilter {
     for (int y = 0; y < RASTER_HEIGHT; y++) {
       for (int x = 0; x < RASTER_WIDTH_ARGB_INT; x++) {
         final int pos = y * RASTER_WIDTH_ARGB_INT + x;
-        int level = getPseudoGray(src[pos]);
-        level += level * MATRIX[x % 4][y % 4] / 17;
+        float level = getPseudoGray(src[pos]);
+        level += level * MATRIX[x & 7][y & 7] / 64.0f;
         if (level < THRESHOLD) {
-          level = 0xFF000000;
+          dst[pos] = 0xFF000000;
         } else {
-          level = 0xFFFFFFFF;
+          dst[pos] = 0xFFFFFFFF;
         }
-        dst[pos] = level;
       }
     }
 

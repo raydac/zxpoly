@@ -7,7 +7,7 @@ public enum TvFilterChain {
   GRAYSCALE("Grayscale", new TvFilter[] {TvFilterGrayscale.getInstance()}),
   OLDTV("Old TV", new TvFilter[] {TvFilterOldTv.getInstance()}),
   GAUSSIAN_BLUR("Gaussian blur", new TvFilter[] {TvFilterGaussian.getInstance()}),
-  BLACKWHITE("Black & White", new TvFilter[] {TvOrdered4x4Bayer.getInstance()});
+  BLACKWHITE("Black & White", new TvFilter[] {TvOrderedBayer.getInstance()});
 
   private final String text;
   private final TvFilter[] filterChain;
