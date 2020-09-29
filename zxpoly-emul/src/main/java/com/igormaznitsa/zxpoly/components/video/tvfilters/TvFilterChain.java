@@ -5,9 +5,9 @@ import java.awt.Color;
 public enum TvFilterChain {
   NONE("None", new TvFilter[0]),
   GRAYSCALE("Grayscale", new TvFilter[] {TvFilterGrayscale.getInstance()}),
+  BLACKWHITE("Black & White", new TvFilter[] {TvOrderedBayer.getInstance()}),
   OLDTV("Old TV", new TvFilter[] {TvFilterOldTv.getInstance()}),
-  GAUSSIAN_BLUR("Gaussian blur", new TvFilter[] {TvFilterGaussian.getInstance()}),
-  BLACKWHITE("Black & White", new TvFilter[] {TvOrderedBayer.getInstance()});
+  GAUSSIAN_BLUR("Gaussian blur", new TvFilter[] {TvFilterGaussian.getInstance()});
 
   private final String text;
   private final TvFilter[] filterChain;
