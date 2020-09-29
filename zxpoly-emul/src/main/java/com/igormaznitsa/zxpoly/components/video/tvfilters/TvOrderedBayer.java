@@ -41,7 +41,8 @@ public final class TvOrderedBayer implements TvFilter {
     final int r = (argb >> 16) & 0xFF;
     final int g = (argb >> 8) & 0xFF;
     final int b = argb & 0xFF;
-    return Math.min(Math.round(r * cr + g * cg + b * cb), 255);
+    final int bits = (toBitPair(g) << 4) | (toBitPair(r) << 2) | toBitPair(b);
+    return bits == 63 ? 64 : bits;
   }
 
   private static int getLevel64(final int r, final int g, final int b) {
@@ -68,12 +69,10 @@ public final class TvOrderedBayer implements TvFilter {
     for (int y = 0; y < RASTER_HEIGHT; y++) {
       for (int x = 0; x < RASTER_WIDTH_ARGB_INT; x++) {
         final int pos = y * RASTER_WIDTH_ARGB_INT + x;
-        float level = getPseudoGray(src[pos]);
-        level += level * MATRIX[x & 7][y & 7] / 65.0f;
-        if (level < THRESHOLD) {
-          dst[pos] = 0xFF000000;
-        } else {
+        if (MATRIX[x & 7][y & 7] < getLevel64(src[pos])) {
           dst[pos] = 0xFFFFFFFF;
+        } else {
+          dst[pos] = 0xFF000000;
         }
       }
     }
