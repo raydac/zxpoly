@@ -137,7 +137,7 @@ public final class VideoController extends JComponent
   private volatile boolean trapMouse = false;
   private volatile boolean enableTrapMouse = false;
   private volatile boolean showZxKeyboardLayout = false;
-  private TvFilterChain tvFilterChain = TvFilterChain.NONE;
+  private volatile TvFilterChain tvFilterChain = TvFilterChain.NONE;
 
   private int tstatesCounter = 0;
 
@@ -1345,13 +1345,52 @@ public final class VideoController extends JComponent
     }
   }
 
-  public int[] makeCopyOfVideoBuffer() {
+  public int[] makeCopyOfVideoBuffer(final boolean applyFilters) {
+    int[] cloneOfBuffer;
+    Color borderColor;
     this.lockBuffer();
     try {
-      return this.bufferImageRgbData.clone();
+      cloneOfBuffer = this.bufferImageRgbData.clone();
+      borderColor = PALETTE_ZXPOLY_COLORS[this.portFEw & 7];
     } finally {
       this.unlockBuffer();
     }
+
+    if (applyFilters) {
+      byte[] rgb = argb2rgb(cloneOfBuffer);
+
+      for (TvFilter f : this.tvFilterChain.getFilterChain()) {
+        rgb = f.apply(false, rgb, borderColor.getRGB());
+        borderColor = f.applyBorderColor(borderColor);
+      }
+
+      cloneOfBuffer = rgb2argb(rgb);
+    }
+    return cloneOfBuffer;
+  }
+
+  private byte[] argb2rgb(final int[] argb) {
+    final byte[] result = new byte[argb.length * 3];
+    int j = 0;
+    for (int i = 0; i < argb.length; i++) {
+      final int value = argb[i];
+      result[j++] = (byte) (value >> 16);
+      result[j++] = (byte) (value >> 8);
+      result[j++] = (byte) value;
+    }
+    return result;
+  }
+
+  private int[] rgb2argb(final byte[] rgb) {
+    final int[] result = new int[rgb.length / 3];
+    int j = 0;
+    for (int i = 0; i < rgb.length; ) {
+      final int r = rgb[i++] & 0xFF;
+      final int g = rgb[i++] & 0xFF;
+      final int b = rgb[i++] & 0xFF;
+      result[j++] = 0xFF000000 | (r << 16) | (g << 8) | b;
+    }
+    return result;
   }
 
   public RenderedImage makeCopyOfCurrentPicture() {

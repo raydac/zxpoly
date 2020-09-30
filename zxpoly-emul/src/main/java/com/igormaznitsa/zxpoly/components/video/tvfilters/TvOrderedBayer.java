@@ -113,4 +113,8 @@ public final class TvOrderedBayer implements TvFilter {
     return result;
   }
 
+  @Override
+  public boolean isGifCompatible() {
+    return true;
+  }
 }

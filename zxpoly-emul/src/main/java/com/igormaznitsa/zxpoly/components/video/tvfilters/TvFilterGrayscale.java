@@ -99,4 +99,8 @@ public final class TvFilterGrayscale implements TvFilter {
     return SHARED_BUFFER;
   }
 
+  @Override
+  public boolean isGifCompatible() {
+    return true;
+  }
 }

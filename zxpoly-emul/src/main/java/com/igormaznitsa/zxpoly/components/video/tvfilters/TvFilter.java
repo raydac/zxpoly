@@ -46,4 +46,8 @@ public interface TvFilter {
 
   }
 
+  default boolean isGifCompatible() {
+    return false;
+  }
+
 }

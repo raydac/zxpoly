@@ -712,7 +712,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             } else {
               countdownToAnimationSave = theAnimationEncoder.getIntsBetweenFrames();
               try {
-                theAnimationEncoder.saveFrame(board.getVideoController().makeCopyOfVideoBuffer());
+                theAnimationEncoder
+                    .saveFrame(board.getVideoController().makeCopyOfVideoBuffer(true));
               } catch (IOException ex) {
                 LOGGER.warning("Can't write animation frame: " + ex.getMessage());
               }
@@ -1377,7 +1378,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           new JRadioButtonMenuItem(chain.getText(), chain == TvFilterChain.NONE);
       tvFilterGroup.add(tvFilterMenuItem);
       tvFilterMenuItem.addActionListener(e -> {
-        this.menuActionAnimatedGIF.setEnabled(chain == TvFilterChain.NONE);
+        this.menuActionAnimatedGIF.setEnabled(chain.isGifCompatible());
         if (tvFilterMenuItem.isSelected()) {
           this.board.getVideoController().setTvFilterChain(chain);
         }
@@ -2035,7 +2036,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           }
         } catch (IOException ex) {
           this.menuViewVideoFilter.setEnabled(true);
-          LOGGER.log(Level.SEVERE, "Can't create GIF encoder", ex);
+          LOGGER.log(Level.SEVERE, "Can't create GIF encoder: " + ex.getMessage(), ex);
+          JOptionPane
+              .showMessageDialog(this, "Can't make GIF encoder: " + ex.getMessage(), "Error!",
+                  JOptionPane.ERROR_MESSAGE);
           return;
         }
 

@@ -1,5 +1,8 @@
 package com.igormaznitsa.zxpoly.components.video.tvfilters;
 
+import static java.util.stream.Stream.of;
+
+
 import java.awt.Color;
 
 public enum TvFilterChain {
@@ -34,6 +37,10 @@ public enum TvFilterChain {
       result = f.applyBorderColor(result);
     }
     return result;
+  }
+
+  public boolean isGifCompatible() {
+    return of(this.filterChain).allMatch(TvFilter::isGifCompatible);
   }
 
   public TvFilter[] getFilterChain() {
