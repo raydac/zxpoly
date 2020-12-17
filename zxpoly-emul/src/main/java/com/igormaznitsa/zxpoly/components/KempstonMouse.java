@@ -108,7 +108,7 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
 
   @Override
   public void mouseExited(final MouseEvent e) {
-    if (this.videoController.isHoldMouse()) {
+    if (this.videoController.isMouseTrapActive()) {
       int x = e.getX();
       int y = e.getY();
 
@@ -138,14 +138,14 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
 
   @Override
   public void mouseEntered(final MouseEvent e) {
-    if (!this.videoController.isHoldMouse()) {
+    if (!this.videoController.isMouseTrapActive()) {
       this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
     }
   }
 
   @Override
   public void mouseReleased(final MouseEvent e) {
-    if (this.videoController.isHoldMouse()) {
+    if (this.videoController.isMouseTrapActive()) {
       this.buttons.set(this.buttons.get() | extractButton(e));
     } else {
       this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
@@ -173,11 +173,11 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
 
   @Override
   public void mousePressed(final MouseEvent e) {
-    if (this.videoController.isHoldMouse()) {
+    if (this.videoController.isMouseTrapActive()) {
       this.buttons.set(this.buttons.get() & (extractButton(e) ^ MOUSE_BUTTONS_NON_ACTIVE));
     } else {
+      this.videoController.setTrapMouseActive(true);
       this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
-      this.videoController.setHoldMouse(true);
       this.pcMouseX = e.getX();
       this.pcMouseY = e.getY();
     }
@@ -190,7 +190,7 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
 
   @Override
   public void mouseMoved(final MouseEvent e) {
-    if (this.videoController.isHoldMouse()) {
+    if (this.videoController.isMouseTrapActive()) {
       final float zoom = this.videoController.getZoom();
 
       final int dx = Math.round((e.getX() - this.pcMouseX) / zoom);

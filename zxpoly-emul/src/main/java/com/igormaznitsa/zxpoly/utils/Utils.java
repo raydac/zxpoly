@@ -129,6 +129,16 @@ public final class Utils {
     }
   }
 
+  public static void safeSwingCall(final Runnable runnable) {
+    if (runnable != null) {
+      if (SwingUtilities.isEventDispatchThread()) {
+        runnable.run();
+      } else {
+        SwingUtilities.invokeLater(runnable);
+      }
+    }
+  }
+
   public static Image loadIcon(final String name) {
     try (InputStream resource = findResourceOrError("com/igormaznitsa/zxpoly/icons/" + name)) {
       return ImageIO.read(resource);

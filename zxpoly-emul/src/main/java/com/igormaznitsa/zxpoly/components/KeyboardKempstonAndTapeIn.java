@@ -352,8 +352,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
     switch (evt.getKeyCode()) {
       case KeyEvent.VK_ESCAPE: {
-        if (this.board.getVideoController().isHoldMouse()) {
-          this.board.getVideoController().setHoldMouse(false);
+        if (this.board.getVideoController().isMouseTrapActive()) {
+          this.board.getVideoController().setTrapMouseActive(false);
         }
       }
       break;

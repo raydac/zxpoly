@@ -66,11 +66,14 @@ import com.igormaznitsa.zxpoly.utils.JHtmlLabel;
 import com.igormaznitsa.zxpoly.utils.RomLoader;
 import com.igormaznitsa.zxpoly.utils.Timer;
 import com.igormaznitsa.zxpoly.utils.Utils;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.Image;
 import java.awt.KeyEventDispatcher;
@@ -113,6 +116,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -134,6 +138,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 public final class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
+
+  private final AtomicReference<JFrame> currentFullScreen = new AtomicReference<>();
+
+  private volatile long lastFullScreenEventTime = 0L;
 
   public static final Logger LOGGER = Logger.getLogger("UI");
   public static final Duration TIMER_INT_DELAY_MILLISECONDS = Duration.ofMillis(20);
@@ -219,6 +227,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenu menuView;
   private JMenu menuViewZoom;
   private JMenu menuViewVideoFilter;
+  private JMenuItem menuViewFullScreen;
   private JMenuItem menuViewZoomIn;
   private JMenuItem menuViewZoomOut;
   private JMenuItem menuFileExit;
@@ -383,7 +392,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.panelIndicators.add(this.indicatorCpu3, cpuIndicatorConstraint, 3);
 
     this.menuOptionsEnableTrapMouse
-        .setSelected(this.board.getVideoController().isTrapMouseEnabled());
+        .setSelected(this.board.getVideoController().isMouseTrapEnabled());
 
     for (final Component item : this.menuBar.getComponents()) {
       if (item instanceof JMenu) {
@@ -454,23 +463,18 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     });
   }
 
-  private void updateInfobar() {
-    assertUiThread();
-    if (panelIndicators.isVisible()) {
-      labelTurbo.setStatus(turboMode);
-
-      final TapeSource tapeFileReader = keyboardAndTapeModule.getTap();
-      labelTapeUsage.setStatus(tapeFileReader != null && tapeFileReader.isPlaying());
-      labelMouseUsage.setStatus(board.getVideoController().isHoldMouse());
-      labelDiskUsage.setStatus(board.getBetaDiskInterface().isActive());
-      labelZX128.setStatus(board.getBoardMode() != BoardMode.ZXPOLY);
-
-      indicatorCpu0.updateForState(board.getCpuActivity(0));
-      indicatorCpu1.updateForState(board.getCpuActivity(1));
-      indicatorCpu2.updateForState(board.getCpuActivity(2));
-      indicatorCpu3.updateForState(board.getCpuActivity(3));
+  private static void setMenuEnable(final JMenuItem item, final boolean enable) {
+    if (item instanceof JMenu) {
+      final JMenu jm = (JMenu) item;
+      jm.setEnabled(enable);
+      for (int i = 0; i < jm.getItemCount(); i++) {
+        setMenuEnable(jm.getItem(i), enable);
+      }
+    } else {
+      if (item != null) {
+        item.setEnabled(enable);
+      }
     }
-    updateTracerCheckBoxes();
   }
 
   private void doOnShutdown() {
@@ -1192,6 +1196,81 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
+  private void updateInfobar() {
+    assertUiThread();
+    if (panelIndicators.isVisible()) {
+      labelTurbo.setStatus(turboMode);
+
+      final TapeSource tapeFileReader = keyboardAndTapeModule.getTap();
+      labelTapeUsage.setStatus(tapeFileReader != null && tapeFileReader.isPlaying());
+      labelMouseUsage.setStatus(board.getVideoController().isMouseTrapActive());
+      labelDiskUsage.setStatus(board.getBetaDiskInterface().isActive());
+      labelZX128.setStatus(board.getBoardMode() != BoardMode.ZXPOLY);
+
+      indicatorCpu0.updateForState(board.getCpuActivity(0));
+      indicatorCpu1.updateForState(board.getCpuActivity(1));
+      indicatorCpu2.updateForState(board.getCpuActivity(2));
+      indicatorCpu3.updateForState(board.getCpuActivity(3));
+    }
+    updateTracerCheckBoxes();
+  }
+
+  private void setMenuEnable(final boolean flag) {
+    for (int i = 0; i < this.getJMenuBar().getMenuCount(); i++) {
+      setMenuEnable(this.getJMenuBar().getMenu(i), flag);
+    }
+  }
+
+  private void doFullScreen() {
+    if (System.currentTimeMillis() - this.lastFullScreenEventTime > 1000L) {
+      LOGGER.info("FULL SCREEN called");
+      final GraphicsEnvironment gEnv = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      final GraphicsDevice gDevice = gEnv.getDefaultScreenDevice();
+
+      JFrame lastFullScreen = this.currentFullScreen.getAndSet(null);
+      if (lastFullScreen == null) {
+        final VideoController vc = this.board.getVideoController();
+        this.scrollPanel.getViewport().remove(vc);
+
+        lastFullScreen = new JFrame("ZX-Poly FullScreen", gDevice.getDefaultConfiguration());
+
+        lastFullScreen.getContentPane().add(vc, BorderLayout.CENTER);
+        lastFullScreen.setUndecorated(true);
+        lastFullScreen.setResizable(false);
+
+        this.currentFullScreen.set(lastFullScreen);
+
+        this.setMenuEnable(false);
+        this.setVisible(false);
+
+        vc.setEnableTrapMouse(true, false, true);
+
+        gDevice.setFullScreenWindow(lastFullScreen);
+      } else {
+        lastFullScreen.getContentPane().removeAll();
+        lastFullScreen.dispose();
+
+        final VideoController vc = this.board.getVideoController();
+
+        vc.setEnableTrapMouse(false, false, false);
+
+        this.scrollPanel.setViewportView(vc);
+        this.scrollPanel.revalidate();
+
+        this.setMenuEnable(true);
+        this.updateInfobar();
+        this.updateTapeMenu();
+        this.updateTracerCheckBoxes();
+        this.setVisible(true);
+        this.pack();
+        this.repaint();
+      }
+    } else {
+      LOGGER.info("Ignoring FULL SCREEN because too often");
+    }
+    this.lastFullScreenEventTime = System.currentTimeMillis();
+  }
+
   /**
    * This method is called from within the constructor to initialize the form.
    * WARNING: Do NOT modify this code. The content of this method is always
@@ -1223,6 +1302,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuView = new JMenu();
     menuViewZoom = new JMenu();
     menuViewVideoFilter = new JMenu();
+    menuViewFullScreen = new JMenuItem();
     menuViewZoomIn = new JMenuItem();
     menuViewZoomOut = new JMenuItem();
     menuLoadDrive = new JMenu();
@@ -1300,8 +1380,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
 
-    scrollPanel.setViewportView(jSeparator2);
-
     getContentPane().add(scrollPanel, java.awt.BorderLayout.CENTER);
 
     panelIndicators.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -1354,6 +1432,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     });
 
     menuView.setText("View");
+
+    menuViewFullScreen.setText("Fullscreen");
+    menuViewFullScreen.addActionListener(e -> this.doFullScreen());
+    menuViewFullScreen
+        .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
+
+    menuView.add(menuViewFullScreen);
 
     menuViewZoomIn.setText("Zoom In");
     menuViewZoomIn.addActionListener(e -> this.board.getVideoController().zoomIn());
@@ -2269,7 +2354,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   private void menuOptionsEnableTrapMouseActionPerformed(ActionEvent evt) {
     this.board.getVideoController()
-        .setEnableTrapMouse(this.menuOptionsEnableTrapMouse.isSelected());
+        .setEnableTrapMouse(this.menuOptionsEnableTrapMouse.isSelected(), true, false);
   }
 
   private void activateTracerForCPUModule(final int index) {
@@ -2453,7 +2538,30 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           this.videoController.setShowZxKeyboardLayout(e.getID() == KeyEvent.KEY_PRESSED);
           e.consume();
           consumed = true;
-        } else {
+        }
+
+        if (MainForm.this.currentFullScreen.get() != null) {
+          // Full screen mode
+          if (e.getID() == KeyEvent.KEY_RELEASED) {
+            switch (e.getKeyCode()) {
+              case KeyEvent.VK_F11:
+              case KeyEvent.VK_ESCAPE: {
+                e.consume();
+                consumed = true;
+                MainForm.this.doFullScreen();
+              }
+              break;
+              case KeyEvent.VK_F12: {
+                e.consume();
+                consumed = true;
+                MainForm.this.menuFileResetActionPerformed(new ActionEvent(this, 0, "reset"));
+              }
+              break;
+            }
+          }
+        }
+
+        if (!consumed) {
           consumed = this.keyboard.onKeyEvent(e);
         }
       }

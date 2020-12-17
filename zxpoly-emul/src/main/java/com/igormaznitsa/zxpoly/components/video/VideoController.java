@@ -134,10 +134,12 @@ public final class VideoController extends JComponent
   private Dimension size = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
   private volatile float zoom = 1.0f;
   private volatile int portFEw = 0;
-  private volatile boolean trapMouse = false;
-  private volatile boolean enableTrapMouse = false;
+  private volatile boolean mouseTrapActive = false;
+  private volatile boolean mouseTrapEnabled = false;
   private volatile boolean showZxKeyboardLayout = false;
   private volatile TvFilterChain tvFilterChain = TvFilterChain.NONE;
+
+  private volatile boolean showMouseTrapIndicator = false;
 
   private int tstatesCounter = 0;
 
@@ -935,34 +937,40 @@ public final class VideoController extends JComponent
     this.showZxKeyboardLayout = show;
   }
 
-  public void setEnableTrapMouse(final boolean flag) {
-    this.enableTrapMouse = flag;
-    if (!this.enableTrapMouse) {
-      this.setHoldMouse(false);
-    }
+  public void setEnableTrapMouse(
+      final boolean flag,
+      final boolean showTrapIndicator,
+      final boolean activateMouseTrap) {
+    this.showMouseTrapIndicator = showTrapIndicator;
+    this.mouseTrapEnabled = flag;
+    this.setTrapMouseActive(flag);
   }
 
-  public boolean isTrapMouseEnabled() {
-    return this.enableTrapMouse;
+  public void setTrapMouseActive(final boolean flag) {
+    this.mouseTrapActive = flag;
+    this.setHideMouse(flag);
   }
 
-  public boolean isHoldMouse() {
-    return this.trapMouse;
+  public boolean isMouseTrapEnabled() {
+    return this.mouseTrapEnabled;
   }
 
-  public void setHoldMouse(final boolean flag) {
-    if (this.enableTrapMouse) {
-      this.trapMouse = flag;
-      if (flag) {
+  public boolean isMouseTrapActive() {
+    return this.mouseTrapActive;
+  }
+
+  public void setHideMouse(final boolean doHide) {
+    final Runnable runnable = () -> {
+      if (doHide) {
         setCursor(Toolkit.getDefaultToolkit()
             .createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT), new Point(0, 0),
                 "InvisibleCursor"));
       } else {
         setCursor(Cursor.getDefaultCursor());
       }
-    }
+    };
+    Utils.safeSwingCall(runnable);
   }
-
 
   public void zoomIn() {
     updateZoom(Math.min(5.0f, this.zoom + 0.2f));
@@ -1042,7 +1050,7 @@ public final class VideoController extends JComponent
     }
     this.drawBuffer(g2, xoff, yoff, this.zoom, this.tvFilterChain);
 
-    if (this.trapMouse) {
+    if (this.mouseTrapActive && this.showMouseTrapIndicator) {
       g2.drawImage(MOUSE_TRAPPED, 2, 2, null);
     }
 
