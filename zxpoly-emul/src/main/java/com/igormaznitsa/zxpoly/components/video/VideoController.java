@@ -139,7 +139,7 @@ public final class VideoController extends JComponent
   private volatile boolean showZxKeyboardLayout = false;
   private volatile TvFilterChain tvFilterChain = TvFilterChain.NONE;
 
-  private volatile boolean showMouseTrapIndicator = false;
+  private volatile boolean enableMouseTrapIndicator = false;
 
   private int tstatesCounter = 0;
 
@@ -939,9 +939,9 @@ public final class VideoController extends JComponent
 
   public void setEnableTrapMouse(
       final boolean flag,
-      final boolean showTrapIndicator,
+      final boolean enableMouseTrapIndicator,
       final boolean activateMouseTrap) {
-    this.showMouseTrapIndicator = showTrapIndicator;
+    this.enableMouseTrapIndicator = enableMouseTrapIndicator;
     this.mouseTrapEnabled = flag;
     this.setTrapMouseActive(flag);
   }
@@ -1050,7 +1050,7 @@ public final class VideoController extends JComponent
     }
     this.drawBuffer(g2, xoff, yoff, this.zoom, this.tvFilterChain);
 
-    if (this.mouseTrapActive && this.showMouseTrapIndicator) {
+    if (this.mouseTrapActive && this.enableMouseTrapIndicator) {
       g2.drawImage(MOUSE_TRAPPED, 2, 2, null);
     }
 

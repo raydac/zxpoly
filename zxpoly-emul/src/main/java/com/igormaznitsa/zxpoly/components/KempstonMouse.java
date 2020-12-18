@@ -176,10 +176,12 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
     if (this.videoController.isMouseTrapActive()) {
       this.buttons.set(this.buttons.get() & (extractButton(e) ^ MOUSE_BUTTONS_NON_ACTIVE));
     } else {
-      this.videoController.setTrapMouseActive(true);
-      this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
-      this.pcMouseX = e.getX();
-      this.pcMouseY = e.getY();
+      if (this.videoController.isMouseTrapEnabled()) {
+        this.videoController.setTrapMouseActive(true);
+        this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
+        this.pcMouseX = e.getX();
+        this.pcMouseY = e.getY();
+      }
     }
   }
 

@@ -1268,7 +1268,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           this.setMenuEnable(false);
           this.setVisible(false);
 
-          vc.setEnableTrapMouse(true, false, true);
+          final boolean mouseTrapOptionActite = this.menuOptionsEnableTrapMouse.isSelected();
+
+          vc.setEnableTrapMouse(mouseTrapOptionActite, false, mouseTrapOptionActite);
 
           gDevice.setFullScreenWindow(lastFullScreen);
 
@@ -1281,7 +1283,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
           final VideoController vc = this.board.getVideoController();
 
-          vc.setEnableTrapMouse(false, false, false);
+          final boolean mouseTrapOptionActite = this.menuOptionsEnableTrapMouse.isSelected();
+          vc.setEnableTrapMouse(mouseTrapOptionActite, true, false);
 
           this.scrollPanel.getViewport().setView(vc);
           vc.doAutoscaleForSize();
