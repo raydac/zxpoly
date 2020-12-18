@@ -1283,7 +1283,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
           vc.setEnableTrapMouse(false, false, false);
 
-          this.scrollPanel.setViewportView(vc);
+          this.scrollPanel.getViewport().setView(vc);
+          vc.doAutoscaleForSize();
+
           this.scrollPanel.revalidate();
 
           this.setMenuEnable(true);
