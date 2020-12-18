@@ -84,6 +84,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.ByteArrayOutputStream;
@@ -1233,6 +1235,19 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         this.scrollPanel.getViewport().remove(vc);
 
         lastFullScreen = new JFrame("ZX-Poly FullScreen", gDevice.getDefaultConfiguration());
+        lastFullScreen.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        lastFullScreen.addWindowFocusListener(new WindowAdapter() {
+          @Override
+          public void windowGainedFocus(WindowEvent e) {
+            vc.requestFocus();
+            MainForm.this.formWindowGainedFocus(e);
+          }
+
+          @Override
+          public void windowLostFocus(WindowEvent e) {
+            MainForm.this.formWindowLostFocus(e);
+          }
+        });
 
         lastFullScreen.getContentPane().add(vc, BorderLayout.CENTER);
         lastFullScreen.setUndecorated(true);
@@ -2317,6 +2332,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void formWindowClosing(java.awt.event.WindowEvent evt) {
+    if (this.currentFullScreen.get() != null) {
+      this.doFullScreen();
+    }
+
     boolean hasChangedDisk = false;
     for (int i = 0; i < 4; i++) {
       final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
