@@ -1495,7 +1495,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuView.setText("View");
 
-    menuViewFullScreen.setText("Fullscreen");
+    menuViewFullScreen.setText("Full Screen");
     menuViewFullScreen.addActionListener(e -> this.doFullScreen());
     menuViewFullScreen
         .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, SystemUtils.IS_OS_MAC ?

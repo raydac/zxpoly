@@ -9,7 +9,7 @@
 
 __2.1.2 (SNAPSHOT)__
 
-- added full-screen mode support
+- added full-screen mode support, menu item `View -> Full Screen`
 - added black-white video filter
 
 __2.1.1 (26-sep-2020)__
