@@ -34,7 +34,6 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.DisplayMode;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -1508,9 +1507,10 @@ public final class VideoController extends JComponent
     return this.getName();
   }
 
-  public void setScaleForDisplayMode(final DisplayMode displayMode) {
-    final int width = displayMode.getWidth();
-    final int height = displayMode.getHeight();
+  public void doAutoscaleForSize() {
+    final Rectangle rectangle = this.getBounds();
+    final int width = rectangle.width;
+    final int height = rectangle.height;
 
     final int maxZoomW = width / SCREEN_WIDTH;
     final int maxZoomH = height / SCREEN_HEIGHT;

@@ -77,11 +77,13 @@ import java.awt.GridBagConstraints;
 import java.awt.Image;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -137,6 +139,7 @@ import javax.swing.event.MenuListener;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 public final class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
 
@@ -1230,8 +1233,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             + gDevice.getDisplayMode());
 
         JFrame lastFullScreen = this.currentFullScreen.getAndSet(null);
+
         if (lastFullScreen == null) {
-          if (gDevice == null || !gDevice.isFullScreenSupported()) {
+          if (!gDevice.isFullScreenSupported()) {
             menuViewFullScreen.setEnabled(false);
             LOGGER.warning("Device doesn't support full screen: " + gDevice.getIDstring());
             return;
@@ -1266,9 +1270,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
           vc.setEnableTrapMouse(true, false, true);
 
-          vc.setScaleForDisplayMode(gDevice.getDisplayMode());
-
           gDevice.setFullScreenWindow(lastFullScreen);
+
+          lastFullScreen.revalidate();
+          lastFullScreen.doLayout();
+          vc.doAutoscaleForSize();
         } else {
           lastFullScreen.getContentPane().removeAll();
           lastFullScreen.dispose();
@@ -1416,6 +1422,24 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
 
+    this.addWindowStateListener(new WindowAdapter() {
+      @Override
+      public void windowStateChanged(WindowEvent e) {
+        if ((e.getNewState() & MAXIMIZED_BOTH) != 0) {
+          SwingUtilities
+              .invokeLater(() -> {
+                MainForm.this.revalidate();
+                MainForm.this.doLayout();
+                SwingUtilities.invokeLater(() -> {
+                  MainForm.this.scrollPanel.revalidate();
+                  MainForm.this.scrollPanel.doLayout();
+                  MainForm.this.board.getVideoController().doAutoscaleForSize();
+                });
+              });
+        }
+      }
+    });
+
     this.getContentPane().add(scrollPanel, java.awt.BorderLayout.CENTER);
 
     panelIndicators.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -1472,18 +1496,22 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuViewFullScreen.setText("Fullscreen");
     menuViewFullScreen.addActionListener(e -> this.doFullScreen());
     menuViewFullScreen
-        .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
+        .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, SystemUtils.IS_OS_MAC ?
+            InputEvent.CTRL_DOWN_MASK | Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() : 0));
+
 
     menuView.add(menuViewFullScreen);
 
     menuViewZoomIn.setText("Zoom In");
     menuViewZoomIn.addActionListener(e -> this.board.getVideoController().zoomIn());
     menuViewZoomIn
-        .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, KeyEvent.CTRL_DOWN_MASK));
+        .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS,
+            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
     menuViewZoomOut.setText("Zoom Out");
     menuViewZoomOut.addActionListener(e -> this.board.getVideoController().zoomOut());
     menuViewZoomOut
-        .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, KeyEvent.CTRL_DOWN_MASK));
+        .setAccelerator(KeyStroke
+            .getKeyStroke(KeyEvent.VK_MINUS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
     menuViewZoom.setText("Zoom");
 
