@@ -7,6 +7,11 @@
 
 # Changelog
 
+__2.1.2 (SNAPSHOT)__
+
+- added full-screen mode support
+- added black-white video filter
+
 __2.1.1 (26-sep-2020)__
 
 - added support of reading WAV files through TAPE
