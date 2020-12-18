@@ -73,7 +73,6 @@ import java.awt.Desktop;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.Image;
 import java.awt.KeyEventDispatcher;
@@ -1224,66 +1223,77 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void doFullScreen() {
-    if (System.currentTimeMillis() - this.lastFullScreenEventTime > 1000L) {
-      LOGGER.info("FULL SCREEN called");
-      final GraphicsEnvironment gEnv = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      final GraphicsDevice gDevice = gEnv.getDefaultScreenDevice();
+    try {
+      if (System.currentTimeMillis() - this.lastFullScreenEventTime > 1000L) {
+        final GraphicsDevice gDevice = this.getGraphicsConfiguration().getDevice();
+        LOGGER.info("FULL SCREEN called, device=" + gDevice.getIDstring() + " displayMode="
+            + gDevice.getDisplayMode());
 
-      JFrame lastFullScreen = this.currentFullScreen.getAndSet(null);
-      if (lastFullScreen == null) {
-        final VideoController vc = this.board.getVideoController();
-        this.scrollPanel.getViewport().remove(vc);
-
-        lastFullScreen = new JFrame("ZX-Poly FullScreen", gDevice.getDefaultConfiguration());
-        lastFullScreen.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        lastFullScreen.addWindowFocusListener(new WindowAdapter() {
-          @Override
-          public void windowGainedFocus(WindowEvent e) {
-            vc.requestFocus();
-            MainForm.this.formWindowGainedFocus(e);
+        JFrame lastFullScreen = this.currentFullScreen.getAndSet(null);
+        if (lastFullScreen == null) {
+          if (gDevice == null || !gDevice.isFullScreenSupported()) {
+            menuViewFullScreen.setEnabled(false);
+            LOGGER.warning("Device doesn't support full screen: " + gDevice.getIDstring());
+            return;
           }
 
-          @Override
-          public void windowLostFocus(WindowEvent e) {
-            MainForm.this.formWindowLostFocus(e);
-          }
-        });
+          final VideoController vc = this.board.getVideoController();
+          this.scrollPanel.getViewport().remove(vc);
 
-        lastFullScreen.getContentPane().add(vc, BorderLayout.CENTER);
-        lastFullScreen.setUndecorated(true);
-        lastFullScreen.setResizable(false);
+          lastFullScreen = new JFrame("ZX-Poly FullScreen", gDevice.getDefaultConfiguration());
+          lastFullScreen.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+          lastFullScreen.addWindowFocusListener(new WindowAdapter() {
+            @Override
+            public void windowGainedFocus(WindowEvent e) {
+              vc.requestFocus();
+              MainForm.this.formWindowGainedFocus(e);
+            }
 
-        this.currentFullScreen.set(lastFullScreen);
+            @Override
+            public void windowLostFocus(WindowEvent e) {
+              MainForm.this.formWindowLostFocus(e);
+            }
+          });
 
-        this.setMenuEnable(false);
-        this.setVisible(false);
+          lastFullScreen.getContentPane().add(vc, BorderLayout.CENTER);
+          lastFullScreen.setUndecorated(true);
+          lastFullScreen.setResizable(false);
 
-        vc.setEnableTrapMouse(true, false, true);
+          this.currentFullScreen.set(lastFullScreen);
 
-        gDevice.setFullScreenWindow(lastFullScreen);
+          this.setMenuEnable(false);
+          this.setVisible(false);
+
+          vc.setEnableTrapMouse(true, false, true);
+
+          vc.setScaleForDisplayMode(gDevice.getDisplayMode());
+
+          gDevice.setFullScreenWindow(lastFullScreen);
+        } else {
+          lastFullScreen.getContentPane().removeAll();
+          lastFullScreen.dispose();
+
+          final VideoController vc = this.board.getVideoController();
+
+          vc.setEnableTrapMouse(false, false, false);
+
+          this.scrollPanel.setViewportView(vc);
+          this.scrollPanel.revalidate();
+
+          this.setMenuEnable(true);
+          this.updateInfobar();
+          this.updateTapeMenu();
+          this.updateTracerCheckBoxes();
+          this.setVisible(true);
+          this.pack();
+          this.repaint();
+        }
       } else {
-        lastFullScreen.getContentPane().removeAll();
-        lastFullScreen.dispose();
-
-        final VideoController vc = this.board.getVideoController();
-
-        vc.setEnableTrapMouse(false, false, false);
-
-        this.scrollPanel.setViewportView(vc);
-        this.scrollPanel.revalidate();
-
-        this.setMenuEnable(true);
-        this.updateInfobar();
-        this.updateTapeMenu();
-        this.updateTracerCheckBoxes();
-        this.setVisible(true);
-        this.pack();
-        this.repaint();
+        LOGGER.info("Ignoring FULL SCREEN because too often");
       }
-    } else {
-      LOGGER.info("Ignoring FULL SCREEN because too often");
+    } finally {
+      this.lastFullScreenEventTime = System.currentTimeMillis();
     }
-    this.lastFullScreenEventTime = System.currentTimeMillis();
   }
 
   /**
@@ -1369,14 +1379,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
     setLocationByPlatform(true);
 
-    addComponentListener(new ComponentAdapter() {
+    this.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
         menuBar.repaint();
       }
     });
 
-    addWindowFocusListener(new java.awt.event.WindowFocusListener() {
+    this.addWindowFocusListener(new java.awt.event.WindowFocusListener() {
       public void windowGainedFocus(java.awt.event.WindowEvent evt) {
         formWindowGainedFocus(evt);
       }
@@ -1385,7 +1395,18 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         formWindowLostFocus(evt);
       }
     });
-    addWindowListener(new java.awt.event.WindowAdapter() {
+
+    this.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentMoved(ComponentEvent e) {
+        if (MainForm.this.currentFullScreen.get() == null) {
+          menuViewFullScreen.setEnabled(
+              MainForm.this.getGraphicsConfiguration().getDevice().isFullScreenSupported());
+        }
+      }
+    });
+
+    this.addWindowListener(new java.awt.event.WindowAdapter() {
       public void windowClosed(java.awt.event.WindowEvent evt) {
         formWindowClosed(evt);
       }
@@ -1395,7 +1416,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
 
-    getContentPane().add(scrollPanel, java.awt.BorderLayout.CENTER);
+    this.getContentPane().add(scrollPanel, java.awt.BorderLayout.CENTER);
 
     panelIndicators.setBorder(javax.swing.BorderFactory.createEtchedBorder());
     panelIndicators.setLayout(new java.awt.GridBagLayout());
