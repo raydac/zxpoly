@@ -9,6 +9,7 @@
 
 __2.1.2 (SNAPSHOT)__
 
+- added support of flags `GFXLeveledAND`,`GFXLeveledOR` and `GFXLeveledXOR` into Spec256 configuration
 - added full-screen mode support, menu item `View -> Full Screen`
 - added black-white video filter
 
@@ -18,28 +19,6 @@ __2.1.1 (26-sep-2020)__
 - fixed ROM work in Spec256 mode
 - improved Z80 emulation
 - refactoring
-
-__2.1.0 (12-sep-2020)__
-
-- improved internal timing
-- base sound synthesizer frequency increased to 48000 Hz
-- added item `Kempston mouse allowed` into `Preferences`, by default active
-- added item `Default ZX128` into `Preferences` to activate ZXMode just on start of the emulator
-- __improved decode of `#7FFD` port in ZX-mode to increase compatibility__
-- added support of loading ROM from local `bootstrap.rom` file placed in emulator folder
-- __added support of TurboSound (NedoPC version)__
-- embedded GraalVM updated to 20.2.0
- - __improved Z80 emulation__
- - __improved emulation of AY8910__ 
- - improved decoding of AY8910 port
- - refactoring
-
-__2.0.7 (16-aug-2020)__
-  - added support for AY-3-8910
-  - added video filters [#1](https://github.com/raydac/zxpoly/issues/1)
-  - added support of Covox on port #FB
-  - added explicit menu items to scale screen
-  - minor bugfixing and refactoring
 
 full [change log](changelog.txt)
 
@@ -140,7 +119,6 @@ Since 2.0.1 version, some restricted [Spec256 platform](http://www.emulatronia.c
 Known issues with emulation of listed games:
  - __Knight lore__ wrongly colored picture
  - __Bubbler__ losing colorization for some game elements
- - __Atic atac__ has some trash as footsteps of game elements
 
 In ZX-Poly emulator working in Spec256 mode, some CPU registers are syncronized every iteration (by default PC, SP and bits of F excluding C bit), but it works not for all games. In games which need another register set, there can be provided special `zxpAlignRegs` parameter in CFG file situated in snapshot archive. For instance `zxpAlignRegs=XxYyPSsHLb` means syncronization of IX,IY,PC,SP,H,L and B' registers.
 

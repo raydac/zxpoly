@@ -1,4 +1,5 @@
 __2.1.2 (SNAPSHOT)__
+- added support of flags `GFXLeveledAND`,`GFXLeveledOR` and `GFXLeveledXOR` into Spec256 configuration
 - added full-screen mode support, menu item `View -> Full Screen`
 - added black-white video filter
 
