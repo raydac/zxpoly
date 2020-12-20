@@ -352,9 +352,9 @@ public class OptionsPanel extends javax.swing.JPanel {
     }
 
     public DataContainer(final OptionsPanel optionsPanel) {
-      this.activeRom =
-          Rom.findForTitle(optionsPanel.comboRomSource.getSelectedItem().toString(), Rom.TEST)
-              .getLink();
+      final Rom rom =
+          Rom.findForTitle(optionsPanel.comboRomSource.getSelectedItem().toString(), Rom.TEST);
+      this.activeRom = rom.getLink();
       this.intPerFrame = (Integer) optionsPanel.spinnerIntFrame.getValue();
       this.ffmpegPath = optionsPanel.textFfmpegPath.getText();
       this.port = (Integer) optionsPanel.spinnerPort.getValue();
@@ -364,7 +364,7 @@ public class OptionsPanel extends javax.swing.JPanel {
       this.covoxFb = optionsPanel.checkCovoxFb.isSelected();
       this.turboSound = optionsPanel.checkTurboSound.isSelected();
       this.kempstonMouseAllowed = optionsPanel.checkKempstonMouseAllowed.isSelected();
-      this.zx128byDefault = optionsPanel.checkZx128ByDefault.isSelected();
+      this.zx128byDefault = rom != Rom.TEST && optionsPanel.checkZx128ByDefault.isSelected();
     }
 
     public void store() {

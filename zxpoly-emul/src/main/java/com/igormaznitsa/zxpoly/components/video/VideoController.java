@@ -445,27 +445,22 @@ public final class VideoController extends JComponent
       final int attrOffset = aoffset++;
 
       final int preRenderedData = preRenderedBuffer[i] & 0xFFFF;
-      final int currentAttr = heap[videoRamHeapOffset + attrOffset];
+
+      int effectiveAttribute = heap[videoRamHeapOffset + attrOffset];
+      effectiveAttribute =
+          flashActive && ((effectiveAttribute & 0x80) != 0) ? (effectiveAttribute & 0b01_000_000)
+              | ((effectiveAttribute >> 3) & 7)
+              | ((effectiveAttribute & 7) << 3) : effectiveAttribute;
 
       int currentPixels = heap[videoRamHeapOffset + i] & 0xFF;
 
-      if (preRenderedData == ((currentPixels << 8) | (currentAttr & 0x7F))) {
+      if (preRenderedData == ((currentPixels << 8) | effectiveAttribute)) {
         offset += 16;
       } else {
+        preRenderedBuffer[i] = (short) ((currentPixels << 8) | effectiveAttribute);
 
-        final int newPreRenderedAttr;
-        if ((currentAttr & 0x80) == 0) {
-          newPreRenderedAttr = (currentAttr & 0x7F);
-        } else {
-          newPreRenderedAttr = flashActive ? (currentAttr & 0b01_000_000)
-              | ((currentAttr >> 3) & 7)
-              | ((currentAttr & 7) << 3) : currentAttr & 0x7F;
-        }
-
-        preRenderedBuffer[i] = (short) ((currentPixels << 8) | newPreRenderedAttr);
-
-        final int inkColor = extractInkColor(currentAttr, flashActive);
-        final int paperColor = extractPaperColor(currentAttr, flashActive);
+        final int inkColor = extractInkPaletteColor(effectiveAttribute);
+        final int paperColor = extractPaperPaletteColor(effectiveAttribute);
 
         int x = 8;
         while (x-- > 0) {
@@ -511,26 +506,21 @@ public final class VideoController extends JComponent
           final int attrOffset = aoffset++;
 
           final int preRenderedData = preRenderedBuffer[i] & 0xFFFF;
-          final int attrData = sourceModule.readVideo(attrOffset);
+          int effectiveAttribute = sourceModule.readVideo(attrOffset);
+          effectiveAttribute = flashActive && ((effectiveAttribute & 0x80) != 0)
+              ? (effectiveAttribute & 0b01_000_000)
+              | ((effectiveAttribute >> 3) & 7)
+              | ((effectiveAttribute & 7) << 3) : effectiveAttribute;
 
           int videoPixels = sourceModule.readVideo(i);
 
           if (forceRender
-              || preRenderedData != ((videoPixels << 8) | (attrData & 0x7F))
+              || preRenderedData != ((videoPixels << 8) | effectiveAttribute)
           ) {
-            final int newPreRenderedAttr;
-            if ((attrData & 0x80) == 0) {
-              newPreRenderedAttr = (attrData & 0x7F);
-            } else {
-              newPreRenderedAttr = flashActive ? (attrData & 0b01_000_000)
-                  | ((attrData >> 3) & 7)
-                  | ((attrData & 7) << 3) : attrData & 0x7F;
-            }
+            preRenderedBuffer[i] = (short) ((videoPixels << 8) | effectiveAttribute);
 
-            preRenderedBuffer[i] = (short) ((videoPixels << 8) | newPreRenderedAttr);
-
-            final int inkColor = extractInkColor(attrData, flashActive);
-            final int paperColor = extractPaperColor(attrData, flashActive);
+            final int inkColor = extractInkPaletteColor(effectiveAttribute);
+            final int paperColor = extractPaperPaletteColor(effectiveAttribute);
 
             int x = 8;
             while (x-- > 0) {
@@ -827,6 +817,16 @@ public final class VideoController extends JComponent
       result = inkColor;
     }
     return result;
+  }
+
+  private static int extractPaperPaletteColor(final int attribute) {
+    final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
+    return PALETTE_ZXPOLY[((attribute >> 3) & 0x07) | bright];
+  }
+
+  private static int extractInkPaletteColor(final int attribute) {
+    final int bright = (attribute & 0x40) == 0 ? 0 : 0x08;
+    return PALETTE_ZXPOLY[(attribute & 0x07) | bright];
   }
 
   private static int extractInkColorSpec256(final int attribute, final boolean flashActive) {
