@@ -33,6 +33,21 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = new Z80(new Z80CPUBus() {
 
       @Override
+      public int postProcessXor(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessAnd(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessOr(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
       public int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg) {
         return valueInReg;
       }
@@ -5521,6 +5536,21 @@ public class Z80Test extends AbstractZ80Test {
     final Z80 cpu = new Z80(new Z80CPUBus() {
 
       @Override
+      public int postProcessXor(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessAnd(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessOr(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
       public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
 
       }
@@ -5607,6 +5637,21 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testIntProcessing_IM1() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
+
+      @Override
+      public int postProcessXor(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessAnd(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessOr(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
 
       @Override
       public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
@@ -5706,6 +5751,21 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testIntProcessing_IM2() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
+
+      @Override
+      public int postProcessXor(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessAnd(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessOr(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
 
       @Override
       public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
@@ -5820,6 +5880,21 @@ public class Z80Test extends AbstractZ80Test {
   @Test
   public void testIntProcessing_EI_RET_RST38() {
     final Z80 cpu = new Z80(new Z80CPUBus() {
+
+      @Override
+      public int postProcessXor(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessAnd(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessOr(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
 
       @Override
       public int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg) {

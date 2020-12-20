@@ -30,6 +30,12 @@ public interface Z80CPUBus {
 
   int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg);
 
+  int postProcessXor(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result);
+
+  int postProcessAnd(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result);
+
+  int postProcessOr(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result);
+
   byte readPort(Z80 cpu, int ctx, int port);
 
   void writePort(Z80 cpu, int ctx, int port, byte data);

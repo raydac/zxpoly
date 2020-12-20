@@ -106,6 +106,21 @@ public abstract class AbstractZ80Test {
     final Z80CPUBus bus = new Z80CPUBus() {
 
       @Override
+      public int postProcessXor(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessAnd(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessOr(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
       public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
 
       }
@@ -193,6 +208,21 @@ public abstract class AbstractZ80Test {
     }
 
     final Z80CPUBus bus = new Z80CPUBus() {
+
+      @Override
+      public int postProcessXor(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessAnd(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessOr(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
 
       @Override
       public int readRegPortAddr(Z80 cpu, int ctx, int reg, int valueInReg) {

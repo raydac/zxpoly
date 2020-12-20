@@ -27,6 +27,7 @@ import java.util.Locale;
  */
 public final class Z80 {
 
+  public static final int REG_UNKNOWN = -1;
   public static final int REG_A = 0;
   public static final int REG_F = 1;
   public static final int REG_B = 2;
@@ -2093,14 +2094,14 @@ public final class Z80 {
   }
 
   private void doALU_A_Reg(final int ctx, final int op, final int reg) {
-    _aluAccumulatorOp(op, readReg8(ctx, reg));
+    _aluAccumulatorOp(ctx, op, reg, readReg8(ctx, reg));
   }
 
   private void doALU_A_n(final int ctx, final int op) {
-    _aluAccumulatorOp(op, readInstrOrPrefix(ctx, false));
+    _aluAccumulatorOp(ctx, op, REG_UNKNOWN, readInstrOrPrefix(ctx, false));
   }
 
-  private void _aluAccumulatorOp(final int op, final int value) {
+  private void _aluAccumulatorOp(final int ctx, final int op, final int regIndex, final int value) {
     final int a = this.regSet[REG_A] & 0xFF;
     final int flagc = this.regSet[REG_F] & FLAG_C;
 
@@ -2152,17 +2153,17 @@ public final class Z80 {
       }
       break;
       case 4: { // AND
-        result = a & value;
+        result = this.bus.postProcessAnd(this, ctx, regIndex, a, value, a & value);
         f = FTABLE_SZYXP[result] | FLAG_H;
       }
       break;
       case 5: { // XOR
-        result = a ^ value;
+        result = this.bus.postProcessXor(this, ctx, regIndex, a, value, a ^ value);
         f = FTABLE_SZYXP[result];
       }
       break;
       case 6: { // OR
-        result = a | value;
+        result = this.bus.postProcessOr(this, ctx, regIndex, a, value, a | value);
         f = FTABLE_SZYXP[result];
       }
       break;

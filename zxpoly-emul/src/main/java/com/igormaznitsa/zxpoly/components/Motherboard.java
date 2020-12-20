@@ -82,6 +82,29 @@ public final class Motherboard implements ZxPolyConstants {
   private final Beeper beeper;
   private final RomData romData;
 
+  private volatile boolean gfxLeveledXor = false;
+  private volatile boolean gfxLeveledOr = false;
+  private volatile boolean gfxLeveledAnd = false;
+
+  public boolean isGfxLeveledXor() {
+    return this.gfxLeveledXor;
+  }
+
+  public boolean isGfxLeveledOr() {
+    return this.gfxLeveledOr;
+  }
+
+  public boolean isGfxLeveledAnd() {
+    return this.gfxLeveledAnd;
+  }
+
+  public void setGfxLeveledLogicalOps(final boolean xor, final boolean or, final boolean and) {
+    LOGGER.info(String.format("Set GFX leveled logic ops XOR=%b, OR=%b, AND=%b", xor, or, and));
+    this.gfxLeveledXor = xor;
+    this.gfxLeveledOr = or;
+    this.gfxLeveledAnd = and;
+  }
+
   public Motherboard(
       final RomData rom,
       final BoardMode boardMode,
@@ -167,6 +190,7 @@ public final class Motherboard implements ZxPolyConstants {
     this.beeper.reset();
     this.totalReset = true;
     this.resetCounter = 3;
+    this.setGfxLeveledLogicalOps(false, false, false);
   }
 
   public void resetAndRestoreRom(final RomData rom) {

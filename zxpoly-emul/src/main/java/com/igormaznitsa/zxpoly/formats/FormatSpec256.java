@@ -259,6 +259,17 @@ public class FormatSpec256 extends Snapshot {
         .setGfxPaper00InkFF(!"0".equals(
             findProperty(archive, "Paper00InkFF", dbItem, bkg.isPresent() ? "0" : "1")));
 
+    final boolean leveledXor = !"0".equals(
+        findProperty(archive, "GFXLeveledXOR", dbItem, "0"));
+
+    final boolean leveledAnd = !"0".equals(
+        findProperty(archive, "GFXLeveledAND", dbItem, "0"));
+
+    final boolean leveledOr = !"0".equals(
+        findProperty(archive, "GFXLeveledOR", dbItem, "0"));
+
+    board.setGfxLeveledLogicalOps(leveledXor, leveledAnd, leveledOr);
+
     board.syncSpec256GpuStates();
   }
 

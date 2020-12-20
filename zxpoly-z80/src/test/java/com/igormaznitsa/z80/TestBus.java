@@ -75,6 +75,22 @@ public final class TestBus implements Z80CPUBus {
     return valueInReg;
   }
 
+
+  @Override
+  public int postProcessXor(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+    return result;
+  }
+
+  @Override
+  public int postProcessAnd(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+    return result;
+  }
+
+  @Override
+  public int postProcessOr(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+    return result;
+  }
+
   @Override
   public int readSpecRegValue(Z80 cpu, int ctx, int reg, int origValue) {
     return origValue;

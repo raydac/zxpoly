@@ -203,6 +203,21 @@ public class Z80FuseTest {
       public void onInterrupt(Z80 cpu, int ctx, boolean nmi) {
 
       }
+
+      @Override
+      public int postProcessXor(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessAnd(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
+
+      @Override
+      public int postProcessOr(Z80 cpu, int ctx, int regIndex, int valueA, int value, int result) {
+        return result;
+      }
     });
     cpu.doReset();
 

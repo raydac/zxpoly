@@ -17,6 +17,9 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import static com.igormaznitsa.z80.Z80.REG_A;
+
+
 import com.igormaznitsa.z80.MemoryAccessProvider;
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
@@ -786,8 +789,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       return valueInReg;
     } else {
       switch (reg) {
-        case Z80.REG_A:
-          return this.cpu.getRegister(Z80.REG_A);
+        case REG_A:
+          return this.cpu.getRegister(REG_A);
         case Z80.REGPAIR_BC:
           return this.cpu.getRegisterPair(Z80.REGPAIR_BC);
         default:
@@ -834,6 +837,48 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   public void write7FFD(final int value, final boolean writeEvenIfLocked) {
     if (((this.port7FFD.get() & PORTw_ZX128_LOCK) == 0) || writeEvenIfLocked) {
       this.port7FFD.set(value);
+    }
+  }
+
+  @Override
+  public int postProcessXor(final Z80 cpu, final int ctx, final int regIndex, final int valueA,
+                            final int value, final int result) {
+    if (ctx == 0) {
+      return result;
+    } else {
+      if (this.board.isGfxLeveledXor()) {
+        return regIndex == REG_A ? 0 : Math.max(valueA, value);
+      } else {
+        return result;
+      }
+    }
+  }
+
+  @Override
+  public int postProcessAnd(final Z80 cpu, final int ctx, final int regIndex, final int valueA,
+                            final int value, final int result) {
+    if (ctx == 0) {
+      return result;
+    } else {
+      if (this.board.isGfxLeveledAnd()) {
+        return Math.min(valueA, value);
+      } else {
+        return result;
+      }
+    }
+  }
+
+  @Override
+  public int postProcessOr(final Z80 cpu, final int ctx, final int regIndex, final int valueA,
+                           final int value, final int result) {
+    if (ctx == 0) {
+      return result;
+    } else {
+      if (this.board.isGfxLeveledOr()) {
+        return Math.max(valueA, value);
+      } else {
+        return result;
+      }
     }
   }
 
