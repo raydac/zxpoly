@@ -1,7 +1,8 @@
-__2.1.2 (SNAPSHOT)__
+__2.1.2 (22-dec-2020)__
 - added support of flags `GFXLeveledAND`,`GFXLeveledOR` and `GFXLeveledXOR` into Spec256 configuration
 - added full-screen mode support, menu item `View -> Full Screen`
 - added black-white video filter
+- updated dependencies
 
 __2.1.1 (26-sep-2020)__
  - added support of reading WAV files through TAPE

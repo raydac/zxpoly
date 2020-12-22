@@ -7,11 +7,12 @@
 
 # Changelog
 
-__2.1.2 (SNAPSHOT)__
+__2.1.2 (22-dec-2020)__
 
 - added support of flags `GFXLeveledAND`,`GFXLeveledOR` and `GFXLeveledXOR` into Spec256 configuration
 - added full-screen mode support, menu item `View -> Full Screen`
 - added black-white video filter
+- updated dependencies
 
 __2.1.1 (26-sep-2020)__
 
@@ -36,7 +37,7 @@ Both the concept and emulator and all its parts are published under [GNU GPL3 li
 
 # Emulator GUI
 Keyboard plays role of ZX-Keyboard (ALT = SS, SHIFT = CS, CTRL+WHEEL = scaling), F5 shows ZX-keys on the screen. Numpad plays role of Kempson joystick.  
-![The Main Window of the Emulator](docs/screenshots/pidentity48.png)
+![The Main Window of the Emulator](docs/screenshots/Aliens_Neoplasma_Screenshot.png)
 
 # Supported snapshot formats
 
@@ -45,10 +46,11 @@ Keyboard plays role of ZX-Keyboard (ALT = SS, SHIFT = CS, CTRL+WHEEL = scaling),
 - Disks: .TRD, .SCL
 
 # Prebuilt versions
+
 The pre-built versions of the emulator and sprite editor can be downloaded
-from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.1.1).   
+from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.1.2).   
 The emulator is written in Java and its JAR file can be started just through command
-line `java -jar zxpoly-emul-2.1.1.jar`   
+line `java -jar zxpoly-emul-2.1.2.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in **File->Options->Active
 ROM**, the ROM will be downloaded from one of remote network resources.   
 ![Test-ROM](docs/screenshots/testromscr1.png)
