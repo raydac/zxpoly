@@ -7,19 +7,18 @@
 
 # Changelog
 
+__2.1.3 (SNAPSHOT)__
+
+- in Preferences added redefinition of keys mapped to Kempston joystick [#5](https://github.com/raydac/zxpoly/issues/5)
+- added support for mouse clickable virtual keyboard (show/hide by F5
+  pressing) [#4](https://github.com/raydac/zxpoly/issues/4)
+
 __2.1.2 (22-dec-2020)__
 
 - added support of flags `GFXLeveledAND`,`GFXLeveledOR` and `GFXLeveledXOR` into Spec256 configuration
 - added full-screen mode support, menu item `View -> Full Screen`
 - added black-white video filter
 - updated dependencies
-
-__2.1.1 (26-sep-2020)__
-
-- added support of reading WAV files through TAPE
-- fixed ROM work in Spec256 mode
-- improved Z80 emulation
-- refactoring
 
 full [change log](changelog.txt)
 
