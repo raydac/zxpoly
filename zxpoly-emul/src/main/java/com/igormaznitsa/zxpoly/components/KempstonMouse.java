@@ -18,13 +18,12 @@
 package com.igormaznitsa.zxpoly.components;
 
 import com.igormaznitsa.zxpoly.components.video.VideoController;
-import java.awt.AWTException;
-import java.awt.Point;
-import java.awt.Robot;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.swing.SwingUtilities;
 
 public final class KempstonMouse extends MouseAdapter implements IoDevice {
 
@@ -145,10 +144,12 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
 
   @Override
   public void mouseReleased(final MouseEvent e) {
-    if (this.videoController.isMouseTrapActive()) {
-      this.buttons.set(this.buttons.get() | extractButton(e));
-    } else {
-      this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
+    if (!e.isConsumed()) {
+      if (this.videoController.isMouseTrapActive()) {
+        this.buttons.set(this.buttons.get() | extractButton(e));
+      } else {
+        this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
+      }
     }
   }
 
@@ -173,14 +174,16 @@ public final class KempstonMouse extends MouseAdapter implements IoDevice {
 
   @Override
   public void mousePressed(final MouseEvent e) {
-    if (this.videoController.isMouseTrapActive()) {
-      this.buttons.set(this.buttons.get() & (extractButton(e) ^ MOUSE_BUTTONS_NON_ACTIVE));
-    } else {
-      if (this.videoController.isMouseTrapEnabled()) {
-        this.videoController.setTrapMouseActive(true);
-        this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
-        this.pcMouseX = e.getX();
-        this.pcMouseY = e.getY();
+    if (!e.isConsumed()) {
+      if (this.videoController.isMouseTrapActive()) {
+        this.buttons.set(this.buttons.get() & (extractButton(e) ^ MOUSE_BUTTONS_NON_ACTIVE));
+      } else {
+        if (this.videoController.isMouseTrapEnabled()) {
+          this.videoController.setTrapMouseActive(true);
+          this.buttons.set(MOUSE_BUTTONS_NON_ACTIVE);
+          this.pcMouseX = e.getX();
+          this.pcMouseY = e.getY();
+        }
       }
     }
   }
