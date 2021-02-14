@@ -17,26 +17,12 @@
 
 package com.igormaznitsa.zxpoly;
 
-import static com.igormaznitsa.z80.Utils.toHex;
-import static com.igormaznitsa.z80.Utils.toHexByte;
-import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
-import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
-import static javax.swing.JOptionPane.showConfirmDialog;
-import static javax.swing.JOptionPane.showMessageDialog;
-import static javax.swing.KeyStroke.getKeyStroke;
-import static org.apache.commons.lang3.StringUtils.repeat;
-
-
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.Spec256AGifEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.ZxPolyAGifEncoder;
-import com.igormaznitsa.zxpoly.components.BoardMode;
-import com.igormaznitsa.zxpoly.components.KempstonMouse;
-import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
-import com.igormaznitsa.zxpoly.components.Motherboard;
-import com.igormaznitsa.zxpoly.components.RomData;
+import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk;
 import com.igormaznitsa.zxpoly.components.snd.Beeper;
@@ -45,101 +31,51 @@ import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSourceFactory;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilterChain;
-import com.igormaznitsa.zxpoly.formats.FormatSNA;
-import com.igormaznitsa.zxpoly.formats.FormatSpec256;
-import com.igormaznitsa.zxpoly.formats.FormatZ80;
-import com.igormaznitsa.zxpoly.formats.FormatZXP;
-import com.igormaznitsa.zxpoly.formats.Snapshot;
+import com.igormaznitsa.zxpoly.formats.*;
 import com.igormaznitsa.zxpoly.streamer.ZxVideoStreamer;
 import com.igormaznitsa.zxpoly.tracer.TraceCpuForm;
 import com.igormaznitsa.zxpoly.trainers.AbstractTrainer;
 import com.igormaznitsa.zxpoly.trainers.TrainerPok;
-import com.igormaznitsa.zxpoly.ui.AboutDialog;
-import com.igormaznitsa.zxpoly.ui.AddressPanel;
-import com.igormaznitsa.zxpoly.ui.CpuLoadIndicator;
-import com.igormaznitsa.zxpoly.ui.GameControllerPanel;
-import com.igormaznitsa.zxpoly.ui.JIndicatorLabel;
-import com.igormaznitsa.zxpoly.ui.OptionsPanel;
-import com.igormaznitsa.zxpoly.ui.SelectTapPosDialog;
-import com.igormaznitsa.zxpoly.utils.AppOptions;
-import com.igormaznitsa.zxpoly.utils.JHtmlLabel;
-import com.igormaznitsa.zxpoly.utils.RomLoader;
+import com.igormaznitsa.zxpoly.ui.*;
 import com.igormaznitsa.zxpoly.utils.Timer;
-import com.igormaznitsa.zxpoly.utils.Utils;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Desktop;
-import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.GraphicsDevice;
-import java.awt.GridBagConstraints;
-import java.awt.Image;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
-import java.awt.Toolkit;
-import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import com.igormaznitsa.zxpoly.utils.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.SystemUtils;
+
+import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioFormat;
+import javax.swing.*;
+import javax.swing.Box.Filler;
+import javax.swing.JPopupMenu.Separator;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
+import javax.swing.filechooser.FileFilter;
+import java.awt.*;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.imageio.ImageIO;
-import javax.sound.sampled.AudioFormat;
-import javax.swing.Box;
-import javax.swing.Box.Filler;
-import javax.swing.ButtonGroup;
-import javax.swing.DefaultBoundedRangeModel;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu.Separator;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JSeparator;
-import javax.swing.JSlider;
-import javax.swing.JToggleButton;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.event.MenuEvent;
-import javax.swing.event.MenuListener;
-import javax.swing.filechooser.FileFilter;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.SystemUtils;
+
+import static com.igormaznitsa.z80.Utils.toHex;
+import static com.igormaznitsa.z80.Utils.toHexByte;
+import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
+import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
+import static javax.swing.JOptionPane.showConfirmDialog;
+import static javax.swing.JOptionPane.showMessageDialog;
+import static javax.swing.KeyStroke.getKeyStroke;
+import static org.apache.commons.lang3.StringUtils.repeat;
 
 public final class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
 
@@ -2608,7 +2544,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       boolean consumed = false;
       if (!e.isConsumed() && MainForm.this.zxKeyboardProcessingAllowed) {
         if (e.getKeyCode() == KeyEvent.VK_F5) {
-          this.videoController.setShowZxKeyboardLayout(e.getID() == KeyEvent.KEY_PRESSED);
+          if (e.getID() == KeyEvent.KEY_PRESSED) {
+            this.videoController.setVkbShow(!this.videoController.isVkbShow());
+          }
           e.consume();
           consumed = true;
         }

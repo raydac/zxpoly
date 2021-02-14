@@ -146,7 +146,7 @@ public final class VideoController extends JComponent
   private volatile int portFEw = 0;
   private volatile boolean mouseTrapActive = false;
   private volatile boolean mouseTrapEnabled = false;
-  private volatile boolean showZxKeyboardLayout = false;
+  private volatile boolean showVkb = false;
   private volatile TvFilterChain tvFilterChain = TvFilterChain.NONE;
   private volatile boolean enableMouseTrapIndicator = false;
   private int tstatesCounter = 0;
@@ -169,7 +169,7 @@ public final class VideoController extends JComponent
 
       @Override
       public void mousePressed(final MouseEvent e) {
-        if (!e.isConsumed() && !mouseTrapActive && showZxKeyboardLayout) {
+        if (!e.isConsumed() && !mouseTrapActive && showVkb) {
           lastMouseClickEvent = e;
           e.consume();
         }
@@ -177,7 +177,7 @@ public final class VideoController extends JComponent
 
       @Override
       public void mouseReleased(final MouseEvent e) {
-        if (!e.isConsumed() && !mouseTrapActive && showZxKeyboardLayout) {
+        if (!e.isConsumed() && !mouseTrapActive && showVkb) {
           lastMouseClickEvent = e;
           e.consume();
         }
@@ -1016,10 +1016,14 @@ public final class VideoController extends JComponent
     this.tvFilterChain = chain == null ? TvFilterChain.NONE : chain;
   }
 
-  public void setShowZxKeyboardLayout(final boolean show) {
-    if (!(show && this.showZxKeyboardLayout)) {
+  public boolean isVkbShow() {
+    return this.showVkb;
+  }
+
+  public void setVkbShow(final boolean show) {
+    if (!(show && this.showVkb)) {
       this.vkbKeysState = ZXKEY_NONE;
-      this.showZxKeyboardLayout = show;
+      this.showVkb = show;
       this.lastMouseClickEvent = null;
     }
   }
@@ -1141,7 +1145,7 @@ public final class VideoController extends JComponent
       g2.drawImage(MOUSE_TRAPPED, 2, 2, null);
     }
 
-    if (this.showZxKeyboardLayout) {
+    if (this.showVkb) {
       final int imgWidth = IMAGE_ZXKEYS.getWidth(null);
       final int imgHeight = IMAGE_ZXKEYS.getHeight(null);
 
