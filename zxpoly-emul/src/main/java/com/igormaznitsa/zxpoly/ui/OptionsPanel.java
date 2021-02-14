@@ -20,44 +20,56 @@ package com.igormaznitsa.zxpoly.ui;
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.AppOptions.Rom;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 
-public class OptionsPanel extends javax.swing.JPanel {
+import static javax.swing.BorderFactory.createTitledBorder;
+import static javax.swing.SwingConstants.RIGHT;
+
+public class OptionsPanel extends JPanel {
 
   private static final Logger LOGGER = Logger.getLogger("Options");
 
-  private javax.swing.JCheckBox checkCovoxFb;
-  private javax.swing.JCheckBox checkTurboSound;
-  private javax.swing.JCheckBox checkZx128ByDefault;
-  private javax.swing.JCheckBox checkKempstonMouseAllowed;
-  private javax.swing.JLabel labelCovoxFb;
-  private javax.swing.JLabel labelTurboSound;
-  private javax.swing.JLabel labelZx128ByDefault;
-  private javax.swing.JLabel labelKempstonMouseAllowed;
-  private javax.swing.JCheckBox checkGrabSound;
+  private JCheckBox checkCovoxFb;
+  private JCheckBox checkTurboSound;
+  private JCheckBox checkZx128ByDefault;
+  private JCheckBox checkKempstonMouseAllowed;
+  private JLabel labelCovoxFb;
+  private JLabel labelTurboSound;
+  private JLabel labelZx128ByDefault;
+  private JLabel labelKempstonMouseAllowed;
+  private JCheckBox checkGrabSound;
   private javax.swing.JComboBox<String> comboNetAdddr;
   private javax.swing.JComboBox<String> comboRomSource;
-  private javax.swing.JLabel labelFfMpegPath;
-  private javax.swing.JLabel labelNetInterface;
-  private javax.swing.JLabel labelPort;
-  private javax.swing.JLabel labelSound;
-  private javax.swing.JLabel labelRomSource;
-  private javax.swing.JLabel labelIntFrame;
-  private javax.swing.JLabel labelFrameRate;
-  private javax.swing.JPanel jPanel1;
-  private javax.swing.JPanel jPanel2;
-  private javax.swing.JSpinner spinnerFramesPerSec;
-  private javax.swing.JSpinner spinnerIntFrame;
-  private javax.swing.JSpinner spinnerPort;
-  private javax.swing.JTextField textFfmpegPath;
+  private JLabel labelFfMpegPath;
+  private JLabel labelNetInterface;
+  private JLabel labelPort;
+  private JLabel labelSound;
+  private JLabel labelRomSource;
+  private JLabel labelIntFrame;
+  private JLabel labelFrameRate;
+  private JPanel panelStreaming;
+  private JPanel panelGenmeral;
+  private JSpinner spinnerFramesPerSec;
+  private JSpinner spinnerIntFrame;
+  private JSpinner spinnerPort;
+  private JTextField textFfmpegPath;
+
+  private KeyCodeSelector keySelectorKempstonLeft;
+  private KeyCodeSelector keySelectorKempstonRight;
+  private KeyCodeSelector keySelectorKempstonUp;
+  private KeyCodeSelector keySelectorKempstonDown;
+  private KeyCodeSelector keySelectorKempstonFire;
 
   public OptionsPanel(final DataContainer dataContainer) {
     initComponents();
@@ -92,10 +104,6 @@ public class OptionsPanel extends javax.swing.JPanel {
     this.fillByDataContainer(dataContainer == null ? new DataContainer() : dataContainer);
   }
 
-  public DataContainer getData() {
-    return new DataContainer(this);
-  }
-
   private void fillByDataContainer(final DataContainer data) {
     this.checkGrabSound.setSelected(data.grabSound);
     this.checkCovoxFb.setSelected(data.covoxFb);
@@ -108,219 +116,357 @@ public class OptionsPanel extends javax.swing.JPanel {
     this.comboNetAdddr.setSelectedItem(data.inetAddress);
     this.spinnerFramesPerSec.setValue(data.frameRate);
     this.comboRomSource.setSelectedItem(Rom.findForLink(data.activeRom, Rom.TEST).getTitle());
+
+    this.keySelectorKempstonFire.selectForCode(data.kempstonKeyFire);
+    this.keySelectorKempstonRight.selectForCode(data.kempstonKeyRight);
+    this.keySelectorKempstonLeft.selectForCode(data.kempstonKeyLeft);
+    this.keySelectorKempstonUp.selectForCode(data.kempstonKeyUp);
+    this.keySelectorKempstonDown.selectForCode(data.kempstonKeyDown);
   }
 
   @SuppressWarnings("unchecked")
   private void initComponents() {
-    java.awt.GridBagConstraints gridBagConstraints;
+    GridBagConstraints gridBagConstraints;
 
-    jPanel1 = new javax.swing.JPanel();
-    labelFfMpegPath = new javax.swing.JLabel();
-    labelNetInterface = new javax.swing.JLabel();
-    textFfmpegPath = new javax.swing.JTextField();
-    comboNetAdddr = new javax.swing.JComboBox<>();
-    labelPort = new javax.swing.JLabel();
-    spinnerPort = new javax.swing.JSpinner();
-    labelSound = new javax.swing.JLabel();
-    checkGrabSound = new javax.swing.JCheckBox();
-    labelFrameRate = new javax.swing.JLabel();
-    spinnerFramesPerSec = new javax.swing.JSpinner();
-    jPanel2 = new javax.swing.JPanel();
-    labelRomSource = new javax.swing.JLabel();
-    labelIntFrame = new javax.swing.JLabel();
-    comboRomSource = new javax.swing.JComboBox<>();
-    spinnerIntFrame = new javax.swing.JSpinner();
-    labelCovoxFb = new javax.swing.JLabel();
-    checkCovoxFb = new javax.swing.JCheckBox();
-    labelTurboSound = new javax.swing.JLabel();
-    checkTurboSound = new javax.swing.JCheckBox();
-    labelZx128ByDefault = new javax.swing.JLabel();
-    checkZx128ByDefault = new javax.swing.JCheckBox();
-    labelKempstonMouseAllowed = new javax.swing.JLabel();
-    checkKempstonMouseAllowed = new javax.swing.JCheckBox();
+    panelStreaming = new JPanel();
+    labelFfMpegPath = new JLabel();
+    labelNetInterface = new JLabel();
+    textFfmpegPath = new JTextField();
+    comboNetAdddr = new JComboBox<>();
+    labelPort = new JLabel();
+    spinnerPort = new JSpinner();
+    labelSound = new JLabel();
+    checkGrabSound = new JCheckBox();
+    labelFrameRate = new JLabel();
+    spinnerFramesPerSec = new JSpinner();
+    panelGenmeral = new JPanel();
+    labelRomSource = new JLabel();
+    labelIntFrame = new JLabel();
+    comboRomSource = new JComboBox<>();
+    spinnerIntFrame = new JSpinner();
+    labelCovoxFb = new JLabel();
+    checkCovoxFb = new JCheckBox();
+    labelTurboSound = new JLabel();
+    checkTurboSound = new JCheckBox();
+    labelZx128ByDefault = new JLabel();
+    checkZx128ByDefault = new JCheckBox();
+    labelKempstonMouseAllowed = new JLabel();
+    checkKempstonMouseAllowed = new JCheckBox();
 
-    setLayout(new java.awt.GridBagLayout());
+    keySelectorKempstonDown = new KeyCodeSelector();
+    keySelectorKempstonLeft = new KeyCodeSelector();
+    keySelectorKempstonUp = new KeyCodeSelector();
+    keySelectorKempstonRight = new KeyCodeSelector();
+    keySelectorKempstonFire = new KeyCodeSelector();
 
-    jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Streaming"));
-    jPanel1.setLayout(new java.awt.GridBagLayout());
+    setLayout(new GridBagLayout());
 
-    labelFfMpegPath.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    panelStreaming.setBorder(createTitledBorder("Streaming"));
+    panelStreaming.setLayout(new GridBagLayout());
+
+    labelFfMpegPath.setHorizontalAlignment(RIGHT);
     labelFfMpegPath.setText("FFmpeg path:");
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 0;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-    jPanel1.add(labelFfMpegPath, gridBagConstraints);
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.EAST;
+    panelStreaming.add(labelFfMpegPath, gridBagConstraints);
 
-    labelNetInterface.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelNetInterface.setHorizontalAlignment(RIGHT);
     labelNetInterface.setText("Net.interface:");
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 1;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-    jPanel1.add(labelNetInterface, gridBagConstraints);
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.EAST;
+    panelStreaming.add(labelNetInterface, gridBagConstraints);
 
     textFfmpegPath.setColumns(24);
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 0;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-    jPanel1.add(textFfmpegPath, gridBagConstraints);
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelStreaming.add(textFfmpegPath, gridBagConstraints);
 
     comboNetAdddr.setModel(new javax.swing.DefaultComboBoxModel<>());
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 1;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-    jPanel1.add(comboNetAdddr, gridBagConstraints);
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelStreaming.add(comboNetAdddr, gridBagConstraints);
 
-    labelPort.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelPort.setHorizontalAlignment(RIGHT);
     labelPort.setText("Port:");
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 2;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-    jPanel1.add(labelPort, gridBagConstraints);
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.EAST;
+    panelStreaming.add(labelPort, gridBagConstraints);
 
     spinnerPort.setModel(new javax.swing.SpinnerNumberModel(0, 0, 65535, 1));
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 2;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-    jPanel1.add(spinnerPort, gridBagConstraints);
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelStreaming.add(spinnerPort, gridBagConstraints);
 
-    labelSound.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelSound.setHorizontalAlignment(RIGHT);
     labelSound.setText("Sound:");
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 4;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-    jPanel1.add(labelSound, gridBagConstraints);
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.EAST;
+    panelStreaming.add(labelSound, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 4;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-    jPanel1.add(checkGrabSound, gridBagConstraints);
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelStreaming.add(checkGrabSound, gridBagConstraints);
 
-    labelFrameRate.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelFrameRate.setHorizontalAlignment(RIGHT);
     labelFrameRate.setText("Frame rate:");
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 3;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    jPanel1.add(labelFrameRate, gridBagConstraints);
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelStreaming.add(labelFrameRate, gridBagConstraints);
 
     spinnerFramesPerSec.setModel(new javax.swing.SpinnerNumberModel(25, 1, 50, 1));
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 3;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-    jPanel1.add(spinnerFramesPerSec, gridBagConstraints);
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelStreaming.add(spinnerFramesPerSec, gridBagConstraints);
 
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 0;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-    add(jPanel1, gridBagConstraints);
+    gridBagConstraints.fill = GridBagConstraints.BOTH;
+    add(panelStreaming, gridBagConstraints);
 
-    jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Generat"));
-    jPanel2.setLayout(new java.awt.GridBagLayout());
+    panelGenmeral.setBorder(createTitledBorder("Generat"));
+    panelGenmeral.setLayout(new GridBagLayout());
 
-    labelRomSource.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelRomSource.setHorizontalAlignment(RIGHT);
     labelRomSource.setText("ROM source:");
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 0;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    jPanel2.add(labelRomSource, gridBagConstraints);
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelRomSource, gridBagConstraints);
 
-    labelIntFrame.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelIntFrame.setHorizontalAlignment(RIGHT);
     labelIntFrame.setText("INT/Frame:");
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 1;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    jPanel2.add(labelIntFrame, gridBagConstraints);
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelIntFrame, gridBagConstraints);
 
     comboRomSource.setModel(new javax.swing.DefaultComboBoxModel<>());
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 0;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-    jPanel2.add(comboRomSource, gridBagConstraints);
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(comboRomSource, gridBagConstraints);
 
     spinnerIntFrame.setModel(new javax.swing.SpinnerNumberModel(1, 1, 100, 1));
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 1;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-    jPanel2.add(spinnerIntFrame, gridBagConstraints);
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(spinnerIntFrame, gridBagConstraints);
 
-    labelTurboSound.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelTurboSound.setHorizontalAlignment(RIGHT);
     labelTurboSound.setText("TurboSound (NedoPC):");
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 2;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    jPanel2.add(labelTurboSound, gridBagConstraints);
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelTurboSound, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 2;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-    jPanel2.add(checkTurboSound, gridBagConstraints);
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(checkTurboSound, gridBagConstraints);
 
-    labelCovoxFb.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelCovoxFb.setHorizontalAlignment(RIGHT);
     labelCovoxFb.setText("Covox (#FB):");
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 3;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    jPanel2.add(labelCovoxFb, gridBagConstraints);
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelCovoxFb, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 3;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-    jPanel2.add(checkCovoxFb, gridBagConstraints);
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(checkCovoxFb, gridBagConstraints);
 
-    labelZx128ByDefault.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelZx128ByDefault.setHorizontalAlignment(RIGHT);
     labelZx128ByDefault.setText("Default ZX Mode:");
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 4;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    jPanel2.add(labelZx128ByDefault, gridBagConstraints);
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelZx128ByDefault, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 4;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-    jPanel2.add(checkZx128ByDefault, gridBagConstraints);
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(checkZx128ByDefault, gridBagConstraints);
 
-    labelKempstonMouseAllowed.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+    labelKempstonMouseAllowed.setHorizontalAlignment(RIGHT);
     labelKempstonMouseAllowed.setText("Kempston mouse allowed:");
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 5;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    jPanel2.add(labelKempstonMouseAllowed, gridBagConstraints);
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelKempstonMouseAllowed, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 5;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-    jPanel2.add(checkKempstonMouseAllowed, gridBagConstraints);
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(checkKempstonMouseAllowed, gridBagConstraints);
 
-    gridBagConstraints = new java.awt.GridBagConstraints();
+    gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 1;
-    gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-    add(jPanel2, gridBagConstraints);
+    gridBagConstraints.fill = GridBagConstraints.BOTH;
+    add(panelGenmeral, gridBagConstraints);
+
+    final JPanel panelKempston = new JPanel(new GridBagLayout());
+    panelKempston.setBorder(createTitledBorder("Kempston joystick"));
+
+    final GridBagConstraints gbx = new GridBagConstraints();
+    gbx.gridx = 0;
+    gbx.gridy = 0;
+    gbx.fill = GridBagConstraints.HORIZONTAL;
+    gbx.anchor = GridBagConstraints.WEST;
+
+    JLabel kempstonLabel = new JLabel("LEFT:");
+    kempstonLabel.setHorizontalAlignment(RIGHT);
+    panelKempston.add(kempstonLabel, gbx);
+    gbx.gridx = 1;
+    panelKempston.add(this.keySelectorKempstonLeft, gbx);
+
+    gbx.gridy = 1;
+    gbx.gridx = 0;
+    kempstonLabel = new JLabel("RIGHT:");
+    kempstonLabel.setHorizontalAlignment(RIGHT);
+    panelKempston.add(kempstonLabel, gbx);
+    gbx.gridx = 1;
+    panelKempston.add(this.keySelectorKempstonRight, gbx);
+
+    gbx.gridy = 2;
+    gbx.gridx = 0;
+    kempstonLabel = new JLabel("UP:");
+    kempstonLabel.setHorizontalAlignment(RIGHT);
+    panelKempston.add(kempstonLabel, gbx);
+    gbx.gridx = 1;
+    panelKempston.add(this.keySelectorKempstonUp, gbx);
+
+    gbx.gridy = 3;
+    gbx.gridx = 0;
+    kempstonLabel = new JLabel("DOWN:");
+    kempstonLabel.setHorizontalAlignment(RIGHT);
+    panelKempston.add(kempstonLabel, gbx);
+    gbx.gridx = 1;
+    panelKempston.add(this.keySelectorKempstonDown, gbx);
+
+    gbx.gridy = 4;
+    gbx.gridx = 0;
+    kempstonLabel = new JLabel("FIRE:");
+    kempstonLabel.setHorizontalAlignment(RIGHT);
+    panelKempston.add(kempstonLabel, gbx);
+    gbx.gridx = 1;
+    panelKempston.add(this.keySelectorKempstonFire, gbx);
+
+
+    gridBagConstraints.gridy = 2;
+    add(panelKempston, gridBagConstraints);
+
+  }
+
+  public DataContainer getData() {
+    return new DataContainer(this);
+  }
+
+  private final static class NameKeyPair implements Comparable<NameKeyPair> {
+    private final String name;
+    private final int keyCode;
+
+    NameKeyPair(final String name, final int keyCode) {
+      this.name = name;
+      this.keyCode = keyCode;
+    }
+
+    @Override
+    public int compareTo(final NameKeyPair o) {
+      return this.name.compareTo(o.name);
+    }
+
+    @Override
+    public String toString() {
+      return this.name;
+    }
+  }
+
+  private static final class KeyCodeSelector extends JComboBox<NameKeyPair> {
+    KeyCodeSelector() {
+      super();
+
+      final List<NameKeyPair> keyList = new ArrayList<>();
+      keyList.add(new NameKeyPair("", -1));
+
+      for (final Field field : KeyEvent.class.getFields()) {
+        if (field.getType() == int.class && Modifier.isPublic(field.getModifiers())
+                && Modifier.isFinal(field.getModifiers())
+                && Modifier.isStatic(field.getModifiers())
+                && field.getName().startsWith("VK_")) {
+          final String name = field.getName().substring(3);
+          try {
+            final int code = field.getInt(null);
+            keyList.add(new NameKeyPair(name, code));
+          } catch (Exception ex) {
+            throw new Error("Unexpected error during key event code extraction: " + field, ex);
+          }
+        }
+      }
+
+      Collections.sort(keyList);
+      final ComboBoxModel<NameKeyPair> model = new DefaultComboBoxModel<>(keyList.toArray(new NameKeyPair[0]));
+      this.setModel(model);
+    }
+
+    KeyCodeSelector selectForCode(final int keyCode) {
+      final ComboBoxModel<NameKeyPair> model = this.getModel();
+      NameKeyPair found = null;
+      for (int i = 0; i < model.getSize(); i++) {
+        final NameKeyPair item = model.getElementAt(i);
+        if (item.keyCode == keyCode) {
+          found = item;
+          break;
+        }
+      }
+      if (found == null) {
+        this.setSelectedIndex(0);
+      } else {
+        this.setSelectedItem(found);
+      }
+      return this;
+    }
+
+    int getSelectedCode() {
+      return ((NameKeyPair) Objects.requireNonNull(this.getSelectedItem())).keyCode;
+    }
   }
 
   public static final class DataContainer {
@@ -336,6 +482,11 @@ public class OptionsPanel extends javax.swing.JPanel {
     public final boolean turboSound;
     public final boolean kempstonMouseAllowed;
     public final boolean zx128byDefault;
+    public final int kempstonKeyUp;
+    public final int kempstonKeyDown;
+    public final int kempstonKeyLeft;
+    public final int kempstonKeyRight;
+    public final int kempstonKeyFire;
 
     public DataContainer() {
       this.activeRom = AppOptions.getInstance().getActiveRom();
@@ -349,11 +500,16 @@ public class OptionsPanel extends javax.swing.JPanel {
       this.turboSound = AppOptions.getInstance().isTurboSound();
       this.kempstonMouseAllowed = AppOptions.getInstance().isKempstonMouseAllowed();
       this.zx128byDefault = AppOptions.getInstance().getDefaultBoardMode() != BoardMode.ZXPOLY;
+      this.kempstonKeyDown = AppOptions.getInstance().getKempstonVkDown();
+      this.kempstonKeyUp = AppOptions.getInstance().getKempstonVkUp();
+      this.kempstonKeyLeft = AppOptions.getInstance().getKempstonVkLeft();
+      this.kempstonKeyRight = AppOptions.getInstance().getKempstonVkRight();
+      this.kempstonKeyFire = AppOptions.getInstance().getKempstonVkFire();
     }
 
     public DataContainer(final OptionsPanel optionsPanel) {
       final Rom rom =
-          Rom.findForTitle(optionsPanel.comboRomSource.getSelectedItem().toString(), Rom.TEST);
+              Rom.findForTitle(optionsPanel.comboRomSource.getSelectedItem().toString(), Rom.TEST);
       this.activeRom = rom.getLink();
       this.intPerFrame = (Integer) optionsPanel.spinnerIntFrame.getValue();
       this.ffmpegPath = optionsPanel.textFfmpegPath.getText();
@@ -365,6 +521,12 @@ public class OptionsPanel extends javax.swing.JPanel {
       this.turboSound = optionsPanel.checkTurboSound.isSelected();
       this.kempstonMouseAllowed = optionsPanel.checkKempstonMouseAllowed.isSelected();
       this.zx128byDefault = rom != Rom.TEST && optionsPanel.checkZx128ByDefault.isSelected();
+
+      this.kempstonKeyDown = optionsPanel.keySelectorKempstonDown.getSelectedCode();
+      this.kempstonKeyUp = optionsPanel.keySelectorKempstonUp.getSelectedCode();
+      this.kempstonKeyLeft = optionsPanel.keySelectorKempstonLeft.getSelectedCode();
+      this.kempstonKeyRight = optionsPanel.keySelectorKempstonRight.getSelectedCode();
+      this.kempstonKeyFire = optionsPanel.keySelectorKempstonFire.getSelectedCode();
     }
 
     public void store() {
@@ -379,7 +541,14 @@ public class OptionsPanel extends javax.swing.JPanel {
       AppOptions.getInstance().setTurboSound(this.turboSound);
       AppOptions.getInstance().setKempstonMouseAllowed(this.kempstonMouseAllowed);
       AppOptions.getInstance()
-          .setDefaultBoardMode(this.zx128byDefault ? BoardMode.ZX128 : BoardMode.ZXPOLY);
+              .setDefaultBoardMode(this.zx128byDefault ? BoardMode.ZX128 : BoardMode.ZXPOLY);
+
+      AppOptions.getInstance().setKempstonVkDown(this.kempstonKeyDown);
+      AppOptions.getInstance().setKempstonVkLeft(this.kempstonKeyLeft);
+      AppOptions.getInstance().setKempstonVkRight(this.kempstonKeyRight);
+      AppOptions.getInstance().setKempstonVkUp(this.kempstonKeyUp);
+      AppOptions.getInstance().setKempstonVkFire(this.kempstonKeyFire);
+
       try {
         AppOptions.getInstance().flush();
       } catch (BackingStoreException ex) {

@@ -22,6 +22,7 @@ import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterInterfac
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterKempston;
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterType;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
+import com.igormaznitsa.zxpoly.utils.AppOptions;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEvent;
 import net.java.games.input.ControllerListener;
@@ -145,7 +146,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private final AtomicReference<TapeSource> tap = new AtomicReference<>();
   private final List<Controller> detectedControllers;
   private final List<GameControllerAdapter> activeGameControllerAdapters =
-      new CopyOnWriteArrayList<>();
+          new CopyOnWriteArrayList<>();
   private volatile long keyboardLines = 0L;
   private volatile long bufferKeyboardLines = 0L;
   private volatile int kempstonSignals = 0;
@@ -153,15 +154,27 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   private final boolean kempstonMouseAllowed;
 
+  private final int kempstonVkLeft;
+  private final int kempstonVkRight;
+  private final int kempstonVkUp;
+  private final int kempstonVkDown;
+  private final int kempstonVkFire;
+
   public KeyboardKempstonAndTapeIn(final Motherboard board, final boolean kempstonMouseAllowed) {
     this.board = board;
     this.kempstonMouseAllowed = kempstonMouseAllowed;
 
+    this.kempstonVkLeft = AppOptions.getInstance().getKempstonVkLeft();
+    this.kempstonVkRight = AppOptions.getInstance().getKempstonVkRight();
+    this.kempstonVkUp = AppOptions.getInstance().getKempstonVkUp();
+    this.kempstonVkDown = AppOptions.getInstance().getKempstonVkDown();
+    this.kempstonVkFire = AppOptions.getInstance().getKempstonVkFire();
+
     if (getDefaultEnvironment().isSupported()) {
       this.detectedControllers =
-          new CopyOnWriteArrayList<>(Arrays.stream(getDefaultEnvironment().getControllers())
-              .filter(x -> isControllerTypeAllowed(x.getType()))
-              .collect(Collectors.toList()));
+              new CopyOnWriteArrayList<>(Arrays.stream(getDefaultEnvironment().getControllers())
+                      .filter(x -> isControllerTypeAllowed(x.getType()))
+                      .collect(Collectors.toList()));
       getDefaultEnvironment().addControllerListener(new ControllerListener() {
         @Override
         public void controllerRemoved(ControllerEvent controllerEvent) {
@@ -351,36 +364,26 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     long zxKeyCode = 0L;
     int kempstonCode = 0;
 
-    switch (evt.getKeyCode()) {
+    final int keyCode = evt.getKeyCode();
+
+    if (keyCode == this.kempstonVkLeft) {
+      kempstonCode = KEMPSTON_LEFT;
+    } else if (keyCode == this.kempstonVkRight) {
+      kempstonCode = KEMPSTON_RIGHT;
+    } else if (keyCode == this.kempstonVkUp) {
+      kempstonCode = KEMPSTON_UP;
+    } else if (keyCode == this.kempstonVkDown) {
+      kempstonCode = KEMPSTON_DOWN;
+    } else if (keyCode == this.kempstonVkFire) {
+      kempstonCode = KEMPSTON_FIRE;
+    }
+
+
+    switch (keyCode) {
       case KeyEvent.VK_ESCAPE: {
         if (this.board.getVideoController().isMouseTrapActive()) {
           this.board.getVideoController().setTrapMouseActive(false);
         }
-      }
-      break;
-      case KeyEvent.VK_KP_LEFT:
-      case KeyEvent.VK_NUMPAD4: {
-        kempstonCode = KEMPSTON_LEFT;
-      }
-      break;
-      case KeyEvent.VK_KP_UP:
-      case KeyEvent.VK_NUMPAD8: {
-        kempstonCode = KEMPSTON_UP;
-      }
-      break;
-      case KeyEvent.VK_KP_RIGHT:
-      case KeyEvent.VK_NUMPAD6: {
-        kempstonCode = KEMPSTON_RIGHT;
-      }
-      break;
-      case KeyEvent.VK_KP_DOWN:
-      case KeyEvent.VK_NUMPAD2: {
-        kempstonCode = KEMPSTON_DOWN;
-      }
-      break;
-      case 65368: // NUMPAD 5
-      case KeyEvent.VK_NUMPAD5: {
-        kempstonCode = KEMPSTON_FIRE;
       }
       break;
       case KeyEvent.VK_1: {

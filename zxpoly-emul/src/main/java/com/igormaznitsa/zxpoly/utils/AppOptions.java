@@ -18,14 +18,16 @@
 package com.igormaznitsa.zxpoly.utils;
 
 import com.igormaznitsa.zxpoly.components.BoardMode;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
+
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.net.InetAddress;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.SystemUtils;
 
 public final class AppOptions {
 
@@ -156,6 +158,46 @@ public final class AppOptions {
     preferences.putInt(Option.INTBETWEENFRAMES.name(), Math.max(0, value));
   }
 
+  public synchronized int getKempstonVkLeft() {
+    return preferences.getInt(Option.KEMPSTON_VK_LEFT.name(), KeyEvent.VK_NUMPAD4);
+  }
+
+  public synchronized void setKempstonVkLeft(final int keyCode) {
+    preferences.putInt(Option.KEMPSTON_VK_LEFT.name(), keyCode);
+  }
+
+  public synchronized int getKempstonVkRight() {
+    return preferences.getInt(Option.KEMPSTON_VK_RIGHT.name(), KeyEvent.VK_NUMPAD6);
+  }
+
+  public synchronized void setKempstonVkRight(final int keyCode) {
+    preferences.putInt(Option.KEMPSTON_VK_RIGHT.name(), keyCode);
+  }
+
+  public synchronized int getKempstonVkUp() {
+    return preferences.getInt(Option.KEMPSTON_VK_UP.name(), KeyEvent.VK_NUMPAD8);
+  }
+
+  public synchronized void setKempstonVkUp(final int keyCode) {
+    preferences.putInt(Option.KEMPSTON_VK_UP.name(), keyCode);
+  }
+
+  public synchronized int getKempstonVkDown() {
+    return preferences.getInt(Option.KEMPSTON_VK_DOWN.name(), KeyEvent.VK_NUMPAD2);
+  }
+
+  public synchronized void setKempstonVkDown(final int keyCode) {
+    preferences.putInt(Option.KEMPSTON_VK_DOWN.name(), keyCode);
+  }
+
+  public synchronized int getKempstonVkFire() {
+    return preferences.getInt(Option.KEMPSTON_VK_FIRE.name(), KeyEvent.VK_NUMPAD5);
+  }
+
+  public synchronized void setKempstonVkFire(final int keyCode) {
+    preferences.putInt(Option.KEMPSTON_VK_FIRE.name(), keyCode);
+  }
+
   public synchronized void flush() throws BackingStoreException {
     preferences.flush();
   }
@@ -240,7 +282,12 @@ public final class AppOptions {
     INTBETWEENFRAMES,
     LAST_SELECTED_AUDIO_DEVICE,
     SOUND_TURNED_ON,
-    KEMPSTON_MOUSE_ALLOWED
+    KEMPSTON_MOUSE_ALLOWED,
+    KEMPSTON_VK_LEFT,
+    KEMPSTON_VK_RIGHT,
+    KEMPSTON_VK_UP,
+    KEMPSTON_VK_DOWN,
+    KEMPSTON_VK_FIRE
   }
 
 }
