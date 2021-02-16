@@ -396,11 +396,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
 
       final javax.swing.Timer infobarUpdateTimer =
-          new javax.swing.Timer(1000, action -> updateInfobar());
+              new javax.swing.Timer(1000, action -> updateInfobar());
       infobarUpdateTimer.setRepeats(true);
       infobarUpdateTimer.setInitialDelay(1000);
       infobarUpdateTimer.start();
     });
+
+    this.board.getIoDevices().forEach(IoDevice::init);
   }
 
   private static void setMenuEnable(final JMenuItem item, final boolean enable) {

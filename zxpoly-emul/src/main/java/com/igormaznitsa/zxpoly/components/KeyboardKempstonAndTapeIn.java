@@ -774,4 +774,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     LOGGER.info("Unregistering adpater: " + adapter);
     this.activeGameControllerAdapters.remove(adapter);
   }
+
+  public long getKeyState() {
+    return this.keyboardLines;
+  }
 }

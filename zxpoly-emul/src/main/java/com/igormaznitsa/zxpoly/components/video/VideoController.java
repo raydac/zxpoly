@@ -39,7 +39,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn.*;
 import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
 import static java.util.Arrays.fill;
 
@@ -48,7 +47,9 @@ public final class VideoController extends JComponent
 
   public static final int SCREEN_WIDTH = 512;
   public static final int SCREEN_HEIGHT = 384;
-  public static final Image IMAGE_ZXKEYS = Utils.loadIcon("zxkeys.png");
+
+  private VkbdRender vkbdRender;
+
   public static final int[] PALETTE_ZXPOLY = new int[]{
           0xFF000000,
           0xFF0000BE,
@@ -104,33 +105,12 @@ public final class VideoController extends JComponent
   private static final int BORDER_LINES = 40;
   private static final int TSTATES_PER_LINE = TSTATES_PER_INT / BORDER_LINES;
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
-  private static final long VKB_STICKY_KEYS = ZXKEY_CS | ZXKEY_SS;
-  private static final long[] KEY_TABLE = new long[]{
-          ZXKEY_1, ZXKEY_2, ZXKEY_3, ZXKEY_4, ZXKEY_5, ZXKEY_6, ZXKEY_7, ZXKEY_8, ZXKEY_9, ZXKEY_0,
-          ZXKEY_Q, ZXKEY_W, ZXKEY_E, ZXKEY_R, ZXKEY_T, ZXKEY_Y, ZXKEY_U, ZXKEY_I, ZXKEY_O, ZXKEY_P,
-          ZXKEY_A, ZXKEY_S, ZXKEY_D, ZXKEY_F, ZXKEY_G, ZXKEY_H, ZXKEY_J, ZXKEY_K, ZXKEY_L, ZXKEY_EN,
-          ZXKEY_CS, ZXKEY_Z, ZXKEY_X, ZXKEY_C, ZXKEY_V, ZXKEY_B, ZXKEY_N, ZXKEY_M, ZXKEY_SS, ZXKEY_SP
-  };
-  private static final int[] BIT2KEY;
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;
   private static volatile boolean gfxHideSameInkPaper = true;
   private static volatile int gfxUpColorsMixed = 64;
   private static volatile int gfxDownColorsMixed = 0;
   private static volatile int[] gfxPrerenderedBack = null;
-
-  static {
-    BIT2KEY = new int[64];
-    for (int keyIndex = 0; keyIndex < KEY_TABLE.length; keyIndex++) {
-      long acc = KEY_TABLE[keyIndex];
-      int arrayIndex = 0;
-      while (acc != 0) {
-        acc >>>= 1;
-        arrayIndex++;
-      }
-      BIT2KEY[arrayIndex - 1] = keyIndex;
-    }
-  }
 
   private final Motherboard board;
   private final ReentrantLock bufferLocker = new ReentrantLock();
@@ -150,8 +130,6 @@ public final class VideoController extends JComponent
   private volatile TvFilterChain tvFilterChain = TvFilterChain.NONE;
   private volatile boolean enableMouseTrapIndicator = false;
   private int tstatesCounter = 0;
-  private volatile long vkbKeysState = ZXKEY_NONE;
-  private volatile MouseEvent lastMouseClickEvent = null;
 
   public VideoController(final Motherboard board) {
     super();
@@ -170,7 +148,7 @@ public final class VideoController extends JComponent
       @Override
       public void mousePressed(final MouseEvent e) {
         if (!e.isConsumed() && !mouseTrapActive && showVkb) {
-          lastMouseClickEvent = e;
+          vkbdRender.setLastMouseEvent(e);
           e.consume();
         }
       }
@@ -178,7 +156,7 @@ public final class VideoController extends JComponent
       @Override
       public void mouseReleased(final MouseEvent e) {
         if (!e.isConsumed() && !mouseTrapActive && showVkb) {
-          lastMouseClickEvent = e;
+          vkbdRender.setLastMouseEvent(e);
           e.consume();
         }
       }
@@ -206,6 +184,11 @@ public final class VideoController extends JComponent
       }
       gfxPrerenderedBack = prerendered;
     }
+  }
+
+  @Override
+  public void init() {
+    this.vkbdRender = new VkbdRender(this.board, true);
   }
 
   public static int toZxPolyIndex(final byte spec256PaletteIndex) {
@@ -953,60 +936,6 @@ public final class VideoController extends JComponent
     return -1;
   }
 
-  private static long processVkbMouseClick(final Rectangle keyboardArea, final MouseEvent mouseEvent, final long keys) {
-    final int keyAreaW = keyboardArea.width / 10;
-    final int keyAreaH = keyboardArea.height / 4;
-
-    long result = keys;
-
-    if (mouseEvent != null && keyboardArea.contains(mouseEvent.getPoint())) {
-      final Point mousePoint = mouseEvent.getPoint();
-      final int kx = (mousePoint.x - keyboardArea.x) / keyAreaW;
-      final int ky = (mousePoint.y - keyboardArea.y) / keyAreaH;
-
-      final long keyMask = KEY_TABLE[ky * 10 + kx];
-
-      final boolean pressingEvent = mouseEvent.getID() == MouseEvent.MOUSE_PRESSED;
-
-      if ((keyMask & VKB_STICKY_KEYS) == 0) {
-        if (pressingEvent) {
-          result &= ~keyMask;
-        } else {
-          result |= keyMask;
-        }
-      } else {
-        if (pressingEvent) {
-          result ^= keyMask;
-        }
-      }
-    }
-    return result;
-  }
-
-  private static void drawVkbState(final Graphics2D gfx, final Rectangle keyboardArea, final long keyState) {
-    final int keyAreaW = keyboardArea.width / 10;
-    final int keyAreaH = keyboardArea.height / 4;
-
-    long keyBits = (keyState ^ ZXKEY_NONE) & ZXKEY_NONE;
-
-    gfx.setColor(Color.GREEN);
-    gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
-    int bitPos = 0;
-    while (keyBits != 0L) {
-      if ((keyBits & 1L) != 0) {
-        final int keyIndex = BIT2KEY[bitPos];
-        final int px = (keyIndex % 10) * keyAreaW;
-        final int py = (keyIndex / 10) * keyAreaH;
-        gfx.fillOval(px + keyboardArea.x, py + keyboardArea.y, keyAreaW, keyAreaH);
-      }
-      bitPos++;
-      keyBits >>>= 1;
-    }
-  }
-
-  public long getVkbState() {
-    return this.vkbKeysState;
-  }
 
   public TvFilterChain getTvFilterChain() {
     return tvFilterChain;
@@ -1022,9 +951,8 @@ public final class VideoController extends JComponent
 
   public void setVkbShow(final boolean show) {
     if (!(show && this.showVkb)) {
-      this.vkbKeysState = ZXKEY_NONE;
       this.showVkb = show;
-      this.lastMouseClickEvent = null;
+      this.vkbdRender.doReset();
     }
   }
 
@@ -1146,8 +1074,8 @@ public final class VideoController extends JComponent
     }
 
     if (this.showVkb) {
-      final int imgWidth = IMAGE_ZXKEYS.getWidth(null);
-      final int imgHeight = IMAGE_ZXKEYS.getHeight(null);
+      final int imgWidth = this.vkbdRender.getImageWidth();
+      final int imgHeight = this.vkbdRender.getImageHeight();
 
       final Rectangle renderRectangle;
 
@@ -1167,17 +1095,7 @@ public final class VideoController extends JComponent
         renderRectangle = new Rectangle(0, bounds.height - newHeight, newWidth, newHeight);
       }
 
-      final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
-      final Point mousePoint = new Point(pointerInfo.getLocation());
-      SwingUtilities.convertPointFromScreen(mousePoint, this);
-
-      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, renderRectangle.contains(mousePoint) ? 1.0f : 0.5f));
-      g2.drawImage(IMAGE_ZXKEYS, renderRectangle.x, renderRectangle.y, renderRectangle.width, renderRectangle.height, null);
-
-      final MouseEvent lastClickEvent = this.lastMouseClickEvent;
-      this.lastMouseClickEvent = null;
-      this.vkbKeysState = processVkbMouseClick(renderRectangle, lastClickEvent, this.vkbKeysState);
-      drawVkbState(g2, renderRectangle, this.vkbKeysState);
+      this.vkbdRender.render(this, g2, renderRectangle);
     }
   }
 
@@ -1571,8 +1489,7 @@ public final class VideoController extends JComponent
 
   @Override
   public void doReset() {
-    this.vkbKeysState = ZXKEY_NONE;
-    this.lastMouseClickEvent = null;
+    this.vkbdRender.doReset();
     Arrays.fill(this.lastRenderedZxData, (byte) 0xFF);
   }
 
@@ -1627,5 +1544,9 @@ public final class VideoController extends JComponent
     final int maxZoomH = height / SCREEN_HEIGHT;
 
     updateZoom(Math.max(1.0f, Math.min(maxZoomH, maxZoomW)));
+  }
+
+  public long getVkbState() {
+    return this.vkbdRender.getKeyState();
   }
 }

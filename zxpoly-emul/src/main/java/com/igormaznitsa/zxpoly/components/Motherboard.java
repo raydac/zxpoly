@@ -17,11 +17,6 @@
 
 package com.igormaznitsa.zxpoly.components;
 
-import static com.igormaznitsa.zxpoly.components.snd.Beeper.BEEPER_LEVELS;
-import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
-import static java.lang.Math.min;
-
-
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
@@ -30,13 +25,14 @@ import com.igormaznitsa.zxpoly.components.snd.CovoxFb;
 import com.igormaznitsa.zxpoly.components.snd.TurboSoundNedoPc;
 import com.igormaznitsa.zxpoly.components.snd.Zx128Ay8910;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Random;
+
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static com.igormaznitsa.zxpoly.components.snd.Beeper.BEEPER_LEVELS;
+import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
+import static java.lang.Math.min;
 
 @SuppressWarnings({"unused", "FieldCanBeLocal", "NonAtomicOperationOnVolatileField"})
 public final class Motherboard implements ZxPolyConstants {
@@ -696,5 +692,9 @@ public final class Motherboard implements ZxPolyConstants {
 
   public byte[] getHeapRam() {
     return this.ram;
+  }
+
+  public List<IoDevice> getIoDevices() {
+    return Arrays.asList(this.ioDevices);
   }
 }

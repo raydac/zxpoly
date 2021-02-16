@@ -17,17 +17,18 @@
 
 package com.igormaznitsa.zxpoly.utils;
 
-import java.awt.Desktop;
-import java.awt.Image;
+import org.apache.commons.lang3.SystemUtils;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.logging.Logger;
-import javax.imageio.ImageIO;
-import javax.swing.SwingUtilities;
-import org.apache.commons.lang3.SystemUtils;
 
 public final class Utils {
 
@@ -139,7 +140,7 @@ public final class Utils {
     }
   }
 
-  public static Image loadIcon(final String name) {
+  public static BufferedImage loadIcon(final String name) {
     try (InputStream resource = findResourceOrError("com/igormaznitsa/zxpoly/icons/" + name)) {
       return ImageIO.read(resource);
     } catch (IOException ex) {

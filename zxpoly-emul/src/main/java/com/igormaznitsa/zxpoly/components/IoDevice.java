@@ -25,6 +25,9 @@ public interface IoDevice extends ZxPolyConstants {
 
   Motherboard getMotherboard();
 
+  default void init() {
+  }
+
   /**
    * Read IO port byte
    *
