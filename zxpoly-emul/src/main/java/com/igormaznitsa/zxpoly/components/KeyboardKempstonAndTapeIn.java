@@ -771,7 +771,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   public void notifyUnregisterGadapter(final GameControllerAdapter adapter) {
-    LOGGER.info("Unregistering adpater: " + adapter);
+    LOGGER.info("Unregistering adapter: " + adapter);
     this.activeGameControllerAdapters.remove(adapter);
   }
 
