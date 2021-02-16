@@ -188,7 +188,7 @@ public final class VideoController extends JComponent
 
   @Override
   public void init() {
-    this.vkbdRender = new VkbdRender(this.board, true);
+    this.vkbdRender = new VkbdRender(this.board);
   }
 
   public static int toZxPolyIndex(final byte spec256PaletteIndex) {
@@ -1095,7 +1095,7 @@ public final class VideoController extends JComponent
         renderRectangle = new Rectangle(0, bounds.height - newHeight, newWidth, newHeight);
       }
 
-      this.vkbdRender.render(this, g2, renderRectangle);
+      this.vkbdRender.render(this, g2, renderRectangle, true);
     }
   }
 

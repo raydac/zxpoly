@@ -37,26 +37,24 @@ public final class VkbdRender {
     }
   }
 
-  private final boolean alphaAllowed;
   private final KeyboardKempstonAndTapeIn mainKeyboard;
   private volatile long vkbKeysState = ZXKEY_NONE;
   private volatile MouseEvent lastMouseClickEvent = null;
 
-  public VkbdRender(final Motherboard motherboard, final boolean alphaAllowed) {
+  public VkbdRender(final Motherboard motherboard) {
     this.mainKeyboard = Objects.requireNonNull(motherboard.findIoDevice(KeyboardKempstonAndTapeIn.class));
-    this.alphaAllowed = alphaAllowed;
   }
 
   public void setLastMouseEvent(final MouseEvent clickMouseEvent) {
     this.lastMouseClickEvent = clickMouseEvent;
   }
 
-  public void render(final Component parent, final Graphics2D gfx, final Rectangle renderRectangle) {
+  public void render(final Component parent, final Graphics2D gfx, final Rectangle renderRectangle, final boolean transparentIfNotFocused) {
     final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
     final Point mousePoint = new Point(pointerInfo.getLocation());
     SwingUtilities.convertPointFromScreen(mousePoint, parent);
 
-    if (this.alphaAllowed) {
+    if (transparentIfNotFocused) {
       gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, renderRectangle.contains(mousePoint) ? 1.0f : 0.5f));
     }
     gfx.drawImage(IMAGE_ZXKEYS, renderRectangle.x, renderRectangle.y, renderRectangle.width, renderRectangle.height, null);
