@@ -48,7 +48,9 @@ public class OptionsPanel extends JPanel {
   private JLabel labelTurboSound;
   private JLabel labelZx128ByDefault;
   private JLabel labelKempstonMouseAllowed;
+  private JLabel labelVirtualKbdApart;
   private JCheckBox checkGrabSound;
+  private JCheckBox checkVkbdApart;
   private javax.swing.JComboBox<String> comboNetAdddr;
   private javax.swing.JComboBox<String> comboRomSource;
   private JLabel labelFfMpegPath;
@@ -106,6 +108,7 @@ public class OptionsPanel extends JPanel {
 
   private void fillByDataContainer(final DataContainer data) {
     this.checkGrabSound.setSelected(data.grabSound);
+    this.checkVkbdApart.setSelected(data.vkdApart);
     this.checkCovoxFb.setSelected(data.covoxFb);
     this.checkZx128ByDefault.setSelected(data.zx128byDefault);
     this.checkTurboSound.setSelected(data.turboSound);
@@ -151,7 +154,9 @@ public class OptionsPanel extends JPanel {
     labelZx128ByDefault = new JLabel();
     checkZx128ByDefault = new JCheckBox();
     labelKempstonMouseAllowed = new JLabel();
+    labelVirtualKbdApart = new JLabel();
     checkKempstonMouseAllowed = new JCheckBox();
+    checkVkbdApart = new JCheckBox();
 
     keySelectorKempstonDown = new KeyCodeSelector();
     keySelectorKempstonLeft = new KeyCodeSelector();
@@ -336,6 +341,20 @@ public class OptionsPanel extends JPanel {
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkKempstonMouseAllowed, gridBagConstraints);
 
+    labelVirtualKbdApart.setHorizontalAlignment(RIGHT);
+    labelVirtualKbdApart.setText("Virtual keyboard apart:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 6;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelVirtualKbdApart, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 6;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(checkVkbdApart, gridBagConstraints);
+
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 1;
@@ -482,6 +501,7 @@ public class OptionsPanel extends JPanel {
     public final boolean turboSound;
     public final boolean kempstonMouseAllowed;
     public final boolean zx128byDefault;
+    public final boolean vkdApart;
     public final int kempstonKeyUp;
     public final int kempstonKeyDown;
     public final int kempstonKeyLeft;
@@ -489,6 +509,7 @@ public class OptionsPanel extends JPanel {
     public final int kempstonKeyFire;
 
     public DataContainer() {
+      this.vkdApart = AppOptions.getInstance().isVkbdApart();
       this.activeRom = AppOptions.getInstance().getActiveRom();
       this.intPerFrame = AppOptions.getInstance().getIntBetweenFrames();
       this.port = AppOptions.getInstance().getPort();
@@ -510,6 +531,8 @@ public class OptionsPanel extends JPanel {
     public DataContainer(final OptionsPanel optionsPanel) {
       final Rom rom =
               Rom.findForTitle(optionsPanel.comboRomSource.getSelectedItem().toString(), Rom.TEST);
+
+      this.vkdApart = optionsPanel.checkVkbdApart.isSelected();
       this.activeRom = rom.getLink();
       this.intPerFrame = (Integer) optionsPanel.spinnerIntFrame.getValue();
       this.ffmpegPath = optionsPanel.textFfmpegPath.getText();
@@ -530,6 +553,7 @@ public class OptionsPanel extends JPanel {
     }
 
     public void store() {
+      AppOptions.getInstance().setVkbdApart(this.vkdApart);
       AppOptions.getInstance().setActiveRom(this.activeRom);
       AppOptions.getInstance().setFfmpegPath(this.ffmpegPath);
       AppOptions.getInstance().setGrabSound(this.grabSound);

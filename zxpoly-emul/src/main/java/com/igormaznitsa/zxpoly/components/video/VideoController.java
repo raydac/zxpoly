@@ -21,6 +21,7 @@ import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter;
 import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilterChain;
 import com.igormaznitsa.zxpoly.formats.Spec256Arch;
+import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.Utils;
 
 import javax.swing.*;
@@ -130,9 +131,15 @@ public final class VideoController extends JComponent
   private volatile TvFilterChain tvFilterChain = TvFilterChain.NONE;
   private volatile boolean enableMouseTrapIndicator = false;
   private int tstatesCounter = 0;
+  private final boolean showVkbdApart;
+
+  private Window vkbdWindow = null;
+  private boolean fullScreenMode;
 
   public VideoController(final Motherboard board) {
     super();
+
+    this.showVkbdApart = AppOptions.getInstance().isVkbdApart();
 
     this.board = board;
     this.modules = board.getModules();
@@ -147,7 +154,7 @@ public final class VideoController extends JComponent
 
       @Override
       public void mousePressed(final MouseEvent e) {
-        if (!e.isConsumed() && !mouseTrapActive && showVkb) {
+        if (!e.isConsumed() && vkbdWindow == null && !mouseTrapActive && showVkb) {
           vkbdRender.setLastMouseEvent(e);
           e.consume();
         }
@@ -155,7 +162,7 @@ public final class VideoController extends JComponent
 
       @Override
       public void mouseReleased(final MouseEvent e) {
-        if (!e.isConsumed() && !mouseTrapActive && showVkb) {
+        if (!e.isConsumed() && vkbdWindow == null && !mouseTrapActive && showVkb) {
           vkbdRender.setLastMouseEvent(e);
           e.consume();
         }
@@ -953,6 +960,87 @@ public final class VideoController extends JComponent
     if (!(show && this.showVkb)) {
       this.showVkb = show;
       this.vkbdRender.doReset();
+      if (this.showVkb) {
+        if (this.showVkbdApart && !this.fullScreenMode) {
+          if (this.vkbdWindow != null) {
+            this.vkbdWindow.dispose();
+          }
+          final Window mainFrame = SwingUtilities.windowForComponent(this);
+
+          this.vkbdWindow = new JDialog(mainFrame, "ZX-Poly virtual keyboard", Dialog.ModalityType.MODELESS, this.getGraphicsConfiguration());
+
+          final JComponent keyboardPanel = new JComponent() {
+            private final Dimension size = new Dimension(vkbdRender.getImageWidth(), vkbdRender.getImageHeight());
+
+            @Override
+            public Dimension getPreferredSize() {
+              return size;
+            }
+
+            @Override
+            public Dimension getMinimumSize() {
+              return this.size;
+            }
+
+            @Override
+            public Dimension getMaximumSize() {
+              return this.size;
+            }
+
+            @Override
+            public Dimension getSize() {
+              return this.size;
+            }
+
+            @Override
+            public boolean isFocusable() {
+              return false;
+            }
+
+            @Override
+            public boolean isOpaque() {
+              return true;
+            }
+
+            @Override
+            public void paintComponent(final Graphics g) {
+              final Graphics2D g2d = (Graphics2D) g;
+              g2d.setColor(Color.GRAY);
+              g2d.fillRect(this.getX(), this.getY(), this.size.width, this.size.height);
+              VideoController.this.vkbdRender.render(this, g2d, new Rectangle(0, 0, size.width, size.height), false);
+            }
+          };
+
+          keyboardPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(final MouseEvent e) {
+              if (!e.isConsumed()) {
+                VideoController.this.vkbdRender.setLastMouseEvent(e);
+                e.consume();
+              }
+            }
+
+            @Override
+            public void mouseReleased(final MouseEvent e) {
+              if (!e.isConsumed()) {
+                VideoController.this.vkbdRender.setLastMouseEvent(e);
+                e.consume();
+              }
+            }
+          });
+
+          this.vkbdWindow.add(keyboardPanel);
+          this.vkbdWindow.setFocusableWindowState(false);
+
+          this.vkbdWindow.setLocation(mainFrame.getLocation());
+          this.vkbdWindow.setVisible(true);
+          this.vkbdWindow.pack();
+        }
+      } else {
+        if (this.vkbdWindow != null) {
+          this.vkbdWindow.dispose();
+        }
+      }
     }
   }
 
@@ -1095,7 +1183,11 @@ public final class VideoController extends JComponent
         renderRectangle = new Rectangle(0, bounds.height - newHeight, newWidth, newHeight);
       }
 
-      this.vkbdRender.render(this, g2, renderRectangle, true);
+      if (!this.showVkbdApart || this.fullScreenMode) {
+        this.vkbdRender.render(this, g2, renderRectangle, true);
+      } else if (this.vkbdWindow != null) {
+        this.vkbdWindow.repaint();
+      }
     }
   }
 
@@ -1548,5 +1640,14 @@ public final class VideoController extends JComponent
 
   public long getVkbState() {
     return this.vkbdRender.getKeyState();
+  }
+
+  public Window getVirtualKeboardWindow() {
+    return this.vkbdWindow;
+  }
+
+  public void setFullScreenMode(boolean active) {
+    this.fullScreenMode = active;
+    this.setVkbShow(false);
   }
 }

@@ -126,6 +126,14 @@ public final class AppOptions {
     preferences.put(Option.DEFAULT_MODE.name(), value.name());
   }
 
+  public synchronized boolean isVkbdApart() {
+    return preferences.getBoolean(Option.VKBD_APART.name(), false);
+  }
+
+  public synchronized void setVkbdApart(final boolean value) {
+    preferences.putBoolean(Option.VKBD_APART.name(), value);
+  }
+
   public synchronized boolean isCovoxFb() {
     return preferences.getBoolean(Option.COVOXFB.name(), false);
   }
@@ -282,6 +290,7 @@ public final class AppOptions {
     INTBETWEENFRAMES,
     LAST_SELECTED_AUDIO_DEVICE,
     SOUND_TURNED_ON,
+    VKBD_APART,
     KEMPSTON_MOUSE_ALLOWED,
     KEMPSTON_VK_LEFT,
     KEMPSTON_VK_RIGHT,
