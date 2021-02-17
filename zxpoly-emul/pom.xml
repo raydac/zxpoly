@@ -63,8 +63,9 @@
         <profile>
             <id>publish</id>
             <properties>
-                <openjdk.bundled.type>java11</openjdk.bundled.type>
-                <openjdk.bundled>20.2.0</openjdk.bundled>
+                <openjdk.bundled.type>jdk</openjdk.bundled.type>
+                <openjdk.bundled>15.0.2+10</openjdk.bundled>
+                <openjdk.provider>BELLSOFT</openjdk.provider>
             </properties>
             <build>
                 <plugins>
@@ -80,7 +81,7 @@
                                 </goals>
                                 <configuration>
                                     <jdkPathProperty>mvnjlink.jdk.work.path</jdkPathProperty>
-                                    <provider>GRAALVMCE</provider>
+                                    <provider>${openjdk.provider}</provider>
                                     <providerConfig>
                                         <type>${openjdk.bundled.type}</type>
                                         <version>${openjdk.bundled}</version>
@@ -95,7 +96,7 @@
                                 </goals>
                                 <configuration>
                                     <jdkPathProperty>mvnjlink.jdk.linux.path</jdkPathProperty>
-                                    <provider>GRAALVMCE</provider>
+                                    <provider>${openjdk.provider}</provider>
                                     <providerConfig>
                                         <type>${openjdk.bundled.type}</type>
                                         <version>${openjdk.bundled}</version>
@@ -111,12 +112,28 @@
                                 </goals>
                                 <configuration>
                                     <jdkPathProperty>mvnjlink.jdk.macos.path</jdkPathProperty>
-                                    <provider>GRAALVMCE</provider>
+                                    <provider>${openjdk.provider}</provider>
                                     <providerConfig>
                                         <type>${openjdk.bundled.type}</type>
-                                        <os>darwin</os>
+                                        <os>macos</os>
                                         <version>${openjdk.bundled}</version>
                                         <arch>amd64</arch>
+                                    </providerConfig>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>cache-macos-jdk-arm64</id>
+                                <goals>
+                                    <goal>cache-jdk</goal>
+                                </goals>
+                                <configuration>
+                                    <jdkPathProperty>mvnjlink.jdk.macos.arm64.path</jdkPathProperty>
+                                    <provider>${openjdk.provider}</provider>
+                                    <providerConfig>
+                                        <type>${openjdk.bundled.type}</type>
+                                        <os>macos</os>
+                                        <version>${openjdk.bundled}</version>
+                                        <arch>aarch64</arch>
                                     </providerConfig>
                                 </configuration>
                             </execution>
@@ -127,7 +144,7 @@
                                 </goals>
                                 <configuration>
                                     <jdkPathProperty>mvnjlink.jdk.windows.path</jdkPathProperty>
-                                    <provider>GRAALVMCE</provider>
+                                    <provider>${openjdk.provider}</provider>
                                     <providerConfig>
                                         <type>${openjdk.bundled.type}</type>
                                         <os>windows</os>
@@ -212,6 +229,30 @@
                                     <output>${project.build.directory}${file.separator}jre_macos</output>
                                     <modulePaths>
                                         <path>${mvnjlink.jdk.macos.path}${file.separator}jmods</path>
+                                    </modulePaths>
+                                    <options>
+                                        <option>--compress=2</option>
+                                        <option>--no-header-files</option>
+                                        <option>--no-man-pages</option>
+                                    </options>
+                                    <addModules>
+                                        <module>jdk.management.agent</module>
+                                        <module>jdk.crypto.ec</module>
+                                    </addModules>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-jre-macos-arm</id>
+                                <goals>
+                                    <goal>jlink</goal>
+                                </goals>
+                                <configuration>
+                                    <toolJdk>${mvnjlink.jdk.work.path}</toolJdk>
+                                    <jdepsReportPath>${project.build.directory}${file.separator}jdeps.out
+                                    </jdepsReportPath>
+                                    <output>${project.build.directory}${file.separator}jre_macos_arm</output>
+                                    <modulePaths>
+                                        <path>${mvnjlink.jdk.macos.arm64.path}${file.separator}jmods</path>
                                     </modulePaths>
                                     <options>
                                         <option>--compress=2</option>
@@ -333,6 +374,21 @@
                                     </descriptors>
                                 </configuration>
                             </execution>
+                            <execution>
+                                <id>make-mac-arm</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <appendAssemblyId>false</appendAssemblyId>
+                                    <finalName>${project.build.finalName}-macos-arm64-withjdk</finalName>
+                                    <descriptors>
+                                        <descriptor>src${file.separator}assembly${file.separator}mac_arm.xml
+                                        </descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
                         </executions>
                     </plugin>
                     <plugin>
@@ -350,6 +406,20 @@
                                     <fileset>
                                         <directory>
                                             ${project.build.directory}${file.separator}${project.build.finalName}-macos-x64-withjdk.jar${file.separator}META-INF
+                                        </directory>
+                                    </fileset>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>remove-manifest-from-mac-arm64-jar</id>
+                                <goals>
+                                    <goal>remove</goal>
+                                </goals>
+                                <phase>install</phase>
+                                <configuration>
+                                    <fileset>
+                                        <directory>
+                                            ${project.build.directory}${file.separator}${project.build.finalName}-macos-arm64-withjdk.jar${file.separator}META-INF
                                         </directory>
                                     </fileset>
                                 </configuration>
@@ -373,6 +443,21 @@
                                     </sourceFile>
                                     <destinationFile>
                                         ${project.build.directory}${file.separator}${project.build.finalName}-macos-x64-withjdk.zip
+                                    </destinationFile>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>rename-mac-arm-jar-to-zip</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>rename</goal>
+                                </goals>
+                                <configuration>
+                                    <sourceFile>
+                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-arm64-withjdk.jar
+                                    </sourceFile>
+                                    <destinationFile>
+                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-arm64-withjdk.zip
                                     </destinationFile>
                                 </configuration>
                             </execution>
