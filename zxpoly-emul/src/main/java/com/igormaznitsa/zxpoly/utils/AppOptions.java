@@ -18,6 +18,7 @@
 package com.igormaznitsa.zxpoly.utils;
 
 import com.igormaznitsa.zxpoly.components.BoardMode;
+import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 
@@ -53,14 +54,29 @@ public final class AppOptions {
     preferences.put(Option.LAST_SELECTED_AUDIO_DEVICE.name(), device);
   }
 
+  public synchronized VirtualKeyboardLook getKeyboardLook() {
+    VirtualKeyboardLook result = VirtualKeyboardLook.DEFAULT;
+    final String name = preferences.get(Option.KEYBOARD_LOOK.name(), result.name());
+    try {
+      result = VirtualKeyboardLook.valueOf(name);
+    } catch (IllegalArgumentException ex) {
+      result = VirtualKeyboardLook.DEFAULT;
+    }
+    return result;
+  }
+
+  public synchronized void setKeyboardLook(final VirtualKeyboardLook look) {
+    preferences.put(Option.KEYBOARD_LOOK.name(), look.name());
+  }
+
   public synchronized String getAddress() {
     return preferences
-        .get(Option.STREAM_ADDR.name(), InetAddress.getLoopbackAddress().getHostAddress());
+            .get(Option.STREAM_ADDR.name(), InetAddress.getLoopbackAddress().getHostAddress());
   }
 
   public synchronized void setAddress(final String address) {
     preferences.put(Option.STREAM_ADDR.name(),
-        address == null ? InetAddress.getLoopbackAddress().getHostAddress() : address);
+            address == null ? InetAddress.getLoopbackAddress().getHostAddress() : address);
   }
 
   public synchronized int getPort() {
@@ -291,6 +307,7 @@ public final class AppOptions {
     LAST_SELECTED_AUDIO_DEVICE,
     SOUND_TURNED_ON,
     VKBD_APART,
+    KEYBOARD_LOOK,
     KEMPSTON_MOUSE_ALLOWED,
     KEMPSTON_VK_LEFT,
     KEMPSTON_VK_RIGHT,

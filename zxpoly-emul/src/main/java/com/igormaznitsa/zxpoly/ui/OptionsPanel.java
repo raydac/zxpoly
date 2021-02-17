@@ -18,6 +18,7 @@
 package com.igormaznitsa.zxpoly.ui;
 
 import com.igormaznitsa.zxpoly.components.BoardMode;
+import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.AppOptions.Rom;
 
@@ -49,10 +50,12 @@ public class OptionsPanel extends JPanel {
   private JLabel labelZx128ByDefault;
   private JLabel labelKempstonMouseAllowed;
   private JLabel labelVirtualKbdApart;
+  private JLabel labelVirtualKbdLook;
   private JCheckBox checkGrabSound;
   private JCheckBox checkVkbdApart;
-  private javax.swing.JComboBox<String> comboNetAdddr;
-  private javax.swing.JComboBox<String> comboRomSource;
+  private JComboBox<String> comboNetAdddr;
+  private JComboBox<String> comboRomSource;
+  private JComboBox<VirtualKeyboardLook> comboKeyboardLook;
   private JLabel labelFfMpegPath;
   private JLabel labelNetInterface;
   private JLabel labelPort;
@@ -119,6 +122,7 @@ public class OptionsPanel extends JPanel {
     this.comboNetAdddr.setSelectedItem(data.inetAddress);
     this.spinnerFramesPerSec.setValue(data.frameRate);
     this.comboRomSource.setSelectedItem(Rom.findForLink(data.activeRom, Rom.TEST).getTitle());
+    this.comboKeyboardLook.setSelectedItem(data.keyboardLook);
 
     this.keySelectorKempstonFire.selectForCode(data.kempstonKeyFire);
     this.keySelectorKempstonRight.selectForCode(data.kempstonKeyRight);
@@ -155,8 +159,10 @@ public class OptionsPanel extends JPanel {
     checkZx128ByDefault = new JCheckBox();
     labelKempstonMouseAllowed = new JLabel();
     labelVirtualKbdApart = new JLabel();
+    labelVirtualKbdLook = new JLabel();
     checkKempstonMouseAllowed = new JCheckBox();
     checkVkbdApart = new JCheckBox();
+    comboKeyboardLook = new JComboBox<>(VirtualKeyboardLook.values());
 
     keySelectorKempstonDown = new KeyCodeSelector();
     keySelectorKempstonLeft = new KeyCodeSelector();
@@ -355,6 +361,20 @@ public class OptionsPanel extends JPanel {
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkVkbdApart, gridBagConstraints);
 
+    labelVirtualKbdLook.setHorizontalAlignment(RIGHT);
+    labelVirtualKbdLook.setText("Keyboard decoration:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 7;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelVirtualKbdLook, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 7;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(comboKeyboardLook, gridBagConstraints);
+
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 1;
@@ -492,6 +512,7 @@ public class OptionsPanel extends JPanel {
 
     public final String ffmpegPath;
     public final String inetAddress;
+    public final VirtualKeyboardLook keyboardLook;
     public final int port;
     public final boolean grabSound;
     public final String activeRom;
@@ -509,6 +530,7 @@ public class OptionsPanel extends JPanel {
     public final int kempstonKeyFire;
 
     public DataContainer() {
+      this.keyboardLook = AppOptions.getInstance().getKeyboardLook();
       this.vkdApart = AppOptions.getInstance().isVkbdApart();
       this.activeRom = AppOptions.getInstance().getActiveRom();
       this.intPerFrame = AppOptions.getInstance().getIntBetweenFrames();
@@ -532,6 +554,8 @@ public class OptionsPanel extends JPanel {
       final Rom rom =
               Rom.findForTitle(optionsPanel.comboRomSource.getSelectedItem().toString(), Rom.TEST);
 
+      this.keyboardLook = (VirtualKeyboardLook) optionsPanel.comboKeyboardLook.getSelectedItem();
+
       this.vkdApart = optionsPanel.checkVkbdApart.isSelected();
       this.activeRom = rom.getLink();
       this.intPerFrame = (Integer) optionsPanel.spinnerIntFrame.getValue();
@@ -553,6 +577,7 @@ public class OptionsPanel extends JPanel {
     }
 
     public void store() {
+      AppOptions.getInstance().setKeyboardLook(this.keyboardLook);
       AppOptions.getInstance().setVkbdApart(this.vkdApart);
       AppOptions.getInstance().setActiveRom(this.activeRom);
       AppOptions.getInstance().setFfmpegPath(this.ffmpegPath);
