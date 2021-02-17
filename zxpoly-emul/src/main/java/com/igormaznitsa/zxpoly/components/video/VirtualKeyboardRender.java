@@ -2,17 +2,15 @@ package com.igormaznitsa.zxpoly.components.video;
 
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
 import com.igormaznitsa.zxpoly.components.Motherboard;
-import com.igormaznitsa.zxpoly.utils.Utils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.util.Objects;
 
 import static com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn.*;
 
-public final class VkbdRender {
+public final class VirtualKeyboardRender {
 
   private static final long VKB_STICKY_KEYS = ZXKEY_CS | ZXKEY_SS;
   private static final long[] KEY_TABLE = new long[]{
@@ -22,7 +20,6 @@ public final class VkbdRender {
           ZXKEY_CS, ZXKEY_Z, ZXKEY_X, ZXKEY_C, ZXKEY_V, ZXKEY_B, ZXKEY_N, ZXKEY_M, ZXKEY_SS, ZXKEY_SP
   };
   private static final int[] BIT2KEY;
-  private static final BufferedImage IMAGE_ZXKEYS = Utils.loadIcon("zxkeys.png");
 
   static {
     BIT2KEY = new int[64];
@@ -40,9 +37,11 @@ public final class VkbdRender {
   private final KeyboardKempstonAndTapeIn mainKeyboard;
   private volatile long vkbKeysState = ZXKEY_NONE;
   private volatile MouseEvent lastMouseClickEvent = null;
+  private final VirtualKeyboardDecoration vkbdDecoration;
 
-  public VkbdRender(final Motherboard motherboard) {
+  public VirtualKeyboardRender(final Motherboard motherboard, final VirtualKeyboardDecoration vkbdDecoration) {
     this.mainKeyboard = Objects.requireNonNull(motherboard.findIoDevice(KeyboardKempstonAndTapeIn.class));
+    this.vkbdDecoration = Objects.requireNonNull(vkbdDecoration);
   }
 
   public void setLastMouseEvent(final MouseEvent clickMouseEvent) {
@@ -57,7 +56,7 @@ public final class VkbdRender {
     if (transparentIfNotFocused) {
       gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, renderRectangle.contains(mousePoint) ? 1.0f : 0.5f));
     }
-    gfx.drawImage(IMAGE_ZXKEYS, renderRectangle.x, renderRectangle.y, renderRectangle.width, renderRectangle.height, null);
+    gfx.drawImage(this.vkbdDecoration.getImage(), renderRectangle.x, renderRectangle.y, renderRectangle.width, renderRectangle.height, null);
 
     final MouseEvent lastClickEvent = this.lastMouseClickEvent;
     this.lastMouseClickEvent = null;
@@ -66,50 +65,48 @@ public final class VkbdRender {
   }
 
   private void drawVkbState(final Graphics2D gfx, final Rectangle keyboardArea) {
-    final int keyAreaW = keyboardArea.width / 10;
-    final int keyAreaH = keyboardArea.height / 4;
+    long totalKeyboardState = ((this.mainKeyboard.getKeyState() & this.vkbKeysState) ^ ZXKEY_NONE) & ZXKEY_NONE;
 
-    long keyBits = ((this.mainKeyboard.getKeyState() & this.vkbKeysState) ^ ZXKEY_NONE) & ZXKEY_NONE;
+    final double scaleX = (double) keyboardArea.width / this.vkbdDecoration.getWidth();
+    final double scaleY = (double) keyboardArea.height / this.vkbdDecoration.getHeight();
 
     gfx.setColor(Color.GREEN);
     gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
     int bitPos = 0;
-    while (keyBits != 0) {
-      if ((keyBits & 1L) != 0) {
-        final int keyIndex = BIT2KEY[bitPos];
-        final int px = (keyIndex % 10) * keyAreaW;
-        final int py = (keyIndex / 10) * keyAreaH;
-        gfx.fillOval(px + keyboardArea.x, py + keyboardArea.y, keyAreaW, keyAreaH);
+    while (totalKeyboardState != 0) {
+      if ((totalKeyboardState & 1L) != 0) {
+        final Rectangle rectangle = this.vkbdDecoration.getKeyRectangleForBitIndex(bitPos);
+        gfx.fillOval(keyboardArea.x + (int) Math.round(scaleX * rectangle.x), keyboardArea.y + (int) Math.round(scaleY * rectangle.y), (int) Math.round(scaleX * rectangle.width), (int) Math.round(scaleY * rectangle.height));
       }
       bitPos++;
-      keyBits >>>= 1;
+      totalKeyboardState >>>= 1;
     }
   }
 
   public void processVkbMouseClick(final Rectangle keyboardArea, final MouseEvent mouseEvent) {
-    final int keyAreaW = keyboardArea.width / 10;
-    final int keyAreaH = keyboardArea.height / 4;
-
     long result = this.vkbKeysState;
 
-    if (mouseEvent != null && keyboardArea.contains(mouseEvent.getPoint())) {
-      final Point mousePoint = mouseEvent.getPoint();
-      final int kx = (mousePoint.x - keyboardArea.x) / keyAreaW;
-      final int ky = (mousePoint.y - keyboardArea.y) / keyAreaH;
+    final double scaleX = (double) keyboardArea.width / this.vkbdDecoration.getWidth();
+    final double scaleY = (double) keyboardArea.height / this.vkbdDecoration.getHeight();
 
-      final long keyMask = KEY_TABLE[ky * 10 + kx];
+    if (mouseEvent != null && keyboardArea.contains(mouseEvent.getPoint())) {
+      final Point normalized = new Point((int) Math.round((mouseEvent.getPoint().x - keyboardArea.x) / scaleX), (int) Math.round((mouseEvent.getPoint().y - keyboardArea.y) / scaleY));
+      final int pressedKeyBit = this.vkbdDecoration.findBitPosition(normalized);
+      if (pressedKeyBit < 0) return;
+
+      final long keyCode = KEY_TABLE[BIT2KEY[pressedKeyBit]];
 
       final boolean pressingEvent = mouseEvent.getID() == MouseEvent.MOUSE_PRESSED;
 
-      if ((keyMask & VKB_STICKY_KEYS) == 0) {
+      if ((keyCode & VKB_STICKY_KEYS) == 0) {
         if (pressingEvent) {
-          result &= ~keyMask;
+          result &= ~keyCode;
         } else {
-          result |= keyMask;
+          result |= keyCode;
         }
       } else {
         if (pressingEvent) {
-          result ^= keyMask;
+          result ^= keyCode;
         }
       }
     }
@@ -126,10 +123,10 @@ public final class VkbdRender {
   }
 
   public int getImageHeight() {
-    return IMAGE_ZXKEYS.getHeight();
+    return this.vkbdDecoration.getHeight();
   }
 
   public int getImageWidth() {
-    return IMAGE_ZXKEYS.getWidth();
+    return this.vkbdDecoration.getWidth();
   }
 }

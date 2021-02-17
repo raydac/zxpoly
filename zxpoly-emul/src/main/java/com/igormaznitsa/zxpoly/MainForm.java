@@ -30,6 +30,8 @@ import com.igormaznitsa.zxpoly.components.snd.SourceSoundPort;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSourceFactory;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
+import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardDecoration;
+import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilterChain;
 import com.igormaznitsa.zxpoly.formats.*;
 import com.igormaznitsa.zxpoly.streamer.ZxVideoStreamer;
@@ -333,12 +335,21 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       this.menuOptionsEnableTrapMouse.setVisible(false);
     }
 
+    final VirtualKeyboardDecoration vkbdContainer;
+    try {
+      vkbdContainer = VirtualKeyboardLook.ZX48.load();
+    } catch (Exception ex) {
+      LOGGER.log(Level.SEVERE, "Can't load virtual keyboard: " + ex.getMessage(), ex);
+      throw new Error("Can't load virtual keyboard");
+    }
+
     this.board = new Motherboard(
             BASE_ROM,
             AppOptions.getInstance().getDefaultBoardMode(),
             AppOptions.getInstance().isCovoxFb(),
             AppOptions.getInstance().isTurboSound(),
-            allowKempstonMouse
+            allowKempstonMouse,
+            vkbdContainer
     );
     this.board.reset();
     this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() != BoardMode.ZXPOLY);

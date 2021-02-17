@@ -25,6 +25,7 @@ import com.igormaznitsa.zxpoly.components.snd.CovoxFb;
 import com.igormaznitsa.zxpoly.components.snd.TurboSoundNedoPc;
 import com.igormaznitsa.zxpoly.components.snd.Zx128Ay8910;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
+import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardDecoration;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -102,11 +103,12 @@ public final class Motherboard implements ZxPolyConstants {
   }
 
   public Motherboard(
-      final RomData rom,
-      final BoardMode boardMode,
-      final boolean enableCovoxFb,
-      final boolean useTurboSound,
-      final boolean allowKempstonMouse
+          final RomData rom,
+          final BoardMode boardMode,
+          final boolean enableCovoxFb,
+          final boolean useTurboSound,
+          final boolean allowKempstonMouse,
+          final VirtualKeyboardDecoration vkbdContainer
   ) {
     if (rom == null) {
       throw new NullPointerException("ROM must not be null");
@@ -127,7 +129,7 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.keyboard = new KeyboardKempstonAndTapeIn(this, allowKempstonMouse);
     iodevices.add(keyboard);
-    this.video = new VideoController(this);
+    this.video = new VideoController(this, vkbdContainer);
     iodevices.add(video);
     iodevices.add(new KempstonMouse(this));
 

@@ -36,6 +36,7 @@ import java.awt.image.DataBufferInt;
 import java.awt.image.RenderedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,7 +50,7 @@ public final class VideoController extends JComponent
   public static final int SCREEN_WIDTH = 512;
   public static final int SCREEN_HEIGHT = 384;
 
-  private VkbdRender vkbdRender;
+  private final VirtualKeyboardDecoration vkbdContainer;
 
   public static final int[] PALETTE_ZXPOLY = new int[]{
           0xFF000000,
@@ -135,9 +136,12 @@ public final class VideoController extends JComponent
 
   private Window vkbdWindow = null;
   private boolean fullScreenMode;
+  private VirtualKeyboardRender vkbdRender;
 
-  public VideoController(final Motherboard board) {
+  public VideoController(final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
     super();
+
+    this.vkbdContainer = Objects.requireNonNull(vkbdContainer);
 
     this.showVkbdApart = AppOptions.getInstance().isVkbdApart();
 
@@ -195,7 +199,7 @@ public final class VideoController extends JComponent
 
   @Override
   public void init() {
-    this.vkbdRender = new VkbdRender(this.board);
+    this.vkbdRender = new VirtualKeyboardRender(this.board, this.vkbdContainer);
   }
 
   public static int toZxPolyIndex(final byte spec256PaletteIndex) {
@@ -988,11 +992,6 @@ public final class VideoController extends JComponent
             }
 
             @Override
-            public Dimension getSize() {
-              return this.size;
-            }
-
-            @Override
             public boolean isFocusable() {
               return false;
             }
@@ -1007,7 +1006,7 @@ public final class VideoController extends JComponent
               final Graphics2D g2d = (Graphics2D) g;
               g2d.setColor(Color.GRAY);
               g2d.fillRect(this.getX(), this.getY(), this.size.width, this.size.height);
-              VideoController.this.vkbdRender.render(this, g2d, new Rectangle(0, 0, size.width, size.height), false);
+              VideoController.this.vkbdRender.render(this, g2d, new Rectangle(0, 0, this.getWidth(), this.getHeight()), false);
             }
           };
 
