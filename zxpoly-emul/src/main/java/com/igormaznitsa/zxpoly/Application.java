@@ -18,15 +18,15 @@
 package com.igormaznitsa.zxpoly;
 
 import com.igormaznitsa.zxpoly.utils.AppOptions;
-import java.awt.Toolkit;
+import org.apache.commons.lang3.SystemUtils;
+
+import javax.swing.*;
+import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import org.apache.commons.lang3.SystemUtils;
 
 public class Application {
 
@@ -68,7 +68,13 @@ public class Application {
       }
 
       try {
-        form = new MainForm(APP_TITLE + ' ' + APP_VERSION, System.getProperty("zxpoly.rom.path", AppOptions.getInstance().getActiveRom()));
+        String romPath = AppOptions.getInstance().getCustomRomPath();
+        if (romPath == null) {
+          romPath = System.getProperty("zxpoly.rom.path", AppOptions.getInstance().getActiveRom());
+        } else {
+          System.out.println("Custom ROM path in use: " + romPath);
+        }
+        form = new MainForm(APP_TITLE + ' ' + APP_VERSION, romPath);
       } catch (Exception ex) {
         ex.printStackTrace();
         System.exit(1);

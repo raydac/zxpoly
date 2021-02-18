@@ -65,6 +65,18 @@ public final class AppOptions {
     return result;
   }
 
+  public synchronized String getCustomRomPath() {
+    return preferences.get(Option.CUSTOM_ROM_PATH.name(), null);
+  }
+
+  public synchronized void setCustomRomPath(final String path) {
+    if (path == null || path.trim().length() == 0) {
+      preferences.remove(Option.CUSTOM_ROM_PATH.name());
+    } else {
+      preferences.put(Option.CUSTOM_ROM_PATH.name(), path);
+    }
+  }
+
   public synchronized void setKeyboardLook(final VirtualKeyboardLook look) {
     preferences.put(Option.KEYBOARD_LOOK.name(), look.name());
   }
@@ -294,6 +306,7 @@ public final class AppOptions {
   }
 
   public enum Option {
+    CUSTOM_ROM_PATH,
     STREAM_FFMPEGPATH,
     STREAM_GRABSOUND,
     STREAM_ADDR,
