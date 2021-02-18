@@ -263,11 +263,11 @@ public class OptionsPanel extends JPanel {
     gridBagConstraints.fill = GridBagConstraints.BOTH;
     add(panelStreaming, gridBagConstraints);
 
-    panelGenmeral.setBorder(createTitledBorder("Generat"));
+    panelGenmeral.setBorder(createTitledBorder("General"));
     panelGenmeral.setLayout(new GridBagLayout());
 
     labelRomSource.setHorizontalAlignment(RIGHT);
-    labelRomSource.setText("Load ROM source:");
+    labelRomSource.setText("Initial ROM load source:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 0;
