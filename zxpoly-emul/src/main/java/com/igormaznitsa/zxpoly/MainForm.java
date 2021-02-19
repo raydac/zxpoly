@@ -226,6 +226,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JCheckBoxMenuItem menuOptionsEnableVideoStream;
   private JCheckBoxMenuItem menuOptionsShowIndicators;
   private JCheckBoxMenuItem menuOptionsTurbo;
+  private JCheckBoxMenuItem menuOptionsOnlyKempstonEvents;
   private JCheckBoxMenuItem menuOptionsZX128Mode;
   private JMenu menuService;
   private JMenuItem menuServiceGameControllers;
@@ -361,6 +362,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.keyboardAndTapeModule = this.board.findIoDevice(KeyboardKempstonAndTapeIn.class);
     this.kempstonMouse = this.board.findIoDevice(KempstonMouse.class);
 
+    this.menuOptionsOnlyKempstonEvents.setSelected(this.keyboardAndTapeModule.isOnlyKempstonEvents());
+
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     manager.addKeyEventDispatcher(
             new KeyboardDispatcher(this.board.getVideoController(), this.keyboardAndTapeModule));
@@ -385,6 +388,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             MainForm.this.stepSemaphor.lock();
             MainForm.this.keyboardAndTapeModule.doReset();
             if (e.getSource() == menuOptions) {
+              menuOptionsOnlyKempstonEvents.setState(keyboardAndTapeModule.isOnlyKempstonEvents());
               menuOptionsEnableSpeaker
                       .setEnabled(!turboMode && !menuOptionsEnableVideoStream.isSelected());
               menuOptionsEnableSpeaker.setState(board.getBeeper().isActive());
@@ -1355,7 +1359,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     labelTurbo =
             new JIndicatorLabel(ICO_TURBO, ICO_TURBO_DIS, "Turbo-mode is ON", "Turbo-mode is OFF");
     labelMouseUsage =
-            new JIndicatorLabel(ICO_MOUSE, ICO_MOUSE_DIS, "Mouse is catched", "Mouse is not active");
+            new JIndicatorLabel(ICO_MOUSE, ICO_MOUSE_DIS, "Mouse is caught", "Mouse is not active");
     labelZX128 = new JIndicatorLabel(ICO_ZX128, ICO_ZX128_DIS, "ZX mode is ON", "ZX mode is OFF");
     labelTapeUsage =
             new JIndicatorLabel(ICO_TAPE, ICO_TAPE_DIS, "Reading", "None");
@@ -1411,6 +1415,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsShowIndicators = new JCheckBoxMenuItem();
     menuOptionsZX128Mode = new JCheckBoxMenuItem();
     menuOptionsTurbo = new JCheckBoxMenuItem();
+    menuOptionsOnlyKempstonEvents = new JCheckBoxMenuItem();
     menuOptionsEnableTrapMouse = new JCheckBoxMenuItem();
     menuOptionsEnableSpeaker = new JCheckBoxMenuItem();
     menuOptionsEnableVideoStream = new JCheckBoxMenuItem();
@@ -1694,7 +1699,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuTapThreshold.setIcon(new ImageIcon(
             getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_sens.png")));
     menuTapThreshold.setText("Signal threshold");
-    menuTapThreshold.addActionListener(this::menuTapThresholdyActionPerformed);
+    menuTapThreshold.addActionListener(this::menuTapThresholdActionPerformed);
     menuTap.add(menuTapThreshold);
 
     menuBar.add(menuTap);
@@ -1810,12 +1815,18 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptions.add(menuOptionsZX128Mode);
 
     menuOptionsTurbo.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F3, 0));
-    menuOptionsTurbo.setSelected(true);
     menuOptionsTurbo.setText("Turbo");
     menuOptionsTurbo.setIcon(new ImageIcon(
             getClass().getResource("/com/igormaznitsa/zxpoly/icons/turbo.png"))); // NOI18N
     menuOptionsTurbo.addActionListener(this::menuOptionsTurboActionPerformed);
     menuOptions.add(menuOptionsTurbo);
+
+    menuOptionsOnlyKempstonEvents.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F6, 0));
+    menuOptionsOnlyKempstonEvents.setText("Only Kempston");
+    menuOptionsOnlyKempstonEvents.setIcon(new ImageIcon(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/onlykempston.png"))); // NOI18N
+    menuOptionsOnlyKempstonEvents.addActionListener(this::menuOptionsOnlyKempstonEvents);
+    menuOptions.add(menuOptionsOnlyKempstonEvents);
 
     menuOptionsEnableTrapMouse.setText("Trap mouse");
     menuOptionsEnableTrapMouse.setToolTipText("Trap mouse as kempston-mouse");
@@ -1872,7 +1883,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     pack();
   }
 
-  private void menuTapThresholdyActionPerformed(final ActionEvent actionEvent) {
+  private void menuOptionsOnlyKempstonEvents(final ActionEvent actionEvent) {
+    this.keyboardAndTapeModule.setOnlyKempstonEvents(this.menuOptionsOnlyKempstonEvents.isSelected());
+    LOGGER.info("Only Kempston events: " + this.menuOptionsOnlyKempstonEvents.isSelected());
+  }
+
+  private void menuTapThresholdActionPerformed(final ActionEvent actionEvent) {
     final TapeSource source = this.keyboardAndTapeModule.getTap();
     if (source != null) {
       final JSlider slider = new JSlider();

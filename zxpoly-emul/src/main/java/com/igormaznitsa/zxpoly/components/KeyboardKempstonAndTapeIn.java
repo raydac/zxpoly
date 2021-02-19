@@ -147,10 +147,11 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private final List<Controller> detectedControllers;
   private final List<GameControllerAdapter> activeGameControllerAdapters =
           new CopyOnWriteArrayList<>();
-  private volatile long keyboardLines = 0L;
+  private volatile long keyboardLines = ZXKEY_NONE;
   private volatile long bufferKeyboardLines = 0L;
   private volatile int kempstonSignals = 0;
   private volatile int kempstonBuffer = 0;
+  private volatile boolean onlyKempstonEvents = false;
 
   private final boolean kempstonMouseAllowed;
 
@@ -159,6 +160,15 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private final int kempstonVkUp;
   private final int kempstonVkDown;
   private final int kempstonVkFire;
+
+  public boolean isOnlyKempstonEvents() {
+    return this.onlyKempstonEvents;
+  }
+
+  public void setOnlyKempstonEvents(final boolean flag) {
+    this.onlyKempstonEvents = flag;
+    this.keyboardLines = ZXKEY_NONE;
+  }
 
   public KeyboardKempstonAndTapeIn(final Motherboard board, final boolean kempstonMouseAllowed) {
     this.board = board;
@@ -236,9 +246,9 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   private boolean isControllerTypeAllowed(final Controller.Type type) {
     return type == Controller.Type.FINGERSTICK
-        || type == Controller.Type.STICK
-        || type == Controller.Type.RUDDER
-        || type == Controller.Type.GAMEPAD;
+            || type == Controller.Type.STICK
+            || type == Controller.Type.RUDDER
+            || type == Controller.Type.GAMEPAD;
   }
 
   public List<Controller> getDetectedControllers() {
@@ -345,7 +355,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   public boolean onKeyEvent(final KeyEvent evt) {
-    if (evt.isControlDown() && evt.getKeyCode() != KeyEvent.VK_SPACE) {
+    if (evt.isControlDown() && evt.getKeyCode() != KeyEvent.VK_SPACE && !this.onlyKempstonEvents) {
       return false;
     }
 
@@ -378,218 +388,219 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
       kempstonCode = KEMPSTON_FIRE;
     }
 
-
-    switch (keyCode) {
-      case KeyEvent.VK_ESCAPE: {
-        if (this.board.getVideoController().isMouseTrapActive()) {
-          this.board.getVideoController().setTrapMouseActive(false);
+    if (!this.onlyKempstonEvents || (evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0) {
+      switch (keyCode) {
+        case KeyEvent.VK_ESCAPE: {
+          if (this.board.getVideoController().isMouseTrapActive()) {
+            this.board.getVideoController().setTrapMouseActive(false);
+          }
         }
+        break;
+        case KeyEvent.VK_1: {
+          zxKeyCode = ZXKEY_1;
+        }
+        break;
+        case KeyEvent.VK_2: {
+          zxKeyCode = ZXKEY_2;
+        }
+        break;
+        case KeyEvent.VK_3: {
+          zxKeyCode = ZXKEY_3;
+        }
+        break;
+        case KeyEvent.VK_4: {
+          zxKeyCode = ZXKEY_4;
+        }
+        break;
+        case KeyEvent.VK_5: {
+          zxKeyCode = ZXKEY_5;
+        }
+        break;
+        case KeyEvent.VK_6: {
+          zxKeyCode = ZXKEY_6;
+        }
+        break;
+        case KeyEvent.VK_7: {
+          zxKeyCode = ZXKEY_7;
+        }
+        break;
+        case KeyEvent.VK_8: {
+          zxKeyCode = ZXKEY_8;
+        }
+        break;
+        case KeyEvent.VK_9: {
+          zxKeyCode = ZXKEY_9;
+        }
+        break;
+        case KeyEvent.VK_0: {
+          zxKeyCode = ZXKEY_0;
+        }
+        break;
+        case KeyEvent.VK_Q: {
+          zxKeyCode = ZXKEY_Q;
+        }
+        break;
+        case KeyEvent.VK_W: {
+          zxKeyCode = ZXKEY_W;
+        }
+        break;
+        case KeyEvent.VK_E: {
+          zxKeyCode = ZXKEY_E;
+        }
+        break;
+        case KeyEvent.VK_R: {
+          zxKeyCode = ZXKEY_R;
+        }
+        break;
+        case KeyEvent.VK_T: {
+          zxKeyCode = ZXKEY_T;
+        }
+        break;
+        case KeyEvent.VK_Y: {
+          zxKeyCode = ZXKEY_Y;
+        }
+        break;
+        case KeyEvent.VK_U: {
+          zxKeyCode = ZXKEY_U;
+        }
+        break;
+        case KeyEvent.VK_I: {
+          zxKeyCode = ZXKEY_I;
+        }
+        break;
+        case KeyEvent.VK_O: {
+          zxKeyCode = ZXKEY_O;
+        }
+        break;
+        case KeyEvent.VK_P: {
+          zxKeyCode = ZXKEY_P;
+        }
+        break;
+        case KeyEvent.VK_A: {
+          zxKeyCode = ZXKEY_A;
+        }
+        break;
+        case KeyEvent.VK_S: {
+          zxKeyCode = ZXKEY_S;
+        }
+        break;
+        case KeyEvent.VK_D: {
+          zxKeyCode = ZXKEY_D;
+        }
+        break;
+        case KeyEvent.VK_F: {
+          zxKeyCode = ZXKEY_F;
+        }
+        break;
+        case KeyEvent.VK_G: {
+          zxKeyCode = ZXKEY_G;
+        }
+        break;
+        case KeyEvent.VK_H: {
+          zxKeyCode = ZXKEY_H;
+        }
+        break;
+        case KeyEvent.VK_J: {
+          zxKeyCode = ZXKEY_J;
+        }
+        break;
+        case KeyEvent.VK_K: {
+          zxKeyCode = ZXKEY_K;
+        }
+        break;
+        case KeyEvent.VK_L: {
+          zxKeyCode = ZXKEY_L;
+        }
+        break;
+        case KeyEvent.VK_ENTER: {
+          zxKeyCode = ZXKEY_EN;
+        }
+        break;
+        case KeyEvent.VK_Z: {
+          zxKeyCode = ZXKEY_Z;
+        }
+        break;
+        case KeyEvent.VK_X: {
+          zxKeyCode = ZXKEY_X;
+        }
+        break;
+        case KeyEvent.VK_C: {
+          zxKeyCode = ZXKEY_C;
+        }
+        break;
+        case KeyEvent.VK_V: {
+          zxKeyCode = ZXKEY_V;
+        }
+        break;
+        case KeyEvent.VK_B: {
+          zxKeyCode = ZXKEY_B;
+        }
+        break;
+        case KeyEvent.VK_N: {
+          zxKeyCode = ZXKEY_N;
+        }
+        break;
+        case KeyEvent.VK_M: {
+          zxKeyCode = ZXKEY_M;
+        }
+        break;
+        case KeyEvent.VK_SPACE: {
+          zxKeyCode = ZXKEY_SP;
+        }
+        break;
+        case KeyEvent.VK_SHIFT: {
+          zxKeyCode = ZXKEY_CS;
+        }
+        break;
+        case KeyEvent.VK_ALT: {
+          zxKeyCode = ZXKEY_SS;
+        }
+        break;
+        case KeyEvent.VK_BACK_SPACE: {
+          zxKeyCode = ZXKEY_CS | ZXKEY_0;
+        }
+        break;
+        case KeyEvent.VK_LEFT: {
+          zxKeyCode = ZXKEY_CS | ZXKEY_5;
+        }
+        break;
+        case KeyEvent.VK_RIGHT: {
+          zxKeyCode = ZXKEY_CS | ZXKEY_8;
+        }
+        break;
+        case KeyEvent.VK_UP: {
+          zxKeyCode = ZXKEY_CS | ZXKEY_7;
+        }
+        break;
+        case KeyEvent.VK_DOWN: {
+          zxKeyCode = ZXKEY_CS | ZXKEY_6;
+        }
+        break;
+        case KeyEvent.VK_COMMA: {
+          zxKeyCode = ZXKEY_SS | ZXKEY_N;
+        }
+        break;
+        case KeyEvent.VK_PERIOD: {
+          zxKeyCode = ZXKEY_SS | ZXKEY_M;
+        }
+        break;
+        case KeyEvent.VK_EQUALS: {
+          zxKeyCode = ZXKEY_SS | ZXKEY_L;
+        }
+        break;
+        case KeyEvent.VK_SLASH: {
+          zxKeyCode = ZXKEY_SS | ZXKEY_V;
+        }
+        break;
+        case KeyEvent.VK_QUOTE: {
+          zxKeyCode = ZXKEY_SS | ZXKEY_7;
+        }
+        break;
+        case KeyEvent.VK_MINUS: {
+          zxKeyCode = ZXKEY_SS | ZXKEY_J;
+        }
+        break;
       }
-      break;
-      case KeyEvent.VK_1: {
-        zxKeyCode = ZXKEY_1;
-      }
-      break;
-      case KeyEvent.VK_2: {
-        zxKeyCode = ZXKEY_2;
-      }
-      break;
-      case KeyEvent.VK_3: {
-        zxKeyCode = ZXKEY_3;
-      }
-      break;
-      case KeyEvent.VK_4: {
-        zxKeyCode = ZXKEY_4;
-      }
-      break;
-      case KeyEvent.VK_5: {
-        zxKeyCode = ZXKEY_5;
-      }
-      break;
-      case KeyEvent.VK_6: {
-        zxKeyCode = ZXKEY_6;
-      }
-      break;
-      case KeyEvent.VK_7: {
-        zxKeyCode = ZXKEY_7;
-      }
-      break;
-      case KeyEvent.VK_8: {
-        zxKeyCode = ZXKEY_8;
-      }
-      break;
-      case KeyEvent.VK_9: {
-        zxKeyCode = ZXKEY_9;
-      }
-      break;
-      case KeyEvent.VK_0: {
-        zxKeyCode = ZXKEY_0;
-      }
-      break;
-      case KeyEvent.VK_Q: {
-        zxKeyCode = ZXKEY_Q;
-      }
-      break;
-      case KeyEvent.VK_W: {
-        zxKeyCode = ZXKEY_W;
-      }
-      break;
-      case KeyEvent.VK_E: {
-        zxKeyCode = ZXKEY_E;
-      }
-      break;
-      case KeyEvent.VK_R: {
-        zxKeyCode = ZXKEY_R;
-      }
-      break;
-      case KeyEvent.VK_T: {
-        zxKeyCode = ZXKEY_T;
-      }
-      break;
-      case KeyEvent.VK_Y: {
-        zxKeyCode = ZXKEY_Y;
-      }
-      break;
-      case KeyEvent.VK_U: {
-        zxKeyCode = ZXKEY_U;
-      }
-      break;
-      case KeyEvent.VK_I: {
-        zxKeyCode = ZXKEY_I;
-      }
-      break;
-      case KeyEvent.VK_O: {
-        zxKeyCode = ZXKEY_O;
-      }
-      break;
-      case KeyEvent.VK_P: {
-        zxKeyCode = ZXKEY_P;
-      }
-      break;
-      case KeyEvent.VK_A: {
-        zxKeyCode = ZXKEY_A;
-      }
-      break;
-      case KeyEvent.VK_S: {
-        zxKeyCode = ZXKEY_S;
-      }
-      break;
-      case KeyEvent.VK_D: {
-        zxKeyCode = ZXKEY_D;
-      }
-      break;
-      case KeyEvent.VK_F: {
-        zxKeyCode = ZXKEY_F;
-      }
-      break;
-      case KeyEvent.VK_G: {
-        zxKeyCode = ZXKEY_G;
-      }
-      break;
-      case KeyEvent.VK_H: {
-        zxKeyCode = ZXKEY_H;
-      }
-      break;
-      case KeyEvent.VK_J: {
-        zxKeyCode = ZXKEY_J;
-      }
-      break;
-      case KeyEvent.VK_K: {
-        zxKeyCode = ZXKEY_K;
-      }
-      break;
-      case KeyEvent.VK_L: {
-        zxKeyCode = ZXKEY_L;
-      }
-      break;
-      case KeyEvent.VK_ENTER: {
-        zxKeyCode = ZXKEY_EN;
-      }
-      break;
-      case KeyEvent.VK_Z: {
-        zxKeyCode = ZXKEY_Z;
-      }
-      break;
-      case KeyEvent.VK_X: {
-        zxKeyCode = ZXKEY_X;
-      }
-      break;
-      case KeyEvent.VK_C: {
-        zxKeyCode = ZXKEY_C;
-      }
-      break;
-      case KeyEvent.VK_V: {
-        zxKeyCode = ZXKEY_V;
-      }
-      break;
-      case KeyEvent.VK_B: {
-        zxKeyCode = ZXKEY_B;
-      }
-      break;
-      case KeyEvent.VK_N: {
-        zxKeyCode = ZXKEY_N;
-      }
-      break;
-      case KeyEvent.VK_M: {
-        zxKeyCode = ZXKEY_M;
-      }
-      break;
-      case KeyEvent.VK_SPACE: {
-        zxKeyCode = ZXKEY_SP;
-      }
-      break;
-      case KeyEvent.VK_SHIFT: {
-        zxKeyCode = ZXKEY_CS;
-      }
-      break;
-      case KeyEvent.VK_ALT: {
-        zxKeyCode = ZXKEY_SS;
-      }
-      break;
-      case KeyEvent.VK_BACK_SPACE: {
-        zxKeyCode = ZXKEY_CS | ZXKEY_0;
-      }
-      break;
-      case KeyEvent.VK_LEFT: {
-        zxKeyCode = ZXKEY_CS | ZXKEY_5;
-      }
-      break;
-      case KeyEvent.VK_RIGHT: {
-        zxKeyCode = ZXKEY_CS | ZXKEY_8;
-      }
-      break;
-      case KeyEvent.VK_UP: {
-        zxKeyCode = ZXKEY_CS | ZXKEY_7;
-      }
-      break;
-      case KeyEvent.VK_DOWN: {
-        zxKeyCode = ZXKEY_CS | ZXKEY_6;
-      }
-      break;
-      case KeyEvent.VK_COMMA: {
-        zxKeyCode = ZXKEY_SS | ZXKEY_N;
-      }
-      break;
-      case KeyEvent.VK_PERIOD: {
-        zxKeyCode = ZXKEY_SS | ZXKEY_M;
-      }
-      break;
-      case KeyEvent.VK_EQUALS: {
-        zxKeyCode = ZXKEY_SS | ZXKEY_L;
-      }
-      break;
-      case KeyEvent.VK_SLASH: {
-        zxKeyCode = ZXKEY_SS | ZXKEY_V;
-      }
-      break;
-      case KeyEvent.VK_QUOTE: {
-        zxKeyCode = ZXKEY_SS | ZXKEY_7;
-      }
-      break;
-      case KeyEvent.VK_MINUS: {
-        zxKeyCode = ZXKEY_SS | ZXKEY_J;
-      }
-      break;
     }
 
     boolean consumed = false;
@@ -643,42 +654,42 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   public void doKempstonCenterX() {
     int state = this.kempstonSignals;
     state = state
-        & ~(KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT | KeyboardKempstonAndTapeIn.KEMPSTON_LEFT);
+            & ~(KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT | KeyboardKempstonAndTapeIn.KEMPSTON_LEFT);
     this.kempstonSignals = state;
   }
 
   public void doKempstonCenterY() {
     int state = this.kempstonSignals;
     state =
-        state & ~(KeyboardKempstonAndTapeIn.KEMPSTON_UP | KeyboardKempstonAndTapeIn.KEMPSTON_DOWN);
+            state & ~(KeyboardKempstonAndTapeIn.KEMPSTON_UP | KeyboardKempstonAndTapeIn.KEMPSTON_DOWN);
     this.kempstonSignals = state;
   }
 
   public void doKempstonLeft() {
     int state = this.kempstonSignals;
     state = KeyboardKempstonAndTapeIn.KEMPSTON_LEFT |
-        (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT);
+            (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT);
     this.kempstonSignals = state;
   }
 
   public void doKempstonUp() {
     int state = this.kempstonSignals;
     state =
-        KeyboardKempstonAndTapeIn.KEMPSTON_UP | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_DOWN);
+            KeyboardKempstonAndTapeIn.KEMPSTON_UP | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_DOWN);
     this.kempstonSignals = state;
   }
 
   public void doKempstonRight() {
     int state = this.kempstonSignals;
     state = KeyboardKempstonAndTapeIn.KEMPSTON_RIGHT |
-        (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_LEFT);
+            (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_LEFT);
     this.kempstonSignals = state;
   }
 
   public void doKempstonDown() {
     int state = this.kempstonSignals;
     state =
-        KeyboardKempstonAndTapeIn.KEMPSTON_DOWN | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_UP);
+            KeyboardKempstonAndTapeIn.KEMPSTON_DOWN | (state & ~KeyboardKempstonAndTapeIn.KEMPSTON_UP);
     this.kempstonSignals = state;
   }
 
