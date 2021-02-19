@@ -1569,13 +1569,14 @@ public final class VideoController extends JComponent
 
   @Override
   public void preStep(final boolean signalReset, final boolean tstatesIntReached,
-                      boolean wallclockInt) {
+                      boolean wallClockInt) {
     if (signalReset) {
       this.portFEw = 0x00;
     }
-    if (wallclockInt) {
+    if (wallClockInt) {
       this.tstatesCounter = 0;
     }
+    this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
   }
 
   @Override

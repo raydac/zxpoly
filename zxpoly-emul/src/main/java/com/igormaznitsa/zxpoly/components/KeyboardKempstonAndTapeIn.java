@@ -261,7 +261,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   private int getKbdValueForLines(int highPortByte) {
     final long vkbKeyState = this.board.getVideoController().getVkbState();
-    final long state = vkbKeyState == ZXKEY_NONE ? this.bufferKeyboardLines : vkbKeyState;
+    final long state = vkbKeyState & this.bufferKeyboardLines;
     int result = 0xFF;
     for (int i = 0; i < 8; i++) {
       if ((highPortByte & 1) == 0) {
