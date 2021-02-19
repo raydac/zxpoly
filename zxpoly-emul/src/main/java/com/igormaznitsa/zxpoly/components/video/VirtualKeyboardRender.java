@@ -20,7 +20,7 @@ public final class VirtualKeyboardRender {
           ZXKEY_CS, ZXKEY_Z, ZXKEY_X, ZXKEY_C, ZXKEY_V, ZXKEY_B, ZXKEY_N, ZXKEY_M, ZXKEY_SS, ZXKEY_SP
   };
   private static final int[] BIT2KEY;
-  private static final int TICKS_BEFORE_RESET_STICKY = 10;
+  private static final int TICKS_BEFORE_RELEASE_STICKY = 10;
 
   static {
     BIT2KEY = new int[64];
@@ -37,7 +37,7 @@ public final class VirtualKeyboardRender {
 
   private final KeyboardKempstonAndTapeIn mainKeyboard;
   private final VirtualKeyboardDecoration vkbdDecoration;
-  private volatile int ticksTillResetStyickyKeys = 0;
+  private volatile int ticksTillReleaseStickyKeys = 0;
   private volatile long vkbKeysState = ZXKEY_NONE;
   private volatile MouseEvent lastMouseClickEvent = null;
 
@@ -87,9 +87,9 @@ public final class VirtualKeyboardRender {
 
   public void preState(final boolean signalReset, final boolean tstatesIntReached,
                        boolean wallclockInt) {
-    if (wallclockInt && this.ticksTillResetStyickyKeys > 0) {
-      this.ticksTillResetStyickyKeys--;
-      if (this.ticksTillResetStyickyKeys == 0) {
+    if (wallclockInt && this.ticksTillReleaseStickyKeys > 0) {
+      this.ticksTillReleaseStickyKeys--;
+      if (this.ticksTillReleaseStickyKeys == 0) {
         this.vkbKeysState |= VKB_STICKY_KEYS;
       }
     }
@@ -120,7 +120,7 @@ public final class VirtualKeyboardRender {
         if (pressingEvent) {
           result ^= keyCode;
           if ((result & VKB_STICKY_KEYS) == 0) {
-            this.ticksTillResetStyickyKeys = TICKS_BEFORE_RESET_STICKY;
+            this.ticksTillReleaseStickyKeys = TICKS_BEFORE_RELEASE_STICKY;
           }
         }
       }
@@ -130,6 +130,7 @@ public final class VirtualKeyboardRender {
 
   public void doReset() {
     this.vkbKeysState = ZXKEY_NONE;
+    this.ticksTillReleaseStickyKeys = 0;
     this.lastMouseClickEvent = null;
   }
 
