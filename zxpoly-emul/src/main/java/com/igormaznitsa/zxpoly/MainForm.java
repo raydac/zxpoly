@@ -2119,7 +2119,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     try {
       this.turnZxKeyboardOff();
       final OptionsPanel optionsPanel = new OptionsPanel(null);
-      if (showConfirmDialog(this, optionsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION,
+      if (showConfirmDialog(this, new JScrollPane(optionsPanel), "Preferences", JOptionPane.OK_CANCEL_OPTION,
               JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
         optionsPanel.getData().store();
         showMessageDialog(this, "Some options will be activated only after emulator restart!",
