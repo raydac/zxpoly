@@ -52,8 +52,10 @@ public class OptionsPanel extends JPanel {
   private JLabel labelVirtualKbdApart;
   private JLabel labelVirtualKbdLook;
   private JLabel labelCustomRomPath;
+  private JLabel labelMacroCursorKeys;
   private JCheckBox checkGrabSound;
   private JCheckBox checkVkbdApart;
+  private JCheckBox checkAutoiCsForCursorKeys;
   private JComboBox<String> comboNetAdddr;
   private JComboBox<String> comboRomSource;
   private JComboBox<VirtualKeyboardLook> comboKeyboardLook;
@@ -126,6 +128,7 @@ public class OptionsPanel extends JPanel {
     this.spinnerFramesPerSec.setValue(data.frameRate);
     this.comboRomSource.setSelectedItem(Rom.findForLink(data.activeRom, Rom.TEST).getTitle());
     this.comboKeyboardLook.setSelectedItem(data.keyboardLook);
+    this.checkAutoiCsForCursorKeys.setSelected(data.autoCsForCursorKeys);
 
     this.keySelectorKempstonFire.selectForCode(data.kempstonKeyFire);
     this.keySelectorKempstonRight.selectForCode(data.kempstonKeyRight);
@@ -164,7 +167,9 @@ public class OptionsPanel extends JPanel {
     labelVirtualKbdApart = new JLabel();
     labelVirtualKbdLook = new JLabel();
     labelCustomRomPath = new JLabel();
+    labelMacroCursorKeys = new JLabel();
     checkKempstonMouseAllowed = new JCheckBox();
+    checkAutoiCsForCursorKeys = new JCheckBox();
     checkVkbdApart = new JCheckBox();
     comboKeyboardLook = new JComboBox<>(VirtualKeyboardLook.values());
     textCustomRomPath = new JTextField();
@@ -395,6 +400,20 @@ public class OptionsPanel extends JPanel {
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(comboKeyboardLook, gridBagConstraints);
 
+    labelMacroCursorKeys.setHorizontalAlignment(RIGHT);
+    labelMacroCursorKeys.setText("Auto-CS for cursor keys:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 9;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelMacroCursorKeys, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 9;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(checkAutoiCsForCursorKeys, gridBagConstraints);
+
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 1;
@@ -426,19 +445,20 @@ public class OptionsPanel extends JPanel {
 
     gbx.gridy = 2;
     gbx.gridx = 0;
+    kempstonLabel = new JLabel("DOWN:");
+    kempstonLabel.setHorizontalAlignment(RIGHT);
+    panelKempston.add(kempstonLabel, gbx);
+    gbx.gridx = 1;
+    panelKempston.add(this.keySelectorKempstonDown, gbx);
+
+    gbx.gridy = 3;
+    gbx.gridx = 0;
     kempstonLabel = new JLabel("UP:");
     kempstonLabel.setHorizontalAlignment(RIGHT);
     panelKempston.add(kempstonLabel, gbx);
     gbx.gridx = 1;
     panelKempston.add(this.keySelectorKempstonUp, gbx);
 
-    gbx.gridy = 3;
-    gbx.gridx = 0;
-    kempstonLabel = new JLabel("DOWN:");
-    kempstonLabel.setHorizontalAlignment(RIGHT);
-    panelKempston.add(kempstonLabel, gbx);
-    gbx.gridx = 1;
-    panelKempston.add(this.keySelectorKempstonDown, gbx);
 
     gbx.gridy = 4;
     gbx.gridx = 0;
@@ -544,6 +564,8 @@ public class OptionsPanel extends JPanel {
     public final boolean kempstonMouseAllowed;
     public final boolean zx128byDefault;
     public final boolean vkdApart;
+    public final boolean autoCsForCursorKeys;
+
     public final int kempstonKeyUp;
     public final int kempstonKeyDown;
     public final int kempstonKeyLeft;
@@ -553,6 +575,7 @@ public class OptionsPanel extends JPanel {
     public DataContainer() {
       final String cromPath = AppOptions.getInstance().getCustomRomPath();
       this.customRomPath = cromPath == null ? "" : cromPath;
+      this.autoCsForCursorKeys = AppOptions.getInstance().getAutoCsForCursorKeys();
       this.keyboardLook = AppOptions.getInstance().getKeyboardLook();
       this.vkdApart = AppOptions.getInstance().isVkbdApart();
       this.activeRom = AppOptions.getInstance().getActiveRom();
@@ -581,6 +604,7 @@ public class OptionsPanel extends JPanel {
 
       this.customRomPath = optionsPanel.textCustomRomPath.getText();
 
+      this.autoCsForCursorKeys = optionsPanel.checkAutoiCsForCursorKeys.isSelected();
       this.vkdApart = optionsPanel.checkVkbdApart.isSelected();
       this.activeRom = rom.getLink();
       this.intPerFrame = (Integer) optionsPanel.spinnerIntFrame.getValue();
@@ -602,6 +626,7 @@ public class OptionsPanel extends JPanel {
     }
 
     public void store() {
+      AppOptions.getInstance().setAutoCsForCursorKeys(this.autoCsForCursorKeys);
       AppOptions.getInstance().setCustomRomPath(this.customRomPath);
       AppOptions.getInstance().setKeyboardLook(this.keyboardLook);
       AppOptions.getInstance().setVkbdApart(this.vkdApart);

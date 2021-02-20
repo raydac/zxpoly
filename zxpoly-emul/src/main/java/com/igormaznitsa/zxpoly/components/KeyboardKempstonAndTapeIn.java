@@ -161,6 +161,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private final int kempstonVkDown;
   private final int kempstonVkFire;
 
+  private final long cursorCsMask = AppOptions.getInstance().getAutoCsForCursorKeys() ? ZXKEY_CS : 0L;
+
   public boolean isOnlyKempstonEvents() {
     return this.onlyKempstonEvents;
   }
@@ -561,19 +563,19 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
         }
         break;
         case KeyEvent.VK_LEFT: {
-          zxKeyCode = ZXKEY_CS | ZXKEY_5;
+          zxKeyCode = this.cursorCsMask | ZXKEY_5;
         }
         break;
         case KeyEvent.VK_RIGHT: {
-          zxKeyCode = ZXKEY_CS | ZXKEY_8;
+          zxKeyCode = this.cursorCsMask | ZXKEY_8;
         }
         break;
         case KeyEvent.VK_UP: {
-          zxKeyCode = ZXKEY_CS | ZXKEY_7;
+          zxKeyCode = this.cursorCsMask | ZXKEY_7;
         }
         break;
         case KeyEvent.VK_DOWN: {
-          zxKeyCode = ZXKEY_CS | ZXKEY_6;
+          zxKeyCode = this.cursorCsMask | ZXKEY_6;
         }
         break;
         case KeyEvent.VK_COMMA: {

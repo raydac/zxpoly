@@ -54,6 +54,14 @@ public final class AppOptions {
     preferences.put(Option.LAST_SELECTED_AUDIO_DEVICE.name(), device);
   }
 
+  public synchronized boolean getAutoCsForCursorKeys() {
+    return preferences.getBoolean(Option.AUTOCS_FOR_CURSOR_KEYS.name(), true);
+  }
+
+  public synchronized void setAutoCsForCursorKeys(final boolean flag) {
+    preferences.putBoolean(Option.AUTOCS_FOR_CURSOR_KEYS.name(), flag);
+  }
+
   public synchronized VirtualKeyboardLook getKeyboardLook() {
     VirtualKeyboardLook result = VirtualKeyboardLook.DEFAULT;
     final String name = preferences.get(Option.KEYBOARD_LOOK.name(), result.name());
@@ -306,6 +314,7 @@ public final class AppOptions {
   }
 
   public enum Option {
+    AUTOCS_FOR_CURSOR_KEYS,
     CUSTOM_ROM_PATH,
     STREAM_FFMPEGPATH,
     STREAM_GRABSOUND,
