@@ -102,7 +102,7 @@ public final class VirtualKeyboardDecoration {
     }
   }
 
-  public int findBitPosition(final Point point) {
+  public int findPressedKeyBits(final Point point) {
     for (int i = 0; i < this.keyCoords.length; i++) {
       if (this.keyCoords[i].contains(point)) return i;
     }

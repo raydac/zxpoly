@@ -85,9 +85,10 @@ public final class VirtualKeyboardRender {
     }
   }
 
-  public void preState(final boolean signalReset, final boolean tstatesIntReached,
-                       boolean wallclockInt) {
-    if (wallclockInt && this.ticksTillReleaseStickyKeys > 0) {
+  public void preState(final boolean signalReset,
+                       final boolean tstatesIntReached,
+                       final boolean wallClockInt) {
+    if (wallClockInt && this.ticksTillReleaseStickyKeys > 0) {
       this.ticksTillReleaseStickyKeys--;
       if (this.ticksTillReleaseStickyKeys == 0) {
         this.vkbKeysState |= VKB_STICKY_KEYS;
@@ -103,22 +104,25 @@ public final class VirtualKeyboardRender {
 
     if (mouseEvent != null && keyboardArea.contains(mouseEvent.getPoint())) {
       final Point normalized = new Point((int) Math.round((mouseEvent.getPoint().x - keyboardArea.x) / scaleX), (int) Math.round((mouseEvent.getPoint().y - keyboardArea.y) / scaleY));
-      final int pressedKeyBit = this.vkbdDecoration.findBitPosition(normalized);
-      if (pressedKeyBit < 0) return;
+      final int pressedKeyBits = this.vkbdDecoration.findPressedKeyBits(normalized);
+      if (pressedKeyBits < 0) return;
 
-      final long keyCode = KEY_TABLE[BIT2KEY[pressedKeyBit]];
+      final long keyCode = KEY_TABLE[BIT2KEY[pressedKeyBits]];
 
       final boolean pressingEvent = mouseEvent.getID() == MouseEvent.MOUSE_PRESSED;
 
-      if ((keyCode & VKB_STICKY_KEYS) == 0) {
+      if ((keyCode & ~VKB_STICKY_KEYS) != 0) {
+        final long woSticky = keyCode & ~VKB_STICKY_KEYS;
         if (pressingEvent) {
-          result &= ~keyCode;
+          result &= ~woSticky;
         } else {
-          result |= keyCode;
+          result |= woSticky;
         }
-      } else {
+      }
+
+      if ((keyCode & VKB_STICKY_KEYS) != 0) {
         if (pressingEvent) {
-          result ^= keyCode;
+          result ^= (keyCode & VKB_STICKY_KEYS);
           if ((result & VKB_STICKY_KEYS) == 0) {
             this.ticksTillReleaseStickyKeys = TICKS_BEFORE_RELEASE_STICKY;
           }
