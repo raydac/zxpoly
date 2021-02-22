@@ -178,7 +178,7 @@
                                     <toolJdk>${mvnjlink.jdk.work.path}</toolJdk>
                                     <jdepsReportPath>${project.build.directory}${file.separator}jdeps.out
                                     </jdepsReportPath>
-                                    <output>${project.build.directory}${file.separator}jre_linux</output>
+                                    <output>${project.build.directory}${file.separator}jre_linux_amd64</output>
                                     <modulePaths>
                                         <path>${mvnjlink.jdk.linux.path}${file.separator}jmods</path>
                                     </modulePaths>
@@ -202,7 +202,7 @@
                                     <toolJdk>${mvnjlink.jdk.work.path}</toolJdk>
                                     <jdepsReportPath>${project.build.directory}${file.separator}jdeps.out
                                     </jdepsReportPath>
-                                    <output>${project.build.directory}${file.separator}jre_windows</output>
+                                    <output>${project.build.directory}${file.separator}jre_windows_amd64</output>
                                     <modulePaths>
                                         <path>${mvnjlink.jdk.windows.path}${file.separator}jmods</path>
                                     </modulePaths>
@@ -226,7 +226,7 @@
                                     <toolJdk>${mvnjlink.jdk.work.path}</toolJdk>
                                     <jdepsReportPath>${project.build.directory}${file.separator}jdeps.out
                                     </jdepsReportPath>
-                                    <output>${project.build.directory}${file.separator}jre_macos</output>
+                                    <output>${project.build.directory}${file.separator}jre_macos_amd64</output>
                                     <modulePaths>
                                         <path>${mvnjlink.jdk.macos.path}${file.separator}jmods</path>
                                     </modulePaths>
@@ -250,7 +250,7 @@
                                     <toolJdk>${mvnjlink.jdk.work.path}</toolJdk>
                                     <jdepsReportPath>${project.build.directory}${file.separator}jdeps.out
                                     </jdepsReportPath>
-                                    <output>${project.build.directory}${file.separator}jre_macos_arm</output>
+                                    <output>${project.build.directory}${file.separator}jre_macos_arm64</output>
                                     <modulePaths>
                                         <path>${mvnjlink.jdk.macos.arm64.path}${file.separator}jmods</path>
                                     </modulePaths>
@@ -339,7 +339,7 @@
                                 </goals>
                                 <configuration>
                                     <appendAssemblyId>false</appendAssemblyId>
-                                    <finalName>${project.build.finalName}-linux-x64-withjdk</finalName>
+                                    <finalName>${project.build.finalName}-linux-amd64-jdk</finalName>
                                     <descriptors>
                                         <descriptor>src${file.separator}assembly${file.separator}linux.xml</descriptor>
                                     </descriptors>
@@ -353,7 +353,7 @@
                                 </goals>
                                 <configuration>
                                     <appendAssemblyId>false</appendAssemblyId>
-                                    <finalName>${project.build.finalName}-windows-x64-withjdk</finalName>
+                                    <finalName>${project.build.finalName}-windows-amd64-jdk</finalName>
                                     <descriptors>
                                         <descriptor>src${file.separator}assembly${file.separator}windows.xml
                                         </descriptor>
@@ -368,7 +368,7 @@
                                 </goals>
                                 <configuration>
                                     <appendAssemblyId>false</appendAssemblyId>
-                                    <finalName>${project.build.finalName}-macos-x64-withjdk</finalName>
+                                    <finalName>${project.build.finalName}-macos-amd64-jdk</finalName>
                                     <descriptors>
                                         <descriptor>src${file.separator}assembly${file.separator}mac.xml</descriptor>
                                     </descriptors>
@@ -382,7 +382,7 @@
                                 </goals>
                                 <configuration>
                                     <appendAssemblyId>false</appendAssemblyId>
-                                    <finalName>${project.build.finalName}-macos-arm64-withjdk</finalName>
+                                    <finalName>${project.build.finalName}-macos-arm64-jdk</finalName>
                                     <descriptors>
                                         <descriptor>src${file.separator}assembly${file.separator}mac_arm.xml
                                         </descriptor>
@@ -405,7 +405,7 @@
                                 <configuration>
                                     <fileset>
                                         <directory>
-                                            ${project.build.directory}${file.separator}${project.build.finalName}-macos-x64-withjdk.jar${file.separator}META-INF
+                                            ${project.build.directory}${file.separator}${project.build.finalName}-macos-amd64-jdk.jar${file.separator}META-INF
                                         </directory>
                                     </fileset>
                                 </configuration>
@@ -419,7 +419,7 @@
                                 <configuration>
                                     <fileset>
                                         <directory>
-                                            ${project.build.directory}${file.separator}${project.build.finalName}-macos-arm64-withjdk.jar${file.separator}META-INF
+                                            ${project.build.directory}${file.separator}${project.build.finalName}-macos-arm64-jdk.jar${file.separator}META-INF
                                         </directory>
                                     </fileset>
                                 </configuration>
@@ -439,10 +439,10 @@
                                 </goals>
                                 <configuration>
                                     <sourceFile>
-                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-x64-withjdk.jar
+                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-amd64-jdk.jar
                                     </sourceFile>
                                     <destinationFile>
-                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-x64-withjdk.zip
+                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-amd64-jdk.zip
                                     </destinationFile>
                                 </configuration>
                             </execution>
@@ -454,10 +454,10 @@
                                 </goals>
                                 <configuration>
                                     <sourceFile>
-                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-arm64-withjdk.jar
+                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-arm64-jdk.jar
                                     </sourceFile>
                                     <destinationFile>
-                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-arm64-withjdk.zip
+                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-arm64-jdk.zip
                                     </destinationFile>
                                 </configuration>
                             </execution>

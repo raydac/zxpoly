@@ -38,7 +38,7 @@
       </includes>
     </fileSet>
     <fileSet>
-      <directory>${project.build.directory}${file.separator}jre_windows</directory>
+      <directory>${project.build.directory}${file.separator}jre_windows_amd64</directory>
       <outputDirectory>${project.build.finalName}${file.separator}jre</outputDirectory>
       <includes>
         <include>*/**</include>

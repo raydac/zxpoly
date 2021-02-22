@@ -33,7 +33,7 @@
       </includes>
     </fileSet>
     <fileSet>
-      <directory>${project.build.directory}${file.separator}jre_linux</directory>
+      <directory>${project.build.directory}${file.separator}jre_linux_amd64</directory>
       <outputDirectory>${project.build.finalName}${file.separator}jre</outputDirectory>
       <includes>
         <include>*/**</include>

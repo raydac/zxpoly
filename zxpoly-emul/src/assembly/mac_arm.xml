@@ -40,7 +40,7 @@
       <filtered>false</filtered>
     </fileSet>
     <fileSet>
-      <directory>${project.build.directory}${file.separator}jre_macos_arm</directory>
+      <directory>${project.build.directory}${file.separator}jre_macos_arm64</directory>
       <outputDirectory>
         ${file.separator}ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS${file.separator}jre
       </outputDirectory>
