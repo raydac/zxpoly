@@ -24,9 +24,6 @@ import com.igormaznitsa.zxpoly.utils.AppOptions.Rom;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.List;
@@ -74,11 +71,11 @@ public class OptionsPanel extends JPanel {
   private JTextField textFfmpegPath;
   private JTextField textCustomRomPath;
 
-  private KeyCodeSelector keySelectorKempstonLeft;
-  private KeyCodeSelector keySelectorKempstonRight;
-  private KeyCodeSelector keySelectorKempstonUp;
-  private KeyCodeSelector keySelectorKempstonDown;
-  private KeyCodeSelector keySelectorKempstonFire;
+  private KeyCodeChooser keySelectorKempstonLeft;
+  private KeyCodeChooser keySelectorKempstonRight;
+  private KeyCodeChooser keySelectorKempstonUp;
+  private KeyCodeChooser keySelectorKempstonDown;
+  private KeyCodeChooser keySelectorKempstonFire;
 
   public OptionsPanel(final DataContainer dataContainer) {
     initComponents();
@@ -130,11 +127,11 @@ public class OptionsPanel extends JPanel {
     this.comboKeyboardLook.setSelectedItem(data.keyboardLook);
     this.checkAutoiCsForCursorKeys.setSelected(data.autoCsForCursorKeys);
 
-    this.keySelectorKempstonFire.selectForCode(data.kempstonKeyFire);
-    this.keySelectorKempstonRight.selectForCode(data.kempstonKeyRight);
-    this.keySelectorKempstonLeft.selectForCode(data.kempstonKeyLeft);
-    this.keySelectorKempstonUp.selectForCode(data.kempstonKeyUp);
-    this.keySelectorKempstonDown.selectForCode(data.kempstonKeyDown);
+    this.keySelectorKempstonFire.setKey(data.kempstonKeyFire);
+    this.keySelectorKempstonRight.setKey(data.kempstonKeyRight);
+    this.keySelectorKempstonLeft.setKey(data.kempstonKeyLeft);
+    this.keySelectorKempstonUp.setKey(data.kempstonKeyUp);
+    this.keySelectorKempstonDown.setKey(data.kempstonKeyDown);
   }
 
   @SuppressWarnings("unchecked")
@@ -174,11 +171,11 @@ public class OptionsPanel extends JPanel {
     comboKeyboardLook = new JComboBox<>(VirtualKeyboardLook.values());
     textCustomRomPath = new JTextField();
 
-    keySelectorKempstonDown = new KeyCodeSelector();
-    keySelectorKempstonLeft = new KeyCodeSelector();
-    keySelectorKempstonUp = new KeyCodeSelector();
-    keySelectorKempstonRight = new KeyCodeSelector();
-    keySelectorKempstonFire = new KeyCodeSelector();
+    keySelectorKempstonDown = new KeyCodeChooser();
+    keySelectorKempstonLeft = new KeyCodeChooser();
+    keySelectorKempstonUp = new KeyCodeChooser();
+    keySelectorKempstonRight = new KeyCodeChooser();
+    keySelectorKempstonFire = new KeyCodeChooser();
 
     setLayout(new GridBagLayout());
 
@@ -498,56 +495,6 @@ public class OptionsPanel extends JPanel {
     }
   }
 
-  private static final class KeyCodeSelector extends JComboBox<NameKeyPair> {
-    KeyCodeSelector() {
-      super();
-
-      final List<NameKeyPair> keyList = new ArrayList<>();
-      keyList.add(new NameKeyPair("", -1));
-
-      for (final Field field : KeyEvent.class.getFields()) {
-        if (field.getType() == int.class && Modifier.isPublic(field.getModifiers())
-                && Modifier.isFinal(field.getModifiers())
-                && Modifier.isStatic(field.getModifiers())
-                && field.getName().startsWith("VK_")) {
-          final String name = field.getName().substring(3);
-          try {
-            final int code = field.getInt(null);
-            keyList.add(new NameKeyPair(name, code));
-          } catch (Exception ex) {
-            throw new Error("Unexpected error during key event code extraction: " + field, ex);
-          }
-        }
-      }
-
-      Collections.sort(keyList);
-      final ComboBoxModel<NameKeyPair> model = new DefaultComboBoxModel<>(keyList.toArray(new NameKeyPair[0]));
-      this.setModel(model);
-    }
-
-    KeyCodeSelector selectForCode(final int keyCode) {
-      final ComboBoxModel<NameKeyPair> model = this.getModel();
-      NameKeyPair found = null;
-      for (int i = 0; i < model.getSize(); i++) {
-        final NameKeyPair item = model.getElementAt(i);
-        if (item.keyCode == keyCode) {
-          found = item;
-          break;
-        }
-      }
-      if (found == null) {
-        this.setSelectedIndex(0);
-      } else {
-        this.setSelectedItem(found);
-      }
-      return this;
-    }
-
-    int getSelectedCode() {
-      return ((NameKeyPair) Objects.requireNonNull(this.getSelectedItem())).keyCode;
-    }
-  }
-
   public static final class DataContainer {
 
     public final String customRomPath;
@@ -618,11 +565,11 @@ public class OptionsPanel extends JPanel {
       this.kempstonMouseAllowed = optionsPanel.checkKempstonMouseAllowed.isSelected();
       this.zx128byDefault = rom != Rom.TEST && optionsPanel.checkZx128ByDefault.isSelected();
 
-      this.kempstonKeyDown = optionsPanel.keySelectorKempstonDown.getSelectedCode();
-      this.kempstonKeyUp = optionsPanel.keySelectorKempstonUp.getSelectedCode();
-      this.kempstonKeyLeft = optionsPanel.keySelectorKempstonLeft.getSelectedCode();
-      this.kempstonKeyRight = optionsPanel.keySelectorKempstonRight.getSelectedCode();
-      this.kempstonKeyFire = optionsPanel.keySelectorKempstonFire.getSelectedCode();
+      this.kempstonKeyDown = optionsPanel.keySelectorKempstonDown.getKey().orElse(-1);
+      this.kempstonKeyUp = optionsPanel.keySelectorKempstonUp.getKey().orElse(-1);
+      this.kempstonKeyLeft = optionsPanel.keySelectorKempstonLeft.getKey().orElse(-1);
+      this.kempstonKeyRight = optionsPanel.keySelectorKempstonRight.getKey().orElse(-1);
+      this.kempstonKeyFire = optionsPanel.keySelectorKempstonFire.getKey().orElse(-1);
     }
 
     public void store() {
