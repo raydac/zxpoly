@@ -226,7 +226,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JCheckBoxMenuItem menuOptionsEnableVideoStream;
   private JCheckBoxMenuItem menuOptionsShowIndicators;
   private JCheckBoxMenuItem menuOptionsTurbo;
-  private JCheckBoxMenuItem menuOptionsOnlyKempstonEvents;
+  private JCheckBoxMenuItem menuOptionsOnlyJoystickEvents;
+  private JMenu menuOptionsJoystickSelect;
+  private JRadioButtonMenuItem menuOptionsJoystickKempston;
+  private JRadioButtonMenuItem menuOptionsJoystickCursor;
   private JCheckBoxMenuItem menuOptionsZX128Mode;
   private JMenu menuService;
   private JMenuItem menuServiceGameControllers;
@@ -362,7 +365,20 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.keyboardAndTapeModule = this.board.findIoDevice(KeyboardKempstonAndTapeIn.class);
     this.kempstonMouse = this.board.findIoDevice(KempstonMouse.class);
 
-    this.menuOptionsOnlyKempstonEvents.setSelected(this.keyboardAndTapeModule.isOnlyKempstonEvents());
+    this.menuOptionsOnlyJoystickEvents.setSelected(this.keyboardAndTapeModule.isOnlyJoystickEvents());
+    if (this.keyboardAndTapeModule.isKempstonJoystickActivated()) {
+      this.menuOptionsJoystickKempston.setSelected(true);
+    } else {
+      this.menuOptionsJoystickCursor.setSelected(true);
+    }
+
+    this.menuOptionsJoystickKempston.addActionListener(e -> {
+      keyboardAndTapeModule.setKempstonJoystickActivated(menuOptionsJoystickKempston.isSelected());
+    });
+
+    this.menuOptionsJoystickCursor.addActionListener(e -> {
+      keyboardAndTapeModule.setKempstonJoystickActivated(menuOptionsJoystickKempston.isSelected());
+    });
 
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     manager.addKeyEventDispatcher(
@@ -388,7 +404,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             MainForm.this.stepSemaphor.lock();
             MainForm.this.keyboardAndTapeModule.doReset();
             if (e.getSource() == menuOptions) {
-              menuOptionsOnlyKempstonEvents.setState(keyboardAndTapeModule.isOnlyKempstonEvents());
+              menuOptionsOnlyJoystickEvents.setState(keyboardAndTapeModule.isOnlyJoystickEvents());
               menuOptionsEnableSpeaker
                       .setEnabled(!turboMode && !menuOptionsEnableVideoStream.isSelected());
               menuOptionsEnableSpeaker.setState(board.getBeeper().isActive());
@@ -1415,7 +1431,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsShowIndicators = new JCheckBoxMenuItem();
     menuOptionsZX128Mode = new JCheckBoxMenuItem();
     menuOptionsTurbo = new JCheckBoxMenuItem();
-    menuOptionsOnlyKempstonEvents = new JCheckBoxMenuItem();
+    menuOptionsOnlyJoystickEvents = new JCheckBoxMenuItem();
+    menuOptionsJoystickSelect = new JMenu();
+    menuOptionsJoystickKempston = new JRadioButtonMenuItem();
+    menuOptionsJoystickCursor = new JRadioButtonMenuItem();
     menuOptionsEnableTrapMouse = new JCheckBoxMenuItem();
     menuOptionsEnableSpeaker = new JCheckBoxMenuItem();
     menuOptionsEnableVideoStream = new JCheckBoxMenuItem();
@@ -1800,6 +1819,28 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     menuOptions.setText("Options");
 
+    menuOptionsJoystickSelect.setText("Joystick");
+    menuOptionsJoystickSelect.setToolTipText("Select active joystick type");
+    menuOptionsJoystickKempston.setText("Kempston");
+    menuOptionsJoystickCursor.setText("Cursor");
+
+    menuOptionsJoystickSelect.add(menuOptionsJoystickKempston);
+    menuOptionsJoystickSelect.add(menuOptionsJoystickCursor);
+
+    final ButtonGroup joystickButtonGroup = new ButtonGroup();
+    joystickButtonGroup.add(menuOptionsJoystickKempston);
+    joystickButtonGroup.add(menuOptionsJoystickCursor);
+
+    menuOptions.add(menuOptionsJoystickSelect);
+
+    menuOptionsOnlyJoystickEvents.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F6, 0));
+    menuOptionsOnlyJoystickEvents.setText("Only joystick");
+    menuOptionsOnlyJoystickEvents.setToolTipText("Disable events from keyboard and allow events only from joystick");
+    menuOptionsOnlyJoystickEvents.setIcon(new ImageIcon(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/onlykempston.png"))); // NOI18N
+    menuOptionsOnlyJoystickEvents.addActionListener(this::menuOptionsOnlyKempstonEvents);
+    menuOptions.add(menuOptionsOnlyJoystickEvents);
+
     menuOptionsShowIndicators.setSelected(true);
     menuOptionsShowIndicators.setText("Indicator panel");
     menuOptionsShowIndicators.setIcon(new ImageIcon(
@@ -1821,15 +1862,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsTurbo.addActionListener(this::menuOptionsTurboActionPerformed);
     menuOptions.add(menuOptionsTurbo);
 
-    menuOptionsOnlyKempstonEvents.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F6, 0));
-    menuOptionsOnlyKempstonEvents.setText("Only Kempston");
-    menuOptionsOnlyKempstonEvents.setIcon(new ImageIcon(
-            getClass().getResource("/com/igormaznitsa/zxpoly/icons/onlykempston.png"))); // NOI18N
-    menuOptionsOnlyKempstonEvents.addActionListener(this::menuOptionsOnlyKempstonEvents);
-    menuOptions.add(menuOptionsOnlyKempstonEvents);
-
     menuOptionsEnableTrapMouse.setText("Trap mouse");
-    menuOptionsEnableTrapMouse.setToolTipText("Trap mouse as kempston-mouse");
+    menuOptionsEnableTrapMouse.setToolTipText("Trap mouse as Kempston-mouse");
     menuOptionsEnableTrapMouse.setIcon(new ImageIcon(
             getClass().getResource("/com/igormaznitsa/zxpoly/icons/pointer.png"))); // NOI18N
     menuOptionsEnableTrapMouse.addActionListener(this::menuOptionsEnableTrapMouseActionPerformed);
@@ -1884,8 +1918,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   }
 
   private void menuOptionsOnlyKempstonEvents(final ActionEvent actionEvent) {
-    this.keyboardAndTapeModule.setOnlyKempstonEvents(this.menuOptionsOnlyKempstonEvents.isSelected());
-    LOGGER.info("Only Kempston events: " + this.menuOptionsOnlyKempstonEvents.isSelected());
+    this.keyboardAndTapeModule.setOnlyJoystickEvents(this.menuOptionsOnlyJoystickEvents.isSelected());
+    LOGGER.info("Only Kempston events: " + this.menuOptionsOnlyJoystickEvents.isSelected());
   }
 
   private void menuTapThresholdActionPerformed(final ActionEvent actionEvent) {
@@ -2698,6 +2732,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
         if (!consumed) {
           consumed = this.keyboard.onKeyEvent(e);
+          if (consumed) {
+            e.consume();
+          }
         }
       }
       return consumed;

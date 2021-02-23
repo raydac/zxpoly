@@ -45,7 +45,7 @@ public class KeyCodeChooser extends JPanel {
       }
     };
     this.textField.setEditable(false);
-    this.textField.setColumns(16);
+    this.textField.setColumns(10);
     this.buttonSelect = new JToggleButton("SELECT");
     this.buttonSelect.addKeyListener(new KeyAdapter() {
       @Override

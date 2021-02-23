@@ -151,7 +151,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private volatile long bufferKeyboardLines = 0L;
   private volatile int kempstonSignals = 0;
   private volatile int kempstonBuffer = 0;
-  private volatile boolean onlyKempstonEvents = false;
+  private final int cursorJoystickVkLeft;
 
   private final boolean kempstonMouseAllowed;
 
@@ -160,17 +160,14 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private final int kempstonVkUp;
   private final int kempstonVkDown;
   private final int kempstonVkFire;
+  private final int cursorJoystickVkRight;
+  private final int cursorJoystickVkUp;
+  private final int cursorJoystickVkDown;
+  private final int cursorJoystickVkFire;
+  private volatile boolean onlyJoystickEvents = false;
 
   private final long cursorCsMask = AppOptions.getInstance().getAutoCsForCursorKeys() ? ZXKEY_CS : 0L;
-
-  public boolean isOnlyKempstonEvents() {
-    return this.onlyKempstonEvents;
-  }
-
-  public void setOnlyKempstonEvents(final boolean flag) {
-    this.onlyKempstonEvents = flag;
-    this.keyboardLines = ZXKEY_NONE;
-  }
+  private volatile boolean activatedKempstonJoystick = true;
 
   public KeyboardKempstonAndTapeIn(final Motherboard board, final boolean kempstonMouseAllowed) {
     this.board = board;
@@ -181,6 +178,12 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     this.kempstonVkUp = AppOptions.getInstance().getKempstonVkUp();
     this.kempstonVkDown = AppOptions.getInstance().getKempstonVkDown();
     this.kempstonVkFire = AppOptions.getInstance().getKempstonVkFire();
+
+    this.cursorJoystickVkDown = AppOptions.getInstance().getCursorJoystickDown();
+    this.cursorJoystickVkFire = AppOptions.getInstance().getCursorJoystickFire();
+    this.cursorJoystickVkLeft = AppOptions.getInstance().getCursorJoystickLeft();
+    this.cursorJoystickVkRight = AppOptions.getInstance().getCursorJoystickRight();
+    this.cursorJoystickVkUp = AppOptions.getInstance().getCursorJoystickUp();
 
     if (getDefaultEnvironment().isSupported()) {
       this.detectedControllers =
@@ -207,6 +210,25 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     } else {
       this.detectedControllers = null;
     }
+  }
+
+  public boolean isKempstonJoystickActivated() {
+    return this.activatedKempstonJoystick;
+  }
+
+  public void setKempstonJoystickActivated(final boolean activated) {
+    LOGGER.info("Activated joystick: " + (activated ? "KEMPSTON" : "CURSOR"));
+    this.activatedKempstonJoystick = activated;
+    this.kempstonSignals = 0;
+  }
+
+  public boolean isOnlyJoystickEvents() {
+    return this.onlyJoystickEvents;
+  }
+
+  public void setOnlyJoystickEvents(final boolean flag) {
+    this.onlyJoystickEvents = flag;
+    this.keyboardLines = ZXKEY_NONE;
   }
 
   public void disposeAllActiveGadapters() {
@@ -357,7 +379,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   public boolean onKeyEvent(final KeyEvent evt) {
-    if (evt.isControlDown() && evt.getKeyCode() != KeyEvent.VK_SPACE && !this.onlyKempstonEvents) {
+    if (evt.isControlDown() && evt.getKeyCode() != KeyEvent.VK_SPACE && !this.onlyJoystickEvents) {
       return false;
     }
 
@@ -378,19 +400,35 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
     final int keyCode = evt.getKeyCode();
 
-    if (keyCode == this.kempstonVkLeft) {
-      kempstonCode = KEMPSTON_LEFT;
-    } else if (keyCode == this.kempstonVkRight) {
-      kempstonCode = KEMPSTON_RIGHT;
-    } else if (keyCode == this.kempstonVkUp) {
-      kempstonCode = KEMPSTON_UP;
-    } else if (keyCode == this.kempstonVkDown) {
-      kempstonCode = KEMPSTON_DOWN;
-    } else if (keyCode == this.kempstonVkFire) {
-      kempstonCode = KEMPSTON_FIRE;
+    final boolean kempsonJoystickActivated = this.activatedKempstonJoystick;
+
+    if (kempsonJoystickActivated) {
+      if (keyCode == this.kempstonVkLeft) {
+        kempstonCode = KEMPSTON_LEFT;
+      } else if (keyCode == this.kempstonVkRight) {
+        kempstonCode = KEMPSTON_RIGHT;
+      } else if (keyCode == this.kempstonVkUp) {
+        kempstonCode = KEMPSTON_UP;
+      } else if (keyCode == this.kempstonVkDown) {
+        kempstonCode = KEMPSTON_DOWN;
+      } else if (keyCode == this.kempstonVkFire) {
+        kempstonCode = KEMPSTON_FIRE;
+      }
+    } else {
+      if (keyCode == this.cursorJoystickVkLeft) {
+        zxKeyCode = ZXKEY_5;
+      } else if (keyCode == this.cursorJoystickVkRight) {
+        zxKeyCode = ZXKEY_8;
+      } else if (keyCode == this.cursorJoystickVkUp) {
+        zxKeyCode = ZXKEY_7;
+      } else if (keyCode == this.cursorJoystickVkDown) {
+        zxKeyCode = ZXKEY_6;
+      } else if (keyCode == this.cursorJoystickVkFire) {
+        zxKeyCode = ZXKEY_0;
+      }
     }
 
-    if (!this.onlyKempstonEvents || (evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0) {
+    if (!this.onlyJoystickEvents || (evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0) {
       switch (keyCode) {
         case KeyEvent.VK_ESCAPE: {
           if (this.board.getVideoController().isMouseTrapActive()) {
@@ -563,19 +601,27 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
         }
         break;
         case KeyEvent.VK_LEFT: {
-          zxKeyCode = this.cursorCsMask | ZXKEY_5;
+          if (kempsonJoystickActivated) {
+            zxKeyCode = this.cursorCsMask | ZXKEY_5;
+          }
         }
         break;
         case KeyEvent.VK_RIGHT: {
-          zxKeyCode = this.cursorCsMask | ZXKEY_8;
+          if (kempsonJoystickActivated) {
+            zxKeyCode = this.cursorCsMask | ZXKEY_8;
+          }
         }
         break;
         case KeyEvent.VK_UP: {
-          zxKeyCode = this.cursorCsMask | ZXKEY_7;
+          if (kempsonJoystickActivated) {
+            zxKeyCode = this.cursorCsMask | ZXKEY_7;
+          }
         }
         break;
         case KeyEvent.VK_DOWN: {
-          zxKeyCode = this.cursorCsMask | ZXKEY_6;
+          if (kempsonJoystickActivated) {
+            zxKeyCode = this.cursorCsMask | ZXKEY_6;
+          }
         }
         break;
         case KeyEvent.VK_COMMA: {

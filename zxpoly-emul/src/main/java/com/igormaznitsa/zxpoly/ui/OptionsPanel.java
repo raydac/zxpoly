@@ -77,6 +77,12 @@ public class OptionsPanel extends JPanel {
   private KeyCodeChooser keySelectorKempstonDown;
   private KeyCodeChooser keySelectorKempstonFire;
 
+  private KeyCodeChooser keySelectorCursorJoystickLeft;
+  private KeyCodeChooser keySelectorCursorJoystickRight;
+  private KeyCodeChooser keySelectorCursorJoystickUp;
+  private KeyCodeChooser keySelectorCursorJoystickDown;
+  private KeyCodeChooser keySelectorCursorJoystickFire;
+
   public OptionsPanel(final DataContainer dataContainer) {
     initComponents();
     this.comboRomSource.removeAllItems();
@@ -132,6 +138,12 @@ public class OptionsPanel extends JPanel {
     this.keySelectorKempstonLeft.setKey(data.kempstonKeyLeft);
     this.keySelectorKempstonUp.setKey(data.kempstonKeyUp);
     this.keySelectorKempstonDown.setKey(data.kempstonKeyDown);
+
+    this.keySelectorCursorJoystickUp.setKey(data.cursorJoystickKeyUp);
+    this.keySelectorCursorJoystickFire.setKey(data.cursorJoystickKeyFire);
+    this.keySelectorCursorJoystickRight.setKey(data.cursorJoystickKeyRight);
+    this.keySelectorCursorJoystickLeft.setKey(data.cursorJoystickKeyLeft);
+    this.keySelectorCursorJoystickDown.setKey(data.cursorJoystickKeyDown);
   }
 
   @SuppressWarnings("unchecked")
@@ -176,6 +188,12 @@ public class OptionsPanel extends JPanel {
     keySelectorKempstonUp = new KeyCodeChooser();
     keySelectorKempstonRight = new KeyCodeChooser();
     keySelectorKempstonFire = new KeyCodeChooser();
+
+    keySelectorCursorJoystickDown = new KeyCodeChooser();
+    keySelectorCursorJoystickLeft = new KeyCodeChooser();
+    keySelectorCursorJoystickRight = new KeyCodeChooser();
+    keySelectorCursorJoystickFire = new KeyCodeChooser();
+    keySelectorCursorJoystickUp = new KeyCodeChooser();
 
     setLayout(new GridBagLayout());
 
@@ -465,9 +483,58 @@ public class OptionsPanel extends JPanel {
     gbx.gridx = 1;
     panelKempston.add(this.keySelectorKempstonFire, gbx);
 
+    final JPanel panelCursor = new JPanel(new GridBagLayout());
+    panelCursor.setBorder(createTitledBorder("Cursor joystick"));
+
+    gbx.gridx = 0;
+    gbx.gridy = 0;
+    gbx.fill = GridBagConstraints.HORIZONTAL;
+    gbx.anchor = GridBagConstraints.WEST;
+
+    JLabel cursorLabel = new JLabel("LEFT:");
+    cursorLabel.setHorizontalAlignment(RIGHT);
+    panelCursor.add(cursorLabel, gbx);
+    gbx.gridx = 1;
+    panelCursor.add(this.keySelectorCursorJoystickLeft, gbx);
+
+    gbx.gridy = 1;
+    gbx.gridx = 0;
+    cursorLabel = new JLabel("RIGHT:");
+    cursorLabel.setHorizontalAlignment(RIGHT);
+    panelCursor.add(cursorLabel, gbx);
+    gbx.gridx = 1;
+    panelCursor.add(this.keySelectorCursorJoystickRight, gbx);
+
+    gbx.gridy = 2;
+    gbx.gridx = 0;
+    cursorLabel = new JLabel("DOWN:");
+    cursorLabel.setHorizontalAlignment(RIGHT);
+    panelCursor.add(cursorLabel, gbx);
+    gbx.gridx = 1;
+    panelCursor.add(this.keySelectorCursorJoystickDown, gbx);
+
+    gbx.gridy = 3;
+    gbx.gridx = 0;
+    cursorLabel = new JLabel("UP:");
+    cursorLabel.setHorizontalAlignment(RIGHT);
+    panelCursor.add(cursorLabel, gbx);
+    gbx.gridx = 1;
+    panelCursor.add(this.keySelectorCursorJoystickUp, gbx);
+
+    gbx.gridy = 4;
+    gbx.gridx = 0;
+    cursorLabel = new JLabel("FIRE:");
+    cursorLabel.setHorizontalAlignment(RIGHT);
+    panelCursor.add(cursorLabel, gbx);
+    gbx.gridx = 1;
+    panelCursor.add(this.keySelectorCursorJoystickFire, gbx);
+
+    final JPanel joysticksPanel = new JPanel(new GridLayout(1, 2));
+    joysticksPanel.add(panelKempston);
+    joysticksPanel.add(panelCursor);
 
     gridBagConstraints.gridy = 2;
-    add(panelKempston, gridBagConstraints);
+    add(joysticksPanel, gridBagConstraints);
 
   }
 
@@ -519,6 +586,12 @@ public class OptionsPanel extends JPanel {
     public final int kempstonKeyRight;
     public final int kempstonKeyFire;
 
+    public final int cursorJoystickKeyUp;
+    public final int cursorJoystickKeyDown;
+    public final int cursorJoystickKeyLeft;
+    public final int cursorJoystickKeyRight;
+    public final int cursorJoystickKeyFire;
+
     public DataContainer() {
       final String cromPath = AppOptions.getInstance().getCustomRomPath();
       this.customRomPath = cromPath == null ? "" : cromPath;
@@ -541,6 +614,12 @@ public class OptionsPanel extends JPanel {
       this.kempstonKeyLeft = AppOptions.getInstance().getKempstonVkLeft();
       this.kempstonKeyRight = AppOptions.getInstance().getKempstonVkRight();
       this.kempstonKeyFire = AppOptions.getInstance().getKempstonVkFire();
+
+      this.cursorJoystickKeyDown = AppOptions.getInstance().getCursorJoystickDown();
+      this.cursorJoystickKeyUp = AppOptions.getInstance().getCursorJoystickUp();
+      this.cursorJoystickKeyLeft = AppOptions.getInstance().getCursorJoystickLeft();
+      this.cursorJoystickKeyRight = AppOptions.getInstance().getCursorJoystickRight();
+      this.cursorJoystickKeyFire = AppOptions.getInstance().getCursorJoystickFire();
     }
 
     public DataContainer(final OptionsPanel optionsPanel) {
@@ -570,6 +649,12 @@ public class OptionsPanel extends JPanel {
       this.kempstonKeyLeft = optionsPanel.keySelectorKempstonLeft.getKey().orElse(-1);
       this.kempstonKeyRight = optionsPanel.keySelectorKempstonRight.getKey().orElse(-1);
       this.kempstonKeyFire = optionsPanel.keySelectorKempstonFire.getKey().orElse(-1);
+
+      this.cursorJoystickKeyFire = optionsPanel.keySelectorCursorJoystickFire.getKey().orElse(-1);
+      this.cursorJoystickKeyRight = optionsPanel.keySelectorCursorJoystickRight.getKey().orElse(-1);
+      this.cursorJoystickKeyLeft = optionsPanel.keySelectorCursorJoystickLeft.getKey().orElse(-1);
+      this.cursorJoystickKeyUp = optionsPanel.keySelectorCursorJoystickUp.getKey().orElse(-1);
+      this.cursorJoystickKeyDown = optionsPanel.keySelectorCursorJoystickDown.getKey().orElse(-1);
     }
 
     public void store() {
@@ -595,6 +680,12 @@ public class OptionsPanel extends JPanel {
       AppOptions.getInstance().setKempstonVkRight(this.kempstonKeyRight);
       AppOptions.getInstance().setKempstonVkUp(this.kempstonKeyUp);
       AppOptions.getInstance().setKempstonVkFire(this.kempstonKeyFire);
+
+      AppOptions.getInstance().setCursorJoystickDown(this.cursorJoystickKeyDown);
+      AppOptions.getInstance().setCursorJoystickFire(this.cursorJoystickKeyFire);
+      AppOptions.getInstance().setCursorJoystickLeft(this.cursorJoystickKeyLeft);
+      AppOptions.getInstance().setCursorJoystickRight(this.cursorJoystickKeyRight);
+      AppOptions.getInstance().setCursorJoystickUp(this.cursorJoystickKeyUp);
 
       try {
         AppOptions.getInstance().flush();

@@ -202,6 +202,46 @@ public final class AppOptions {
     preferences.putInt(Option.INTBETWEENFRAMES.name(), Math.max(0, value));
   }
 
+  public synchronized int getCursorJoystickDown() {
+    return preferences.getInt(Option.CURSOR_JOYSTICK_VK_DOWN.name(), KeyEvent.VK_DOWN);
+  }
+
+  public synchronized void setCursorJoystickDown(final int keyCode) {
+    preferences.putInt(Option.CURSOR_JOYSTICK_VK_DOWN.name(), keyCode);
+  }
+
+  public synchronized int getCursorJoystickUp() {
+    return preferences.getInt(Option.CURSOR_JOYSTICK_VK_UP.name(), KeyEvent.VK_UP);
+  }
+
+  public synchronized void setCursorJoystickUp(final int keyCode) {
+    preferences.putInt(Option.CURSOR_JOYSTICK_VK_UP.name(), keyCode);
+  }
+
+  public synchronized int getCursorJoystickLeft() {
+    return preferences.getInt(Option.CURSOR_JOYSTICK_VK_LEFT.name(), KeyEvent.VK_LEFT);
+  }
+
+  public synchronized void setCursorJoystickLeft(final int keyCode) {
+    preferences.putInt(Option.CURSOR_JOYSTICK_VK_LEFT.name(), keyCode);
+  }
+
+  public synchronized int getCursorJoystickRight() {
+    return preferences.getInt(Option.CURSOR_JOYSTICK_VK_RIGHT.name(), KeyEvent.VK_RIGHT);
+  }
+
+  public synchronized void setCursorJoystickRight(final int keyCode) {
+    preferences.putInt(Option.CURSOR_JOYSTICK_VK_RIGHT.name(), keyCode);
+  }
+
+  public synchronized int getCursorJoystickFire() {
+    return preferences.getInt(Option.CURSOR_JOYSTICK_VK_FIRE.name(), KeyEvent.VK_SPACE);
+  }
+
+  public synchronized void setCursorJoystickFire(final int keyCode) {
+    preferences.putInt(Option.CURSOR_JOYSTICK_VK_FIRE.name(), keyCode);
+  }
+
   public synchronized int getKempstonVkLeft() {
     return preferences.getInt(Option.KEMPSTON_VK_LEFT.name(), KeyEvent.VK_NUMPAD4);
   }
@@ -335,7 +375,12 @@ public final class AppOptions {
     KEMPSTON_VK_RIGHT,
     KEMPSTON_VK_UP,
     KEMPSTON_VK_DOWN,
-    KEMPSTON_VK_FIRE
+    KEMPSTON_VK_FIRE,
+    CURSOR_JOYSTICK_VK_LEFT,
+    CURSOR_JOYSTICK_VK_RIGHT,
+    CURSOR_JOYSTICK_VK_UP,
+    CURSOR_JOYSTICK_VK_DOWN,
+    CURSOR_JOYSTICK_VK_FIRE
   }
 
 }
