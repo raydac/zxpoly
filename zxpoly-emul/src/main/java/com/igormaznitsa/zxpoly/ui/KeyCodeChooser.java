@@ -47,6 +47,10 @@ public class KeyCodeChooser extends JPanel {
     this.textField.setEditable(false);
     this.textField.setColumns(10);
     this.buttonSelect = new JToggleButton("SELECT");
+    this.buttonSelect.addActionListener(e -> {
+      buttonSelect.requestFocus();
+      buttonSelect.setFocusTraversalKeysEnabled(!buttonSelect.isSelected());
+    });
     this.buttonSelect.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(final KeyEvent e) {
@@ -54,7 +58,7 @@ public class KeyCodeChooser extends JPanel {
           if (e.getKeyCode() != KeyEvent.VK_ESCAPE) {
             setKey(e.getKeyCode());
           }
-          buttonSelect.setSelected(false);
+          buttonSelect.doClick();
           e.consume();
         }
       }
@@ -72,10 +76,9 @@ public class KeyCodeChooser extends JPanel {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (buttonSelect.isSelected()) {
-          buttonSelect.setSelected(false);
+          buttonSelect.doClick();
         } else {
-          buttonSelect.setSelected(true);
-          buttonSelect.requestFocus();
+          buttonSelect.doClick();
         }
       }
     });
