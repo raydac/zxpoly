@@ -1,13 +1,12 @@
 package com.igormaznitsa.zxpoly.components.snd;
 
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.SourceDataLine;
+import java.util.Arrays;
+
 import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
 import static java.util.Arrays.fill;
 import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
-
-
-import java.util.Arrays;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.SourceDataLine;
 
 final class SndBufferContainer {
   public static final int SND_FREQ = 48000;
@@ -65,10 +64,14 @@ final class SndBufferContainer {
     this.lastWrittenPosition = 0;
   }
 
+  public static int calculatePosition(final int tstatesIntCounter) {
+    return ((tstatesIntCounter * SAMPLES_PER_INT + TSTATES_PER_INT / 2)
+            / TSTATES_PER_INT);
+  }
+
   public void setValue(final int deltaTstates, final int level) {
     this.tstatesIntCounter += deltaTstates;
-    int position = ((tstatesIntCounter * SAMPLES_PER_INT + TSTATES_PER_INT / 2)
-        / TSTATES_PER_INT) * 4;
+    int position = calculatePosition(tstatesIntCounter) * 4;
 
     if (position < SND_BUFFER_SIZE) {
       if (position - this.lastWrittenPosition < 8) {

@@ -17,19 +17,19 @@
 
 package com.igormaznitsa.zxpoly.components.snd;
 
-import static java.lang.Long.toHexString;
-import static java.lang.String.format;
-
-
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.Line;
+import javax.sound.sampled.SourceDataLine;
 import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.Line;
-import javax.sound.sampled.SourceDataLine;
+import java.util.stream.IntStream;
+
+import static java.lang.Long.toHexString;
+import static java.lang.String.format;
 
 public final class Beeper {
 
@@ -43,9 +43,8 @@ public final class Beeper {
   public static final int CHANNEL_RESERV_1 = 6;
   public static final int CHANNEL_RESERV_2 = 7;
   public static final int[] BEEPER_LEVELS;
-  private static final Logger LOGGER = Logger.getLogger("Beeper");
   public static final AudioFormat AUDIO_FORMAT = SndBufferContainer.AUDIO_FORMAT;
-
+  private static final Logger LOGGER = Logger.getLogger("Beeper");
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
     public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int level) {
@@ -67,12 +66,13 @@ public final class Beeper {
 
   static {
     BEEPER_LEVELS =
-        Arrays.stream(new double[] {0.0d, 0.065d, 0.18d, 0.254d, 0.80d, 0.87d, 0.93d, 1.0d})
-            .mapToInt(d -> Math.min(AMPLITUDE_MAX, (int) Math.round(d * AMPLITUDE_MAX))).toArray();
+            Arrays.stream(new double[]{0.0d, 0.065d, 0.18d, 0.254d, 0.80d, 0.87d, 0.93d, 1.0d})
+                    .mapToInt(d -> Math.min(AMPLITUDE_MAX, (int) Math.round(d * AMPLITUDE_MAX))).toArray();
   }
 
-  private long channels = 0L;
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
+  private final SoundChannelValueFilter[] soundChannelFilters = IntStream.range(0, 8).mapToObj(i -> new SoundChannelValueFilter()).toArray(SoundChannelValueFilter[]::new);
+  private long channels = 0L;
 
   public Beeper() {
   }
@@ -99,7 +99,7 @@ public final class Beeper {
 
   public void setChannelValue(final int channel, final int level256) {
     this.channels =
-        (this.channels & ~(0xFFL << (8 * channel))) | ((long) (level256 & 0XFF) << (8 * channel));
+            (this.channels & ~(0xFFL << (8 * channel))) | ((long) (level256 & 0XFF) << (8 * channel));
   }
 
   public void reset() {
@@ -107,20 +107,22 @@ public final class Beeper {
     this.activeInternalBeeper.get().reset();
   }
 
-  private int mixChannelsAsSignedByte() {
+  private int mixChannelsAsSignedShort(final int spentTstates) {
     long value = this.channels;
     int mixed = 0;
+    int channelIndex = 0;
     while (value != 0L) {
-      mixed += ((int) value) & 0xFF;
+      final int channelValue = this.soundChannelFilters[channelIndex++].update(spentTstates, (((int) value) & 0xFF) << 5);
       value >>>= 8;
+      mixed += channelValue;
     }
-    return (mixed << 5) - 32768;
+    return mixed - 32768;
   }
 
   public void updateState(final boolean tstatesInt, final boolean wallclockInt,
                           final int spentTstates) {
     this.activeInternalBeeper.get()
-        .updateState(tstatesInt, wallclockInt, spentTstates, this.mixChannelsAsSignedByte());
+            .updateState(tstatesInt, wallclockInt, spentTstates, this.mixChannelsAsSignedShort(spentTstates));
   }
 
   public boolean isActive() {
@@ -137,6 +139,7 @@ public final class Beeper {
 
   public void clearChannels() {
     this.channels = 0L;
+    for (final SoundChannelValueFilter f : this.soundChannelFilters) f.reset();
   }
 
 
@@ -154,10 +157,12 @@ public final class Beeper {
   private static final class InternalBeeper implements IBeeper, Runnable {
 
     private final BlockingQueue<byte[]> soundDataQueue =
-        new ArrayBlockingQueue<>(SndBufferContainer.BUFFERS_NUMBER);
+            new ArrayBlockingQueue<>(SndBufferContainer.BUFFERS_NUMBER);
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
+    private final SndBufferContainer sndBuffer = new SndBufferContainer();
     private volatile boolean working = true;
+
 
     private InternalBeeper(final SourceSoundPort sourceSoundPort) {
       this.sourceDataLine = sourceSoundPort.asSourceDataLine();
@@ -169,7 +174,6 @@ public final class Beeper {
       this.thread.setDaemon(true);
     }
 
-
     @Override
     public void start() {
       if (this.thread != null && this.working) {
@@ -177,14 +181,12 @@ public final class Beeper {
       }
     }
 
-    private final SndBufferContainer sndBuffer = new SndBufferContainer();
-
     @Override
     public void updateState(
-        boolean tstatesIntReached,
-        boolean wallclockInt,
-        int spentTstates,
-        final int level
+            boolean tstatesIntReached,
+            boolean wallclockInt,
+            int spentTstates,
+            final int level
     ) {
       if (this.working) {
         if (wallclockInt) {
@@ -214,16 +216,16 @@ public final class Beeper {
       LOGGER.info("Starting thread");
       try {
         this.sourceDataLine
-            .open(SndBufferContainer.AUDIO_FORMAT,
-                SndBufferContainer.SND_BUFFER_SIZE * SndBufferContainer.BUFFERS_NUMBER);
+                .open(SndBufferContainer.AUDIO_FORMAT,
+                        SndBufferContainer.SND_BUFFER_SIZE * SndBufferContainer.BUFFERS_NUMBER);
 
         LOGGER.info(format(
-            "Sound line opened, buffer size is %d byte(s)",
-            this.sourceDataLine.getBufferSize())
+                "Sound line opened, buffer size is %d byte(s)",
+                this.sourceDataLine.getBufferSize())
         );
 
         byte[] empty =
-            new byte[SndBufferContainer.BUFFERS_NUMBER * SndBufferContainer.SND_BUFFER_SIZE];
+                new byte[SndBufferContainer.BUFFERS_NUMBER * SndBufferContainer.SND_BUFFER_SIZE];
         Arrays.fill(empty, (byte) 0xFF);
         this.sourceDataLine.write(empty, 0, empty.length);
 
