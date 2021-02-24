@@ -180,10 +180,10 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     this.kempstonVkFire = AppOptions.getInstance().getKempstonVkFire();
 
     this.cursorJoystickVkDown = AppOptions.getInstance().getCursorJoystickDown();
-    this.cursorJoystickVkFire = AppOptions.getInstance().getCursorJoystickFire();
-    this.cursorJoystickVkLeft = AppOptions.getInstance().getCursorJoystickLeft();
-    this.cursorJoystickVkRight = AppOptions.getInstance().getCursorJoystickRight();
-    this.cursorJoystickVkUp = AppOptions.getInstance().getCursorJoystickUp();
+    this.cursorJoystickVkFire = AppOptions.getInstance().getProtekJoystickFire();
+    this.cursorJoystickVkLeft = AppOptions.getInstance().getProtekJoystickLeft();
+    this.cursorJoystickVkRight = AppOptions.getInstance().getProtekJoystickRight();
+    this.cursorJoystickVkUp = AppOptions.getInstance().getProtekJoystickUp();
 
     if (getDefaultEnvironment().isSupported()) {
       this.detectedControllers =

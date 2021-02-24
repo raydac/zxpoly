@@ -141,6 +141,8 @@ public final class VideoController extends JComponent
   public VideoController(final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
     super();
 
+    this.setFocusTraversalKeysEnabled(false);
+
     this.vkbdContainer = Objects.requireNonNull(vkbdContainer);
 
     this.showVkbdApart = AppOptions.getInstance().isVkbdApart();

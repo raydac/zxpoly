@@ -228,7 +228,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JCheckBoxMenuItem menuOptionsOnlyJoystickEvents;
   private JMenu menuOptionsJoystickSelect;
   private JRadioButtonMenuItem menuOptionsJoystickKempston;
-  private JRadioButtonMenuItem menuOptionsJoystickCursor;
+  private JRadioButtonMenuItem menuOptionsJoystickProtek;
   private JCheckBoxMenuItem menuOptionsZX128Mode;
   private JMenu menuService;
   private JMenuItem menuServiceGameControllers;
@@ -368,14 +368,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     if (this.keyboardAndTapeModule.isKempstonJoystickActivated()) {
       this.menuOptionsJoystickKempston.setSelected(true);
     } else {
-      this.menuOptionsJoystickCursor.setSelected(true);
+      this.menuOptionsJoystickProtek.setSelected(true);
     }
 
     this.menuOptionsJoystickKempston.addActionListener(e -> {
       keyboardAndTapeModule.setKempstonJoystickActivated(menuOptionsJoystickKempston.isSelected());
     });
 
-    this.menuOptionsJoystickCursor.addActionListener(e -> {
+    this.menuOptionsJoystickProtek.addActionListener(e -> {
       keyboardAndTapeModule.setKempstonJoystickActivated(menuOptionsJoystickKempston.isSelected());
     });
 
@@ -1427,7 +1427,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptionsOnlyJoystickEvents = new JCheckBoxMenuItem();
     menuOptionsJoystickSelect = new JMenu();
     menuOptionsJoystickKempston = new JRadioButtonMenuItem();
-    menuOptionsJoystickCursor = new JRadioButtonMenuItem();
+    menuOptionsJoystickProtek = new JRadioButtonMenuItem();
     menuOptionsEnableTrapMouse = new JCheckBoxMenuItem();
     menuOptionsEnableSpeaker = new JCheckBoxMenuItem();
     menuOptionsEnableVideoStream = new JCheckBoxMenuItem();
@@ -1813,21 +1813,24 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuOptions.setText("Options");
 
     menuOptionsJoystickSelect.setText("Joystick");
+    menuOptionsJoystickSelect.setIcon(new ImageIcon(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/protek.png"))); // NOI18N);
+
     menuOptionsJoystickSelect.setToolTipText("Select active joystick type");
     menuOptionsJoystickKempston.setText("Kempston");
-    menuOptionsJoystickCursor.setText("Cursor");
+    menuOptionsJoystickProtek.setText("Protek");
 
     menuOptionsJoystickSelect.add(menuOptionsJoystickKempston);
-    menuOptionsJoystickSelect.add(menuOptionsJoystickCursor);
+    menuOptionsJoystickSelect.add(menuOptionsJoystickProtek);
 
     final ButtonGroup joystickButtonGroup = new ButtonGroup();
     joystickButtonGroup.add(menuOptionsJoystickKempston);
-    joystickButtonGroup.add(menuOptionsJoystickCursor);
+    joystickButtonGroup.add(menuOptionsJoystickProtek);
 
     menuOptions.add(menuOptionsJoystickSelect);
 
     menuOptionsOnlyJoystickEvents.setAccelerator(getKeyStroke(java.awt.event.KeyEvent.VK_F6, 0));
-    menuOptionsOnlyJoystickEvents.setText("Only joystick");
+    menuOptionsOnlyJoystickEvents.setText("ZX-Keyboard Off");
     menuOptionsOnlyJoystickEvents.setToolTipText("Disable events from keyboard and allow events only from joystick");
     menuOptionsOnlyJoystickEvents.setIcon(new ImageIcon(
             getClass().getResource("/com/igormaznitsa/zxpoly/icons/onlykempston.png"))); // NOI18N

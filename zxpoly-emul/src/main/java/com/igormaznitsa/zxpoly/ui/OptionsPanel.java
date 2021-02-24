@@ -77,11 +77,11 @@ public class OptionsPanel extends JPanel {
   private KeyCodeChooser keySelectorKempstonDown;
   private KeyCodeChooser keySelectorKempstonFire;
 
-  private KeyCodeChooser keySelectorCursorJoystickLeft;
-  private KeyCodeChooser keySelectorCursorJoystickRight;
-  private KeyCodeChooser keySelectorCursorJoystickUp;
-  private KeyCodeChooser keySelectorCursorJoystickDown;
-  private KeyCodeChooser keySelectorCursorJoystickFire;
+  private KeyCodeChooser keySelectorProtekJoystickLeft;
+  private KeyCodeChooser keySelectorProtekJoystickRight;
+  private KeyCodeChooser keySelectorProtekJoystickUp;
+  private KeyCodeChooser keySelectorProtekJoystickDown;
+  private KeyCodeChooser keySelectorProtekJoystickFire;
 
   public OptionsPanel(final DataContainer dataContainer) {
     initComponents();
@@ -139,11 +139,11 @@ public class OptionsPanel extends JPanel {
     this.keySelectorKempstonUp.setKey(data.kempstonKeyUp);
     this.keySelectorKempstonDown.setKey(data.kempstonKeyDown);
 
-    this.keySelectorCursorJoystickUp.setKey(data.cursorJoystickKeyUp);
-    this.keySelectorCursorJoystickFire.setKey(data.cursorJoystickKeyFire);
-    this.keySelectorCursorJoystickRight.setKey(data.cursorJoystickKeyRight);
-    this.keySelectorCursorJoystickLeft.setKey(data.cursorJoystickKeyLeft);
-    this.keySelectorCursorJoystickDown.setKey(data.cursorJoystickKeyDown);
+    this.keySelectorProtekJoystickUp.setKey(data.protekJoystickKeyUp);
+    this.keySelectorProtekJoystickFire.setKey(data.protekJoystickKeyFire);
+    this.keySelectorProtekJoystickRight.setKey(data.protekJoystickKeyRight);
+    this.keySelectorProtekJoystickLeft.setKey(data.protekJoystickKeyLeft);
+    this.keySelectorProtekJoystickDown.setKey(data.protekJoystickKeyDown);
   }
 
   @SuppressWarnings("unchecked")
@@ -189,11 +189,11 @@ public class OptionsPanel extends JPanel {
     keySelectorKempstonRight = new KeyCodeChooser();
     keySelectorKempstonFire = new KeyCodeChooser();
 
-    keySelectorCursorJoystickDown = new KeyCodeChooser();
-    keySelectorCursorJoystickLeft = new KeyCodeChooser();
-    keySelectorCursorJoystickRight = new KeyCodeChooser();
-    keySelectorCursorJoystickFire = new KeyCodeChooser();
-    keySelectorCursorJoystickUp = new KeyCodeChooser();
+    keySelectorProtekJoystickDown = new KeyCodeChooser();
+    keySelectorProtekJoystickLeft = new KeyCodeChooser();
+    keySelectorProtekJoystickRight = new KeyCodeChooser();
+    keySelectorProtekJoystickFire = new KeyCodeChooser();
+    keySelectorProtekJoystickUp = new KeyCodeChooser();
 
     setLayout(new GridBagLayout());
 
@@ -484,7 +484,7 @@ public class OptionsPanel extends JPanel {
     panelKempston.add(this.keySelectorKempstonFire, gbx);
 
     final JPanel panelCursor = new JPanel(new GridBagLayout());
-    panelCursor.setBorder(createTitledBorder("Cursor joystick"));
+    panelCursor.setBorder(createTitledBorder("Protek joystick"));
 
     gbx.gridx = 0;
     gbx.gridy = 0;
@@ -495,7 +495,7 @@ public class OptionsPanel extends JPanel {
     cursorLabel.setHorizontalAlignment(RIGHT);
     panelCursor.add(cursorLabel, gbx);
     gbx.gridx = 1;
-    panelCursor.add(this.keySelectorCursorJoystickLeft, gbx);
+    panelCursor.add(this.keySelectorProtekJoystickLeft, gbx);
 
     gbx.gridy = 1;
     gbx.gridx = 0;
@@ -503,7 +503,7 @@ public class OptionsPanel extends JPanel {
     cursorLabel.setHorizontalAlignment(RIGHT);
     panelCursor.add(cursorLabel, gbx);
     gbx.gridx = 1;
-    panelCursor.add(this.keySelectorCursorJoystickRight, gbx);
+    panelCursor.add(this.keySelectorProtekJoystickRight, gbx);
 
     gbx.gridy = 2;
     gbx.gridx = 0;
@@ -511,7 +511,7 @@ public class OptionsPanel extends JPanel {
     cursorLabel.setHorizontalAlignment(RIGHT);
     panelCursor.add(cursorLabel, gbx);
     gbx.gridx = 1;
-    panelCursor.add(this.keySelectorCursorJoystickDown, gbx);
+    panelCursor.add(this.keySelectorProtekJoystickDown, gbx);
 
     gbx.gridy = 3;
     gbx.gridx = 0;
@@ -519,7 +519,7 @@ public class OptionsPanel extends JPanel {
     cursorLabel.setHorizontalAlignment(RIGHT);
     panelCursor.add(cursorLabel, gbx);
     gbx.gridx = 1;
-    panelCursor.add(this.keySelectorCursorJoystickUp, gbx);
+    panelCursor.add(this.keySelectorProtekJoystickUp, gbx);
 
     gbx.gridy = 4;
     gbx.gridx = 0;
@@ -527,7 +527,7 @@ public class OptionsPanel extends JPanel {
     cursorLabel.setHorizontalAlignment(RIGHT);
     panelCursor.add(cursorLabel, gbx);
     gbx.gridx = 1;
-    panelCursor.add(this.keySelectorCursorJoystickFire, gbx);
+    panelCursor.add(this.keySelectorProtekJoystickFire, gbx);
 
     final JPanel joysticksPanel = new JPanel(new GridLayout(1, 2));
     joysticksPanel.add(panelKempston);
@@ -586,11 +586,11 @@ public class OptionsPanel extends JPanel {
     public final int kempstonKeyRight;
     public final int kempstonKeyFire;
 
-    public final int cursorJoystickKeyUp;
-    public final int cursorJoystickKeyDown;
-    public final int cursorJoystickKeyLeft;
-    public final int cursorJoystickKeyRight;
-    public final int cursorJoystickKeyFire;
+    public final int protekJoystickKeyUp;
+    public final int protekJoystickKeyDown;
+    public final int protekJoystickKeyLeft;
+    public final int protekJoystickKeyRight;
+    public final int protekJoystickKeyFire;
 
     public DataContainer() {
       final String cromPath = AppOptions.getInstance().getCustomRomPath();
@@ -615,11 +615,11 @@ public class OptionsPanel extends JPanel {
       this.kempstonKeyRight = AppOptions.getInstance().getKempstonVkRight();
       this.kempstonKeyFire = AppOptions.getInstance().getKempstonVkFire();
 
-      this.cursorJoystickKeyDown = AppOptions.getInstance().getCursorJoystickDown();
-      this.cursorJoystickKeyUp = AppOptions.getInstance().getCursorJoystickUp();
-      this.cursorJoystickKeyLeft = AppOptions.getInstance().getCursorJoystickLeft();
-      this.cursorJoystickKeyRight = AppOptions.getInstance().getCursorJoystickRight();
-      this.cursorJoystickKeyFire = AppOptions.getInstance().getCursorJoystickFire();
+      this.protekJoystickKeyDown = AppOptions.getInstance().getCursorJoystickDown();
+      this.protekJoystickKeyUp = AppOptions.getInstance().getProtekJoystickUp();
+      this.protekJoystickKeyLeft = AppOptions.getInstance().getProtekJoystickLeft();
+      this.protekJoystickKeyRight = AppOptions.getInstance().getProtekJoystickRight();
+      this.protekJoystickKeyFire = AppOptions.getInstance().getProtekJoystickFire();
     }
 
     public DataContainer(final OptionsPanel optionsPanel) {
@@ -650,11 +650,11 @@ public class OptionsPanel extends JPanel {
       this.kempstonKeyRight = optionsPanel.keySelectorKempstonRight.getKey().orElse(-1);
       this.kempstonKeyFire = optionsPanel.keySelectorKempstonFire.getKey().orElse(-1);
 
-      this.cursorJoystickKeyFire = optionsPanel.keySelectorCursorJoystickFire.getKey().orElse(-1);
-      this.cursorJoystickKeyRight = optionsPanel.keySelectorCursorJoystickRight.getKey().orElse(-1);
-      this.cursorJoystickKeyLeft = optionsPanel.keySelectorCursorJoystickLeft.getKey().orElse(-1);
-      this.cursorJoystickKeyUp = optionsPanel.keySelectorCursorJoystickUp.getKey().orElse(-1);
-      this.cursorJoystickKeyDown = optionsPanel.keySelectorCursorJoystickDown.getKey().orElse(-1);
+      this.protekJoystickKeyFire = optionsPanel.keySelectorProtekJoystickFire.getKey().orElse(-1);
+      this.protekJoystickKeyRight = optionsPanel.keySelectorProtekJoystickRight.getKey().orElse(-1);
+      this.protekJoystickKeyLeft = optionsPanel.keySelectorProtekJoystickLeft.getKey().orElse(-1);
+      this.protekJoystickKeyUp = optionsPanel.keySelectorProtekJoystickUp.getKey().orElse(-1);
+      this.protekJoystickKeyDown = optionsPanel.keySelectorProtekJoystickDown.getKey().orElse(-1);
     }
 
     public void store() {
@@ -681,11 +681,11 @@ public class OptionsPanel extends JPanel {
       AppOptions.getInstance().setKempstonVkUp(this.kempstonKeyUp);
       AppOptions.getInstance().setKempstonVkFire(this.kempstonKeyFire);
 
-      AppOptions.getInstance().setCursorJoystickDown(this.cursorJoystickKeyDown);
-      AppOptions.getInstance().setCursorJoystickFire(this.cursorJoystickKeyFire);
-      AppOptions.getInstance().setCursorJoystickLeft(this.cursorJoystickKeyLeft);
-      AppOptions.getInstance().setCursorJoystickRight(this.cursorJoystickKeyRight);
-      AppOptions.getInstance().setCursorJoystickUp(this.cursorJoystickKeyUp);
+      AppOptions.getInstance().setProtekJoystickDown(this.protekJoystickKeyDown);
+      AppOptions.getInstance().setProtekJoystickFire(this.protekJoystickKeyFire);
+      AppOptions.getInstance().setProtekJoystickLeft(this.protekJoystickKeyLeft);
+      AppOptions.getInstance().setProtekJoystickRight(this.protekJoystickKeyRight);
+      AppOptions.getInstance().setProtekJoystickUp(this.protekJoystickKeyUp);
 
       try {
         AppOptions.getInstance().flush();

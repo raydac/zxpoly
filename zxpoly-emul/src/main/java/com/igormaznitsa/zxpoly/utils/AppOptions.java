@@ -203,43 +203,43 @@ public final class AppOptions {
   }
 
   public synchronized int getCursorJoystickDown() {
-    return preferences.getInt(Option.CURSOR_JOYSTICK_VK_DOWN.name(), KeyEvent.VK_DOWN);
+    return preferences.getInt(Option.PROTEK_JOYSTICK_VK_DOWN.name(), KeyEvent.VK_DOWN);
   }
 
-  public synchronized void setCursorJoystickDown(final int keyCode) {
-    preferences.putInt(Option.CURSOR_JOYSTICK_VK_DOWN.name(), keyCode);
+  public synchronized void setProtekJoystickDown(final int keyCode) {
+    preferences.putInt(Option.PROTEK_JOYSTICK_VK_DOWN.name(), keyCode);
   }
 
-  public synchronized int getCursorJoystickUp() {
-    return preferences.getInt(Option.CURSOR_JOYSTICK_VK_UP.name(), KeyEvent.VK_UP);
+  public synchronized int getProtekJoystickUp() {
+    return preferences.getInt(Option.PROTEK_JOYSTICK_VK_UP.name(), KeyEvent.VK_UP);
   }
 
-  public synchronized void setCursorJoystickUp(final int keyCode) {
-    preferences.putInt(Option.CURSOR_JOYSTICK_VK_UP.name(), keyCode);
+  public synchronized void setProtekJoystickUp(final int keyCode) {
+    preferences.putInt(Option.PROTEK_JOYSTICK_VK_UP.name(), keyCode);
   }
 
-  public synchronized int getCursorJoystickLeft() {
-    return preferences.getInt(Option.CURSOR_JOYSTICK_VK_LEFT.name(), KeyEvent.VK_LEFT);
+  public synchronized int getProtekJoystickLeft() {
+    return preferences.getInt(Option.PROTEK_JOYSTICK_VK_LEFT.name(), KeyEvent.VK_LEFT);
   }
 
-  public synchronized void setCursorJoystickLeft(final int keyCode) {
-    preferences.putInt(Option.CURSOR_JOYSTICK_VK_LEFT.name(), keyCode);
+  public synchronized void setProtekJoystickLeft(final int keyCode) {
+    preferences.putInt(Option.PROTEK_JOYSTICK_VK_LEFT.name(), keyCode);
   }
 
-  public synchronized int getCursorJoystickRight() {
-    return preferences.getInt(Option.CURSOR_JOYSTICK_VK_RIGHT.name(), KeyEvent.VK_RIGHT);
+  public synchronized int getProtekJoystickRight() {
+    return preferences.getInt(Option.PROTEK_JOYSTICK_VK_RIGHT.name(), KeyEvent.VK_RIGHT);
   }
 
-  public synchronized void setCursorJoystickRight(final int keyCode) {
-    preferences.putInt(Option.CURSOR_JOYSTICK_VK_RIGHT.name(), keyCode);
+  public synchronized void setProtekJoystickRight(final int keyCode) {
+    preferences.putInt(Option.PROTEK_JOYSTICK_VK_RIGHT.name(), keyCode);
   }
 
-  public synchronized int getCursorJoystickFire() {
-    return preferences.getInt(Option.CURSOR_JOYSTICK_VK_FIRE.name(), KeyEvent.VK_SPACE);
+  public synchronized int getProtekJoystickFire() {
+    return preferences.getInt(Option.PROTEK_JOYSTICK_VK_FIRE.name(), KeyEvent.VK_TAB);
   }
 
-  public synchronized void setCursorJoystickFire(final int keyCode) {
-    preferences.putInt(Option.CURSOR_JOYSTICK_VK_FIRE.name(), keyCode);
+  public synchronized void setProtekJoystickFire(final int keyCode) {
+    preferences.putInt(Option.PROTEK_JOYSTICK_VK_FIRE.name(), keyCode);
   }
 
   public synchronized int getKempstonVkLeft() {
@@ -376,11 +376,11 @@ public final class AppOptions {
     KEMPSTON_VK_UP,
     KEMPSTON_VK_DOWN,
     KEMPSTON_VK_FIRE,
-    CURSOR_JOYSTICK_VK_LEFT,
-    CURSOR_JOYSTICK_VK_RIGHT,
-    CURSOR_JOYSTICK_VK_UP,
-    CURSOR_JOYSTICK_VK_DOWN,
-    CURSOR_JOYSTICK_VK_FIRE
+    PROTEK_JOYSTICK_VK_LEFT,
+    PROTEK_JOYSTICK_VK_RIGHT,
+    PROTEK_JOYSTICK_VK_UP,
+    PROTEK_JOYSTICK_VK_DOWN,
+    PROTEK_JOYSTICK_VK_FIRE
   }
 
 }
