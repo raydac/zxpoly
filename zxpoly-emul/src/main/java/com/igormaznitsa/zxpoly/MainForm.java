@@ -106,6 +106,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           UIManager.getLookAndFeel().getDisabledIcon(null, ICO_ZX128);
   private static final Icon ICO_EMUL_PLAY = new ImageIcon(Utils.loadIcon("emul_play.png"));
   private static final Icon ICO_EMUL_PAUSE = new ImageIcon(Utils.loadIcon("emul_pause.png"));
+  private static final Icon ICO_EMUL_VKBD = new ImageIcon(Utils.loadIcon("vkbd.png"));
   private static final String TEXT_START_ANIM_GIF = "Record AGIF";
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
   private static final long serialVersionUID = 7309959798344327441L;
@@ -201,6 +202,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenu menuView;
   private JMenu menuViewZoom;
   private JMenu menuViewVideoFilter;
+  private JToggleButton toggleButtonShowVkbd;
   private JMenuItem menuViewFullScreen;
   private JMenuItem menuViewZoomIn;
   private JMenuItem menuViewZoomOut;
@@ -272,6 +274,17 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     initComponents();
 
     this.menuBar.add(Box.createHorizontalGlue());
+
+    this.toggleButtonShowVkbd = new JToggleButton();
+    this.toggleButtonShowVkbd.setIcon(ICO_EMUL_VKBD);
+    this.toggleButtonShowVkbd.setFocusable(false);
+    this.toggleButtonShowVkbd.setRolloverEnabled(false);
+    this.toggleButtonShowVkbd.setToolTipText("Show/Hide virtual keyboard");
+    this.toggleButtonShowVkbd.addActionListener(e -> {
+      final JToggleButton source = (JToggleButton) e.getSource();
+      showVirtualKeyboard(source.isSelected());
+    });
+
     final JToggleButton buttonStartPause = new JToggleButton();
     buttonStartPause.setFocusable(false);
 
@@ -279,8 +292,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     buttonStartPause.setRolloverEnabled(false);
     buttonStartPause.setToolTipText("Play/Pause emulation");
 
-    buttonStartPause.addActionListener((final ActionEvent event) -> {
-      final JToggleButton source = (JToggleButton) event.getSource();
+    buttonStartPause.addActionListener(e -> {
+      final JToggleButton source = (JToggleButton) e.getSource();
       if (source.isSelected()) {
         MainForm.this.stepSemaphor.lock();
         source.setIcon(ICO_EMUL_PLAY);
@@ -292,6 +305,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
 
+    this.menuBar.add(this.toggleButtonShowVkbd);
     this.menuBar.add(buttonStartPause);
 
     this.setTitle(title);
@@ -380,8 +394,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     });
 
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    manager.addKeyEventDispatcher(
-            new KeyboardDispatcher(this.board.getVideoController(), this.keyboardAndTapeModule));
+    manager.addKeyEventDispatcher(new KeyboardDispatcher(this));
 
     final GridBagConstraints cpuIndicatorConstraint = new GridBagConstraints();
     cpuIndicatorConstraint.ipadx = 5;
@@ -1982,6 +1995,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
+  public void showVirtualKeyboard(final boolean show) {
+    this.board.getVideoController().setVkbShow(show);
+    this.toggleButtonShowVkbd.setSelected(show);
+  }
+
+
   private void menuOptionsTurboActionPerformed(ActionEvent evt) {
     final boolean turboActivated = this.menuOptionsTurbo.isSelected();
     this.board.getBeeper().setSourceSoundPort(null);
@@ -2687,10 +2706,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     private final VideoController videoController;
     private final KeyboardKempstonAndTapeIn keyboard;
+    private final MainForm mainForm;
 
-    KeyboardDispatcher(final VideoController videoController, final KeyboardKempstonAndTapeIn kbd) {
-      this.keyboard = kbd;
-      this.videoController = videoController;
+    KeyboardDispatcher(final MainForm mainForm) {
+      this.mainForm = mainForm;
+      this.keyboard = mainForm.keyboardAndTapeModule;
+      this.videoController = mainForm.board.getVideoController();
     }
 
     @Override
@@ -2699,7 +2720,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       if (!e.isConsumed() && MainForm.this.zxKeyboardProcessingAllowed) {
         if (e.getKeyCode() == KeyEvent.VK_F5) {
           if (e.getID() == KeyEvent.KEY_PRESSED) {
-            this.videoController.setVkbShow(!this.videoController.isVkbShow());
+            this.mainForm.showVirtualKeyboard(!this.videoController.isVkbShow());
           }
           e.consume();
           consumed = true;
