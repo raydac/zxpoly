@@ -20,7 +20,7 @@ package com.igormaznitsa.zxpoly;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
-import com.igormaznitsa.zxpoly.animeencoders.Spec256AGifEncoder;
+import com.igormaznitsa.zxpoly.animeencoders.CustomPalette256AGifEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.ZxPolyAGifEncoder;
 import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
@@ -2291,8 +2291,12 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         this.lastAnimGifOptions = panel.getValue();
         try {
           if (this.board.getBoardMode() == BoardMode.SPEC256) {
-            encoder = new Spec256AGifEncoder(new File(this.lastAnimGifOptions.filePath),
-                    this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
+            encoder = new CustomPalette256AGifEncoder(
+                    new File(this.lastAnimGifOptions.filePath),
+                    VideoController.PALETTE_SPEC256,
+                    this.lastAnimGifOptions.frameRate,
+                    this.lastAnimGifOptions.repeat
+            );
           } else {
             encoder = new ZxPolyAGifEncoder(new File(this.lastAnimGifOptions.filePath),
                     this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
