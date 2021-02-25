@@ -1,16 +1,17 @@
 package com.igormaznitsa.zxpoly.components.video.tvfilters;
 
+import java.awt.*;
+
 import static java.util.stream.Stream.of;
-
-
-import java.awt.Color;
 
 public enum TvFilterChain {
   NONE("None", new TvFilter[0]),
-  GRAYSCALE("Grayscale", new TvFilter[] {TvFilterGrayscale.getInstance()}),
-  BLACKWHITE("Black & White", new TvFilter[] {TvOrderedBayer.getInstance()}),
-  OLDTV("Old TV", new TvFilter[] {TvFilterOldTv.getInstance()}),
-  GAUSSIAN_BLUR("Gaussian blur", new TvFilter[] {TvFilterGaussian.getInstance()});
+  GRAYSCALE("Grayscale", new TvFilter[]{TvFilterGrayscale.getInstance()}),
+  BLACKWHITE("Black & White", new TvFilter[]{TvOrderedBayer.getInstance()}),
+  OLDTV("Old TV Color", new TvFilter[]{TvFilterOldTv.getInstance()}),
+  AMBERCRT("Old TV Amber", new TvFilter[]{TvFilterAmberCrt.getInstance()}),
+  GREENCRT("Old TV Green", new TvFilter[]{TvFilterGreenCrt.getInstance()}),
+  GAUSSIAN_BLUR("Gaussian blur", new TvFilter[]{TvFilterGaussian.getInstance()});
 
   private final String text;
   private final TvFilter[] filterChain;

@@ -4,11 +4,11 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 
-public final class TvFilterOldTv implements TvFilter {
+public class TvFilterOldTv implements TvFilter {
 
   private static final TvFilterOldTv INSTANCE = new TvFilterOldTv();
 
-  private TvFilterOldTv() {
+  TvFilterOldTv() {
 
   }
 
