@@ -126,7 +126,7 @@ public final class InMemoryWavFile {
   }
 
   private float readUnsignedByteAt(final long pos) {
-    return (float) this.wavData[(int) pos] / (float) 0xFF;
+    return (float) (this.wavData[(int) pos] & 0xFF) / (float) 0xFF;
   }
 
   private float readSignedShort(final long pos) {
