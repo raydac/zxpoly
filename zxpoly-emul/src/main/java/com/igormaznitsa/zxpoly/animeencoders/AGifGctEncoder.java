@@ -49,7 +49,7 @@ public final class AGifGctEncoder {
   private boolean firstFrame;
 
   public AGifGctEncoder(final int imageWidth, final int imageHeight, final int[] palette) {
-    if (palette.length == 0 || palette.length > 256) throw new IllegalArgumentException("Wrong size of palette");
+    if (palette.length > 256) throw new IllegalArgumentException("Wrong size of palette");
     this.width = imageWidth;
     this.height = imageHeight;
     this.rgbPalette = new int[256];
