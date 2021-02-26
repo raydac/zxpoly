@@ -33,7 +33,7 @@ import java.util.OptionalInt;
  * @version 1.03 November 2003
  */
 
-public final class AnimatedGlobalPaletteGifEncoder {
+public final class AGifGctEncoder {
 
   private final int width; // image width
   private final int height; // image height
@@ -48,7 +48,7 @@ public final class AnimatedGlobalPaletteGifEncoder {
   private int preparedFrameDelay;
   private boolean firstFrame;
 
-  public AnimatedGlobalPaletteGifEncoder(final int imageWidth, final int imageHeight, final int[] palette) {
+  public AGifGctEncoder(final int imageWidth, final int imageHeight, final int[] palette) {
     if (palette.length == 0 || palette.length > 256) throw new IllegalArgumentException("Wrong size of palette");
     this.width = imageWidth;
     this.height = imageHeight;
