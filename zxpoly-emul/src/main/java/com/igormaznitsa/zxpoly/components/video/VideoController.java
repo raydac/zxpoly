@@ -1645,8 +1645,7 @@ public final class VideoController extends JComponent
     return this.getName();
   }
 
-  public void doAutoscaleForSize() {
-    final Rectangle rectangle = this.getBounds();
+  public void doAutoscaleForSize(final Rectangle rectangle) {
     final int width = rectangle.width;
     final int height = rectangle.height;
 

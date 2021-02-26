@@ -1337,7 +1337,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
           lastFullScreen.revalidate();
           lastFullScreen.doLayout();
-          vc.doAutoscaleForSize();
+          vc.doAutoscaleForSize(this.scrollPanel.getViewportBorderBounds());
         } else {
           lastFullScreen.getContentPane().removeAll();
           lastFullScreen.dispose();
@@ -1348,7 +1348,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           vc.setEnableTrapMouse(mouseTrapOptionActive, true, false);
 
           this.scrollPanel.getViewport().setView(vc);
-          vc.doAutoscaleForSize();
+          vc.doAutoscaleForSize(this.scrollPanel.getViewportBorderBounds());
           vc.setFullScreenMode(false);
 
           this.scrollPanel.revalidate();
@@ -1495,20 +1495,16 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
 
-    this.addWindowStateListener(new WindowAdapter() {
+    this.addComponentListener(new ComponentAdapter() {
       @Override
-      public void windowStateChanged(WindowEvent e) {
-        if ((e.getNewState() & MAXIMIZED_BOTH) != 0) {
-          SwingUtilities
-                  .invokeLater(() -> {
-                    MainForm.this.revalidate();
-                    MainForm.this.doLayout();
-                    SwingUtilities.invokeLater(() -> {
-                      MainForm.this.scrollPanel.revalidate();
-                      MainForm.this.scrollPanel.doLayout();
-                      MainForm.this.board.getVideoController().doAutoscaleForSize();
-                    });
-                  });
+      public void componentResized(final ComponentEvent e) {
+        if (MainForm.this.getState() == MAXIMIZED_BOTH || MainForm.this.getState() == NORMAL) {
+          MainForm.this.scrollPanel.revalidate();
+          SwingUtilities.invokeLater(() -> {
+            final Rectangle rectangle = MainForm.this.scrollPanel.getVisibleRect();
+            MainForm.this.board.getVideoController().doAutoscaleForSize(rectangle);
+            MainForm.this.scrollPanel.revalidate();
+          });
         }
       }
     });
