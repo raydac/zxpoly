@@ -31,12 +31,12 @@ import java.time.Duration;
 public final class ZxPolyAGifEncoder implements AnimationEncoder {
 
   private final int intsBetweenFrames;
-  private final AnimatedGlobalPaletteGifEncoder gifEncoder;
+  private final AGifGctEncoder gifEncoder;
 
   private final OutputStream outputStream;
 
   public ZxPolyAGifEncoder(final File file, final int[] rgbPalette, final int frameRate, final boolean loop) throws IOException {
-    this.gifEncoder = new AnimatedGlobalPaletteGifEncoder(VideoController.SCREEN_WIDTH, VideoController.SCREEN_HEIGHT, rgbPalette);
+    this.gifEncoder = new AGifGctEncoder(VideoController.SCREEN_WIDTH, VideoController.SCREEN_HEIGHT, rgbPalette);
     this.intsBetweenFrames =
             (int) (1000L / MainForm.TIMER_INT_DELAY_MILLISECONDS.toMillis()) / frameRate;
     this.gifEncoder.setDelay(Duration.ofMillis(this.intsBetweenFrames * MainForm.TIMER_INT_DELAY_MILLISECONDS.toMillis()));
