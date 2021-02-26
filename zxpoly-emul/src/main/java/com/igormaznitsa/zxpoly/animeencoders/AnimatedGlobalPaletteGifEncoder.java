@@ -6,6 +6,7 @@ import com.igormaznitsa.zxpoly.utils.IntMap;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.OptionalInt;
 
 /**
@@ -31,18 +32,20 @@ import java.util.OptionalInt;
  * @version 1.03 November 2003
  */
 
-public class AnimatedGlobalPaletteGifEncoder {
+public final class AnimatedGlobalPaletteGifEncoder {
 
-  protected final int width; // image width
-  protected final int height; // image height
-  protected final byte[] indexedPixels; // converted frame indexed to palette
+  private final int width; // image width
+  private final int height; // image height
+  private final byte[] newFrameIndexes; // converted frame indexed to palette
+  private final byte[] preparedFrameIndexes;
   private final int[] rgbPalette;
   private final IntMap mapRgb2index;
-  protected int repeat = -1; // no repeat
-  protected int delay = 0; // frame delay (hundredths)
-  protected boolean started = false; // ready to output frames
-  protected OutputStream out;
-  protected boolean firstFrame = true;
+  private int repeat = -1; // no repeat
+  private int delay = 0; // frame delay (hundredths)
+  private boolean started = false; // ready to output frames
+  private OutputStream out;
+  private int preparedFrameDelay;
+  private boolean firstFrame;
 
   public AnimatedGlobalPaletteGifEncoder(final int imageWidth, final int imageHeight, final int[] palette) {
     if (palette.length == 0 || palette.length > 256) throw new IllegalArgumentException("Wrong size of palette");
@@ -55,7 +58,8 @@ public class AnimatedGlobalPaletteGifEncoder {
       this.rgbPalette[i] = rgb;
       this.mapRgb2index.put(rgb, i);
     }
-    this.indexedPixels = new byte[imageWidth * imageHeight];
+    this.newFrameIndexes = new byte[imageWidth * imageHeight];
+    this.preparedFrameIndexes = new byte[imageWidth * imageHeight];
   }
 
   /**
@@ -66,6 +70,7 @@ public class AnimatedGlobalPaletteGifEncoder {
    */
   public void setDelay(final Duration time) {
     this.delay = Math.round(time.toMillis() / 10.0f);
+    this.preparedFrameDelay = this.delay;
   }
 
   /**
@@ -94,36 +99,44 @@ public class AnimatedGlobalPaletteGifEncoder {
     if (!this.started) {
       throw new IllegalStateException("Not started yet");
     }
-    if (firstFrame) {
-      writeLSD(); // logical screen descriptior
 
-      // global palette
-      for (int rgb : this.rgbPalette) {
-        this.out.write(rgb >> 16);
-        this.out.write(rgb >> 8);
-        this.out.write(rgb);
-      }
+    final boolean foundDifference = findNewFrameIndexes(argb);
 
-      if (this.repeat >= 0) {
-        // use NS app extension to indicate reps
-        writeNetscapeExt();
+    if (this.firstFrame) {
+      System.arraycopy(this.newFrameIndexes, 0, this.preparedFrameIndexes, 0, this.preparedFrameIndexes.length);
+      this.preparedFrameDelay = this.delay;
+      this.firstFrame = false;
+    } else {
+      if (foundDifference) {
+        dropPreparedFrame();
+        System.arraycopy(this.newFrameIndexes, 0, this.preparedFrameIndexes, 0, this.preparedFrameIndexes.length);
+      } else {
+        final int nextDelayValue = this.preparedFrameDelay + this.delay;
+        if ((nextDelayValue & 0xFFFF_0000) != 0) {
+          dropPreparedFrame();
+        } else {
+          this.preparedFrameDelay += this.delay;
+        }
       }
     }
-    writeGraphicCtrlExt(); // write graphic control extension
-    writeImageDesc(); // image descriptor
-
-    fillIndexesArray(argb);
-
-    writePixels(); // encode and write pixel data
-    this.firstFrame = false;
   }
 
-  private void fillIndexesArray(final int[] argb) {
-    for (int i = 0; i < this.indexedPixels.length; i++) {
+  private void dropPreparedFrame() throws IOException {
+    writeGraphicCtrlExt(this.preparedFrameDelay); // write graphic control extension
+    writeImageDesc(); // image descriptor
+    writePreparedIndexes(); // encode and write pixel data
+    this.preparedFrameDelay = this.delay;
+  }
+
+  private boolean findNewFrameIndexes(final int[] argb) {
+    boolean changed = false;
+    for (int i = 0; i < this.newFrameIndexes.length; i++) {
+      final byte prev = this.newFrameIndexes[i];
       final int rgb = argb[i] & 0xFF_FF_FF;
       final OptionalInt index = this.mapRgb2index.get(rgb);
+      final byte newValue;
       if (index.isPresent()) {
-        this.indexedPixels[i] = (byte) index.getAsInt();
+        newValue = (byte) index.getAsInt();
       } else {
         int found = 0;
         double distance = Double.MAX_VALUE;
@@ -145,9 +158,14 @@ public class AnimatedGlobalPaletteGifEncoder {
           }
         }
         this.mapRgb2index.put(rgb, found);
-        this.indexedPixels[i] = (byte) found;
+        newValue = (byte) found;
+      }
+      if (prev != newValue) {
+        this.newFrameIndexes[i] = newValue;
+        changed = true;
       }
     }
+    return changed;
   }
 
   /**
@@ -157,12 +175,14 @@ public class AnimatedGlobalPaletteGifEncoder {
   public void finish() throws IOException {
     if (!this.started) throw new IllegalStateException("Not started yet");
     this.started = false;
+
+    this.dropPreparedFrame();
+
     this.out.write(0x3b); // gif trailer
     this.out.flush();
 
     // reset for subsequent use
     out = null;
-    firstFrame = true;
   }
 
   /**
@@ -172,31 +192,40 @@ public class AnimatedGlobalPaletteGifEncoder {
    * @param os OutputStream on which GIF images are written.
    * @return false if initial write failed.
    */
-  public boolean start(OutputStream os) {
-    if (os == null)
-      return false;
-    boolean ok = true;
-    out = os;
-    try {
-      writeString("GIF89a"); // header
-    } catch (IOException e) {
-      ok = false;
+  public void start(OutputStream os) throws IOException {
+    if (this.started) throw new IllegalStateException("Already started");
+    this.started = true;
+    this.out = Objects.requireNonNull(os);
+    writeString("GIF89a"); // header
+    writeLSD(); // logical screen descriptior
+
+    // global palette
+    for (int rgb : this.rgbPalette) {
+      this.out.write(rgb >> 16);
+      this.out.write(rgb >> 8);
+      this.out.write(rgb);
     }
-    return started = ok;
+
+    if (this.repeat >= 0) {
+      // use NS app extension to indicate reps
+      writeNetscapeExt();
+    }
+
+    this.firstFrame = true;
   }
 
   /**
    * Writes Graphic Control Extension
    */
-  protected void writeGraphicCtrlExt() throws IOException {
+  protected void writeGraphicCtrlExt(final int delayCounter) throws IOException {
     out.write(0x21); // extension introducer
     out.write(0xf9); // GCE label
     out.write(4); // data block size
 
     // packed fields
-    out.write(0);
+    out.write(4);
 
-    writeShort(delay); // delay x 1/100 sec
+    writeShort(delayCounter); // delay x 1/100 sec
     out.write(0); // transparent color index
     out.write(0); // block terminator
   }
@@ -246,15 +275,15 @@ public class AnimatedGlobalPaletteGifEncoder {
   /**
    * Encodes and writes pixel data
    */
-  protected void writePixels() throws IOException {
-    LZWEncoder encoder = new LZWEncoder(width, height, indexedPixels);
+  private void writePreparedIndexes() throws IOException {
+    LZWEncoder encoder = new LZWEncoder(this.width, this.height, this.preparedFrameIndexes);
     encoder.encode(out);
   }
 
   /**
    * Write 16-bit value to output stream, LSB first
    */
-  protected void writeShort(int value) throws IOException {
+  private void writeShort(int value) throws IOException {
     out.write(value);
     out.write(value >> 8);
   }
@@ -262,7 +291,7 @@ public class AnimatedGlobalPaletteGifEncoder {
   /**
    * Writes string to output stream
    */
-  protected void writeString(String s) throws IOException {
+  private void writeString(String s) throws IOException {
     for (int i = 0; i < s.length(); i++) {
       out.write((byte) s.charAt(i));
     }
