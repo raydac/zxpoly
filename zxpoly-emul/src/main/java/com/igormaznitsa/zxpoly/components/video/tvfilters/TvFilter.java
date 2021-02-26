@@ -10,16 +10,12 @@ public interface TvFilter {
   int[] SHARED_BUFFER_RASTER =
           ((DataBufferInt) SHARED_BUFFER.getRaster().getDataBuffer()).getData();
 
-  final int RASTER_WIDTH_ARGB_INT = 512;
-  final int RASTER_WIDTH_RGB_BYTE = RASTER_WIDTH_ARGB_INT * 3;
-  final int RASTER_HEIGHT = 384;
+  int RASTER_WIDTH_ARGB_INT = 512;
+  int RASTER_WIDTH_RGB_BYTE = RASTER_WIDTH_ARGB_INT * 3;
+  int RASTER_HEIGHT = 384;
 
-  default int[] getGif256ItemPalette() {
-    if (!this.isGifCompatible()) {
-      throw new IllegalStateException("Gif is not supported by the filter");
-    } else {
-      throw new UnsupportedOperationException("Must be implemented in ancestor");
-    }
+  default int[] makePalette() {
+    return null;
   }
 
   default Color applyBorderColor(final Color borderColor) {

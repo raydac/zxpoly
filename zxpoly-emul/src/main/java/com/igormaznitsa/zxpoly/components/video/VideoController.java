@@ -1325,6 +1325,22 @@ public final class VideoController extends JComponent
     }
   }
 
+  public int[] findCurrentPalette() {
+    if (this.tvFilterChain.isEmpty()) {
+      switch (this.currentVideoMode) {
+        case VIDEOMODE_SPEC256:
+        case VIDEOMODE_SPEC256_16: {
+          return PALETTE_SPEC256;
+        }
+        default: {
+          return PALETTE_ZXPOLY;
+        }
+      }
+    } else {
+      return this.tvFilterChain.findPalette();
+    }
+  }
+
   public int getVideoMode() {
     return this.currentVideoMode;
   }

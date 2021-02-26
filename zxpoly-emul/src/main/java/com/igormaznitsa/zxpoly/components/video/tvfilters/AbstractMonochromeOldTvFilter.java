@@ -15,6 +15,15 @@ public abstract class AbstractMonochromeOldTvFilter extends TvFilterOldTv {
     this.borderColors = this.precalculateEightBorderColors();
   }
 
+  @Override
+  public int[] makePalette() {
+    final int[] result = new int[256];
+    for (int y = 0; y < 256; y++) {
+      result[y] = y2rgb(y);
+    }
+    return result;
+  }
+
   public static int rgb2y(final int r, final int g, final int b) {
     return Math.min(Math.round(r * 0.4047f + g * 0.5913f + b * 0.2537f), 255);
   }

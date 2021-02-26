@@ -1,5 +1,7 @@
 package com.igormaznitsa.zxpoly.components.video.tvfilters;
 
+import com.igormaznitsa.zxpoly.components.video.VideoController;
+
 import java.awt.*;
 
 import static java.util.stream.Stream.of;
@@ -7,7 +9,7 @@ import static java.util.stream.Stream.of;
 public enum TvFilterChain {
   NONE("None", new TvFilter[0]),
   GRAYSCALE("Grayscale", new TvFilter[]{TvFilterGrayscale.getInstance()}),
-  BLACKWHITE("Black & White", new TvFilter[]{TvOrderedBayer.getInstance()}),
+  BLACKWHITE("Black & White", new TvFilter[]{TvFilterBlackWhite.getInstance()}),
   OLDTV("Old TV Color", new TvFilter[]{TvFilterOldTv.getInstance()}),
   AMBERCRT("Old TV Amber", new TvFilter[]{TvFilterAmberCrt.getInstance()}),
   GREENCRT("Old TV Green", new TvFilter[]{TvFilterGreenCrt.getInstance()}),
@@ -46,5 +48,13 @@ public enum TvFilterChain {
 
   public TvFilter[] getFilterChain() {
     return this.filterChain;
+  }
+
+  public int[] findPalette() {
+    int[] result = null;
+    for (final TvFilter f : this.filterChain) {
+      result = f.makePalette();
+    }
+    return result == null ? VideoController.PALETTE_SPEC256 : result;
   }
 }

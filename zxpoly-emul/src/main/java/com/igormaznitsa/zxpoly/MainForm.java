@@ -20,7 +20,6 @@ package com.igormaznitsa.zxpoly;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
-import com.igormaznitsa.zxpoly.animeencoders.CustomPalette256AGifEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.ZxPolyAGifEncoder;
 import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
@@ -2290,23 +2289,16 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         this.menuViewVideoFilter.setEnabled(false);
         this.lastAnimGifOptions = panel.getValue();
         try {
-          if (this.board.getBoardMode() == BoardMode.SPEC256) {
-            encoder = new CustomPalette256AGifEncoder(
-                    new File(this.lastAnimGifOptions.filePath),
-                    VideoController.PALETTE_SPEC256,
-                    this.lastAnimGifOptions.frameRate,
-                    this.lastAnimGifOptions.repeat
-            );
-          } else {
-            encoder = new ZxPolyAGifEncoder(new File(this.lastAnimGifOptions.filePath),
-                    this.lastAnimGifOptions.frameRate, this.lastAnimGifOptions.repeat);
-          }
+          encoder = new ZxPolyAGifEncoder(
+                  new File(this.lastAnimGifOptions.filePath),
+                  this.board.getVideoController().findCurrentPalette(),
+                  this.lastAnimGifOptions.frameRate,
+                  this.lastAnimGifOptions.repeat);
         } catch (IOException ex) {
           this.menuViewVideoFilter.setEnabled(true);
           LOGGER.log(Level.SEVERE, "Can't create GIF encoder: " + ex.getMessage(), ex);
-          JOptionPane
-                  .showMessageDialog(this, "Can't make GIF encoder: " + ex.getMessage(), "Error!",
-                          JOptionPane.ERROR_MESSAGE);
+          showMessageDialog(this, "Can't make GIF encoder: " + ex.getMessage(), "Error!",
+                  JOptionPane.ERROR_MESSAGE);
           return;
         }
 
