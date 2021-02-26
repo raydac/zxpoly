@@ -12,6 +12,7 @@ import java.util.OptionalInt;
 /**
  * Class AnimatedGifEncoder - Encodes a GIF file consisting of one or more
  * frames.
+ * (adapted by Igor Maznitsa in 2021 for ZX-Poly screen processing)
  *
  * <pre>
  *  Example:
@@ -190,10 +191,11 @@ public final class AnimatedGlobalPaletteGifEncoder {
    * automatically.
    *
    * @param os OutputStream on which GIF images are written.
-   * @return false if initial write failed.
    */
-  public void start(OutputStream os) throws IOException {
-    if (this.started) throw new IllegalStateException("Already started");
+  public void start(final OutputStream os) throws IOException {
+    if (this.started) {
+      throw new IllegalStateException("Already started");
+    }
     this.started = true;
     this.out = Objects.requireNonNull(os);
     writeString("GIF89a"); // header
