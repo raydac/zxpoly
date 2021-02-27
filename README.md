@@ -9,23 +9,21 @@
 
 __2.1.3 (SNAPSHOT)__
 
+- added auto-restore of sound after turbo mode off
 - fixed reading of samples from unsigned 8 bit WAV
 - reworked form resize processing [#18](https://github.com/raydac/zxpoly/issues/18)
 - added Old TV Amber and Old TV Green filters [#15](https://github.com/raydac/zxpoly/issues/15)
 - added toggle button to activate virtual ZX-Keyboard [#17](https://github.com/raydac/zxpoly/issues/17)
 - added auto-releasing for SS+CS on virtual keyboard [#12](https://github.com/raydac/zxpoly/issues/12)
 - added configurable Protek joystick and `ZX-Keyboard Off` mode (either pressed F6 or flag in Options menu), to process
-  events only from selected joystick (ZX-Keyboard keys in the mode works only with pressed
-  CTRL) [#11](https://github.com/raydac/zxpoly/issues/11)
+  events only from selected joystick (ZX-Keyboard keys in the mode works only with pressed CTRL) [#11](https://github.com/raydac/zxpoly/issues/11)
 - added way define custom ROM path through preferences [#9](https://github.com/raydac/zxpoly/issues/9)
 - added distributive for MacOS arm64 (game controller interface may not work)
 - embedded JDK updated to Liberica OpenJDK 15.0.2+10
 - added way change virtual keyboard skin through preferences [#8](https://github.com/raydac/zxpoly/issues/8)
-- added support for snapshot and file containers drag and drop into main
-  form [#7](https://github.com/raydac/zxpoly/issues/7)
+- added support for snapshot and file containers drag and drop into main form [#7](https://github.com/raydac/zxpoly/issues/7)
 - in Preferences added redefinition of keys mapped to Kempston joystick [#5](https://github.com/raydac/zxpoly/issues/5)
-- added support for mouse clickable virtual keyboard (show/hide by F5
-  pressing) [#4](https://github.com/raydac/zxpoly/issues/4)
+- added support for mouse clickable virtual keyboard (show/hide by F5 pressing) [#4](https://github.com/raydac/zxpoly/issues/4)
 
 __2.1.2 (22-dec-2020)__
 
