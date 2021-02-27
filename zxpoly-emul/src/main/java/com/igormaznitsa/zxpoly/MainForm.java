@@ -18,9 +18,9 @@
 package com.igormaznitsa.zxpoly;
 
 import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.zxpoly.animeencoders.AGifEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
-import com.igormaznitsa.zxpoly.animeencoders.ZxPolyAGifEncoder;
 import com.igormaznitsa.zxpoly.components.*;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk;
@@ -2285,7 +2285,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         this.menuViewVideoFilter.setEnabled(false);
         this.lastAnimGifOptions = panel.getValue();
         try {
-          encoder = new ZxPolyAGifEncoder(
+          encoder = new AGifEncoder(
                   new File(this.lastAnimGifOptions.filePath),
                   this.board.getVideoController().findCurrentPalette(),
                   this.lastAnimGifOptions.frameRate,

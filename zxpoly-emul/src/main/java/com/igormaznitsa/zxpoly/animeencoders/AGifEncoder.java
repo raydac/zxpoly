@@ -28,20 +28,20 @@ import java.io.OutputStream;
 import java.time.Duration;
 
 
-public final class ZxPolyAGifEncoder implements AnimationEncoder {
+public final class AGifEncoder implements AnimationEncoder {
 
   private final int intsBetweenFrames;
-  private final AGifGctEncoder gifEncoder;
+  private final AdaptedAnimatedGifEncoder gifEncoder;
 
   private final OutputStream outputStream;
 
-  public ZxPolyAGifEncoder(final File file, final int[] rgbPalette, final int frameRate, final boolean loop) throws IOException {
-    this.gifEncoder = new AGifGctEncoder(VideoController.SCREEN_WIDTH, VideoController.SCREEN_HEIGHT, rgbPalette);
+  public AGifEncoder(final File targetFile, final int[] globalRgbPalette, final int frameRate, final boolean makeLoop) throws IOException {
+    this.gifEncoder = new AdaptedAnimatedGifEncoder(VideoController.SCREEN_WIDTH, VideoController.SCREEN_HEIGHT, globalRgbPalette);
     this.intsBetweenFrames =
             (int) (1000L / MainForm.TIMER_INT_DELAY_MILLISECONDS.toMillis()) / frameRate;
     this.gifEncoder.setDelay(Duration.ofMillis(this.intsBetweenFrames * MainForm.TIMER_INT_DELAY_MILLISECONDS.toMillis()));
-    this.outputStream = new FileOutputStream(file);
-    gifEncoder.setRepeat(loop ? 0 : 1);
+    this.outputStream = new FileOutputStream(targetFile);
+    gifEncoder.setRepeat(makeLoop ? 0 : 1);
     gifEncoder.start(this.outputStream);
   }
 

@@ -11,14 +11,14 @@ import java.util.OptionalInt;
 
 /**
  * Class AnimatedGifEncoder - Encodes a GIF file consisting of one or more
- * frames.
+ * frames only for Global Palette .
  * (adapted by Igor Maznitsa in 2021 for ZX-Poly screen processing)
  *
  * <pre>
  *  Example:
- *     AnimatedGifEncoder e = new AnimatedGifEncoder();
+ *     AdaptedAnimatedGifEncoder e = new AdaptedAnimatedGifEncoder(512,384,new int []{0,0xFFFFFF});
  *     e.start(outputFileName);
- *     e.setDelay(1000);   // 1 frame per sec
+ *     e.setDelay(Duration.ofSeconds(1));   // 1 frame per sec
  *     e.addFrame(image1);
  *     e.addFrame(image2);
  *     e.finish();
@@ -33,14 +33,14 @@ import java.util.OptionalInt;
  * @version 1.03 November 2003
  */
 
-public final class AGifGctEncoder {
+final class AdaptedAnimatedGifEncoder {
 
   private final int width; // image width
   private final int height; // image height
   private final byte[] newFrameIndexes; // converted frame indexed to palette
   private final byte[] preparedFrameIndexes;
-  private final int[] rgbPalette;
-  private final IntMap mapRgb2index;
+  private final int[] globalRgbPalette;
+  private final IntMap mapRgb2PaletteIndex;
   private int repeat = -1; // no repeat
   private int delay = 0; // frame delay (hundredths)
   private boolean started = false; // ready to output frames
@@ -48,16 +48,16 @@ public final class AGifGctEncoder {
   private int preparedFrameDelay;
   private boolean firstFrame;
 
-  public AGifGctEncoder(final int imageWidth, final int imageHeight, final int[] palette) {
-    if (palette.length > 256) throw new IllegalArgumentException("Wrong size of palette");
+  public AdaptedAnimatedGifEncoder(final int imageWidth, final int imageHeight, final int[] globalPalette) {
+    if (globalPalette.length > 256) throw new IllegalArgumentException("Wrong size of palette");
     this.width = imageWidth;
     this.height = imageHeight;
-    this.rgbPalette = new int[256];
-    this.mapRgb2index = new IntMap(1024);
-    for (int i = 0; i < palette.length; i++) {
-      final int rgb = palette[i] & 0xFF_FF_FF;
-      this.rgbPalette[i] = rgb;
-      this.mapRgb2index.put(rgb, i);
+    this.globalRgbPalette = new int[256];
+    this.mapRgb2PaletteIndex = new IntMap(1024);
+    for (int i = 0; i < globalPalette.length; i++) {
+      final int rgb = globalPalette[i] & 0xFF_FF_FF;
+      this.globalRgbPalette[i] = rgb;
+      this.mapRgb2PaletteIndex.put(rgb, i);
     }
     this.newFrameIndexes = new byte[imageWidth * imageHeight];
     this.preparedFrameIndexes = new byte[imageWidth * imageHeight];
@@ -134,7 +134,7 @@ public final class AGifGctEncoder {
     for (int i = 0; i < this.newFrameIndexes.length; i++) {
       final byte prev = this.newFrameIndexes[i];
       final int rgb = argb[i] & 0xFF_FF_FF;
-      final OptionalInt index = this.mapRgb2index.get(rgb);
+      final OptionalInt index = this.mapRgb2PaletteIndex.get(rgb);
       final byte newValue;
       if (index.isPresent()) {
         newValue = (byte) index.getAsInt();
@@ -146,8 +146,8 @@ public final class AGifGctEncoder {
         final int bg = (rgb >> 8) & 0xFF;
         final int bb = rgb & 0xFF;
 
-        for (int j = 0; j < this.rgbPalette.length; j++) {
-          final int prgb = this.rgbPalette[j];
+        for (int j = 0; j < this.globalRgbPalette.length; j++) {
+          final int prgb = this.globalRgbPalette[j];
           final int dr = br - ((prgb >> 16) & 0xFF);
           final int dg = bg - ((prgb >> 8) & 0xFF);
           final int db = bb - (prgb & 0xFF);
@@ -158,7 +158,7 @@ public final class AGifGctEncoder {
             distance = thisDist;
           }
         }
-        this.mapRgb2index.put(rgb, found);
+        this.mapRgb2PaletteIndex.put(rgb, found);
         newValue = (byte) found;
       }
       if (prev != newValue) {
@@ -202,7 +202,7 @@ public final class AGifGctEncoder {
     writeLSD(); // logical screen descriptior
 
     // global palette
-    for (int rgb : this.rgbPalette) {
+    for (int rgb : this.globalRgbPalette) {
       this.out.write(rgb >> 16);
       this.out.write(rgb >> 8);
       this.out.write(rgb);
