@@ -21,6 +21,7 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.SourceDataLine;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,6 +52,11 @@ public final class Beeper {
     }
 
     @Override
+    public Optional<SourceSoundPort> getSoundPort() {
+      return Optional.empty();
+    }
+
+    @Override
     public void dispose() {
     }
 
@@ -77,7 +83,8 @@ public final class Beeper {
   public Beeper() {
   }
 
-  public void setSourceSoundPort(final SourceSoundPort soundPort) {
+  public Optional<SourceSoundPort> setSourceSoundPort(final SourceSoundPort soundPort) {
+    final IBeeper prevBeeper = this.activeInternalBeeper.get();
     if (soundPort == null) {
       this.activeInternalBeeper.getAndSet(NULL_BEEPER).dispose();
     } else {
@@ -91,6 +98,7 @@ public final class Beeper {
         this.activeInternalBeeper.getAndSet(NULL_BEEPER).dispose();
       }
     }
+    return prevBeeper.getSoundPort();
   }
 
   public boolean isNullBeeper() {
@@ -145,6 +153,8 @@ public final class Beeper {
 
   private interface IBeeper {
 
+    Optional<SourceSoundPort> getSoundPort();
+
     void start();
 
     void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int level);
@@ -161,10 +171,11 @@ public final class Beeper {
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
     private final SndBufferContainer sndBuffer = new SndBufferContainer();
+    private final Optional<SourceSoundPort> sourceSoundPort;
     private volatile boolean working = true;
 
-
     private InternalBeeper(final SourceSoundPort sourceSoundPort) {
+      this.sourceSoundPort = Optional.of(sourceSoundPort);
       this.sourceDataLine = sourceSoundPort.asSourceDataLine();
       final Line.Info lineInfo = this.sourceDataLine.getLineInfo();
       LOGGER.info("Got sound data line: " + lineInfo.toString());
@@ -172,6 +183,11 @@ public final class Beeper {
       this.thread = new Thread(this, "zxp-beeper-thread-" + toHexString(System.nanoTime()));
       this.thread.setPriority(Thread.NORM_PRIORITY + 2);
       this.thread.setDaemon(true);
+    }
+
+    @Override
+    public Optional<SourceSoundPort> getSoundPort() {
+      return this.sourceSoundPort;
     }
 
     @Override

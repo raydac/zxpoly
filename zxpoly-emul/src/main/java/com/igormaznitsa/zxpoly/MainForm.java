@@ -256,6 +256,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private javax.swing.JPanel panelIndicators;
   private javax.swing.JScrollPane scrollPanel;
   private File lastPokeFileFolder = null;
+  private Optional<SourceSoundPort> preTurboSourceSoundPort = Optional.empty();
 
   public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
@@ -1995,11 +1996,18 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.toggleButtonShowVkbd.setSelected(show);
   }
 
-
   private void menuOptionsTurboActionPerformed(ActionEvent evt) {
     final boolean turboActivated = this.menuOptionsTurbo.isSelected();
-    this.board.getBeeper().setSourceSoundPort(null);
-    this.setTurboMode(turboActivated);
+    if (turboActivated) {
+      this.preTurboSourceSoundPort = this.board.getBeeper().setSourceSoundPort(null);
+      LOGGER.info("Saved sound port: " + this.preTurboSourceSoundPort);
+      this.setTurboMode(true);
+    } else {
+      this.setTurboMode(false);
+      this.board.getBeeper().setSourceSoundPort(this.preTurboSourceSoundPort.orElse(null));
+      LOGGER.info("Restored sound port: " + this.preTurboSourceSoundPort);
+      this.preTurboSourceSoundPort = Optional.empty();
+    }
   }
 
   private void menuFileSelectDiskCActionPerformed(ActionEvent evt) {
