@@ -1,0 +1,35 @@
+.video {
+    border: 2px solid darkgray;
+    display: inline-block;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+}
+.content {
+  max-width: 800px;
+  margin: auto;
+}
+.code {
+    font-family: "Courier New", Courier, monospace;
+    font-weight: bold;
+    color: lightgray;
+    background: darkblue;
+}
+footer {color: cyan; text-align: right;}
+body {background-color: black;}
+img {
+    width:64px;
+    height:64px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 16px;
+}
+h2   {color: red;}
+h1   {color: yellow;}
+h3   {color: orange;}
+h4   {color: orange;}
+p    {color: white;}
+a    {color: yellow;}
+video {border: 3px solid cyan;}
