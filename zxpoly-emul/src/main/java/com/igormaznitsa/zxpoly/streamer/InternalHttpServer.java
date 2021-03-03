@@ -5,16 +5,19 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.apache.commons.io.IOUtils;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalInt;
+import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -32,15 +35,13 @@ public class InternalHttpServer {
   private final AtomicReference<HttpServer> httpServerRef = new AtomicReference<>();
   private final AtomicReference<TcpReader> tcpReaderRef = new AtomicReference<>();
   private final Consumer<InternalHttpServer> stopConsumer;
-  private volatile boolean stopped;
-
-  private final ExecutorService executorService = Executors.newCachedThreadPool(r -> {
+  private final ExecutorService executorService = new ThreadPoolExecutor(2, 10, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2), r -> {
     final Thread thread = new Thread(r, "zxpoly-stream-" + System.nanoTime());
     thread.setDaemon(true);
     return thread;
   });
-
   private final List<ThreadDataBuffer> threadDataBuffers = new CopyOnWriteArrayList<>();
+  private volatile boolean stopped;
 
   public InternalHttpServer(
           final String mime,
@@ -116,51 +117,49 @@ public class InternalHttpServer {
   }
 
   private void handleMainPage(final HttpExchange exchange) throws IOException {
-    final String linkToVideoStream = "http://" + this.getHttpAddress() + "/" + STREAM_RESOURCE;
+    try {
+      final String linkToVideoStream = "http://" + this.getHttpAddress() + "/" + STREAM_RESOURCE;
 
-    String path = exchange.getRequestURI().getPath();
-    LOGGER.info("Incoming request for resource: " + path);
-    if ("/".equals(path)) {
-      path = "/streamer.html";
-    }
-
-    String mime = "text/plain";
-    boolean binary = false;
-    if (path.endsWith(".css")) {
-      mime = "text/css";
-    } else if (path.endsWith(".js")) {
-      mime = "text/javascript";
-    } else if (path.endsWith(".htm") || path.endsWith(".html")) {
-      mime = "text/html";
-    } else if (path.endsWith(".png")) {
-      mime = "image/png";
-      binary = true;
-    } else if (path.endsWith(".ico")) {
-      mime = "image/x-icon";
-      binary = true;
-    }
-
-    final Headers headers = exchange.getResponseHeaders();
-    headers.add("Content-Type", mime);
-
-    byte[] data = readResource(path);
-    if (data == null) {
-      exchange.sendResponseHeaders(404, 0L);
-      final OutputStream out = exchange.getResponseBody();
-      out.write(new byte[0]);
-      out.flush();
-      out.close();
-    } else {
-      if (!binary) {
-        final String text = new String(data, StandardCharsets.UTF_8).replace("${video.link}", linkToVideoStream)
-                .replace("${video.mime}", this.mime);
-        data = text.getBytes(StandardCharsets.UTF_8);
+      String path = exchange.getRequestURI().getPath();
+      LOGGER.info("Incoming request for resource: " + path);
+      if ("/".equals(path)) {
+        path = "/streamer.html";
       }
-      exchange.sendResponseHeaders(200, data.length);
-      final OutputStream out = exchange.getResponseBody();
-      out.write(data);
-      out.flush();
-      out.close();
+
+      String mime = "text/plain";
+      boolean binary = false;
+      if (path.endsWith(".css")) {
+        mime = "text/css";
+      } else if (path.endsWith(".js")) {
+        mime = "text/javascript";
+      } else if (path.endsWith(".htm") || path.endsWith(".html")) {
+        mime = "text/html";
+      } else if (path.endsWith(".png")) {
+        mime = "image/png";
+        binary = true;
+      } else if (path.endsWith(".ico")) {
+        mime = "image/x-icon";
+        binary = true;
+      }
+
+      final Headers headers = exchange.getResponseHeaders();
+      headers.add("Content-Type", mime);
+
+      byte[] data = readResource(path);
+      if (data == null) {
+        exchange.sendResponseHeaders(404, -1L);
+      } else {
+        if (!binary) {
+          final String text = new String(data, StandardCharsets.UTF_8).replace("${video.link}", linkToVideoStream)
+                  .replace("${video.mime}", this.mime);
+          data = text.getBytes(StandardCharsets.UTF_8);
+        }
+        exchange.sendResponseHeaders(200, data.length);
+        final OutputStream out = exchange.getResponseBody();
+        out.write(data);
+      }
+    } finally {
+      exchange.close();
     }
   }
 
@@ -171,7 +170,6 @@ public class InternalHttpServer {
       headers.add("Content-Type", this.mime);
       headers.add("Cache-Control", "no-cache, no-store");
       headers.add("Pragma", "no-cache");
-      headers.add("Transfer-Encoding", "chunked");
       headers.add("Expires", "0");
       headers.add("Connection", "Keep-Alive");
       headers.add("Keep-Alive", "max");
@@ -198,12 +196,14 @@ public class InternalHttpServer {
 
           final Headers headers = exchange.getResponseHeaders();
           headers.add("Content-Type", this.mime);
-          headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
-          headers.add("Expires", "0");
+          headers.add("Cache-Control", "no-cache, no-store");
           headers.add("Pragma", "no-cache");
+          headers.add("Expires", "0");
+          headers.add("Connection", "Keep-Alive");
+          headers.add("Keep-Alive", "max");
           headers.add("Accept-Ranges", "none");
 
-          exchange.sendResponseHeaders(200, 0);
+          exchange.sendResponseHeaders(200, Long.MAX_VALUE);
 
           try (final OutputStream responseStream = exchange.getResponseBody()) {
             while (!this.stopped && !Thread.currentThread().isInterrupted()) {
@@ -234,13 +234,14 @@ public class InternalHttpServer {
   }
 
   public void stop() {
-    stopped = true;
+    this.stopped = true;
     final HttpServer server = this.httpServerRef.getAndSet(null);
     if (server != null) {
       final TcpReader reader = this.tcpReaderRef.getAndSet(null);
       if (reader != null) {
         reader.stop();
       }
+
       try {
         LOGGER.info("Stopping server");
         server.stop(0);
@@ -252,6 +253,267 @@ public class InternalHttpServer {
 
       if (this.stopConsumer != null) {
         this.stopConsumer.accept(this);
+      }
+    }
+  }
+
+  public String getTcpAddress() {
+    final TcpReader reader = this.tcpReaderRef.get();
+    return reader == null ? "none" : reader.getServerAddress();
+  }
+
+  public static class WebSocketStreamWrapper {
+
+    private static final byte[] EMPTY_ARRAY = new byte[0];
+    private final Random rnd = new Random();
+    private final AtomicReference<Thread> thread = new AtomicReference<>();
+    private final InputStream inputStream;
+    private final OutputStream outputStream;
+    private final WebSocketStreamWrapper.WsSignalReceiver receiver;
+
+    private final Lock writeLock = new ReentrantLock();
+
+    public WebSocketStreamWrapper(final WebSocketStreamWrapper.WsSignalReceiver receiver, final InputStream inputStream, final OutputStream outputStream) {
+      this.receiver = Objects.requireNonNull(receiver);
+      this.inputStream = inputStream;
+      this.outputStream = outputStream;
+    }
+
+    static void writeWebSocketFrame(final OutputStream stream, final int opCode, final OptionalInt frameMask, final byte[] data) throws IOException {
+      stream.write(0x80 | (opCode & 0xF));
+
+      final int maskBit;
+      final byte[] mask;
+      if (frameMask.isPresent()) {
+        maskBit = 0x80;
+        mask = new byte[4];
+        final int value = frameMask.getAsInt();
+        mask[0] = (byte) (value >> 24);
+        mask[1] = (byte) (value >> 16);
+        mask[2] = (byte) (value >> 8);
+        mask[3] = (byte) value;
+      } else {
+        maskBit = 0;
+        mask = null;
+      }
+
+      if (data.length < 126) {
+        stream.write(maskBit | data.length);
+      } else if (data.length < 0x10000) {
+        stream.write(maskBit | 0x7E);
+        writePayloadLength(stream, data.length);
+      } else {
+        stream.write(maskBit | 0x7F);
+        writePayloadLength(stream, data.length);
+      }
+
+      if (mask != null) {
+        stream.write(mask);
+        for (int i = 0; i < data.length; i++) {
+          final int j = i % 4;
+          data[i] ^= mask[j];
+        }
+      }
+      stream.write(data);
+
+      if (mask != null) {
+        for (int i = 0; i < data.length; i++) {
+          final int j = i % 4;
+          data[i] ^= mask[j];
+        }
+      }
+      stream.flush();
+    }
+
+    private static long readPayloadLengthBytes(final InputStream in, final int bytes) throws IOException {
+      long result = 0L;
+      int count = bytes;
+      while (--count > 0) {
+        final int next = in.read();
+        if (next < 0) throw new EOFException();
+        result |= (long) next << (8 * count);
+      }
+      return result;
+    }
+
+    private static void writePayloadLength(final OutputStream out, final long length) throws IOException {
+      if (length < 0x10000) {
+        out.write((byte) length);
+        out.write((byte) (length >> 8));
+      } else {
+        out.write((byte) length);
+        out.write((byte) (length >> 8));
+        out.write((byte) (length >> 16));
+        out.write((byte) (length >> 24));
+        out.write((byte) (length >> 32));
+        out.write((byte) (length >> 40));
+        out.write((byte) (length >> 48));
+        out.write((byte) (length >> 56));
+      }
+    }
+
+    public void start() {
+      final Thread newThread = new Thread(this::readRun, "ws-wrapper-read-thread-" + System.nanoTime());
+      if (this.thread.compareAndSet(null, newThread)) {
+        newThread.start();
+      } else {
+        throw new IllegalStateException("Already started");
+      }
+    }
+
+    private void assertStarted() {
+      if (this.thread.get() == null) {
+        throw new IllegalStateException("Not started");
+      }
+    }
+
+    private OptionalInt generateMask() {
+      int result = 0;
+      do {
+        result = this.rnd.nextInt();
+      } while (result == 0);
+      return OptionalInt.of(result);
+    }
+
+    public void writeFrame(final int opCode, final byte[] data) throws IOException {
+      this.assertStarted();
+      this.writeLock.lock();
+      try {
+        writeWebSocketFrame(this.outputStream, opCode, this.generateMask(), data);
+      } finally {
+        this.writeLock.unlock();
+      }
+    }
+
+    public void writeText(final String text) throws IOException {
+      this.writeFrame(0x01, text.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public void writeBinary(final byte[] data) throws IOException {
+      this.writeFrame(0x02, data);
+    }
+
+    private void readRun() {
+      this.receiver.onStart(this);
+      try {
+        while (this.thread.get() != null && Thread.currentThread().isAlive()) {
+          final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+          int opcode = 0;
+          while (this.thread.get() != null && Thread.currentThread().isAlive()) {
+            final int maskOpcode = this.inputStream.read();
+            if (maskOpcode < 0) throw new EOFException();
+
+            final boolean fin = (maskOpcode & 0x80) != 0;
+            opcode |= maskOpcode & 0xF;
+
+            final int maskPayloadLen = this.inputStream.read();
+            if (maskPayloadLen < 0) throw new EOFException();
+
+            final boolean mask = (maskPayloadLen & 0x80) != 0;
+            long payloadLen = maskPayloadLen & 0x7F;
+            if (payloadLen == 0x7EL) {
+              payloadLen = readPayloadLengthBytes(this.inputStream, 2);
+            } else if (payloadLen == 0x7FL) {
+              payloadLen = readPayloadLengthBytes(this.inputStream, 8);
+            }
+            final byte[] maskValue;
+            if (mask) {
+              maskValue = IOUtils.readFully(this.inputStream, 4);
+            } else {
+              maskValue = EMPTY_ARRAY;
+            }
+            final byte[] payload = IOUtils.readFully(this.inputStream, (int) payloadLen);
+
+            if (mask) {
+              for (int i = 0; i < payload.length; i++) {
+                final int j = i % 4;
+                payload[i] ^= maskValue[j];
+              }
+            }
+
+            buffer.write(payload);
+
+            if (fin) {
+              this.processIncomingPacket(opcode, buffer.toByteArray());
+              break;
+            }
+          }
+        }
+      } catch (Exception ex) {
+        // DO NOTHING
+        ex.printStackTrace();
+      } finally {
+        this.receiver.onStop(this);
+      }
+    }
+
+    private void processIncomingPacket(final int opCode, final byte[] data) throws IOException {
+      switch (opCode) {
+        case 0x00: {  // continuation frame
+          this.receiver.onUnexpected(this, opCode, data);
+        }
+        break;
+        case 0x01: { // text frame
+          this.receiver.onText(this, new String(data, StandardCharsets.UTF_8));
+        }
+        break;
+        case 0x02: { // binary frame
+          this.receiver.onBinary(this, data);
+        }
+        break;
+        case 0x08: { // connection close
+          this.receiver.onClose(this, data);
+        }
+        break;
+        case 0x09: { // ping
+          this.writeFrame(0x0A, EMPTY_ARRAY);
+        }
+        break;
+        case 0x0A: { // pong
+
+        }
+        break;
+        default: { // reserved
+          this.receiver.onReserved(this, opCode, data);
+        }
+        break;
+      }
+    }
+
+    public void close(final boolean closeStreams) {
+      final Thread startedThread = this.thread.getAndSet(null);
+      if (startedThread != null) {
+        IOUtils.closeQuietly(this.inputStream);
+        IOUtils.closeQuietly(this.outputStream);
+        try {
+          startedThread.interrupt();
+          startedThread.join();
+        } catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+
+    public interface WsSignalReceiver {
+      default void onText(WebSocketStreamWrapper source, String text) {
+      }
+
+      default void onBinary(WebSocketStreamWrapper source, byte[] data) {
+      }
+
+      default void onClose(WebSocketStreamWrapper source, byte[] data) {
+      }
+
+      default void onUnexpected(WebSocketStreamWrapper source, int code, byte[] data) {
+      }
+
+      default void onReserved(WebSocketStreamWrapper source, int code, byte[] data) {
+      }
+
+      default void onStart(WebSocketStreamWrapper source) {
+      }
+
+      default void onStop(WebSocketStreamWrapper source) {
       }
     }
   }
@@ -286,10 +548,5 @@ public class InternalHttpServer {
         return this.buffer.offer(data);
       }
     }
-  }
-
-  public String getTcpAddress() {
-    final TcpReader reader = this.tcpReaderRef.get();
-    return reader == null ? "none" : reader.getServerAddress();
   }
 }

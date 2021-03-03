@@ -19,35 +19,10 @@
         hosted by <a href="https://github.com/raydac/zxpoly">GitHub</a>.</p>
     <p><b>Video-stream URL:</b> <a href="${video.link}">${video.link}</a><br/><b>Mime-type:</b> ${video.mime}</p>
     <div class="video">
-        <canvas height="384" id="videoCanvas" width="512">
-            <p>
-                Please use a browser that supports the Canvas Element, like
-                <a href="http://www.google.com/chrome">Chrome</a>,
-                <a href="http://www.mozilla.com/firefox/">Firefox</a>,
-                <a href="http://www.apple.com/safari/">Safari</a> or Internet Explorer 10
-            </p>
-        </canvas>
-        <script src="jsmpeg.min.js" type="text/javascript"></script>
-        <script type="text/javascript">
-
-		// Show loading notice
-		var canvas = document.getElementById('videoCanvas');
-		var ctx = canvas.getContext('2d');
-		ctx.fillStyle = 'orange';
-		ctx.fillText('Loading...', canvas.width/2-30, canvas.height/3);
-
-		var player = new JSMpeg.Player('${video.link}', {
-		        canvas:canvas,
-		        disableGl:true,
-                autoplay:false,
-                disableWebAssembly:true,
-                decodeFirstFrame:false,
-                progressive:true,
-                chunkSize:131072
-		      });
-
-
-        </script>
+        <video controls height="384" width="512">
+            <source src="${video.link}" type="${video.mime}">
+            Your browser does not support HTML video
+        </video>
     </div>
     <div>
         <h3>Tips for some media players</h3>

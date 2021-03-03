@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static com.igormaznitsa.zxpoly.components.snd.Beeper.AUDIO_FORMAT;
-import static java.lang.String.join;
 
 public class FfmpegWrapper {
 
@@ -23,11 +23,11 @@ public class FfmpegWrapper {
 
 
   public FfmpegWrapper(
-      final String ffmpegPath,
-      final int frameRate,
-      final String srcVideo,
-      final String srcAudio,
-      final String dstResult
+          final String ffmpegPath,
+          final int frameRate,
+          final String srcVideo,
+          final String srcAudio,
+          final String dstResult
   ) {
     this.ffmpegPath = ffmpegPath;
     this.frameRate = frameRate;
@@ -110,9 +110,9 @@ public class FfmpegWrapper {
       args.add(this.srcAudio);
 
       args.add("-c:a");
-      args.add("mp2");
+      args.add("ac3_fixed");
       args.add("-b:a");
-      args.add("192k");
+      args.add("320k");
 
       args.add("-af");
       args.add("aresample=async=" + beeperSampleRate);
@@ -124,7 +124,11 @@ public class FfmpegWrapper {
     args.add("zerolatency");
 
     args.add("-c:v");
-    args.add("mpeg1video");
+    args.add("libx264");
+
+    args.add("-x264opts");
+    args.add(String
+            .format("keyint=%1$d:min-keyint=%1$d:no-scenecut:nal-hrd=cbr:force-cfr=1", this.frameRate));
 
     args.add("-vf");
     args.add("format=yuv420p,scale=pal:flags=fast_bilinear,fps=fps=30");
@@ -161,13 +165,13 @@ public class FfmpegWrapper {
     args.add("mpegts");
     args.add(this.dstResult);
 
-    LOGGER.info("Starting FFmpeg: " + join(" ", args));
+    LOGGER.info("Starting FFmpeg: " + args.stream().collect(Collectors.joining(" ")));
 
     final Process process = new ProcessBuilder(args)
-        .redirectError(ProcessBuilder.Redirect.INHERIT)
-        .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-        .redirectInput(ProcessBuilder.Redirect.PIPE)
-        .start();
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectInput(ProcessBuilder.Redirect.PIPE)
+            .start();
 
     if (!this.process.compareAndSet(null, process)) {
       throw new Error("Unexpected state, detected already started process");
