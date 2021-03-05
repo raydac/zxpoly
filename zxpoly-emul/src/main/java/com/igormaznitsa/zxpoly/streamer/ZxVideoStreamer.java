@@ -23,12 +23,12 @@ public final class ZxVideoStreamer {
 
   private final AtomicBoolean started = new AtomicBoolean();
   private final Consumer<ZxVideoStreamer> endWorkConsumer;
-  private final Timer wallclock = new Timer(Duration.ofMillis(20));
+  private final Timer wallClock = new Timer(Duration.ofMillis(20));
   private volatile TcpWriter videoWriter;
   private volatile TcpWriter soundWriter;
   private volatile FfmpegWrapper ffmpegWrapper;
   private volatile ZxStreamingSoundPort soudPort;
-  private volatile InternalHttpServer internalHttp;
+  private volatile HttpProcessor httpProcessor;
   private volatile Beeper beeper;
   private volatile Duration delayBetweenFrameGrab;
   private volatile boolean internalEntitiesStarted;
@@ -41,9 +41,9 @@ public final class ZxVideoStreamer {
   }
 
   private synchronized void stopAllInternalEntities() {
-    if (this.internalHttp != null) {
-      this.internalHttp.stop();
-      this.internalHttp = null;
+    if (this.httpProcessor != null) {
+      this.httpProcessor.stop();
+      this.httpProcessor = null;
     }
 
     if (this.beeper != null) {
@@ -86,7 +86,7 @@ public final class ZxVideoStreamer {
         new TcpWriter("tcp-video-writer", 2, InetAddress.getLoopbackAddress(), 0);
 
     this.delayBetweenFrameGrab = Duration.ofMillis((1000L + frameRate / 2) / frameRate);
-    this.wallclock.next(this.delayBetweenFrameGrab);
+    this.wallClock.next(this.delayBetweenFrameGrab);
 
     if (this.beeper == null) {
       this.soundWriter = null;
@@ -151,18 +151,18 @@ public final class ZxVideoStreamer {
     }
 
     try {
-      this.internalHttp =
-          new InternalHttpServer(
-              "video/MP2T",
-              InetAddress.getLoopbackAddress(),
-              0,
-              address,
-              port,
-              server -> {
-                LOGGER.info("Internal HTTP server has been stopped");
-                this.stop();
-              });
-      this.internalHttp.start();
+      this.httpProcessor =
+              new HttpProcessor(
+                      "video/MP2T",
+                      InetAddress.getLoopbackAddress(),
+                      0,
+                      address,
+                      port,
+                      server -> {
+                        LOGGER.info("Internal HTTP server has been stopped");
+                        this.stop();
+                      });
+      this.httpProcessor.start();
     } catch (Exception ex) {
       stop();
       throw new IllegalStateException("Can't start internal tcp-http retranslator", ex);
@@ -174,7 +174,7 @@ public final class ZxVideoStreamer {
         "tcp://" + this.videoWriter.getServerAddress(),
         this.soundWriter == null ? null :
             "tcp://" + this.soundWriter.getServerAddress(),
-        "tcp://" + this.internalHttp.getTcpAddress()
+            "tcp://" + this.httpProcessor.getTcpAddress()
     );
 
     if (this.beeper != null) {
@@ -211,7 +211,7 @@ public final class ZxVideoStreamer {
       this.beeper = beeper;
       this.startInternalEntities(address, port, ffmpegPath, frameRate);
       internalEntitiesStarted = true;
-      final String link = "http://" + this.internalHttp.getHttpAddress() + '/';
+      final String link = "http://" + this.httpProcessor.getHttpAddress() + '/';
       try {
         Utils.browseLink(new URL(link));
       } catch (MalformedURLException ex) {
@@ -231,10 +231,10 @@ public final class ZxVideoStreamer {
 
   public void onWallclockInt() {
     if (this.internalEntitiesStarted) {
-      if (this.wallclock.completed()) {
-        this.wallclock.next(this.delayBetweenFrameGrab);
+      if (this.wallClock.completed()) {
+        this.wallClock.next(this.delayBetweenFrameGrab);
         this.videoWriter.write(this.videoController.grabRgb(this.rgbArray));
-        this.wallclock.next();
+        this.wallClock.next();
       }
     }
   }

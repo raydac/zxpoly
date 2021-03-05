@@ -15,7 +15,7 @@ public class WebSocketStreamWrapperTest extends TestCase {
     final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     final JBBPBitOutputStream stream = new JBBPBitOutputStream(buffer);
 
-    InternalHttpServer.WebSocketStreamWrapper.writeWebSocketFrame(stream, 2, OptionalInt.empty(), new byte[]{1, 2, 3});
+    HttpProcessor.WebSocketStreamWrapper.writeWebSocketFrame(stream, 2, OptionalInt.empty(), new byte[]{1, 2, 3});
     stream.close();
     final byte[] frame = buffer.toByteArray();
 
@@ -33,7 +33,7 @@ public class WebSocketStreamWrapperTest extends TestCase {
     final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     final JBBPBitOutputStream stream = new JBBPBitOutputStream(buffer);
 
-    InternalHttpServer.WebSocketStreamWrapper.writeWebSocketFrame(stream, 2, OptionalInt.of(0x06070809), new byte[]{1, 2, 3});
+    HttpProcessor.WebSocketStreamWrapper.writeWebSocketFrame(stream, 2, OptionalInt.of(0x06070809), new byte[]{1, 2, 3});
     stream.close();
     final byte[] frame = buffer.toByteArray();
 

@@ -1,0 +1,4 @@
+#EXTM3U
+#EXTINF:-1,ZX-Poly emulator videostream
+${video.link}
+#EXT-X-ENDLIST
