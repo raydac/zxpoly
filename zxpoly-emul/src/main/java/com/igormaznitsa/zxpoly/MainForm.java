@@ -1356,6 +1356,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           vc.doAutoscaleForSize(this.scrollPanel.getViewportBorderBounds());
           SwingUtilities.invokeLater(() -> {
             vc.doAutoscaleForSize(vc.getVisibleRect());
+            vc.setVkbShow(false);
+            toggleButtonShowVkbd.setSelected(false);
           });
         } else {
           lastFullScreen.getContentPane().removeAll();
@@ -1382,6 +1384,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
           SwingUtilities.invokeLater(() -> {
             vc.doAutoscaleForSize(vc.getVisibleRect());
+            vc.setVkbShow(false);
+            toggleButtonShowVkbd.setSelected(false);
           });
         }
       } else {
