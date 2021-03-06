@@ -1,4 +1,6 @@
-__2.1.3 (SNAPSHOT)__
+__2.1.3 (06-mar-2021)__
+- improved INT tick processing
+- added support of WebSocket for streaming
 - added auto-restore of sound after turbo mode off
 - fixed reading of samples from unsigned 8 bit WAV
 - reworked form resize processing [#18](https://github.com/raydac/zxpoly/issues/18)

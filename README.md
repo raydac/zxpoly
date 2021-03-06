@@ -7,8 +7,10 @@
 
 # Changelog
 
-__2.1.3 (SNAPSHOT)__
+__2.1.3 (06-mar-2021)__
 
+- improved INT tick processing
+- added support of WebSocket for streaming
 - added auto-restore of sound after turbo mode off
 - fixed reading of samples from unsigned 8 bit WAV
 - reworked form resize processing [#18](https://github.com/raydac/zxpoly/issues/18)
@@ -16,7 +18,8 @@ __2.1.3 (SNAPSHOT)__
 - added toggle button to activate virtual ZX-Keyboard [#17](https://github.com/raydac/zxpoly/issues/17)
 - added auto-releasing for SS+CS on virtual keyboard [#12](https://github.com/raydac/zxpoly/issues/12)
 - added configurable Protek joystick and `ZX-Keyboard Off` mode (either pressed F6 or flag in Options menu), to process
-  events only from selected joystick (ZX-Keyboard keys in the mode works only with pressed CTRL) [#11](https://github.com/raydac/zxpoly/issues/11)
+  events only from selected joystick (ZX-Keyboard keys in the mode works only with pressed
+  CTRL) [#11](https://github.com/raydac/zxpoly/issues/11)
 - added way define custom ROM path through preferences [#9](https://github.com/raydac/zxpoly/issues/9)
 - added distributive for MacOS arm64 (game controller interface may not work)
 - embedded JDK updated to Liberica OpenJDK 15.0.2+10
@@ -25,30 +28,47 @@ __2.1.3 (SNAPSHOT)__
 - in Preferences added redefinition of keys mapped to Kempston joystick [#5](https://github.com/raydac/zxpoly/issues/5)
 - added support for mouse clickable virtual keyboard (show/hide by F5 pressing) [#4](https://github.com/raydac/zxpoly/issues/4)
 
-__2.1.2 (22-dec-2020)__
-
-- added support of flags `GFXLeveledAND`,`GFXLeveledOR` and `GFXLeveledXOR` into Spec256 configuration
-- added full-screen mode support, menu item `View -> Full Screen`
-- added black-white video filter
-- updated dependencies
-
 full [change log](changelog.txt)
 
 __NB! The emulator has been developed as proof of concept of ZX-Poly and by default it starts in ZX-Poly mode, if you need ZX-Spectrum 128 mode then activate it through options!__
- 
+
 # Introduction
-I am a ZX-Spectrum fan since 1989. ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from mono-system to poly-system.   
 
-The idea was to start four ZX-Spectrum-128 in parallel with small modifications of graphics data. It didn't need any changes in ROM and SOS but only total synchronization between CPUs and sharing of all control signals.
+I am a ZX-Spectrum fan since 1989. ZX-Spectrum platform was very popular in the USSR. In april of 1994 I got some idea
+how to resolve [attribute clash](https://en.wikipedia.org/wiki/Attribute_clash) through moving the platform from
+mono-system to poly-system.
 
-I can't say that the idea was too original one because I was inspired by the book ["COMPUTER IMAGES" ("Understanding computer" Time-Life books)](https://youtu.be/rCkGOmcLSa0). There I found several strings about the Pixar platform (developed by the Lucasfilm team) which processes each color component by dedicated CPU. In Zx-Poly each CPU also processes dedicated color component (R,G,B,Y). Software no so often checks information written into VRAM so that big part of games and utilities could be adapted just through edition of their graphic data.   
+The idea was to start four ZX-Spectrum-128 in parallel with small modifications of graphics data. It didn't need any
+changes in ROM and SOS but only total synchronization between CPUs and sharing of all control signals.
+
+I can't say that the idea was too original one because I was inspired by the
+book ["COMPUTER IMAGES" ("Understanding computer" Time-Life books)](https://youtu.be/rCkGOmcLSa0). There I found several
+strings about the Pixar platform (developed by the Lucasfilm team) which processes each color component by dedicated
+CPU. In Zx-Poly each CPU also processes dedicated color component (R,G,B,Y). Software no so often checks information
+written into VRAM so that big part of games and utilities could be adapted just through edition of their graphic data.
 
 # License
-Both the concept and emulator and all its parts are published under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 
-# Emulator GUI
-Keyboard plays role of ZX-Keyboard (ALT = SS, SHIFT = CS, CTRL+WHEEL = scaling), F5 shows ZX-keys on the screen. Numpad plays role of Kempson joystick.  
-![The Main Window of the Emulator](docs/screenshots/Aliens_Neoplasma_Screenshot.png)
+Both the concept and emulator and all its parts are published
+under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
+
+# Pre-built versions
+
+![The Main Window of the Emulator](docs/screenshots/Spec256SolomonsKey_Screenshot.png)
+
+| OS                                           |  Download link                                                                                                                                                                                | 
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.1.3/zxpoly-emul-2.1.3-SNAPSHOT-windows-amd64-jdk.zip)__      |
+| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.1.3/zxpoly-emul-2.1.3-SNAPSHOT-macos-amd64-jdk.zip)__            |
+| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.1.3/zxpoly-emul-2.1.3-SNAPSHOT-macos-arm64-jdk.zip)__          |
+| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.1.3/zxpoly-emul-2.1.3-SNAPSHOT-linux-amd64-jdk.tar.gz)__       |
+| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.1.3/zxpoly-emul-2.1.3-SNAPSHOT.jar)__                               | 
+
+Because the emulator is written in Java, its JAR file can be started just through command
+line `java -jar zxpoly-emul-2.1.3.jar`   
+By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in __File->Options->Active
+ROM__, the ROM will be downloaded from one of remote network resources.   
+![Test-ROM](docs/screenshots/testromscr1.png)
 
 # Supported snapshot formats
 
@@ -56,24 +76,23 @@ Keyboard plays role of ZX-Keyboard (ALT = SS, SHIFT = CS, CTRL+WHEEL = scaling),
 - Tape: .TAP (allows export to WAV file), .WAV
 - Disks: .TRD, .SCL
 
-# Prebuilt versions
-
-The pre-built versions of the emulator and sprite editor can be downloaded
-from [the release page](https://github.com/raydac/zxpoly/releases/tag/2.1.2).   
-The emulator is written in Java and its JAR file can be started just through command
-line `java -jar zxpoly-emul-2.1.2.jar`   
-By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in **File->Options->Active
-ROM**, the ROM will be downloaded from one of remote network resources.   
-![Test-ROM](docs/screenshots/testromscr1.png)
-
 # Support of game controllers
-Since 2.0.5 the emulator supports gamepads and joysticks. It uses X,Y position and recognizing all buttons as Fire. Mapping of game controller can be turned on through **Service->Game controllers**. I recommend restart emulator after new controller connect because JInput works not well for such situation.
+
+Since 2.0.5 the emulator supports game-pads and joysticks. It uses X,Y position and recognizing all buttons as Fire.
+Mapping of game controller can be turned on through **Service->Game controllers**. I recommend restart emulator after
+new controller connect because JInput works not well for such situation. For work with joystick, the emulator uses
+library `jinput` so that it can work not for all host-platforms.
 
 # Theory and structure of the ZX-Poly platform
+
 ![ZXPoly test ROM screen](docs/block_scheme.png)    
-The base of the platform is the theory that stable synchronous systems (without any inside random processes) built on the same components (because different element base can be also source of random processes) by being started synchronously in the same time from the same state have the same state in any point of time if all synchronous system components get the same input signal states in the same time.   
+The base of the platform is the theory that stable synchronous systems (without any inside random processes) built on
+the same components (because different element base can be also source of random processes) by being started
+synchronously in the same time from the same state have the same state in any point of time if all synchronous system
+components get the same input signal states in the same time.   
 ![Structure of ZXPoly](docs/zxpolystruct.png)
-ZX-Poly platform adds several ports to manipulate work modes and the main port of the platform is #3D00. [In more details it is desribed in wiki.](https://github.com/raydac/zxpoly/wiki/Short-description-of-ZX-Poly-platform)
+ZX-Poly platform adds several ports to manipulate work modes and the main port of the platform is
+#3D00. [In more details it is desribed in wiki.](https://github.com/raydac/zxpoly/wiki/Short-description-of-ZX-Poly-platform)
 
 # Supported videomodes
 ## Standard ZX-Spectrum 256x192 (2 colors per pixel in 8x8 block) (mode 0,1,2,3)
