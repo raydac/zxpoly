@@ -9,6 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.OptionalInt;
 
+@SuppressWarnings("XorPower")
 public class WebSocketStreamWrapperTest extends TestCase {
   @Test
   public void testWrite_Small_NoMask() throws IOException {
