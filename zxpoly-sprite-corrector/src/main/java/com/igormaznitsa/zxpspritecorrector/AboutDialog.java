@@ -17,7 +17,7 @@
 
 package com.igormaznitsa.zxpspritecorrector;
 
-import javax.swing.JFrame;
+import javax.swing.*;
 
 public final class AboutDialog extends javax.swing.JDialog {
 
@@ -31,7 +31,7 @@ public final class AboutDialog extends javax.swing.JDialog {
     super(parent, true);
     initComponents();
 
-    this.infoText.setText(this.infoText.getText().replace("${project.version}", "2.1.3"));
+    this.infoText.setText(this.infoText.getText().replace("${project.version}", "2.1.4"));
 
     this.setLocationRelativeTo(null);
   }

@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 public class Application {
 
   public static final String APP_TITLE = "ZX-Poly emulator";
-  public static final String APP_VERSION = "v 2.1.3";
+  public static final String APP_VERSION = "v 2.1.4";
 
   private static void setGnomeAppTitle() {
     try {
