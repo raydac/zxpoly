@@ -725,36 +725,51 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     int tstates = 0;
 
+    int intStateFlags = 0;
+
     while (!Thread.currentThread().isInterrupted()) {
       if (stepSemaphor.tryLock()) {
         try {
           final boolean inTurboMode = this.turboMode;
-          final boolean tstatesIntReached = tstates >= TSTATES_PER_INT;
-          final boolean wallclockInt = this.wallclock.completed();
+          final boolean intTickForTstatesReached = tstates >= TSTATES_PER_INT;
+          final boolean intTickForWallclockReached = this.wallclock.completed();
 
-          if (wallclockInt) {
+          intStateFlags |= (intTickForTstatesReached ? 1 : 0) | (intTickForWallclockReached ? 2 : 0);
+
+          final boolean doCpuIntTick;
+          if (intStateFlags == 3) {
+            doCpuIntTick = true;
+            intStateFlags = 0;
+          } else {
+            doCpuIntTick = false;
+          }
+
+          if (intTickForWallclockReached) {
             this.wallclock.next();
-            countdownToPaint--;
-            countdownToAnimationSave--;
-
-            if (!tstatesIntReached) {
+            if (!intTickForTstatesReached) {
               this.onSlownessDetected(TSTATES_PER_INT - tstates);
             }
-
             tstates = 0;
           }
 
-          final boolean executionEnabled = inTurboMode || !tstatesIntReached || wallclockInt;
+
+          if (doCpuIntTick) {
+            countdownToPaint--;
+            countdownToAnimationSave--;
+          }
+
+          final boolean executionEnabled = inTurboMode || !intTickForTstatesReached || doCpuIntTick;
 
           final int detectedTriggers = this.board.step(
-                  tstatesIntReached,
-                  wallclockInt,
+                  intTickForTstatesReached,
+                  intTickForWallclockReached,
+                  doCpuIntTick,
                   executionEnabled);
 
           tstates += executionEnabled ? this.board.getMasterCpu().getStepTstates() : 0;
 
 
-          if (wallclockInt) {
+          if (intTickForWallclockReached) {
             this.videoStreamer.onWallclockInt();
           }
 
