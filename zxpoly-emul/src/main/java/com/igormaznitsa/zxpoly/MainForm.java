@@ -731,10 +731,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       if (stepSemaphor.tryLock()) {
         try {
           final boolean inTurboMode = this.turboMode;
-          final boolean intTickForTstatesReached = tstates >= TSTATES_PER_INT;
+          final boolean tstatesForIntExhausted = tstates >= TSTATES_PER_INT;
           final boolean intTickForWallclockReached = this.wallclock.completed();
 
-          intStateFlags |= (intTickForTstatesReached ? 1 : 0) | (intTickForWallclockReached ? 2 : 0);
+          intStateFlags |= (tstatesForIntExhausted ? 1 : 0) | (intTickForWallclockReached ? 2 : 0);
 
           final boolean doCpuIntTick;
           if (intStateFlags == 3) {
@@ -746,7 +746,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
           if (intTickForWallclockReached) {
             this.wallclock.next();
-            if (!intTickForTstatesReached) {
+            if (!tstatesForIntExhausted) {
               this.onSlownessDetected(TSTATES_PER_INT - tstates);
             }
             tstates = 0;
@@ -758,10 +758,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             countdownToAnimationSave--;
           }
 
-          final boolean executionEnabled = inTurboMode || !intTickForTstatesReached || doCpuIntTick;
+          final boolean executionEnabled = inTurboMode || !tstatesForIntExhausted || doCpuIntTick;
 
           final int detectedTriggers = this.board.step(
-                  intTickForTstatesReached,
+                  tstatesForIntExhausted,
                   intTickForWallclockReached,
                   doCpuIntTick,
                   executionEnabled);
@@ -824,9 +824,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void onSlownessDetected(final long nonCompletedMcycles) {
+  private void onSlownessDetected(final long remainTstates) {
     LOGGER.warning(String.format("Slowness detected: %.02f%%",
-            (float) nonCompletedMcycles / (float) TSTATES_PER_INT * 100.0f));
+            (float) remainTstates / (float) TSTATES_PER_INT * 100.0f));
   }
 
   private void updateTracerWindowsForStep() {
