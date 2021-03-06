@@ -1354,6 +1354,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           lastFullScreen.revalidate();
           lastFullScreen.doLayout();
           vc.doAutoscaleForSize(this.scrollPanel.getViewportBorderBounds());
+          SwingUtilities.invokeLater(() -> {
+            vc.doAutoscaleForSize(vc.getVisibleRect());
+          });
         } else {
           lastFullScreen.getContentPane().removeAll();
           lastFullScreen.dispose();
@@ -1376,6 +1379,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           this.setVisible(true);
           this.pack();
           this.repaint();
+
+          SwingUtilities.invokeLater(() -> {
+            vc.doAutoscaleForSize(vc.getVisibleRect());
+          });
         }
       } else {
         LOGGER.info("Ignoring FULL SCREEN because too often");
