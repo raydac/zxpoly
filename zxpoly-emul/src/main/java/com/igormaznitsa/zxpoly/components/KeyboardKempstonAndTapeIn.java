@@ -282,22 +282,27 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     return this.detectedControllers != null;
   }
 
-  private int getKbdValueForLines(int highPortByte) {
+  private int getKbdValueForLines(int scanLinePort) {
     final long vkbKeyState = this.board.getVideoController().getVkbState();
     final long state = vkbKeyState & this.bufferKeyboardLines;
+
+    scanLinePort ^= 0xFF;
+
     int result = 0x1F;
-    for (int i = 0; i < 8; i++) {
-      if ((highPortByte & 1) == 0) {
-        result &= (int) (state >>> (i * 8));
+    int shift = 0;
+    while (scanLinePort != 0) {
+      if ((scanLinePort & 1) != 0) {
+        result &= (int) (state >>> shift);
       }
-      highPortByte >>= 1;
+      shift += 8;
+      scanLinePort >>= 1;
     }
     return result & 0x1F;
   }
 
-  private int readKeyboardAndTap(final int port, final TapeSource tapeFileReader) {
+  private int readKeyboardAndTap(final int scanLinePort, final TapeSource tapeFileReader) {
     int result = 0xFF;
-    result &= getKbdValueForLines(port >>> 8);
+    result &= getKbdValueForLines((scanLinePort >>> 8) & 0xFF);
     if (this.isTapeIn()) result ^= MIC_BIT;
     return result;
   }
