@@ -1,25 +1,17 @@
 package com.igormaznitsa.zxpoly.ui;
 
-import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.toList;
-
-
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapter;
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterType;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import net.java.games.input.Controller;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
+import java.util.*;
+
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toList;
 
 public final class GameControllerPanel extends JPanel {
 
@@ -69,7 +61,7 @@ public final class GameControllerPanel extends JPanel {
             gameControllerAdapterType != GameControllerAdapterType.NONE &&
             !alreadySelected.contains(
                 gameControllerAdapterType)) {
-          result.add(module.makeGadapter(record.controller, gameControllerAdapterType));
+          result.add(module.makeGameControllerAdapter(record.controller, gameControllerAdapterType));
           alreadySelected.add(gameControllerAdapterType);
         }
       }

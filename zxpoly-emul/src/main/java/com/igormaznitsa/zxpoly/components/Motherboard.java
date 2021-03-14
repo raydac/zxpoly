@@ -140,7 +140,6 @@ public final class Motherboard implements ZxPolyConstants {
       iodevices.add(new Zx128Ay8910(this));
     }
 
-
     if (enableCovoxFb) {
       LOGGER.info("Covox #FB is enabled and added among IO devices");
       iodevices.add(new CovoxFb(this));

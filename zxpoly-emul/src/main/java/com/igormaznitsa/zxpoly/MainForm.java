@@ -1062,7 +1062,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE
         ) == JOptionPane.OK_OPTION) {
-          this.keyboardAndTapeModule.setActiveGadapters(gameControllerPanel.getSelected());
+          this.keyboardAndTapeModule.setActiveGameControllerAdapters(gameControllerPanel.getSelected());
         }
       }
     } finally {

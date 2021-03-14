@@ -140,7 +140,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private static final int KEMPSTON_UP = 8;
   private static final int KEMPSTON_FIRE = 16;
 
-  private static final int TAP_BIT = 0b01000000;
+  private static final int MIC_BIT = 0b0100_0000;
 
   private final Motherboard board;
   private final AtomicReference<TapeSource> tap = new AtomicReference<>();
@@ -187,9 +187,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
     if (getDefaultEnvironment().isSupported()) {
       this.detectedControllers =
-              new CopyOnWriteArrayList<>(Arrays.stream(getDefaultEnvironment().getControllers())
-                      .filter(x -> isControllerTypeAllowed(x.getType()))
-                      .collect(Collectors.toList()));
+              Arrays.stream(getDefaultEnvironment().getControllers())
+                      .filter(x -> isControllerTypeAllowed(x.getType())).collect(Collectors.toCollection(CopyOnWriteArrayList::new));
       getDefaultEnvironment().addControllerListener(new ControllerListener() {
         @Override
         public void controllerRemoved(ControllerEvent controllerEvent) {
@@ -231,13 +230,13 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     this.keyboardLines = ZXKEY_NONE;
   }
 
-  public void disposeAllActiveGadapters() {
+  public void disposeAllActiveGameControllerAdapters() {
     this.activeGameControllerAdapters.forEach(GameControllerAdapter::dispose);
     this.activeGameControllerAdapters.clear();
   }
 
-  public GameControllerAdapter makeGadapter(final Controller controller,
-                                            final GameControllerAdapterType type) {
+  public GameControllerAdapter makeGameControllerAdapter(final Controller controller,
+                                                         final GameControllerAdapterType type) {
     switch (type) {
       case KEMPSTON:
         return new GameControllerAdapterKempston(this, controller);
@@ -256,7 +255,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     }
   }
 
-  public void setActiveGadapters(final List<GameControllerAdapter> adapters) {
+  public void setActiveGameControllerAdapters(final List<GameControllerAdapter> adapters) {
     this.activeGameControllerAdapters.forEach(GameControllerAdapter::dispose);
     if (!this.activeGameControllerAdapters.isEmpty()) {
       throw new Error("Detected non-disposed controller");
@@ -286,19 +285,21 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private int getKbdValueForLines(int highPortByte) {
     final long vkbKeyState = this.board.getVideoController().getVkbState();
     final long state = vkbKeyState & this.bufferKeyboardLines;
-    int result = 0xFF;
+    int result = 0x1F;
     for (int i = 0; i < 8; i++) {
       if ((highPortByte & 1) == 0) {
         result &= (int) (state >>> (i * 8));
       }
       highPortByte >>= 1;
     }
-    return result;
+    return result & 0x1F;
   }
 
   private int readKeyboardAndTap(final int port, final TapeSource tapeFileReader) {
-    final int tapbit = tapeFileReader == null ? 0 : this.isTapeIn() ? TAP_BIT : 0;
-    return getKbdValueForLines(port >>> 8) | tapbit | 0xA0;
+    int result = 0xFF;
+    result &= getKbdValueForLines(port >>> 8);
+    if (this.isTapeIn()) result ^= MIC_BIT;
+    return result;
   }
 
   @Override
@@ -310,7 +311,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
       final int lowPortAddr = port & 0xFF;
 
       if ((lowPortAddr & 1) == 0) {
-        if (!inZxPolyMode || (inZxPolyMode && lowPortAddr == 0xFE)) {
+        if (!inZxPolyMode || lowPortAddr == 0xFE) {
           result = readKeyboardAndTap(port, this.getTap());
         }
       } else {
