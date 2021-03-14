@@ -313,25 +313,25 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     if (!module.isTrdosActive()) {
       final boolean inZxPolyMode = module.getMotherboard().getBoardMode() == BoardMode.ZXPOLY;
 
-      final int lowPortAddr = port & 0xFF;
+      final int lowPortAddress = port & 0xFF;
 
-      if ((lowPortAddr & 1) == 0) {
-        if (!inZxPolyMode || lowPortAddr == 0xFE) {
+      if ((lowPortAddress & 1) == 0) {
+        if (!inZxPolyMode || lowPortAddress == 0xFE) {
           result = readKeyboardAndTap(port, this.getTap());
         }
       } else {
         // KEMPSTON JOYSTICK
         if (inZxPolyMode) {
-          if (lowPortAddr == 0x1F) { // full decode
+          if (lowPortAddress == 0x1F) { // full decode
             result = this.kempstonBuffer;
           }
         } else {
           if (this.kempstonMouseAllowed) {
-            if (lowPortAddr == 0x1F) { // full decode
+            if (lowPortAddress == 0x1F) { // full decode
               result = this.kempstonBuffer;
             }
           } else {
-            if ((lowPortAddr & 0b100000) == 0) { // partial decode
+            if ((lowPortAddress & 0b100000) == 0) { // partial decode
               result = this.kempstonBuffer;
             }
           }
