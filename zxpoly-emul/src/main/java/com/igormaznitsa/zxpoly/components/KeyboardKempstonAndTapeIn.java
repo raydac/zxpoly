@@ -304,7 +304,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     int result = 0xFF;
     result &= getKbdValueForLines((scanLinePort >>> 8) & 0xFF);
     if (this.isTapeIn()) result ^= MIC_BIT;
-    return result;
+    return result | 0b101_00000;
   }
 
   @Override
