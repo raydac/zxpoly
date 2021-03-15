@@ -3,20 +3,22 @@ echo it needs ZASM 4.0.11 from http://k1.spdns.de/Develop/Projects/zasm-4.0/Dist
 
 # slicing images to zxpoly planes
 
-java -jar $PWD/bin/zxsc.jar sliceImage $PWD/images/256.png
-java -jar $PWD/bin/zxsc.jar sliceImage $PWD/images/512.png
+JAVA_EXE=/home/igorm/SDK/jdk-11/bin/java
+
+$JAVA_EXE -jar $PWD/bin/zxsc.jar sliceImage $PWD/images/256.png
+$JAVA_EXE -jar $PWD/bin/zxsc.jar sliceImage $PWD/images/512.png
 
 # packing zxpoly planes to lpz
 
-$PWD/bin/xlpz.sh $PWD/images/256c0.c0
-$PWD/bin/xlpz.sh $PWD/images/256c1.c1
-$PWD/bin/xlpz.sh $PWD/images/256c2.c2
-$PWD/bin/xlpz.sh $PWD/images/256c3.c3
+$PWD/bin/zx0 $PWD/images/256c0.c0 $PWD/images/256C0.ZX0
+$PWD/bin/zx0 $PWD/images/256c1.c1 $PWD/images/256C1.ZX0
+$PWD/bin/zx0 $PWD/images/256c2.c2 $PWD/images/256C2.ZX0
+$PWD/bin/zx0 $PWD/images/256c3.c3 $PWD/images/256C3.ZX0
 
-$PWD/bin/xlpz.sh $PWD/images/512c0.c0
-$PWD/bin/xlpz.sh $PWD/images/512c1.c1
-$PWD/bin/xlpz.sh $PWD/images/512c2.c2
-$PWD/bin/xlpz.sh $PWD/images/512c3.c3
+$PWD/bin/zx0 $PWD/images/512c0.c0 $PWD/images/512C0.ZX0
+$PWD/bin/zx0 $PWD/images/512c1.c1 $PWD/images/512C1.ZX0
+$PWD/bin/zx0 $PWD/images/512c2.c2 $PWD/images/512C2.ZX0
+$PWD/bin/zx0 $PWD/images/512c3.c3 $PWD/images/512C3.ZX0
 
 
 TARGETROM=$PWD/../zxpoly-emul/src/main/resources/com/igormaznitsa/zxpoly/rom/zxpolytest.rom

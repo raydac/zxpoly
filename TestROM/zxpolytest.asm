@@ -515,9 +515,9 @@ _end:
   mvideomode 4
 
   ; RED PART
-  ld hl,TSTIMGR+2
+  ld hl,TSTIMGR
   ld de,$4000
-  call DELPZ
+  call dzx0_standard
 
   ld a,1
   call SET_IOCPU
@@ -528,9 +528,9 @@ _end:
   call SCR2PRT_
 
   ; BRIGHT PART
-  ld hl,TSTIMGY+2
+  ld hl,TSTIMGY
   ld de,$4000
-  call DELPZ
+  call dzx0_standard
 
   ld a,3
   call SET_IOCPU
@@ -541,9 +541,9 @@ _end:
   call SCR2PRT_
 
   ; BLUE PART
-  ld hl,TSTIMGB+2
+  ld hl,TSTIMGB
   ld de,$4000
-  call DELPZ
+  call dzx0_standard
 
   ld a,2
   call SET_IOCPU
@@ -554,9 +554,9 @@ _end:
   call SCR2PRT_
 
   ; GREEN PART
-  ld hl,TSTIMGG+2
+  ld hl,TSTIMGG
   ld de,$4000
-  call DELPZ
+  call dzx0_standard
 
   xor a
   call SET_IOCPU
@@ -567,9 +567,9 @@ TEST512:
   mvideomode 5
 
   ; CPU1
-  ld hl,IMG512C1+2
+  ld hl,IMG512C1
   ld de,$4000
-  call DELPZ
+  call dzx0_standard
 
   ld a,1
   call SET_IOCPU
@@ -580,9 +580,9 @@ TEST512:
   call SCR2PRT_
 
   ; CPU2
-  ld hl,IMG512C2+2
+  ld hl,IMG512C2
   ld de,$4000
-  call DELPZ
+  call dzx0_standard
 
   ld a,2
   call SET_IOCPU
@@ -593,9 +593,9 @@ TEST512:
   call SCR2PRT_
 
   ; CPU3
-  ld hl,IMG512C3+2
+  ld hl,IMG512C3
   ld de,$4000
-  call DELPZ
+  call dzx0_standard
 
   ld a,3
   call SET_IOCPU
@@ -609,9 +609,9 @@ TEST512:
   xor a
   call SET_IOCPU
 
-  ld hl,IMG512C0+2
+  ld hl,IMG512C0
   ld de,$4000
-  call DELPZ
+  call dzx0_standard
 
 _endmain:
   jp _endtests
@@ -1127,17 +1127,17 @@ _cycFGH:
 
   ret
 
-  include "./lib/xdelpz.asm"
+  include "./lib/dzx0_standard.asm"
 
-IMG512C0: incbin "./images/512C0.LPZ"
-IMG512C1: incbin "./images/512C1.LPZ"
-IMG512C2: incbin "./images/512C2.LPZ"
-IMG512C3: incbin "./images/512C3.LPZ"
+IMG512C0: incbin "./images/512C0.ZX0"
+IMG512C1: incbin "./images/512C1.ZX0"
+IMG512C2: incbin "./images/512C2.ZX0"
+IMG512C3: incbin "./images/512C3.ZX0"
 
-TSTIMGR: incbin "./images/256C1.LPZ"
-TSTIMGG: incbin "./images/256C0.LPZ"
-TSTIMGB: incbin "./images/256C2.LPZ"
-TSTIMGY: incbin "./images/256C3.LPZ"
+TSTIMGR: incbin "./images/256C1.ZX0"
+TSTIMGG: incbin "./images/256C0.ZX0"
+TSTIMGB: incbin "./images/256C2.ZX0"
+TSTIMGY: incbin "./images/256C3.ZX0"
 
 ; offset memory address for screen char Y position
 ATTROFFST:

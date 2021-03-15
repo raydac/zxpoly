@@ -1,12 +1,12 @@
 STR_HEADER:
   DEFB 21
-  DEFM "-= TEST ROM v 1.02 =-"
+  DEFM "-= TEST ROM v 1.03 =-"
 
 STR_COPY:
   DEFB 32
   DEFM "  "
   DEFB 127
-  DEFM "2007-2018  Igor A. Maznitsa  "
+  DEFM "2007-2021  Igor A. Maznitsa  "
 
 ST_ZXPOLY:
   DEFB 20
