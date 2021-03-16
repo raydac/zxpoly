@@ -27,7 +27,6 @@ import com.igormaznitsa.jbbp.mapper.JBBPMapper;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import org.apache.commons.io.FileUtils;
 
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
@@ -129,9 +128,7 @@ public final class SNAPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ReadResult readFrom(final File file, final int index) throws IOException {
-    final byte[] array = FileUtils.readFileToByteArray(file);
-
+  public ReadResult readFrom(final String name, final byte[] array, final int index) throws IOException {
     final boolean sna128;
 
     switch (array.length) {
@@ -227,8 +224,8 @@ public final class SNAPlugin extends AbstractFilePlugin {
 
           .End().toByteArray();
       return new ReadResult(new ZXPolyData(
-          new Info(file.getName(), 'C', snaFile.extendedData.regPC, data.length, 0, extra),
-          new Z80InZXPOutPlugin(), data), null);
+              new Info(name, 'C', snaFile.extendedData.regPC, data.length, 0, extra),
+              new Z80InZXPOutPlugin(), data), null);
     } else {
       LOGGER.info("SNA48 DETECTED");
 
@@ -279,8 +276,8 @@ public final class SNAPlugin extends AbstractFilePlugin {
           .Bits(JBBPBitNumber.BITS_2, 0)
           .End().toByteArray();
       return new ReadResult(
-          new ZXPolyData(new Info(file.getName(), 'C', startAddress, dataLength, 0, extra),
-              new Z80InZXPOutPlugin(), data), null);
+              new ZXPolyData(new Info(name, 'C', startAddress, dataLength, 0, extra),
+                      new Z80InZXPOutPlugin(), data), null);
     }
   }
 

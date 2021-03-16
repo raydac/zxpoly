@@ -94,7 +94,7 @@ public abstract class AbstractFilePlugin extends FileFilter {
 
   public abstract String getExtension(boolean forExport);
 
-  public abstract ReadResult readFrom(File file, int index) throws IOException;
+  public abstract ReadResult readFrom(String name, byte[] data, int index) throws IOException;
 
   public abstract void writeTo(File file, ZXPolyData data, SessionData sessionData,
                                Object... extraData)

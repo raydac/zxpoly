@@ -28,7 +28,6 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
@@ -105,12 +104,11 @@ public class HOBETAPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ReadResult readFrom(final File file, final int index) throws IOException {
-    final byte[] wholeFile = FileUtils.readFileToByteArray(file);
-    final Hobeta parsed = HOBETA_FILE_PARSER.parse(wholeFile).mapTo(new Hobeta());
+  public ReadResult readFrom(final String name, final byte[] data, final int index) throws IOException {
+    final Hobeta parsed = HOBETA_FILE_PARSER.parse(data).mapTo(new Hobeta());
     return new ReadResult(new ZXPolyData(
-        new Info(parsed.name, (char) (parsed.type & 0xFF), parsed.start, parsed.length, 0), this,
-        parsed.data), null);
+            new Info(parsed.name, (char) (parsed.type & 0xFF), parsed.start, parsed.length, 0), this,
+            parsed.data), null);
   }
 
   @Override

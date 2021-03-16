@@ -29,6 +29,7 @@ import com.igormaznitsa.zxpspritecorrector.files.SessionData;
 import org.apache.commons.io.FilenameUtils;
 
 import javax.swing.*;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -156,8 +157,8 @@ public class TAPPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ReadResult readFrom(final File file, final int index) throws IOException {
-    JBBPBitInputStream in = new JBBPBitInputStream(new FileInputStream(file));
+  public ReadResult readFrom(final String name, final byte[] dataArray, final int index) throws IOException {
+    JBBPBitInputStream in = new JBBPBitInputStream(new ByteArrayInputStream(dataArray));
     try {
       int curindex = 0;
 

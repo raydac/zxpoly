@@ -24,13 +24,12 @@ import com.igormaznitsa.jbbp.utils.JBBPUtils;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.annotations.Inject;
+
+import java.io.*;
+import java.util.List;
+import java.util.Locale;
 
 public class SZEPlugin extends AbstractFilePlugin {
 
@@ -96,10 +95,10 @@ public class SZEPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ReadResult readFrom(final File file, final int index) throws IOException {
-    try (FileInputStream inStream = new FileInputStream(file)) {
+  public ReadResult readFrom(final String name, final byte[] data, final int index) throws IOException {
+    try (InputStream inStream = new ByteArrayInputStream(data)) {
       final ZXPolyData zxpolyData =
-          new ZXPolyData(inStream, this.context.getComponents(AbstractFilePlugin.class));
+              new ZXPolyData(inStream, this.context.getComponents(AbstractFilePlugin.class));
       final JBBPBitInputStream in = new JBBPBitInputStream(inStream);
       final int length = in.readInt(JBBPByteOrder.BIG_ENDIAN);
       return new ReadResult(zxpolyData, new SessionData(in));

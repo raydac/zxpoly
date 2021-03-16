@@ -33,7 +33,6 @@ import com.igormaznitsa.zxpspritecorrector.files.Z80ExportDialog;
 import com.igormaznitsa.zxpspritecorrector.files.ZXEMLSnapshotFormat;
 import com.igormaznitsa.zxpspritecorrector.files.ZXEMLSnapshotFormat.Page;
 import com.igormaznitsa.zxpspritecorrector.files.ZXEMLSnapshotFormat.Pages;
-import org.apache.commons.io.FileUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -293,9 +292,7 @@ public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ReadResult readFrom(final File file, int index) throws IOException {
-    final byte[] array = FileUtils.readFileToByteArray(file);
-
+  public ReadResult readFrom(String name, byte[] array, int index) throws IOException {
     if (array.length < 30) {
       throw new IOException("File is too short to be Z80 snapshot");
     }
@@ -420,8 +417,8 @@ public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
     }
     System.arraycopy(array, 0, extra, bankIndex, headerLength);
     return new ReadResult(
-        new ZXPolyData(new Info(file.getName(), 'C', startAddress, data.length, PAGE_SIZE, extra),
-            this, data), null);
+            new ZXPolyData(new Info(name, 'C', startAddress, data.length, PAGE_SIZE, extra),
+                    this, data), null);
   }
 
   @Override

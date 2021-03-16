@@ -4,15 +4,16 @@ import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import java.awt.Rectangle;
+
+import javax.swing.filechooser.FileFilter;
+import java.awt.*;
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
-import javax.swing.filechooser.FileFilter;
 
 public class LegacySZEPlugin extends AbstractFilePlugin {
 
@@ -59,8 +60,8 @@ public class LegacySZEPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ReadResult readFrom(final File file, final int index) throws IOException {
-    try (final DataInputStream inStream = new DataInputStream(new FileInputStream(file))) {
+  public ReadResult readFrom(final String name, final byte[] dataArray, final int index) throws IOException {
+    try (final DataInputStream inStream = new DataInputStream(new ByteArrayInputStream(dataArray))) {
       if (!"ZXEC".equals(inStream.readUTF())) {
         throw new IOException("Wrong file format");
       }

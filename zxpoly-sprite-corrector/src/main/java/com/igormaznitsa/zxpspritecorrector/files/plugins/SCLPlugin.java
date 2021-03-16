@@ -29,6 +29,7 @@ import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -98,9 +99,9 @@ public class SCLPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ReadResult readFrom(final File file, final int index) throws IOException {
+  public ReadResult readFrom(final String name, final byte[] dataArray, final int index) throws IOException {
     final List<SCLCatalogItem> list = new ArrayList<>();
-    final JBBPBitInputStream in = new JBBPBitInputStream(new FileInputStream(file));
+    final JBBPBitInputStream in = new JBBPBitInputStream(new ByteArrayInputStream(dataArray));
     try {
       final long id = in.readLong(JBBPByteOrder.BIG_ENDIAN);
       if (id == 0x53494E434C414952L) {
@@ -125,7 +126,7 @@ public class SCLPlugin extends AbstractFilePlugin {
                 (int) offset), this, in.readByteArray(itemToRead.sectors * 256)), null);
 
       } else {
-        throw new IllegalArgumentException("It's not a SCl file: " + file);
+        throw new IllegalArgumentException("It's not a SCl file");
       }
     } finally {
       JBBPUtils.closeQuietly(in);

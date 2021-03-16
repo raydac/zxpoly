@@ -30,6 +30,7 @@ import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -90,9 +91,9 @@ public class TRDPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ReadResult readFrom(final File file, final int index) throws IOException {
+  public ReadResult readFrom(String name, byte[] data, int index) throws IOException {
     final JBBPBitInputStream inStream =
-        new JBBPBitInputStream(new FileInputStream(file), JBBPBitOrder.LSB0);
+            new JBBPBitInputStream(new ByteArrayInputStream(data), JBBPBitOrder.LSB0);
     try {
       final List<TRDosCatalogItem> list = new ArrayList<>();
       for (int i = 0; i < 128; i++) {

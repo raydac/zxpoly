@@ -17,41 +17,22 @@
 
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.PAGE_SIZE;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.VERSION_1;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.VERSION_2;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.VERSION_3A;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.VERSION_3B;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.Z80_MAINPART;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.convertZ80BankIndexesToPages;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.getVersion;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.is48k;
-import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.makePair;
-import static java.lang.Math.sqrt;
-
-
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import java.io.EOFException;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
+import org.apache.commons.io.FilenameUtils;
+
+import javax.swing.filechooser.FileFilter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import javax.swing.filechooser.FileFilter;
-import org.apache.commons.io.FilenameUtils;
+
+import static com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin.*;
+import static java.lang.Math.sqrt;
 
 public class Spec256ZipPlugin extends AbstractFilePlugin {
 
@@ -259,7 +240,7 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
   }
 
   @Override
-  public ReadResult readFrom(final File file, final int index) throws IOException {
+  public ReadResult readFrom(final String name, final byte[] data, final int index) throws IOException {
     throw new IOException("Reading is unsupported");
   }
 

@@ -24,6 +24,7 @@ import com.igormaznitsa.zxpspritecorrector.files.plugins.*;
 import com.igormaznitsa.zxpspritecorrector.tools.*;
 import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
 import com.igormaznitsa.zxpspritecorrector.utils.TransferableImage;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoBuilder;
@@ -147,7 +148,10 @@ public final class SpriteCorrectorMainFrame extends JFrame {
   private JSpinner spinnerCurrentAddress;
   private ButtonGroup toolsButtonGroup;
 
-  public SpriteCorrectorMainFrame(final GraphicsConfiguration graphicsConfig, final boolean standaloneApplication) {
+  public SpriteCorrectorMainFrame(
+          final GraphicsConfiguration graphicsConfig,
+          final boolean standaloneApplication
+  ) {
     super(graphicsConfig);
     SLIDER_ALL_LABELS = new Hashtable<>();
     SLIDER_ODD_LABELS = new Hashtable<>();
@@ -955,7 +959,8 @@ public final class SpriteCorrectorMainFrame extends JFrame {
       final SZEPlugin szePlugin = container.getComponent(SZEPlugin.class);
 
       try {
-        loadFileWithPlugin(szePlugin, file, -1);
+        final String name = file.getName();
+        loadFileWithPlugin(szePlugin, file, name, FileUtils.readFileToByteArray(file), -1);
       } catch (IOException ex) {
         JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
       }
@@ -1055,10 +1060,10 @@ public final class SpriteCorrectorMainFrame extends JFrame {
     this.menuSave.setEnabled(file != null);
   }
 
-  private void loadFileWithPlugin(final AbstractFilePlugin plugin, final File selectedFile,
+  private void loadFileWithPlugin(final AbstractFilePlugin plugin, final File sourceFile, final String name, final byte[] data,
                                   final int selected) throws IOException {
-    final AbstractFilePlugin.ReadResult result = plugin.readFrom(selectedFile, selected);
-    this.setTitle(selectedFile.getAbsolutePath());
+    final AbstractFilePlugin.ReadResult result = plugin.readFrom(name, data, selected);
+    this.setTitle(name);
     this.mainEditor.setProcessingData(result.getData());
     if (result.getSessionData() != null) {
       loadStateFromSession(result.getSessionData());
@@ -1067,7 +1072,7 @@ public final class SpriteCorrectorMainFrame extends JFrame {
     }
     this.mainEditor.setChanged(false);
 
-    setCurrentSZEFile(plugin instanceof SZEPlugin ? selectedFile : null);
+    setCurrentSZEFile(plugin instanceof SZEPlugin ? sourceFile : null);
 
     if ((plugin instanceof SCRPlugin) && !this.menuOptionsZXScreen.isSelected()) {
       this.menuOptionsZXScreen.setSelected(true);
@@ -1098,14 +1103,16 @@ public final class SpriteCorrectorMainFrame extends JFrame {
           int selected = -1;
           if (plugin.doesContainInternalFileItems()) {
             final SelectInsideDataDialog itemSelector =
-                new SelectInsideDataDialog(this, selectedFile, plugin);
+                    new SelectInsideDataDialog(this, selectedFile, plugin);
             itemSelector.setVisible(true);
             selected = itemSelector.getSelectedIndex();
             if (selected < 0) {
               return;
             }
           }
-          loadFileWithPlugin(plugin, selectedFile, selected);
+          final String name = selectedFile.getName();
+          final byte[] data = FileUtils.readFileToByteArray(selectedFile);
+          loadFileWithPlugin(plugin, selectedFile, name, data, selected);
           if (plugin instanceof SZEPlugin) {
             this.addSzeProjectToRecentProjects(selectedFile);
           }
