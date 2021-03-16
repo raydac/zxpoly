@@ -114,6 +114,12 @@ public class OptionsPanel extends JPanel {
     addressList.forEach(x -> this.comboNetAdddr.addItem(x));
 
     this.fillByDataContainer(dataContainer == null ? new DataContainer() : dataContainer);
+
+    this.comboRomSource.addActionListener(e -> {
+      if (Rom.TEST.getTitle().equals(this.comboRomSource.getSelectedItem())) {
+        this.checkZx128ByDefault.setSelected(false);
+      }
+    });
   }
 
   private void fillByDataContainer(final DataContainer data) {
