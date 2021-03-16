@@ -57,6 +57,11 @@
             <artifactId>jinput</artifactId>
             <version>${jinput.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.igormaznitsa</groupId>
+            <artifactId>zxpoly-sprite-corrector</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <profiles>

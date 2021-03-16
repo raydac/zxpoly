@@ -17,46 +17,25 @@
 
 package com.igormaznitsa.zxpspritecorrector;
 
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static javax.swing.JOptionPane.OK_OPTION;
-import static javax.swing.JOptionPane.showConfirmDialog;
-
-
-import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
-import com.igormaznitsa.zxpspritecorrector.components.InsideFileView;
-import com.igormaznitsa.zxpspritecorrector.components.PenWidth;
-import com.igormaznitsa.zxpspritecorrector.components.SelectInsideDataDialog;
-import com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector;
-import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
+import com.igormaznitsa.zxpspritecorrector.components.*;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
 import com.igormaznitsa.zxpspritecorrector.files.Spec256ConfigEditorPanel;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.HOBETAPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.LegacySZEPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.SCLPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.SCRPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.SNAPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.SZEPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.Spec256ZipPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.TAPPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.TRDPlugin;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin;
-import com.igormaznitsa.zxpspritecorrector.tools.AbstractTool;
-import com.igormaznitsa.zxpspritecorrector.tools.ToolButtonModel;
-import com.igormaznitsa.zxpspritecorrector.tools.ToolColorizer;
-import com.igormaznitsa.zxpspritecorrector.tools.ToolEraser;
-import com.igormaznitsa.zxpspritecorrector.tools.ToolPencil;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.*;
+import com.igormaznitsa.zxpspritecorrector.tools.*;
 import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
 import com.igormaznitsa.zxpspritecorrector.utils.TransferableImage;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Toolkit;
+import org.apache.commons.io.FilenameUtils;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.PicoBuilder;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.injectors.ProviderAdapter;
+
+import javax.swing.*;
+import javax.swing.Box.Filler;
+import javax.swing.JPopupMenu.Separator;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -67,56 +46,31 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Dictionary;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
-import javax.swing.BoundedRangeModel;
-import javax.swing.Box.Filler;
-import javax.swing.ButtonGroup;
-import javax.swing.DefaultBoundedRangeModel;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu.Separator;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JScrollBar;
-import javax.swing.JSeparator;
-import javax.swing.JSlider;
-import javax.swing.JSpinner;
-import javax.swing.JToggleButton;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.event.MenuEvent;
-import javax.swing.event.MenuListener;
-import org.apache.commons.io.FilenameUtils;
-import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.PicoBuilder;
-import org.picocontainer.PicoContainer;
-import org.picocontainer.injectors.ProviderAdapter;
 
-public final class MainFrame extends javax.swing.JFrame {
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static javax.swing.JOptionPane.OK_OPTION;
+import static javax.swing.JOptionPane.showConfirmDialog;
+
+public final class SpriteCorrectorMainFrame extends JFrame {
+
+  private static final Logger LOGGER = Logger.getLogger("Sprite-Corrector");
 
   private static final String EXTRA_PROPERTY_DATA_ID = "spec256.config.properties";
   private static Properties lastSpec256Properties = new Properties();
 
   private static final long serialVersionUID = -5031012548284731523L;
   public final MutablePicoContainer container = new PicoBuilder()
-      .withAutomatic()
-      .withAnnotatedMethodInjection()
-      .withAnnotatedFieldInjection()
-      .withConstructorInjection()
+          .withAutomatic()
+          .withAnnotatedMethodInjection()
+          .withAnnotatedFieldInjection()
+          .withConstructorInjection()
       .withCaching()
       .build();
   final BoundedRangeModel SLIDER_ALL_MODEL = new DefaultBoundedRangeModel(32, 0, 1, 32);
@@ -193,7 +147,8 @@ public final class MainFrame extends javax.swing.JFrame {
   private JSpinner spinnerCurrentAddress;
   private ButtonGroup toolsButtonGroup;
 
-  public MainFrame() {
+  public SpriteCorrectorMainFrame(final GraphicsConfiguration graphicsConfig, final boolean standaloneApplication) {
+    super(graphicsConfig);
     SLIDER_ALL_LABELS = new Hashtable<>();
     SLIDER_ODD_LABELS = new Hashtable<>();
     SLIDER_EVEN_LABELS = new Hashtable<>();
@@ -240,17 +195,17 @@ public final class MainFrame extends javax.swing.JFrame {
 
     this.container.start();
 
-    this.container.getComponents(AbstractTool.class).stream().forEachOrdered(tool -> {
-          this.panelTools.add(tool);
-          this.toolsButtonGroup.add(tool);
+    this.container.getComponents(AbstractTool.class).forEach(tool -> {
+      this.panelTools.add(tool);
+      this.toolsButtonGroup.add(tool);
 
-          tool.addItemListener((ItemEvent e) -> {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-              this.selectAreaMode = false;
-              this.sliderPenWidth.setModel(((AbstractTool) e.getItem()).getScaleModel());
-              this.currentAbstractTool.set(tool);
-            } else if (e.getStateChange() == ItemEvent.DESELECTED) {
-              if (this.currentAbstractTool.compareAndSet(tool, null)) {
+      tool.addItemListener((ItemEvent e) -> {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          this.selectAreaMode = false;
+          this.sliderPenWidth.setModel(((AbstractTool) e.getItem()).getScaleModel());
+          this.currentAbstractTool.set(tool);
+        } else if (e.getStateChange() == ItemEvent.DESELECTED) {
+          if (this.currentAbstractTool.compareAndSet(tool, null)) {
                 this.sliderPenWidth.setModel(null);
               }
             }
@@ -301,7 +256,7 @@ public final class MainFrame extends javax.swing.JFrame {
     this.menuOptionsMode512.addActionListener(x -> {
       final boolean mode512 = this.menuOptionsMode512.isSelected();
       this.container.getComponents(AbstractTool.class)
-          .forEach((t) -> t.setEnabled(!mode512 || (mode512 && t.doesSupport512x384())));
+              .forEach((t) -> t.setEnabled(!mode512 || t.doesSupport512x384()));
     });
 
     resetOptions();
@@ -411,8 +366,6 @@ public final class MainFrame extends javax.swing.JFrame {
             final SessionData sessionDataToSave = makeCurrentSessionData();
             plugin.writeTo(this.lastExportedFile, this.mainEditor.getProcessingData(),
                 sessionDataToSave, properties);
-          } else {
-            return;
           }
         } else {
           final SessionData sessionDataToSave = makeCurrentSessionData();
@@ -709,7 +662,7 @@ public final class MainFrame extends javax.swing.JFrame {
         menuFileRecentFiles.removeAll();
         for (final String path : recentProjects) {
           final JMenuItem projectItem = new JMenuItem(path);
-          projectItem.addActionListener(x -> MainFrame.this.openSzeFileForPath(path));
+          projectItem.addActionListener(x -> SpriteCorrectorMainFrame.this.openSzeFileForPath(path));
           menuFileRecentFiles.add(projectItem);
         }
       }
@@ -1013,7 +966,7 @@ public final class MainFrame extends javax.swing.JFrame {
   }
 
   private List<String> getRecentProjects() {
-    final Preferences preferences = Preferences.userNodeForPackage(MainFrame.class);
+    final Preferences preferences = Preferences.userNodeForPackage(SpriteCorrectorMainFrame.class);
     final String list = preferences.get("recent-projects", "");
     return Arrays.stream(list.split("\\n"))
         .map(String::trim)
@@ -1028,11 +981,11 @@ public final class MainFrame extends javax.swing.JFrame {
       recentProjects.add(0, file.getAbsolutePath());
       final String newValue = recentProjects.stream().limit(10).collect(joining("\n"));
 
-      final Preferences preferences = Preferences.userNodeForPackage(MainFrame.class);
+      final Preferences preferences = Preferences.userNodeForPackage(SpriteCorrectorMainFrame.class);
       preferences.put("recent-projects", newValue);
       preferences.flush();
     } catch (Exception ex) {
-      System.err.println("Can't save recent project info: " + ex.getMessage());
+      LOGGER.log(Level.SEVERE, "Can't save recent project info: " + ex.getMessage(), ex);
     }
   }
 

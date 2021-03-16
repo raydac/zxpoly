@@ -29,6 +29,7 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -134,8 +135,8 @@ public class TRDPlugin extends AbstractFilePlugin {
     final char type = data.getInfo().getType();
 
     final FileNameDialog fileNameDialog =
-        new FileNameDialog(this.mainFrame, "TRD file " + file.getName(), null, zxFileName,
-            new char[] {type, type, type, type});
+            new FileNameDialog(this.spriteCorrectorMainFrame, "TRD file " + file.getName(), null, zxFileName,
+                    new char[]{type, type, type, type});
     fileNameDialog.setVisible(true);
     if (fileNameDialog.approved()) {
       final JBBPOut out = JBBPOut.BeginBin(JBBPByteOrder.LITTLE_ENDIAN);

@@ -39,6 +39,7 @@ import com.igormaznitsa.zxpoly.trainers.TrainerPok;
 import com.igormaznitsa.zxpoly.ui.*;
 import com.igormaznitsa.zxpoly.utils.Timer;
 import com.igormaznitsa.zxpoly.utils.*;
+import com.igormaznitsa.zxpspritecorrector.SpriteCorrectorMainFrame;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -106,6 +107,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private static final Icon ICO_EMUL_PLAY = new ImageIcon(Utils.loadIcon("emul_play.png"));
   private static final Icon ICO_EMUL_PAUSE = new ImageIcon(Utils.loadIcon("emul_pause.png"));
   private static final Icon ICO_EMUL_VKBD = new ImageIcon(Utils.loadIcon("vkbd.png"));
+  private static final Icon ICO_SPRITECORRECTOR = new ImageIcon(Utils.loadIcon("spritecorrector.png"));
   private static final String TEXT_START_ANIM_GIF = "Record AGIF";
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
   private static final long serialVersionUID = 7309959798344327441L;
@@ -157,7 +159,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
   private final Motherboard board;
   private final ZxVideoStreamer videoStreamer;
-  private final Timer wallclock = new Timer(TIMER_INT_DELAY_MILLISECONDS);
+  private final Timer wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS);
   private final Runnable traceWindowsUpdater = new Runnable() {
 
     @Override
@@ -202,6 +204,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenu menuViewZoom;
   private JMenu menuViewVideoFilter;
   private JToggleButton toggleButtonShowVkbd;
+  private final Thread mainCpuThread;
   private JMenuItem menuViewFullScreen;
   private JMenuItem menuViewZoomIn;
   private JMenuItem menuViewZoomOut;
@@ -257,6 +260,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private javax.swing.JScrollPane scrollPanel;
   private File lastPokeFileFolder = null;
   private Optional<SourceSoundPort> preTurboSourceSoundPort = Optional.empty();
+  private final javax.swing.Timer infoBarUpdateTimer;
+  private final AtomicReference<SpriteCorrectorMainFrame> spriteCorrectorMainFrame = new AtomicReference<>();
+  private JButton buttonShowSpriteCorrector;
 
   public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
@@ -285,6 +291,29 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       showVirtualKeyboard(source.isSelected());
     });
 
+    this.buttonShowSpriteCorrector = new JButton();
+    this.buttonShowSpriteCorrector.setIcon(ICO_SPRITECORRECTOR);
+    this.buttonShowSpriteCorrector.setFocusable(false);
+    this.buttonShowSpriteCorrector.setRolloverEnabled(false);
+    this.buttonShowSpriteCorrector.setToolTipText("Start ZXPoly Sprite Corrector");
+    this.buttonShowSpriteCorrector.addActionListener(e -> {
+      SpriteCorrectorMainFrame spriteCorrector = this.spriteCorrectorMainFrame.get();
+      if (spriteCorrector != null && spriteCorrector.isDisplayable()) {
+        spriteCorrector.toFront();
+        spriteCorrector.requestFocus();
+      } else {
+        if (spriteCorrector != null) {
+          spriteCorrector.dispose();
+        }
+        spriteCorrector = new SpriteCorrectorMainFrame(this.getGraphicsConfiguration(), false);
+        spriteCorrector.setVisible(true);
+        spriteCorrector.setLocation(this.getLocation());
+        spriteCorrector.toFront();
+        spriteCorrector.requestFocus();
+        this.spriteCorrectorMainFrame.set(spriteCorrector);
+      }
+    });
+
     final JToggleButton buttonStartPause = new JToggleButton();
     buttonStartPause.setFocusable(false);
 
@@ -305,6 +334,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
 
+    this.menuBar.add(this.buttonShowSpriteCorrector);
     this.menuBar.add(this.toggleButtonShowVkbd);
     this.menuBar.add(buttonStartPause);
 
@@ -457,23 +487,23 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     this.setLocationRelativeTo(null);
 
+    this.mainCpuThread = new Thread(this, "zx-poly-main-cpu-thread");
+    this.mainCpuThread.setPriority(Thread.MAX_PRIORITY);
+    this.mainCpuThread.setDaemon(true);
+    this.mainCpuThread.setUncaughtExceptionHandler((t, e) -> {
+      LOGGER.severe("Detected exception in main thread, stopping application, see logs");
+      e.printStackTrace(System.err);
+      System.exit(666);
+    });
+
+    this.infoBarUpdateTimer =
+            new javax.swing.Timer(1000, action -> updateInfobar());
+    this.infoBarUpdateTimer.setRepeats(true);
+    this.infoBarUpdateTimer.setInitialDelay(1000);
+
     SwingUtilities.invokeLater(() -> {
-      final Thread mainCpuThread = new Thread(this, "zx-poly-main-cpu-thread");
-      mainCpuThread.setPriority(Thread.MAX_PRIORITY);
-      mainCpuThread.setDaemon(true);
-      mainCpuThread.setUncaughtExceptionHandler((t, e) -> {
-        LOGGER.severe("Detected exception in main thread, stopping application, see logs");
-        e.printStackTrace(System.err);
-        System.exit(666);
-      });
-      mainCpuThread.start();
-
-
-      final javax.swing.Timer infobarUpdateTimer =
-              new javax.swing.Timer(1000, action -> updateInfobar());
-      infobarUpdateTimer.setRepeats(true);
-      infobarUpdateTimer.setInitialDelay(1000);
-      infobarUpdateTimer.start();
+      this.mainCpuThread.start();
+      this.infoBarUpdateTimer.start();
     });
 
     this.board.getIoDevices().forEach(IoDevice::init);
@@ -719,7 +749,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   @Override
   public void run() {
-    this.wallclock.next();
+    this.wallClock.next();
     int countdownToPaint = 0;
     int countdownToAnimationSave = 0;
 
@@ -732,7 +762,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         try {
           final boolean inTurboMode = this.turboMode;
           final boolean tstatesForIntExhausted = tstates >= TSTATES_PER_INT;
-          final boolean intTickForWallclockReached = this.wallclock.completed();
+          final boolean intTickForWallclockReached = this.wallClock.completed();
 
           intStateFlags |= (tstatesForIntExhausted ? 1 : 0) | (intTickForWallclockReached ? 2 : 0);
 
@@ -745,7 +775,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           }
 
           if (intTickForWallclockReached) {
-            this.wallclock.next();
+            this.wallClock.next();
             if (!tstatesForIntExhausted) {
               this.onSlownessDetected(TSTATES_PER_INT - tstates);
             }
@@ -809,8 +839,8 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           updateTracerWindowsForStep();
         }
       } else {
-        if (this.wallclock.completed()) {
-          this.wallclock.next();
+        if (this.wallClock.completed()) {
+          this.wallClock.next();
           this.videoStreamer.onWallclockInt();
           this.board.dryIntTickOnWallClockTime(tstates >= TSTATES_PER_INT, true, tstates);
           tstates = 0;
@@ -2547,7 +2577,18 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.board.dispose();
 
     if (close) {
-      System.exit(0);
+      final SpriteCorrectorMainFrame spriteCorrector = this.spriteCorrectorMainFrame.get();
+      if (spriteCorrector != null && spriteCorrector.isDisplayable()) {
+        LOGGER.info("Detected active ZXPoly Sprite corrector");
+        spriteCorrector.toFront();
+        spriteCorrector.requestFocus();
+        this.infoBarUpdateTimer.stop();
+        this.board.dispose();
+        this.mainCpuThread.interrupt();
+        this.dispose();
+      } else {
+        System.exit(0);
+      }
     }
   }
 

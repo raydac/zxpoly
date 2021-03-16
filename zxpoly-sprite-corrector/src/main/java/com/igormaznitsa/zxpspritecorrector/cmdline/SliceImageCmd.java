@@ -28,8 +28,11 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 public class SliceImageCmd {
+
+  private static final Logger LOGGER = Logger.getLogger("Image-Slicer");
 
   public SliceImageCmd() {
 
@@ -47,8 +50,7 @@ public class SliceImageCmd {
         } else if (img.getWidth() == 512 && img.getHeight() == 384) {
           processScreen512x384(imgFile, img);
         } else {
-          System.err
-                  .print("Incompatible image resolution = " + img.getWidth() + 'x' + img.getHeight());
+          LOGGER.severe("Incompatible image resolution = " + img.getWidth() + 'x' + img.getHeight());
           return 1;
         }
 
@@ -57,7 +59,7 @@ public class SliceImageCmd {
         return 1;
       }
     } else {
-      System.err.println("Can't find file name to be sliced");
+      LOGGER.severe("Can't find file name to be sliced");
       return 1;
     }
     return 0;
@@ -83,7 +85,7 @@ public class SliceImageCmd {
 
   public void processScreen512x384(final File srcFile, final BufferedImage image)
           throws IOException {
-    System.out.println("Slicing image for 512x384");
+    LOGGER.info("Slicing image for 512x384");
 
     final int pixelsNumber = 256 * 192;
 
@@ -235,7 +237,7 @@ public class SliceImageCmd {
 
   public void processScreen256x192(final File srcFile, final BufferedImage srcArgbImage)
           throws IOException {
-    System.out.println("Slicing image for 256x192x16");
+    LOGGER.info("Slicing image for 256x192x16");
 
     final int totalPixels = 256 * 192;
 

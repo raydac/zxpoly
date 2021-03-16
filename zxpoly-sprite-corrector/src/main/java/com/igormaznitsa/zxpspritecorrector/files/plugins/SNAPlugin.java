@@ -27,25 +27,29 @@ import com.igormaznitsa.jbbp.mapper.JBBPMapper;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
+import org.apache.commons.io.FileUtils;
+
+import javax.swing.filechooser.FileFilter;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Logger;
 import java.util.stream.IntStream;
-import javax.swing.filechooser.FileFilter;
-import org.apache.commons.io.FileUtils;
 
 public final class SNAPlugin extends AbstractFilePlugin {
+
+  private static final Logger LOGGER = Logger.getLogger("SNA-Plugin");
 
   private static final String DESCRIPTION = "SNA snapshot";
 
   private final JBBPParser SNA_PARSER = JBBPParser.prepare(
-      "ubyte regI;"
-          + "<ushort altRegHL;"
-          + "<ushort altRegDE;"
-          + "<ushort altRegBC;"
-          + "<ushort altRegAF;"
-          + "<ushort regHL;"
+          "ubyte regI;"
+                  + "<ushort altRegHL;"
+                  + "<ushort altRegDE;"
+                  + "<ushort altRegBC;"
+                  + "<ushort altRegAF;"
+                  + "<ushort regHL;"
           + "<ushort regDE;"
           + "<ushort regBC;"
           + "<ushort regIY;"
@@ -148,10 +152,10 @@ public final class SNAPlugin extends AbstractFilePlugin {
         SNA_PARSER.parse(array).mapTo(new SnaFileSnapshot(), JBBPMapper.FLAG_IGNORE_MISSING_VALUES);
 
     if (sna128) {
-      System.out.println("SNA128 DETECTED");
+      LOGGER.info("SNA128 DETECTED");
 
       final byte[] data = new byte[0x4000 * (3 + snaFile.extendedData.extrabank.length)];
-      System.out.println("SNA128 data length: " + data.length + " bytes");
+      LOGGER.info("SNA128 data length: " + data.length + " bytes");
 
       final int topPage = snaFile.extendedData.port7FFD & 7;
 
@@ -226,7 +230,7 @@ public final class SNAPlugin extends AbstractFilePlugin {
           new Info(file.getName(), 'C', snaFile.extendedData.regPC, data.length, 0, extra),
           new Z80InZXPOutPlugin(), data), null);
     } else {
-      System.out.println("SNA48 DETECTED");
+      LOGGER.info("SNA48 DETECTED");
 
       int regsp = snaFile.regSP;
       if (regsp < 0x4000) {

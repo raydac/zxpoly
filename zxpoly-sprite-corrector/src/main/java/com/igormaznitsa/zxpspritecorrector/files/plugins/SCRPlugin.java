@@ -21,11 +21,12 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
-import org.apache.commons.io.FileUtils;
 
 public class SCRPlugin extends AbstractFilePlugin {
 
@@ -76,8 +77,8 @@ public class SCRPlugin extends AbstractFilePlugin {
       final Object... extraData
   ) throws IOException {
     final FileNameDialog dialog =
-        new FileNameDialog(this.mainFrame, "Base file name is " + file.getName(),
-            FileNameDialog.makeFileNames(file.getName()), null, null);
+            new FileNameDialog(this.spriteCorrectorMainFrame, "Base file name is " + file.getName(),
+                    FileNameDialog.makeFileNames(file.getName()), null, null);
     dialog.setVisible(true);
     if (dialog.approved()) {
       final String[] fileNames = dialog.getFileName();

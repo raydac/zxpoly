@@ -26,14 +26,15 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
+import org.apache.commons.io.FilenameUtils;
+
+import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import javax.swing.JOptionPane;
-import org.apache.commons.io.FilenameUtils;
 
 public class TAPPlugin extends AbstractFilePlugin {
 
@@ -238,8 +239,8 @@ public class TAPPlugin extends AbstractFilePlugin {
       final Object... extraData
   ) throws IOException {
     final int saveAsSeparateFiles = JOptionPane
-        .showConfirmDialog(this.mainFrame, "Save each block as separated file?", "Separate files",
-            JOptionPane.YES_NO_CANCEL_OPTION);
+            .showConfirmDialog(this.spriteCorrectorMainFrame, "Save each block as separated file?", "Separate files",
+                    JOptionPane.YES_NO_CANCEL_OPTION);
     if (saveAsSeparateFiles == JOptionPane.CANCEL_OPTION) {
       return;
     }
@@ -249,13 +250,13 @@ public class TAPPlugin extends AbstractFilePlugin {
     if (saveAsSeparateFiles == JOptionPane.YES_OPTION) {
 
       final FileNameDialog fileNameDialog =
-          new FileNameDialog(this.mainFrame, "Saving as separated files",
-              new String[] {addNumberToFileName(baseName, 0),
-                  addNumberToFileName(baseName, 1), addNumberToFileName(baseName, 2),
-                  addNumberToFileName(baseName, 3)},
-              new String[] {prepareNameForTAP(baseZXName, 0), prepareNameForTAP(baseZXName, 1),
-                  prepareNameForTAP(baseZXName, 2), prepareNameForTAP(baseZXName, 3)},
-              null);
+              new FileNameDialog(this.spriteCorrectorMainFrame, "Saving as separated files",
+                      new String[]{addNumberToFileName(baseName, 0),
+                              addNumberToFileName(baseName, 1), addNumberToFileName(baseName, 2),
+                              addNumberToFileName(baseName, 3)},
+                      new String[]{prepareNameForTAP(baseZXName, 0), prepareNameForTAP(baseZXName, 1),
+                              prepareNameForTAP(baseZXName, 2), prepareNameForTAP(baseZXName, 3)},
+                      null);
       fileNameDialog.setVisible(true);
       if (fileNameDialog.approved()) {
         final String[] fileNames = fileNameDialog.getFileName();
@@ -276,10 +277,10 @@ public class TAPPlugin extends AbstractFilePlugin {
       }
     } else {
       final FileNameDialog fileNameDialog =
-          new FileNameDialog(this.mainFrame, "Save as " + baseName, null,
-              new String[] {prepareNameForTAP(baseZXName, 0), prepareNameForTAP(baseZXName, 1),
-                  prepareNameForTAP(baseZXName, 2), prepareNameForTAP(baseZXName, 3)},
-              null);
+              new FileNameDialog(this.spriteCorrectorMainFrame, "Save as " + baseName, null,
+                      new String[]{prepareNameForTAP(baseZXName, 0), prepareNameForTAP(baseZXName, 1),
+                              prepareNameForTAP(baseZXName, 2), prepareNameForTAP(baseZXName, 3)},
+                      null);
       fileNameDialog.setVisible(true);
       if (fileNameDialog.approved()) {
         final String[] zxNames = fileNameDialog.getZxName();

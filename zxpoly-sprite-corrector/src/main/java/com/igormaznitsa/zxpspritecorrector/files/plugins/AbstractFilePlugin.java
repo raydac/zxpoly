@@ -17,23 +17,24 @@
 
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
-import com.igormaznitsa.zxpspritecorrector.MainFrame;
+import com.igormaznitsa.zxpspritecorrector.SpriteCorrectorMainFrame;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import javax.swing.JOptionPane;
-import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.picocontainer.annotations.Inject;
 
+import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
 public abstract class AbstractFilePlugin extends FileFilter {
 
   @Inject
-  protected MainFrame mainFrame;
+  protected SpriteCorrectorMainFrame spriteCorrectorMainFrame;
 
   public AbstractFilePlugin() {
     super();
@@ -102,8 +103,8 @@ public abstract class AbstractFilePlugin extends FileFilter {
   protected boolean saveDataToFile(final File file, final byte[] data) throws IOException {
     if (file.isFile()) {
       switch (JOptionPane
-          .showConfirmDialog(this.mainFrame, "Overwrite file '" + file.getAbsolutePath() + "'?",
-              "Overwrite file", JOptionPane.YES_NO_CANCEL_OPTION)) {
+              .showConfirmDialog(this.spriteCorrectorMainFrame, "Overwrite file '" + file.getAbsolutePath() + "'?",
+                      "Overwrite file", JOptionPane.YES_NO_CANCEL_OPTION)) {
         case JOptionPane.NO_OPTION:
           return true;
         case JOptionPane.CANCEL_OPTION:

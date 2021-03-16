@@ -28,13 +28,14 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 
 public class HOBETAPlugin extends AbstractFilePlugin {
 
@@ -134,13 +135,13 @@ public class HOBETAPlugin extends AbstractFilePlugin {
     final String zxName = data.getInfo().getName();
 
     final FileNameDialog nameDialog = new FileNameDialog(
-        this.mainFrame,
-        "Base file name is " + file.getName(),
-        new String[] {addNumberToFileName(name, 0), addNumberToFileName(name, 1),
-            addNumberToFileName(name, 2), addNumberToFileName(name, 3)},
-        new String[] {prepareNameForTRD(zxName, 0), prepareNameForTRD(zxName, 1),
-            prepareNameForTRD(zxName, 2), prepareNameForTRD(zxName, 3)},
-        new char[] {zxType, zxType, zxType, zxType}
+            this.spriteCorrectorMainFrame,
+            "Base file name is " + file.getName(),
+            new String[]{addNumberToFileName(name, 0), addNumberToFileName(name, 1),
+                    addNumberToFileName(name, 2), addNumberToFileName(name, 3)},
+            new String[]{prepareNameForTRD(zxName, 0), prepareNameForTRD(zxName, 1),
+                    prepareNameForTRD(zxName, 2), prepareNameForTRD(zxName, 3)},
+            new char[]{zxType, zxType, zxType, zxType}
     );
     nameDialog.setVisible(true);
 

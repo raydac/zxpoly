@@ -33,6 +33,8 @@ import com.igormaznitsa.zxpspritecorrector.files.Z80ExportDialog;
 import com.igormaznitsa.zxpspritecorrector.files.ZXEMLSnapshotFormat;
 import com.igormaznitsa.zxpspritecorrector.files.ZXEMLSnapshotFormat.Page;
 import com.igormaznitsa.zxpspritecorrector.files.ZXEMLSnapshotFormat.Pages;
+import org.apache.commons.io.FileUtils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +42,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import org.apache.commons.io.FileUtils;
 
 public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
 
@@ -434,7 +435,7 @@ public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
       throw new IOException("Only imported Z80 snapshot can be exported");
     }
 
-    final Z80ExportDialog dialog = new Z80ExportDialog(this.mainFrame);
+    final Z80ExportDialog dialog = new Z80ExportDialog(this.spriteCorrectorMainFrame);
     dialog.setVisible(true);
     if (!dialog.isAccepted()) {
       return;

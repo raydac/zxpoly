@@ -21,12 +21,13 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.SCRPlugin;
-import javax.swing.SpinnerNumberModel;
+
+import javax.swing.*;
 
 public final class NewDataDialog extends javax.swing.JDialog {
 
   private static final long serialVersionUID = 233857924099132156L;
-  private final MainFrame frame;
+  private final SpriteCorrectorMainFrame frame;
   private AbstractFilePlugin.ReadResult result;
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JButton buttonCancel;
@@ -35,7 +36,7 @@ public final class NewDataDialog extends javax.swing.JDialog {
   private javax.swing.JLabel labelName;
   private javax.swing.JSpinner spinnerSize;
 
-  public NewDataDialog(final MainFrame parent) {
+  public NewDataDialog(final SpriteCorrectorMainFrame parent) {
     super(parent, true);
     this.frame = parent;
     initComponents();
