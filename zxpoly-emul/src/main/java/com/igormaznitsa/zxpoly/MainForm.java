@@ -239,6 +239,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenuItem menuServiceSaveScreen;
   private JMenuItem menuServiceSaveScreenAllVRAM;
   private JMenuItem menuServiceMakeSnapshot;
+  private JMenuItem menuServiceStartEditor;
   private JMenu menuTap;
   private JMenu menuTapExportAs;
   private JMenuItem menuTapExportAsWav;
@@ -262,7 +263,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private Optional<SourceSoundPort> preTurboSourceSoundPort = Optional.empty();
   private final javax.swing.Timer infoBarUpdateTimer;
   private final AtomicReference<SpriteCorrectorMainFrame> spriteCorrectorMainFrame = new AtomicReference<>();
-  private JButton buttonShowSpriteCorrector;
 
   public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
@@ -291,29 +291,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       showVirtualKeyboard(source.isSelected());
     });
 
-    this.buttonShowSpriteCorrector = new JButton();
-    this.buttonShowSpriteCorrector.setIcon(ICO_SPRITECORRECTOR);
-    this.buttonShowSpriteCorrector.setFocusable(false);
-    this.buttonShowSpriteCorrector.setRolloverEnabled(false);
-    this.buttonShowSpriteCorrector.setToolTipText("Start ZXPoly Sprite Corrector");
-    this.buttonShowSpriteCorrector.addActionListener(e -> {
-      SpriteCorrectorMainFrame spriteCorrector = this.spriteCorrectorMainFrame.get();
-      if (spriteCorrector != null && spriteCorrector.isDisplayable()) {
-        spriteCorrector.toFront();
-        spriteCorrector.requestFocus();
-      } else {
-        if (spriteCorrector != null) {
-          spriteCorrector.dispose();
-        }
-        spriteCorrector = new SpriteCorrectorMainFrame(this.getGraphicsConfiguration(), false);
-        spriteCorrector.setVisible(true);
-        spriteCorrector.setLocation(this.getLocation());
-        spriteCorrector.toFront();
-        spriteCorrector.requestFocus();
-        this.spriteCorrectorMainFrame.set(spriteCorrector);
-      }
-    });
-
     final JToggleButton buttonStartPause = new JToggleButton();
     buttonStartPause.setFocusable(false);
 
@@ -334,7 +311,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
 
-    this.menuBar.add(this.buttonShowSpriteCorrector);
     this.menuBar.add(this.toggleButtonShowVkbd);
     this.menuBar.add(buttonStartPause);
 
@@ -1566,6 +1542,25 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
 
+    this.menuServiceStartEditor = new JMenuItem("Start editor", ICO_SPRITECORRECTOR);
+    this.menuServiceStartEditor.addActionListener(e -> {
+      SpriteCorrectorMainFrame spriteCorrector = this.spriteCorrectorMainFrame.get();
+      if (spriteCorrector != null && spriteCorrector.isDisplayable()) {
+        spriteCorrector.toFront();
+        spriteCorrector.requestFocus();
+      } else {
+        if (spriteCorrector != null) {
+          spriteCorrector.dispose();
+        }
+        spriteCorrector = new SpriteCorrectorMainFrame(this.getGraphicsConfiguration(), false);
+        spriteCorrector.setVisible(true);
+        spriteCorrector.setLocation(this.getLocation());
+        spriteCorrector.toFront();
+        spriteCorrector.requestFocus();
+        this.spriteCorrectorMainFrame.set(spriteCorrector);
+      }
+    });
+
     this.getContentPane().add(scrollPanel, java.awt.BorderLayout.CENTER);
 
     panelIndicators.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -1836,6 +1831,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuServiceGameControllers.addActionListener(this::menuServiceGameControllerActionPerformed);
 
     menuService.add(menuServiceGameControllers);
+    this.menuService.add(this.menuServiceStartEditor);
 
     menuCatcher.setText("Test triggers");
 
