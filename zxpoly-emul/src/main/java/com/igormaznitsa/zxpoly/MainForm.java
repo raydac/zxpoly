@@ -40,6 +40,7 @@ import com.igormaznitsa.zxpoly.ui.*;
 import com.igormaznitsa.zxpoly.utils.Timer;
 import com.igormaznitsa.zxpoly.utils.*;
 import com.igormaznitsa.zxpspritecorrector.SpriteCorrectorMainFrame;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -1544,20 +1545,36 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     this.menuServiceStartEditor = new JMenuItem("Start editor", ICO_SPRITECORRECTOR);
     this.menuServiceStartEditor.addActionListener(e -> {
-      SpriteCorrectorMainFrame spriteCorrector = this.spriteCorrectorMainFrame.get();
-      if (spriteCorrector != null && spriteCorrector.isDisplayable()) {
-        spriteCorrector.toFront();
-        spriteCorrector.requestFocus();
-      } else {
-        if (spriteCorrector != null) {
-          spriteCorrector.dispose();
+      this.stepSemaphor.lock();
+      try {
+        SpriteCorrectorMainFrame spriteCorrector = this.spriteCorrectorMainFrame.get();
+        if (spriteCorrector != null && spriteCorrector.isDisplayable()) {
+          spriteCorrector.toFront();
+          spriteCorrector.requestFocus();
+        } else {
+          if (spriteCorrector != null) {
+            spriteCorrector.dispose();
+          }
+          spriteCorrector = new SpriteCorrectorMainFrame(this.getGraphicsConfiguration(), false);
+          spriteCorrector.setVisible(true);
+          spriteCorrector.setLocation(this.getLocation());
+          spriteCorrector.toFront();
+          spriteCorrector.requestFocus();
+          this.spriteCorrectorMainFrame.set(spriteCorrector);
+
+          try {
+            final byte[] data = new FormatZ80().saveToArray(this.board, this.board.getVideoController());
+            final Optional<AbstractFilePlugin> plugin = spriteCorrector.findImportFilePlugin("z80");
+            if (data != null && plugin.isPresent()) {
+              spriteCorrector.loadFileWithPlugin(plugin.get(), null, "emulator-data", data, -1);
+              spriteCorrector.updateAndResetEditMenu();
+            }
+          } catch (IOException ex) {
+            LOGGER.severe("Error during snapshot creation: " + ex.getMessage());
+          }
         }
-        spriteCorrector = new SpriteCorrectorMainFrame(this.getGraphicsConfiguration(), false);
-        spriteCorrector.setVisible(true);
-        spriteCorrector.setLocation(this.getLocation());
-        spriteCorrector.toFront();
-        spriteCorrector.requestFocus();
-        this.spriteCorrectorMainFrame.set(spriteCorrector);
+      } finally {
+        this.stepSemaphor.unlock();
       }
     });
 
@@ -1809,7 +1826,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     menuServiceMakeSnapshot.setIcon(new ImageIcon(
             getClass().getResource("/com/igormaznitsa/zxpoly/icons/save_snapshot.png"))); // NOI18N
     menuServiceMakeSnapshot.setText("Save snapshot");
-    menuServiceMakeSnapshot.addActionListener(this::menuServicemakeSnapshotActionPerformed);
+    menuServiceMakeSnapshot.addActionListener(this::menuServiceMakeSnapshotActionPerformed);
     menuService.add(menuServiceMakeSnapshot);
 
     menuTapExportAs.setIcon(new ImageIcon(
@@ -2449,7 +2466,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void menuServicemakeSnapshotActionPerformed(ActionEvent evt) {
+  private void menuServiceMakeSnapshotActionPerformed(ActionEvent evt) {
     stepSemaphor.lock();
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
