@@ -7,6 +7,12 @@
 
 # Changelog
 
+__2.1.4 (SNAPSHOT)__
+
+- embedded JDK updated to Liberica OpenJDK 16+36
+- the sprite corrector now embedded into emulator
+- Refactoring
+
 __2.1.3 (06-mar-2021)__
 
 - improved INT tick processing
