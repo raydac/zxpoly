@@ -1543,7 +1543,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
       }
     });
 
-    this.menuServiceStartEditor = new JMenuItem("Start editor", ICO_SPRITECORRECTOR);
+    this.menuServiceStartEditor = new JMenuItem("ZX-Sprite corrector", ICO_SPRITECORRECTOR);
     this.menuServiceStartEditor.addActionListener(e -> {
       this.stepSemaphor.lock();
       try {
