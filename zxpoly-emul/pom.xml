@@ -69,7 +69,7 @@
             <id>publish</id>
             <properties>
                 <openjdk.bundled.type>jdk</openjdk.bundled.type>
-                <openjdk.bundled>15.0.2+10</openjdk.bundled>
+                <openjdk.bundled>16+36</openjdk.bundled>
                 <openjdk.provider>BELLSOFT</openjdk.provider>
             </properties>
             <build>
