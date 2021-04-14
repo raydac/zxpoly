@@ -23,11 +23,8 @@ import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -125,16 +122,16 @@ public class FormatZ80 extends Snapshot {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     if (mode48) {
       // save non compressed data blocks
-      final byte [] page4000 = module.makeCopyOfZxMemPage(1);
-      final byte [] page8000 = module.makeCopyOfZxMemPage(2);
-      final byte [] pageC000 = module.makeCopyOfZxMemPage(3);
+      final byte[] page4000 = module.makeCopyOfZxMemPage(1);
+      final byte[] page8000 = module.makeCopyOfZxMemPage(2);
+      final byte[] pageC000 = module.makeCopyOfZxMemPage(3);
       new Bank(4, page8000).writeNonCompressed(bos);
       new Bank(5, pageC000).writeNonCompressed(bos);
       new Bank(8, page4000).writeNonCompressed(bos);
     } else {
       // save non compressed data blocks
       for (int i = 0; i < 8; i++) {
-        final byte [] data = module.makeCopyOfHeapPage(i);
+        final byte[] data = module.makeCopyOfHeapPage(i);
         new Bank(i + 3, data).writeNonCompressed(bos);
       }
     }
@@ -228,7 +225,7 @@ public class FormatZ80 extends Snapshot {
       }
       break;
       default:
-        throw new IllegalArgumentException("Unexpected Z80 snaphshot version: " + version);
+        throw new IllegalArgumentException("Unexpected Z80 snapshot version: " + version);
     }
 
     final boolean mode48 = is48k(version, snapshot);
@@ -441,9 +438,9 @@ public class FormatZ80 extends Snapshot {
       while (length > 0) {
         if (length >= 4) {
           if (source[offset] == (byte) 0x00
-              && source[offset + 1] == (byte) 0xED
-              && source[offset + 2] == (byte) 0xED
-              && source[offset + 3] == (byte) 0x00) {
+                  && source[offset + 1] == (byte) 0xED
+                  && source[offset + 2] == (byte) 0xED
+                  && source[offset + 3] == (byte) 0x00) {
             length = 0;
           } else if (source[offset] == (byte) 0xED && source[offset + 1] == (byte) 0xED) {
             offset += 2;

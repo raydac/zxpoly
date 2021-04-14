@@ -474,7 +474,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     });
 
     this.infoBarUpdateTimer =
-            new javax.swing.Timer(1000, action -> updateInfobar());
+            new javax.swing.Timer(1000, action -> updateInfoBar());
     this.infoBarUpdateTimer.setRepeats(true);
     this.infoBarUpdateTimer.setInitialDelay(1000);
 
@@ -1283,7 +1283,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     }
   }
 
-  private void updateInfobar() {
+  private void updateInfoBar() {
     assertUiThread();
     if (panelIndicators.isVisible()) {
       labelTurbo.setStatus(turboMode);
@@ -1382,7 +1382,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           this.scrollPanel.revalidate();
 
           this.setMenuEnable(true);
-          this.updateInfobar();
+          this.updateInfoBar();
           this.updateTapeMenu();
           this.updateTracerCheckBoxes();
           this.setVisible(true);
