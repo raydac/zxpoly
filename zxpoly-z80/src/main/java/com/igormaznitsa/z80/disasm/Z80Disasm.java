@@ -19,6 +19,7 @@ package com.igormaznitsa.z80.disasm;
 
 import com.igormaznitsa.z80.MemoryAccessProvider;
 import com.igormaznitsa.z80.Z80Instruction;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -127,32 +128,32 @@ public final class Z80Disasm {
 
   public static Z80Instruction decodeInstruction(final MemoryAccessProvider memoryAccessProvider,
                                                  final int offset) {
-    final Z80Instruction[] arraytofind;
+    final Z80Instruction[] arrayToFind;
 
     int off = offset;
 
     switch (memoryAccessProvider.readAddress(off++) & 0xFF) {
       case 0xCB:
-        arraytofind = CB_PREFIXED;
+        arrayToFind = CB_PREFIXED;
         break;
       case 0xDD: {
-        arraytofind =
-            (memoryAccessProvider.readAddress(off) & 0xFF) == 0xCB ? DDCB_PREFIXED : DD_PREFIXED;
+        arrayToFind =
+                (memoryAccessProvider.readAddress(off) & 0xFF) == 0xCB ? DDCB_PREFIXED : DD_PREFIXED;
       }
       break;
       case 0xFD: {
-        arraytofind =
-            (memoryAccessProvider.readAddress(off) & 0xFF) == 0xCB ? FDCB_PREFIXED : FD_PREFIXED;
+        arrayToFind =
+                (memoryAccessProvider.readAddress(off) & 0xFF) == 0xCB ? FDCB_PREFIXED : FD_PREFIXED;
       }
       break;
       default:
-        arraytofind = NO_PREFIXED;
+        arrayToFind = NO_PREFIXED;
         break;
     }
 
     Z80Instruction result = null;
 
-    for (final Z80Instruction i : arraytofind) {
+    for (final Z80Instruction i : arrayToFind) {
       if (i.matches(memoryAccessProvider, offset)) {
         result = i;
         break;
