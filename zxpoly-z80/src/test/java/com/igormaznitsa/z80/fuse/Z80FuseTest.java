@@ -1,31 +1,25 @@
 package com.igormaznitsa.z80.fuse;
 
+import com.igormaznitsa.z80.Pair;
+import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.z80.Z80CPUBus;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.io.BufferedReader;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static com.igormaznitsa.z80.Pair.pairOf;
 import static java.lang.ClassLoader.getSystemResourceAsStream;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
-
-import com.igormaznitsa.z80.Pair;
-import com.igormaznitsa.z80.Z80;
-import com.igormaznitsa.z80.Z80CPUBus;
-import java.io.BufferedReader;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.junit.Assert.*;
 
 public class Z80FuseTest {
 
@@ -328,9 +322,25 @@ public class Z80FuseTest {
     }
     if ((cpu.getRegisterPair(Z80.REGPAIR_AF, false) & afMask) != (expected.af & afMask)) {
       if (logError) {
+        final int expectedF = (expected.af & afMask) & 0xFF;
+        final int foundF = (cpu.getRegisterPair(Z80.REGPAIR_AF, false) & afMask) & 0xFF;
+        final int xorF = expectedF ^ foundF;
+        String badFlagsInF = "ok";
+        if (xorF != 0) {
+          String buffer = String.valueOf((xorF & 128) == 0 ? '_' : 'S') +
+                  ((xorF & 64) == 0 ? '_' : 'Z') +
+                  ((xorF & 32) == 0 ? '_' : 'Y') +
+                  ((xorF & 16) == 0 ? '_' : 'H') +
+                  ((xorF & 8) == 0 ? '_' : 'X') +
+                  ((xorF & 4) == 0 ? '_' : 'P') +
+                  ((xorF & 2) == 0 ? '_' : 'N') +
+                  ((xorF & 1) == 0 ? '_' : 'C');
+          badFlagsInF = buffer;
+        }
+
         System.out.println(
-            format("%nAF expected 0x%X <> 0x%X", (expected.af & afMask),
-                (cpu.getRegisterPair(Z80.REGPAIR_AF, false) & afMask)));
+                format("%nAF expected 0x%X <> 0x%X, F is %s", (expected.af & afMask),
+                        (cpu.getRegisterPair(Z80.REGPAIR_AF, false) & afMask), badFlagsInF));
       }
       result = false;
     }
