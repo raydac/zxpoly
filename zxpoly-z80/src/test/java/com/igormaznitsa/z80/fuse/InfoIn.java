@@ -128,6 +128,7 @@ final class InfoIn {
             .append(",IFF2=").append(this.iff2 ? "1" : "0")
             .append(",IM=").append(this.im)
             .append(",HALT=").append(this.halted ? "1" : "0")
+            .append(",MEMPTR=").append(this.memptr)
             .append(",Tstats=").append(this.tstates);
 
     final byte[] ram = new byte[0x10000];

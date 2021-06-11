@@ -105,7 +105,7 @@ public final class Z80 {
     FTABLE_SZYXP[0] |= FLAG_Z;
   }
 
-  private int lastReadReg8MemPtr;
+  private int memptr;
 
   private final Z80CPUBus bus;
   private final byte[] regSet = new byte[8];
@@ -261,6 +261,14 @@ public final class Z80 {
     this.insideBlockInstruction = src.insideBlockInstruction;
     this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
     return this;
+  }
+
+  public int getMemPtr() {
+    return this.memptr;
+  }
+
+  public void setMemPtr(final int value) {
+    this.memptr = value & 0xFFFF;
   }
 
   public int getIM() {
@@ -758,19 +766,19 @@ public final class Z80 {
         switch (normalizedPrefix()) {
           case 0x00: {
             final int memptr = _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL));
-            this.lastReadReg8MemPtr = memptr;
+            this.memptr = memptr;
             return _readmem8(ctx, memptr);
           }
           case 0xDD: {
             this.tstates += 5;
             final int memptr = _readPtr(ctx, REG_IX, this.regIX) + (byte) _read_ixiy_d(ctx);
-            this.lastReadReg8MemPtr = memptr;
+            this.memptr = memptr;
             return _readmem8(ctx, memptr);
           }
           case 0xFD: {
             this.tstates += 5;
             final int memptr = _readPtr(ctx, REG_IY, this.regIY) + (byte) _read_ixiy_d(ctx);
-            this.lastReadReg8MemPtr = memptr;
+            this.memptr = memptr;
             return _readmem8(ctx, memptr);
           }
         }
@@ -2261,7 +2269,7 @@ public final class Z80 {
     if (reg == 6) {
       this.tstates++;
       // (HL),(IX),(IY)
-      h = this.lastReadReg8MemPtr >> 8;
+      h = this.memptr >> 8;
     } else {
       h = val;
     }
