@@ -26,14 +26,14 @@ final class InfoIn {
   final int iy;
   final int sp;
   final int pc;
-  final int memptr;
+  final int memPtr;
   final int i;
   final int im;
   final int r;
   final boolean iff1;
   final boolean iff2;
   final boolean halted;
-  final int tstates;
+  final int tStates;
 
   final List<int[]> lines;
 
@@ -69,7 +69,7 @@ final class InfoIn {
     this.iy = registers[9];
     this.sp = registers[10];
     this.pc = registers[11];
-    this.memptr = registers[12];
+    this.memPtr = registers[12];
 
     line = reader.readLine();
     if (line == null) {
@@ -85,13 +85,13 @@ final class InfoIn {
     this.iff2 = !"0".equals((splitted[3].trim()));
     this.im = parseInt(splitted[4].trim());
     this.halted = !"0".equals((splitted[5].trim()));
-    this.tstates = parseInt(splitted[6].trim());
+    this.tStates = parseInt(splitted[6].trim());
 
     final List<int[]> lines = new ArrayList<>();
     while (!Thread.currentThread().isInterrupted()) {
       line = reader.readLine();
       if (line == null) {
-        throw new IOException("Unexpected end of file");
+        throw new EOFException("Unexpected end of file");
       }
       line = line.trim();
       if (line.isEmpty()) {
@@ -128,8 +128,8 @@ final class InfoIn {
             .append(",IFF2=").append(this.iff2 ? "1" : "0")
             .append(",IM=").append(this.im)
             .append(",HALT=").append(this.halted ? "1" : "0")
-            .append(",MEMPTR=").append(this.memptr)
-            .append(",Tstats=").append(this.tstates);
+            .append(",MEMPTR=").append(this.memPtr)
+            .append(",Tstat.=").append(this.tStates);
 
     final byte[] ram = new byte[0x10000];
     final MemoryAccessProvider memoryAccessProvider = address -> ram[address];

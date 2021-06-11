@@ -426,7 +426,7 @@ public class Z80FuseTest {
     cpu.setRegister(Z80.REG_PC, in.pc);
     cpu.setRegister(Z80.REG_SP, in.sp);
 
-    cpu.setMemPtr(in.memptr);
+    cpu.setMemPtr(in.memPtr);
 
     for (final int[] line : in.lines) {
       int pc = line[0];
