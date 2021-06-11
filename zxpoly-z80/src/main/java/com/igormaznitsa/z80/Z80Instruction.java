@@ -21,11 +21,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -304,8 +300,7 @@ public final class Z80Instruction {
 
       int resultIndex = 0;
 
-      for (int i = 0; i < this.instructionCodeTemplate.length; i++) {
-        final int type = this.instructionCodeTemplate[i];
+      for (final int type : this.instructionCodeTemplate) {
         if (type < SPEC_INDEX) {
           resultBuff[resultIndex++] = (byte) type;
         } else {
@@ -385,8 +380,8 @@ public final class Z80Instruction {
   }
 
   public boolean matches(final MemoryAccessProvider memoryAccessProvider, int offset) {
-    for (int i = 0; i < this.instructionCodeTemplate.length; i++) {
-      switch (this.instructionCodeTemplate[i]) {
+    for (int j : this.instructionCodeTemplate) {
+      switch (j) {
         case SPEC_INDEX:
         case SPEC_OFFSET:
         case SPEC_UNSIGNED_BYTE:
@@ -397,7 +392,7 @@ public final class Z80Instruction {
           break;
         default: {
           if ((memoryAccessProvider.readAddress(offset++) & 0xFF) !=
-              this.instructionCodeTemplate[i]) {
+                  j) {
             return false;
           }
         }
@@ -439,15 +434,15 @@ public final class Z80Instruction {
     String sbyte = null;
     String sword = null;
 
-    for (int i = 0; i < this.instructionCodeTemplate.length; i++) {
-      switch (this.instructionCodeTemplate[i]) {
+    for (int j : this.instructionCodeTemplate) {
+      switch (j) {
         case SPEC_INDEX: {
           sindex = indexToHex(memoryAccessProvider.readAddress(address++));
         }
         break;
         case SPEC_OFFSET: {
           soffset = offsetToHex(memoryAccessProvider.readAddress(address++), this.fixedPartLength,
-              pcCounter);
+                  pcCounter);
         }
         break;
         case SPEC_UNSIGNED_BYTE: {
@@ -456,12 +451,12 @@ public final class Z80Instruction {
         break;
         case SPEC_UNSIGNED_WORD: {
           sword = unsignedWordToHex(memoryAccessProvider.readAddress(address++),
-              memoryAccessProvider.readAddress(address++));
+                  memoryAccessProvider.readAddress(address++));
         }
         break;
         default: {
           if ((memoryAccessProvider.readAddress(address++) & 0xFF) !=
-              this.instructionCodeTemplate[i]) {
+                  j) {
             return null;
           }
         }

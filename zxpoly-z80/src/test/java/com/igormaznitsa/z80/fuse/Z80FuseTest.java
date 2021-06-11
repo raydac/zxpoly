@@ -80,7 +80,6 @@ public class Z80FuseTest {
       } catch (EOFException ex) {
         // DO NOTHING
       }
-
     }
 
     return result;
@@ -115,7 +114,9 @@ public class Z80FuseTest {
       System.err.println("Failed tests");
       System.err.println("----------------------");
       failedTests.forEach(x -> {
-        System.err.println(x.getLeft().name);
+        System.err.println("Name: " + x.getLeft().name);
+        System.err.println(x.getLeft().makeDescription());
+        System.err.println();
       });
 
       fail();
@@ -253,7 +254,7 @@ public class Z80FuseTest {
               }
             });
 
-    if (!checkCpuState(cpu, test.getRight(), true, false, true)) {
+    if (!checkCpuState(cpu, test.getRight(), true, true, true)) {
       ok.set(false);
     }
 

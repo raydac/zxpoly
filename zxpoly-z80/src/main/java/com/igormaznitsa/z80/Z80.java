@@ -51,7 +51,7 @@ public final class Z80 {
   public static final int SIGNAL_IN_nRESET = 4;
   public static final int SIGNAL_IN_nWAIT = 8;
   public static final int SIGNAL_IN_ALL_INACTIVE =
-      SIGNAL_IN_nINT | SIGNAL_IN_nNMI | SIGNAL_IN_nRESET | SIGNAL_IN_nWAIT;
+          SIGNAL_IN_nINT | SIGNAL_IN_nNMI | SIGNAL_IN_nRESET | SIGNAL_IN_nWAIT;
   public static final int SIGNAL_OUT_nM1 = 1;
   public static final int SIGNAL_OUT_nHALT = 2;
   public static final int SIGNAL_OUT_ALL_INACTIVE = SIGNAL_OUT_nHALT | SIGNAL_OUT_nM1;
@@ -79,8 +79,8 @@ public final class Z80 {
   private static final int FLAG_SZ = FLAG_S | FLAG_Z;
   private static final int FLAG_SZC = FLAG_SZ | FLAG_C;
   private static final int FLAG_HC = FLAG_H | FLAG_C;
-  private static final byte[] FTABLE_OVERFLOW = new byte[] {
-      0, (byte) FLAG_PV, (byte) FLAG_PV, 0
+  private static final byte[] FTABLE_OVERFLOW = new byte[]{
+          0, (byte) FLAG_PV, (byte) FLAG_PV, 0
   };
 
   static {
@@ -227,7 +227,7 @@ public final class Z80 {
       final int index = allowedPositions.indexOf(c);
       if (index < 0) {
         throw new IllegalArgumentException(
-            "Unexpected char: " + c + " expected one from '" + allowedPositions + "'");
+                "Unexpected char: " + c + " expected one from '" + allowedPositions + "'");
       } else {
         result |= 1 << index;
       }
@@ -476,9 +476,9 @@ public final class Z80 {
       }
       break;
       case 2: {
-        final int address = _readmem16(ctx,
-            ((_readSpecRegValue(ctx, REG_I, this.regI) & 0xFF) << 8)
-                | (this.bus.onCPURequestDataLines(this, ctx) & 0xFF));
+        final int vector = ((_readSpecRegValue(ctx, REG_I, this.regI) & 0xFF) << 8)
+                | (this.bus.onCPURequestDataLines(this, ctx) & 0xFF);
+        final int address = _readmem16(ctx, vector);
         _call(ctx, address);
         this.tstates++;
       }
@@ -585,7 +585,7 @@ public final class Z80 {
     final int pc = this.regPC;
     this.regPC = (this.regPC + 1) & 0xFFFF;
     this.outSignals =
-        (m1 ? this.outSignals & (~SIGNAL_OUT_nM1) : this.outSignals | SIGNAL_OUT_nM1) & 0xFF;
+            (m1 ? this.outSignals & (~SIGNAL_OUT_nM1) : this.outSignals | SIGNAL_OUT_nM1) & 0xFF;
     final int result = this.bus.readMemory(this, ctx, pc, m1 && nonDisplacementByte, true) & 0xFF;
     this.outSignals = this.outSignals | SIGNAL_OUT_nM1;
 
@@ -692,11 +692,11 @@ public final class Z80 {
                 break;
               case 4:
                 this.regSet[REG_F] =
-                    (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
+                        (byte) ((this.regSet[REG_F] & FLAG_C) | (src.regSet[REG_F] & ~FLAG_C));
                 break;
               case 5:
                 this.altRegSet[REG_F] =
-                    (byte) ((this.altRegSet[REG_F] & FLAG_C) | (src.altRegSet[REG_F] & ~FLAG_C));
+                        (byte) ((this.altRegSet[REG_F] & FLAG_C) | (src.altRegSet[REG_F] & ~FLAG_C));
                 break;
               case 6:
                 this.regPC = src.regPC;
@@ -954,7 +954,7 @@ public final class Z80 {
         switch (normalizedPrefix()) {
           case 0x00: {
             _writemem8(ctx, _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL)),
-                (byte) value);
+                    (byte) value);
             return;
           }
           case 0xDD: {
@@ -989,7 +989,7 @@ public final class Z80 {
 
   private boolean isHiLoFront(final int signal, final int signals) {
     return (((this.prevINSignals & signal) ^ (signals & signal)) & (signal & this.prevINSignals)) !=
-        0;
+            0;
   }
 
   /**
@@ -1005,7 +1005,7 @@ public final class Z80 {
   public int nextInstruction(final int ctx, final boolean signalRESET, final boolean signalNMI,
                              final boolean signalNT) {
     int flag = (signalNT ? 0 : SIGNAL_IN_nINT) | (signalNMI ? 0 : SIGNAL_IN_nNMI)
-        | (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
+            | (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
 
     this.lastQ = this.q;
     this.q = 0;
@@ -1033,9 +1033,9 @@ public final class Z80 {
                                                    final boolean signalNMI,
                                                    final boolean signalNT) {
     int flag = (signalNT ? 0 : SIGNAL_IN_nINT)
-        | (signalNMI ? 0 : SIGNAL_IN_nNMI)
-        | (signalRESET ? 0 : SIGNAL_IN_nRESET)
-        | SIGNAL_IN_nWAIT;
+            | (signalNMI ? 0 : SIGNAL_IN_nNMI)
+            | (signalRESET ? 0 : SIGNAL_IN_nRESET)
+            | SIGNAL_IN_nWAIT;
 
     int spentTstates = 0;
 
@@ -1521,7 +1521,7 @@ public final class Z80 {
       break;
       default:
         throw new Error("Illegal prefix state [0x"
-            + Integer.toHexString(this.prefix).toUpperCase(Locale.ENGLISH) + ']');
+                + Integer.toHexString(this.prefix).toUpperCase(Locale.ENGLISH) + ']');
     }
 
     return commandCompleted;
@@ -1588,8 +1588,8 @@ public final class Z80 {
 
     final int c = reg ^ value ^ result;
     final int f = (byte) ((this.regSet[REG_F] & FLAG_SZPV)
-        | ((result >>> 8) & FLAG_XY)
-        | ((c >>> 8) & FLAG_H) | ((c >>> (16 - FLAG_C_SHIFT))));
+            | ((result >>> 8) & FLAG_XY)
+            | ((c >>> 8) & FLAG_H) | ((c >>> (16 - FLAG_C_SHIFT))));
     this.q = f;
     this.regSet[REG_F] = (byte) f;
 
@@ -1682,18 +1682,18 @@ public final class Z80 {
         switch (normalizedPrefix()) {
           case 0x00:
             _writemem8(ctx, _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL)),
-                (byte) value);
+                    (byte) value);
             return;
           case 0xDD:
             _writemem8(ctx,
-                _readPtr(ctx, REG_IX, this.regIX) + (byte) readInstrOrPrefix(ctx, false),
-                (byte) value);
+                    _readPtr(ctx, REG_IX, this.regIX) + (byte) readInstrOrPrefix(ctx, false),
+                    (byte) value);
             this.tstates += 5;
             return;
           case 0xFD:
             _writemem8(ctx,
-                _readPtr(ctx, REG_IY, this.regIY) + (byte) readInstrOrPrefix(ctx, false),
-                (byte) value);
+                    _readPtr(ctx, REG_IY, this.regIY) + (byte) readInstrOrPrefix(ctx, false),
+                    (byte) value);
             this.tstates += 5;
             return;
         }
@@ -1763,17 +1763,17 @@ public final class Z80 {
         switch (normalizedPrefix()) {
           case 0x00:
             _writemem8(ctx, _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL)),
-                (byte) value);
+                    (byte) value);
             return;
           case 0xDD:
             _writemem8(ctx, _readPtr(ctx, REG_IX, this.regIX) +
-                (byte) (this.cbDisplacementByte < 0 ? this.lastInstructionByte :
-                    this.cbDisplacementByte), (byte) value);
+                    (byte) (this.cbDisplacementByte < 0 ? this.lastInstructionByte :
+                            this.cbDisplacementByte), (byte) value);
             return;
           case 0xFD:
             _writemem8(ctx, _readPtr(ctx, REG_IY, this.regIY) +
-                (byte) (this.cbDisplacementByte < 0 ? this.lastInstructionByte :
-                    this.cbDisplacementByte), (byte) value);
+                    (byte) (this.cbDisplacementByte < 0 ? this.lastInstructionByte :
+                            this.cbDisplacementByte), (byte) value);
             return;
         }
       }
@@ -1946,8 +1946,8 @@ public final class Z80 {
     int a = this.regSet[REG_A];
     int f = this.regSet[REG_F] & 0xFF;
     f = (f & FLAG_SZPV)
-        | ((f & FLAG_C) == 0 ? FLAG_C : FLAG_H)
-        | (((this.lastQ ^ f) | a) & FLAG_XY);
+            | ((f & FLAG_C) == 0 ? FLAG_C : FLAG_H)
+            | (((this.lastQ ^ f) | a) & FLAG_XY);
     this.regSet[REG_F] = (byte) f;
     this.q = f;
   }
@@ -2030,8 +2030,8 @@ public final class Z80 {
 
   private void doIN_A_n(final int ctx) {
     this.regSet[REG_A] = (byte) _readport(ctx,
-        ((_portAddrFromReg(ctx, REG_A, this.regSet[REG_A]) & 0xFF) << 8)
-            | readInstrOrPrefix(ctx, false));
+            ((_portAddrFromReg(ctx, REG_A, this.regSet[REG_A]) & 0xFF) << 8)
+                    | readInstrOrPrefix(ctx, false));
   }
 
   private void doEX_mSP_HL(final int ctx) {
@@ -2190,7 +2190,7 @@ public final class Z80 {
   }
 
   private void doRST(final int ctx, final int address) {
-    _call(ctx, address);
+    _call(ctx, address & 0xFF);
     this.tstates++;
   }
 
@@ -2304,7 +2304,7 @@ public final class Z80 {
 
   private void doIN_C(final int ctx) {
     final int value =
-        _readport(ctx, _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC)));
+            _readport(ctx, _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC)));
     final int f = (FTABLE_SZYXP[value] | (this.regSet[REG_F] & FLAG_C));
     this.q = f;
     this.regSet[REG_F] = (byte) f;
@@ -2312,7 +2312,7 @@ public final class Z80 {
 
   private void doIN_C(final int ctx, final int y) {
     final int value =
-        _readport(ctx, _portAddrFromReg(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC))) & 0xFF;
+            _readport(ctx, _portAddrFromReg(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC))) & 0xFF;
     writeReg8(ctx, y, value);
 
     final int f = (FTABLE_SZYXP[value] | (this.regSet[REG_F] & FLAG_C));
@@ -2357,7 +2357,7 @@ public final class Z80 {
 
   private void doRETI(final int ctx) {
     this.iff1 =
-        this.iff2; // all RET(N/I) commands make copy
+            this.iff2; // all RET(N/I) commands make copy
     // see https://wwwold.fizyka.umk.pl/~jacek/zx/faq/reference/z80reference.htm
     this.insideBlockInstruction = this.insideBlockInstructionPrev;
     this.detectedINT = false;
@@ -2408,8 +2408,8 @@ public final class Z80 {
     setRegister(REG_A, value);
 
     final int f = (FTABLE_SZYX[value]
-        | (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0)
-        | (this.regSet[REG_F] & FLAG_C));
+            | (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0)
+            | (this.regSet[REG_F] & FLAG_C));
     this.q = f;
     this.regSet[REG_F] = (byte) f;
 
@@ -2421,8 +2421,8 @@ public final class Z80 {
     setRegister(REG_A, value);
 
     final int f = (FTABLE_SZYX[value]
-        | (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0)
-        | (this.regSet[REG_F] & FLAG_C));
+            | (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0)
+            | (this.regSet[REG_F] & FLAG_C));
     this.q = f;
     this.regSet[REG_F] = (byte) f;
 
@@ -2593,9 +2593,9 @@ public final class Z80 {
 
     final int initemp2 = (initemp + (bc & 0xFF) + delta) & 0xff;
     final int f = ((initemp & 0x80) == 0 ? 0 : FLAG_N)
-        | (initemp2 < initemp ? FLAG_HC : 0)
-        | (FTABLE_SZYXP[(initemp2 & 0x07) ^ b] & FLAG_PV)
-        | FTABLE_SZYX[b];
+            | (initemp2 < initemp ? FLAG_HC : 0)
+            | (FTABLE_SZYXP[(initemp2 & 0x07) ^ b] & FLAG_PV)
+            | FTABLE_SZYX[b];
     this.regSet[REG_F] = (byte) f;
     this.q = f;
 
@@ -2637,7 +2637,7 @@ public final class Z80 {
     setRegisterPair(REGPAIR_DE, de);
 
     final int bc =
-        (_readSpecRegPairValue(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC)) - 1) & 0xFFFF;
+            (_readSpecRegPairValue(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC)) - 1) & 0xFFFF;
     setRegisterPair(REGPAIR_BC, bc);
 
     int f = this.regSet[REG_F] & FLAG_SZC;
@@ -2725,9 +2725,9 @@ public final class Z80 {
 
     final int outitemp2 = (outitemp + (hl & 0xFF)) & 0xFF;
     final int f = ((outitemp & 0x80) == 0 ? 0 : FLAG_N)
-        | (outitemp2 < outitemp ? FLAG_HC : 0)
-        | (FTABLE_SZYXP[(outitemp2 & 0x07) ^ b] & FLAG_PV)
-        | FTABLE_SZYX[b];
+            | (outitemp2 < outitemp ? FLAG_HC : 0)
+            | (FTABLE_SZYXP[(outitemp2 & 0x07) ^ b] & FLAG_PV)
+            | FTABLE_SZYX[b];
     this.q = f;
     this.regSet[REG_F] = (byte) f;
 
@@ -2759,13 +2759,13 @@ public final class Z80 {
     result.append("DE=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_DE))).append(',');
     result.append("HL=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_HL))).append(',');
     result.append("AF'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_AF, true)))
-        .append(',');
+            .append(',');
     result.append("BC'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_BC, true)))
-        .append(',');
+            .append(',');
     result.append("DE'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_DE, true)))
-        .append(',');
+            .append(',');
     result.append("HL'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_HL, true)))
-        .append(',');
+            .append(',');
     result.append("R=").append(Utils.toHex(this.getRegister(Z80.REG_R))).append(',');
     result.append("I=").append(Utils.toHex(this.getRegister(Z80.REG_I))).append(',');
     result.append("IM=").append(this.getIM()).append(',');
@@ -2814,7 +2814,7 @@ public final class Z80 {
       return false;
     }
     if (compareExe && (this.lastM1InstructionByte != other.lastM1InstructionByte ||
-        this.lastInstructionByte != other.lastInstructionByte)) {
+            this.lastInstructionByte != other.lastInstructionByte)) {
       return false;
     }
 
@@ -2832,7 +2832,7 @@ public final class Z80 {
     setRegisterPair(REGPAIR_DE, de);
 
     final int bc =
-        (_readSpecRegPairValue(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC)) - 1) & 0xFFFF;
+            (_readSpecRegPairValue(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC)) - 1) & 0xFFFF;
     setRegisterPair(REGPAIR_BC, bc);
 
     int f = this.regSet[REG_F] & FLAG_SZC;

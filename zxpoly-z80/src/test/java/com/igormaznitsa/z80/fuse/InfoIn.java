@@ -1,15 +1,16 @@
 package com.igormaznitsa.z80.fuse;
 
-import static org.junit.Assert.assertEquals;
-
+import com.igormaznitsa.z80.MemoryAccessProvider;
+import com.igormaznitsa.z80.Z80Instruction;
+import com.igormaznitsa.z80.disasm.Z80Disasm;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import static java.lang.Integer.parseInt;
+import static org.junit.Assert.assertEquals;
 
 final class InfoIn {
   final String name;
@@ -38,15 +39,12 @@ final class InfoIn {
 
   InfoIn(final BufferedReader reader) throws IOException {
     String line;
-    while (true) {
+    do {
       line = reader.readLine();
       if (line == null) {
         throw new EOFException("End of file");
       }
-      if (!line.trim().isEmpty()) {
-        break;
-      }
-    }
+    } while (line.trim().isEmpty());
 
     this.name = line.trim();
 
@@ -81,13 +79,13 @@ final class InfoIn {
     final String[] splitted = line.split("\\s+");
     assertEquals(line + " : " + Arrays.toString(splitted), 7, splitted.length);
 
-    this.i = Integer.parseInt(splitted[0].trim(), 16);
-    this.r = Integer.parseInt(splitted[1].trim(), 16);
+    this.i = parseInt(splitted[0].trim(), 16);
+    this.r = parseInt(splitted[1].trim(), 16);
     this.iff1 = !"0".equals((splitted[2].trim()));
     this.iff2 = !"0".equals((splitted[3].trim()));
-    this.im = Integer.parseInt(splitted[4].trim());
+    this.im = parseInt(splitted[4].trim());
     this.halted = !"0".equals((splitted[5].trim()));
-    this.tstates = Integer.parseInt(splitted[6].trim());
+    this.tstates = parseInt(splitted[6].trim());
 
     final List<int[]> lines = new ArrayList<>();
     while (!Thread.currentThread().isInterrupted()) {
@@ -104,15 +102,55 @@ final class InfoIn {
       }
 
       final int[] parsed = Arrays.stream(line.split("\\s"))
-          .map(String::trim)
-          .filter(x -> !x.equals("-1"))
-          .mapToInt(x -> Integer.parseInt(x, 16))
-          .toArray();
+              .map(String::trim)
+              .filter(x -> !x.equals("-1"))
+              .mapToInt(x -> parseInt(x, 16))
+              .toArray();
 
       lines.add(parsed);
     }
 
     this.lines = Collections.unmodifiableList(lines);
+  }
+
+  private static String toAddr(final int addr) {
+    String result = Integer.toHexString(addr).toUpperCase(Locale.ENGLISH);
+    return '#' + "0000".substring(result.length()) + result;
+  }
+
+  public String makeDescription() {
+    final StringBuilder builder = new StringBuilder();
+
+    builder
+            .append("I=").append(this.i)
+            .append(",R=").append(this.r)
+            .append(",IFF1=").append(this.iff1 ? "1" : "0")
+            .append(",IFF2=").append(this.iff2 ? "1" : "0")
+            .append(",IM=").append(this.im)
+            .append(",HALT=").append(this.halted ? "1" : "0")
+            .append(",Tstats=").append(this.tstates);
+
+    final byte[] ram = new byte[0x10000];
+    final MemoryAccessProvider memoryAccessProvider = address -> ram[address];
+
+    this.lines.forEach(line -> {
+      Arrays.fill(ram, (byte) 0);
+      int pc = line[0];
+      for (int i = 1; i < line.length; i++) {
+        ram[pc++] = (byte) line[i];
+      }
+      int disasmPc = line[0];
+      while (disasmPc <= pc) {
+        final Z80Instruction instruction = Z80Disasm.decodeInstruction(memoryAccessProvider, disasmPc);
+        builder.append('\n')
+                .append(toAddr(disasmPc))
+                .append(" ")
+                .append(instruction.decode(memoryAccessProvider, disasmPc, disasmPc));
+        disasmPc += instruction.getLength();
+      }
+    });
+
+    return builder.toString();
   }
 
 }
