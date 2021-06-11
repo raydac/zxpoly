@@ -651,6 +651,21 @@
                                         <exclude>META-INF/*.SF</exclude>
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/LICENSE.txt</exclude>
+                                        <exclude>META-INF/NOTICE.txt</exclude>
+                                        <exclude>META-INF/MANIFEST.txt</exclude>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                        <exclude>META-INF/DEPENDENCIES</exclude>
+                                        <exclude>META-INF/LICENSE</exclude>
+                                        <exclude>META-INF/NOTICE</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.igormaznitsa:zxpoly-sprite-corrector</artifact>
+                                    <excludes>
+                                        <exclude>com/igormaznitsa/jbbp/**</exclude>
+                                        <exclude>META-INF/**</exclude>
+                                        <exclude>org/apache/commons/io/**</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
