@@ -9,6 +9,7 @@
 
 __2.1.4 (SNAPSHOT)__
 
+- improved emulation of Z80
 - updated Launch4J launcher for Windows
 - embedded JDK updated to Liberica OpenJDK 16.0.1+9
 - the sprite corrector now embedded into emulator
