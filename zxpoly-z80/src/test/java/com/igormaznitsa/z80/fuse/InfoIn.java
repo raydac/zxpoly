@@ -140,7 +140,7 @@ final class InfoIn {
         ram[pc++] = (byte) line[i];
       }
       int disasmPc = line[0];
-      while (disasmPc <= pc) {
+      while (disasmPc < pc) {
         final Z80Instruction instruction = Z80Disasm.decodeInstruction(memoryAccessProvider, disasmPc);
         builder.append('\n')
                 .append(toAddr(disasmPc))
