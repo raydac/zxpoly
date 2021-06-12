@@ -133,8 +133,8 @@ public final class Z80 {
   private boolean insideBlockInstruction;
   private int resetCycle = 0;
 
-  private int q;
-  private int lastQ;
+  private int internalRegQ;
+  private int internalRegLastQ;
 
   public Z80(final Z80CPUBus bus) {
     if (bus == null) {
@@ -155,8 +155,8 @@ public final class Z80 {
    */
   public Z80(final Z80 cpu) {
     this.prefix = cpu.prefix;
-    this.q = cpu.q;
-    this.lastQ = cpu.lastQ;
+    this.internalRegQ = cpu.internalRegQ;
+    this.internalRegLastQ = cpu.internalRegLastQ;
     this.resetCycle = cpu.resetCycle;
     this.iff1 = cpu.iff1;
     this.iff2 = cpu.iff2;
@@ -413,8 +413,8 @@ public final class Z80 {
   private void _reset(final int cycle) {
     switch (cycle % 3) {
       case 0: {
-        this.q = 0;
-        this.lastQ = 0;
+        this.internalRegQ = 0;
+        this.internalRegLastQ = 0;
         this.iff1 = false;
         this.iff2 = false;
         this.regI = 0;
@@ -463,8 +463,6 @@ public final class Z80 {
   private void _int(final int ctx) {
     _resetHalt();
 
-    this.q = 0;
-
     this.iff1 = false;
     this.iff2 = false;
 
@@ -512,7 +510,6 @@ public final class Z80 {
     this.bus.onInterrupt(this, ctx, true);
 
     _resetHalt();
-    this.q = 0;
     this.insideBlockInstructionPrev = this.insideBlockInstruction;
     this.iff1 = false;
     this.detectedNMI = false;
@@ -1018,9 +1015,6 @@ public final class Z80 {
     int flag = (signalNT ? 0 : SIGNAL_IN_nINT) | (signalNMI ? 0 : SIGNAL_IN_nNMI)
             | (signalRESET ? 0 : SIGNAL_IN_nRESET) | SIGNAL_IN_nWAIT;
 
-    this.lastQ = this.q;
-    this.q = 0;
-
     int spentTstates = 0;
     while (step(ctx, flag)) {
       flag = SIGNAL_IN_ALL_INACTIVE;
@@ -1082,6 +1076,8 @@ public final class Z80 {
         result = false;
       } else {
         // Process command
+        this.internalRegLastQ = this.internalRegQ;
+        this.internalRegQ = 0;
         if (_step(ctx, readInstrOrPrefix(ctx, true))) {
           // Command completed
           this.prefix = 0;
@@ -1558,7 +1554,6 @@ public final class Z80 {
     temp = this.regSet[REG_F];
     this.regSet[REG_F] = this.altRegSet[REG_F];
     this.altRegSet[REG_F] = temp;
-    this.q = this.regSet[REG_F] & 0xFF;
   }
 
   private void doDJNZ(final int ctx) {
@@ -1607,7 +1602,7 @@ public final class Z80 {
     final int f = (byte) ((this.regSet[REG_F] & FLAG_SZPV)
             | ((result >>> 8) & FLAG_XY)
             | ((c >>> 8) & FLAG_H) | ((c >>> (16 - FLAG_C_SHIFT))));
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
 
     this.setMemPtr(reg + 1);
@@ -1628,7 +1623,7 @@ public final class Z80 {
     f |= FTABLE_OVERFLOW[c >>> 15];
     f |= z >>> (16 - FLAG_C_SHIFT);
 
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
     writeReg16(2, z);
 
@@ -1653,7 +1648,7 @@ public final class Z80 {
     f |= c >>> (16 - FLAG_C_SHIFT);
 
     writeReg16(2, z);
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
 
     this.setMemPtr(x + 1);
@@ -1874,7 +1869,7 @@ public final class Z80 {
     f |= FTABLE_OVERFLOW[(c >>> 7) & 0x03];
 
     writeReg8_UseCachedInstructionByte(ctx, y, z);
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
   }
 
@@ -1891,7 +1886,7 @@ public final class Z80 {
     f |= FTABLE_SZYX[z & 0xff];
     f |= FTABLE_OVERFLOW[(c >>> 7) & 0x03];
 
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
   }
 
@@ -1903,7 +1898,7 @@ public final class Z80 {
     int a = this.regSet[REG_A] & 0xFF;
     a = (a << 1) | (a >>> 7);
     final int f = ((this.regSet[REG_F] & FLAG_SZPV) | (a & (FLAG_XY | FLAG_C)));
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
     this.regSet[REG_A] = (byte) a;
   }
@@ -1913,7 +1908,7 @@ public final class Z80 {
     int f = (this.regSet[REG_F] & (FLAG_SZPV)) | (a & FLAG_C);
     a = (a >>> 1) | (a << 7);
     f |= (a & FLAG_XY);
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
     this.regSet[REG_A] = (byte) a;
   }
@@ -1922,7 +1917,7 @@ public final class Z80 {
     final int A = this.regSet[REG_A] & 0xFF;
     final int a = A << 1;
     int f = (this.regSet[REG_F] & FLAG_SZPV) | (a & FLAG_XY) | (A >>> 7);
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_A] = (byte) (a | (this.regSet[REG_F] & FLAG_C));
     this.regSet[REG_F] = (byte) f;
   }
@@ -1933,7 +1928,7 @@ public final class Z80 {
     c = A & 0x01;
     A = (A >> 1) | ((regSet[REG_F] & FLAG_C) << 7);
     final int f = ((this.regSet[REG_F] & FLAG_SZPV) | (A & FLAG_XY) | c);
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
     this.regSet[REG_A] = (byte) A;
   }
@@ -1955,7 +1950,7 @@ public final class Z80 {
     final int newa = (a + ((flags & FLAG_N) == 0 ? +d : -d)) & 0xFF;
     this.regSet[REG_A] = (byte) newa;
     final int f = (FTABLE_SZYXP[newa] | ((newa ^ a) & FLAG_H) | (this.regSet[REG_F] & FLAG_N) | c);
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
   }
 
@@ -1965,15 +1960,15 @@ public final class Z80 {
     this.regSet[REG_A] = (byte) A;
     final int f = ((this.regSet[REG_F] & (FLAG_SZPV | FLAG_C)) | (A & FLAG_XY) | FLAG_H | FLAG_N);
     this.regSet[REG_F] = (byte) f;
-    this.q = f;
+    this.internalRegQ = f;
   }
 
   private void doSCF() {
     int a = this.regSet[REG_A];
     int f = this.regSet[REG_F];
-    f = (f & FLAG_SZPV) | (((this.lastQ ^ f) | a) & FLAG_XY) | FLAG_C;
+    f = (f & FLAG_SZPV) | (((this.internalRegLastQ ^ f) | a) & FLAG_XY) | FLAG_C;
     this.regSet[REG_F] = (byte) f;
-    this.q = f;
+    this.internalRegQ = f;
   }
 
   private void doCCF() {
@@ -1981,9 +1976,9 @@ public final class Z80 {
     int f = this.regSet[REG_F] & 0xFF;
     f = (f & FLAG_SZPV)
             | ((f & FLAG_C) == 0 ? FLAG_C : FLAG_H)
-            | (((this.lastQ ^ f) | a) & FLAG_XY);
+            | (((this.internalRegLastQ ^ f) | a) & FLAG_XY);
     this.regSet[REG_F] = (byte) f;
-    this.q = f;
+    this.internalRegQ = f;
   }
 
   private void doLDRegByReg(final int ctx, final int y, final int z) {
@@ -2233,7 +2228,7 @@ public final class Z80 {
         throw new Error("Detected unexpected ALU operation [" + op + ']');
     }
     this.regSet[REG_A] = (byte) result;
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
   }
 
@@ -2293,7 +2288,7 @@ public final class Z80 {
     }
     writeReg8_UseCachedInstructionByte(ctx, reg, x);
     final int f = (FTABLE_SZYXP[x & 0xFF] | c);
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
     return x;
   }
@@ -2327,7 +2322,7 @@ public final class Z80 {
     if (bit == 7 && (val & 0x80) != 0) {
       f |= FLAG_S;
     }
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
   }
 
@@ -2357,7 +2352,7 @@ public final class Z80 {
     final int value =
             _readport(ctx, port);
     final int f = (FTABLE_SZYXP[value] | (this.regSet[REG_F] & FLAG_C));
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
   }
 
@@ -2369,7 +2364,7 @@ public final class Z80 {
     writeReg8(ctx, y, value);
 
     final int f = (FTABLE_SZYXP[value] | (this.regSet[REG_F] & FLAG_C));
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
   }
 
@@ -2408,7 +2403,7 @@ public final class Z80 {
     c &= 0x0180;
     f |= FTABLE_OVERFLOW[c >>> 7];
     f |= c >>> (8 - FLAG_C_SHIFT);
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_A] = (byte) z;
     this.regSet[REG_F] = (byte) f;
   }
@@ -2467,7 +2462,7 @@ public final class Z80 {
     final int f = (FTABLE_SZYX[value]
             | (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0)
             | (this.regSet[REG_F] & FLAG_C));
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
 
     this.tstates++;
@@ -2480,7 +2475,7 @@ public final class Z80 {
     final int f = (FTABLE_SZYX[value]
             | (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0)
             | (this.regSet[REG_F] & FLAG_C));
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
 
     this.tstates++;
@@ -2496,7 +2491,7 @@ public final class Z80 {
     y >>>= 8;
     this.regSet[REG_A] = (byte) y;
     final int f = (FTABLE_SZYXP[y] | (this.regSet[REG_F] & FLAG_C));
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
 
     this.setMemPtr(hl + 1);
@@ -2515,7 +2510,7 @@ public final class Z80 {
     this.regSet[REG_A] = (byte) y;
     final int f = (FTABLE_SZYXP[y] | (this.regSet[REG_F] & FLAG_C));
     this.regSet[REG_F] = (byte) f;
-    this.q = f;
+    this.internalRegQ = f;
 
     this.setMemPtr(hl + 1);
 
@@ -2638,7 +2633,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     final int flags = this.regSet[REG_F];
 
-    this.q = flags;
+    this.internalRegQ = flags;
 
     if ((flags & (FLAG_Z | FLAG_PV)) == FLAG_PV) {
       final int address = (this.regPC - 2) & 0xFFFF;
@@ -2669,7 +2664,7 @@ public final class Z80 {
             | (FTABLE_SZYXP[(initemp2 & 0x07) ^ b] & FLAG_PV)
             | FTABLE_SZYX[b];
     this.regSet[REG_F] = (byte) f;
-    this.q = f;
+    this.internalRegQ = f;
 
     this.setMemPtr(bc + delta);
 
@@ -2720,7 +2715,7 @@ public final class Z80 {
     f |= value & FLAG_X;
     f |= (value << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
     this.regSet[REG_F] = (byte) f;
-    this.q = f;
+    this.internalRegQ = f;
 
     this.tstates += 2;
   }
@@ -2756,7 +2751,7 @@ public final class Z80 {
     f |= (f | FLAG_N | (this.regSet[REG_F] & FLAG_C));
     this.regSet[REG_F] = (byte) f;
 
-    this.q = f;
+    this.internalRegQ = f;
 
     this.setMemPtr(this.getMemPtr() + 1);
 
@@ -2807,7 +2802,7 @@ public final class Z80 {
             | (outitemp2 < outitemp ? FLAG_HC : 0)
             | (FTABLE_SZYXP[(outitemp2 & 0x07) ^ b] & FLAG_PV)
             | FTABLE_SZYX[b];
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
 
     this.setMemPtr(((b << 8) | (bc & 0xFF)) + delta);
@@ -2820,7 +2815,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     final int flags = this.regSet[REG_F];
 
-    this.q = flags;
+    this.internalRegQ = flags;
 
     if ((flags & (FLAG_Z | FLAG_PV)) == FLAG_PV) {
       final int address = (this.regPC - 2) & 0xFFFF;
@@ -2926,7 +2921,7 @@ public final class Z80 {
     f |= x & FLAG_X;
     f |= (x << (FLAG_Y_SHIFT - 1)) & FLAG_Y;
     this.regSet[REG_F] = (byte) f;
-    this.q = f;
+    this.internalRegQ = f;
 
     this.tstates += 2;
   }
@@ -2947,7 +2942,7 @@ public final class Z80 {
     f |= FTABLE_SZYX[z & 0xff] & FLAG_SZ;
     f |= bc != 0 ? FLAG_PV : 0;
     f |= FLAG_N | (this.regSet[REG_F] & FLAG_C);
-    this.q = f;
+    this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
 
     this.setMemPtr(this.getMemPtr() - 1);
