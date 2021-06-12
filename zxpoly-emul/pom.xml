@@ -666,6 +666,7 @@
                                         <exclude>com/igormaznitsa/jbbp/**</exclude>
                                         <exclude>META-INF/**</exclude>
                                         <exclude>org/apache/commons/io/**</exclude>
+                                        <exclude>org/picocontainer/**</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
