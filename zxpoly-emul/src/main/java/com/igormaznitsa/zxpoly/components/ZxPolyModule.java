@@ -749,14 +749,13 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       break;
       case SPEC256:
       case SPEC256_16: {
-        if (ctx == 0) {
-          final int ramOffsetInHeap = ramOffset2HeapAddress(value7FFD, address);
-          if (address >= 0x4000) {
-            // RAM AREA
+        if (address >= 0x4000) {
+          if (ctx == 0) {
+            final int ramOffsetInHeap = ramOffset2HeapAddress(value7FFD, address);
             this.board.writeRam(this, ramOffsetInHeap, val);
+          } else {
+            this.writeGfxMemory(ctx - 1, this.port7FFD.get(), address, val);
           }
-        } else {
-          this.writeGfxMemory(ctx - 1, this.port7FFD.get(), address, val);
         }
       }
       break;
