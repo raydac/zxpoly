@@ -719,11 +719,12 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   @Override
   public void writeMemory(final Z80 cpu, final int ctx, final int address, final byte data) {
     final int val = data & 0xFF;
-    if (ctx == 0) {
-      final int value7FFD = this.port7FFD.get();
-      if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
-        final int reg0 = this.zxPolyRegsWritten.get(0);
 
+    final int value7FFD = this.port7FFD.get();
+
+    switch (this.board.getBoardMode()) {
+      case ZXPOLY: {
+        final int reg0 = this.zxPolyRegsWritten.get(0);
         if ((reg0 & REG0w_MEMORY_WRITING_DISABLED) == 0) {
           final int ramOffsetInHeap = ramOffset2HeapAddress(value7FFD, address);
 
@@ -736,15 +737,31 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
             this.board.writeRam(this, ramOffsetInHeap, val);
           }
         }
-      } else {
+      }
+      break;
+      case ZX128: {
         final int ramOffsetInHeap = ramOffset2HeapAddress(value7FFD, address);
         if (address >= 0x4000) {
           // RAM AREA
           this.board.writeRam(this, ramOffsetInHeap, val);
         }
       }
-    } else {
-      this.writeGfxMemory(ctx - 1, this.port7FFD.get(), address, val);
+      break;
+      case SPEC256:
+      case SPEC256_16: {
+        if (ctx == 0) {
+          final int ramOffsetInHeap = ramOffset2HeapAddress(value7FFD, address);
+          if (address >= 0x4000) {
+            // RAM AREA
+            this.board.writeRam(this, ramOffsetInHeap, val);
+          }
+        } else {
+          this.writeGfxMemory(ctx - 1, this.port7FFD.get(), address, val);
+        }
+      }
+      break;
+      default:
+        throw new Error("Unexpected mode");
     }
   }
 
