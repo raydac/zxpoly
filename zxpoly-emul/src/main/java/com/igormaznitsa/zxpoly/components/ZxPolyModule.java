@@ -181,10 +181,10 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         } else {
           if (!isTrdosActive() && port == PORT_REG0) {
             final int cpuState = this.cpu.getState();
-            final int addr = packAddress(this.lastM1Address);
+            final int address = packAddress(this.lastM1Address);
 
             result = ((cpuState & Z80.SIGNAL_OUT_nHALT) == 0 ? ZXPOLY_rREG0_HALTMODE : 0)
-                    | (this.waitSignal ? ZXPOLY_rREG0_WAITMODE : 0) | (addr << 2);
+                    | (this.waitSignal ? ZXPOLY_rREG0_WAITMODE : 0) | (address << 2);
           } else {
             result = -1;
           }
@@ -824,13 +824,17 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   @Override
   public byte readPort(final Z80 cpu, final int ctx, final int port) {
-    final byte result;
-    if (ctx == 0) {
-      if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
+    byte result = 0;
+    boolean readFromBus = true;
+    if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
+      if (ctx == 0) {
         if (port == PORTrw_ZXPOLY) {
           if (this.moduleIndex == 0 && this.board.getMappedCpuIndex() > 0) {
+            // reading mapped CPU cell
             result = (byte) this.board.readBusIo(this, port);
           } else {
+            // form #3D00 result value
+            readFromBus = false;
             final int reg0 = zxPolyRegsWritten.get(0);
             final int outForCpu0 =
                     this.moduleIndex == this.board.getMappedCpuIndex() ? PORTr_ZXPOLY_IOFORCPU0 : 0;
@@ -841,16 +845,10 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
             result = (byte) (this.moduleIndex | ((reg0 & 7) << 5) | outForCpu0 | memDisabled
                     | ioDisabled);
           }
-        } else {
-          result = (byte) this.board.readBusIo(this, port);
         }
-      } else {
-        result = (byte) this.board.readBusIo(this, port);
       }
-    } else {
-      result = (byte) this.board.readBusIo(this, port);
     }
-    return result;
+    return readFromBus ? (byte) this.board.readBusIo(this, port) : result;
   }
 
   public int read7FFD() {
@@ -907,19 +905,16 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   @Override
   public void writePort(final Z80 cpu, final int ctx, final int port, final byte data) {
-    if (ctx == 0) {
-      final int val = data & 0xFF;
-      if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
+    final int val = data & 0xFF;
+    if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
+      if (ctx == 0) {
         final int reg0 = this.zxPolyRegsWritten.get(0);
         if ((reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 || port == PORTw_ZX128) {
-          if (port == PORTw_ZX128) {
-            if (this.moduleIndex == 0) {
-              if (this.board.getMappedCpuIndex() > 0 &&
-                      (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_WRITE_MAPPED_IO_7FFD) != 0) {
-                this.board.writeBusIo(this, port, val);
-              } else {
-                write7FFD(val, false);
-              }
+          if (port == PORTw_ZX128) { // full port decode
+            if (this.moduleIndex == 0
+                    && this.board.getMappedCpuIndex() > 0
+                    && (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_WRITE_MAPPED_IO_7FFD) != 0) {
+              this.board.writeBusIo(this, port, val);
             } else {
               write7FFD(val, false);
             }
@@ -927,12 +922,12 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
             this.board.writeBusIo(this, port, val);
           }
         }
+      }
+    } else {
+      if ((port & 0x8002) == 0) { // only A15 and A1 in use to detect #7FFD in non ZX-Poly mode
+        write7FFD(val, false);
       } else {
-        if ((port & 0x8002) == 0) { // only A15 and A1 in use to detect #7FFD in non ZX-Poly mode
-          write7FFD(val, false);
-        } else {
-          this.board.writeBusIo(this, port, val);
-        }
+        this.board.writeBusIo(this, port, val);
       }
     }
   }
