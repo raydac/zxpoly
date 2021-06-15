@@ -970,7 +970,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void updateScreen() {
     final VideoController vc = board.getVideoController();
     vc.updateBuffer();
-    vc.repaint();
+    vc.paintImmediately();
   }
 
   private void menuOptionsEnableVideoStreamActionPerformed(final ActionEvent actionEvent) {

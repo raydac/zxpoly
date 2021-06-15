@@ -1667,4 +1667,13 @@ public final class VideoController extends JComponent
     this.fullScreenMode = active;
     this.setVkbShow(false);
   }
+
+  public void paintImmediately() {
+    if (SwingUtilities.isEventDispatchThread()) {
+      this.paintImmediately(this.getBounds());
+    } else {
+      SwingUtilities.invokeLater(() ->
+              this.paintImmediately(this.getBounds()));
+    }
+  }
 }
