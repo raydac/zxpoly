@@ -734,19 +734,35 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     int intStateFlags = 0;
 
+    boolean evenHalfFrame = false;
+
     while (!Thread.currentThread().isInterrupted()) {
+      boolean blinkVideoBuffer = false;
       if (stepSemaphor.tryLock()) {
         try {
           final boolean inTurboMode = this.turboMode;
           final boolean tstatesForIntExhausted = tstates >= TSTATES_PER_INT;
           final boolean intTickForWallclockReached = this.wallClock.completed();
 
+          final int prevIntStateFlags = intStateFlags;
           intStateFlags |= (tstatesForIntExhausted ? 1 : 0) | (intTickForWallclockReached ? 2 : 0);
+
+          if (((prevIntStateFlags ^ intStateFlags) & 1) != 0) {
+            countdownToPaint--;
+            if (countdownToPaint <= 0) {
+              countdownToPaint = expectedIntTicksBetweenFrames;
+              this.updateScreenBuffer();
+            }
+            countdownToAnimationSave--;
+          }
 
           final boolean doCpuIntTick;
           if (intStateFlags == 3) {
             doCpuIntTick = true;
             intStateFlags = 0;
+            final boolean prevHalfFrame = evenHalfFrame;
+            evenHalfFrame = !evenHalfFrame;
+            blinkVideoBuffer = !evenHalfFrame && prevHalfFrame;
           } else {
             doCpuIntTick = false;
           }
@@ -757,12 +773,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
               this.onSlownessDetected(TSTATES_PER_INT - tstates);
             }
             tstates = 0;
-          }
-
-
-          if (doCpuIntTick) {
-            countdownToPaint--;
-            countdownToAnimationSave--;
           }
 
           final boolean executionEnabled = inTurboMode || !tstatesForIntExhausted || doCpuIntTick;
@@ -789,11 +799,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
             SwingUtilities.invokeLater(() -> onTrigger(detectedTriggers, lastM1Address, cpuStates));
           }
 
-          if (countdownToPaint <= 0) {
-            countdownToPaint = expectedIntTicksBetweenFrames;
-            updateScreen();
-          }
-
           if (countdownToAnimationSave <= 0) {
             final AnimationEncoder theAnimationEncoder = this.currentAnimationEncoder.get();
             if (theAnimationEncoder == null) {
@@ -810,6 +815,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           }
         } finally {
           stepSemaphor.unlock();
+        }
+
+        if (blinkVideoBuffer) {
+          this.repaintScreen();
         }
 
         if (this.activeTracerWindowCounter.get() > 0) {
@@ -967,10 +976,14 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.turboMode = value;
   }
 
-  private void updateScreen() {
+  private void updateScreenBuffer() {
     final VideoController vc = board.getVideoController();
-    vc.updateBuffer();
-    vc.paintImmediately();
+    vc.syncUpdateBuffer();
+  }
+
+  private void repaintScreen() {
+    final VideoController vc = board.getVideoController();
+    vc.doSyncRepaint();
   }
 
   private void menuOptionsEnableVideoStreamActionPerformed(final ActionEvent actionEvent) {
