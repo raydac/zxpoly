@@ -734,7 +734,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     int intStateFlags = 0;
 
-    boolean evenHalfFrame = false;
+    long cpuIntTickCounter = 0L;
 
     while (!Thread.currentThread().isInterrupted()) {
       boolean blinkVideoBuffer = false;
@@ -748,6 +748,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           intStateFlags |= (tstatesForIntExhausted ? 1 : 0) | (intTickForWallclockReached ? 2 : 0);
 
           if (((prevIntStateFlags ^ intStateFlags) & 1) != 0) {
+            cpuIntTickCounter++;
             countdownToPaint--;
             if (countdownToPaint <= 0) {
               countdownToPaint = expectedIntTicksBetweenFrames;
@@ -760,9 +761,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           if (intStateFlags == 3) {
             doCpuIntTick = true;
             intStateFlags = 0;
-            final boolean prevHalfFrame = evenHalfFrame;
-            evenHalfFrame = !evenHalfFrame;
-            blinkVideoBuffer = !evenHalfFrame && prevHalfFrame;
+            blinkVideoBuffer = (cpuIntTickCounter & 1L) == 0L;
           } else {
             doCpuIntTick = false;
           }
