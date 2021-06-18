@@ -34,7 +34,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.RenderedImage;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
@@ -1669,17 +1668,25 @@ public final class VideoController extends JComponent
     this.setVkbShow(false);
   }
 
-  public void doSyncRepaint() {
+  @Override
+  public boolean isOpaque() {
+    return true;
+  }
+
+  @Override
+  public boolean isDoubleBuffered() {
+    return false;
+  }
+
+  private void doImmediatePaint() {
+    this.paintImmediately(0, 0, this.getWidth(), this.getHeight());
+  }
+
+  public void notifyRepaint() {
     if (SwingUtilities.isEventDispatchThread()) {
-      this.paintImmediately(0, 0, this.getWidth(), this.getHeight());
+      this.doImmediatePaint();
     } else {
-      try {
-        SwingUtilities.invokeAndWait(() -> this.paintImmediately(0, 0, this.getWidth(), this.getHeight()));
-      } catch (InterruptedException ex) {
-        Thread.currentThread().interrupt();
-      } catch (InvocationTargetException e) {
-        throw new Error("Unexpected error", e);
-      }
+      SwingUtilities.invokeLater(this::doImmediatePaint);
     }
   }
 }

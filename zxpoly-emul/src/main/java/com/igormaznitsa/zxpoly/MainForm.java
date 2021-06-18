@@ -979,7 +979,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
   private void repaintScreen() {
     final VideoController vc = board.getVideoController();
-    vc.doSyncRepaint();
+    vc.notifyRepaint();
   }
 
   private void menuOptionsEnableVideoStreamActionPerformed(final ActionEvent actionEvent) {
