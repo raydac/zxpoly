@@ -17,14 +17,14 @@
 
 package com.igormaznitsa.zxpoly.components.betadisk;
 
-import static java.util.Arrays.copyOf;
-
-
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
+import org.apache.commons.io.FilenameUtils;
+
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
-import org.apache.commons.io.FilenameUtils;
+
+import static java.util.Arrays.copyOf;
 
 public class TrDosDisk {
 
@@ -329,6 +329,11 @@ public class TrDosDisk {
       this.owner = disk;
       this.offset = offset;
       updateCrc();
+    }
+
+    @Override
+    public String toString() {
+      return String.format("Sector(side=%d,track=%d,phIndex=%d", this.side, this.track, this.physicalIndex);
     }
 
     public boolean isWriteProtect() {
