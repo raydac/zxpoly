@@ -17,12 +17,8 @@
 
 package com.igormaznitsa.zxpoly.components.betadisk;
 
-import static com.igormaznitsa.zxpoly.components.Motherboard.CPU_FREQ;
-import static java.time.Duration.ofMillis;
-import static java.time.Duration.ofSeconds;
-
-
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk.Sector;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -30,9 +26,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public final class FddControllerK1818VG93 {
+import static com.igormaznitsa.zxpoly.components.Motherboard.CPU_FREQ;
+import static java.time.Duration.ofMillis;
+import static java.time.Duration.ofSeconds;
 
-  private static final long DELAY_FDD_MOTOR_ON_MS = 2000L;
+public final class FddControllerK1818VG93 {
 
   static final int ADDR_COMMAND_STATE = 0;
   static final int ADDR_TRACK = 1;
@@ -40,6 +38,7 @@ public final class FddControllerK1818VG93 {
   static final int ADDR_DATA = 3;
   static final int STAT_BUSY = 0x01;
   static final int STAT_DRQ = 0x02;
+  private static final long DELAY_FDD_MOTOR_ON_MS = 2000L;
   private static final int STAT_INDEX = 0x02;
   private static final int STAT_TRK00_OR_LOST = 0x04;
   private static final int STAT_CRCERR = 0x08;
@@ -49,9 +48,9 @@ public final class FddControllerK1818VG93 {
   private static final int STAT_WRITEPROTECT = 0x40;
   private static final int ST_NOTREADY = 0x80;
   private static final long TSTATE_NANOSECOND_LENGTH =
-      Math.round((double) ofSeconds(1).toNanos() / (double) CPU_FREQ);
+          Math.round((double) ofSeconds(1).toNanos() / (double) CPU_FREQ);
   private static final long TSTATES_HEAD_TO_NEXT_TRACK =
-      ofMillis(12).toNanos() / TSTATE_NANOSECOND_LENGTH;
+          ofMillis(12).toNanos() / TSTATE_NANOSECOND_LENGTH;
   private static final long TSTATES_PER_BUFFER_VALID = 128L;
   private static final long TSTATES_SECTOR_POSITIONING = TSTATES_PER_BUFFER_VALID;
   private static final int REG_COMMAND = 0x00;
@@ -60,6 +59,7 @@ public final class FddControllerK1818VG93 {
   private static final int REG_SECTOR = 0x03;
   private static final int REG_DATA_WR = 0x04;
   private static final int REG_DATA_RD = 0x05;
+  private static final int COMMAND_FLAG_MULTIPLE_RECORDS = 0b0001_0000;
   private final int[] registers = new int[6];
   private final AtomicReference<TrDosDisk> trdosDisk = new AtomicReference<>();
   private final Logger logger;
@@ -233,7 +233,7 @@ public final class FddControllerK1818VG93 {
 
         if (this.firstCommandStep) {
           logger.log(Level.INFO,
-              "FDD cmd (" + toBinByte(normValue) + "): " + commandAsText(normValue));
+                  "FDD cmd (" + toBinByte(normValue) + "): " + commandAsText(normValue));
         }
       }
       break;
@@ -383,13 +383,13 @@ public final class FddControllerK1818VG93 {
 
   private void loadSector(final int side, final int track, final int sector) {
     final TrDosDisk floppy = this.trdosDisk.get();
-    final Sector thesector;
+    final Sector foundSector;
     if (floppy == null) {
-      thesector = null;
+      foundSector = null;
     } else {
-      thesector = floppy.findSector(side, track, sector);
+      foundSector = floppy.findSector(side, track, sector);
     }
-    this.sector = thesector;
+    this.sector = foundSector;
   }
 
   private void provideReadData(final int data) {
@@ -406,13 +406,13 @@ public final class FddControllerK1818VG93 {
 
   private void cmdForceInterrupt(final long tstatesCounter, final int command,
                                  final boolean start) {
-    final TrDosDisk thedisk = this.trdosDisk.get();
+    final TrDosDisk currentDisk = this.trdosDisk.get();
     resetStatus(false);
 
-    if (thedisk == null) {
+    if (currentDisk == null) {
       setInternalFlag(ST_NOTREADY);
     } else {
-      this.sector = thedisk.findFirstSector(this.head, this.registers[REG_TRACK]);
+      this.sector = currentDisk.findFirstSector(this.head, this.registers[REG_TRACK]);
       if (this.sector == null) {
         setInternalFlag(STAT_NOTFOUND);
       } else {
@@ -424,7 +424,7 @@ public final class FddControllerK1818VG93 {
   }
 
   private void cmdRestore(final long tstatesCounter, final int command, final boolean start) {
-    final TrDosDisk thedisk = this.trdosDisk.get();
+    final TrDosDisk currentDisk = this.trdosDisk.get();
 
     resetStatus(false);
 
@@ -432,22 +432,23 @@ public final class FddControllerK1818VG93 {
       this.counter = 0;
     }
 
-    if (thedisk == null) {
+    if (currentDisk == null) {
       setInternalFlag(ST_NOTREADY);
     } else {
       if ((command & 0b00001000) != 0) {
         setInternalFlag(STAT_HEADL);
       }
-      if (thedisk.isWriteProtect()) {
+      if (currentDisk.isWriteProtect()) {
         setInternalFlag(STAT_WRITEPROTECT);
       }
 
       if (counter < 0xFF && this.registers[REG_TRACK] > 0) {
         this.registers[REG_TRACK]--;
-        this.sector = thedisk.findFirstSector(this.head, this.registers[REG_TRACK]);
+        this.sector = currentDisk.findFirstSector(this.head, this.registers[REG_TRACK]);
         if (this.sector == null) {
           setInternalFlag(STAT_NOTFOUND);
         } else {
+          this.registers[REG_SECTOR] = 1;
           if (!this.sector.isCrcOk()) {
             setInternalFlag(STAT_CRCERR);
           }
@@ -455,7 +456,9 @@ public final class FddControllerK1818VG93 {
         }
       } else {
         if (this.registers[REG_TRACK] != 0) {
-          this.sector = thedisk.findFirstSector(this.head, this.registers[REG_TRACK]);
+          this.sector = currentDisk.findFirstSector(this.head, this.registers[REG_TRACK]);
+          if (this.sector != null)
+            this.registers[REG_SECTOR] = 1;
           setInternalFlag(STAT_NOTFOUND);
         }
       }
@@ -469,20 +472,20 @@ public final class FddControllerK1818VG93 {
   private void cmdSeek(final long tstatesCounter, final int command, final boolean start) {
     resetStatus(false);
 
-    final TrDosDisk curDisk = this.trdosDisk.get();
+    final TrDosDisk currentDisk = this.trdosDisk.get();
 
     if ((command & 0b00001000) != 0) {
       setInternalFlag(STAT_HEADL);
     }
 
-    if (curDisk == null) {
+    if (currentDisk == null) {
       setInternalFlag(ST_NOTREADY);
     } else {
       if (start) {
         this.operationTimeOutCycles = tstatesCounter + TSTATES_HEAD_TO_NEXT_TRACK;
       }
 
-      if (curDisk.isWriteProtect()) {
+      if (currentDisk.isWriteProtect()) {
         setInternalFlag(STAT_WRITEPROTECT);
       }
 
@@ -493,15 +496,19 @@ public final class FddControllerK1818VG93 {
           } else {
             this.registers[REG_TRACK]--;
           }
+          this.sector = currentDisk.findFirstSector(this.head, this.registers[REG_TRACK]);
+          if (this.sector != null) {
+            this.registers[REG_SECTOR] = 1;
+          }
           logger.info("FDD head moved to track " + this.registers[REG_TRACK] + ", target track is "
-              + this.registers[REG_DATA_WR]);
+                  + this.registers[REG_DATA_WR]);
           this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_HEAD_TO_NEXT_TRACK);
         }
       }
 
       boolean completed = this.registers[REG_TRACK] == this.registers[REG_DATA_WR];
 
-      this.sector = curDisk.findRandomSector(this.head, this.registers[REG_TRACK]);
+      this.sector = currentDisk.findRandomSector(this.head, this.registers[REG_TRACK]);
 
       if (this.sector == null) {
         setInternalFlag(STAT_NOTFOUND);
@@ -701,14 +708,14 @@ public final class FddControllerK1818VG93 {
   }
 
   private void cmdReadSector(final long tstatesCounter, final int command, final boolean start) {
-    final boolean multiSectors = (command & 0b100000) != 0;
+    final boolean multiSectors = (command & COMMAND_FLAG_MULTIPLE_RECORDS) != 0;
     final int sideNumber = (command >>> 3) & 1;
     final boolean doCheckSide = (command & 2) != 0;
 
     resetStatus(true);
 
-    final TrDosDisk thedisk = this.trdosDisk.get();
-    if (thedisk == null) {
+    final TrDosDisk currentDisk = this.trdosDisk.get();
+    if (currentDisk == null) {
       setInternalFlag(ST_NOTREADY);
     } else {
       loadSector(this.head, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
@@ -776,7 +783,7 @@ public final class FddControllerK1818VG93 {
   }
 
   private void cmdWriteSector(final long tstatesCounter, final int command, final boolean start) {
-    final boolean multiOp = (command & 0x10) != 0;
+    final boolean multiOp = (command & COMMAND_FLAG_MULTIPLE_RECORDS) != 0;
     final int softSide = (command >>> 3) & 1;
     final boolean doCheckSide = (command & 1) != 0;
 
@@ -864,7 +871,7 @@ public final class FddControllerK1818VG93 {
       if (start) {
         this.counter = 0;
         final TrackHelper helper = this.mfmModulation ? new MFMTrackHelper(this.getDisk()) :
-            new FMTracHelper(this.getDisk());
+                new FMTracHelper(this.getDisk());
         helper.prepareTrackForRead(this.head, this.registers[REG_TRACK]);
 
         this.tempAuxiliaryObject = helper;
@@ -907,7 +914,7 @@ public final class FddControllerK1818VG93 {
         this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_BUFFER_VALID);
         this.flagWaitDataWr = true;
         this.tempAuxiliaryObject = this.mfmModulation ? new MFMTrackHelper(this.getDisk()) :
-            new FMTracHelper(this.getDisk());
+                new FMTracHelper(this.getDisk());
       }
 
       if (!this.flagWaitDataWr) {
@@ -1029,16 +1036,16 @@ public final class FddControllerK1818VG93 {
         break;
         case DATA: {
           final TrDosDisk.Sector sector =
-              this.disk.findSector(this.headIndex, this.trackIndex, this.sectorIndex);
+                  this.disk.findSector(this.headIndex, this.trackIndex, this.sectorIndex);
           if (sector == null) {
             throw new IOException(
-                "Can't find sector: " + this.trackIndex + ':' + this.headIndex + ':'
-                    + this.sectorIndex);
+                    "Can't find sector: " + this.trackIndex + ':' + this.headIndex + ':'
+                            + this.sectorIndex);
           }
           if (!sector.writeByte(this.dataByteIndex, dataByte)) {
             throw new IOException(
-                "Can't write " + this.dataByteIndex + " byte to sector: " + this.trackIndex + ':'
-                    + this.headIndex + ':' + this.sectorIndex);
+                    "Can't write " + this.dataByteIndex + " byte to sector: " + this.trackIndex + ':'
+                            + this.headIndex + ':' + this.sectorIndex);
           }
           this.expectedData--;
           this.dataByteIndex++;
@@ -1070,7 +1077,7 @@ public final class FddControllerK1818VG93 {
 
     int readNextTrackData() {
       return this.trackBytePosition < this.trackTotalBytes
-          ? this.trackReadBuffer[this.trackBytePosition++] : -1;
+              ? this.trackReadBuffer[this.trackBytePosition++] : -1;
     }
 
     boolean isCompleted() {
