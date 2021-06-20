@@ -1286,25 +1286,25 @@ public final class VideoController extends JComponent
       final int borderArgbColor = PALETTE_ZXPOLY[this.borderLineColors[BORDER_LINES - 1]];
       final Rectangle area;
       final TvFilter[] tvFilters = filterChain.getFilterChain();
-      BufferedImage postprocessedImage;
+      BufferedImage postProcessedImage;
       lockBuffer();
       try {
-        postprocessedImage = tvFilters[0].apply(this.bufferImage, zoom, borderArgbColor, true);
+        postProcessedImage = tvFilters[0].apply(this.bufferImage, zoom, borderArgbColor, true);
       } finally {
         unlockBuffer();
       }
       for (int i = 1; i < tvFilters.length; i++) {
-        postprocessedImage = tvFilters[i].apply(postprocessedImage, zoom, borderArgbColor, false);
+        postProcessedImage = tvFilters[i].apply(postProcessedImage, zoom, borderArgbColor, false);
       }
       if (zoom == 1.0f) {
         area = new Rectangle(x, y, 512, 384);
-        gfx.drawImage(postprocessedImage, null, x, y);
+        gfx.drawImage(postProcessedImage, null, x, y);
       } else {
         final boolean sizeChangedDuringPostprocessing =
-                postprocessedImage.getWidth() != this.bufferImage.getWidth();
+                postProcessedImage.getWidth() != this.bufferImage.getWidth();
 
         if (sizeChangedDuringPostprocessing) {
-          gfx.drawImage(postprocessedImage, null, x, y);
+          gfx.drawImage(postProcessedImage, null, x, y);
           area = new Rectangle(x, y, 512, 384);
         } else {
           final float normalizedZoom = Math.max(1.0f, zoom);
@@ -1314,7 +1314,7 @@ public final class VideoController extends JComponent
           area = new Rectangle(x, y, Math.round(SCREEN_WIDTH * normalizedZoom),
                   Math.round(SCREEN_HEIGHT * normalizedZoom));
 
-          gfx.drawImage(postprocessedImage, x, y, area.width,
+          gfx.drawImage(postProcessedImage, x, y, area.width,
                   area.height, null);
         }
       }

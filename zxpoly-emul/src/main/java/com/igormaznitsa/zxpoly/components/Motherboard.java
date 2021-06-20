@@ -43,6 +43,9 @@ public final class Motherboard implements ZxPolyConstants {
   public static final int LINES_PER_FRAME = 311;
   public static final int TSTATES_PER_INT = TSTATES_PER_LINE * LINES_PER_FRAME;
 
+  public static final int TSTATES_BEFORE_MAIN_SCREEN_DRAW_START = TSTATES_PER_LINE * (LINES_PER_FRAME - 192) / 2 + 4;
+  public static final int TSTATES_FOR_WHOLE_SCREEN_DRAW = TSTATES_PER_LINE * 192 + 4;
+
   public static final int TRIGGER_NONE = 0;
   public static final int TRIGGER_DIFF_MODULESTATES = 1;
   public static final int TRIGGER_DIFF_MEM_ADDR = 2;
