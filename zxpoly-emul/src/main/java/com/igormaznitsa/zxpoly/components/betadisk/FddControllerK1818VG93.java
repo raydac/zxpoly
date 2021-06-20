@@ -43,7 +43,7 @@ public final class FddControllerK1818VG93 {
   private static final int STAT_TRK00_OR_LOST = 0x04;
   private static final int STAT_CRCERR = 0x08;
   private static final int STAT_NOTFOUND = 0x10;
-  private static final int STAT_HEADL = 0x20;
+  private static final int STAT_HEAD_LOAD = 0x20;
   private static final int STAT_WRFAULT = 0x20;
   private static final int STAT_WRITEPROTECT = 0x40;
   private static final int ST_NOTREADY = 0x80;
@@ -272,48 +272,48 @@ public final class FddControllerK1818VG93 {
   }
 
   private String commandAsText(final int command) {
-    final int track = this.registers[REG_TRACK];
-    final int theSector = this.registers[REG_SECTOR];
-    final int theHead = this.head;
+    final int addressTrack = this.registers[REG_TRACK];
+    final int addressSector = this.registers[REG_SECTOR];
+    final int addressHead = this.head;
 
-    final String addr = track + ":" + theHead + ":" + theSector;
+    final String address = String.format("current(track=%d, head=%d, sector=%d, dataReg=%d)", addressTrack, addressHead, addressSector, this.registers[REG_DATA_WR]);
 
     final int high = command >>> 4;
     switch (high) {
       case 0b0000: {
-        return "RESTORE";
+        return "RESTORE (" + address + ')';
       }
       case 0b0001: {
-        return "SEEK (track=" + track + ", head=" + this.head + ")";
+        return "SEEK (" + address + ")";
       }
       case 0b0010:
       case 0b0011: {
-        return "STEP";
+        return "STEP (" + address + ')';
       }
       case 0b0100:
       case 0b0101: {
-        return "STEP IN";
+        return "STEP_IN (" + address + ')';
       }
       case 0b0110:
       case 0b0111: {
-        return "STEP OUT";
+        return "STEP_OUT (" + address + ')';
       }
       case 0b1000:
       case 0b1001: {
-        return "RD.SECTOR" + ((high & 1) == 0 ? "(S)" : "(M)") + ' ' + addr;
+        return "RD.SECTOR" + ((high & 1) == 0 ? "(S)" : "(M)") + ' ' + address;
       }
       case 0b1010:
       case 0b1011: {
-        return "WR.SECTOR" + ((high & 1) == 0 ? "(S)" : "(M)") + ' ' + addr;
+        return "WR.SECTOR" + ((high & 1) == 0 ? "(S)" : "(M)") + ' ' + address;
       }
       case 0b1100: {
         return "RD.ADDR";
       }
       case 0b1110: {
-        return "RD.TRACK (track=" + track + ")";
+        return "RD.TRACK (track=" + addressTrack + ")";
       }
       case 0b1111: {
-        return "WR.TRACK (track=" + track + ")";
+        return "WR.TRACK (track=" + addressTrack + ")";
       }
       case 0b1101: {
         return "FRC.INTERRUPT";
@@ -436,7 +436,7 @@ public final class FddControllerK1818VG93 {
       setInternalFlag(ST_NOTREADY);
     } else {
       if ((command & 0b00001000) != 0) {
-        setInternalFlag(STAT_HEADL);
+        setInternalFlag(STAT_HEAD_LOAD);
       }
       if (currentDisk.isWriteProtect()) {
         setInternalFlag(STAT_WRITEPROTECT);
@@ -475,7 +475,7 @@ public final class FddControllerK1818VG93 {
     final TrDosDisk currentDisk = this.trdosDisk.get();
 
     if ((command & 0b00001000) != 0) {
-      setInternalFlag(STAT_HEADL);
+      setInternalFlag(STAT_HEAD_LOAD);
     }
 
     if (currentDisk == null) {
@@ -496,30 +496,27 @@ public final class FddControllerK1818VG93 {
           } else {
             this.registers[REG_TRACK]--;
           }
-          this.sector = currentDisk.findFirstSector(this.head, this.registers[REG_TRACK]);
-          if (this.sector != null) {
-            this.registers[REG_SECTOR] = 1;
-          }
+          this.registers[REG_SECTOR] = 1;
+          loadSector(this.head, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
           logger.info("FDD head moved to track " + this.registers[REG_TRACK] + ", target track is "
                   + this.registers[REG_DATA_WR]);
           this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_HEAD_TO_NEXT_TRACK);
         }
       }
 
-      boolean completed = this.registers[REG_TRACK] == this.registers[REG_DATA_WR];
-
-      this.sector = currentDisk.findRandomSector(this.head, this.registers[REG_TRACK]);
+      boolean workCompleted = this.registers[REG_TRACK] == this.registers[REG_DATA_WR];
 
       if (this.sector == null) {
         setInternalFlag(STAT_NOTFOUND);
-        completed = true;
+        workCompleted = true;
       } else {
-        if (!this.sector.isCrcOk()) {
+        loadSector(this.head, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
+        if (this.sector != null && !this.sector.isCrcOk()) {
           setInternalFlag(STAT_CRCERR);
         }
       }
 
-      if (!completed) {
+      if (!workCompleted) {
         setInternalFlag(STAT_BUSY);
       }
     }
@@ -528,18 +525,18 @@ public final class FddControllerK1818VG93 {
   private void cmdReadAddress(final long tstatesCounter, final int command, final boolean start) {
     resetStatus(true);
 
-    final TrDosDisk thedisk = this.trdosDisk.get();
+    final TrDosDisk currentDisk = this.trdosDisk.get();
 
-    if (thedisk == null) {
+    if (currentDisk == null) {
       setInternalFlag(ST_NOTREADY);
     } else {
       if (start) {
         // turn sector
         if (this.sector != null) {
-          this.sector = thedisk.findSectorAfter(this.sector);
+          this.sector = currentDisk.findSectorAfter(this.sector);
         }
         if (this.sector == null) {
-          this.sector = thedisk.findFirstSector(this.head, this.registers[REG_TRACK]);
+          this.sector = currentDisk.findFirstSector(this.head, this.registers[REG_TRACK]);
         }
 
         this.counter = 6;
@@ -549,7 +546,7 @@ public final class FddControllerK1818VG93 {
       }
 
       if (this.sector == null) {
-        this.sector = thedisk.findFirstSector(this.head, this.registers[REG_TRACK]);
+        this.sector = currentDisk.findFirstSector(this.head, this.registers[REG_TRACK]);
       }
 
       if (this.sector == null) {
@@ -662,7 +659,7 @@ public final class FddControllerK1818VG93 {
       }
 
       if ((command & 0b00001000) != 0) {
-        setInternalFlag(STAT_HEADL);
+        setInternalFlag(STAT_HEAD_LOAD);
       }
       if (thedisk.isWriteProtect()) {
         setInternalFlag(STAT_WRITEPROTECT);
@@ -674,16 +671,16 @@ public final class FddControllerK1818VG93 {
       if (tstatesCounter < this.operationTimeOutCycles) {
         setInternalFlag(STAT_BUSY);
       } else {
-        int curtrack = this.registers[REG_TRACK];
+        int currentTrack = this.registers[REG_TRACK];
         if (this.outwardStepDirection) {
-          curtrack = (curtrack + 1) & 0xFF;
+          currentTrack = (currentTrack + 1) & 0xFF;
         } else {
-          curtrack = (curtrack - 1) & 0xFF;
+          currentTrack = (currentTrack - 1) & 0xFF;
         }
-        this.sector = thedisk.findRandomSector(this.head, curtrack);
+        this.sector = thedisk.findRandomSector(this.head, currentTrack);
 
         if ((command & 0x10) != 0) {
-          this.registers[REG_TRACK] = curtrack;
+          this.registers[REG_TRACK] = currentTrack;
         }
 
         if (this.sector == null) {
@@ -751,10 +748,11 @@ public final class FddControllerK1818VG93 {
             }
           } else {
             if (this.counter >= this.sector.size()) {
-              this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
               this.sectorPositioningCycles = Math.abs(tstatesCounter + TSTATES_SECTOR_POSITIONING);
               if (multiSectors) {
                 if (!this.sector.isLastOnTrack()) {
+                  this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
+                  loadSector(this.head, this.registers[REG_TRACK], this.registers[REG_SECTOR]);
                   this.counter = 0;
                   setInternalFlag(STAT_BUSY);
                 }
