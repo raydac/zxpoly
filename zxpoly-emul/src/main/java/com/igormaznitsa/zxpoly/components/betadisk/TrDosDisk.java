@@ -39,9 +39,19 @@ public class TrDosDisk {
   private File srcFile;
   private SourceDataType type;
 
+  private int headIndex = 0;
+
+  public int getHeadIndex() {
+    return this.headIndex;
+  }
+
+  public void setHeadIndex(final int index) {
+    this.headIndex = index & 1;
+  }
+
   public TrDosDisk() {
     this(null, SourceDataType.TRD,
-        new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
+            new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
   }
 
   public TrDosDisk(final File srcFile, final SourceDataType type, final byte[] srcData,
@@ -233,8 +243,8 @@ public class TrDosDisk {
     }
   }
 
-  public Sector findRandomSector(final int side, final int track) {
-    Sector sector = findFirstSector(side, track);
+  public Sector findRandomSector(final int track) {
+    Sector sector = findFirstSector(track);
     if (sector != null) {
       int toskip = RND.nextInt(SECTORS_PER_TRACK);
       Sector found = sector;
@@ -248,11 +258,11 @@ public class TrDosDisk {
     return sector;
   }
 
-  public Sector findFirstSector(final int side, final int track) {
+  public Sector findFirstSector(final int track) {
     Sector result = null;
 
     for (final Sector s : this.sectors) {
-      if (s.getSide() == side && s.getTrackNumber() == track) {
+      if (s.getSide() == this.headIndex && s.getTrackNumber() == track) {
         result = s;
         break;
       }
@@ -274,12 +284,12 @@ public class TrDosDisk {
     return null;
   }
 
-  public Sector findSector(final int side, final int track, final int physicalSectorIndex) {
+  public Sector findSector(final int track, final int physicalSectorIndex) {
     Sector result = null;
 
     for (final Sector s : this.sectors) {
-      if (s.getSide() == side && s.getTrackNumber() == track &&
-          s.getPhysicalIndex() == physicalSectorIndex) {
+      if (s.getSide() == this.headIndex && s.getTrackNumber() == track &&
+              s.getPhysicalIndex() == physicalSectorIndex) {
         result = s;
         break;
       }

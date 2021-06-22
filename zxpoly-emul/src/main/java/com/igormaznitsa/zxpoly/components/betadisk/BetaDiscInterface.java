@@ -20,6 +20,7 @@ package com.igormaznitsa.zxpoly.components.betadisk;
 import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
+
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.logging.Logger;
 
@@ -53,7 +54,11 @@ public class BetaDiscInterface implements IoDevice {
 
   private void tuneControllerToDisk() {
     final int driveIndex = this.ffPort & 0x3;
-    this.vg93.activateDisk(driveIndex, this.diskDrives.get(driveIndex));
+    final TrDosDisk disk = this.diskDrives.get(driveIndex);
+    if (disk != null) {
+      disk.setHeadIndex((this.ffPort >> 4) ^ 1);
+    }
+    this.vg93.activateDisk(driveIndex, disk);
   }
 
   @Override
@@ -112,7 +117,6 @@ public class BetaDiscInterface implements IoDevice {
   private void setSystemReg(final int value) {
     this.ffPort = value;
     this.vg93.setResetIn((this.ffPort & 0b0000_0100) != 0);
-    this.vg93.setHead((this.ffPort & 0b0001_0000) == 0 ? 1 : 0);
     this.vg93.setMFMModulation((this.ffPort & 0b0100_0000) == 0);
     tuneControllerToDisk();
   }
