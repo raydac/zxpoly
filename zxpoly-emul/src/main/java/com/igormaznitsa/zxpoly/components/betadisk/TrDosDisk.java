@@ -28,10 +28,10 @@ import static java.util.Arrays.copyOf;
 
 public class TrDosDisk {
 
-  private static final int MAX_SIDES = 2;
-  private static final int MAX_TRACKS_PER_SIDE = 86;
-  private static final int SECTORS_PER_TRACK = 16;
-  private static final int SECTOR_SIZE = 256;
+  public static final int MAX_SIDES = 2;
+  public static final int MAX_TRACKS_PER_SIDE = 86;
+  public static final int SECTORS_PER_TRACK = 16;
+  public static final int SECTOR_SIZE = 256;
   private static final Random RND = new Random();
   private final byte[] data;
   private final Sector[] sectors;
