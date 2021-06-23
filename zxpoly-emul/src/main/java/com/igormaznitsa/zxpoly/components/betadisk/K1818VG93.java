@@ -400,21 +400,9 @@ public final class K1818VG93 {
 
   private void cmdForceInterrupt(final long tstatesCounter, final int command,
                                  final boolean start) {
-    final TrDosDisk currentDisk = this.trdosDisk.get();
-    resetStatus(false);
-
-    if (currentDisk == null) {
-      setInternalFlag(STATUS_NOT_READY);
-    } else {
-      this.sector = currentDisk.findFirstSector(this.registers[REG_TRACK]);
-      if (this.sector == null) {
-        setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
-      } else {
-        if (!this.sector.isCrcOk()) {
-          setInternalFlag(STATUS_CRCERROR);
-        }
-      }
-    }
+    logger.info("INTERRUPT (counter=" + this.counter + ')');
+    this.operationTimeOutCycles = -1L;
+    resetInternalFlag(STATUS_BUSY);
   }
 
   private void cmdRestore(final long tstatesCounter, final int command, final boolean start) {
@@ -732,6 +720,7 @@ public final class K1818VG93 {
 
         if (tstatesCounter < this.sectorPositioningCycles) {
           setInternalFlag(STATUS_BUSY);
+          resetInternalFlag(STATUS_INDEXMARK_DRQ);
         } else {
           if (this.sectorPositioningCycles >= 0L) {
             // start reading of first byte
@@ -747,14 +736,19 @@ public final class K1818VG93 {
             }
           } else {
             if (this.counter >= this.sector.size()) {
+              // sector reading end
               this.sectorPositioningCycles = Math.abs(tstatesCounter + TSTATES_PER_SECTOR);
               if (multiSectors) {
                 if (!this.sector.isLastOnTrack()) {
+                  this.logger.info("RD.SECTOR completed, start next sector in multi-sec");
                   this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
                   loadSector(this.registers[REG_TRACK], this.registers[REG_SECTOR]);
                   this.counter = 0;
                   setInternalFlag(STATUS_BUSY);
+                  resetInternalFlag(STATUS_INDEXMARK_DRQ);
                 }
+              } else {
+                this.logger.info("RD.SECTOR completed");
               }
             } else {
               final int data = this.sector.readByte(this.counter++);
@@ -762,6 +756,7 @@ public final class K1818VG93 {
 
               if (data < 0) {
                 setInternalFlag(STATUS_TR00_DATALOST);
+                resetInternalFlag(STATUS_INDEXMARK_DRQ);
               } else {
                 if (tstatesCounter > this.operationTimeOutCycles) {
                   setInternalFlag(STATUS_TR00_DATALOST);
