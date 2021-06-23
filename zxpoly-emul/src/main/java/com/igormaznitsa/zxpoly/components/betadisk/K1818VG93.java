@@ -27,8 +27,20 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public final class FddControllerK1818VG93 {
+public final class K1818VG93 {
 
+  public static final int STATUS_BUSY = 0b0000_0001;
+  public static final int STATUS_INDEXMARK_DRQ = 0b0000_0010;
+  public static final int STATUS_TR00_DATALOST = 0b0000_0100;
+  public static final int STATUS_CRCERROR = 0b0000_1000;
+  public static final int STATUS_SEEKERROR_NOTFOUNF = 0b0001_0000;
+  public static final int STATUS_HEADLOADED_RECTYPE_WRITEFAULT = 0b0010_0000;
+  public static final int STATUS_WRITE_PROTECT = 0b0100_0000;
+  public static final int STATUS_NOT_READY = 0b1000_0000;
+  static final int ADDR_COMMAND_STATE = 0;
+  static final int ADDR_TRACK = 1;
+  static final int ADDR_SECTOR = 2;
+  static final int ADDR_DATA = 3;
   private static final long TSTATES_DISK_TURN = Motherboard.TSTATES_PER_INT * 4;
   private static final long[] TSTATES_PER_TRACK_CHANGE = new long[]{
           Motherboard.TSTATES_PER_INT / 4,
@@ -38,22 +50,7 @@ public final class FddControllerK1818VG93 {
   };
   private static final long TSTATES_PER_SECTOR = TSTATES_DISK_TURN / TrDosDisk.SECTORS_PER_TRACK;
   private static final long TSTATES_PER_SECTOR_BYTE = Motherboard.TSTATES_PER_INT / 640;
-
-  static final int ADDR_COMMAND_STATE = 0;
-  static final int ADDR_TRACK = 1;
-  static final int ADDR_SECTOR = 2;
-  static final int ADDR_DATA = 3;
-  static final int STAT_BUSY = 0x01;
-  static final int STAT_DRQ = 0x02;
   private static final long DELAY_FDD_MOTOR_ON_MS = 2000L;
-  private static final int STAT_INDEX = 0x02;
-  private static final int STAT_TRK00_OR_LOST = 0x04;
-  private static final int STAT_CRCERR = 0x08;
-  private static final int STAT_NOTFOUND = 0x10;
-  private static final int STAT_HEAD_LOAD = 0x20;
-  private static final int STAT_WRFAULT = 0x20;
-  private static final int STAT_WRITEPROTECT = 0x40;
-  private static final int ST_NOTREADY = 0x80;
   private static final int REG_COMMAND = 0x00;
   private static final int REG_STATUS = 0x01;
   private static final int REG_TRACK = 0x02;
@@ -79,7 +76,7 @@ public final class FddControllerK1818VG93 {
   private volatile long lastBusyOnTime;
   private Object tempAuxiliaryObject;
 
-  public FddControllerK1818VG93(final Logger logger) {
+  public K1818VG93(final Logger logger) {
     this.logger = logger;
     reset();
   }
@@ -107,11 +104,11 @@ public final class FddControllerK1818VG93 {
   }
 
   private void resetStatus(final boolean preventDataLostFlag) {
-    registers[REG_STATUS] = preventDataLostFlag ? registers[REG_STATUS] & STAT_TRK00_OR_LOST : 0;
+    registers[REG_STATUS] = preventDataLostFlag ? registers[REG_STATUS] & STATUS_TR00_DATALOST : 0;
   }
 
   private void setInternalFlag(final int flags) {
-    if ((flags & STAT_BUSY) != 0) {
+    if ((flags & STATUS_BUSY) != 0) {
       this.lastBusyOnTime = System.currentTimeMillis();
     }
     registers[REG_STATUS] |= flags;
@@ -156,18 +153,18 @@ public final class FddControllerK1818VG93 {
           case 0b0001: {
             // set TR00 status
             if (this.registers[REG_TRACK] == 0) {
-              setInternalFlag(STAT_TRK00_OR_LOST);
+              setInternalFlag(STATUS_TR00_DATALOST);
             } else {
-              resetInternalFlag(STAT_TRK00_OR_LOST);
+              resetInternalFlag(STATUS_TR00_DATALOST);
             }
             // change index bit in status
             if (this.trdosDisk.get() == null) {
-              setInternalFlag(STAT_INDEX);
+              setInternalFlag(STATUS_INDEXMARK_DRQ);
             } else {
               if (this.indexHoleMarker) {
-                setInternalFlag(STAT_INDEX);
+                setInternalFlag(STATUS_INDEXMARK_DRQ);
               } else {
-                resetInternalFlag(STAT_INDEX);
+                resetInternalFlag(STATUS_INDEXMARK_DRQ);
               }
             }
           }
@@ -183,7 +180,7 @@ public final class FddControllerK1818VG93 {
       case ADDR_DATA:
         if (this.flagWaitDataRd) {
           this.flagWaitDataRd = false;
-          resetInternalFlag(STAT_DRQ);
+          resetInternalFlag(STATUS_INDEXMARK_DRQ);
         }
         return registers[REG_DATA_RD] & 0xFF;
       default:
@@ -195,14 +192,14 @@ public final class FddControllerK1818VG93 {
     final int normValue = value & 0xFF;
     switch (addr & 0x03) {
       case ADDR_COMMAND_STATE: { // command
-        if (isFlag(STAT_BUSY)) {
+        if (isFlag(STATUS_BUSY)) {
           if ((normValue >>> 4) == 0b1101) {
             this.registers[REG_COMMAND] = normValue;
             this.firstCommandStep = true;
             this.flagWaitDataRd = false;
             this.flagWaitDataWr = false;
             this.operationTimeOutCycles = 0L;
-            setInternalFlag(STAT_BUSY);
+            setInternalFlag(STATUS_BUSY);
           }
         } else {
           switch (normValue >>> 4) {
@@ -224,7 +221,7 @@ public final class FddControllerK1818VG93 {
           this.firstCommandStep = true;
           this.flagWaitDataRd = false;
           this.flagWaitDataWr = false;
-          setInternalFlag(STAT_BUSY);
+          setInternalFlag(STATUS_BUSY);
         }
 
         if (this.firstCommandStep) {
@@ -234,13 +231,13 @@ public final class FddControllerK1818VG93 {
       }
       break;
       case ADDR_TRACK: { // track
-        if (!isFlag(STAT_BUSY)) {
+        if (!isFlag(STATUS_BUSY)) {
           registers[REG_TRACK] = normValue;
         }
       }
       break;
       case ADDR_SECTOR: { // sector
-        if (!isFlag(STAT_BUSY)) {
+        if (!isFlag(STATUS_BUSY)) {
           registers[REG_SECTOR] = normValue;
         }
       }
@@ -248,7 +245,7 @@ public final class FddControllerK1818VG93 {
       case ADDR_DATA: { // data
         if (this.flagWaitDataWr) {
           this.flagWaitDataWr = false;
-          resetInternalFlag(STAT_DRQ);
+          resetInternalFlag(STATUS_INDEXMARK_DRQ);
         }
         registers[REG_DATA_WR] = normValue;
       }
@@ -324,13 +321,13 @@ public final class FddControllerK1818VG93 {
   public void step(final long tstatesCounter) {
     final TrDosDisk thefloppy = this.trdosDisk.get();
     if (thefloppy == null) {
-      setInternalFlag(ST_NOTREADY);
+      setInternalFlag(STATUS_NOT_READY);
     } else {
-      resetInternalFlag(ST_NOTREADY);
+      resetInternalFlag(STATUS_NOT_READY);
     }
 
     final int command = this.registers[REG_COMMAND];
-    if (isFlag(STAT_BUSY)) {
+    if (isFlag(STATUS_BUSY)) {
       final boolean first = this.firstCommandStep;
       this.firstCommandStep = false;
       switch (command >>> 4) {
@@ -407,14 +404,14 @@ public final class FddControllerK1818VG93 {
     resetStatus(false);
 
     if (currentDisk == null) {
-      setInternalFlag(ST_NOTREADY);
+      setInternalFlag(STATUS_NOT_READY);
     } else {
       this.sector = currentDisk.findFirstSector(this.registers[REG_TRACK]);
       if (this.sector == null) {
-        setInternalFlag(STAT_NOTFOUND);
+        setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
       } else {
         if (!this.sector.isCrcOk()) {
-          setInternalFlag(STAT_CRCERR);
+          setInternalFlag(STATUS_CRCERROR);
         }
       }
     }
@@ -430,42 +427,42 @@ public final class FddControllerK1818VG93 {
     }
 
     if (currentDisk == null) {
-      setInternalFlag(ST_NOTREADY);
+      setInternalFlag(STATUS_NOT_READY);
     } else {
       if ((command & 0b00001000) != 0) {
-        setInternalFlag(STAT_HEAD_LOAD);
+        setInternalFlag(STATUS_HEADLOADED_RECTYPE_WRITEFAULT);
       }
       if (currentDisk.isWriteProtect()) {
-        setInternalFlag(STAT_WRITEPROTECT);
+        setInternalFlag(STATUS_WRITE_PROTECT);
       }
 
       if (counter < 0xFF && this.registers[REG_TRACK] > 0) {
         this.registers[REG_TRACK]--;
         this.sector = currentDisk.findFirstSector(this.registers[REG_TRACK]);
         if (this.sector == null) {
-          setInternalFlag(STAT_NOTFOUND);
+          setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
         } else {
           this.registers[REG_SECTOR] = 1;
           if (!this.sector.isCrcOk()) {
-            setInternalFlag(STAT_CRCERR);
+            setInternalFlag(STATUS_CRCERROR);
           }
-          setInternalFlag(STAT_BUSY);
+          setInternalFlag(STATUS_BUSY);
         }
       } else {
         if (this.registers[REG_TRACK] != 0) {
           this.sector = currentDisk.findFirstSector(this.registers[REG_TRACK]);
           if (this.sector != null)
             this.registers[REG_SECTOR] = 1;
-          setInternalFlag(STAT_NOTFOUND);
+          setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
         }
       }
 
       if (this.sector != null && !this.sector.isCrcOk()) {
-        setInternalFlag(STAT_CRCERR);
+        setInternalFlag(STATUS_CRCERROR);
       }
 
       if (this.registers[REG_TRACK] == 0) {
-        setInternalFlag(STAT_TRK00_OR_LOST);
+        setInternalFlag(STATUS_TR00_DATALOST);
       }
     }
   }
@@ -476,14 +473,14 @@ public final class FddControllerK1818VG93 {
     final TrDosDisk currentDisk = this.trdosDisk.get();
 
     if ((command & 0b00001000) != 0) {
-      setInternalFlag(STAT_HEAD_LOAD);
+      setInternalFlag(STATUS_HEADLOADED_RECTYPE_WRITEFAULT);
     }
 
     if (currentDisk == null) {
-      setInternalFlag(ST_NOTREADY);
+      setInternalFlag(STATUS_NOT_READY);
     } else {
       if (currentDisk.isWriteProtect()) {
-        setInternalFlag(STAT_WRITEPROTECT);
+        setInternalFlag(STATUS_WRITE_PROTECT);
       }
 
       if (this.registers[REG_TRACK] != this.registers[REG_DATA_WR]) {
@@ -504,12 +501,12 @@ public final class FddControllerK1818VG93 {
       boolean workCompleted = this.registers[REG_TRACK] == this.registers[REG_DATA_WR];
 
       if (this.sector == null) {
-        setInternalFlag(STAT_NOTFOUND);
+        setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
         workCompleted = true;
       } else {
         loadSector(this.registers[REG_TRACK], this.registers[REG_SECTOR]);
         if (this.sector != null && !this.sector.isCrcOk()) {
-          setInternalFlag(STAT_CRCERR);
+          setInternalFlag(STATUS_CRCERROR);
         }
       }
 
@@ -518,7 +515,7 @@ public final class FddControllerK1818VG93 {
 //          setInternalFlag(STAT_TRK00_OR_LOST);
         }
       } else {
-        setInternalFlag(STAT_BUSY);
+        setInternalFlag(STATUS_BUSY);
       }
     }
   }
@@ -529,7 +526,7 @@ public final class FddControllerK1818VG93 {
     final TrDosDisk currentDisk = this.trdosDisk.get();
 
     if (currentDisk == null) {
-      setInternalFlag(ST_NOTREADY);
+      setInternalFlag(STATUS_NOT_READY);
     } else {
       if (start) {
         // turn sector
@@ -551,11 +548,11 @@ public final class FddControllerK1818VG93 {
       }
 
       if (this.sector == null) {
-        setInternalFlag(STAT_NOTFOUND);
+        setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
         resetDataRegisters();
       } else {
         if (tstatesCounter < this.sectorPositioningCycles) {
-          setInternalFlag(STAT_BUSY);
+          setInternalFlag(STATUS_BUSY);
         } else {
           if (this.sectorPositioningCycles >= 0L) {
             this.sectorPositioningCycles = -1L;
@@ -563,7 +560,7 @@ public final class FddControllerK1818VG93 {
           }
 
           if (!this.sector.isCrcOk()) {
-            setInternalFlag(STAT_CRCERR);
+            setInternalFlag(STATUS_CRCERROR);
           } else {
             if (!this.flagWaitDataRd) {
               this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_SECTOR_BYTE);
@@ -572,21 +569,21 @@ public final class FddControllerK1818VG93 {
                   case 6: {// track
                     final int trackNum = this.sector.getTrackNumber();
                     provideReadData(trackNum);
-                    setInternalFlag(STAT_DRQ);
+                    setInternalFlag(STATUS_INDEXMARK_DRQ);
                     this.extraCounter |= (trackNum << 16);
                   }
                   break;
                   case 5: {// side
                     final int side = this.sector.getSide();
                     provideReadData(side);
-                    setInternalFlag(STAT_DRQ);
+                    setInternalFlag(STATUS_INDEXMARK_DRQ);
                     this.extraCounter |= (side << 8);
                   }
                   break;
                   case 4: {// sector
                     final int sectorId = this.sector.getPhysicalIndex();
                     provideReadData(sectorId);
-                    setInternalFlag(STAT_DRQ);
+                    setInternalFlag(STATUS_INDEXMARK_DRQ);
                     this.extraCounter |= sectorId;
                   }
                   break;
@@ -604,19 +601,19 @@ public final class FddControllerK1818VG93 {
                     }
 
                     provideReadData(type);
-                    setInternalFlag(STAT_DRQ);
+                    setInternalFlag(STATUS_INDEXMARK_DRQ);
                   }
                   break;
                   case 2: {// crc1
                     final int crc = this.sector.getCrc() >>> 8;
                     provideReadData(crc);
-                    setInternalFlag(STAT_DRQ);
+                    setInternalFlag(STATUS_INDEXMARK_DRQ);
                   }
                   break;
                   case 1: {// crc2
                     final int crc = this.sector.getCrc() & 0xFF;
                     provideReadData(crc);
-                    setInternalFlag(STAT_DRQ);
+                    setInternalFlag(STATUS_INDEXMARK_DRQ);
                   }
                   break;
                   default:
@@ -624,7 +621,7 @@ public final class FddControllerK1818VG93 {
                 }
                 this.counter--;
                 if (this.counter > 0) {
-                  setInternalFlag(STAT_BUSY);
+                  setInternalFlag(STATUS_BUSY);
                 } else {
                   final int track = (this.extraCounter >> 16) & 0xFF;
                   final int side = (this.extraCounter >> 8) & 0xFF;
@@ -634,10 +631,9 @@ public final class FddControllerK1818VG93 {
               }
             } else {
               if (tstatesCounter > this.operationTimeOutCycles) {
-                setInternalFlag(STAT_TRK00_OR_LOST);
+                setInternalFlag(STATUS_TR00_DATALOST);
               } else {
-                setInternalFlag(STAT_DRQ);
-                setInternalFlag(STAT_BUSY);
+                setInternalFlag(STATUS_INDEXMARK_DRQ | STATUS_BUSY);
               }
             }
           }
@@ -653,24 +649,24 @@ public final class FddControllerK1818VG93 {
 
     if (thedisk == null) {
       resetDataRegisters();
-      setInternalFlag(ST_NOTREADY);
+      setInternalFlag(STATUS_NOT_READY);
     } else {
       if (start) {
         this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_SECTOR_BYTE);
       }
 
       if ((command & 0b00001000) != 0) {
-        setInternalFlag(STAT_HEAD_LOAD);
+        setInternalFlag(STATUS_HEADLOADED_RECTYPE_WRITEFAULT);
       }
       if (thedisk.isWriteProtect()) {
-        setInternalFlag(STAT_WRITEPROTECT);
+        setInternalFlag(STATUS_WRITE_PROTECT);
       }
       if (!this.sector.isCrcOk()) {
-        setInternalFlag(STAT_CRCERR);
+        setInternalFlag(STATUS_CRCERROR);
       }
 
       if (tstatesCounter < this.operationTimeOutCycles) {
-        setInternalFlag(STAT_BUSY);
+        setInternalFlag(STATUS_BUSY);
       } else {
         int currentTrack = this.registers[REG_TRACK];
         if (this.outwardStepDirection) {
@@ -685,13 +681,13 @@ public final class FddControllerK1818VG93 {
         }
 
         if (this.sector == null) {
-          setInternalFlag(STAT_NOTFOUND);
+          setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
         } else {
           if (!this.sector.isCrcOk()) {
-            setInternalFlag(STAT_CRCERR);
+            setInternalFlag(STATUS_CRCERROR);
           }
           if (this.registers[REG_TRACK] == 0) {
-            setInternalFlag(STAT_TRK00_OR_LOST);
+            setInternalFlag(STATUS_TR00_DATALOST);
           }
         }
       }
@@ -717,7 +713,7 @@ public final class FddControllerK1818VG93 {
 
     final TrDosDisk currentDisk = this.trdosDisk.get();
     if (currentDisk == null) {
-      setInternalFlag(ST_NOTREADY);
+      setInternalFlag(STATUS_NOT_READY);
     } else {
       loadSector(this.registers[REG_TRACK], this.registers[REG_SECTOR]);
 
@@ -727,7 +723,7 @@ public final class FddControllerK1818VG93 {
 
       if (this.sector == null) {
         resetDataRegisters();
-        setInternalFlag(STAT_NOTFOUND);
+        setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
       } else {
         if (start) {
           this.counter = 0;
@@ -735,7 +731,7 @@ public final class FddControllerK1818VG93 {
         }
 
         if (tstatesCounter < this.sectorPositioningCycles) {
-          setInternalFlag(STAT_BUSY);
+          setInternalFlag(STATUS_BUSY);
         } else {
           if (this.sectorPositioningCycles >= 0L) {
             // start reading of first byte
@@ -745,10 +741,9 @@ public final class FddControllerK1818VG93 {
 
           if (this.flagWaitDataRd) {
             if (tstatesCounter > this.operationTimeOutCycles) {
-              setInternalFlag(STAT_TRK00_OR_LOST);
+              setInternalFlag(STATUS_TR00_DATALOST);
             } else {
-              setInternalFlag(STAT_DRQ);
-              setInternalFlag(STAT_BUSY);
+              setInternalFlag(STATUS_INDEXMARK_DRQ | STATUS_BUSY);
             }
           } else {
             if (this.counter >= this.sector.size()) {
@@ -758,7 +753,7 @@ public final class FddControllerK1818VG93 {
                   this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
                   loadSector(this.registers[REG_TRACK], this.registers[REG_SECTOR]);
                   this.counter = 0;
-                  setInternalFlag(STAT_BUSY);
+                  setInternalFlag(STATUS_BUSY);
                 }
               }
             } else {
@@ -766,15 +761,14 @@ public final class FddControllerK1818VG93 {
               this.sectorPositioningCycles = Math.abs(tstatesCounter + TSTATES_PER_SECTOR_BYTE);
 
               if (data < 0) {
-                setInternalFlag(STAT_TRK00_OR_LOST);
+                setInternalFlag(STATUS_TR00_DATALOST);
               } else {
                 if (tstatesCounter > this.operationTimeOutCycles) {
-                  setInternalFlag(STAT_TRK00_OR_LOST);
+                  setInternalFlag(STATUS_TR00_DATALOST);
                 } else {
                   this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_SECTOR_BYTE);
                   provideReadData(data);
-                  setInternalFlag(STAT_DRQ);
-                  setInternalFlag(STAT_BUSY);
+                  setInternalFlag(STATUS_INDEXMARK_DRQ | STATUS_BUSY);
                 }
               }
             }
@@ -793,10 +787,10 @@ public final class FddControllerK1818VG93 {
 
     final TrDosDisk thedisk = this.trdosDisk.get();
     if (thedisk == null) {
-      setInternalFlag(ST_NOTREADY);
+      setInternalFlag(STATUS_NOT_READY);
     } else {
       if (thedisk.isWriteProtect()) {
-        setInternalFlag(STAT_WRITEPROTECT);
+        setInternalFlag(STATUS_WRITE_PROTECT);
       }
     }
 
@@ -808,7 +802,7 @@ public final class FddControllerK1818VG93 {
 
     if (this.sector == null) {
       resetDataRegisters();
-      setInternalFlag(STAT_NOTFOUND);
+      setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
     } else {
       if (start) {
         this.counter = 0;
@@ -817,7 +811,7 @@ public final class FddControllerK1818VG93 {
       }
 
       if (tstatesCounter < this.sectorPositioningCycles) {
-        setInternalFlag(STAT_BUSY);
+        setInternalFlag(STATUS_BUSY);
       } else {
         if (this.sectorPositioningCycles >= 0L) {
           // start reading of first byte
@@ -833,31 +827,29 @@ public final class FddControllerK1818VG93 {
             if (multiOp) {
               if (!this.sector.isLastOnTrack()) {
                 this.counter = 0;
-                setInternalFlag(STAT_BUSY);
+                setInternalFlag(STATUS_BUSY);
               }
             }
           } else {
             if (tstatesCounter > this.operationTimeOutCycles) {
               resetDataRegisters();
-              setInternalFlag(STAT_NOTFOUND);
+              setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
             } else {
               this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_SECTOR_BYTE);
               if (!this.sector.writeByte(this.counter++, this.registers[REG_DATA_WR])) {
-                setInternalFlag(STAT_WRFAULT);
+                setInternalFlag(STATUS_HEADLOADED_RECTYPE_WRITEFAULT);
               } else {
                 if (this.counter < this.sector.size()) {
-                  setInternalFlag(STAT_DRQ);
-                  setInternalFlag(STAT_BUSY);
+                  setInternalFlag(STATUS_INDEXMARK_DRQ | STATUS_BUSY);
                 }
               }
             }
           }
         } else {
           if (tstatesCounter > this.operationTimeOutCycles) {
-            setInternalFlag(STAT_TRK00_OR_LOST);
+            setInternalFlag(STATUS_TR00_DATALOST);
           }
-          setInternalFlag(STAT_DRQ);
-          setInternalFlag(STAT_BUSY);
+          setInternalFlag(STATUS_INDEXMARK_DRQ | STATUS_BUSY);
         }
       }
     }
@@ -868,7 +860,7 @@ public final class FddControllerK1818VG93 {
 
     final TrDosDisk currentDisk = this.trdosDisk.get();
     if (currentDisk == null) {
-      setInternalFlag(ST_NOTREADY);
+      setInternalFlag(STATUS_NOT_READY);
     } else {
       if (start) {
         this.counter = 0;
@@ -890,15 +882,14 @@ public final class FddControllerK1818VG93 {
 
           if (data >= 0) {
             provideReadData(data);
-            setInternalFlag(STAT_BUSY);
+            setInternalFlag(STATUS_BUSY);
           }
         }
       } else {
         if (tstatesCounter > this.operationTimeOutCycles) {
-          setInternalFlag(STAT_TRK00_OR_LOST);
+          setInternalFlag(STATUS_TR00_DATALOST);
         }
-        setInternalFlag(STAT_DRQ);
-        setInternalFlag(STAT_BUSY);
+        setInternalFlag(STATUS_INDEXMARK_DRQ | STATUS_BUSY);
       }
     }
   }
@@ -909,7 +900,7 @@ public final class FddControllerK1818VG93 {
     final TrDosDisk currentDisk = this.trdosDisk.get();
 
     if (currentDisk == null) {
-      setInternalFlag(ST_NOTREADY);
+      setInternalFlag(STATUS_NOT_READY);
     } else {
       if (start) {
         this.counter = 0;
@@ -929,18 +920,16 @@ public final class FddControllerK1818VG93 {
         if (!helper.isCompleted()) {
           try {
             helper.writeNextDataByte(data);
-            setInternalFlag(STAT_BUSY);
-            setInternalFlag(STAT_DRQ);
+            setInternalFlag(STATUS_BUSY | STATUS_INDEXMARK_DRQ);
           } catch (IOException ex) {
-            setInternalFlag(STAT_WRFAULT);
+            setInternalFlag(STATUS_HEADLOADED_RECTYPE_WRITEFAULT);
           }
         }
       } else {
         if (tstatesCounter > this.operationTimeOutCycles) {
-          setInternalFlag(STAT_TRK00_OR_LOST);
+          setInternalFlag(STATUS_TR00_DATALOST);
         }
-        setInternalFlag(STAT_DRQ);
-        setInternalFlag(STAT_BUSY);
+        setInternalFlag(STATUS_INDEXMARK_DRQ | STATUS_BUSY);
       }
     }
   }

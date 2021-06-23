@@ -33,14 +33,14 @@ public class BetaDiscInterface implements IoDevice {
 
   private static final Logger LOGGER = Logger.getLogger("BD");
   private final Motherboard board;
-  private final FddControllerK1818VG93 vg93;
+  private final K1818VG93 vg93;
   private final AtomicReferenceArray<TrDosDisk> diskDrives = new AtomicReferenceArray<>(4);
   private long totalTstates = 0L;
   private int ffPort;
 
   public BetaDiscInterface(final Motherboard board) {
     this.board = board;
-    this.vg93 = new FddControllerK1818VG93(LOGGER);
+    this.vg93 = new K1818VG93(LOGGER);
   }
 
   public TrDosDisk getDiskInDrive(final int driveIndex) {
@@ -66,20 +66,22 @@ public class BetaDiscInterface implements IoDevice {
     if (module.isTrdosActive()) {
       switch (port & 0xFF) {
         case 0x1F: {
-          return vg93.read(FddControllerK1818VG93.ADDR_COMMAND_STATE);
+          return vg93.read(K1818VG93.ADDR_COMMAND_STATE);
         }
         case 0x3F: {
-          return vg93.read(FddControllerK1818VG93.ADDR_TRACK);
+          return vg93.read(K1818VG93.ADDR_TRACK);
         }
         case 0x5F: {
-          return vg93.read(FddControllerK1818VG93.ADDR_SECTOR);
+          return vg93.read(K1818VG93.ADDR_SECTOR);
         }
         case 0x7F: {
-          return vg93.read(FddControllerK1818VG93.ADDR_DATA);
+          return vg93.read(K1818VG93.ADDR_DATA);
         }
         case 0xFF: {
-          final int stat = vg93.read(FddControllerK1818VG93.ADDR_COMMAND_STATE);
-          return (((stat & FddControllerK1818VG93.STAT_BUSY) == 0 ? 0x80 : 0) | ((stat & FddControllerK1818VG93.STAT_DRQ) == 0 ? 0 : 0x40)) | 0b00111111;
+          final int statusValue = vg93.read(K1818VG93.ADDR_COMMAND_STATE);
+          final boolean busy = (statusValue & K1818VG93.STATUS_BUSY) != 0;
+          final boolean dataRequest = (statusValue & K1818VG93.STATUS_INDEXMARK_DRQ) != 0;
+          return (dataRequest ? 0b0100_0000 : 0) | (busy ? 0 : 0b1000_0000);
         }
       }
     }
@@ -91,19 +93,19 @@ public class BetaDiscInterface implements IoDevice {
     if (module.isTrdosActive()) {
       switch (port & 0xFF) {
         case 0x1F: {
-          vg93.write(FddControllerK1818VG93.ADDR_COMMAND_STATE, value);
+          vg93.write(K1818VG93.ADDR_COMMAND_STATE, value);
         }
         break;
         case 0x3F: {
-          vg93.write(FddControllerK1818VG93.ADDR_TRACK, value);
+          vg93.write(K1818VG93.ADDR_TRACK, value);
         }
         break;
         case 0x5F: {
-          vg93.write(FddControllerK1818VG93.ADDR_SECTOR, value);
+          vg93.write(K1818VG93.ADDR_SECTOR, value);
         }
         break;
         case 0x7F: {
-          vg93.write(FddControllerK1818VG93.ADDR_DATA, value);
+          vg93.write(K1818VG93.ADDR_DATA, value);
         }
         break;
         case 0xFF: {
