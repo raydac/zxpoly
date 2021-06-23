@@ -37,7 +37,7 @@ public final class FddControllerK1818VG93 {
           Motherboard.TSTATES_PER_INT + Motherboard.TSTATES_PER_INT / 3,
   };
   private static final long TSTATES_PER_SECTOR = TSTATES_DISK_TURN / TrDosDisk.SECTORS_PER_TRACK;
-  private static final long TSTATES_PER_SECTOR_BYTE = TSTATES_PER_SECTOR / 256;
+  private static final long TSTATES_PER_SECTOR_BYTE = Motherboard.TSTATES_PER_INT / 640;
 
   static final int ADDR_COMMAND_STATE = 0;
   static final int ADDR_TRACK = 1;
@@ -201,21 +201,25 @@ public final class FddControllerK1818VG93 {
             this.firstCommandStep = true;
             this.flagWaitDataRd = false;
             this.flagWaitDataWr = false;
+            this.operationTimeOutCycles = 0L;
             setInternalFlag(STAT_BUSY);
           }
         } else {
           switch (normValue >>> 4) {
-            case 0b1000:
+            case 0b1000: // RD SECTOR
             case 0b1001:
+
             case 0b1010:
-            case 0b1011:
-            case 0b1100:
-            case 0b1110:
-            case 0b1111: {
+            case 0b1011: // WR SECTOR
+
+            case 0b1100: // RD ADDRESS
+            case 0b1110: // RD TRACK
+            case 0b1111: { // WR TRACK
               resetStatus(false);
             }
             break;
           }
+          this.operationTimeOutCycles = 0L;
           this.registers[REG_COMMAND] = normValue;
           this.firstCommandStep = true;
           this.flagWaitDataRd = false;
@@ -459,6 +463,10 @@ public final class FddControllerK1818VG93 {
       if (this.sector != null && !this.sector.isCrcOk()) {
         setInternalFlag(STAT_CRCERR);
       }
+
+      if (this.registers[REG_TRACK] == 0) {
+        setInternalFlag(STAT_TRK00_OR_LOST);
+      }
     }
   }
 
@@ -474,10 +482,6 @@ public final class FddControllerK1818VG93 {
     if (currentDisk == null) {
       setInternalFlag(ST_NOTREADY);
     } else {
-      if (start) {
-        this.operationTimeOutCycles = tstatesCounter + TSTATES_PER_TRACK_CHANGE[command & 2];
-      }
-
       if (currentDisk.isWriteProtect()) {
         setInternalFlag(STAT_WRITEPROTECT);
       }
@@ -509,7 +513,11 @@ public final class FddControllerK1818VG93 {
         }
       }
 
-      if (!workCompleted) {
+      if (workCompleted) {
+        if (this.registers[REG_TRACK] == 0) {
+//          setInternalFlag(STAT_TRK00_OR_LOST);
+        }
+      } else {
         setInternalFlag(STAT_BUSY);
       }
     }
@@ -681,6 +689,9 @@ public final class FddControllerK1818VG93 {
         } else {
           if (!this.sector.isCrcOk()) {
             setInternalFlag(STAT_CRCERR);
+          }
+          if (this.registers[REG_TRACK] == 0) {
+            setInternalFlag(STAT_TRK00_OR_LOST);
           }
         }
       }
