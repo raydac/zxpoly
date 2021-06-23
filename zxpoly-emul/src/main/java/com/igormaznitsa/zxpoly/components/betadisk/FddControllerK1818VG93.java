@@ -533,7 +533,7 @@ public final class FddControllerK1818VG93 {
         }
 
         this.counter = 6;
-        this.sectorPositioningCycles = Math.abs(tstatesCounter + TSTATES_PER_SECTOR);
+        this.sectorPositioningCycles = Math.abs(tstatesCounter + TSTATES_PER_SECTOR_BYTE);
 
         this.extraCounter = 0;
       }
