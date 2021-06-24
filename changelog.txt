@@ -1,4 +1,4 @@
-__2.2.0 (SNAPSHOT)__
+__2.2.0 (24-jun-2021)__
 
 - improved emulation of index mark for FDD
 - video output processing moved into end screen paint

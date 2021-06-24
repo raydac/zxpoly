@@ -7,7 +7,7 @@
 
 # Changelog
 
-__2.2.0 (SNAPSHOT)__
+__2.2.0 (24-jun-2021)__
 
 - improved emulation of index mark for FDD
 - video output processing moved into end screen paint
@@ -65,18 +65,18 @@ under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 
 # Pre-built versions
 
-![The Main Window of the Emulator](docs/screenshots/Spec256SolomonsKey_Screenshot.png)
+![The Main Window of the Emulator](docs/screenshots/Gauntlet3_Screenshot.png)
 
 | OS                                           |  Download link                                                                                                                                                                                | 
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.1.3/zxpoly-emul-2.1.3-windows-amd64-jdk.zip)__      |
-| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.1.3/zxpoly-emul-2.1.3-macos-amd64-jdk.zip)__            |
-| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.1.3/zxpoly-emul-2.1.3-macos-arm64-jdk.zip)__          |
-| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.1.3/zxpoly-emul-2.1.3-linux-amd64-jdk.tar.gz)__       |
-| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.1.3/zxpoly-emul-2.1.3.jar)__                               | 
+| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2..3/zxpoly-emul-2.2.0-windows-amd64-jdk.zip)__      |
+| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0-macos-amd64-jdk.zip)__            |
+| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0-macos-arm64-jdk.zip)__          |
+| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0-linux-amd64-jdk.tar.gz)__       |
+| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0.jar)__                               | 
 
 Because the emulator is written in Java, its JAR file can be started just through command
-line `java -jar zxpoly-emul-2.1.3.jar`   
+line `java -jar zxpoly-emul-2.2.0.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in __File->Options->Active
 ROM__, the ROM will be downloaded from one of remote network resources.   
 ![Test-ROM](docs/screenshots/testromscr1.png)
@@ -139,7 +139,7 @@ To adapt old games, I have developed special utility called ZX-Poly Sprite corre
 is a very easy editor which shows images in data blocks and allows to redraw them. It supports import from Z80 and SNA
 snapshots and as the result it generates ZXP snapshots.   
 ![ZXPoly Sprite Corrector screenshot](docs/zxpoly_sprite_editor.png)   
-Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.1.3).
+Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.2.0).
 
 ## "Official Father Christmas" (1989)
 Original look of the game   
