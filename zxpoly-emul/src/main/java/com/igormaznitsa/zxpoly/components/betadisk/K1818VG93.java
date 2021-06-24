@@ -50,6 +50,7 @@ public final class K1818VG93 {
   };
   private static final long TSTATES_PER_SECTOR = TSTATES_DISK_TURN / TrDosDisk.SECTORS_PER_TRACK;
   private static final long TSTATES_PER_SECTOR_BYTE = Motherboard.TSTATES_PER_INT / 640;
+  private static final long TSTATES_INDEX_MARK_LENGTH = (Motherboard.TSTATES_PER_INT * 80L) / 1000L; // 4 ms
   private static final long DELAY_FDD_MOTOR_ON_MS = 2000L;
   private static final int REG_COMMAND = 0x00;
   private static final int REG_STATUS = 0x01;
@@ -69,12 +70,14 @@ public final class K1818VG93 {
   private boolean resetIn;
   private boolean firstCommandStep;
   private boolean outwardStepDirection;
-  private boolean indexHoleMarker;
+  private boolean trackIndexMarkerActive;
   private boolean mfmModulation;
   private long sectorPositioningCycles;
   private long operationTimeOutCycles;
   private volatile long lastBusyOnTime;
   private Object tempAuxiliaryObject;
+
+  private long timeIndexMarkChange = -1L;
 
   public K1818VG93(final Logger logger) {
     this.logger = logger;
@@ -83,6 +86,8 @@ public final class K1818VG93 {
 
   public void reset() {
     Arrays.fill(registers, 0);
+    this.trackIndexMarkerActive = false;
+    this.timeIndexMarkChange = -1L;
     this.flagWaitDataRd = false;
     this.flagWaitDataWr = false;
     this.resetIn = false;
@@ -95,6 +100,8 @@ public final class K1818VG93 {
     if (disk == null) {
       this.sector = null;
     } else {
+      this.timeIndexMarkChange = -1L;
+      this.trackIndexMarkerActive = false;
       this.sector = disk.findFirstSector(this.registers[REG_TRACK]);
     }
   }
@@ -137,40 +144,30 @@ public final class K1818VG93 {
     this.mfmModulation = flag;
   }
 
-  public int read(final int addr) {
-    switch (addr & 0x03) {
-      case ADDR_COMMAND_STATE: {
-        this.indexHoleMarker = !this.indexHoleMarker;
-        switch (registers[REG_COMMAND] >>> 4) {
-          case 0b0000:
-          case 0b1101:
-          case 0b0100:
-          case 0b0101:
-          case 0b0110:
-          case 0b0111:
-          case 0b0010:
-          case 0b0011:
-          case 0b0001: {
-            // set TR00 status
-            if (this.registers[REG_TRACK] == 0) {
-              setInternalFlag(STATUS_TR00_DATALOST);
-            } else {
-              resetInternalFlag(STATUS_TR00_DATALOST);
-            }
-            // change index bit in status
-            if (this.trdosDisk.get() == null) {
-              setInternalFlag(STATUS_INDEXMARK_DRQ);
-            } else {
-              if (this.indexHoleMarker) {
-                setInternalFlag(STATUS_INDEXMARK_DRQ);
-              } else {
-                resetInternalFlag(STATUS_INDEXMARK_DRQ);
-              }
-            }
-          }
-          break;
-        }
+  private void updateStatusForCommandsTypeI() {
+    if (this.registers[REG_TRACK] == 0) {
+      setInternalFlag(STATUS_TR00_DATALOST);
+    } else {
+      resetInternalFlag(STATUS_TR00_DATALOST);
+    }
 
+    if (this.trdosDisk.get() == null) {
+      setInternalFlag(STATUS_INDEXMARK_DRQ);
+    } else {
+      if (this.sector != null && !this.sector.isCrcOk()) {
+        setInternalFlag(STATUS_CRCERROR);
+      }
+      if (this.trackIndexMarkerActive) {
+        setInternalFlag(STATUS_INDEXMARK_DRQ);
+      } else {
+        resetInternalFlag(STATUS_INDEXMARK_DRQ);
+      }
+    }
+  }
+
+  public int read(final int address) {
+    switch (address & 0b11) {
+      case ADDR_COMMAND_STATE: {
         return registers[REG_STATUS] & 0xFF;
       }
       case ADDR_TRACK:
@@ -324,9 +321,16 @@ public final class K1818VG93 {
       setInternalFlag(STATUS_NOT_READY);
     } else {
       resetInternalFlag(STATUS_NOT_READY);
+      if (tstatesCounter >= this.timeIndexMarkChange) {
+        this.timeIndexMarkChange = tstatesCounter + (this.trackIndexMarkerActive ? TSTATES_DISK_TURN - TSTATES_INDEX_MARK_LENGTH : TSTATES_INDEX_MARK_LENGTH);
+        this.trackIndexMarkerActive = !this.trackIndexMarkerActive;
+      }
     }
 
     final int command = this.registers[REG_COMMAND];
+    if ((command & 0x80) == 0) {
+      this.updateStatusForCommandsTypeI();
+    }
     if (isFlag(STATUS_BUSY)) {
       final boolean first = this.firstCommandStep;
       this.firstCommandStep = false;
@@ -431,9 +435,6 @@ public final class K1818VG93 {
           setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
         } else {
           this.registers[REG_SECTOR] = 1;
-          if (!this.sector.isCrcOk()) {
-            setInternalFlag(STATUS_CRCERROR);
-          }
           setInternalFlag(STATUS_BUSY);
         }
       } else {
@@ -444,14 +445,6 @@ public final class K1818VG93 {
           setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
         }
       }
-
-      if (this.sector != null && !this.sector.isCrcOk()) {
-        setInternalFlag(STATUS_CRCERROR);
-      }
-
-      if (this.registers[REG_TRACK] == 0) {
-        setInternalFlag(STATUS_TR00_DATALOST);
-      }
     }
   }
 
@@ -460,19 +453,24 @@ public final class K1818VG93 {
 
     final TrDosDisk currentDisk = this.trdosDisk.get();
 
-    if ((command & 0b00001000) != 0) {
+    if ((command & 0b0000_1000) != 0) {
       setInternalFlag(STATUS_HEADLOADED_RECTYPE_WRITEFAULT);
     }
 
     if (currentDisk == null) {
       setInternalFlag(STATUS_NOT_READY);
     } else {
+      if (start) {
+        this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_SECTOR_BYTE);
+      }
+
       if (currentDisk.isWriteProtect()) {
         setInternalFlag(STATUS_WRITE_PROTECT);
       }
 
-      if (this.registers[REG_TRACK] != this.registers[REG_DATA_WR]) {
-        if (tstatesCounter >= this.operationTimeOutCycles) {
+      boolean completed = false;
+      if (tstatesCounter >= this.operationTimeOutCycles) {
+        if (this.registers[REG_TRACK] != this.registers[REG_DATA_WR]) {
           if (this.registers[REG_TRACK] < this.registers[REG_DATA_WR]) {
             this.registers[REG_TRACK]++;
           } else {
@@ -484,24 +482,22 @@ public final class K1818VG93 {
                   + this.registers[REG_DATA_WR]);
           this.operationTimeOutCycles = Math.abs(tstatesCounter + TSTATES_PER_TRACK_CHANGE[command & 2]);
         }
-      }
 
-      boolean workCompleted = this.registers[REG_TRACK] == this.registers[REG_DATA_WR];
+        completed = this.registers[REG_TRACK] == this.registers[REG_DATA_WR];
 
-      if (this.sector == null) {
-        setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
-        workCompleted = true;
-      } else {
-        loadSector(this.registers[REG_TRACK], this.registers[REG_SECTOR]);
-        if (this.sector != null && !this.sector.isCrcOk()) {
-          setInternalFlag(STATUS_CRCERROR);
+        if (this.sector == null) {
+          setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
+          completed = true;
+        } else {
+          loadSector(this.registers[REG_TRACK], this.registers[REG_SECTOR]);
+          if (this.sector != null && !this.sector.isCrcOk()) {
+            setInternalFlag(STATUS_CRCERROR);
+          }
         }
       }
 
-      if (workCompleted) {
-        if (this.registers[REG_TRACK] == 0) {
-//          setInternalFlag(STAT_TRK00_OR_LOST);
-        }
+      if (completed) {
+        this.logger.info("SEEK completed on track=" + this.registers[REG_TRACK]);
       } else {
         setInternalFlag(STATUS_BUSY);
       }
@@ -670,13 +666,6 @@ public final class K1818VG93 {
 
         if (this.sector == null) {
           setInternalFlag(STATUS_SEEKERROR_NOTFOUNF);
-        } else {
-          if (!this.sector.isCrcOk()) {
-            setInternalFlag(STATUS_CRCERROR);
-          }
-          if (this.registers[REG_TRACK] == 0) {
-            setInternalFlag(STATUS_TR00_DATALOST);
-          }
         }
       }
     }
