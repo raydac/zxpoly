@@ -7,9 +7,11 @@
 
 # Changelog
 
-__2.1.4 (SNAPSHOT)__
+__2.2.0 (SNAPSHOT)__
 
-- improved emulation of FDD controller [#21](https://github.com/raydac/zxpoly/issues/21)
+- improved emulation of index mark for FDD
+- video output processing moved into end screen paint
+- improved emulation of Command Type I for FDD controller [#21](https://github.com/raydac/zxpoly/issues/21)
 - fixed emulation of Z80 [#30](https://github.com/raydac/zxpoly/issues/30)
 - updated Launch4J launcher for Windows
 - embedded JDK updated to Liberica OpenJDK 16.0.1+9
