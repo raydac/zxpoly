@@ -735,7 +735,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     int intStateFlags = 0;
     long nextTimeUpdateScreenBuffer = Long.MAX_VALUE;
     long totalTstates = 0L;
-    long totlaIntCounter = 0L;
 
     while (!Thread.currentThread().isInterrupted()) {
       boolean updateMainScreenBuffer = false;
@@ -756,8 +755,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           final boolean doCpuIntTick;
           if (intStateFlags == 3) {
             doCpuIntTick = true;
-            totlaIntCounter++;
-
             countdownToNotifyRepaint--;
             if (countdownToNotifyRepaint <= 0) {
               countdownToNotifyRepaint = expectedIntTicksBetweenFrames;
