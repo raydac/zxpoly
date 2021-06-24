@@ -69,7 +69,7 @@ under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 
 | OS                                           |  Download link                                                                                                                                                                                | 
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2..3/zxpoly-emul-2.2.0-windows-amd64-jdk.zip)__      |
+| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0-windows-amd64-jdk.zip)__      |
 | ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0-macos-amd64-jdk.zip)__            |
 | ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0-macos-arm64-jdk.zip)__          |
 | ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0-linux-amd64-jdk.tar.gz)__       |
