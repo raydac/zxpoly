@@ -32,9 +32,9 @@ public final class TurboSoundNedoPc implements IoDevice, AySounder {
 
   private void onLevels1(final Ay8910Chip ay, final int levelA, final int levelB,
                          final int levelC) {
-    this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_0, AY_AMPLITUDE[levelA]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_1, AY_AMPLITUDE[levelB]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_RESERV_2, AY_AMPLITUDE[levelC]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_TS_A, AY_AMPLITUDE[levelA]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_TS_B, AY_AMPLITUDE[levelB]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_TS_C, AY_AMPLITUDE[levelC]);
   }
 
   @Override

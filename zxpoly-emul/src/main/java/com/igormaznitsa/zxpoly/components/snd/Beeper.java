@@ -40,15 +40,15 @@ public final class Beeper {
   public static final int CHANNEL_AY_A = 2;
   public static final int CHANNEL_AY_B = 3;
   public static final int CHANNEL_AY_C = 4;
-  public static final int CHANNEL_RESERV_0 = 5;
-  public static final int CHANNEL_RESERV_1 = 6;
-  public static final int CHANNEL_RESERV_2 = 7;
+  public static final int CHANNEL_TS_A = 5;
+  public static final int CHANNEL_TS_B = 6;
+  public static final int CHANNEL_TS_C = 7;
   public static final int[] BEEPER_LEVELS;
   public static final AudioFormat AUDIO_FORMAT = SndBufferContainer.AUDIO_FORMAT;
   private static final Logger LOGGER = Logger.getLogger("Beeper");
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
-    public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int level) {
+    public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft, int levelRight) {
     }
 
     @Override
@@ -78,9 +78,44 @@ public final class Beeper {
 
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
   private final SoundChannelValueFilter[] soundChannelFilters = IntStream.range(0, 8).mapToObj(i -> new SoundChannelValueFilter()).toArray(SoundChannelValueFilter[]::new);
-  private long channels = 0L;
+  private final int[] channels = new int[8];
+  private final MixerFunction mixerLeft;
+  private final MixerFunction mixerRight;
 
-  public Beeper() {
+  public Beeper(final boolean mixACB, final boolean covoxPresented, final boolean turboSoundPresented) {
+    if (mixACB) {
+      if (turboSoundPresented && covoxPresented) {
+        this.mixerLeft = MixerUtilsACB::mixLeft_TS_CVX;
+        this.mixerRight = MixerUtilsACB::mixRight_TS_CVX;
+      } else if (covoxPresented) {
+        this.mixerLeft = MixerUtilsACB::mixLeft_CVX;
+        this.mixerRight = MixerUtilsACB::mixRight_CVX;
+      } else if (turboSoundPresented) {
+        this.mixerLeft = MixerUtilsACB::mixLeft_TS;
+        this.mixerRight = MixerUtilsACB::mixRight_TS;
+      } else {
+        this.mixerLeft = MixerUtilsACB::mixLeft;
+        this.mixerRight = MixerUtilsACB::mixRight;
+      }
+    } else {
+      if (turboSoundPresented && covoxPresented) {
+        this.mixerLeft = MixerUtilsABC::mixLeft_TS_CVX;
+        this.mixerRight = MixerUtilsABC::mixRight_TS_CVX;
+      } else if (covoxPresented) {
+        this.mixerLeft = MixerUtilsABC::mixLeft_CVX;
+        this.mixerRight = MixerUtilsABC::mixRight_CVX;
+      } else if (turboSoundPresented) {
+        this.mixerLeft = MixerUtilsABC::mixLeft_TS;
+        this.mixerRight = MixerUtilsABC::mixRight_TS;
+      } else {
+        this.mixerLeft = MixerUtilsABC::mixLeft;
+        this.mixerRight = MixerUtilsABC::mixRight;
+      }
+    }
+  }
+
+  public void setChannelValue(final int channel, final int level256) {
+    this.channels[channel] = level256 & 0xFF;
   }
 
   public Optional<SourceSoundPort> setSourceSoundPort(final SourceSoundPort soundPort) {
@@ -105,9 +140,15 @@ public final class Beeper {
     return this.activeInternalBeeper.get() == NULL_BEEPER;
   }
 
-  public void setChannelValue(final int channel, final int level256) {
-    this.channels =
-            (this.channels & ~(0xFFL << (8 * channel))) | ((long) (level256 & 0XFF) << (8 * channel));
+  public void updateState(final boolean tstatesInt, final boolean wallclockInt,
+                          final int spentTstates) {
+    this.activeInternalBeeper.get()
+            .updateState(tstatesInt,
+                    wallclockInt,
+                    spentTstates,
+                    this.mixerLeft.mix(this.channels, this.soundChannelFilters, spentTstates),
+                    this.mixerRight.mix(this.channels, this.soundChannelFilters, spentTstates)
+            );
   }
 
   public void reset() {
@@ -115,22 +156,9 @@ public final class Beeper {
     this.activeInternalBeeper.get().reset();
   }
 
-  private int mixChannelsAsSignedShort(final int spentTstates) {
-    long value = this.channels;
-    int mixed = 0;
-    int channelIndex = 0;
-    while (value != 0L) {
-      final int channelValue = this.soundChannelFilters[channelIndex++].update(spentTstates, (((int) value) & 0xFF) << 5);
-      value >>>= 8;
-      mixed += channelValue;
-    }
-    return mixed - 32768;
-  }
-
-  public void updateState(final boolean tstatesInt, final boolean wallclockInt,
-                          final int spentTstates) {
-    this.activeInternalBeeper.get()
-            .updateState(tstatesInt, wallclockInt, spentTstates, this.mixChannelsAsSignedShort(spentTstates));
+  public void clearChannels() {
+    Arrays.fill(this.channels, 0);
+    for (final SoundChannelValueFilter f : this.soundChannelFilters) f.reset();
   }
 
   public boolean isActive() {
@@ -145,11 +173,10 @@ public final class Beeper {
     return SndBufferContainer.AUDIO_FORMAT;
   }
 
-  public void clearChannels() {
-    this.channels = 0L;
-    for (final SoundChannelValueFilter f : this.soundChannelFilters) f.reset();
+  @FunctionalInterface
+  private interface MixerFunction {
+    int mix(int[] values, SoundChannelValueFilter[] filters, int spentTstates);
   }
-
 
   private interface IBeeper {
 
@@ -157,7 +184,7 @@ public final class Beeper {
 
     void start();
 
-    void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int level);
+    void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft, int levelRight);
 
     void dispose();
 
@@ -171,12 +198,12 @@ public final class Beeper {
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
     private final SndBufferContainer sndBuffer = new SndBufferContainer();
-    private final Optional<SourceSoundPort> sourceSoundPort;
+    private final Optional<SourceSoundPort> optionalSourceSoundPort;
     private volatile boolean working = true;
 
-    private InternalBeeper(final SourceSoundPort sourceSoundPort) {
-      this.sourceSoundPort = Optional.of(sourceSoundPort);
-      this.sourceDataLine = sourceSoundPort.asSourceDataLine();
+    private InternalBeeper(final SourceSoundPort optionalSourceSoundPort) {
+      this.optionalSourceSoundPort = Optional.of(optionalSourceSoundPort);
+      this.sourceDataLine = optionalSourceSoundPort.asSourceDataLine();
       final Line.Info lineInfo = this.sourceDataLine.getLineInfo();
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
@@ -187,7 +214,7 @@ public final class Beeper {
 
     @Override
     public Optional<SourceSoundPort> getSoundPort() {
-      return this.sourceSoundPort;
+      return this.optionalSourceSoundPort;
     }
 
     @Override
@@ -202,14 +229,15 @@ public final class Beeper {
             boolean tstatesIntReached,
             boolean wallclockInt,
             int spentTstates,
-            final int level
+            final int levelLeft,
+            final int levelRight
     ) {
       if (this.working) {
         if (wallclockInt) {
-          this.soundDataQueue.offer(sndBuffer.nextBuffer(level));
+          this.soundDataQueue.offer(sndBuffer.nextBuffer(levelLeft, levelRight));
           sndBuffer.resetPosition();
         } else {
-          sndBuffer.setValue(spentTstates, level);
+          sndBuffer.setValue(spentTstates, levelLeft, levelRight);
         }
       }
     }

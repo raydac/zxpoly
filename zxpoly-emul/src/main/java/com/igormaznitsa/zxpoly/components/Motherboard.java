@@ -124,7 +124,7 @@ public final class Motherboard implements ZxPolyConstants {
     }
 
     this.boardMode = boardMode;
-    this.beeper = new Beeper();
+    this.beeper = new Beeper(false, enableCovoxFb, useTurboSound);
     this.betaDisk = new BetaDiscInterface(this);
     this.romData = rom;
 
