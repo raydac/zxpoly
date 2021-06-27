@@ -369,6 +369,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.board = new Motherboard(
             BASE_ROM,
             AppOptions.getInstance().getDefaultBoardMode(),
+            AppOptions.getInstance().isSoundChannelsACB(),
             AppOptions.getInstance().isCovoxFb(),
             AppOptions.getInstance().isTurboSound(),
             allowKempstonMouse,

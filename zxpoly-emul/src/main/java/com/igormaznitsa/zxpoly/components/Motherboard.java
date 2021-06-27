@@ -108,6 +108,7 @@ public final class Motherboard implements ZxPolyConstants {
   public Motherboard(
           final RomData rom,
           final BoardMode boardMode,
+          final boolean useAcbSoundScheme,
           final boolean enableCovoxFb,
           final boolean useTurboSound,
           final boolean allowKempstonMouse,
@@ -124,7 +125,7 @@ public final class Motherboard implements ZxPolyConstants {
     }
 
     this.boardMode = boardMode;
-    this.beeper = new Beeper(false, enableCovoxFb, useTurboSound);
+    this.beeper = new Beeper(useAcbSoundScheme, enableCovoxFb, useTurboSound);
     this.betaDisk = new BetaDiscInterface(this);
     this.romData = rom;
 

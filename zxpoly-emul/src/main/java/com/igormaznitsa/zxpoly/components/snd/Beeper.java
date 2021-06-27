@@ -82,8 +82,8 @@ public final class Beeper {
   private final MixerFunction mixerLeft;
   private final MixerFunction mixerRight;
 
-  public Beeper(final boolean mixACB, final boolean covoxPresented, final boolean turboSoundPresented) {
-    if (mixACB) {
+  public Beeper(final boolean useAcbSoundScheme, final boolean covoxPresented, final boolean turboSoundPresented) {
+    if (useAcbSoundScheme) {
       if (turboSoundPresented && covoxPresented) {
         this.mixerLeft = MixerUtilsACB::mixLeft_TS_CVX;
         this.mixerRight = MixerUtilsACB::mixRight_TS_CVX;

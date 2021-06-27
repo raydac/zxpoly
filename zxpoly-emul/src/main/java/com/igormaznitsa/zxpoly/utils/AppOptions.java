@@ -178,6 +178,14 @@ public final class AppOptions {
     preferences.putBoolean(Option.COVOXFB.name(), value);
   }
 
+  public synchronized boolean isSoundChannelsACB() {
+    return preferences.getBoolean(Option.SOUND_CHANNELS_ACB.name(), false);
+  }
+
+  public synchronized void setSoundChannelsACB(final boolean value) {
+    preferences.putBoolean(Option.SOUND_CHANNELS_ACB.name(), value);
+  }
+
   public synchronized boolean isKempstonMouseAllowed() {
     return preferences.getBoolean(Option.KEMPSTON_MOUSE_ALLOWED.name(), true);
   }
@@ -362,6 +370,7 @@ public final class AppOptions {
     STREAM_PORT,
     STREAM_FRAMERATE,
     DEFAULT_MODE,
+    SOUND_CHANNELS_ACB,
     ROMPATH,
     COVOXFB,
     TURBOSOUND,
