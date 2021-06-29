@@ -1,7 +1,6 @@
 package com.igormaznitsa.zxpoly.components.snd;
 
 import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.SourceDataLine;
 import java.util.Arrays;
 
 import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
@@ -39,10 +38,6 @@ final class SndBufferContainer {
       Arrays.fill(this.allSndBuffers[i], (byte) 0xFF);
     }
     this.soundBuffer = this.allSndBuffers[this.bufferIndex];
-  }
-
-  public void writeCurrent(final SourceDataLine line) {
-    line.write(this.soundBuffer, 0, SND_BUFFER_SIZE);
   }
 
   public byte[] nextBuffer(final int fillLevelL, final int fillLevelR) {
