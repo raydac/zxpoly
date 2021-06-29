@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ZXPOLY_HOME="$(dirname ${BASH_SOURCE[0]})"
+LOG_FILE=$ZXPOLY_HOME/console.log
 JAVA_HOME=$ZXPOLY_HOME/jre
 
 #JAVA_EXTRA_GFX_FLAGS="-Dcom.sun.management.jmxremote=true -Dsun.java2d.opengl=true"
@@ -20,7 +21,15 @@ then
     fi
 fi
 
-$JAVA_RUN $JAVA_FLAGS $JAVA_EXTRA_GFX_FLAGS -Djava.library.path="$ZXPOLY_HOME" -jar "$ZXPOLY_HOME"/zxpoly-emul.jar $@
+echo \$JAVA_RUN=$JAVA_RUN &>$LOG_FILE
+
+echo ------JAVA_VERSION------ &>>$LOG_FILE
+
+$JAVA_RUN -version &>>$LOG_FILE
+
+echo ------------------------ &>>$LOG_FILE
+
+$JAVA_RUN $JAVA_FLAGS $JAVA_EXTRA_GFX_FLAGS -Djava.library.path="$ZXPOLY_HOME" -jar "$ZXPOLY_HOME"/zxpoly-emul.jar $@ &>>$LOG_FILE&
 THE_PID=$!
 echo $THE_PID>$ZXPOLY_HOME/.pid
 wait $THE_PID
