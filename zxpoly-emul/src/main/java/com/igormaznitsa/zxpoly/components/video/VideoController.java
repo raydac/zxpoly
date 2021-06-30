@@ -49,9 +49,6 @@ public final class VideoController extends JComponent
 
   public static final int SCREEN_WIDTH = 512;
   public static final int SCREEN_HEIGHT = 384;
-
-  private final VirtualKeyboardDecoration vkbdContainer;
-
   public static final int[] PALETTE_ZXPOLY = new int[]{
           0xFF000000,
           0xFF0000BE,
@@ -98,22 +95,23 @@ public final class VideoController extends JComponent
                   SCREEN_HEIGHT + (PREFERRED_BORDER_WIDTH << 1));
   private static final int[] PALETTE_ALIGNED_ZXPOLY =
           Utils.alignPaletteColors(PALETTE_ZXPOLY, PALETTE_SPEC256);
-
   private static final int ZXSPEC_PIXEL_AREA_SIZE = 0x1C00;
-
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
   private static final int BORDER_LINES = 40;
   private static final int TSTATES_PER_LINE = TSTATES_PER_INT / BORDER_LINES;
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
+  private static final float SCALE_STEP = 0.2f;
+  private static final float SCALE_MIN = 1.0f;
+  private static final float SCALE_MAX = 6.0f;
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;
   private static volatile boolean gfxHideSameInkPaper = true;
   private static volatile int gfxUpColorsMixed = 64;
   private static volatile int gfxDownColorsMixed = 0;
   private static volatile int[] gfxPrerenderedBack = null;
-
+  private final VirtualKeyboardDecoration vkbdContainer;
   private final Motherboard board;
   private final ReentrantLock bufferLocker = new ReentrantLock();
   private final BufferedImage bufferImage;
@@ -121,6 +119,7 @@ public final class VideoController extends JComponent
   private final ZxPolyModule[] modules;
   private final byte[] borderLineColors = new byte[BORDER_LINES];
   private final short[] lastRenderedZxData = new short[ZXSPEC_PIXEL_AREA_SIZE];
+  private final boolean showVkbdApart;
   private long changedBorderLines = 0L;
   private volatile int currentVideoMode = VIDEOMODE_ZXPOLY_256x192_FLASH_MASK;
   private Dimension size = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -132,8 +131,6 @@ public final class VideoController extends JComponent
   private volatile TvFilterChain tvFilterChain = TvFilterChain.NONE;
   private volatile boolean enableMouseTrapIndicator = false;
   private int tstatesCounter = 0;
-  private final boolean showVkbdApart;
-
   private Window vkbdWindow = null;
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
@@ -197,11 +194,6 @@ public final class VideoController extends JComponent
       }
       gfxPrerenderedBack = prerendered;
     }
-  }
-
-  @Override
-  public void init() {
-    this.vkbdRender = new VirtualKeyboardRender(this.board, this.vkbdContainer);
   }
 
   public static int toZxPolyIndex(final byte spec256PaletteIndex) {
@@ -949,6 +941,10 @@ public final class VideoController extends JComponent
     return -1;
   }
 
+  @Override
+  public void init() {
+    this.vkbdRender = new VirtualKeyboardRender(this.board, this.vkbdContainer);
+  }
 
   public TvFilterChain getTvFilterChain() {
     return tvFilterChain;
@@ -1081,24 +1077,24 @@ public final class VideoController extends JComponent
   }
 
   public void zoomIn() {
-    updateZoom(Math.min(5.0f, this.zoom + 0.2f));
+    this.updateZoom(Math.min(SCALE_MAX, this.zoom + SCALE_STEP));
   }
 
   public void zoomOut() {
-    updateZoom(Math.max(1.0f, this.zoom - 0.2f));
+    this.updateZoom(Math.max(SCALE_MIN, this.zoom - SCALE_STEP));
   }
 
   @Override
   public void mouseWheelMoved(final MouseWheelEvent e) {
     if (e.isControlDown()) {
-      final float newzoom;
+      final float newZoom;
       if (e.getPreciseWheelRotation() > 0) {
-        newzoom = Math.max(1.0f, this.zoom - 0.2f);
+        newZoom = Math.max(SCALE_MIN, this.zoom - SCALE_STEP);
       } else {
-        newzoom = Math.min(5.0f, this.zoom + 0.2f);
+        newZoom = Math.min(SCALE_MAX, this.zoom + SCALE_STEP);
       }
-      if (newzoom != this.zoom) {
-        updateZoom(newzoom);
+      if (newZoom != this.zoom) {
+        this.updateZoom(newZoom);
       }
     }
   }
@@ -1645,14 +1641,14 @@ public final class VideoController extends JComponent
     return this.getName();
   }
 
-  public void doAutoscaleForSize(final Rectangle rectangle) {
-    final int width = rectangle.width;
-    final int height = rectangle.height;
+  public void zoomForSize(final Rectangle rectangle) {
+    final float width = (float) rectangle.width - (rectangle.width * 0.2f);
+    final float height = (float) rectangle.height - (rectangle.height * 0.2f);
 
-    final int maxZoomW = width / SCREEN_WIDTH;
-    final int maxZoomH = height / SCREEN_HEIGHT;
+    final float maxZoomW = (int) ((width / SCREEN_WIDTH) / SCALE_STEP) * SCALE_STEP;
+    final float maxZoomH = (int) ((height / SCREEN_HEIGHT) / SCALE_STEP) * SCALE_STEP;
 
-    updateZoom(Math.max(1.0f, Math.min(maxZoomH, maxZoomW)));
+    updateZoom(Math.max(SCALE_MIN, Math.min(SCALE_MAX, Math.min(maxZoomH, maxZoomW))));
   }
 
   public long getVkbState() {
