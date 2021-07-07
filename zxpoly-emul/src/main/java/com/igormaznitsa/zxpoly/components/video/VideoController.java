@@ -99,8 +99,8 @@ public final class VideoController extends JComponent
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
-  private static final int BORDER_LINES = 40;
-  private static final int TSTATES_PER_BORDER_LINE = TSTATES_PER_INT / BORDER_LINES;
+  private final int numberOfBorderLines;
+  private final int statesPerBorderLine;
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private static final float SCALE_STEP = 0.2f;
   private static final float SCALE_MIN = 1.0f;
@@ -117,8 +117,8 @@ public final class VideoController extends JComponent
   private final BufferedImage bufferImage;
   private final int[] bufferImageRgbData;
   private final ZxPolyModule[] modules;
-  private final byte[] borderLineColors = new byte[BORDER_LINES];
-  private final byte[] outBorderLineColors = new byte[BORDER_LINES];
+  private final byte[] borderLineColors;
+  private final byte[] outBorderLineColors;
   private final short[] lastRenderedZxData = new short[ZXSPEC_PIXEL_AREA_SIZE];
   private final boolean showVkbdApart;
   private volatile int currentVideoMode = VIDEOMODE_ZXPOLY_256x192_FLASH_MASK;
@@ -135,8 +135,13 @@ public final class VideoController extends JComponent
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
 
-  public VideoController(final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
+  public VideoController(final Motherboard board, final int numberOfBorderLines, final VirtualKeyboardDecoration vkbdContainer) {
     super();
+
+    this.numberOfBorderLines = Math.min(Motherboard.LINES_PER_FRAME, Math.max(1, numberOfBorderLines));
+    this.statesPerBorderLine = TSTATES_PER_INT / numberOfBorderLines;
+    this.borderLineColors = new byte[numberOfBorderLines];
+    this.outBorderLineColors = new byte[numberOfBorderLines];
 
     this.setFocusTraversalKeysEnabled(false);
 
@@ -1118,7 +1123,7 @@ public final class VideoController extends JComponent
   }
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
-    final float lineHeight = Math.max(1, (float) height / BORDER_LINES) + 1;
+    final float lineHeight = Math.max(1, (float) height / numberOfBorderLines) + 1;
     float y = 0.0f;
     final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
 
@@ -1281,7 +1286,7 @@ public final class VideoController extends JComponent
         unlockBuffer();
       }
     } else {
-      final int borderArgbColor = PALETTE_ZXPOLY[this.borderLineColors[BORDER_LINES - 1]];
+      final int borderArgbColor = PALETTE_ZXPOLY[this.borderLineColors[numberOfBorderLines - 1]];
       final Rectangle area;
       final TvFilter[] tvFilters = filterChain.getFilterChain();
       BufferedImage postProcessedImage;
@@ -1568,11 +1573,6 @@ public final class VideoController extends JComponent
       final boolean zxPolyMode = module.getMotherboard().getBoardMode() == BoardMode.ZXPOLY;
       if ((zxPolyMode && (port & 0xFF) == 0xFE) || (!zxPolyMode && (port & 1) == 0)) {
         this.portFEw = value & 0xFF;
-
-        int borderLineIndex = this.tstatesCounter / TSTATES_PER_BORDER_LINE;
-        if (borderLineIndex >= 0 && borderLineIndex < BORDER_LINES) {
-          this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
-        }
       }
     }
   }
@@ -1592,6 +1592,11 @@ public final class VideoController extends JComponent
       this.tstatesCounter = 0;
     }
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
+
+    int borderLineIndex = this.tstatesCounter / statesPerBorderLine;
+    if (borderLineIndex >= 0 && borderLineIndex < numberOfBorderLines) {
+      this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
+    }
   }
 
   @Override
@@ -1601,7 +1606,7 @@ public final class VideoController extends JComponent
   }
 
   @Override
-  public void postStep(int spentTstates) {
+  public void postStep(final int spentTstates) {
     this.tstatesCounter += spentTstates;
   }
 

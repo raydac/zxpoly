@@ -369,6 +369,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.board = new Motherboard(
             BASE_ROM,
             AppOptions.getInstance().getDefaultBoardMode(),
+            AppOptions.getInstance().getBorderLines(),
             AppOptions.getInstance().isSoundChannelsACB(),
             AppOptions.getInstance().isCovoxFb(),
             AppOptions.getInstance().isTurboSound(),
@@ -731,66 +732,63 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     int countdownToNotifyRepaint = 0;
     int countdownToAnimationSave = 0;
 
-    int tStatesInCurrentInt = 0;
 
-    int intStateFlags = 0;
-    long nextTimeUpdateScreenBuffer = Long.MAX_VALUE;
-    long totalTstates = 0L;
+    int tiStatesInInt = 0;
+
+    final int VFLAG_BLINK_BORDER = 1;
+    final int VFLAG_BLINK_SCREEN = 2;
+
+    int viFlags = 0;
 
     while (!Thread.currentThread().isInterrupted()) {
-      boolean updateMainScreenBuffer = false;
-      boolean blinkVideoBuffer = false;
+      final int prevViFlags = viFlags;
+      boolean notifyRepaintScreen = false;
       if (stepSemaphor.tryLock()) {
         try {
           final boolean inTurboMode = this.turboMode;
-          final boolean tStatesForIntExhausted = tStatesInCurrentInt >= TSTATES_PER_INT;
+          final boolean tiStatesForIntExhausted = tiStatesInInt >= TSTATES_PER_INT;
           final boolean intTickForWallClockReached = this.wallClock.completed();
 
-          final int prevStateFlags = intStateFlags;
-          intStateFlags |= (tStatesForIntExhausted ? 1 : 0) | (intTickForWallClockReached ? 2 : 0);
-
-          if (((prevStateFlags ^ intStateFlags) & 1) != 0 && (intStateFlags & 1) == 1) {
-            nextTimeUpdateScreenBuffer = totalTstates + Motherboard.TSTATES_BEFORE_MAIN_SCREEN_DRAW_START + Motherboard.TSTATES_FOR_WHOLE_SCREEN_DRAW;
-          }
-
           final boolean doCpuIntTick;
-          if (intStateFlags == 3) {
-            doCpuIntTick = true;
-            countdownToNotifyRepaint--;
-            if (countdownToNotifyRepaint <= 0) {
-              countdownToNotifyRepaint = expectedIntTicksBetweenFrames;
-              blinkVideoBuffer = true;
+          if (intTickForWallClockReached) {
+            if (tiStatesForIntExhausted) {
+              doCpuIntTick = true;
+              countdownToNotifyRepaint--;
+              if (countdownToNotifyRepaint <= 0) {
+                countdownToNotifyRepaint = expectedIntTicksBetweenFrames;
+                notifyRepaintScreen = true;
+              }
+              countdownToAnimationSave--;
+            } else {
+              doCpuIntTick = false;
             }
-            countdownToAnimationSave--;
-
-            intStateFlags = 0;
+            this.wallClock.next();
+            if (!tiStatesForIntExhausted) {
+              this.onSlownessDetected(TSTATES_PER_INT - tiStatesInInt);
+            }
+            tiStatesInInt = 0;
+            viFlags = 0;
           } else {
             doCpuIntTick = false;
           }
 
-          if (intTickForWallClockReached) {
-            this.wallClock.next();
-            if (!tStatesForIntExhausted) {
-              this.onSlownessDetected(TSTATES_PER_INT - tStatesInCurrentInt);
-            }
-            tStatesInCurrentInt = 0;
-          }
-
-          final boolean executionEnabled = inTurboMode || !tStatesForIntExhausted || doCpuIntTick;
+          final boolean executionEnabled = inTurboMode || !tiStatesForIntExhausted || doCpuIntTick;
 
           final int detectedTriggers = this.board.step(
-                  tStatesForIntExhausted,
+                  tiStatesForIntExhausted,
                   intTickForWallClockReached,
                   doCpuIntTick,
                   executionEnabled);
 
-          final int spentTstates = executionEnabled ? this.board.getMasterCpu().getStepTstates() : 0;
-          totalTstates += spentTstates;
-          tStatesInCurrentInt += spentTstates;
+          final int spentTiStates = executionEnabled ? this.board.getMasterCpu().getStepTstates() : 0;
+          tiStatesInInt += spentTiStates;
 
-          if (totalTstates >= nextTimeUpdateScreenBuffer) {
-            nextTimeUpdateScreenBuffer = Long.MAX_VALUE;
-            updateMainScreenBuffer = true;
+          if (tiStatesInInt >= Motherboard.TSTATES_BEFORE_MAIN_SCREEN_DRAW_START + Motherboard.TSTATES_FOR_WHOLE_SCREEN_DRAW) {
+            viFlags |= VFLAG_BLINK_SCREEN;
+          }
+
+          if (tiStatesInInt >= Motherboard.TSTATES_FOR_END_DRAW_BORDER) {
+            viFlags |= VFLAG_BLINK_BORDER;
           }
 
           if (intTickForWallClockReached) {
@@ -824,11 +822,17 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           stepSemaphor.unlock();
         }
 
-        if (updateMainScreenBuffer) {
-          updateScreenBuffer();
+        final int changedViFlags = prevViFlags ^ viFlags;
+
+        if ((changedViFlags & VFLAG_BLINK_SCREEN) != 0 && (viFlags & VFLAG_BLINK_SCREEN) != 0) {
+          this.blinkScreen();
         }
 
-        if (blinkVideoBuffer) {
+        if ((changedViFlags & VFLAG_BLINK_BORDER) != 0 && (viFlags & VFLAG_BLINK_BORDER) != 0) {
+          this.blinkBorder();
+        }
+
+        if (notifyRepaintScreen) {
           this.repaintScreen();
         }
 
@@ -839,13 +843,13 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
         if (this.wallClock.completed()) {
           this.wallClock.next();
           this.videoStreamer.onWallclockInt();
-          this.board.dryIntTickOnWallClockTime(tStatesInCurrentInt >= TSTATES_PER_INT, true, tStatesInCurrentInt);
-          tStatesInCurrentInt = 0;
+          this.board.dryIntTickOnWallClockTime(tiStatesInInt >= TSTATES_PER_INT, true, tiStatesInInt);
+          tiStatesInInt = 0;
         } else {
-          if (tStatesInCurrentInt < TSTATES_PER_INT) {
-            tStatesInCurrentInt += 4;
+          if (tiStatesInInt < TSTATES_PER_INT) {
+            tiStatesInInt += 4;
           }
-          this.board.dryIntTickOnWallClockTime(tStatesInCurrentInt >= TSTATES_PER_INT, true, tStatesInCurrentInt);
+          this.board.dryIntTickOnWallClockTime(tiStatesInInt >= TSTATES_PER_INT, true, tiStatesInInt);
         }
       }
     }
@@ -987,15 +991,16 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.turboMode = value;
   }
 
-  private void updateScreenBuffer() {
-    final VideoController vc = board.getVideoController();
-    vc.syncUpdateBuffer();
-    vc.blinkBorder();
+  private void blinkScreen() {
+    this.board.getVideoController().syncUpdateBuffer();
+  }
+
+  private void blinkBorder() {
+    this.board.getVideoController().blinkBorder();
   }
 
   private void repaintScreen() {
-    final VideoController vc = board.getVideoController();
-    vc.notifyRepaint();
+    board.getVideoController().notifyRepaint();
   }
 
   private void menuOptionsEnableVideoStreamActionPerformed(final ActionEvent actionEvent) {

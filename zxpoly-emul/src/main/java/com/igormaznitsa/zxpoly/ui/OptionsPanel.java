@@ -42,6 +42,7 @@ public class OptionsPanel extends JPanel {
   private JCheckBox checkTurboSound;
   private JCheckBox checkZx128ByDefault;
   private JCheckBox checkKempstonMouseAllowed;
+  private JSpinner spinnerBorderLines;
   private JLabel labelCovoxFb;
   private JLabel labelSoundSchemeACB;
   private JLabel labelTurboSound;
@@ -60,6 +61,7 @@ public class OptionsPanel extends JPanel {
   private JComboBox<VirtualKeyboardLook> comboKeyboardLook;
   private JLabel labelFfMpegPath;
   private JLabel labelNetInterface;
+  private JLabel labelBorderLines;
   private JLabel labelPort;
   private JLabel labelSound;
   private JLabel labelRomSource;
@@ -134,6 +136,7 @@ public class OptionsPanel extends JPanel {
     this.checkTurboSound.setSelected(data.turboSound);
     this.checkKempstonMouseAllowed.setSelected(data.kempstonMouseAllowed);
     this.spinnerPort.setValue(data.port);
+    this.spinnerBorderLines.setValue(data.borderLines);
     this.spinnerIntFrame.setValue(data.intPerFrame);
     this.textFfmpegPath.setText(data.ffmpegPath);
     this.comboNetAdddr.setSelectedItem(data.inetAddress);
@@ -162,10 +165,12 @@ public class OptionsPanel extends JPanel {
     panelStreaming = new JPanel();
     labelFfMpegPath = new JLabel();
     labelNetInterface = new JLabel();
+    labelBorderLines = new JLabel();
     textFfmpegPath = new JTextField();
     comboNetAdddr = new JComboBox<>();
     labelPort = new JLabel();
     spinnerPort = new JSpinner();
+    spinnerBorderLines = new JSpinner();
     labelSound = new JLabel();
     checkGrabSound = new JCheckBox();
     labelSoundSchemeACB = new JLabel();
@@ -342,16 +347,31 @@ public class OptionsPanel extends JPanel {
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(spinnerIntFrame, gridBagConstraints);
 
-    labelTurboSound.setHorizontalAlignment(RIGHT);
-    labelTurboSound.setText("TurboSound (NedoPC):");
+    labelBorderLines.setHorizontalAlignment(RIGHT);
+    labelBorderLines.setText("Border lines:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 3;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGenmeral.add(labelTurboSound, gridBagConstraints);
+    panelGenmeral.add(labelBorderLines, gridBagConstraints);
+
+    spinnerBorderLines.setModel(new javax.swing.SpinnerNumberModel(1, 1, 320, 1));
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 3;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(spinnerBorderLines, gridBagConstraints);
+
+    labelTurboSound.setHorizontalAlignment(RIGHT);
+    labelTurboSound.setText("TurboSound (NedoPC):");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 4;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelTurboSound, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 4;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkTurboSound, gridBagConstraints);
@@ -360,12 +380,12 @@ public class OptionsPanel extends JPanel {
     labelCovoxFb.setText("Covox (#FB):");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 4;
+    gridBagConstraints.gridy = 5;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelCovoxFb, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 4;
+    gridBagConstraints.gridy = 5;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkCovoxFb, gridBagConstraints);
@@ -374,12 +394,12 @@ public class OptionsPanel extends JPanel {
     labelSoundSchemeACB.setText("Sound channels ACB:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 5;
+    gridBagConstraints.gridy = 6;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelSoundSchemeACB, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 5;
+    gridBagConstraints.gridy = 6;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkSoundSchemeACB, gridBagConstraints);
@@ -388,12 +408,12 @@ public class OptionsPanel extends JPanel {
     labelZx128ByDefault.setText("Default ZX Mode:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 6;
+    gridBagConstraints.gridy = 7;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelZx128ByDefault, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 6;
+    gridBagConstraints.gridy = 7;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkZx128ByDefault, gridBagConstraints);
@@ -402,12 +422,12 @@ public class OptionsPanel extends JPanel {
     labelKempstonMouseAllowed.setText("Kempston mouse allowed:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 7;
+    gridBagConstraints.gridy = 8;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelKempstonMouseAllowed, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 7;
+    gridBagConstraints.gridy = 8;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkKempstonMouseAllowed, gridBagConstraints);
@@ -416,12 +436,12 @@ public class OptionsPanel extends JPanel {
     labelVirtualKbdApart.setText("Virtual keyboard apart:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 8;
+    gridBagConstraints.gridy = 9;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelVirtualKbdApart, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 8;
+    gridBagConstraints.gridy = 9;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkVkbdApart, gridBagConstraints);
@@ -430,12 +450,12 @@ public class OptionsPanel extends JPanel {
     labelVirtualKbdLook.setText("Keyboard decoration:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 9;
+    gridBagConstraints.gridy = 10;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelVirtualKbdLook, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 9;
+    gridBagConstraints.gridy = 10;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(comboKeyboardLook, gridBagConstraints);
@@ -444,12 +464,12 @@ public class OptionsPanel extends JPanel {
     labelMacroCursorKeys.setText("Auto-CS for cursor keys:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 10;
+    gridBagConstraints.gridy = 11;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelMacroCursorKeys, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 10;
+    gridBagConstraints.gridy = 11;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkAutoiCsForCursorKeys, gridBagConstraints);
@@ -611,6 +631,8 @@ public class OptionsPanel extends JPanel {
     public final int kempstonKeyRight;
     public final int kempstonKeyFire;
 
+    public final int borderLines;
+
     public final int protekJoystickKeyUp;
     public final int protekJoystickKeyDown;
     public final int protekJoystickKeyLeft;
@@ -622,6 +644,7 @@ public class OptionsPanel extends JPanel {
     public DataContainer() {
       final String cromPath = AppOptions.getInstance().getCustomRomPath();
       this.customRomPath = cromPath == null ? "" : cromPath;
+      this.borderLines = AppOptions.getInstance().getBorderLines();
       this.soundSchemeAcb = AppOptions.getInstance().isSoundChannelsACB();
       this.autoCsForCursorKeys = AppOptions.getInstance().getAutoCsForCursorKeys();
       this.keyboardLook = AppOptions.getInstance().getKeyboardLook();
@@ -658,6 +681,8 @@ public class OptionsPanel extends JPanel {
 
       this.customRomPath = optionsPanel.textCustomRomPath.getText();
 
+      this.borderLines = (Integer) optionsPanel.spinnerBorderLines.getValue();
+
       this.autoCsForCursorKeys = optionsPanel.checkAutoiCsForCursorKeys.isSelected();
       this.vkdApart = optionsPanel.checkVkbdApart.isSelected();
       this.activeRom = rom.getLink();
@@ -687,6 +712,7 @@ public class OptionsPanel extends JPanel {
     }
 
     public void store() {
+      AppOptions.getInstance().setBorderLines(this.borderLines);
       AppOptions.getInstance().setAutoCsForCursorKeys(this.autoCsForCursorKeys);
       AppOptions.getInstance().setCustomRomPath(this.customRomPath);
       AppOptions.getInstance().setKeyboardLook(this.keyboardLook);

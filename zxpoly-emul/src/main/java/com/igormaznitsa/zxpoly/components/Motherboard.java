@@ -39,8 +39,8 @@ import static java.lang.Math.min;
 public final class Motherboard implements ZxPolyConstants {
 
   public static final int CPU_FREQ = 3546900;
-  public static final int TSTATES_PER_LINE = 228;
-  public static final int LINES_PER_FRAME = 311;
+  public static final int TSTATES_PER_LINE = 224;
+  public static final int LINES_PER_FRAME = 320;
   public static final int TSTATES_PER_INT = TSTATES_PER_LINE * LINES_PER_FRAME;
 
   public static final int TSTATES_BEFORE_MAIN_SCREEN_DRAW_START = TSTATES_PER_LINE * (LINES_PER_FRAME - 192) / 2 + 4;
@@ -109,6 +109,7 @@ public final class Motherboard implements ZxPolyConstants {
   public Motherboard(
           final RomData rom,
           final BoardMode boardMode,
+          final int borderLines,
           final boolean useAcbSoundScheme,
           final boolean enableCovoxFb,
           final boolean useTurboSound,
@@ -134,7 +135,7 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.keyboard = new KeyboardKempstonAndTapeIn(this, allowKempstonMouse);
     iodevices.add(keyboard);
-    this.video = new VideoController(this, vkbdContainer);
+    this.video = new VideoController(this, borderLines, vkbdContainer);
     iodevices.add(video);
     iodevices.add(new KempstonMouse(this));
 
