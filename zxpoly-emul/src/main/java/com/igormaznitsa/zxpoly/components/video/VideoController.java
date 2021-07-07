@@ -100,7 +100,7 @@ public final class VideoController extends JComponent
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
   private static final int BORDER_LINES = 40;
-  private static final int TSTATES_PER_LINE = TSTATES_PER_INT / BORDER_LINES;
+  private static final int TSTATES_PER_BORDER_LINE = TSTATES_PER_INT / BORDER_LINES;
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private static final float SCALE_STEP = 0.2f;
   private static final float SCALE_MIN = 1.0f;
@@ -118,9 +118,9 @@ public final class VideoController extends JComponent
   private final int[] bufferImageRgbData;
   private final ZxPolyModule[] modules;
   private final byte[] borderLineColors = new byte[BORDER_LINES];
+  private final byte[] outBorderLineColors = new byte[BORDER_LINES];
   private final short[] lastRenderedZxData = new short[ZXSPEC_PIXEL_AREA_SIZE];
   private final boolean showVkbdApart;
-  private long changedBorderLines = 0L;
   private volatile int currentVideoMode = VIDEOMODE_ZXPOLY_256x192_FLASH_MASK;
   private Dimension size = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
   private volatile float zoom = 1.0f;
@@ -1118,23 +1118,25 @@ public final class VideoController extends JComponent
   }
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
-    if (this.changedBorderLines != 0L) {
-      final float lineHeight = Math.max(1, (float) height / BORDER_LINES) + 1;
-      float y = 0.0f;
-      final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
+    final float lineHeight = Math.max(1, (float) height / BORDER_LINES) + 1;
+    float y = 0.0f;
+    final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
 
-      for (final byte c : this.borderLineColors) {
+    synchronized (this.outBorderLineColors) {
+      for (final byte c : this.outBorderLineColors) {
         g.setColor(this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[c]));
         rectangle.y = y;
         g.fill(rectangle);
         y += lineHeight;
       }
-    } else {
-      g.setColor(this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]));
-      g.fill(new Rectangle2D.Float(0.0f, 0.0f, width, height));
     }
-    this.changedBorderLines = 0L;
-    fill(this.borderLineColors, (byte) (this.portFEw & 7));
+  }
+
+  public void blinkBorder() {
+    synchronized (this.outBorderLineColors) {
+      System.arraycopy(this.borderLineColors, 0, this.outBorderLineColors, 0, this.borderLineColors.length);
+      fill(this.borderLineColors, (byte) (this.portFEw & 7));
+    }
   }
 
   @Override
@@ -1567,10 +1569,9 @@ public final class VideoController extends JComponent
       if ((zxPolyMode && (port & 0xFF) == 0xFE) || (!zxPolyMode && (port & 1) == 0)) {
         this.portFEw = value & 0xFF;
 
-        int borderLineIndex = this.tstatesCounter / TSTATES_PER_LINE;
+        int borderLineIndex = this.tstatesCounter / TSTATES_PER_BORDER_LINE;
         if (borderLineIndex >= 0 && borderLineIndex < BORDER_LINES) {
           this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
-          this.changedBorderLines |= 1L << borderLineIndex;
         }
       }
     }

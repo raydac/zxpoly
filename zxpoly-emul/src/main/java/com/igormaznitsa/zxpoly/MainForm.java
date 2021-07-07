@@ -990,6 +990,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private void updateScreenBuffer() {
     final VideoController vc = board.getVideoController();
     vc.syncUpdateBuffer();
+    vc.blinkBorder();
   }
 
   private void repaintScreen() {
