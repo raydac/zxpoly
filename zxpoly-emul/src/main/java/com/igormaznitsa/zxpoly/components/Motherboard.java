@@ -39,13 +39,17 @@ import static java.lang.Math.min;
 public final class Motherboard implements ZxPolyConstants {
 
   public static final int CPU_FREQ = 3546900;
-  public static final int TSTATES_PER_LINE = 224;
-  public static final int LINES_PER_FRAME = 320;
-  public static final int TSTATES_PER_INT = TSTATES_PER_LINE * LINES_PER_FRAME;
 
-  public static final int TSTATES_BEFORE_MAIN_SCREEN_DRAW_START = TSTATES_PER_LINE * (LINES_PER_FRAME - 192) / 2 + 4;
-  public static final int TSTATES_FOR_WHOLE_SCREEN_DRAW = TSTATES_PER_LINE * 192 + 4;
-  public static final int TSTATES_FOR_END_DRAW_BORDER = TSTATES_PER_INT;
+  public static final int SCREEN_VISIBLE_ROWS_BEFORE_MAIN_AREA = 48;
+  public static final int SCREEN_VISIBLE_ROWS_AFTER_MAIN_AREA = 56;
+  public static final int TOTAL_SCREEN_VISIBLE_ROWS = SCREEN_VISIBLE_ROWS_BEFORE_MAIN_AREA + 192 + SCREEN_VISIBLE_ROWS_AFTER_MAIN_AREA;
+
+  public static final int TSTATES_PER_ROW = 224;
+  public static final int TSTATES_BEFORE_SCREEN_OUTPUT_START = 16 * TSTATES_PER_ROW;
+  public static final int TSTATES_BEFORE_MAIN_AREA_OUTPUT = TSTATES_BEFORE_SCREEN_OUTPUT_START + SCREEN_VISIBLE_ROWS_BEFORE_MAIN_AREA * TSTATES_PER_ROW;
+  public static final int TSTATES_MAIN_AREA_OUTPUT_END = TSTATES_BEFORE_MAIN_AREA_OUTPUT + 192 * TSTATES_PER_ROW;
+  public static final int TSTATES_SCREEN_OUTPUT_END = TSTATES_MAIN_AREA_OUTPUT_END + SCREEN_VISIBLE_ROWS_AFTER_MAIN_AREA * TSTATES_PER_ROW;
+  public static final int TSTATES_PER_INT = CPU_FREQ / 50;
 
   public static final int TRIGGER_NONE = 0;
   public static final int TRIGGER_DIFF_MODULESTATES = 1;

@@ -783,11 +783,11 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
           final int spentTiStates = executionEnabled ? this.board.getMasterCpu().getStepTstates() : 0;
           tiStatesInInt += spentTiStates;
 
-          if (tiStatesInInt >= Motherboard.TSTATES_BEFORE_MAIN_SCREEN_DRAW_START + Motherboard.TSTATES_FOR_WHOLE_SCREEN_DRAW) {
+          if (tiStatesInInt >= Motherboard.TSTATES_MAIN_AREA_OUTPUT_END) {
             viFlags |= VFLAG_BLINK_SCREEN;
           }
 
-          if (tiStatesInInt >= Motherboard.TSTATES_FOR_END_DRAW_BORDER) {
+          if (tiStatesInInt >= Motherboard.TSTATES_SCREEN_OUTPUT_END) {
             viFlags |= VFLAG_BLINK_BORDER;
           }
 

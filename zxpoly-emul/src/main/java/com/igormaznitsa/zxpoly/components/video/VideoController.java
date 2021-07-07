@@ -41,7 +41,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
 import static java.util.Arrays.fill;
 
 public final class VideoController extends JComponent
@@ -99,18 +98,19 @@ public final class VideoController extends JComponent
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
-  private final int numberOfBorderLines;
-  private final int statesPerBorderLine;
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private static final float SCALE_STEP = 0.2f;
   private static final float SCALE_MIN = 1.0f;
   private static final float SCALE_MAX = 6.0f;
+  private static final float COEFF_MAIN_AREAY_Y = (float) Motherboard.SCREEN_VISIBLE_ROWS_BEFORE_MAIN_AREA / (float) Motherboard.SCREEN_VISIBLE_ROWS_AFTER_MAIN_AREA;
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;
   private static volatile boolean gfxHideSameInkPaper = true;
   private static volatile int gfxUpColorsMixed = 64;
   private static volatile int gfxDownColorsMixed = 0;
   private static volatile int[] gfxPrerenderedBack = null;
+  private final int numberOfBorderLines;
+  private final int statesPerBorderLine;
   private final VirtualKeyboardDecoration vkbdContainer;
   private final Motherboard board;
   private final ReentrantLock bufferLocker = new ReentrantLock();
@@ -138,8 +138,8 @@ public final class VideoController extends JComponent
   public VideoController(final Motherboard board, final int numberOfBorderLines, final VirtualKeyboardDecoration vkbdContainer) {
     super();
 
-    this.numberOfBorderLines = Math.min(Motherboard.LINES_PER_FRAME, Math.max(1, numberOfBorderLines));
-    this.statesPerBorderLine = TSTATES_PER_INT / numberOfBorderLines;
+    this.numberOfBorderLines = Math.min(Motherboard.TOTAL_SCREEN_VISIBLE_ROWS, Math.max(1, numberOfBorderLines));
+    this.statesPerBorderLine = (Motherboard.TSTATES_SCREEN_OUTPUT_END - Motherboard.TSTATES_BEFORE_SCREEN_OUTPUT_START) / numberOfBorderLines;
     this.borderLineColors = new byte[numberOfBorderLines];
     this.outBorderLineColors = new byte[numberOfBorderLines];
 
@@ -1154,7 +1154,7 @@ public final class VideoController extends JComponent
     final int height = bounds.height;
 
     final int xoff = (width - this.size.width) / 2;
-    final int yoff = (height - this.size.height) / 2;
+    final int yoff = Math.round((height - this.size.height) / 2.0f * COEFF_MAIN_AREAY_Y);
 
     if (xoff > 0 || yoff > 0) {
       drawBorder(g2, width, height);
@@ -1593,8 +1593,8 @@ public final class VideoController extends JComponent
     }
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
 
-    int borderLineIndex = this.tstatesCounter / statesPerBorderLine;
-    if (borderLineIndex >= 0 && borderLineIndex < numberOfBorderLines) {
+    int borderLineIndex = (this.tstatesCounter - Motherboard.TSTATES_BEFORE_SCREEN_OUTPUT_START) / this.statesPerBorderLine;
+    if (borderLineIndex >= 0 && borderLineIndex < this.numberOfBorderLines) {
       this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
     }
   }
