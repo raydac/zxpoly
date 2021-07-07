@@ -8,7 +8,7 @@
 # Changelog
 
 __2.2.1 (SNAPSHOT)__
-
+- added option to change number of border lines (by default 40)
 - added stereo sound for AY-channels (ABC by default, it is possible turn on ACB)
 
 __2.2.0 (24-jun-2021)__
