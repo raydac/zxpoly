@@ -83,7 +83,7 @@ import static javax.swing.JOptionPane.showMessageDialog;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static org.apache.commons.lang3.StringUtils.repeat;
 
-public final class MainForm extends javax.swing.JFrame implements Runnable, ActionListener {
+public final class MainForm extends javax.swing.JFrame implements ActionListener {
 
   public static final Logger LOGGER = Logger.getLogger("UI");
   public static final Duration TIMER_INT_DELAY_MILLISECONDS = Duration.ofMillis(20);
@@ -179,6 +179,9 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private final KeyboardKempstonAndTapeIn keyboardAndTapeModule;
   private final KempstonMouse kempstonMouse;
   private final ReentrantLock stepSemaphor = new ReentrantLock();
+  private final Thread mainCpuThread;
+  private final javax.swing.Timer infoBarUpdateTimer;
+  private final AtomicReference<SpriteCorrectorMainFrame> spriteCorrectorMainFrame = new AtomicReference<>();
   private volatile long lastFullScreenEventTime = 0L;
   private volatile boolean turboMode = false;
   private volatile boolean zxKeyboardProcessingAllowed = true;
@@ -205,7 +208,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private JMenu menuViewZoom;
   private JMenu menuViewVideoFilter;
   private JToggleButton toggleButtonShowVkbd;
-  private final Thread mainCpuThread;
   private JMenuItem menuViewFullScreen;
   private JMenuItem menuViewZoomIn;
   private JMenuItem menuViewZoomOut;
@@ -262,8 +264,6 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
   private javax.swing.JScrollPane scrollPanel;
   private File lastPokeFileFolder = null;
   private Optional<SourceSoundPort> preTurboSourceSoundPort = Optional.empty();
-  private final javax.swing.Timer infoBarUpdateTimer;
-  private final AtomicReference<SpriteCorrectorMainFrame> spriteCorrectorMainFrame = new AtomicReference<>();
 
   public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
@@ -466,7 +466,7 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
 
     this.setLocationRelativeTo(null);
 
-    this.mainCpuThread = new Thread(this, "zx-poly-main-cpu-thread");
+    this.mainCpuThread = new Thread(this::mainLoop, "zx-poly-main-cpu-thread");
     this.mainCpuThread.setPriority(Thread.MAX_PRIORITY);
     this.mainCpuThread.setDaemon(true);
     this.mainCpuThread.setUncaughtExceptionHandler((t, e) -> {
@@ -726,12 +726,10 @@ public final class MainForm extends javax.swing.JFrame implements Runnable, Acti
     this.menuTapThreshold.setEnabled(sensitivity);
   }
 
-  @Override
-  public void run() {
+  private void mainLoop() {
     this.wallClock.next();
     int countdownToNotifyRepaint = 0;
     int countdownToAnimationSave = 0;
-
 
     int tiStatesInInt = 0;
 
