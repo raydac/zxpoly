@@ -51,6 +51,8 @@ public final class Motherboard implements ZxPolyConstants {
   public static final int TSTATES_SCREEN_OUTPUT_END = TSTATES_MAIN_AREA_OUTPUT_END + SCREEN_VISIBLE_ROWS_AFTER_MAIN_AREA * TSTATES_PER_ROW;
   public static final int TSTATES_PER_INT = CPU_FREQ / 50;
 
+  public static final int INT_TSTATES_LENGTH = 32;
+
   public static final int TRIGGER_NONE = 0;
   public static final int TRIGGER_DIFF_MODULESTATES = 1;
   public static final int TRIGGER_DIFF_MEM_ADDR = 2;
