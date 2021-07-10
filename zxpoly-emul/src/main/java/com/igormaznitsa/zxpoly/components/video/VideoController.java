@@ -1805,7 +1805,7 @@ public final class VideoController extends JComponent
     }
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
 
-    int borderLineIndex = (this.tstatesCounter - Motherboard.TSTATES_BEFORE_SCREEN_OUTPUT_START) / this.statesPerBorderLine;
+    int borderLineIndex = (this.tstatesCounter - Motherboard.TSTATES_BEFORE_BORDER_VISIBILITY) / this.statesPerBorderLine;
     if (borderLineIndex >= 0 && borderLineIndex < this.numberOfBorderLines) {
       this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
     }
