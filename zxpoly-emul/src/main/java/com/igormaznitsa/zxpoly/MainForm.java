@@ -178,6 +178,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   };
   private final KeyboardKempstonAndTapeIn keyboardAndTapeModule;
   private final KempstonMouse kempstonMouse;
+  private final boolean interlaceScan;
   private final ReentrantLock stepSemaphor = new ReentrantLock();
   private final Thread mainCpuThread;
   private final javax.swing.Timer infoBarUpdateTimer;
@@ -279,6 +280,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
     LOGGER.log(Level.INFO, "INT ticks between frames: " + expectedIntTicksBetweenFrames);
     initComponents();
+
+    this.interlaceScan = AppOptions.getInstance().isInterlacedScan();
 
     this.menuBar.add(Box.createHorizontalGlue());
 
@@ -738,6 +741,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
     int viFlags = 0;
 
+    long sessionIntCounter = 0;
+
     while (!Thread.currentThread().isInterrupted()) {
       final int prevViFlags = viFlags;
       boolean notifyRepaintScreen = false;
@@ -750,6 +755,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           final boolean doCpuIntTick;
           if (intTickForWallClockReached) {
             if (tiStatesForIntExhausted) {
+              sessionIntCounter++;
               doCpuIntTick = true;
               countdownToNotifyRepaint--;
               if (countdownToNotifyRepaint <= 0) {
@@ -823,7 +829,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         final int changedViFlags = prevViFlags ^ viFlags;
 
         if ((changedViFlags & VFLAG_BLINK_SCREEN) != 0 && (viFlags & VFLAG_BLINK_SCREEN) != 0) {
-          this.blinkScreen();
+          this.blinkScreen(sessionIntCounter);
         }
 
         if ((changedViFlags & VFLAG_BLINK_BORDER) != 0 && (viFlags & VFLAG_BLINK_BORDER) != 0) {
@@ -989,8 +995,12 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     this.turboMode = value;
   }
 
-  private void blinkScreen() {
-    this.board.getVideoController().syncUpdateBuffer();
+  private void blinkScreen(final long sessionIntCounter) {
+    if (this.interlaceScan) {
+      this.board.getVideoController().syncUpdateBuffer((sessionIntCounter & 1) == 0 ? VideoController.RenderLines.EVEN : VideoController.RenderLines.ODD);
+    } else {
+      this.board.getVideoController().syncUpdateBuffer(VideoController.RenderLines.ALL);
+    }
   }
 
   private void blinkBorder() {

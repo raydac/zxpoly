@@ -131,6 +131,14 @@ public final class AppOptions {
     preferences.putBoolean(Option.SOUND_TURNED_ON.name(), value);
   }
 
+  public synchronized boolean isInterlacedScan() {
+    return preferences.getBoolean(Option.INTERLACED_SCAN.name(), false);
+  }
+
+  public synchronized void setInterlacedScan(final boolean value) {
+    preferences.putBoolean(Option.INTERLACED_SCAN.name(), value);
+  }
+
   public synchronized int getFrameRate() {
     return preferences.getInt(Option.STREAM_FRAMERATE.name(), 25);
   }
@@ -370,6 +378,7 @@ public final class AppOptions {
   }
 
   public enum Option {
+    INTERLACED_SCAN,
     BORDER_LINES,
     AUTOCS_FOR_CURSOR_KEYS,
     CUSTOM_ROM_PATH,

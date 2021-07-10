@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.IntPredicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -134,7 +135,6 @@ public final class VideoController extends JComponent
   private Window vkbdWindow = null;
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
-
   public VideoController(final Motherboard board, final int numberOfBorderLines, final VirtualKeyboardDecoration vkbdContainer) {
     super();
 
@@ -338,6 +338,7 @@ public final class VideoController extends JComponent
   }
 
   private static void fillDataBufferForSpec256x16VideoMode(
+          final RenderLines renderLines,
           final ZxPolyModule[] modules,
           final int[] pixelRgbBuffer,
           final boolean flashActive
@@ -356,17 +357,22 @@ public final class VideoController extends JComponent
 
     final ZxPolyModule sourceModule = modules[0];
     int offset = 0;
-    int aoffset = 0;
-    int coordY;
+    int attributeOffset = 0;
+    int lineY;
     for (int i = 0; i < 0x1800; i++) {
       if ((i & 0x1F) == 0) {
         // the first byte in the line
-        coordY = extractYFromAddress(i);
-        aoffset = calcAttributeAddressZxMode(i);
-        offset = coordY << 10;
+        lineY = extractYFromAddress(i);
+        if (preRenderedBack != null || renderLines.test(lineY)) {
+          offset = lineY << 10;
+          attributeOffset = calcAttributeAddressZxMode(i);
+        } else {
+          i += 0x1F;
+          continue;
+        }
       }
 
-      final int attrOffset = aoffset++;
+      final int attrOffset = attributeOffset++;
       long pixelData = sourceModule.readGfxVideo16(i);
       int origData = sourceModule.readVideo(i);
 
@@ -436,6 +442,7 @@ public final class VideoController extends JComponent
   }
 
   private static void fillDataBufferForZxSpectrum128Mode(
+          final RenderLines renderLines,
           final ZxPolyModule[] modules,
           final int[] pixelRgbBuffer,
           final short[] preRenderedBuffer,
@@ -454,16 +461,22 @@ public final class VideoController extends JComponent
     }
 
     int offset = 0;
-    int aoffset = 0;
+    int attributeOffset = 0;
 
     for (int i = 0; i < 0x1800; i++) {
       if ((i & 0x1F) == 0) {
         // the first byte in the line
-        offset = extractYFromAddress(i) << 10;
-        aoffset = calcAttributeAddressZxMode(i);
+        final int y = extractYFromAddress(i);
+        if (renderLines.test(y)) {
+          offset = y << 10;
+          attributeOffset = calcAttributeAddressZxMode(i);
+        } else {
+          i += 0x1F;
+          continue;
+        }
       }
 
-      final int attrOffset = aoffset++;
+      final int attrOffset = attributeOffset++;
 
       final int preRenderedData = preRenderedBuffer[i] & 0xFFFF;
 
@@ -500,6 +513,7 @@ public final class VideoController extends JComponent
   }
 
   private static void fillDataBufferForZxPolyVideoMode(
+          final RenderLines renderLines,
           final int zxPolyVideoMode,
           final ZxPolyModule[] modules,
           final int[] pixelRgbBuffer,
@@ -515,16 +529,22 @@ public final class VideoController extends JComponent
         final ZxPolyModule sourceModule = modules[zxPolyVideoMode & 0x3];
 
         int offset = 0;
-        int aoffset = 0;
+        int attributeOffset = 0;
 
         for (int i = 0; i < 0x1800; i++) {
           if ((i & 0x1F) == 0) {
             // the first byte in the line
-            offset = extractYFromAddress(i) << 10;
-            aoffset = calcAttributeAddressZxMode(i);
+            final int y = extractYFromAddress(i);
+            if (renderLines.test(y)) {
+              offset = y << 10;
+              attributeOffset = calcAttributeAddressZxMode(i);
+            } else {
+              i += 0x1F;
+              continue;
+            }
           }
 
-          final int attrOffset = aoffset++;
+          final int attrOffset = attributeOffset++;
 
           final int preRenderedData = preRenderedBuffer[i] & 0xFFFF;
           int effectiveAttribute = sourceModule.readVideo(attrOffset);
@@ -575,8 +595,14 @@ public final class VideoController extends JComponent
         for (int i = 0; i < 0x1800; i++) {
           if ((i & 0x1F) == 0) {
             // the first byte in the line
-            offset = extractYFromAddress(i) << 10;
-            attributeoffset = calcAttributeAddressZxMode(i);
+            final int y = extractYFromAddress(i);
+            if (renderLines.test(y)) {
+              offset = y << 10;
+              attributeoffset = calcAttributeAddressZxMode(i);
+            } else {
+              i += 0x1F;
+              continue;
+            }
           }
 
           int videoValue0 = module0.readVideo(i);
@@ -725,8 +751,14 @@ public final class VideoController extends JComponent
         for (int i = 0; i < 0x1800; i++) {
           if ((i & 0x1F) == 0) {
             // the first byte in the line
-            offset = extractYFromAddress(i) << 10;
-            attributeoffset = calcAttributeAddressZxMode(i);
+            final int y = extractYFromAddress(i);
+            if (renderLines.test(y)) {
+              offset = y << 10;
+              attributeoffset = calcAttributeAddressZxMode(i);
+            } else {
+              i += 0x1F;
+              continue;
+            }
           }
 
           int videoValue0 = module0.readVideo(i);
@@ -1195,10 +1227,11 @@ public final class VideoController extends JComponent
     }
   }
 
-  private void refreshBufferData(final int videoMode) {
+  private void refreshBufferData(final RenderLines renderLines, final int videoMode) {
     switch (videoMode) {
       case VIDEOMODE_ZX48_CPU0: {
         fillDataBufferForZxSpectrum128Mode(
+                renderLines,
                 this.modules,
                 this.bufferImageRgbData,
                 this.lastRenderedZxData,
@@ -1216,6 +1249,7 @@ public final class VideoController extends JComponent
       break;
       case VIDEOMODE_SPEC256_16: {
         fillDataBufferForSpec256x16VideoMode(
+                renderLines,
                 this.modules,
                 this.bufferImageRgbData,
                 this.board.isFlashActive()
@@ -1224,6 +1258,7 @@ public final class VideoController extends JComponent
       break;
       default: {
         fillDataBufferForZxPolyVideoMode(
+                renderLines,
                 this.currentVideoMode,
                 this.modules,
                 this.bufferImageRgbData,
@@ -1272,15 +1307,15 @@ public final class VideoController extends JComponent
     if (filterChain.isEmpty()) {
       lockBuffer();
       try {
-        if (zoom == 1.0f) {
+        final float normalZoom = Math.max(1.0f, zoom);
+        if (normalZoom == 1.0f) {
           gfx.drawImage(this.bufferImage, null, x, y);
         } else {
-          final float nzoom = Math.max(1.0f, zoom);
           gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
           gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 
-          gfx.drawImage(this.bufferImage, x, y, Math.round(SCREEN_WIDTH * nzoom),
-                  Math.round(SCREEN_HEIGHT * nzoom), null);
+          gfx.drawImage(this.bufferImage, x, y, Math.round(SCREEN_WIDTH * normalZoom),
+                  Math.round(SCREEN_HEIGHT * normalZoom), null);
         }
       } finally {
         unlockBuffer();
@@ -1360,7 +1395,7 @@ public final class VideoController extends JComponent
         }
         this.currentVideoMode = newVideoMode;
         log.log(Level.INFO, "mode set: " + decodeVideoModeCode(newVideoMode));
-        refreshBufferData(this.currentVideoMode);
+        refreshBufferData(RenderLines.ALL, this.currentVideoMode);
       }
     } finally {
       unlockBuffer();
@@ -1395,10 +1430,10 @@ public final class VideoController extends JComponent
     bufferLocker.unlock();
   }
 
-  public void syncUpdateBuffer() {
+  public void syncUpdateBuffer(final RenderLines renderLines) {
     lockBuffer();
     try {
-      this.refreshBufferData(this.currentVideoMode);
+      this.refreshBufferData(renderLines, this.currentVideoMode);
     } finally {
       unlockBuffer();
     }
@@ -1414,6 +1449,7 @@ public final class VideoController extends JComponent
                       BufferedImage.TYPE_INT_ARGB);
       Graphics g = buffImage.getGraphics();
       fillDataBufferForZxPolyVideoMode(
+              RenderLines.ALL,
               this.currentVideoMode,
               this.modules,
               this.bufferImageRgbData,
@@ -1429,6 +1465,7 @@ public final class VideoController extends JComponent
               BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
       fillDataBufferForZxPolyVideoMode(
+              RenderLines.ALL,
               VIDEOMODE_ZX48_CPU0,
               this.modules,
               this.bufferImageRgbData,
@@ -1444,6 +1481,7 @@ public final class VideoController extends JComponent
               BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
       fillDataBufferForZxPolyVideoMode(
+              RenderLines.ALL,
               VIDEOMODE_ZX48_CPU1,
               this.modules,
               this.bufferImageRgbData,
@@ -1459,6 +1497,7 @@ public final class VideoController extends JComponent
               BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
       fillDataBufferForZxPolyVideoMode(
+              RenderLines.ALL,
               VIDEOMODE_ZX48_CPU2,
               this.modules,
               this.bufferImageRgbData,
@@ -1474,6 +1513,7 @@ public final class VideoController extends JComponent
               BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
       fillDataBufferForZxPolyVideoMode(
+              RenderLines.ALL,
               VIDEOMODE_ZX48_CPU3,
               this.modules,
               this.bufferImageRgbData,
@@ -1487,7 +1527,7 @@ public final class VideoController extends JComponent
 
       return result.toArray(EMPTY_ARRAY);
     } finally {
-      refreshBufferData(VIDEOMODE_ZX48_CPU0);
+      refreshBufferData(RenderLines.ALL, VIDEOMODE_ZX48_CPU0);
       this.unlockBuffer();
     }
   }
@@ -1689,6 +1729,23 @@ public final class VideoController extends JComponent
       this.doImmediatePaint();
     } else {
       SwingUtilities.invokeLater(this::doImmediatePaint);
+    }
+  }
+
+  public enum RenderLines implements IntPredicate {
+    ALL(x -> true),
+    EVEN(x -> (x & 1) == 0),
+    ODD(x -> (x & 1) == 1);
+
+    private final IntPredicate predicate;
+
+    RenderLines(final IntPredicate predicate) {
+      this.predicate = predicate;
+    }
+
+    @Override
+    public boolean test(final int value) {
+      return this.predicate.test(value);
     }
   }
 }
