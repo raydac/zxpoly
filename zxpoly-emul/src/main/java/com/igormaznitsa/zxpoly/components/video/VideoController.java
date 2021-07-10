@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.IntPredicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -135,6 +134,7 @@ public final class VideoController extends JComponent
   private Window vkbdWindow = null;
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
+
   public VideoController(final Motherboard board, final int numberOfBorderLines, final VirtualKeyboardDecoration vkbdContainer) {
     super();
 
@@ -240,6 +240,7 @@ public final class VideoController extends JComponent
   }
 
   private static void fillDataBufferForSpec256VideoMode(
+          final LineRenderMode renderLines,
           final ZxPolyModule[] modules,
           final int[] pixelRgbBuffer,
           final boolean flashActive
@@ -248,10 +249,6 @@ public final class VideoController extends JComponent
     final boolean bkOverFF = gfxBackOverFF;
     final boolean paper00inkFF = gfxPaper00InkFF;
     final boolean hideSameInkPaper = gfxHideSameInkPaper;
-
-    if (preRenderedBack != null) {
-      System.arraycopy(preRenderedBack, 0, pixelRgbBuffer, 0, preRenderedBack.length);
-    }
 
     final int downAttrMixedIndex = gfxDownColorsMixed;
     final int upAttrMixedIndex = 0xFF - gfxUpColorsMixed;
@@ -323,22 +320,36 @@ public final class VideoController extends JComponent
         pixelData <<= 8;
         origData <<= 1;
 
-        if (draw) {
-          pixelRgbBuffer[offset++] = color;
-          pixelRgbBuffer[offset] = color;
-          offset += SCREEN_WIDTH;
-          pixelRgbBuffer[offset--] = color;
-          pixelRgbBuffer[offset] = color;
-          offset -= SCREEN_WIDTH - 2;
-        } else {
-          offset += 2;
+        final int theColor = draw ? color : preRenderedBack[offset];
+        switch (renderLines) {
+          case ALL: {
+            pixelRgbBuffer[offset++] = theColor;
+            pixelRgbBuffer[offset] = theColor;
+            offset += SCREEN_WIDTH;
+            pixelRgbBuffer[offset--] = theColor;
+            pixelRgbBuffer[offset] = theColor;
+            offset -= SCREEN_WIDTH - 2;
+          }
+          break;
+          case EVEN: {
+            pixelRgbBuffer[offset++] = theColor;
+            pixelRgbBuffer[offset++] = theColor;
+          }
+          break;
+          case ODD: {
+            pixelRgbBuffer[SCREEN_WIDTH + offset++] = theColor;
+            pixelRgbBuffer[SCREEN_WIDTH + offset++] = theColor;
+          }
+          break;
+          default:
+            throw new Error("Unexpected mode");
         }
       }
     }
   }
 
   private static void fillDataBufferForSpec256x16VideoMode(
-          final RenderLines renderLines,
+          final LineRenderMode renderLines,
           final ZxPolyModule[] modules,
           final int[] pixelRgbBuffer,
           final boolean flashActive
@@ -347,10 +358,6 @@ public final class VideoController extends JComponent
     final boolean bkOverFF = gfxBackOverFF;
     final boolean paper00inkFF = gfxPaper00InkFF;
     final boolean hideSameInkPaper = gfxHideSameInkPaper;
-
-    if (preRenderedBack != null) {
-      System.arraycopy(preRenderedBack, 0, pixelRgbBuffer, 0, preRenderedBack.length);
-    }
 
     final int downAttrMixedIndex = gfxDownColorsMixed;
     final int upAttrMixedIndex = 0xFF - gfxUpColorsMixed;
@@ -363,13 +370,8 @@ public final class VideoController extends JComponent
       if ((i & 0x1F) == 0) {
         // the first byte in the line
         lineY = extractYFromAddress(i);
-        if (preRenderedBack != null || renderLines.test(lineY)) {
-          offset = lineY << 10;
-          attributeOffset = calcAttributeAddressZxMode(i);
-        } else {
-          i += 0x1F;
-          continue;
-        }
+        offset = lineY << 10;
+        attributeOffset = calcAttributeAddressZxMode(i);
       }
 
       final int attrOffset = attributeOffset++;
@@ -427,22 +429,37 @@ public final class VideoController extends JComponent
         pixelData <<= 5;
         origData <<= 1;
 
-        if (draw) {
-          pixelRgbBuffer[offset++] = color;
-          pixelRgbBuffer[offset] = color;
-          offset += SCREEN_WIDTH;
-          pixelRgbBuffer[offset--] = color;
-          pixelRgbBuffer[offset] = color;
-          offset -= SCREEN_WIDTH - 2;
-        } else {
-          offset += 2;
+        final int theColor = draw ? color : preRenderedBack[offset];
+        switch (renderLines) {
+          case ALL: {
+            pixelRgbBuffer[offset++] = theColor;
+            pixelRgbBuffer[offset] = theColor;
+            offset += SCREEN_WIDTH;
+            pixelRgbBuffer[offset--] = theColor;
+            pixelRgbBuffer[offset] = theColor;
+            offset -= SCREEN_WIDTH - 2;
+          }
+          break;
+          case EVEN: {
+            pixelRgbBuffer[offset++] = theColor;
+            pixelRgbBuffer[offset++] = theColor;
+          }
+          break;
+          case ODD: {
+            pixelRgbBuffer[SCREEN_WIDTH + offset++] = theColor;
+            pixelRgbBuffer[SCREEN_WIDTH + offset++] = theColor;
+          }
+          break;
+          default: {
+            throw new Error("Unexpected mode");
+          }
         }
       }
     }
   }
 
   private static void fillDataBufferForZxSpectrum128Mode(
-          final RenderLines renderLines,
+          final LineRenderMode renderLines,
           final ZxPolyModule[] modules,
           final int[] pixelRgbBuffer,
           final short[] preRenderedBuffer,
@@ -467,18 +484,13 @@ public final class VideoController extends JComponent
       if ((i & 0x1F) == 0) {
         // the first byte in the line
         final int y = extractYFromAddress(i);
-        if (renderLines.test(y)) {
-          offset = y << 10;
-          attributeOffset = calcAttributeAddressZxMode(i);
-        } else {
-          i += 0x1F;
-          continue;
-        }
+        offset = y << 10;
+        attributeOffset = calcAttributeAddressZxMode(i);
       }
 
       final int attrOffset = attributeOffset++;
 
-      final int preRenderedData = preRenderedBuffer[i] & 0xFFFF;
+      final int preRenderedData = renderLines == LineRenderMode.ALL ? preRenderedBuffer[i] & 0xFFFF : -1;
 
       int effectiveAttribute = heap[videoRamHeapOffset + attrOffset];
       effectiveAttribute =
@@ -497,23 +509,42 @@ public final class VideoController extends JComponent
         final int paperColor = extractPaperPaletteColor(effectiveAttribute);
 
         int x = 8;
+
         while (x-- > 0) {
           final int color = (currentPixels & 0x80) == 0 ? paperColor : inkColor;
           currentPixels <<= 1;
 
-          pixelRgbBuffer[offset++] = color;
-          pixelRgbBuffer[offset] = color;
-          offset += SCREEN_WIDTH;
-          pixelRgbBuffer[offset--] = color;
-          pixelRgbBuffer[offset] = color;
-          offset -= SCREEN_WIDTH - 2;
+          switch (renderLines) {
+            case ALL: {
+              pixelRgbBuffer[offset++] = color;
+              pixelRgbBuffer[offset] = color;
+              offset += SCREEN_WIDTH;
+
+              pixelRgbBuffer[offset--] = color;
+              pixelRgbBuffer[offset] = color;
+              offset -= SCREEN_WIDTH - 2;
+            }
+            break;
+            case EVEN: {
+              pixelRgbBuffer[offset++] = color;
+              pixelRgbBuffer[offset++] = color;
+            }
+            break;
+            case ODD: {
+              pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
+              pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
+            }
+            break;
+            default:
+              throw new Error("Unexpected mode");
+          }
         }
       }
     }
   }
 
   private static void fillDataBufferForZxPolyVideoMode(
-          final RenderLines renderLines,
+          final LineRenderMode renderLines,
           final int zxPolyVideoMode,
           final ZxPolyModule[] modules,
           final int[] pixelRgbBuffer,
@@ -535,18 +566,13 @@ public final class VideoController extends JComponent
           if ((i & 0x1F) == 0) {
             // the first byte in the line
             final int y = extractYFromAddress(i);
-            if (renderLines.test(y)) {
-              offset = y << 10;
-              attributeOffset = calcAttributeAddressZxMode(i);
-            } else {
-              i += 0x1F;
-              continue;
-            }
+            offset = y << 10;
+            attributeOffset = calcAttributeAddressZxMode(i);
           }
 
           final int attrOffset = attributeOffset++;
 
-          final int preRenderedData = preRenderedBuffer[i] & 0xFFFF;
+          final int preRenderedData = renderLines == LineRenderMode.ALL ? preRenderedBuffer[i] & 0xFFFF : -1;
           int effectiveAttribute = sourceModule.readVideo(attrOffset);
           effectiveAttribute = flashActive && ((effectiveAttribute & 0x80) != 0)
                   ? (effectiveAttribute & 0b01_000_000)
@@ -568,12 +594,30 @@ public final class VideoController extends JComponent
               final int color = (videoPixels & 0x80) == 0 ? paperColor : inkColor;
               videoPixels <<= 1;
 
-              pixelRgbBuffer[offset++] = color;
-              pixelRgbBuffer[offset] = color;
-              offset += SCREEN_WIDTH;
-              pixelRgbBuffer[offset--] = color;
-              pixelRgbBuffer[offset] = color;
-              offset -= SCREEN_WIDTH - 2;
+              switch (renderLines) {
+                case ALL: {
+                  pixelRgbBuffer[offset++] = color;
+                  pixelRgbBuffer[offset] = color;
+                  offset += SCREEN_WIDTH;
+
+                  pixelRgbBuffer[offset--] = color;
+                  pixelRgbBuffer[offset] = color;
+                  offset -= SCREEN_WIDTH - 2;
+                }
+                break;
+                case EVEN: {
+                  pixelRgbBuffer[offset++] = color;
+                  pixelRgbBuffer[offset++] = color;
+                }
+                break;
+                case ODD: {
+                  pixelRgbBuffer[SCREEN_WIDTH + (offset++)] = color;
+                  pixelRgbBuffer[SCREEN_WIDTH + (offset++)] = color;
+                }
+                break;
+                default:
+                  throw new Error("Unexpected mode");
+              }
             }
           } else {
             offset += 16;
@@ -596,13 +640,8 @@ public final class VideoController extends JComponent
           if ((i & 0x1F) == 0) {
             // the first byte in the line
             final int y = extractYFromAddress(i);
-            if (renderLines.test(y)) {
-              offset = y << 10;
-              attributeoffset = calcAttributeAddressZxMode(i);
-            } else {
-              i += 0x1F;
-              continue;
-            }
+            offset = y << 10;
+            attributeoffset = calcAttributeAddressZxMode(i);
           }
 
           int videoValue0 = module0.readVideo(i);
@@ -620,12 +659,31 @@ public final class VideoController extends JComponent
               int x = 8;
               if (inkColor == paperColor) {
                 while (x-- > 0) {
-                  pixelRgbBuffer[offset++] = inkColor;
-                  pixelRgbBuffer[offset] = inkColor;
-                  offset += SCREEN_WIDTH;
-                  pixelRgbBuffer[offset--] = inkColor;
-                  pixelRgbBuffer[offset] = inkColor;
-                  offset -= SCREEN_WIDTH - 2;
+
+                  switch (renderLines) {
+                    case ALL: {
+                      pixelRgbBuffer[offset++] = inkColor;
+                      pixelRgbBuffer[offset] = inkColor;
+                      offset += SCREEN_WIDTH;
+
+                      pixelRgbBuffer[offset--] = inkColor;
+                      pixelRgbBuffer[offset] = inkColor;
+                      offset -= SCREEN_WIDTH - 2;
+                    }
+                    break;
+                    case EVEN: {
+                      pixelRgbBuffer[offset++] = inkColor;
+                      pixelRgbBuffer[offset++] = inkColor;
+                    }
+                    break;
+                    case ODD: {
+                      pixelRgbBuffer[SCREEN_WIDTH + offset++] = inkColor;
+                      pixelRgbBuffer[SCREEN_WIDTH + offset++] = inkColor;
+                    }
+                    break;
+                    default:
+                      throw new Error("Unexpected mode");
+                  }
                 }
               } else {
                 while (x-- > 0) {
@@ -641,12 +699,30 @@ public final class VideoController extends JComponent
 
                   final int color = PALETTE_ZXPOLY[value];
 
-                  pixelRgbBuffer[offset++] = color;
-                  pixelRgbBuffer[offset] = color;
-                  offset += SCREEN_WIDTH;
-                  pixelRgbBuffer[offset--] = color;
-                  pixelRgbBuffer[offset] = color;
-                  offset -= SCREEN_WIDTH - 2;
+                  switch (renderLines) {
+                    case ALL: {
+                      pixelRgbBuffer[offset++] = color;
+                      pixelRgbBuffer[offset] = color;
+                      offset += SCREEN_WIDTH;
+
+                      pixelRgbBuffer[offset--] = color;
+                      pixelRgbBuffer[offset] = color;
+                      offset -= SCREEN_WIDTH - 2;
+                    }
+                    break;
+                    case EVEN: {
+                      pixelRgbBuffer[offset++] = color;
+                      pixelRgbBuffer[offset++] = color;
+                    }
+                    break;
+                    case ODD: {
+                      pixelRgbBuffer[SCREEN_WIDTH + (offset++)] = color;
+                      pixelRgbBuffer[SCREEN_WIDTH + (offset++)] = color;
+                    }
+                    break;
+                    default:
+                      throw new Error("Unexpected mode");
+                  }
                 }
               }
             }
@@ -660,31 +736,71 @@ public final class VideoController extends JComponent
               int x = 8;
               if ((attrModule0 & 0b1000_0000) == 0) {
                 while (x-- > 0) {
-                  pixelRgbBuffer[offset] =
-                          (videoValue0 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                  switch (renderLines) {
+                    case ALL: {
+                      pixelRgbBuffer[offset] =
+                              (videoValue0 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+
+                      pixelRgbBuffer[offset + SCREEN_WIDTH] =
+                              (videoValue2 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+
+                      pixelRgbBuffer[++offset] =
+                              (videoValue1 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+
+                      pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
+                              (videoValue3 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+
+                    }
+                    break;
+                    case EVEN: {
+                      pixelRgbBuffer[offset++] =
+                              (videoValue0 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                      pixelRgbBuffer[offset++] =
+                              (videoValue1 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                    }
+                    break;
+                    case ODD: {
+                      pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
+                              (videoValue2 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                      pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
+                              (videoValue3 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                    }
+                    break;
+                    default:
+                      throw new Error("Unexpected mode");
+                  }
                   videoValue0 <<= 1;
-
-                  pixelRgbBuffer[offset + SCREEN_WIDTH] =
-                          (videoValue2 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
                   videoValue2 <<= 1;
-
-                  pixelRgbBuffer[++offset] =
-                          (videoValue1 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
                   videoValue1 <<= 1;
-
-                  pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
-                          (videoValue3 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
                   videoValue3 <<= 1;
                 }
               } else {
                 if (inkColorMod0 == paperColorMod0) {
                   while (x-- > 0) {
-                    pixelRgbBuffer[offset++] = inkColorMod0;
-                    pixelRgbBuffer[offset] = inkColorMod0;
-                    offset += SCREEN_WIDTH;
-                    pixelRgbBuffer[offset--] = inkColorMod0;
-                    pixelRgbBuffer[offset] = inkColorMod0;
-                    offset -= SCREEN_WIDTH - 2;
+                    switch (renderLines) {
+                      case ALL: {
+                        pixelRgbBuffer[offset++] = inkColorMod0;
+                        pixelRgbBuffer[offset] = inkColorMod0;
+                        offset += SCREEN_WIDTH;
+
+                        pixelRgbBuffer[offset--] = inkColorMod0;
+                        pixelRgbBuffer[offset] = inkColorMod0;
+                        offset -= SCREEN_WIDTH - 2;
+                      }
+                      break;
+                      case EVEN: {
+                        pixelRgbBuffer[offset++] = inkColorMod0;
+                        pixelRgbBuffer[offset++] = inkColorMod0;
+                      }
+                      break;
+                      case ODD: {
+                        pixelRgbBuffer[SCREEN_WIDTH + (offset++)] = inkColorMod0;
+                        pixelRgbBuffer[SCREEN_WIDTH + (offset++)] = inkColorMod0;
+                      }
+                      break;
+                      default:
+                        throw new Error("Unexpected mode");
+                    }
                   }
                 } else {
                   while (x-- > 0) {
@@ -700,12 +816,30 @@ public final class VideoController extends JComponent
 
                     final int color = PALETTE_ZXPOLY[value];
 
-                    pixelRgbBuffer[offset++] = color;
-                    pixelRgbBuffer[offset] = color;
-                    offset += SCREEN_WIDTH;
-                    pixelRgbBuffer[offset--] = color;
-                    pixelRgbBuffer[offset] = color;
-                    offset -= SCREEN_WIDTH - 2;
+                    switch (renderLines) {
+                      case ALL: {
+                        pixelRgbBuffer[offset++] = color;
+                        pixelRgbBuffer[offset] = color;
+                        offset += SCREEN_WIDTH;
+
+                        pixelRgbBuffer[offset--] = color;
+                        pixelRgbBuffer[offset] = color;
+                        offset -= SCREEN_WIDTH - 2;
+                      }
+                      break;
+                      case EVEN: {
+                        pixelRgbBuffer[offset++] = color;
+                        pixelRgbBuffer[offset++] = color;
+                      }
+                      break;
+                      case ODD: {
+                        pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
+                        pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
+                      }
+                      break;
+                      default:
+                        throw new Error("Unexpected mode");
+                    }
                   }
                 }
               }
@@ -726,12 +860,30 @@ public final class VideoController extends JComponent
 
                 final int color = PALETTE_ZXPOLY[value];
 
-                pixelRgbBuffer[offset++] = color;
-                pixelRgbBuffer[offset] = color;
-                offset += SCREEN_WIDTH;
-                pixelRgbBuffer[offset--] = color;
-                pixelRgbBuffer[offset] = color;
-                offset -= SCREEN_WIDTH - 2;
+                switch (renderLines) {
+                  case ALL: {
+                    pixelRgbBuffer[offset++] = color;
+                    pixelRgbBuffer[offset] = color;
+                    offset += SCREEN_WIDTH;
+
+                    pixelRgbBuffer[offset--] = color;
+                    pixelRgbBuffer[offset] = color;
+                    offset -= SCREEN_WIDTH - 2;
+                  }
+                  break;
+                  case EVEN: {
+                    pixelRgbBuffer[offset++] = color;
+                    pixelRgbBuffer[offset++] = color;
+                  }
+                  break;
+                  case ODD: {
+                    pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
+                    pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
+                  }
+                  break;
+                  default:
+                    throw new Error("Unexpected mode");
+                }
               }
             }
             break;
@@ -741,7 +893,7 @@ public final class VideoController extends JComponent
       break;
       case VIDEOMODE_ZXPOLY_512x384: {
         int offset = 0;
-        int attributeoffset = 0;
+        int attributeOffset = 0;
 
         final ZxPolyModule module0 = modules[0];
         final ZxPolyModule module1 = modules[1];
@@ -752,49 +904,68 @@ public final class VideoController extends JComponent
           if ((i & 0x1F) == 0) {
             // the first byte in the line
             final int y = extractYFromAddress(i);
-            if (renderLines.test(y)) {
-              offset = y << 10;
-              attributeoffset = calcAttributeAddressZxMode(i);
-            } else {
-              i += 0x1F;
-              continue;
-            }
+            offset = y << 10;
+            attributeOffset = calcAttributeAddressZxMode(i);
           }
 
           int videoValue0 = module0.readVideo(i);
-          final int attribute0 = module0.readVideo(attributeoffset);
+          final int attribute0 = module0.readVideo(attributeOffset);
 
           int videoValue1 = module1.readVideo(i);
-          final int attribute1 = module1.readVideo(attributeoffset);
+          final int attribute1 = module1.readVideo(attributeOffset);
 
           int videoValue2 = module2.readVideo(i);
-          final int attribute2 = module2.readVideo(attributeoffset);
+          final int attribute2 = module2.readVideo(attributeOffset);
 
           int videoValue3 = module3.readVideo(i);
-          final int attribute3 = module3.readVideo(attributeoffset++);
+          final int attribute3 = module3.readVideo(attributeOffset++);
 
           int x = 8;
           while (x-- > 0) {
-            pixelRgbBuffer[offset] =
-                    (videoValue0 & 0x80) == 0 ? extractPaperColor(attribute0, flashActive) :
-                            extractInkColor(attribute0, flashActive);
+            switch (renderLines) {
+              case ALL: {
+                pixelRgbBuffer[offset] =
+                        (videoValue0 & 0x80) == 0 ? extractPaperColor(attribute0, flashActive) :
+                                extractInkColor(attribute0, flashActive);
+
+                pixelRgbBuffer[offset + SCREEN_WIDTH] =
+                        (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) :
+                                extractInkColor(attribute2, flashActive);
+                pixelRgbBuffer[++offset] =
+                        (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, flashActive) :
+                                extractInkColor(attribute1, flashActive);
+
+                pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
+                        (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) :
+                                extractInkColor(attribute3, flashActive);
+              }
+              break;
+              case EVEN: {
+                pixelRgbBuffer[offset++] =
+                        (videoValue0 & 0x80) == 0 ? extractPaperColor(attribute0, flashActive) :
+                                extractInkColor(attribute0, flashActive);
+                pixelRgbBuffer[offset++] =
+                        (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, flashActive) :
+                                extractInkColor(attribute1, flashActive);
+              }
+              break;
+              case ODD: {
+                pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
+                        (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) :
+                                extractInkColor(attribute2, flashActive);
+                pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
+                        (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) :
+                                extractInkColor(attribute3, flashActive);
+              }
+              break;
+              default:
+                throw new Error("Unexpected mode");
+            }
+
             videoValue0 <<= 1;
-
-            pixelRgbBuffer[offset + SCREEN_WIDTH] =
-                    (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) :
-                            extractInkColor(attribute2, flashActive);
             videoValue2 <<= 1;
-
-            pixelRgbBuffer[++offset] =
-                    (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, flashActive) :
-                            extractInkColor(attribute1, flashActive);
             videoValue1 <<= 1;
-
-            pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
-                    (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) :
-                            extractInkColor(attribute3, flashActive);
             videoValue3 <<= 1;
-
           }
         }
       }
@@ -1227,7 +1398,7 @@ public final class VideoController extends JComponent
     }
   }
 
-  private void refreshBufferData(final RenderLines renderLines, final int videoMode) {
+  private void refreshBufferData(final LineRenderMode renderLines, final int videoMode) {
     switch (videoMode) {
       case VIDEOMODE_ZX48_CPU0: {
         fillDataBufferForZxSpectrum128Mode(
@@ -1241,6 +1412,7 @@ public final class VideoController extends JComponent
       break;
       case VIDEOMODE_SPEC256: {
         fillDataBufferForSpec256VideoMode(
+                renderLines,
                 this.modules,
                 this.bufferImageRgbData,
                 this.board.isFlashActive()
@@ -1395,7 +1567,7 @@ public final class VideoController extends JComponent
         }
         this.currentVideoMode = newVideoMode;
         log.log(Level.INFO, "mode set: " + decodeVideoModeCode(newVideoMode));
-        refreshBufferData(RenderLines.ALL, this.currentVideoMode);
+        refreshBufferData(LineRenderMode.ALL, this.currentVideoMode);
       }
     } finally {
       unlockBuffer();
@@ -1430,7 +1602,7 @@ public final class VideoController extends JComponent
     bufferLocker.unlock();
   }
 
-  public void syncUpdateBuffer(final RenderLines renderLines) {
+  public void syncUpdateBuffer(final LineRenderMode renderLines) {
     lockBuffer();
     try {
       this.refreshBufferData(renderLines, this.currentVideoMode);
@@ -1449,7 +1621,7 @@ public final class VideoController extends JComponent
                       BufferedImage.TYPE_INT_ARGB);
       Graphics g = buffImage.getGraphics();
       fillDataBufferForZxPolyVideoMode(
-              RenderLines.ALL,
+              LineRenderMode.ALL,
               this.currentVideoMode,
               this.modules,
               this.bufferImageRgbData,
@@ -1465,7 +1637,7 @@ public final class VideoController extends JComponent
               BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
       fillDataBufferForZxPolyVideoMode(
-              RenderLines.ALL,
+              LineRenderMode.ALL,
               VIDEOMODE_ZX48_CPU0,
               this.modules,
               this.bufferImageRgbData,
@@ -1481,7 +1653,7 @@ public final class VideoController extends JComponent
               BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
       fillDataBufferForZxPolyVideoMode(
-              RenderLines.ALL,
+              LineRenderMode.ALL,
               VIDEOMODE_ZX48_CPU1,
               this.modules,
               this.bufferImageRgbData,
@@ -1497,7 +1669,7 @@ public final class VideoController extends JComponent
               BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
       fillDataBufferForZxPolyVideoMode(
-              RenderLines.ALL,
+              LineRenderMode.ALL,
               VIDEOMODE_ZX48_CPU2,
               this.modules,
               this.bufferImageRgbData,
@@ -1513,7 +1685,7 @@ public final class VideoController extends JComponent
               BufferedImage.TYPE_INT_ARGB);
       g = buffImage.getGraphics();
       fillDataBufferForZxPolyVideoMode(
-              RenderLines.ALL,
+              LineRenderMode.ALL,
               VIDEOMODE_ZX48_CPU3,
               this.modules,
               this.bufferImageRgbData,
@@ -1527,7 +1699,7 @@ public final class VideoController extends JComponent
 
       return result.toArray(EMPTY_ARRAY);
     } finally {
-      refreshBufferData(RenderLines.ALL, VIDEOMODE_ZX48_CPU0);
+      refreshBufferData(LineRenderMode.ALL, VIDEOMODE_ZX48_CPU0);
       this.unlockBuffer();
     }
   }
@@ -1732,20 +1904,9 @@ public final class VideoController extends JComponent
     }
   }
 
-  public enum RenderLines implements IntPredicate {
-    ALL(x -> true),
-    EVEN(x -> (x & 1) == 0),
-    ODD(x -> (x & 1) == 1);
-
-    private final IntPredicate predicate;
-
-    RenderLines(final IntPredicate predicate) {
-      this.predicate = predicate;
-    }
-
-    @Override
-    public boolean test(final int value) {
-      return this.predicate.test(value);
-    }
+  public enum LineRenderMode {
+    ALL,
+    EVEN,
+    ODD;
   }
 }

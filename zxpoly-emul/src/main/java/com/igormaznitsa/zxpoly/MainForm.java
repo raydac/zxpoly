@@ -997,9 +997,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
   private void blinkScreen(final long sessionIntCounter) {
     if (this.interlaceScan) {
-      this.board.getVideoController().syncUpdateBuffer((sessionIntCounter & 1) == 0 ? VideoController.RenderLines.EVEN : VideoController.RenderLines.ODD);
+      this.board.getVideoController().syncUpdateBuffer((sessionIntCounter & 1) == 0 ? VideoController.LineRenderMode.EVEN : VideoController.LineRenderMode.ODD);
     } else {
-      this.board.getVideoController().syncUpdateBuffer(VideoController.RenderLines.ALL);
+      this.board.getVideoController().syncUpdateBuffer(VideoController.LineRenderMode.ALL);
     }
   }
 
