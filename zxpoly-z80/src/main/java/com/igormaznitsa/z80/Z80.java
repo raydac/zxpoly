@@ -119,14 +119,14 @@ public final class Z80 {
   private int regPC;
   private int regI;
   private int regR;
-  private int tstates;
+  private int tiStates;
   private int lastM1InstructionByte = -1;
   private int lastInstructionByte = -1;
   private int cbDisplacementByte = -1;
   private int prefix;
   private int outSignals = 0xFFFFFFFF;
-  private int prevINSignals = 0xFFFFFFFF;
-  private boolean interruptAllowedForStep;
+  private int prevInSignals = 0xFFFFFFFF;
+  private boolean stepAllowsInterruption;
   private boolean detectedNMI;
   private boolean detectedINT;
   private boolean insideBlockInstructionPrev;
@@ -144,7 +144,7 @@ public final class Z80 {
     _reset(0);
     _reset(1);
     _reset(2);
-    this.tstates = 0;
+    this.tiStates = 0;
   }
 
   /**
@@ -171,11 +171,11 @@ public final class Z80 {
     System.arraycopy(cpu.altRegSet, 0, this.altRegSet, 0, cpu.altRegSet.length);
     this.lastM1InstructionByte = cpu.lastM1InstructionByte;
     this.lastInstructionByte = cpu.lastInstructionByte;
-    this.tstates = cpu.tstates;
+    this.tiStates = cpu.tiStates;
     this.cbDisplacementByte = cpu.cbDisplacementByte;
     this.outSignals = cpu.outSignals;
-    this.prevINSignals = cpu.prevINSignals;
-    this.interruptAllowedForStep = cpu.interruptAllowedForStep;
+    this.prevInSignals = cpu.prevInSignals;
+    this.stepAllowsInterruption = cpu.stepAllowsInterruption;
     this.detectedINT = cpu.detectedINT;
     this.detectedNMI = cpu.detectedNMI;
     this.insideBlockInstruction = cpu.insideBlockInstruction;
@@ -251,11 +251,11 @@ public final class Z80 {
     System.arraycopy(src.altRegSet, 0, this.altRegSet, 0, src.altRegSet.length);
     this.lastM1InstructionByte = src.lastM1InstructionByte;
     this.lastInstructionByte = src.lastInstructionByte;
-    this.tstates = src.tstates;
+    this.tiStates = src.tiStates;
     this.cbDisplacementByte = src.cbDisplacementByte;
     this.outSignals = src.outSignals;
-    this.prevINSignals = src.prevINSignals;
-    this.interruptAllowedForStep = src.interruptAllowedForStep;
+    this.prevInSignals = src.prevInSignals;
+    this.stepAllowsInterruption = src.stepAllowsInterruption;
     this.detectedINT = src.detectedINT;
     this.detectedNMI = src.detectedNMI;
     this.insideBlockInstruction = src.insideBlockInstruction;
@@ -291,8 +291,8 @@ public final class Z80 {
     return this.prefix;
   }
 
-  public int getPrevINSignals() {
-    return this.prevINSignals;
+  public int getPrevInSignals() {
+    return this.prevInSignals;
   }
 
   public int getPC() {
@@ -403,7 +403,7 @@ public final class Z80 {
   }
 
   public int getStepTstates() {
-    return this.tstates;
+    return this.tiStates;
   }
 
   public boolean isInsideBlockLoop() {
@@ -445,12 +445,12 @@ public final class Z80 {
     this.insideBlockInstruction = false;
     this.insideBlockInstructionPrev = false;
 
-    this.interruptAllowedForStep = false;
+    this.stepAllowsInterruption = false;
 
     this.prefix = 0;
     this.outSignals = SIGNAL_OUT_ALL_INACTIVE;
 
-    this.tstates += 3;
+    this.tiStates += 3;
   }
 
   private void _resetHalt() {
@@ -487,14 +487,14 @@ public final class Z80 {
         final int address = _readmem16(ctx, vector);
         this.setMemPtr(address);
         _call(ctx, address);
-        this.tstates++;
+        this.tiStates++;
       }
       break;
       default:
         throw new Error("Unexpected IM mode [" + this.im + ']');
     }
 
-    this.tstates += 6;
+    this.tiStates += 6;
   }
 
   private void _incR() {
@@ -515,12 +515,12 @@ public final class Z80 {
     this.detectedNMI = false;
     this.detectedINT = false;
     _call(ctx, 0x66);
-    this.tstates += 5;
+    this.tiStates += 5;
   }
 
   private void _writemem8(final int ctx, final int address, final byte value) {
     this.bus.writeMemory(this, ctx, address & 0xFFFF, value);
-    this.tstates += 3;
+    this.tiStates += 3;
   }
 
   private int _readNextPcAddressedWord(final int ctx) {
@@ -553,22 +553,22 @@ public final class Z80 {
   }
 
   private int _readport(final int ctx, final int port) {
-    this.tstates += 4;
+    this.tiStates += 4;
     return this.bus.readPort(this, ctx, port & 0xFFFF) & 0xFF;
   }
 
   private void _writeport(final int ctx, final int port, final int value) {
     this.bus.writePort(this, ctx, port & 0xFFFF, (byte) value);
-    this.tstates += 4;
+    this.tiStates += 4;
   }
 
   private int _readmem8(final int ctx, final int address) {
-    this.tstates += 3;
+    this.tiStates += 3;
     return this.bus.readMemory(this, ctx, address & 0xFFFF, false, false) & 0xFF;
   }
 
   private int _readmem8withM1(final int ctx, final int address) {
-    this.tstates += 3;
+    this.tiStates += 3;
     return this.bus.readMemory(this, ctx, address & 0xFFFF, true, false) & 0xFF;
   }
 
@@ -580,7 +580,7 @@ public final class Z80 {
     if (this.cbDisplacementByte < 0) {
       return readInstrOrPrefix(ctx, false);
     } else {
-      this.tstates -= 5;
+      this.tiStates -= 5;
       return this.cbDisplacementByte;
     }
   }
@@ -595,7 +595,7 @@ public final class Z80 {
     final int result = this.bus.readMemory(this, ctx, pc, m1 && nonDisplacementByte, true) & 0xFF;
     this.outSignals = this.outSignals | SIGNAL_OUT_nM1;
 
-    this.tstates += m1 ? 4 : 3;
+    this.tiStates += m1 ? 4 : 3;
 
     if (m1) {
       this.lastM1InstructionByte = result;
@@ -670,8 +670,8 @@ public final class Z80 {
     this.regR = src.regR;
     this.insideBlockInstruction = src.insideBlockInstruction;
     this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
-    this.prevINSignals = src.prevINSignals;
-    this.interruptAllowedForStep = src.interruptAllowedForStep;
+    this.prevInSignals = src.prevInSignals;
+    this.stepAllowsInterruption = src.stepAllowsInterruption;
     this.detectedINT = src.detectedINT;
     this.detectedNMI = src.detectedNMI;
 
@@ -767,13 +767,13 @@ public final class Z80 {
             return _readmem8(ctx, address);
           }
           case 0xDD: {
-            this.tstates += 5;
+            this.tiStates += 5;
             final int address = _readPtr(ctx, REG_IX, this.regIX) + (byte) _read_ixiy_d(ctx);
             this.setMemPtr(address);
             return _readmem8(ctx, address);
           }
           case 0xFD: {
-            this.tstates += 5;
+            this.tiStates += 5;
             final int address = _readPtr(ctx, REG_IY, this.regIY) + (byte) _read_ixiy_d(ctx);
             this.setMemPtr(address);
             return _readmem8(ctx, address);
@@ -967,14 +967,14 @@ public final class Z80 {
             final int address = _readPtr(ctx, REG_IX, this.regIX) + (byte) value;
             _writemem8(ctx, address, (byte) readInstrOrPrefix(ctx, false));
             this.setMemPtr(address);
-            this.tstates += 2;
+            this.tiStates += 2;
             return;
           }
           case 0xFD: {
             final int address = _readPtr(ctx, REG_IY, this.regIY) + (byte) value;
             _writemem8(ctx, address, (byte) readInstrOrPrefix(ctx, false));
             this.setMemPtr(address);
-            this.tstates += 2;
+            this.tiStates += 2;
             return;
           }
         }
@@ -996,7 +996,7 @@ public final class Z80 {
   }
 
   private boolean isHiLoFront(final int signal, final int signals) {
-    return (((this.prevINSignals & signal) ^ (signals & signal)) & (signal & this.prevINSignals)) !=
+    return (((this.prevInSignals & signal) ^ (signals & signal)) & (signal & this.prevInSignals)) !=
             0;
   }
 
@@ -1061,14 +1061,14 @@ public final class Z80 {
    * otherwise
    */
   public boolean step(final int ctx, final int incomingSignals) {
-    this.tstates = 0;
+    this.tiStates = 0;
     try {
       final boolean result;
-      this.interruptAllowedForStep = true;
+      this.stepAllowsInterruption = true;
 
       if ((incomingSignals & SIGNAL_IN_nWAIT) == 0) {
         // PROCESS nWAIT
-        this.tstates++;
+        this.tiStates++;
         result = this.prefix != 0;
       } else if ((incomingSignals & SIGNAL_IN_nRESET) == 0) {
         // START RESET
@@ -1083,7 +1083,7 @@ public final class Z80 {
           this.prefix = 0;
           result = false;
 
-          if (this.interruptAllowedForStep) {
+          if (this.stepAllowsInterruption) {
             // Check interruptions
             if ((incomingSignals & SIGNAL_IN_nNMI) == 0) {
               // NMI
@@ -1100,7 +1100,7 @@ public final class Z80 {
 
       return result;
     } finally {
-      this.prevINSignals = incomingSignals;
+      this.prevInSignals = incomingSignals;
     }
   }
 
@@ -1536,7 +1536,7 @@ public final class Z80 {
 
   private void doNONI() {
     this.prefix = 0;
-    this.interruptAllowedForStep = false;
+    this.stepAllowsInterruption = false;
   }
 
   private void doHalt() {
@@ -1558,13 +1558,13 @@ public final class Z80 {
 
   private void doDJNZ(final int ctx) {
     final int offset = (byte) readInstrOrPrefix(ctx, false);
-    this.tstates++;
+    this.tiStates++;
     int b = _readSpecRegValue(ctx, REG_B, this.regSet[REG_B]) & 0xFF;
     final int address = (this.regPC + offset) & 0xFFFF;
     if (--b != 0) {
       this.regPC = address;
       this.setMemPtr(address);
-      this.tstates += 5;
+      this.tiStates += 5;
     }
     this.regSet[REG_B] = (byte) b;
   }
@@ -1575,7 +1575,7 @@ public final class Z80 {
       final int address = (this.regPC + offset) & 0xFFFF;
       this.setMemPtr(address);
       this.regPC = address;
-      this.tstates += 5;
+      this.tiStates += 5;
     }
   }
 
@@ -1584,7 +1584,7 @@ public final class Z80 {
     final int address = (this.regPC + offset) & 0xFFFF;
     this.regPC = address;
     this.setMemPtr(address);
-    this.tstates += 5;
+    this.tiStates += 5;
   }
 
   private void doLDRegPairByNextWord(final int ctx, final int p) {
@@ -1607,7 +1607,7 @@ public final class Z80 {
 
     this.setMemPtr(reg + 1);
 
-    this.tstates += 7;
+    this.tiStates += 7;
   }
 
   private void doADC_HL_RegPair(final int p) {
@@ -1629,7 +1629,7 @@ public final class Z80 {
 
     this.setMemPtr(x + 1);
 
-    this.tstates += 7;
+    this.tiStates += 7;
   }
 
   private void doSBC_HL_RegPair(final int p) {
@@ -1653,7 +1653,7 @@ public final class Z80 {
 
     this.setMemPtr(x + 1);
 
-    this.tstates += 7;
+    this.tiStates += 7;
   }
 
   private void writeReg8_forLdReg8Instruction(final int ctx, final int r, final int value) {
@@ -1706,14 +1706,14 @@ public final class Z80 {
             final int address = _readPtr(ctx, REG_IX, this.regIX) + (byte) readInstrOrPrefix(ctx, false);
             _writemem8(ctx, address, (byte) value);
             this.setMemPtr(address);
-            this.tstates += 5;
+            this.tiStates += 5;
             return;
           }
           case 0xFD: {
             final int address = _readPtr(ctx, REG_IY, this.regIY) + (byte) readInstrOrPrefix(ctx, false);
             _writemem8(ctx, address, (byte) value);
             this.setMemPtr(address);
-            this.tstates += 5;
+            this.tiStates += 5;
             return;
           }
         }
@@ -1779,7 +1779,7 @@ public final class Z80 {
         }
         return;
       case 6: { // (HL)
-        this.tstates += 1;
+        this.tiStates += 1;
         switch (normalizedPrefix()) {
           case 0x00:
             _writemem8(ctx, _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL)),
@@ -1849,12 +1849,12 @@ public final class Z80 {
 
   private void doINCRegPair(final int p) {
     writeReg16(p, readReg16(p) + 1);
-    this.tstates += 2;
+    this.tiStates += 2;
   }
 
   private void doDECRegPair(final int p) {
     writeReg16(p, readReg16(p) - 1);
-    this.tstates += 2;
+    this.tiStates += 2;
   }
 
   private void doINCReg(final int ctx, final int y) {
@@ -2009,7 +2009,7 @@ public final class Z80 {
       this.regPC = address;
       this.regSP = sp1 & 0xFFFF;
     }
-    this.tstates++;
+    this.tiStates++;
   }
 
   private void doRET(final int ctx) {
@@ -2040,7 +2040,7 @@ public final class Z80 {
   }
 
   private void doLD_SP_HL(final int ctx) {
-    this.tstates += 2;
+    this.tiStates += 2;
     setRegister(REG_SP, readHlPtr(ctx));
   }
 
@@ -2083,7 +2083,7 @@ public final class Z80 {
 
     this.setMemPtr(value);
 
-    this.tstates += 3;
+    this.tiStates += 3;
   }
 
   private void doEX_DE_HL() {
@@ -2098,7 +2098,7 @@ public final class Z80 {
   private void doDI() {
     this.iff1 = false;
     this.iff2 = false;
-    this.interruptAllowedForStep = false;
+    this.stepAllowsInterruption = false;
     this.insideBlockInstruction = false;
     this.insideBlockInstructionPrev = false;
     this.detectedINT = false;
@@ -2107,7 +2107,7 @@ public final class Z80 {
   private void doEI() {
     this.iff1 = true;
     this.iff2 = true;
-    this.interruptAllowedForStep = false;
+    this.stepAllowsInterruption = false;
     this.insideBlockInstruction = false;
     this.insideBlockInstructionPrev = false;
     this.detectedINT = false;
@@ -2118,7 +2118,7 @@ public final class Z80 {
     this.setMemPtr(address);
     if (checkCondition(y)) {
       _call(ctx, address);
-      this.tstates++;
+      this.tiStates++;
     }
   }
 
@@ -2126,14 +2126,14 @@ public final class Z80 {
     final int address = _readNextPcAddressedWord(ctx);
     this.setMemPtr(address);
     _call(ctx, address);
-    this.tstates++;
+    this.tiStates++;
   }
 
   private void doPUSH(final int ctx, final int p) {
     final int address = _readPtr(ctx, REG_SP, this.getSP()) - 2;
     _writemem16(ctx, address, readReg16_2(p));
     setRegister(REG_SP, address);
-    this.tstates++;
+    this.tiStates++;
   }
 
   private void doALU_A_Reg(final int ctx, final int op, final int reg) {
@@ -2235,7 +2235,7 @@ public final class Z80 {
   private void doRST(final int ctx, final int address) {
     _call(ctx, address & 0xFF);
     this.setMemPtr(address);
-    this.tstates++;
+    this.tiStates++;
   }
 
   private int doRollShift(final int ctx, final int op, final int reg) {
@@ -2303,7 +2303,7 @@ public final class Z80 {
 
     final int h;
     if (reg == 6) {
-      this.tstates++;
+      this.tiStates++;
       // (HL),(IX),(IY)
       h = this.memptr >> 8;
     } else {
@@ -2447,12 +2447,12 @@ public final class Z80 {
 
   private void doLD_I_A() {
     setRegister(REG_I, getRegister(REG_A));
-    this.tstates++;
+    this.tiStates++;
   }
 
   private void doLD_R_A() {
     setRegister(REG_R, getRegister(REG_A));
-    this.tstates++;
+    this.tiStates++;
   }
 
   private void doLD_A_I() {
@@ -2465,7 +2465,7 @@ public final class Z80 {
     this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
 
-    this.tstates++;
+    this.tiStates++;
   }
 
   private void doLD_A_R() {
@@ -2478,7 +2478,7 @@ public final class Z80 {
     this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
 
-    this.tstates++;
+    this.tiStates++;
   }
 
   private void doRRD(final int ctx) {
@@ -2496,7 +2496,7 @@ public final class Z80 {
 
     this.setMemPtr(hl + 1);
 
-    this.tstates += 4;
+    this.tiStates += 4;
   }
 
   private void doRLD(final int ctx) {
@@ -2514,7 +2514,7 @@ public final class Z80 {
 
     this.setMemPtr(hl + 1);
 
-    this.tstates += 4;
+    this.tiStates += 4;
   }
 
   private boolean doBLI(final int ctx, final int y, final int z) {
@@ -2614,7 +2614,7 @@ public final class Z80 {
       final int address = (this.regPC - 2) & 0xFFFF;
       this.setMemPtr(address + 1);
       this.regPC = address;
-      this.tstates += 5;
+      this.tiStates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2639,7 +2639,7 @@ public final class Z80 {
       final int address = (this.regPC - 2) & 0xFFFF;
       this.setMemPtr(address + 1);
       this.regPC = address;
-      this.tstates += 5;
+      this.tiStates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2668,7 +2668,7 @@ public final class Z80 {
 
     this.setMemPtr(bc + delta);
 
-    this.tstates++;
+    this.tiStates++;
   }
 
   private boolean doINIR(final int ctx) {
@@ -2676,7 +2676,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tstates += 5;
+      this.tiStates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2688,7 +2688,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tstates += 5;
+      this.tiStates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2717,7 +2717,7 @@ public final class Z80 {
     this.regSet[REG_F] = (byte) f;
     this.internalRegQ = f;
 
-    this.tstates += 2;
+    this.tiStates += 2;
   }
 
   private boolean doOTIR(final int ctx) {
@@ -2725,7 +2725,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tstates += 5;
+      this.tiStates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2755,7 +2755,7 @@ public final class Z80 {
 
     this.setMemPtr(this.getMemPtr() + 1);
 
-    this.tstates += 5;
+    this.tiStates += 5;
   }
 
   private boolean doOTDR(final int ctx) {
@@ -2763,7 +2763,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tstates += 5;
+      this.tiStates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2777,7 +2777,7 @@ public final class Z80 {
       final int address = (this.regPC - 2) & 0xFFFF;
       this.regPC = address;
       this.setMemPtr(address + 1);
-      this.tstates += 5;
+      this.tiStates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2807,7 +2807,7 @@ public final class Z80 {
 
     this.setMemPtr(((b << 8) | (bc & 0xFF)) + delta);
 
-    this.tstates++;
+    this.tiStates++;
   }
 
   private boolean doCPDR(final int ctx) {
@@ -2821,7 +2821,7 @@ public final class Z80 {
       final int address = (this.regPC - 2) & 0xFFFF;
       this.regPC = address;
       this.setMemPtr(address + 1);
-      this.tstates += 5;
+      this.tiStates += 5;
     } else {
       loopNonCompleted = false;
     }
@@ -2923,7 +2923,7 @@ public final class Z80 {
     this.regSet[REG_F] = (byte) f;
     this.internalRegQ = f;
 
-    this.tstates += 2;
+    this.tiStates += 2;
   }
 
   private void doCPD(final int ctx) {
@@ -2947,7 +2947,7 @@ public final class Z80 {
 
     this.setMemPtr(this.getMemPtr() - 1);
 
-    this.tstates += 5;
+    this.tiStates += 5;
   }
 
 }
