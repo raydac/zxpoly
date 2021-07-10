@@ -17,12 +17,9 @@
 
 package com.igormaznitsa.z80;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class TestZ80Signals extends AbstractZ80Test {
   @Test
@@ -104,6 +101,41 @@ public class TestZ80Signals extends AbstractZ80Test {
 
     assertFalse(cpu.isIFF1());
     assertEquals(0x66, cpu.getRegister(Z80.REG_PC));
+    assertEquals(0xFFFD, cpu.getRegister(Z80.REG_SP));
+  }
+
+  @Test
+  public void testInt_EI_INCA_DECA() {
+    final TestBus tb = new TestBus(0xFF, 0, 0xFB, 0x3C, 0x3D);
+    final Z80 cpu = new Z80(tb);
+    cpu.setRegister(Z80.REG_A, 0);
+    cpu.setIM(0);
+    cpu.setIFF(false, false);
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
+
+    assertFalse(cpu.step(111, ~Z80.SIGNAL_IN_nINT));
+    assertEquals(0x01, cpu.getRegister(Z80.REG_PC));
+    assertEquals(0xFFFF, cpu.getRegister(Z80.REG_SP));
+
+    assertFalse(cpu.step(111, ~Z80.SIGNAL_IN_nINT));
+    assertEquals(1, cpu.getRegister(Z80.REG_A));
+    assertEquals(0x38, cpu.getRegister(Z80.REG_PC));
+    assertEquals(0xFFFD, cpu.getRegister(Z80.REG_SP));
+  }
+
+  @Test
+  public void testInt_INCA_DECA() {
+    final TestBus tb = new TestBus(0xFF, 0, 0x3C, 0x3D);
+    final Z80 cpu = new Z80(tb);
+    cpu.setRegister(Z80.REG_A, 0);
+    cpu.setIM(0);
+    cpu.setIFF(true, true);
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
+
+    assertFalse(cpu.step(111, ~Z80.SIGNAL_IN_nINT));
+
+    assertEquals(1, cpu.getRegister(Z80.REG_A));
+    assertEquals(0x38, cpu.getRegister(Z80.REG_PC));
     assertEquals(0xFFFD, cpu.getRegister(Z80.REG_SP));
   }
 
