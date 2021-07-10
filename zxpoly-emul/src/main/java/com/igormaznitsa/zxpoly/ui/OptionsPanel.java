@@ -130,6 +130,7 @@ public class OptionsPanel extends JPanel {
   }
 
   private void fillByDataContainer(final DataContainer data) {
+    this.checkInterlacedScan.setSelected(data.interlacedScan);
     this.textCustomRomPath.setText(data.customRomPath);
     this.checkSoundSchemeACB.setSelected(data.soundSchemeAcb);
     this.checkGrabSound.setSelected(data.grabSound);
@@ -662,8 +663,8 @@ public class OptionsPanel extends JPanel {
     public final boolean soundSchemeAcb;
 
     public DataContainer() {
-      final String cromPath = AppOptions.getInstance().getCustomRomPath();
-      this.customRomPath = cromPath == null ? "" : cromPath;
+      final String customRomPath = AppOptions.getInstance().getCustomRomPath();
+      this.customRomPath = customRomPath == null ? "" : customRomPath;
       this.borderLines = AppOptions.getInstance().getBorderLines();
       this.interlacedScan = AppOptions.getInstance().isInterlacedScan();
       this.soundSchemeAcb = AppOptions.getInstance().isSoundChannelsACB();
