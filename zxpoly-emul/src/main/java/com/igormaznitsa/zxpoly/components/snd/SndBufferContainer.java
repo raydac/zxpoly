@@ -3,7 +3,7 @@ package com.igormaznitsa.zxpoly.components.snd;
 import javax.sound.sampled.AudioFormat;
 import java.util.Arrays;
 
-import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
+import static com.igormaznitsa.zxpoly.components.Timings.TSTATES_PER_FRAME;
 import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
 
 final class SndBufferContainer {
@@ -59,8 +59,8 @@ final class SndBufferContainer {
   }
 
   public static int calculatePosition(final int tstatesIntCounter) {
-    return ((tstatesIntCounter * SAMPLES_PER_INT + TSTATES_PER_INT / 2)
-            / TSTATES_PER_INT);
+    return ((tstatesIntCounter * SAMPLES_PER_INT + TSTATES_PER_FRAME / 2)
+            / TSTATES_PER_FRAME);
   }
 
   public void setValue(final int deltaTstates, final int levelLeft, final int levelRight) {

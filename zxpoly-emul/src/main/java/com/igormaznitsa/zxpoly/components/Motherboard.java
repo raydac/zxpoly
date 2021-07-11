@@ -38,22 +38,6 @@ import static java.lang.Math.min;
 @SuppressWarnings({"unused", "FieldCanBeLocal", "NonAtomicOperationOnVolatileField"})
 public final class Motherboard implements ZxPolyConstants {
 
-  public static final int CPU_FREQ = 3546900;
-
-  public static final int SCREEN_VISIBLE_ROWS_BEFORE_MAIN_AREA = 63;
-  public static final int SCREEN_VISIBLE_ROWS_AFTER_MAIN_AREA = 56;
-  public static final int TOTAL_SCREEN_VISIBLE_ROWS = SCREEN_VISIBLE_ROWS_BEFORE_MAIN_AREA + 192 + SCREEN_VISIBLE_ROWS_AFTER_MAIN_AREA;
-
-  public static final int TSTATES_PER_ROW = 228;
-  public static final int TSTATES_BEFORE_SCREEN_OUTPUT_START = 0;
-  public static final int TSTATES_BEFORE_BORDER_VISIBILITY = 16 * TSTATES_PER_ROW;
-  public static final int TSTATES_BEFORE_MAIN_AREA_OUTPUT = TSTATES_BEFORE_SCREEN_OUTPUT_START + SCREEN_VISIBLE_ROWS_BEFORE_MAIN_AREA * TSTATES_PER_ROW;
-  public static final int TSTATES_MAIN_AREA_OUTPUT_END = TSTATES_BEFORE_MAIN_AREA_OUTPUT + 192 * TSTATES_PER_ROW;
-  public static final int TSTATES_SCREEN_OUTPUT_END = TSTATES_MAIN_AREA_OUTPUT_END + SCREEN_VISIBLE_ROWS_AFTER_MAIN_AREA * TSTATES_PER_ROW;
-  public static final int TSTATES_PER_INT = CPU_FREQ / 50;
-
-  public static final int INT_TSTATES_LENGTH = 32;
-
   public static final int TRIGGER_NONE = 0;
   public static final int TRIGGER_DIFF_MODULESTATES = 1;
   public static final int TRIGGER_DIFF_MEM_ADDR = 2;
@@ -75,6 +59,9 @@ public final class Motherboard implements ZxPolyConstants {
 
   private final BetaDiscInterface betaDisk;
   private final float[] cpuLoad = new float[4];
+  private final Random rnd = new Random();
+  private final Beeper beeper;
+  private final RomData romData;
   private volatile int port3D00 = (int) System.nanoTime() & 0xFF; // simulate noise after turning on
   private volatile boolean totalReset;
   private volatile int resetCounter;
@@ -86,32 +73,9 @@ public final class Motherboard implements ZxPolyConstants {
   private volatile BoardMode boardMode;
   private int statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
   private volatile int gfxSyncRegsRecord = 0;
-  private final Random rnd = new Random();
-  private final Beeper beeper;
-  private final RomData romData;
-
   private volatile boolean gfxLeveledXor = false;
   private volatile boolean gfxLeveledOr = false;
   private volatile boolean gfxLeveledAnd = false;
-
-  public boolean isGfxLeveledXor() {
-    return this.gfxLeveledXor;
-  }
-
-  public boolean isGfxLeveledOr() {
-    return this.gfxLeveledOr;
-  }
-
-  public boolean isGfxLeveledAnd() {
-    return this.gfxLeveledAnd;
-  }
-
-  public void setGfxLeveledLogicalOps(final boolean xor, final boolean or, final boolean and) {
-    LOGGER.info(String.format("Set GFX leveled logic ops XOR=%b, OR=%b, AND=%b", xor, or, and));
-    this.gfxLeveledXor = xor;
-    this.gfxLeveledOr = or;
-    this.gfxLeveledAnd = and;
-  }
 
   public Motherboard(
           final RomData rom,
@@ -175,6 +139,25 @@ public final class Motherboard implements ZxPolyConstants {
     for (int i = 0; i < SPEC256_GFX_CORES; i++) {
       this.spec256GfxCores[i] = new Z80(this.modules[0].getCpu());
     }
+  }
+
+  public boolean isGfxLeveledXor() {
+    return this.gfxLeveledXor;
+  }
+
+  public boolean isGfxLeveledOr() {
+    return this.gfxLeveledOr;
+  }
+
+  public boolean isGfxLeveledAnd() {
+    return this.gfxLeveledAnd;
+  }
+
+  public void setGfxLeveledLogicalOps(final boolean xor, final boolean or, final boolean and) {
+    LOGGER.info(String.format("Set GFX leveled logic ops XOR=%b, OR=%b, AND=%b", xor, or, and));
+    this.gfxLeveledXor = xor;
+    this.gfxLeveledOr = or;
+    this.gfxLeveledAnd = and;
   }
 
   public Beeper getBeeper() {
@@ -324,7 +307,7 @@ public final class Motherboard implements ZxPolyConstants {
       if (this.statisticCounter <= 0) {
         for (int i = 0; i < 4; i++) {
           this.cpuLoad[i] = min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweenInt()
-              / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (TSTATES_PER_INT));
+                  / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (Timings.TSTATES_PER_FRAME));
         }
         this.statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
         resetStatisticsAtModules = true;

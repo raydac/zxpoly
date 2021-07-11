@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 import static com.igormaznitsa.z80.Z80.REG_A;
+import static com.igormaznitsa.zxpoly.components.Timings.TSTATES_INT_NMI_LENGTH;
 
 @SuppressWarnings("WeakerAccess")
 public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProvider {
@@ -290,8 +291,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     doNmi = (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_DISABLE_NMI) == 0 && this.localNmi;
     this.localNmi = false;
 
-    this.intTiStatesCounter = doInt ? Motherboard.INT_TSTATES_LENGTH : this.intTiStatesCounter;
-    this.nmiTiStatesCounter = doNmi ? Motherboard.INT_TSTATES_LENGTH : this.nmiTiStatesCounter;
+    this.intTiStatesCounter = doInt ? TSTATES_INT_NMI_LENGTH : this.intTiStatesCounter;
+    this.nmiTiStatesCounter = doNmi ? TSTATES_INT_NMI_LENGTH : this.nmiTiStatesCounter;
 
     sigReset = signalReset || (this.localResetCounter > 0) ? Z80.SIGNAL_IN_nRESET : 0;
     if (this.localResetCounter > 0) {

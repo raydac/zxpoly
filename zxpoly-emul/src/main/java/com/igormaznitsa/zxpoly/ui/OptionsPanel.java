@@ -18,7 +18,7 @@
 package com.igormaznitsa.zxpoly.ui;
 
 import com.igormaznitsa.zxpoly.components.BoardMode;
-import com.igormaznitsa.zxpoly.components.Motherboard;
+import com.igormaznitsa.zxpoly.components.Timings;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.AppOptions.Rom;
@@ -361,7 +361,7 @@ public class OptionsPanel extends JPanel {
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelBorderLines, gridBagConstraints);
 
-    spinnerBorderLines.setModel(new javax.swing.SpinnerNumberModel(1, 1, Motherboard.TOTAL_SCREEN_VISIBLE_ROWS, 1));
+    spinnerBorderLines.setModel(new javax.swing.SpinnerNumberModel(1, 1, Timings.TOTAL_VISIBLE_SCREEN_LINES, 1));
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 3;

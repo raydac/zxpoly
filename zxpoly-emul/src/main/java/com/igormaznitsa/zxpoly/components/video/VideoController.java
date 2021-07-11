@@ -101,7 +101,7 @@ public final class VideoController extends JComponent
   private static final float SCALE_STEP = 0.2f;
   private static final float SCALE_MIN = 1.0f;
   private static final float SCALE_MAX = 6.0f;
-  private static final float COEFF_MAIN_AREAY_Y = (float) Motherboard.SCREEN_VISIBLE_ROWS_BEFORE_MAIN_AREA / (float) Motherboard.SCREEN_VISIBLE_ROWS_AFTER_MAIN_AREA;
+  private static final float COEFF_MAIN_AREAY_Y = (float) Timings.SCREEN_VISIBLE_LINES_BEFORE_RASTER / (float) Timings.LINES_AFTER_PAPER;
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;
   private static volatile boolean gfxHideSameInkPaper = true;
@@ -136,8 +136,8 @@ public final class VideoController extends JComponent
   public VideoController(final Motherboard board, final int numberOfBorderLines, final VirtualKeyboardDecoration vkbdContainer) {
     super();
 
-    this.numberOfBorderLines = Math.min(Motherboard.TOTAL_SCREEN_VISIBLE_ROWS, Math.max(1, numberOfBorderLines));
-    this.statesPerBorderLine = (Motherboard.TSTATES_SCREEN_OUTPUT_END - Motherboard.TSTATES_BEFORE_SCREEN_OUTPUT_START) / numberOfBorderLines;
+    this.numberOfBorderLines = Math.min(Timings.TOTAL_VISIBLE_SCREEN_LINES, Math.max(1, numberOfBorderLines));
+    this.statesPerBorderLine = (Timings.TSTATES_SCREEN_END - Timings.TSTATES_SCREEN_START) / numberOfBorderLines;
     this.borderLineColors = new byte[numberOfBorderLines];
     this.outBorderLineColors = new byte[numberOfBorderLines];
 
@@ -1749,7 +1749,7 @@ public final class VideoController extends JComponent
     }
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
 
-    int borderLineIndex = (this.tstatesCounter - Motherboard.TSTATES_BEFORE_BORDER_VISIBILITY) / this.statesPerBorderLine;
+    int borderLineIndex = (this.tstatesCounter - Timings.TSTATES_RASTER_START) / this.statesPerBorderLine;
     if (borderLineIndex >= 0 && borderLineIndex < this.numberOfBorderLines) {
       this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
     }

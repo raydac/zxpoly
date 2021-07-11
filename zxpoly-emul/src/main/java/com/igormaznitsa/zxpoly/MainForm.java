@@ -76,7 +76,7 @@ import java.util.logging.Logger;
 
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
-import static com.igormaznitsa.zxpoly.components.Motherboard.TSTATES_PER_INT;
+import static com.igormaznitsa.zxpoly.components.Timings.TSTATES_PER_FRAME;
 import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
 import static javax.swing.JOptionPane.showConfirmDialog;
 import static javax.swing.JOptionPane.showMessageDialog;
@@ -749,7 +749,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       if (stepSemaphor.tryLock()) {
         try {
           final boolean inTurboMode = this.turboMode;
-          final boolean tiStatesForIntExhausted = tiStatesInInt >= TSTATES_PER_INT;
+          final boolean tiStatesForIntExhausted = tiStatesInInt >= TSTATES_PER_FRAME;
           final boolean intTickForWallClockReached = this.wallClock.completed();
 
           final boolean doCpuIntTick;
@@ -768,7 +768,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
             }
             this.wallClock.next();
             if (!tiStatesForIntExhausted) {
-              this.onSlownessDetected(TSTATES_PER_INT - tiStatesInInt);
+              this.onSlownessDetected(TSTATES_PER_FRAME - tiStatesInInt);
             }
             tiStatesInInt = 0;
             viFlags = 0;
@@ -787,11 +787,11 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           final int spentTiStates = executionEnabled ? this.board.getMasterCpu().getStepTstates() : 0;
           tiStatesInInt += spentTiStates;
 
-          if (tiStatesInInt >= Motherboard.TSTATES_MAIN_AREA_OUTPUT_END) {
+          if (tiStatesInInt >= Timings.TSTATES_RASTER_END) {
             viFlags |= VFLAG_BLINK_SCREEN;
           }
 
-          if (tiStatesInInt >= Motherboard.TSTATES_SCREEN_OUTPUT_END) {
+          if (tiStatesInInt >= Timings.TSTATES_SCREEN_END) {
             viFlags |= VFLAG_BLINK_BORDER;
           }
 
@@ -847,13 +847,13 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         if (this.wallClock.completed()) {
           this.wallClock.next();
           this.videoStreamer.onWallclockInt();
-          this.board.dryIntTickOnWallClockTime(tiStatesInInt >= TSTATES_PER_INT, true, tiStatesInInt);
+          this.board.dryIntTickOnWallClockTime(tiStatesInInt >= TSTATES_PER_FRAME, true, tiStatesInInt);
           tiStatesInInt = 0;
         } else {
-          if (tiStatesInInt < TSTATES_PER_INT) {
+          if (tiStatesInInt < TSTATES_PER_FRAME) {
             tiStatesInInt += 4;
           }
-          this.board.dryIntTickOnWallClockTime(tiStatesInInt >= TSTATES_PER_INT, true, tiStatesInInt);
+          this.board.dryIntTickOnWallClockTime(tiStatesInInt >= TSTATES_PER_FRAME, true, tiStatesInInt);
         }
       }
     }
@@ -861,7 +861,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
   private void onSlownessDetected(final long remainTstates) {
     LOGGER.warning(String.format("Slowness detected: %.02f%%",
-            (float) remainTstates / (float) TSTATES_PER_INT * 100.0f));
+            (float) remainTstates / (float) TSTATES_PER_FRAME * 100.0f));
   }
 
   private void updateTracerWindowsForStep() {

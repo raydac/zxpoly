@@ -1,7 +1,8 @@
 package com.igormaznitsa.zxpoly.components.tapereader;
 
-import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.tapereader.wave.InMemoryWavFile;
+
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -9,8 +10,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.swing.ListModel;
-import javax.swing.SwingUtilities;
+
+import static com.igormaznitsa.zxpoly.components.Timings.TSTATES_PER_FRAME;
 
 public class ReaderWav implements TapeSource {
 
@@ -24,7 +25,7 @@ public class ReaderWav implements TapeSource {
 
   public ReaderWav(final String name, final File file) throws IOException {
     this.name = name;
-    this.wavFile = new InMemoryWavFile(file, Motherboard.TSTATES_PER_INT * 50);
+    this.wavFile = new InMemoryWavFile(file, TSTATES_PER_FRAME * 50);
   }
 
   @Override

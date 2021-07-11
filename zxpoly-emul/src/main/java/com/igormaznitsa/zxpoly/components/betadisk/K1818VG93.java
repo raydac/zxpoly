@@ -17,7 +17,6 @@
 
 package com.igormaznitsa.zxpoly.components.betadisk;
 
-import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk.Sector;
 
 import java.io.ByteArrayOutputStream;
@@ -26,6 +25,8 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static com.igormaznitsa.zxpoly.components.Timings.TSTATES_PER_FRAME;
 
 public final class K1818VG93 {
 
@@ -41,16 +42,16 @@ public final class K1818VG93 {
   static final int ADDR_TRACK = 1;
   static final int ADDR_SECTOR = 2;
   static final int ADDR_DATA = 3;
-  private static final long TSTATES_DISK_TURN = Motherboard.TSTATES_PER_INT * 4;
+  private static final long TSTATES_DISK_TURN = TSTATES_PER_FRAME * 4;
   private static final long[] TSTATES_PER_TRACK_CHANGE = new long[]{
-          Motherboard.TSTATES_PER_INT / 4,
-          Motherboard.TSTATES_PER_INT / 2,
-          Motherboard.TSTATES_PER_INT,
-          Motherboard.TSTATES_PER_INT + Motherboard.TSTATES_PER_INT / 3,
+          TSTATES_PER_FRAME / 4,
+          TSTATES_PER_FRAME / 2,
+          TSTATES_PER_FRAME,
+          TSTATES_PER_FRAME + TSTATES_PER_FRAME / 3,
   };
   private static final long TSTATES_PER_SECTOR = TSTATES_DISK_TURN / TrDosDisk.SECTORS_PER_TRACK;
-  private static final long TSTATES_PER_SECTOR_BYTE = Motherboard.TSTATES_PER_INT / 640;
-  private static final long TSTATES_INDEX_MARK_LENGTH = (Motherboard.TSTATES_PER_INT * 80L) / 1000L; // 4 ms
+  private static final long TSTATES_PER_SECTOR_BYTE = TSTATES_PER_FRAME / 640;
+  private static final long TSTATES_INDEX_MARK_LENGTH = (TSTATES_PER_FRAME * 80L) / 1000L; // 4 ms
   private static final long DELAY_FDD_MOTOR_ON_MS = 2000L;
   private static final int REG_COMMAND = 0x00;
   private static final int REG_STATUS = 0x01;
