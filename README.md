@@ -9,7 +9,7 @@
 
 __2.2.1 (SNAPSHOT)__
 
-- added support for interlace TV output (__by default ON__)
+- added support for interlace TV output (__by default OFF__)
 - added option to change number of border lines (by default 40)
 - added stereo sound for AY-channels (ABC by default, it is possible turn on ACB)
 - minor refactoring

@@ -132,7 +132,7 @@ public final class AppOptions {
   }
 
   public synchronized boolean isInterlacedScan() {
-    return preferences.getBoolean(Option.INTERLACED_SCAN.name(), true);
+    return preferences.getBoolean(Option.INTERLACED_SCAN.name(), false);
   }
 
   public synchronized void setInterlacedScan(final boolean value) {
