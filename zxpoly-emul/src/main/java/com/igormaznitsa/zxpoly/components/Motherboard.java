@@ -174,12 +174,12 @@ public final class Motherboard implements ZxPolyConstants {
     }
   }
 
-  private void _writeRam(final int addr, final int value) {
-    this.ram[addr] = (byte) value;
+  private void _writeRam(final int address, final int value) {
+    this.ram[address] = (byte) value;
   }
 
-  private int _readRam(final int addr) {
-    return this.ram[addr] & 0xFF;
+  private int _readRam(final int address) {
+    return this.ram[address] & 0xFF;
   }
 
   public void reset() {
