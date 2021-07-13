@@ -402,6 +402,10 @@ public final class Z80 {
     return this.bus;
   }
 
+  public void addTstates(final int tiStates) {
+    this.tiStates += tiStates;
+  }
+
   public int getStepTstates() {
     return this.tiStates;
   }

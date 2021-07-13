@@ -136,7 +136,7 @@ public final class AppOptions {
   }
 
   public synchronized boolean isContendedRam() {
-    return preferences.getBoolean(Option.CONTENDED_RAM.name(), true);
+    return preferences.getBoolean(Option.CONTENDED_RAM.name(), false);
   }
 
   public synchronized void setContendedRam(final boolean value) {

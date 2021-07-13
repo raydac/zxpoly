@@ -500,7 +500,7 @@ public class OptionsPanel extends JPanel {
     panelGenmeral.add(checkAutoiCsForCursorKeys, gridBagConstraints);
 
     labelContendedRam.setHorizontalAlignment(RIGHT);
-    labelContendedRam.setText("Contended RAM:");
+    labelContendedRam.setText("Contended RAM(alpha):");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 13;

@@ -95,7 +95,7 @@ public final class Motherboard implements ZxPolyConstants {
     this.modules = new ZxPolyModule[4];
     final List<IoDevice> iodevices = new ArrayList<>();
     for (int i = 0; i < this.modules.length; i++) {
-      this.modules[i] = new ZxPolyModule(this, contendedRam, rom, i);
+      this.modules[i] = new ZxPolyModule(this, rom, i);
       iodevices.add(this.modules[i]);
     }
 
@@ -712,20 +712,41 @@ public final class Motherboard implements ZxPolyConstants {
     return result;
   }
 
-  private void doContendMemory() {
-    this.frameTiStatesCounter += CONTEND_DELAYS[this.frameTiStatesCounter] & 0xFF;
+  private static boolean isUlaPort(final int port) {
+    return (port & 1) == 0;
   }
 
-  void onReadContendedRam(final ZxPolyModule module, final int port7FFD, final int address) {
-    if (module.isMaster() && isSlowRamArea(address, port7FFD)) {
-      this.doContendMemory();
+  int contendRam(final int port7FFD, final int address) {
+    int result = 0;
+    if (this.contendedRam && isSlowRamArea(address, port7FFD)) {
+      result = this.frameTiStatesCounter < Timings.TSTATES_PER_FRAME ? CONTEND_DELAYS[this.frameTiStatesCounter] & 0xFF : 0;
     }
+    return result;
   }
 
-  void onWriteContendedRam(final ZxPolyModule module, final int port7FFD, final int address) {
-    if (module.isMaster() && isSlowRamArea(address, port7FFD)) {
-      this.doContendMemory();
+  int contendPortEarly(final int port, final int port7FFD) {
+    int result = 0;
+    if (this.contendedRam && isSlowRamArea(port, port7FFD)) {
+      result = this.frameTiStatesCounter < Timings.TSTATES_PER_FRAME ? CONTEND_DELAYS[this.frameTiStatesCounter] & 0xFF : 0;
     }
+    return result;
+  }
+
+  int contendPortLate(final int port, final int port7FFD) {
+    int result = 0;
+    if (this.contendedRam) {
+      if (isUlaPort(port)) {
+        result = 2 + (this.frameTiStatesCounter < Timings.TSTATES_PER_FRAME ? CONTEND_DELAYS[this.frameTiStatesCounter] & 0xFF : 0);
+      } else if (isSlowRamArea(port, port7FFD)) {
+        int tstates = this.frameTiStatesCounter;
+        result += tstates < Timings.TSTATES_PER_FRAME ? CONTEND_DELAYS[tstates++] & 0xFF : 0;
+        result += tstates < Timings.TSTATES_PER_FRAME ? CONTEND_DELAYS[tstates++] & 0xFF : 0;
+        result += tstates < Timings.TSTATES_PER_FRAME ? CONTEND_DELAYS[tstates] & 0xFF : 0;
+      } else {
+        result = 2;
+      }
+    }
+    return result;
   }
 
   public void resetIoDevices() {

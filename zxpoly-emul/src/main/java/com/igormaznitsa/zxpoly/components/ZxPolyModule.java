@@ -72,12 +72,10 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   private boolean gfxWaitSignal;
   private int gfxIntCounter;
   private int gfxNmiCounter;
-  private final boolean contendedRam;
 
   private static final int GFX_PAGE_SIZE = 0x4000 * 8;
 
-  public ZxPolyModule(final Motherboard board, final boolean contendedRam, final RomData romData, final int index) {
-    this.contendedRam = contendedRam;
+  public ZxPolyModule(final Motherboard board, final RomData romData, final int index) {
     this.romData.set(Objects.requireNonNull(romData));
     this.board = Objects.requireNonNull(board);
     this.moduleIndex = index;
@@ -514,9 +512,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         throw new Error("Unexpected mode");
     }
 
-    if (this.contendedRam) {
-      this.board.onReadContendedRam(this, this.port7FFD.get(), address);
-    }
+    this.cpu.addTstates(this.board.contendRam(this.port7FFD.get(), address));
 
     return result;
   }
@@ -749,9 +745,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       default:
         throw new Error("Unexpected mode");
     }
-    if (this.contendedRam) {
-      this.board.onWriteContendedRam(this, this.port7FFD.get(), address);
-    }
+    this.cpu.addTstates(this.board.contendRam(this.port7FFD.get(), address));
   }
 
   @Override
@@ -814,6 +808,9 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   @Override
   public byte readPort(final Z80 cpu, final int ctx, final int port) {
+    this.cpu.addTstates(this.board.contendPortEarly(port, this.port7FFD.get()));
+    this.cpu.addTstates(this.board.contendPortLate(port, this.port7FFD.get()));
+
     byte result = 0;
     boolean readFromBus = true;
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
@@ -893,6 +890,9 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   @Override
   public void writePort(final Z80 cpu, final int ctx, final int port, final byte data) {
+    this.cpu.addTstates(this.board.contendPortEarly(port, this.port7FFD.get()));
+    this.cpu.addTstates(this.board.contendPortLate(port, this.port7FFD.get()));
+
     final int val = data & 0xFF;
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       final int reg0 = this.zxPolyRegsWritten.get(0);
