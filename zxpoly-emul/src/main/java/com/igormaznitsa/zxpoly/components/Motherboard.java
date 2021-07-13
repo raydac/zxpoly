@@ -47,7 +47,7 @@ public final class Motherboard implements ZxPolyConstants {
 
   private static final int SPEC256_GFX_CORES = 8;
   private static final int SPEC256_16_GFX_CORES = 5;
-
+  private static final byte[] CONTEND_DELAYS = generateFrameContendDelays(6, 5, 4, 3, 2, 1, 0, 0);
   private final ZxPolyModule[] modules;
   private final Z80[] spec256GfxCores;
   private final IoDevice[] ioDevices;
@@ -56,7 +56,6 @@ public final class Motherboard implements ZxPolyConstants {
   private final byte[] ram = new byte[512 * 1024];
   private final VideoController video;
   private final KeyboardKempstonAndTapeIn keyboard;
-
   private final BetaDiscInterface betaDisk;
   private final float[] cpuLoad = new float[4];
   private final Random rnd = new Random();
@@ -143,6 +142,32 @@ public final class Motherboard implements ZxPolyConstants {
     for (int i = 0; i < SPEC256_GFX_CORES; i++) {
       this.spec256GfxCores[i] = new Z80(this.modules[0].getCpu());
     }
+  }
+
+  private static boolean isSlowRamArea(final int address, final int port7FFD) {
+    final int pageStart = address & 0xC000;
+    return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
+  }
+
+  private static byte[] generateFrameContendDelays(final int... sequence) {
+    final byte[] resultDelays = new byte[Timings.TSTATES_PER_FRAME];
+    for (int t = 0; t < Timings.TSTATES_PER_FRAME; t++) {
+      final int shifted = (t + 1) + Timings.LINES_BEFORE_FIRST_PAPER_LINE;
+      final int line = shifted / Timings.TSTATES_PER_WHOLE_RASTER_LINE;
+      final int pix = shifted % Timings.TSTATES_PER_WHOLE_RASTER_LINE;
+
+      if (line >= Timings.LINES_BEFORE_FIRST_PAPER_LINE
+              && line < (Timings.LINES_BEFORE_FIRST_PAPER_LINE + Timings.PAPER_LINES)) {
+        int scrPix = pix - Timings.TSTATES_BEFORE_RASTER_LINE_AREA;
+        if (scrPix < 0 || scrPix >= Timings.TSTATES_RASTER_LINE_DATA) {
+          resultDelays[t] = 0;
+        } else {
+          int pixByte = scrPix % 8;
+          resultDelays[t] = (byte) sequence[pixByte];
+        }
+      }
+    }
+    return resultDelays;
   }
 
   public boolean isGfxLeveledXor() {
@@ -298,11 +323,6 @@ public final class Motherboard implements ZxPolyConstants {
     return this.frameTiStatesCounter;
   }
 
-  private static boolean isSlowRamArea(final int address, final int port7FFD) {
-    final int pageStart = address & 0xC000;
-    return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
-  }
-
   public void dryIntTickOnWallClockTime(final boolean tstatesIntReached, final boolean wallclockInt,
                                         final int tstates) {
     this.beeper.clearChannels();
@@ -329,6 +349,8 @@ public final class Motherboard implements ZxPolyConstants {
     if (startNewFrame) {
       this.startNewFrame();
     }
+
+    final int prevFrameInt = this.frameTiStatesCounter;
 
     if (wallclockInt) {
       this.statisticCounter--;
@@ -464,8 +486,8 @@ public final class Motherboard implements ZxPolyConstants {
           throw new Error("Unexpected board mode: " + this.boardMode);
       }
 
-      final int spentTstates = this.modules[0].getCpu().getStepTstates();
-      this.frameTiStatesCounter += spentTstates;
+      this.frameTiStatesCounter += this.modules[0].getCpu().getStepTstates();
+      final int spentTstates = this.frameTiStatesCounter - prevFrameInt;
 
       final int feValue = this.video.getPortFE();
       final int levelTapeOut = BEEPER_LEVELS[((feValue >> 3) & 1) == 0 ? 0 : 4];
@@ -690,21 +712,19 @@ public final class Motherboard implements ZxPolyConstants {
     return result;
   }
 
-  private void contendMemory() {
-    if (this.frameTiStatesCounter >= Timings.TSTATES_RASTER_START && this.frameTiStatesCounter < Timings.TSTATES_RASTER_END) {
-      // TODO add delays
-    }
+  private void doContendMemory() {
+    this.frameTiStatesCounter += CONTEND_DELAYS[this.frameTiStatesCounter] & 0xFF;
   }
 
   void onReadContendedRam(final ZxPolyModule module, final int port7FFD, final int address) {
     if (module.isMaster() && isSlowRamArea(address, port7FFD)) {
-      this.contendMemory();
+      this.doContendMemory();
     }
   }
 
   void onWriteContendedRam(final ZxPolyModule module, final int port7FFD, final int address) {
     if (module.isMaster() && isSlowRamArea(address, port7FFD)) {
-      this.contendMemory();
+      this.doContendMemory();
     }
   }
 
