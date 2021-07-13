@@ -735,8 +735,6 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     int countdownToNotifyRepaint = 0;
     int countdownToAnimationSave = 0;
 
-    int currentFrameTiStates = 0;
-
     final int VFLAG_BLINK_BORDER = 1;
     final int VFLAG_BLINK_SCREEN = 2;
 
@@ -749,8 +747,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       boolean notifyRepaintScreen = false;
       if (stepSemaphor.tryLock()) {
         try {
+          int frameTiStates = this.board.getFrameTiStates();
           final boolean inTurboMode = this.turboMode;
-          final boolean tiStatesForIntExhausted = currentFrameTiStates >= TSTATES_PER_FRAME;
+          final boolean tiStatesForIntExhausted = frameTiStates >= TSTATES_PER_FRAME;
           final boolean intTickForWallClockReached = this.wallClock.completed();
 
           final boolean doCpuIntTick;
@@ -769,9 +768,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
             }
             this.wallClock.next();
             if (!tiStatesForIntExhausted) {
-              this.onSlownessDetected(TSTATES_PER_FRAME - currentFrameTiStates);
+              this.onSlownessDetected(TSTATES_PER_FRAME - frameTiStates);
             }
-            currentFrameTiStates = 0;
             viFlags = 0;
           } else {
             doCpuIntTick = false;
@@ -785,14 +783,13 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
                   doCpuIntTick,
                   executionEnabled);
 
-          final int stepTiStates = executionEnabled ? this.board.getMasterCpu().getStepTstates() : 0;
-          currentFrameTiStates += stepTiStates;
+          frameTiStates = this.board.getFrameTiStates();
 
-          if (currentFrameTiStates >= Timings.TSTATES_RASTER_END) {
+          if (frameTiStates >= Timings.TSTATES_RASTER_END) {
             viFlags |= VFLAG_BLINK_SCREEN;
           }
 
-          if (currentFrameTiStates >= Timings.TSTATES_SCREEN_END) {
+          if (frameTiStates >= Timings.TSTATES_SCREEN_END) {
             viFlags |= VFLAG_BLINK_BORDER;
           }
 
@@ -845,16 +842,17 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           updateTracerWindowsForStep();
         }
       } else {
+        final int frameTiStates = this.board.getFrameTiStates();
         if (this.wallClock.completed()) {
           this.wallClock.next();
           this.videoStreamer.onWallclockInt();
-          this.board.dryIntTickOnWallClockTime(currentFrameTiStates >= TSTATES_PER_FRAME, true, currentFrameTiStates);
-          currentFrameTiStates = 0;
+          this.board.dryIntTickOnWallClockTime(frameTiStates >= TSTATES_PER_FRAME, true, frameTiStates);
+          this.board.startNewFrame();
         } else {
-          if (currentFrameTiStates < TSTATES_PER_FRAME) {
-            currentFrameTiStates += 4;
+          if (frameTiStates < TSTATES_PER_FRAME) {
+            this.board.doNop();
           }
-          this.board.dryIntTickOnWallClockTime(currentFrameTiStates >= TSTATES_PER_FRAME, true, currentFrameTiStates);
+          this.board.dryIntTickOnWallClockTime(frameTiStates >= TSTATES_PER_FRAME, true, frameTiStates);
         }
       }
     }
