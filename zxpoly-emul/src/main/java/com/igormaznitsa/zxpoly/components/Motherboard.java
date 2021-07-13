@@ -81,6 +81,7 @@ public final class Motherboard implements ZxPolyConstants {
           final RomData rom,
           final BoardMode boardMode,
           final int borderLines,
+          final boolean contendedRam,
           final boolean useAcbSoundScheme,
           final boolean enableCovoxFb,
           final boolean useTurboSound,

@@ -54,10 +54,12 @@ public class OptionsPanel extends JPanel {
   private JLabel labelVirtualKbdLook;
   private JLabel labelCustomRomPath;
   private JLabel labelMacroCursorKeys;
+  private JLabel labelContendedRam;
   private JCheckBox checkGrabSound;
   private JCheckBox checkInterlacedScan;
   private JCheckBox checkSoundSchemeACB;
   private JCheckBox checkVkbdApart;
+  private JCheckBox checkContendedRam;
   private JCheckBox checkAutoiCsForCursorKeys;
   private JComboBox<String> comboNetAdddr;
   private JComboBox<String> comboRomSource;
@@ -130,6 +132,7 @@ public class OptionsPanel extends JPanel {
   }
 
   private void fillByDataContainer(final DataContainer data) {
+    this.checkContendedRam.setSelected(data.contendedRam);
     this.checkInterlacedScan.setSelected(data.interlacedScan);
     this.textCustomRomPath.setText(data.customRomPath);
     this.checkSoundSchemeACB.setSelected(data.soundSchemeAcb);
@@ -168,6 +171,7 @@ public class OptionsPanel extends JPanel {
 
     panelStreaming = new JPanel();
     labelInterlacedScan = new JLabel();
+    labelContendedRam = new JLabel();
     checkInterlacedScan = new JCheckBox();
     labelFfMpegPath = new JLabel();
     labelNetInterface = new JLabel();
@@ -201,6 +205,7 @@ public class OptionsPanel extends JPanel {
     labelMacroCursorKeys = new JLabel();
     checkKempstonMouseAllowed = new JCheckBox();
     checkAutoiCsForCursorKeys = new JCheckBox();
+    checkContendedRam = new JCheckBox();
     checkVkbdApart = new JCheckBox();
     comboKeyboardLook = new JComboBox<>(VirtualKeyboardLook.values());
     textCustomRomPath = new JTextField();
@@ -494,6 +499,20 @@ public class OptionsPanel extends JPanel {
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkAutoiCsForCursorKeys, gridBagConstraints);
 
+    labelContendedRam.setHorizontalAlignment(RIGHT);
+    labelContendedRam.setText("Contended RAM:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 13;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelContendedRam, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 13;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(checkContendedRam, gridBagConstraints);
+
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 1;
@@ -645,6 +664,7 @@ public class OptionsPanel extends JPanel {
     public final boolean vkdApart;
     public final boolean autoCsForCursorKeys;
     public final boolean interlacedScan;
+    public final boolean contendedRam;
 
     public final int kempstonKeyUp;
     public final int kempstonKeyDown;
@@ -664,6 +684,7 @@ public class OptionsPanel extends JPanel {
 
     public DataContainer() {
       final String customRomPath = AppOptions.getInstance().getCustomRomPath();
+      this.contendedRam = AppOptions.getInstance().isContendedRam();
       this.customRomPath = customRomPath == null ? "" : customRomPath;
       this.borderLines = AppOptions.getInstance().getBorderLines();
       this.interlacedScan = AppOptions.getInstance().isInterlacedScan();
@@ -705,6 +726,7 @@ public class OptionsPanel extends JPanel {
       this.borderLines = (Integer) optionsPanel.spinnerBorderLines.getValue();
       this.interlacedScan = optionsPanel.checkInterlacedScan.isSelected();
 
+      this.contendedRam = optionsPanel.checkContendedRam.isSelected();
       this.autoCsForCursorKeys = optionsPanel.checkAutoiCsForCursorKeys.isSelected();
       this.vkdApart = optionsPanel.checkVkbdApart.isSelected();
       this.activeRom = rom.getLink();
@@ -734,6 +756,7 @@ public class OptionsPanel extends JPanel {
     }
 
     public void store() {
+      AppOptions.getInstance().setContendedRam(this.contendedRam);
       AppOptions.getInstance().setInterlacedScan(this.interlacedScan);
       AppOptions.getInstance().setBorderLines(this.borderLines);
       AppOptions.getInstance().setAutoCsForCursorKeys(this.autoCsForCursorKeys);

@@ -42,6 +42,10 @@ public final class AppOptions {
     return INSTANCE;
   }
 
+  public synchronized String getActiveRom() {
+    return preferences.get(Option.ROMPATH.name(), AppOptions.TEST_ROM);
+  }
+
   public synchronized boolean isTestRomActive() {
     return TEST_ROM.equals(this.getActiveRom());
   }
@@ -131,6 +135,14 @@ public final class AppOptions {
     preferences.putBoolean(Option.SOUND_TURNED_ON.name(), value);
   }
 
+  public synchronized boolean isContendedRam() {
+    return preferences.getBoolean(Option.CONTENDED_RAM.name(), true);
+  }
+
+  public synchronized void setContendedRam(final boolean value) {
+    preferences.putBoolean(Option.CONTENDED_RAM.name(), value);
+  }
+
   public synchronized boolean isInterlacedScan() {
     return preferences.getBoolean(Option.INTERLACED_SCAN.name(), false);
   }
@@ -208,10 +220,6 @@ public final class AppOptions {
 
   public synchronized void setKempstonMouseAllowed(final boolean value) {
     preferences.putBoolean(Option.KEMPSTON_MOUSE_ALLOWED.name(), value);
-  }
-
-  public synchronized String getActiveRom() {
-    return preferences.get(Option.ROMPATH.name(), AppOptions.TEST_ROM);
   }
 
   public synchronized void setActiveRom(final String romPath) {
@@ -378,6 +386,7 @@ public final class AppOptions {
   }
 
   public enum Option {
+    CONTENDED_RAM,
     INTERLACED_SCAN,
     BORDER_LINES,
     AUTOCS_FOR_CURSOR_KEYS,
