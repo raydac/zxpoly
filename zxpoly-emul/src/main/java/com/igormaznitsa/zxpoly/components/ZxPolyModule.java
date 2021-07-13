@@ -72,10 +72,12 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   private boolean gfxWaitSignal;
   private int gfxIntCounter;
   private int gfxNmiCounter;
+  private final boolean contendedRam;
 
   private static final int GFX_PAGE_SIZE = 0x4000 * 8;
 
-  public ZxPolyModule(final Motherboard board, final RomData romData, final int index) {
+  public ZxPolyModule(final Motherboard board, final boolean contendedRam, final RomData romData, final int index) {
+    this.contendedRam = contendedRam;
     this.romData.set(Objects.requireNonNull(romData));
     this.board = Objects.requireNonNull(board);
     this.moduleIndex = index;
@@ -511,6 +513,11 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       default:
         throw new Error("Unexpected mode");
     }
+
+    if (this.contendedRam) {
+      this.board.onReadContendedRam(this, this.port7FFD.get(), address);
+    }
+
     return result;
   }
 
@@ -741,6 +748,9 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       break;
       default:
         throw new Error("Unexpected mode");
+    }
+    if (this.contendedRam) {
+      this.board.onWriteContendedRam(this, this.port7FFD.get(), address);
     }
   }
 

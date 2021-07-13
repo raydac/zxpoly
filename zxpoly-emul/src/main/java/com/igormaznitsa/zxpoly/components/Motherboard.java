@@ -96,7 +96,7 @@ public final class Motherboard implements ZxPolyConstants {
     this.modules = new ZxPolyModule[4];
     final List<IoDevice> iodevices = new ArrayList<>();
     for (int i = 0; i < this.modules.length; i++) {
-      this.modules[i] = new ZxPolyModule(this, rom, i);
+      this.modules[i] = new ZxPolyModule(this, contendedRam, rom, i);
       iodevices.add(this.modules[i]);
     }
 
@@ -128,11 +128,11 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.ioDevices = iodevices.toArray(new IoDevice[0]);
     this.ioDevicesPreStep = Arrays.stream(this.ioDevices)
-        .filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_PRESTEP) != 0)
-        .toArray(IoDevice[]::new);
+            .filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_PRESTEP) != 0)
+            .toArray(IoDevice[]::new);
     this.ioDevicesPostStep = Arrays.stream(this.ioDevices)
-        .filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_POSTSTEP) != 0)
-        .toArray(IoDevice[]::new);
+            .filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_POSTSTEP) != 0)
+            .toArray(IoDevice[]::new);
 
     // simulation of garbage in memory after power on
     for (int i = 0; i < this.ram.length; i++) {
@@ -298,6 +298,24 @@ public final class Motherboard implements ZxPolyConstants {
     return this.frameTiStatesCounter;
   }
 
+  private static boolean isSlowRamArea(final int address, final int port7FFD) {
+    final int pageStart = address & 0xC000;
+    return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
+  }
+
+  public void dryIntTickOnWallClockTime(final boolean tstatesIntReached, final boolean wallclockInt,
+                                        final int tstates) {
+    this.beeper.clearChannels();
+    this.beeper.updateState(tstatesIntReached, wallclockInt, tstates);
+  }
+
+  public void syncSpec256GpuStates() {
+    final Z80 mainCpu = this.modules[0].getCpu();
+    for (final Z80 spec256GfxCore : this.spec256GfxCores) {
+      spec256GfxCore.fillByState(mainCpu);
+    }
+  }
+
   public int step(final boolean tstatesIntReached,
                   final boolean wallclockInt,
                   final boolean startNewFrame,
@@ -429,7 +447,7 @@ public final class Motherboard implements ZxPolyConstants {
         case SPEC256_16:
         case SPEC256: {
           final int cores =
-              this.boardMode == BoardMode.SPEC256_16 ? SPEC256_16_GFX_CORES : SPEC256_GFX_CORES;
+                  this.boardMode == BoardMode.SPEC256_16 ? SPEC256_16_GFX_CORES : SPEC256_GFX_CORES;
           final ZxPolyModule masterModule = modules[0];
           final Z80 mainCpu = masterModule.getCpu();
           masterModule.saveInternalCopyForGfx();
@@ -455,7 +473,7 @@ public final class Motherboard implements ZxPolyConstants {
       final int levelTapeIn = BEEPER_LEVELS[this.keyboard.isTapeIn() ? 3 : 0];
 
       this.beeper.setChannelValue(CHANNEL_BEEPER,
-          Math.min(255, levelSpeaker + levelTapeIn + levelTapeOut));
+              Math.min(255, levelSpeaker + levelTapeIn + levelTapeOut));
 
       for (final IoDevice device : this.ioDevicesPostStep) {
         device.postStep(spentTstates);
@@ -487,7 +505,7 @@ public final class Motherboard implements ZxPolyConstants {
 
           for (int i = 1; i < 4; i++) {
             if (m1ExeByte != modules[i].getCpu().getLastM1InstructionByte() ||
-                exeByte != modules[i].getCpu().getLastInstructionByte()) {
+                    exeByte != modules[i].getCpu().getLastInstructionByte()) {
               result |= TRIGGER_DIFF_EXE_CODE;
               this.triggers = this.triggers & ~TRIGGER_DIFF_EXE_CODE;
               break;
@@ -495,39 +513,6 @@ public final class Motherboard implements ZxPolyConstants {
           }
         }
       }
-    }
-    return result;
-  }
-
-  public void dryIntTickOnWallClockTime(final boolean tstatesIntReached, final boolean wallclockInt,
-                                        final int tstates) {
-    this.beeper.clearChannels();
-    this.beeper.updateState(tstatesIntReached, wallclockInt, tstates);
-  }
-
-  public void syncSpec256GpuStates() {
-    final Z80 mainCpu = this.modules[0].getCpu();
-    for (final Z80 spec256GfxCore : this.spec256GfxCores) {
-      spec256GfxCore.fillByState(mainCpu);
-    }
-  }
-
-  private boolean haveModulesSamePositionAndMode() {
-    final int pc = this.modules[0].getCpu().getRegister(Z80.REG_PC);
-    final int sp = this.modules[0].getCpu().getRegister(Z80.REG_SP);
-    final int im = this.modules[0].getCpu().getIM();
-    final boolean iff1 = this.modules[0].getCpu().isIFF1();
-    final boolean iff2 = this.modules[0].getCpu().isIFF2();
-
-    boolean result = true;
-
-    for (int i = 1; result && i < 4; i++) {
-      result = pc == this.modules[i].getCpu().getRegister(Z80.REG_PC)
-          && sp == this.modules[i].getCpu().getRegister(Z80.REG_SP)
-          && im == this.modules[i].getCpu().getIM()
-          && iff1 == this.modules[i].getCpu().isIFF1()
-          && iff2 == this.modules[i].getCpu().isIFF2();
-
     }
     return result;
   }
@@ -602,43 +587,22 @@ public final class Motherboard implements ZxPolyConstants {
     this._writeRam(heapAddress, value);
   }
 
-  public int readBusIo(final ZxPolyModule module, final int port) {
-    final int mappedCPU = getMappedCpuIndex();
-    int result = -1;
+  private boolean haveModulesSamePositionAndMode() {
+    final int pc = this.modules[0].getCpu().getRegister(Z80.REG_PC);
+    final int sp = this.modules[0].getCpu().getRegister(Z80.REG_SP);
+    final int im = this.modules[0].getCpu().getIM();
+    final boolean iff1 = this.modules[0].getCpu().isIFF1();
+    final boolean iff2 = this.modules[0].getCpu().isIFF2();
 
-    if (this.getBoardMode() == BoardMode.ZXPOLY &&
-        (module.getModuleIndex() == 0 && mappedCPU > 0)) {
-      final ZxPolyModule destmodule = modules[mappedCPU];
-      result = this._readRam(destmodule.ramOffset2HeapAddress(destmodule.read7FFD(), port));
-      destmodule.prepareLocalInt();
-    } else {
-      IoDevice firstDetectedActiveDevice = null;
-      for (final IoDevice device : this.ioDevices) {
-        final int data = device.readIo(module, port);
-        if (data < 0) {
-          continue;
-        }
+    boolean result = true;
 
-        if (result < 0) {
-          result = data;
-          firstDetectedActiveDevice = device;
-        } else {
-          final int prevResult = result;
-          result |= data;
-          if (prevResult != result) {
-            LOGGER.log(Level.WARNING,
-                "Detected IO collision during read: " + firstDetectedActiveDevice + ", "
-                    + device.getName() + " port #"
-                    + Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
-          }
-        }
-      }
+    for (int i = 1; result && i < 4; i++) {
+      result = pc == this.modules[i].getCpu().getRegister(Z80.REG_PC)
+              && sp == this.modules[i].getCpu().getRegister(Z80.REG_SP)
+              && im == this.modules[i].getCpu().getIM()
+              && iff1 == this.modules[i].getCpu().isIFF1()
+              && iff2 == this.modules[i].getCpu().isIFF2();
 
-      if (result < 0 && (port & 0xFF) == 0xFF) {
-        // all IO devices in Z state, some simulation of "port FF"
-        result = this.rnd.nextInt(100) > 90 ? 0xFF :
-            this.modules[0].readVideo(0x1800 + rnd.nextInt(0x300));
-      }
     }
     return result;
   }
@@ -683,6 +647,65 @@ public final class Motherboard implements ZxPolyConstants {
       }
     }
     return result;
+  }
+
+  public int readBusIo(final ZxPolyModule module, final int port) {
+    final int mappedCPU = getMappedCpuIndex();
+    int result = -1;
+
+    if (this.getBoardMode() == BoardMode.ZXPOLY &&
+            (module.getModuleIndex() == 0 && mappedCPU > 0)) {
+      final ZxPolyModule destmodule = modules[mappedCPU];
+      result = this._readRam(destmodule.ramOffset2HeapAddress(destmodule.read7FFD(), port));
+      destmodule.prepareLocalInt();
+    } else {
+      IoDevice firstDetectedActiveDevice = null;
+      for (final IoDevice device : this.ioDevices) {
+        final int data = device.readIo(module, port);
+        if (data < 0) {
+          continue;
+        }
+
+        if (result < 0) {
+          result = data;
+          firstDetectedActiveDevice = device;
+        } else {
+          final int prevResult = result;
+          result |= data;
+          if (prevResult != result) {
+            LOGGER.log(Level.WARNING,
+                    "Detected IO collision during read: " + firstDetectedActiveDevice + ", "
+                            + device.getName() + " port #"
+                            + Integer.toHexString(port).toUpperCase(Locale.ENGLISH));
+          }
+        }
+      }
+
+      if (result < 0 && (port & 0xFF) == 0xFF) {
+        // all IO devices in Z state, some simulation of "port FF"
+        result = this.rnd.nextInt(100) > 90 ? 0xFF :
+                this.modules[0].readVideo(0x1800 + rnd.nextInt(0x300));
+      }
+    }
+    return result;
+  }
+
+  private void contendMemory() {
+    if (this.frameTiStatesCounter >= Timings.TSTATES_RASTER_START && this.frameTiStatesCounter < Timings.TSTATES_RASTER_END) {
+      // TODO add delays
+    }
+  }
+
+  void onReadContendedRam(final ZxPolyModule module, final int port7FFD, final int address) {
+    if (module.isMaster() && isSlowRamArea(address, port7FFD)) {
+      this.contendMemory();
+    }
+  }
+
+  void onWriteContendedRam(final ZxPolyModule module, final int port7FFD, final int address) {
+    if (module.isMaster() && isSlowRamArea(address, port7FFD)) {
+      this.contendMemory();
+    }
   }
 
   public void resetIoDevices() {
