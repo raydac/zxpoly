@@ -189,15 +189,15 @@ public final class Motherboard implements ZxPolyConstants {
 
   public void resetAndRestoreRom(final RomData rom) {
     LOGGER.info("Restoring ROM");
-    for (int i = 0; i < this.modules.length; i++) {
-      this.modules[i].setRomData(rom);
+    for (final ZxPolyModule module : this.modules) {
+      module.setRomData(rom);
     }
     LOGGER.info("Full system reset");
     this.totalReset = true;
     this.resetCounter = 3;
   }
 
-  public boolean set3D00(final int value, final boolean force) {
+  public void set3D00(final int value, final boolean force) {
     if (is3D00NotLocked() || force) {
       this.port3D00 = value;
       LOGGER.log(Level.INFO, "set #3D00 to " + Utils.toHex(value));
@@ -210,10 +210,8 @@ public final class Motherboard implements ZxPolyConstants {
       }
 
       this.video.setVideoMode((this.port3D00 >> 2) & 0x7);
-      return true;
     } else {
       LOGGER.info("Rejected new value for #3D00 because it is locked");
-      return false;
     }
   }
 
@@ -676,10 +674,8 @@ public final class Motherboard implements ZxPolyConstants {
   }
 
   public void resetIoDevices() {
-    final IoDevice[] devices = this.ioDevices;
-    final int devicesNum = devices.length;
-    for (int i = 0; i < devicesNum; i++) {
-      devices[i].doReset();
+    for (final IoDevice device : this.ioDevices) {
+      device.doReset();
     }
   }
 
