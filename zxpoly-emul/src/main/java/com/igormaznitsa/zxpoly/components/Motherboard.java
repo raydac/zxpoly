@@ -47,7 +47,7 @@ public final class Motherboard implements ZxPolyConstants {
 
   private static final int SPEC256_GFX_CORES = 8;
   private static final int SPEC256_16_GFX_CORES = 5;
-  private static final byte[] CONTEND_DELAYS = generateFrameContendDelays(6, 5, 4, 3, 2, 1, 0, 0);
+  private static final byte[] CONTEND_DELAYS = generateFrameContendDelays(5, 4, 3, 2, 1, 0, 0, 6);
   private final ZxPolyModule[] modules;
   private final Z80[] spec256GfxCores;
   private final IoDevice[] ioDevices;
@@ -151,22 +151,16 @@ public final class Motherboard implements ZxPolyConstants {
 
   private static byte[] generateFrameContendDelays(final int... sequence) {
     final byte[] resultDelays = new byte[Timings.TSTATES_PER_FRAME];
-    for (int t = 0; t < Timings.TSTATES_PER_FRAME; t++) {
-      final int shifted = (t + 1) + Timings.LINES_BEFORE_FIRST_PAPER_LINE;
-      final int line = shifted / Timings.TSTATES_PER_WHOLE_RASTER_LINE;
-      final int pix = shifted % Timings.TSTATES_PER_WHOLE_RASTER_LINE;
 
-      if (line >= Timings.LINES_BEFORE_FIRST_PAPER_LINE
-              && line < (Timings.LINES_BEFORE_FIRST_PAPER_LINE + Timings.PAPER_LINES)) {
-        int scrPix = pix - Timings.TSTATES_BEFORE_RASTER_LINE_AREA;
-        if (scrPix < 0 || scrPix >= Timings.TSTATES_RASTER_LINE_DATA) {
-          resultDelays[t] = 0;
-        } else {
-          int pixByte = scrPix % 8;
-          resultDelays[t] = (byte) sequence[pixByte];
+    for (int y = 0; y < Timings.TSTATES_PER_FRAME; y += Timings.TSTATES_PER_WHOLE_RASTER_LINE) {
+      if (y < Timings.TSTATES_RASTER_START || y >= Timings.TSTATES_RASTER_END) continue;
+      for (int x = 0; x < Timings.TSTATES_PER_WHOLE_RASTER_LINE; x++) {
+        if (x >= Timings.TSTATES_BEFORE_RASTER_LINE_AREA && x < Timings.TSTATES_AFTER_RASTER_LINE_AREA) {
+          resultDelays[y + x] = (byte) sequence[x % sequence.length];
         }
       }
     }
+
     return resultDelays;
   }
 
@@ -734,17 +728,8 @@ public final class Motherboard implements ZxPolyConstants {
 
   int contendPortLate(final int port, final int port7FFD) {
     int result = 0;
-    if (this.contendedRam) {
-      if (isUlaPort(port)) {
-        result = 2 + (this.frameTiStatesCounter < Timings.TSTATES_PER_FRAME ? CONTEND_DELAYS[this.frameTiStatesCounter] & 0xFF : 0);
-      } else if (isSlowRamArea(port, port7FFD)) {
-        int tstates = this.frameTiStatesCounter;
-        result += tstates < Timings.TSTATES_PER_FRAME ? CONTEND_DELAYS[tstates++] & 0xFF : 0;
-        result += tstates < Timings.TSTATES_PER_FRAME ? CONTEND_DELAYS[tstates++] & 0xFF : 0;
-        result += tstates < Timings.TSTATES_PER_FRAME ? CONTEND_DELAYS[tstates] & 0xFF : 0;
-      } else {
-        result = 2;
-      }
+    if (this.contendedRam && (isUlaPort(port) || isSlowRamArea(port, port7FFD))) {
+      result = this.frameTiStatesCounter < Timings.TSTATES_PER_FRAME ? CONTEND_DELAYS[this.frameTiStatesCounter] & 0xFF : 0;
     }
     return result;
   }

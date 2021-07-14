@@ -101,7 +101,7 @@ public final class VideoController extends JComponent
   private static final float SCALE_STEP = 0.2f;
   private static final float SCALE_MIN = 1.0f;
   private static final float SCALE_MAX = 6.0f;
-  private static final float COEFF_MAIN_AREAY_Y = (float) Timings.SCREEN_VISIBLE_LINES_BEFORE_RASTER / (float) Timings.LINES_AFTER_PAPER;
+  private static final float COEFF_MAIN_AREAY_Y = (float) Timings.LINES_VISIBLE_TOP_BORDER / (float) Timings.LINES_AFTER_PAPER;
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;
   private static volatile boolean gfxHideSameInkPaper = true;
