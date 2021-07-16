@@ -336,6 +336,8 @@ public final class Motherboard implements ZxPolyConstants {
                   final boolean executionEnabled) {
     this.localResetForAllModules = false;
 
+    final BoardMode currentMode = this.boardMode;
+
     final boolean resetStatisticsAtModules;
 
     int result = TRIGGER_NONE;
@@ -396,40 +398,40 @@ public final class Motherboard implements ZxPolyConstants {
 
           switch ((int) System.nanoTime() & 0x3) {
             case 0: {
-              zx0halt = modules[0].step(signalReset, startNewFrame, resetStatisticsAtModules);
+              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
               if (localResetForAllModules) {
                 return result;
               }
-              zx3halt = modules[3].step(signalReset, startNewFrame, resetStatisticsAtModules);
-              zx2halt = modules[2].step(signalReset, startNewFrame, resetStatisticsAtModules);
-              zx1halt = modules[1].step(signalReset, startNewFrame, resetStatisticsAtModules);
+              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
             }
             break;
             case 1: {
-              zx1halt = modules[1].step(signalReset, startNewFrame, resetStatisticsAtModules);
-              zx2halt = modules[2].step(signalReset, startNewFrame, resetStatisticsAtModules);
-              zx0halt = modules[0].step(signalReset, startNewFrame, resetStatisticsAtModules);
+              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
-              zx3halt = modules[3].step(signalReset, startNewFrame, resetStatisticsAtModules);
+              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
             }
             break;
             case 2: {
-              zx3halt = modules[3].step(signalReset, startNewFrame, resetStatisticsAtModules);
-              zx0halt = modules[0].step(signalReset, startNewFrame, resetStatisticsAtModules);
+              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
-              zx1halt = modules[1].step(signalReset, startNewFrame, resetStatisticsAtModules);
-              zx2halt = modules[2].step(signalReset, startNewFrame, resetStatisticsAtModules);
+              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
             }
             break;
             case 3: {
-              zx2halt = modules[2].step(signalReset, startNewFrame, resetStatisticsAtModules);
-              zx3halt = modules[3].step(signalReset, startNewFrame, resetStatisticsAtModules);
-              zx1halt = modules[1].step(signalReset, startNewFrame, resetStatisticsAtModules);
-              zx0halt = modules[0].step(signalReset, startNewFrame, resetStatisticsAtModules);
+              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
@@ -457,7 +459,7 @@ public final class Motherboard implements ZxPolyConstants {
         }
         break;
         case ZX128: {
-          modules[0].step(signalReset, startNewFrame, resetStatisticsAtModules);
+          modules[0].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
         }
         break;
         case SPEC256_16:
@@ -473,7 +475,7 @@ public final class Motherboard implements ZxPolyConstants {
             gfxCore.alignRegisterValuesWith(mainCpu, syncRegRecord);
             masterModule.stepWithGfxCpu(i + 1, gfxCore, signalReset, startNewFrame);
           }
-          masterModule.step(signalReset, startNewFrame, resetStatisticsAtModules);
+          masterModule.step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
         }
         break;
         default:
@@ -604,11 +606,12 @@ public final class Motherboard implements ZxPolyConstants {
   }
 
   private boolean haveModulesSamePositionAndMode() {
-    final int pc = this.modules[0].getCpu().getRegister(Z80.REG_PC);
-    final int sp = this.modules[0].getCpu().getRegister(Z80.REG_SP);
-    final int im = this.modules[0].getCpu().getIM();
-    final boolean iff1 = this.modules[0].getCpu().isIFF1();
-    final boolean iff2 = this.modules[0].getCpu().isIFF2();
+    final Z80 cpu0 = this.modules[0].getCpu();
+    final int pc = cpu0.getRegister(Z80.REG_PC);
+    final int sp = cpu0.getRegister(Z80.REG_SP);
+    final int im = cpu0.getIM();
+    final boolean iff1 = cpu0.isIFF1();
+    final boolean iff2 = cpu0.isIFF2();
 
     boolean result = true;
 
@@ -748,7 +751,7 @@ public final class Motherboard implements ZxPolyConstants {
     return this.ram;
   }
 
-  public List<IoDevice> getIoDevices() {
+  public List<IoDevice> findIoDevices() {
     return Arrays.asList(this.ioDevices);
   }
 

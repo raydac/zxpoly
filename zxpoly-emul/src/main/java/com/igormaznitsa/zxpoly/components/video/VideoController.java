@@ -1840,6 +1840,12 @@ public final class VideoController extends JComponent
   }
 
   public void notifyRepaint() {
+    this.repaint(0L);
+    // this.doSyncRepaint();
+  }
+
+  // can make application very slow on high resolutions screens!
+  public void doSyncRepaint() {
     if (SwingUtilities.isEventDispatchThread()) {
       this.doImmediatePaint();
     } else {

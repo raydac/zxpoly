@@ -489,7 +489,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       this.infoBarUpdateTimer.start();
     });
 
-    this.board.getIoDevices().forEach(IoDevice::init);
+    this.board.findIoDevices().forEach(IoDevice::init);
 
     this.setDropTarget(new DropTarget() {
       @Override

@@ -262,6 +262,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   public boolean step(
+          final BoardMode boardMode,
           final boolean signalReset,
           final boolean commonInt,
           final boolean resetStatistic
@@ -276,20 +277,27 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       this.mcyclesOfActivityBetweenInt = 0L;
     }
 
-    if (this.moduleIndex == 0) {
-      if (this.board.is3D00NotLocked() && !is7FFDLocked()) {
-        doInt = (this.port7FFD.get() & PORTw_ZX128_INTCPU0) == 0 && (commonInt || this.localInt);
+    if (boardMode == BoardMode.ZXPOLY) {
+      if (this.moduleIndex == 0) {
+        if (this.board.is3D00NotLocked() && !is7FFDLocked()) {
+          doInt = (this.port7FFD.get() & PORTw_ZX128_INTCPU0) == 0 && (commonInt || this.localInt);
+        } else {
+          doInt = commonInt || this.localInt;
+        }
       } else {
-        doInt = commonInt || this.localInt;
+        doInt = (!this.activeRegisterReading && this.registerReadingCounter <= 0) &&
+                ((!this.board.is3D00NotLocked() && commonInt) || this.localInt);
       }
-    } else {
-      doInt = (!this.activeRegisterReading && this.registerReadingCounter <= 0) &&
-              ((!this.board.is3D00NotLocked() && commonInt) || this.localInt);
-    }
-    this.localInt = false;
+      this.localInt = false;
 
-    doNmi = (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_DISABLE_NMI) == 0 && this.localNmi;
-    this.localNmi = false;
+      doNmi = (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_DISABLE_NMI) == 0 && this.localNmi;
+      this.localNmi = false;
+    } else {
+      this.localInt = false;
+      this.localNmi = false;
+      doInt = commonInt;
+      doNmi = false;
+    }
 
     this.intTiStatesCounter =
             doInt && this.intTiStatesCounter == 0 ?
@@ -338,11 +346,11 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   public void stepWithGfxCpu(final int ctx, final Z80 gfxCpu, final boolean signalReset,
                              final boolean commonInt) {
     this.localInt = false;
-    int sigReset = signalReset ? Z80.SIGNAL_IN_nRESET : 0;
-    int sigWait = this.gfxWaitSignal ? Z80.SIGNAL_IN_nWAIT : 0;
+    int sigReset = signalReset ? 0 : Z80.SIGNAL_IN_nRESET;
+    int sigWait = this.gfxWaitSignal ? 0 : Z80.SIGNAL_IN_nWAIT;
     gfxCpu.step(ctx,
-            Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.gfxIntCounter > 0 ? Z80.SIGNAL_IN_nINT : 0)
-                    ^ sigWait ^ (this.gfxNmiCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
+            sigReset | (this.gfxIntCounter != 0 ? 0 : Z80.SIGNAL_IN_nINT)
+                    | sigWait | (this.gfxNmiCounter != 0 ? 0 : Z80.SIGNAL_IN_nNMI));
   }
 
   public boolean is7FFDLocked() {
@@ -576,17 +584,15 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     synchronized (this.gfxRom) {
       int startOffset = page.getPageIndex() * GFX_PAGE_SIZE;
       final byte[] data = page.getGfxData();
-      for (int i = 0; i < data.length; i++) {
-        this.gfxRom[startOffset + i] = data[i];
-      }
+      System.arraycopy(data, 0, this.gfxRom, startOffset, data.length);
     }
   }
 
   public void writeGfxRamPage(final Spec256Arch.Spec256GfxPage page) {
     synchronized (this.gfxRam) {
       int startOffset = page.getPageIndex() * GFX_PAGE_SIZE;
-      for (byte gfxPageDatum : page.getGfxData()) {
-        this.gfxRam[startOffset++] = (byte) gfxPageDatum;
+      for (final byte gfxPageDatum : page.getGfxData()) {
+        this.gfxRam[startOffset++] = gfxPageDatum;
       }
     }
   }
