@@ -30,6 +30,6 @@ public interface Timings {
 
   int TSTATES_PER_FRAME = TSTATES_SCREEN_END;
 
-  int TSTATES_INT_NMI_LENGTH = 36;
+  int TSTATES_INT_NMI_LENGTH = 28;
 
 }

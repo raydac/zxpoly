@@ -291,24 +291,37 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     doNmi = (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_DISABLE_NMI) == 0 && this.localNmi;
     this.localNmi = false;
 
-    this.intTiStatesCounter = doInt ? TSTATES_INT_NMI_LENGTH : this.intTiStatesCounter;
-    this.nmiTiStatesCounter = doNmi ? TSTATES_INT_NMI_LENGTH : this.nmiTiStatesCounter;
+    this.intTiStatesCounter =
+            doInt && this.intTiStatesCounter == 0 ?
+                    TSTATES_INT_NMI_LENGTH : this.intTiStatesCounter;
+    this.nmiTiStatesCounter = doNmi && this.nmiTiStatesCounter == 0 ? TSTATES_INT_NMI_LENGTH : this.nmiTiStatesCounter;
 
-    sigReset = signalReset || (this.localResetCounter > 0) ? Z80.SIGNAL_IN_nRESET : 0;
+    sigReset = signalReset || (this.localResetCounter > 0) ? 0 : Z80.SIGNAL_IN_nRESET;
     if (this.localResetCounter > 0) {
       this.localResetCounter--;
     }
 
-    sigWait = this.waitSignal ? Z80.SIGNAL_IN_nWAIT : 0;
+    sigWait = this.waitSignal ? 0 : Z80.SIGNAL_IN_nWAIT;
 
     final int oldCpuState = this.cpu.getState();
     this.cpu.step(this.moduleIndex,
-            Z80.SIGNAL_IN_ALL_INACTIVE ^ sigReset ^ (this.intTiStatesCounter > 0 ? Z80.SIGNAL_IN_nINT : 0)
-                    ^ sigWait ^ (this.nmiTiStatesCounter > 0 ? Z80.SIGNAL_IN_nNMI : 0));
+            sigReset | (this.intTiStatesCounter != 0 ? 0 : Z80.SIGNAL_IN_nINT)
+                    | sigWait | (this.nmiTiStatesCounter != 0 ? 0 : Z80.SIGNAL_IN_nNMI));
     final int spentTiStates = this.cpu.getStepTstates();
 
-    this.nmiTiStatesCounter = Math.max(0, this.nmiTiStatesCounter - spentTiStates);
-    this.intTiStatesCounter = Math.max(0, this.intTiStatesCounter - spentTiStates);
+    if (this.nmiTiStatesCounter > 0) {
+      this.nmiTiStatesCounter -= spentTiStates;
+      if (this.nmiTiStatesCounter == 0) this.nmiTiStatesCounter = -1;
+    } else if (this.nmiTiStatesCounter < 0) {
+      this.nmiTiStatesCounter = 0;
+    }
+
+    if (this.intTiStatesCounter > 0) {
+      this.intTiStatesCounter -= spentTiStates;
+      if (this.intTiStatesCounter == 0) this.intTiStatesCounter = -1;
+    } else if (this.intTiStatesCounter < 0) {
+      this.intTiStatesCounter = 0;
+    }
 
     final int newCpuState = this.cpu.getState();
 
