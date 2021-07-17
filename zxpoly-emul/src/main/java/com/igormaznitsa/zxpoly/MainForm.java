@@ -2282,7 +2282,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       if (showConfirmDialog(this, new JScrollPane(optionsPanel), "Preferences", JOptionPane.OK_CANCEL_OPTION,
               JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
         optionsPanel.getData().store();
-        showMessageDialog(this, "Some options will be activated only after emulator restart!",
+        showMessageDialog(this, "Restart the emulator for new options!",
                 "Restart may required!",
                 JOptionPane.WARNING_MESSAGE);
       }

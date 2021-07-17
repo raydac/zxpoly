@@ -1745,7 +1745,7 @@ public final class VideoController extends JComponent
 
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
 
-    final int borderLineIndex = frameTiStates / this.timingProfile.ulaLineTime - 18; // 18 is heuristic value found by test aquaplane game
+    final int borderLineIndex = frameTiStates / this.timingProfile.ulaLineTime - 28; // 28 is heuristic value found by test aquaplane game
 
     if (borderLineIndex >= 0 && borderLineIndex < this.timingProfile.ulaTotalRows) {
       this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);

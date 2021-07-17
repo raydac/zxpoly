@@ -101,6 +101,6 @@ public enum TimingProfile {
     this.tstatesPaperLineTime = 128;
     this.tstatesBorderStart = (this.ulaFirstPaperLine - this.ulaBorderLinesTop) * ulaLineTime;
     this.tstatesInFramePaperStart = this.ulaFirstPaperLine * this.ulaLineTime + this.ulaFirstPaperTact;
-    this.tstatesInBottomBorderStart = this.ulaFirstPaperLine + 193;
+    this.tstatesInBottomBorderStart = (this.ulaFirstPaperLine + 193) * this.ulaLineTime;
   }
 }
