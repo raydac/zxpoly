@@ -1,9 +1,10 @@
 package com.igormaznitsa.zxpoly.components.snd;
 
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
+
 import javax.sound.sampled.AudioFormat;
 import java.util.Arrays;
 
-import static com.igormaznitsa.zxpoly.components.Timings.TSTATES_FRAME;
 import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
 
 final class SndBufferContainer {
@@ -31,7 +32,10 @@ final class SndBufferContainer {
   private int tstatesIntCounter = 0;
   private int lastWrittenPosition = 0;
 
-  public SndBufferContainer() {
+  private final TimingProfile timingProfile;
+
+  public SndBufferContainer(final TimingProfile timingProfile) {
+    this.timingProfile = timingProfile;
     this.allSndBuffers = new byte[BUFFERS_NUMBER][];
     for (int i = 0; i < BUFFERS_NUMBER; i++) {
       this.allSndBuffers[i] = new byte[SND_BUFFER_SIZE];
@@ -58,9 +62,9 @@ final class SndBufferContainer {
     this.lastWrittenPosition = 0;
   }
 
-  public static int calculatePosition(final int tstatesIntCounter) {
-    return ((tstatesIntCounter * SAMPLES_PER_INT + TSTATES_FRAME / 2)
-            / TSTATES_FRAME);
+  public int calculatePosition(final int tstatesIntCounter) {
+    return ((tstatesIntCounter * SAMPLES_PER_INT + this.timingProfile.ulaFrameTact / 2)
+            / this.timingProfile.ulaFrameTact);
   }
 
   public void setValue(final int deltaTstates, final int levelLeft, final int levelRight) {

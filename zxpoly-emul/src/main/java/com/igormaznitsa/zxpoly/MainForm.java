@@ -30,6 +30,7 @@ import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSourceFactory;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardDecoration;
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilterChain;
 import com.igormaznitsa.zxpoly.formats.*;
 import com.igormaznitsa.zxpoly.streamer.ZxVideoStreamer;
@@ -76,7 +77,6 @@ import java.util.logging.Logger;
 
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
-import static com.igormaznitsa.zxpoly.components.Timings.TSTATES_FRAME;
 import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
 import static javax.swing.JOptionPane.showConfirmDialog;
 import static javax.swing.JOptionPane.showMessageDialog;
@@ -266,8 +266,12 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private File lastPokeFileFolder = null;
   private Optional<SourceSoundPort> preTurboSourceSoundPort = Optional.empty();
 
+  private final TimingProfile timingProfile;
+
   public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
+
+    this.timingProfile = TimingProfile.SPEC128;
 
     final String ticks = System.getProperty("zxpoly.int.ticks", "");
     int intBetweenFrames = AppOptions.getInstance().getIntBetweenFrames();
@@ -370,6 +374,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     }
 
     this.board = new Motherboard(
+            this.timingProfile,
             BASE_ROM,
             AppOptions.getInstance().getDefaultBoardMode(),
             AppOptions.getInstance().isContendedRam(),
@@ -748,7 +753,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         try {
           int frameTiStates = this.board.getFrameTiStates();
           final boolean inTurboMode = this.turboMode;
-          final boolean tiStatesForIntExhausted = frameTiStates >= TSTATES_FRAME;
+          final boolean tiStatesForIntExhausted = frameTiStates >= this.timingProfile.ulaFrameTact;
           final boolean intTickForWallClockReached = this.wallClock.completed();
 
           final boolean doCpuIntTick;
@@ -767,7 +772,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
             }
             this.wallClock.next();
             if (!tiStatesForIntExhausted) {
-              this.onSlownessDetected(TSTATES_FRAME - frameTiStates);
+              this.onSlownessDetected(this.timingProfile.ulaFrameTact - frameTiStates);
             }
             viFlags = 0;
           } else {
@@ -784,11 +789,11 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
           frameTiStates = this.board.getFrameTiStates();
 
-          if (frameTiStates >= Timings.VERT_TSTATES_BORDER_BOTTOM_START) {
+          if (frameTiStates >= this.timingProfile.tstatesInBottomBorderStart) {
             viFlags |= VFLAG_BLINK_SCREEN;
           }
 
-          if (frameTiStates >= Timings.VERT_TSTATES_TOP_BORDER_END) {
+          if (frameTiStates >= this.timingProfile.ulaFrameTact) {
             viFlags |= VFLAG_BLINK_BORDER;
           }
 
@@ -845,13 +850,13 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         if (this.wallClock.completed()) {
           this.wallClock.next();
           this.videoStreamer.onWallclockInt();
-          this.board.dryIntTickOnWallClockTime(frameTiStates >= TSTATES_FRAME, true, frameTiStates);
+          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.ulaFrameTact, true, frameTiStates);
           this.board.startNewFrame();
         } else {
-          if (frameTiStates < TSTATES_FRAME) {
+          if (frameTiStates < this.timingProfile.ulaFrameTact) {
             this.board.doNop();
           }
-          this.board.dryIntTickOnWallClockTime(frameTiStates >= TSTATES_FRAME, true, frameTiStates);
+          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.ulaFrameTact, true, frameTiStates);
         }
       }
     }
@@ -859,7 +864,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
   private void onSlownessDetected(final long remainTstates) {
     LOGGER.warning(String.format("Slowness detected: %.02f%%",
-            (float) remainTstates / (float) TSTATES_FRAME * 100.0f));
+            (float) remainTstates / (float) this.timingProfile.ulaFrameTact * 100.0f));
   }
 
   private void updateTracerWindowsForStep() {
@@ -2151,7 +2156,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         this.keyboardAndTapeModule.getTap().removeActionListener(this);
       }
 
-      final TapeSource source = TapeSourceFactory.makeSource(tapFile);
+      final TapeSource source = TapeSourceFactory.makeSource(this.timingProfile, tapFile);
       source.addActionListener(this);
       this.keyboardAndTapeModule.setTap(source);
       LOGGER.info("Loaded TAP, total data size " + source.size() + " bytes");

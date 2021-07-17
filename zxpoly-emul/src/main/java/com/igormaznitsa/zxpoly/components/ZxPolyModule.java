@@ -19,6 +19,7 @@ package com.igormaznitsa.zxpoly.components;
 
 import com.igormaznitsa.z80.*;
 import com.igormaznitsa.z80.disasm.Z80Disasm;
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.formats.Spec256Arch;
 
 import java.util.ArrayList;
@@ -31,7 +32,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 import static com.igormaznitsa.z80.Z80.REG_A;
-import static com.igormaznitsa.zxpoly.components.Timings.TSTATES_INT_NMI_LENGTH;
 
 @SuppressWarnings("WeakerAccess")
 public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProvider {
@@ -75,7 +75,11 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   private static final int GFX_PAGE_SIZE = 0x4000 * 8;
 
-  public ZxPolyModule(final Motherboard board, final RomData romData, final int index) {
+  private final TimingProfile timingProfile;
+
+
+  public ZxPolyModule(final TimingProfile timingProfile, final Motherboard board, final RomData romData, final int index) {
+    this.timingProfile = timingProfile;
     this.romData.set(Objects.requireNonNull(romData));
     this.board = Objects.requireNonNull(board);
     this.moduleIndex = index;
@@ -301,8 +305,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     this.intTiStatesCounter =
             doInt && this.intTiStatesCounter == 0 ?
-                    TSTATES_INT_NMI_LENGTH : this.intTiStatesCounter;
-    this.nmiTiStatesCounter = doNmi && this.nmiTiStatesCounter == 0 ? TSTATES_INT_NMI_LENGTH : this.nmiTiStatesCounter;
+                    this.timingProfile.ulaIntLength : this.intTiStatesCounter;
+    this.nmiTiStatesCounter = doNmi && this.nmiTiStatesCounter == 0 ? this.timingProfile.ulaIntLength : this.nmiTiStatesCounter;
 
     sigReset = signalReset || (this.localResetCounter > 0) ? 0 : Z80.SIGNAL_IN_nRESET;
     if (this.localResetCounter > 0) {

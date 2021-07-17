@@ -26,6 +26,7 @@ import com.igormaznitsa.zxpoly.components.snd.TurboSoundNedoPc;
 import com.igormaznitsa.zxpoly.components.snd.Zx128Ay8910;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardDecoration;
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -47,7 +48,7 @@ public final class Motherboard implements ZxPolyConstants {
 
   private static final int SPEC256_GFX_CORES = 8;
   private static final int SPEC256_16_GFX_CORES = 5;
-  private static final byte[] CONTEND_DELAYS = generateFrameContendDelays(6, 5, 4, 3, 2, 1, 0, 0);
+  private final byte[] contendDelay;
   private final ZxPolyModule[] modules;
   private final Z80[] spec256GfxCores;
   private final IoDevice[] ioDevices;
@@ -77,8 +78,10 @@ public final class Motherboard implements ZxPolyConstants {
   private volatile boolean gfxLeveledOr = false;
   private volatile boolean gfxLeveledAnd = false;
   private int frameTiStatesCounter = 0;
+  private final TimingProfile timingProfile;
 
   public Motherboard(
+          final TimingProfile timingProfile,
           final RomData rom,
           final BoardMode boardMode,
           final boolean contendedRam,
@@ -91,40 +94,43 @@ public final class Motherboard implements ZxPolyConstants {
     if (rom == null) {
       throw new NullPointerException("ROM must not be null");
     }
+    this.timingProfile = timingProfile;
     this.modules = new ZxPolyModule[4];
-    final List<IoDevice> iodevices = new ArrayList<>();
+    final List<IoDevice> ioDevices = new ArrayList<>();
     for (int i = 0; i < this.modules.length; i++) {
-      this.modules[i] = new ZxPolyModule(this, rom, i);
-      iodevices.add(this.modules[i]);
+      this.modules[i] = new ZxPolyModule(timingProfile, this, rom, i);
+      ioDevices.add(this.modules[i]);
     }
+
+    this.contendDelay = generateFrameContendDelays(timingProfile, 6, 5, 4, 3, 2, 1, 0, 0);
 
     this.contendedRam = contendedRam;
     this.boardMode = boardMode;
-    this.beeper = new Beeper(useAcbSoundScheme, enableCovoxFb, useTurboSound);
-    this.betaDisk = new BetaDiscInterface(this);
+    this.beeper = new Beeper(timingProfile, useAcbSoundScheme, enableCovoxFb, useTurboSound);
+    this.betaDisk = new BetaDiscInterface(this.timingProfile, this);
     this.romData = rom;
 
-    iodevices.add(this.betaDisk);
+    ioDevices.add(this.betaDisk);
 
-    this.keyboard = new KeyboardKempstonAndTapeIn(this, allowKempstonMouse);
-    iodevices.add(keyboard);
-    this.video = new VideoController(this, vkbdContainer);
-    iodevices.add(video);
-    iodevices.add(new KempstonMouse(this));
+    this.keyboard = new KeyboardKempstonAndTapeIn(timingProfile, this, allowKempstonMouse);
+    ioDevices.add(keyboard);
+    this.video = new VideoController(timingProfile, this, vkbdContainer);
+    ioDevices.add(video);
+    ioDevices.add(new KempstonMouse(this));
 
     if (useTurboSound) {
       LOGGER.info("TurboSound activated as AY");
-      iodevices.add(new TurboSoundNedoPc(this));
+      ioDevices.add(new TurboSoundNedoPc(this));
     } else {
-      iodevices.add(new Zx128Ay8910(this));
+      ioDevices.add(new Zx128Ay8910(this));
     }
 
     if (enableCovoxFb) {
       LOGGER.info("Covox #FB is enabled and added among IO devices");
-      iodevices.add(new CovoxFb(this));
+      ioDevices.add(new CovoxFb(this));
     }
 
-    this.ioDevices = iodevices.toArray(new IoDevice[0]);
+    this.ioDevices = ioDevices.toArray(new IoDevice[0]);
     this.ioDevicesPreStep = Arrays.stream(this.ioDevices)
             .filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_PRESTEP) != 0)
             .toArray(IoDevice[]::new);
@@ -148,12 +154,12 @@ public final class Motherboard implements ZxPolyConstants {
     return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
   }
 
-  private static byte[] generateFrameContendDelays(final int... sequence) {
-    final byte[] resultDelays = new byte[Timings.TSTATES_FRAME];
+  private static byte[] generateFrameContendDelays(final TimingProfile profile, final int... sequence) {
+    final byte[] resultDelays = new byte[profile.ulaFrameTact];
 
-    for (int row = Timings.VERT_TSTATES_RASTER_START; row < Timings.VERT_TSTATES_BORDER_BOTTOM_START; row += Timings.TSTATES_H_WHOLE_ROW) {
-      for (int col = 0; col < Timings.TSTATES_H_RASTER_DATA; col++) {
-        resultDelays[row + col + Timings.TSTATES_H_BORDER_LEFT] = (byte) sequence[col % sequence.length];
+    for (int row = profile.tstatesInFramePaperStart; row < profile.tstatesInBottomBorderStart; row += profile.ulaLineTime) {
+      for (int col = 0; col < profile.tstatesPaperLineTime; col++) {
+        resultDelays[row + col] = (byte) sequence[col % sequence.length];
       }
     }
     return resultDelays;
@@ -348,7 +354,7 @@ public final class Motherboard implements ZxPolyConstants {
       if (this.statisticCounter <= 0) {
         for (int i = 0; i < 4; i++) {
           this.cpuLoad[i] = min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweenInt()
-                  / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (Timings.TSTATES_FRAME));
+                  / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (this.timingProfile.ulaFrameTact));
         }
         this.statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
         resetStatisticsAtModules = true;
@@ -711,7 +717,7 @@ public final class Motherboard implements ZxPolyConstants {
   int contendRam(final int port7FFD, final int address) {
     int result = 0;
     if (this.contendedRam && isSlowRamArea(address, port7FFD)) {
-      result = this.frameTiStatesCounter < Timings.TSTATES_FRAME ? CONTEND_DELAYS[this.frameTiStatesCounter] & 0xFF : 0;
+      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTact ? contendDelay[this.frameTiStatesCounter] & 0xFF : 0;
     }
     return result;
   }
@@ -719,7 +725,7 @@ public final class Motherboard implements ZxPolyConstants {
   int contendPortEarly(final int port, final int port7FFD) {
     int result = 0;
     if (this.contendedRam && isSlowRamArea(port, port7FFD)) {
-      result = this.frameTiStatesCounter < Timings.TSTATES_FRAME ? CONTEND_DELAYS[this.frameTiStatesCounter] & 0xFF : 0;
+      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTact ? contendDelay[this.frameTiStatesCounter] & 0xFF : 0;
     }
     return result;
   }
@@ -727,7 +733,7 @@ public final class Motherboard implements ZxPolyConstants {
   int contendPortLate(final int port, final int port7FFD) {
     int result = 0;
     if (this.contendedRam && (isUlaPort(port) || isSlowRamArea(port, port7FFD))) {
-      result = this.frameTiStatesCounter < Timings.TSTATES_FRAME ? CONTEND_DELAYS[this.frameTiStatesCounter] & 0xFF : 0;
+      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTact ? contendDelay[this.frameTiStatesCounter] & 0xFF : 0;
     }
     return result;
   }

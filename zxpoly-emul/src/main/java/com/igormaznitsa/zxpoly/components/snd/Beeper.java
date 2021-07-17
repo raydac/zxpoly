@@ -17,6 +17,8 @@
 
 package com.igormaznitsa.zxpoly.components.snd;
 
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.SourceDataLine;
@@ -81,8 +83,10 @@ public final class Beeper {
   private final int[] channels = new int[8];
   private final MixerFunction mixerLeft;
   private final MixerFunction mixerRight;
+  private final TimingProfile timingProfile;
 
-  public Beeper(final boolean useAcbSoundScheme, final boolean covoxPresented, final boolean turboSoundPresented) {
+  public Beeper(final TimingProfile timingProfile, final boolean useAcbSoundScheme, final boolean covoxPresented, final boolean turboSoundPresented) {
+    this.timingProfile = timingProfile;
     if (useAcbSoundScheme) {
       if (turboSoundPresented && covoxPresented) {
         this.mixerLeft = MixerUtilsACB::mixLeft_TS_CVX;
@@ -124,7 +128,7 @@ public final class Beeper {
       this.activeInternalBeeper.getAndSet(NULL_BEEPER).dispose();
     } else {
       try {
-        final IBeeper newInternalBeeper = new InternalBeeper(soundPort);
+        final IBeeper newInternalBeeper = new InternalBeeper(this.timingProfile, soundPort);
         if (this.activeInternalBeeper.compareAndSet(NULL_BEEPER, newInternalBeeper)) {
           newInternalBeeper.start();
         }
@@ -197,11 +201,12 @@ public final class Beeper {
             new ArrayBlockingQueue<>(SndBufferContainer.BUFFERS_NUMBER);
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
-    private final SndBufferContainer sndBuffer = new SndBufferContainer();
+    private final SndBufferContainer sndBuffer;
     private final Optional<SourceSoundPort> optionalSourceSoundPort;
     private volatile boolean working = true;
 
-    private InternalBeeper(final SourceSoundPort optionalSourceSoundPort) {
+    private InternalBeeper(final TimingProfile timingProfile, final SourceSoundPort optionalSourceSoundPort) {
+      this.sndBuffer = new SndBufferContainer(timingProfile);
       this.optionalSourceSoundPort = Optional.of(optionalSourceSoundPort);
       this.sourceDataLine = optionalSourceSoundPort.asSourceDataLine();
       final Line.Info lineInfo = this.sourceDataLine.getLineInfo();

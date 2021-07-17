@@ -20,6 +20,7 @@ package com.igormaznitsa.zxpoly.components.betadisk;
 import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.logging.Logger;
@@ -38,9 +39,9 @@ public class BetaDiscInterface implements IoDevice {
   private long totalTstates = 0L;
   private int ffPort;
 
-  public BetaDiscInterface(final Motherboard board) {
+  public BetaDiscInterface(final TimingProfile timingProfile, final Motherboard board) {
     this.board = board;
-    this.vg93 = new K1818VG93(LOGGER);
+    this.vg93 = new K1818VG93(timingProfile, LOGGER);
   }
 
   public TrDosDisk getDiskInDrive(final int driveIndex) {

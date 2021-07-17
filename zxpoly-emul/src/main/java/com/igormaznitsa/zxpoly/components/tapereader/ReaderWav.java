@@ -1,6 +1,7 @@
 package com.igormaznitsa.zxpoly.components.tapereader;
 
 import com.igormaznitsa.zxpoly.components.tapereader.wave.InMemoryWavFile;
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -10,8 +11,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static com.igormaznitsa.zxpoly.components.Timings.TSTATES_FRAME;
 
 public class ReaderWav implements TapeSource {
 
@@ -23,9 +22,12 @@ public class ReaderWav implements TapeSource {
 
   private volatile float bias = 0.01f;
 
-  public ReaderWav(final String name, final File file) throws IOException {
+  private final TimingProfile timingProfile;
+
+  public ReaderWav(final TimingProfile timingProfile, final String name, final File file) throws IOException {
+    this.timingProfile = timingProfile;
     this.name = name;
-    this.wavFile = new InMemoryWavFile(file, TSTATES_FRAME * 50);
+    this.wavFile = new InMemoryWavFile(file, timingProfile.ulaFrameTact * 50);
   }
 
   @Override

@@ -22,6 +22,7 @@ import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterInterfac
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterKempston;
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterType;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEvent;
@@ -168,8 +169,10 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   private final long cursorCsMask = AppOptions.getInstance().getAutoCsForCursorKeys() ? ZXKEY_CS : 0L;
   private volatile boolean activatedKempstonJoystick = true;
+  private final TimingProfile timingProfile;
 
-  public KeyboardKempstonAndTapeIn(final Motherboard board, final boolean kempstonMouseAllowed) {
+  public KeyboardKempstonAndTapeIn(final TimingProfile timingProfile, final Motherboard board, final boolean kempstonMouseAllowed) {
+    this.timingProfile = timingProfile;
     this.board = board;
     this.kempstonMouseAllowed = kempstonMouseAllowed;
 

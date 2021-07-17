@@ -18,6 +18,7 @@
 package com.igormaznitsa.zxpoly.components.video;
 
 import com.igormaznitsa.zxpoly.components.*;
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter;
 import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilterChain;
 import com.igormaznitsa.zxpoly.formats.Spec256Arch;
@@ -88,9 +89,7 @@ public final class VideoController extends JComponent
           VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/spec256.raw.pal"),
           true);
   private static final int PREFERRED_BORDER_WIDTH = 64;
-  private static final Dimension MINIMUM_SIZE =
-          new Dimension(SCREEN_WIDTH + (PREFERRED_BORDER_WIDTH << 1),
-                  SCREEN_HEIGHT + (PREFERRED_BORDER_WIDTH << 1));
+  private final Dimension baseSize;
   private static final int[] PALETTE_ALIGNED_ZXPOLY =
           Utils.alignPaletteColors(PALETTE_ZXPOLY, PALETTE_SPEC256);
   private static final Logger log = Logger.getLogger("VC");
@@ -100,7 +99,6 @@ public final class VideoController extends JComponent
   private static final float SCALE_STEP = 0.2f;
   private static final float SCALE_MIN = 1.0f;
   private static final float SCALE_MAX = 6.0f;
-  private static final float COEFF_MAIN_AREAY_Y = (float) Timings.ROWS_TOP_BORDER / Timings.ROWS_BOTTOM_BORDER;
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;
   private static volatile boolean gfxHideSameInkPaper = true;
@@ -128,12 +126,16 @@ public final class VideoController extends JComponent
   private Window vkbdWindow = null;
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
+  private final TimingProfile timingProfile;
 
-  public VideoController(final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
+  public VideoController(final TimingProfile timingProfile, final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
     super();
+    this.timingProfile = timingProfile;
+    this.borderLineColors = new byte[this.timingProfile.ulaVisibleRows];
+    this.outBorderLineColors = new byte[this.timingProfile.ulaVisibleRows];
 
-    this.borderLineColors = new byte[Timings.TOTAL_VISIBLE_ROWS];
-    this.outBorderLineColors = new byte[Timings.TOTAL_VISIBLE_ROWS];
+    this.baseSize = new Dimension(SCREEN_WIDTH + (PREFERRED_BORDER_WIDTH << 1),
+            SCREEN_HEIGHT + timingProfile.ulaBorderLinesTop + timingProfile.ulaBorderLinesBottom);
 
     this.setFocusTraversalKeysEnabled(false);
 
@@ -1281,13 +1283,13 @@ public final class VideoController extends JComponent
 
   @Override
   public Dimension getPreferredSize() {
-    return new Dimension(Math.max(this.size.width, MINIMUM_SIZE.width),
-            Math.max(this.size.height, MINIMUM_SIZE.height));
+    return new Dimension(Math.max(this.size.width, baseSize.width),
+            Math.max(this.size.height, baseSize.height));
   }
 
   @Override
   public Dimension getMinimumSize() {
-    return MINIMUM_SIZE;
+    return baseSize;
   }
 
   private void updateZoom(final float value) {
@@ -1298,7 +1300,7 @@ public final class VideoController extends JComponent
   }
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
-    final float lineHeight = Math.max(1, (float) height / Timings.TOTAL_VISIBLE_ROWS) + 1;
+    final float lineHeight = Math.max(1, (float) height / this.timingProfile.ulaLineTime) + 1;
     float y = 0.0f;
     final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
 
@@ -1325,16 +1327,17 @@ public final class VideoController extends JComponent
 
     final Rectangle bounds = this.getBounds();
 
-    final int width = bounds.width;
-    final int height = bounds.height;
+    final int visibleWidth = bounds.width;
+    final int visibleHeight = bounds.height;
 
-    final int xoff = (width - this.size.width) / 2;
-    final int yoff = Math.round((height - this.size.height) / 2.0f * COEFF_MAIN_AREAY_Y);
+    final int screenOffsetX = (visibleWidth - this.size.width) / 2;
 
-    if (xoff > 0 || yoff > 0) {
-      drawBorder(g2, width, height);
+    final int screenOffsetY = Math.round(this.zoom * this.timingProfile.ulaBorderLinesTop);
+
+    if (screenOffsetX > 0 || screenOffsetY > 0) {
+      drawBorder(g2, visibleWidth, visibleHeight);
     }
-    this.drawBuffer(g2, xoff, yoff, this.zoom, this.tvFilterChain);
+    this.drawBuffer(g2, screenOffsetX, screenOffsetY, this.zoom, this.tvFilterChain);
 
     if (this.mouseTrapActive && this.enableMouseTrapIndicator) {
       g2.drawImage(MOUSE_TRAPPED, 2, 2, null);
@@ -1462,7 +1465,7 @@ public final class VideoController extends JComponent
         unlockBuffer();
       }
     } else {
-      final int borderArgbColor = PALETTE_ZXPOLY[this.borderLineColors[Timings.TOTAL_VISIBLE_ROWS - 1]];
+      final int borderArgbColor = PALETTE_ZXPOLY[this.borderLineColors[this.timingProfile.ulaVisibleRows - 1]];
       final Rectangle area;
       final TvFilter[] tvFilters = filterChain.getFilterChain();
       BufferedImage postProcessedImage;
@@ -1741,22 +1744,9 @@ public final class VideoController extends JComponent
 
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
 
-    final int borderLineIndex = (frameTiStates - Timings.TSTATES_START_BORDER) / Timings.TSTATES_H_WHOLE_ROW;
-//    if (frameTiStates < Timings.VERT_TSTATES_BORDER_BOTTOM_START) {
-//      // raster
-//      borderLineIndex = Timings.ROWS_TOP_BORDER + (frameTiStates - Timings.VERT_TSTATES_RASTER_START) / Timings.TSTATES_H_WHOLE_ROW;
-//    } else if (frameTiStates < Timings.VERT_TSTATES_VSYNC) {
-//      // bottom border
-//      borderLineIndex = (Timings.ROWS_TOP_BORDER + Timings.ROWS_RASTER) + (frameTiStates - Timings.VERT_TSTATES_BORDER_BOTTOM_START) / Timings.TSTATES_H_WHOLE_ROW;
-//    } else if (frameTiStates < Timings.VERT_TSTATES_TOP_BORDER){
-//      // vsync
-//      borderLineIndex = -1;
-//    } else {
-//      // top border
-//      borderLineIndex = (frameTiStates - Timings.VERT_TSTATES_TOP_BORDER) / Timings.TSTATES_H_WHOLE_ROW;
-//    }
+    final int borderLineIndex = (frameTiStates - this.timingProfile.tstatesBorderStart) / this.timingProfile.ulaLineTime;
 
-    if (borderLineIndex >= 0 && borderLineIndex < Timings.TOTAL_VISIBLE_ROWS) {
+    if (borderLineIndex >= 0 && borderLineIndex < this.timingProfile.ulaVisibleRows) {
       this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
     }
   }
