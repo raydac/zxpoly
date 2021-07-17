@@ -6,8 +6,8 @@ public enum TimingProfile {
           64,
           61,
           70784,
-          32,
-          32,
+          48,
+          48,
           16,
           16,
           61,
@@ -18,8 +18,8 @@ public enum TimingProfile {
           80,
           65,
           71680,
-          32,
-          32,
+          48,
+          48,
           16,
           16,
           0,
@@ -30,20 +30,21 @@ public enum TimingProfile {
           64,
           64,
           69888,
-          32,
-          32,
+          48,
+          48,
           16,
           16,
           64,
           32
   ),
   SPEC128(
+
           228,
           63,
           64,
           70908,
-          32,
-          32,
+          48,
+          48,
           16,
           16,
           64 + 2,
@@ -62,6 +63,9 @@ public enum TimingProfile {
   public final int ulaIntLength;
 
   public final int ulaVisibleRows;
+  public final int ulaTotalRows;
+  public final int ulaFirstVisibleRow;
+
   public final int tstatesInFramePaperStart;
   public final int tstatesInBottomBorderStart;
   public final int tstatesPaperLineTime;
@@ -91,8 +95,10 @@ public enum TimingProfile {
     this.ulaIntLength = ulaIntLength;
 
     this.ulaVisibleRows = ulaBorderLinesTop + ulaBorderLinesBottom + 192;
+    this.ulaTotalRows = ulaFrameTact / ulaLineTime;
+    this.ulaFirstVisibleRow = this.ulaTotalRows - this.ulaVisibleRows;
 
-    this.tstatesPaperLineTime = ulaLineTime - ulaBorderTiLeft - ulaBorderTiRight;
+    this.tstatesPaperLineTime = 128;
     this.tstatesBorderStart = (this.ulaFirstPaperLine - this.ulaBorderLinesTop) * ulaLineTime;
     this.tstatesInFramePaperStart = this.ulaFirstPaperLine * this.ulaLineTime + this.ulaFirstPaperTact;
     this.tstatesInBottomBorderStart = this.ulaFirstPaperLine + 193;

@@ -131,8 +131,8 @@ public final class VideoController extends JComponent
   public VideoController(final TimingProfile timingProfile, final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
     super();
     this.timingProfile = timingProfile;
-    this.borderLineColors = new byte[this.timingProfile.ulaVisibleRows];
-    this.outBorderLineColors = new byte[this.timingProfile.ulaVisibleRows];
+    this.borderLineColors = new byte[this.timingProfile.ulaTotalRows];
+    this.outBorderLineColors = new byte[this.timingProfile.ulaTotalRows];
 
     this.baseSize = new Dimension(SCREEN_WIDTH + (PREFERRED_BORDER_WIDTH << 1),
             SCREEN_HEIGHT + timingProfile.ulaBorderLinesTop + timingProfile.ulaBorderLinesBottom);
@@ -1300,13 +1300,14 @@ public final class VideoController extends JComponent
   }
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
-    final float lineHeight = Math.max(1, (float) height / this.timingProfile.ulaLineTime) + 1;
+    final float lineHeight = Math.max(1, (float) height / this.timingProfile.ulaVisibleRows) + 1;
     float y = 0.0f;
     final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
 
     synchronized (this.outBorderLineColors) {
-      for (final byte c : this.outBorderLineColors) {
-        g.setColor(this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[c]));
+      for (int i = this.timingProfile.ulaFirstVisibleRow; i < this.timingProfile.ulaTotalRows; i++) {
+        final int colorIndex = this.outBorderLineColors[i];
+        g.setColor(this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[colorIndex]));
         rectangle.y = y;
         g.fill(rectangle);
         y += lineHeight;
@@ -1744,9 +1745,9 @@ public final class VideoController extends JComponent
 
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
 
-    final int borderLineIndex = (frameTiStates - this.timingProfile.tstatesBorderStart) / this.timingProfile.ulaLineTime;
+    final int borderLineIndex = frameTiStates / this.timingProfile.ulaLineTime - 18; // 18 is heuristic value found by test aquaplane game
 
-    if (borderLineIndex >= 0 && borderLineIndex < this.timingProfile.ulaVisibleRows) {
+    if (borderLineIndex >= 0 && borderLineIndex < this.timingProfile.ulaTotalRows) {
       this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
     }
   }
