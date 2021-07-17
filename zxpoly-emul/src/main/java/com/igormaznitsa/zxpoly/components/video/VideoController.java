@@ -93,7 +93,6 @@ public final class VideoController extends JComponent
                   SCREEN_HEIGHT + (PREFERRED_BORDER_WIDTH << 1));
   private static final int[] PALETTE_ALIGNED_ZXPOLY =
           Utils.alignPaletteColors(PALETTE_ZXPOLY, PALETTE_SPEC256);
-  private static final int ZXSPEC_PIXEL_AREA_SIZE = 0x1C00;
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
@@ -101,15 +100,13 @@ public final class VideoController extends JComponent
   private static final float SCALE_STEP = 0.2f;
   private static final float SCALE_MIN = 1.0f;
   private static final float SCALE_MAX = 6.0f;
-  private static final float COEFF_MAIN_AREAY_Y = (float) Timings.LINES_VISIBLE_TOP_BORDER / (float) Timings.LINES_AFTER_PAPER;
+  private static final float COEFF_MAIN_AREAY_Y = (float) Timings.ROWS_TOP_BORDER / Timings.ROWS_BOTTOM_BORDER;
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;
   private static volatile boolean gfxHideSameInkPaper = true;
   private static volatile int gfxUpColorsMixed = 64;
   private static volatile int gfxDownColorsMixed = 0;
   private static volatile int[] gfxPrerenderedBack = null;
-  private final int numberOfBorderLines;
-  private final int statesPerBorderLine;
   private final VirtualKeyboardDecoration vkbdContainer;
   private final Motherboard board;
   private final ReentrantLock bufferLocker = new ReentrantLock();
@@ -128,18 +125,15 @@ public final class VideoController extends JComponent
   private volatile boolean showVkb = false;
   private volatile TvFilterChain tvFilterChain = TvFilterChain.NONE;
   private volatile boolean enableMouseTrapIndicator = false;
-  private int tstatesCounter = 0;
   private Window vkbdWindow = null;
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
 
-  public VideoController(final Motherboard board, final int numberOfBorderLines, final VirtualKeyboardDecoration vkbdContainer) {
+  public VideoController(final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
     super();
 
-    this.numberOfBorderLines = Math.min(Timings.TOTAL_VISIBLE_SCREEN_LINES, Math.max(1, numberOfBorderLines));
-    this.statesPerBorderLine = (Timings.TSTATES_SCREEN_END - Timings.TSTATES_SCREEN_START) / numberOfBorderLines;
-    this.borderLineColors = new byte[numberOfBorderLines];
-    this.outBorderLineColors = new byte[numberOfBorderLines];
+    this.borderLineColors = new byte[Timings.TOTAL_VISIBLE_ROWS];
+    this.outBorderLineColors = new byte[Timings.TOTAL_VISIBLE_ROWS];
 
     this.setFocusTraversalKeysEnabled(false);
 
@@ -1304,7 +1298,7 @@ public final class VideoController extends JComponent
   }
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
-    final float lineHeight = Math.max(1, (float) height / numberOfBorderLines) + 1;
+    final float lineHeight = Math.max(1, (float) height / Timings.TOTAL_VISIBLE_ROWS) + 1;
     float y = 0.0f;
     final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
 
@@ -1468,7 +1462,7 @@ public final class VideoController extends JComponent
         unlockBuffer();
       }
     } else {
-      final int borderArgbColor = PALETTE_ZXPOLY[this.borderLineColors[numberOfBorderLines - 1]];
+      final int borderArgbColor = PALETTE_ZXPOLY[this.borderLineColors[Timings.TOTAL_VISIBLE_ROWS - 1]];
       final Rectangle area;
       final TvFilter[] tvFilters = filterChain.getFilterChain();
       BufferedImage postProcessedImage;
@@ -1739,18 +1733,30 @@ public final class VideoController extends JComponent
   }
 
   @Override
-  public void preStep(final boolean signalReset, final boolean tstatesIntReached,
+  public void preStep(final int frameTiStates, final boolean signalReset, final boolean tstatesIntReached,
                       boolean wallClockInt) {
     if (signalReset) {
       this.portFEw = 0x00;
     }
-    if (wallClockInt) {
-      this.tstatesCounter = 0;
-    }
+
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
 
-    int borderLineIndex = (this.tstatesCounter - Timings.TSTATES_RASTER_START) / this.statesPerBorderLine;
-    if (borderLineIndex >= 0 && borderLineIndex < this.numberOfBorderLines) {
+    final int borderLineIndex = (frameTiStates - Timings.TSTATES_START_BORDER) / Timings.TSTATES_H_WHOLE_ROW;
+//    if (frameTiStates < Timings.VERT_TSTATES_BORDER_BOTTOM_START) {
+//      // raster
+//      borderLineIndex = Timings.ROWS_TOP_BORDER + (frameTiStates - Timings.VERT_TSTATES_RASTER_START) / Timings.TSTATES_H_WHOLE_ROW;
+//    } else if (frameTiStates < Timings.VERT_TSTATES_VSYNC) {
+//      // bottom border
+//      borderLineIndex = (Timings.ROWS_TOP_BORDER + Timings.ROWS_RASTER) + (frameTiStates - Timings.VERT_TSTATES_BORDER_BOTTOM_START) / Timings.TSTATES_H_WHOLE_ROW;
+//    } else if (frameTiStates < Timings.VERT_TSTATES_TOP_BORDER){
+//      // vsync
+//      borderLineIndex = -1;
+//    } else {
+//      // top border
+//      borderLineIndex = (frameTiStates - Timings.VERT_TSTATES_TOP_BORDER) / Timings.TSTATES_H_WHOLE_ROW;
+//    }
+
+    if (borderLineIndex >= 0 && borderLineIndex < Timings.TOTAL_VISIBLE_ROWS) {
       this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
     }
   }
@@ -1762,7 +1768,6 @@ public final class VideoController extends JComponent
 
   @Override
   public void postStep(final int spentTstates) {
-    this.tstatesCounter += spentTstates;
   }
 
   public float getZoom() {

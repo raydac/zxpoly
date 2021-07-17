@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.igormaznitsa.zxpoly.components.Timings.TSTATES_PER_FRAME;
+import static com.igormaznitsa.zxpoly.components.Timings.TSTATES_FRAME;
 
 public class ReaderWav implements TapeSource {
 
@@ -25,7 +25,7 @@ public class ReaderWav implements TapeSource {
 
   public ReaderWav(final String name, final File file) throws IOException {
     this.name = name;
-    this.wavFile = new InMemoryWavFile(file, TSTATES_PER_FRAME * 50);
+    this.wavFile = new InMemoryWavFile(file, TSTATES_FRAME * 50);
   }
 
   @Override

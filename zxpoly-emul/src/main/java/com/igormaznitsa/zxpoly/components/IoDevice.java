@@ -39,7 +39,7 @@ public interface IoDevice extends ZxPolyConstants {
 
   void writeIo(ZxPolyModule module, int port, int value);
 
-  void preStep(boolean signalReset, boolean tstatesIntReached, boolean wallclockInt);
+  void preStep(int frameTiStates, boolean signalReset, boolean tstatesIntReached, boolean wallclockInt);
 
   void postStep(int spentTstates);
 

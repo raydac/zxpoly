@@ -138,7 +138,7 @@ public class BetaDiscInterface implements IoDevice {
   }
 
   @Override
-  public void preStep(final boolean signalReset, final boolean tstatesIntReached,
+  public void preStep(final int frameTiStates, final boolean signalReset, final boolean tstatesIntReached,
                       boolean wallclockInt) {
     if (signalReset) {
       doReset();

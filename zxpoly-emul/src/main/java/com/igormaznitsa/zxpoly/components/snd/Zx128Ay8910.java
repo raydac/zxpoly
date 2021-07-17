@@ -48,7 +48,7 @@ public final class Zx128Ay8910 implements IoDevice, AySounder {
   }
 
   @Override
-  public void preStep(boolean signalReset, boolean tstatesIntReached, boolean wallClockInt) {
+  public void preStep(int frameTiStates, boolean signalReset, boolean tstatesIntReached, boolean wallClockInt) {
     if (signalReset) {
       this.doReset();
     }

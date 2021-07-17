@@ -58,14 +58,6 @@ public final class AppOptions {
     preferences.put(Option.LAST_SELECTED_AUDIO_DEVICE.name(), device);
   }
 
-  public synchronized int getBorderLines() {
-    return preferences.getInt(Option.BORDER_LINES.name(), 40);
-  }
-
-  public synchronized void setBorderLines(final int lines) {
-    preferences.putInt(Option.BORDER_LINES.name(), lines);
-  }
-
   public synchronized boolean getAutoCsForCursorKeys() {
     return preferences.getBoolean(Option.AUTOCS_FOR_CURSOR_KEYS.name(), true);
   }
@@ -388,7 +380,6 @@ public final class AppOptions {
   public enum Option {
     CONTENDED_RAM,
     INTERLACED_SCAN,
-    BORDER_LINES,
     AUTOCS_FOR_CURSOR_KEYS,
     CUSTOM_ROM_PATH,
     STREAM_FFMPEGPATH,

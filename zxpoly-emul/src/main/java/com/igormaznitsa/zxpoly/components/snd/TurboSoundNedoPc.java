@@ -68,9 +68,10 @@ public final class TurboSoundNedoPc implements IoDevice, AySounder {
 
   @Override
   public void preStep(
-      final boolean signalReset,
-      final boolean tstatesIntReached,
-      final boolean wallclockInt
+          final int frameTiStates,
+          final boolean signalReset,
+          final boolean tstatesIntReached,
+          final boolean wallclockInt
   ) {
     if (signalReset) {
       this.doReset();
