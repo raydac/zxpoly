@@ -1,8 +1,6 @@
 package com.igormaznitsa.zxpoly.components;
 
 public interface Timings {
-  int CPU_FREQ_HZ = 3546900;
-
   int ROWS_VSYNC = 8;
   int ROWS_RASTER = 192;
   int ROWS_BOTTOM_BORDER = 56;
