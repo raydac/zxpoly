@@ -1294,13 +1294,14 @@ public final class VideoController extends JComponent
 
   private void updateZoom(final float value) {
     this.zoom = value;
-    this.size = new Dimension(Math.round(SCREEN_WIDTH * value), Math.round(SCREEN_HEIGHT * value));
+    this.size = new Dimension(Math.round(SCREEN_WIDTH * value),
+            Math.round((this.timingProfile.ulaBorderLinesTop + this.timingProfile.ulaBorderLinesBottom + SCREEN_HEIGHT) * value));
     this.getParent().revalidate();
     this.getParent().repaint();
   }
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
-    final float lineHeight = Math.max(1, (float) height / this.timingProfile.ulaVisibleRows) + 1;
+    final float lineHeight = Math.max(1, (float) height / this.timingProfile.ulaVisibleRows) + 1.7f;
     float y = 0.0f;
     final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
 
