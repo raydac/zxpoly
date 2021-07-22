@@ -27,10 +27,7 @@ import com.igormaznitsa.zxpoly.utils.Utils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -96,7 +93,7 @@ public final class VideoController extends JComponent
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
-  private static final float SCALE_STEP = 0.2f;
+  private static final float SCALE_STEP = 0.05f;
   private static final float SCALE_MIN = 1.0f;
   private static final float SCALE_MAX = 6.0f;
   private static volatile boolean gfxBackOverFF = false;
@@ -150,6 +147,14 @@ public final class VideoController extends JComponent
     this.bufferImage.setAccelerationPriority(1.0f);
     this.bufferImageRgbData =
             ((DataBufferInt) this.bufferImage.getRaster().getDataBuffer()).getData();
+
+    this.addHierarchyListener(new HierarchyListener() {
+      @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        final Container container = e.getChangedParent();
+        if (container != null) zoomForSize(container.getBounds());
+      }
+    });
 
     this.addMouseWheelListener(this);
     this.addMouseListener(new MouseAdapter() {
@@ -1296,6 +1301,7 @@ public final class VideoController extends JComponent
     this.zoom = value;
     this.size = new Dimension(Math.round(SCREEN_WIDTH * value),
             Math.round((this.timingProfile.ulaBorderLinesTop + this.timingProfile.ulaBorderLinesBottom + SCREEN_HEIGHT) * value));
+    this.repaint();
     this.getParent().revalidate();
     this.getParent().repaint();
   }
@@ -1800,11 +1806,13 @@ public final class VideoController extends JComponent
   }
 
   public void zoomForSize(final Rectangle rectangle) {
-    final float width = (float) rectangle.width - (rectangle.width * 0.2f);
-    final float height = (float) rectangle.height - (rectangle.height * 0.2f);
+    final float width = (float) rectangle.width - (rectangle.width * SCALE_STEP);
+    final float height = (float) rectangle.height - (rectangle.height * (SCALE_STEP * 2.5f));
+
+    final int totalRows = SCREEN_HEIGHT + this.timingProfile.ulaBorderLinesBottom + this.timingProfile.ulaBorderLinesTop;
 
     final float maxZoomW = (int) ((width / SCREEN_WIDTH) / SCALE_STEP) * SCALE_STEP;
-    final float maxZoomH = (int) ((height / SCREEN_HEIGHT) / SCALE_STEP) * SCALE_STEP;
+    final float maxZoomH = (int) ((height / totalRows) / SCALE_STEP) * SCALE_STEP;
 
     updateZoom(Math.max(SCALE_MIN, Math.min(SCALE_MAX, Math.min(maxZoomH, maxZoomW))));
   }

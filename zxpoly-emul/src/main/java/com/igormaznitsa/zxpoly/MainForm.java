@@ -2021,10 +2021,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     });
     menuHelpDonation.setIcon(new ImageIcon(
             getClass().getResource("/com/igormaznitsa/zxpoly/icons/donate.png"))); // NOI18N
+
     menuHelp.add(menuHelpDonation);
-
     menuBar.add(menuHelp);
-
     setJMenuBar(menuBar);
 
     pack();
