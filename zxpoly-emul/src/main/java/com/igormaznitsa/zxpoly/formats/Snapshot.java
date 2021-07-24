@@ -40,21 +40,21 @@ public abstract class Snapshot extends FileFilter {
   }
 
   public void doMode128(final Motherboard board) {
-    LOGGER.info("Mode ZX-128");
+    LOGGER.info("Turning on the ZX-128 mode");
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
     board.setBoardMode(BoardMode.ZX128, false);
     board.getMasterCpu().doReset();
   }
 
   public void doModeSpec256_128(final Motherboard board, final boolean mode16Colors) {
-    LOGGER.info("Mode Spec256.128");
+    LOGGER.info("Turning on the Spec256.128 mode");
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
     board.setBoardMode(mode16Colors ? BoardMode.SPEC256_16 : BoardMode.SPEC256, false);
     board.getMasterCpu().doReset();
   }
 
   public void doMode48(final Motherboard board) {
-    LOGGER.info("Mode ZX-48");
+    LOGGER.info("Turning on the ZX-48 mode");
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
     stream(board.getModules()).forEach(ZxPolyModule::makeAndLockZx48Mode);
     board.setBoardMode(BoardMode.ZX128, false);
@@ -62,14 +62,14 @@ public abstract class Snapshot extends FileFilter {
   }
 
   public void doZxPoly(final Motherboard board) {
-    LOGGER.info("Mode ZX-Poly");
+    LOGGER.info("Turning on the ZXPoly mode");
     board.set3D00(0, true);
     board.setBoardMode(BoardMode.ZXPOLY, false);
     board.getMasterCpu().doReset();
   }
 
   public void doModeSpec256_48(final Motherboard board, final boolean mode16Colors) {
-    LOGGER.info("Mode Spec256.48");
+    LOGGER.info("Turning on the Spec256.48 mode");
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
     stream(board.getModules()).forEach(ZxPolyModule::makeAndLockZx48Mode);
     board.setBoardMode(mode16Colors ? BoardMode.SPEC256_16 : BoardMode.SPEC256, false);

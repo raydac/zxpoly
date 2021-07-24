@@ -425,11 +425,11 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     return result;
   }
 
-  public synchronized void syncWriteHeapPage(final int pageIndex, final byte[] data) {
+  public synchronized void syncWriteHeapPage(final int heapPageIndex, final byte[] data) {
     if (data.length != 0x4000) {
       throw new IllegalArgumentException("Page size must be 0x4000:" + data.length);
     }
-    final int pageOffset = pageIndex * 0x4000;
+    final int pageOffset = heapPageIndex * 0x4000;
     for (int i = 0; i < data.length; i++) {
       this.board.writeRam(this, this.getHeapOffset() + pageOffset + i, data[i]);
     }

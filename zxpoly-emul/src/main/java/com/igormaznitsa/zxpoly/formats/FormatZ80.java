@@ -208,11 +208,22 @@ public class FormatZ80 extends Snapshot {
         LOGGER.info("Z80 snapshot v3" + (version == VERSION_3A ? "A" : "B") + (snapshot.getFLAGS().getCOMPRESSED() == 0 ? "" : "(compressed)"));
         switch (snapshot.getMODE()) {
           case 0:
+            LOGGER.info("Mode 48k");
+            break;
           case 1:
+            LOGGER.info("Mode 48k+If.1");
+            break;
           case 3:
+            LOGGER.info("Mode 48k+M.G.T.");
+            break;
           case 4:
+            LOGGER.info("Mode 128k");
+            break;
           case 5:
+            LOGGER.info("Mode 128k+If.1");
+            break;
           case 6:
+            LOGGER.info("Mode 128k+M.G.T.");
             break;
           default:
             throw new IOException("Unsupported Z80 hardware mode [" + snapshot.getMODE() + ']');
@@ -223,9 +234,9 @@ public class FormatZ80 extends Snapshot {
         throw new IllegalArgumentException("Unexpected Z80 snapshot version: " + version);
     }
 
-    final boolean mode48 = is48k(version, snapshot);
+    final boolean snapshot48k = is48k(version, snapshot);
 
-    if (mode48) {
+    if (snapshot48k) {
       doMode48(board);
     } else {
       doMode128(board);
@@ -271,7 +282,7 @@ public class FormatZ80 extends Snapshot {
     } else {
       final Bank[] banks = Bank.toBanks(snapshot.getDATA());
 
-      if (mode48) {
+      if (snapshot48k) {
         for (final Bank b : banks) {
           final int offset;
           switch (b.page) {
@@ -299,6 +310,8 @@ public class FormatZ80 extends Snapshot {
         for (final Bank b : banks) {
           if (b.page >= 3 && b.page <= 10) {
             module.syncWriteHeapPage(b.page - 3, b.data);
+          } else {
+            throw new IOException("Illegal page index (3<=x<=10):" + b.page);
           }
         }
       }
