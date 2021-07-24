@@ -23,6 +23,7 @@ import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -71,19 +72,15 @@ public class FormatSNA extends Snapshot {
     cpu.setRegister(Z80.REG_I, parser.getREGI());
     cpu.setRegister(Z80.REG_R, parser.getREGR());
 
-    cpu.setIM(parser.getINTMODE());
-    final boolean iff = (parser.getIFF2() & 4) != 0;
-    cpu.setIFF(iff, iff);
+    cpu.setIM(parser.getINTMODE() & 3);
+    final boolean iff2 = (parser.getIFF2() & 4) == 4;
+    cpu.setIFF(iff2, iff2);
 
-    vc.writeIo(module, 0xFE, parser.getBORDERCOLOR());
-    vc.setBorderColor(parser.getBORDERCOLOR());
+    vc.writeIo(module, 0xFE, parser.getBORDERCOLOR() & 7);
+    vc.setBorderColor(parser.getBORDERCOLOR() & 7);
 
     if (sna128) {
-      final int offsetpage2 = 0x8000;
-      final int offsetpage5 = 0x14000;
-      final int offsetpageTop = (parser.getEXTENDEDDATA().getPORT7FFD() & 7) * 0x4000;
-
-      final int[] bankIndex = new int[] {0, 1, 2, 3, 4, 5, 6, 7};
+      final int[] bankIndex = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
       bankIndex[2] = -1;
       bankIndex[5] = -1;
       bankIndex[parser.getEXTENDEDDATA().getPORT7FFD() & 7] = -1;
@@ -113,16 +110,15 @@ public class FormatSNA extends Snapshot {
         module.writeMemory(cpu, 0, 0x4000 + i, parser.getRAMDUMP()[i]);
       }
 
-      int regsp = parser.getREGSP();
-      final int lowaddr = parser.getRAMDUMP()[regsp - 0x4000] & 0xFF;
-      regsp = (regsp + 1) & 0xFFFF;
-      final int highaddr = parser.getRAMDUMP()[regsp - 0x4000] & 0xFF;
-      regsp = (regsp + 1) & 0xFFFF;
-      parser.setREGSP((char) regsp);
-      final int startAddress = (highaddr << 8) | lowaddr;
+      int regSp = parser.getREGSP();
+      final int lowPc = parser.getRAMDUMP()[regSp - 0x4000] & 0xFF;
+      regSp = (regSp + 1) & 0xFFFF;
+      final int highPc = parser.getRAMDUMP()[regSp - 0x4000] & 0xFF;
+      regSp = (regSp + 1) & 0xFFFF;
+      parser.setREGSP((char) regSp);
 
-      cpu.setRegister(Z80.REG_SP, parser.getREGSP());
-      cpu.setRegister(Z80.REG_PC, startAddress);
+      cpu.setRegister(Z80.REG_SP, regSp);
+      cpu.setRegister(Z80.REG_PC, (highPc << 8) | lowPc);
     }
   }
 
@@ -149,57 +145,59 @@ public class FormatSNA extends Snapshot {
     parser.setREGI((char) cpu.getRegister(Z80.REG_I));
     parser.setREGR((char) cpu.getRegister(Z80.REG_R));
 
-    parser.setINTMODE((char) cpu.getIM());
+    parser.setINTMODE((char) (cpu.getIM() & 3));
     parser.setIFF2((char) (cpu.isIFF1() ? 4 : 0));
 
-    parser.setBORDERCOLOR((char) vc.getPortFE());
+    parser.setBORDERCOLOR((char) (vc.getPortFE() & 7));
 
     final int topPageIndex = module.read7FFD() & 7;
 
-    final int offsetpage2 = 0x8000;
-    final int offsetpage5 = 0x14000;
-    final int offsetpageTop = topPageIndex * 0x4000;
+    final int offsetPage2 = 0x8000;
+    final int offsetPage5 = 0x14000;
+    final int offsetPageTop = topPageIndex * 0x4000;
 
-    final byte[] lowram = new byte[49179];
+    final byte[] lowRam = new byte[49179];
 
-    final int[] bankIndex = new int[] {0, 1, 2, 3, 4, 5, 6, 7};
+    final int[] bankIndex = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
     bankIndex[2] = -1;
     bankIndex[5] = -1;
     bankIndex[topPageIndex] = -1;
 
     for (int i = 0; i < 0x4000; i++) {
-      lowram[i] = (byte) module.readHeap(offsetpage5 + i);
-      lowram[i + 0x4000] = (byte) module.readHeap(offsetpage2 + i);
-      lowram[i + 0x8000] = (byte) module.readHeap(offsetpageTop + i);
+      lowRam[i] = (byte) module.readHeap(offsetPage5 + i);
+      lowRam[i + 0x4000] = (byte) module.readHeap(offsetPage2 + i);
+      lowRam[i + 0x8000] = (byte) module.readHeap(offsetPageTop + i);
     }
 
     parser.setREGSP((char) cpu.getRegister(Z80.REG_SP));
-    parser.setRAMDUMP(lowram);
+    parser.setRAMDUMP(lowRam);
 
-    SNAParser.EXTENDEDDATA extData = parser.makeEXTENDEDDATA();
+    if (!isMode48(module)) {
+      SNAParser.EXTENDEDDATA extData = parser.makeEXTENDEDDATA();
 
-    extData.setREGPC((char) cpu.getRegister(Z80.REG_PC));
-    extData.setPORT7FFD((char) module.read7FFD());
-    extData.setONTRDOS((byte) (module.isTrdosActive() ? 1 : 0));
+      extData.setREGPC((char) cpu.getRegister(Z80.REG_PC));
+      extData.setPORT7FFD((char) module.read7FFD());
+      extData.setONTRDOS((byte) (module.isTrdosActive() ? 1 : 0));
 
-    final int totalExtraBanks = (int) IntStream.of(bankIndex).filter(x -> x >= 0).count();
+      final int totalExtraBanks = (int) IntStream.of(bankIndex).filter(x -> x >= 0).count();
 
-    final SNAParser.EXTENDEDDATA.EXTRABANK[] extraBank = parser.getEXTENDEDDATA().makeEXTRABANK(totalExtraBanks);
+      final SNAParser.EXTENDEDDATA.EXTRABANK[] extraBank = parser.getEXTENDEDDATA().makeEXTRABANK(totalExtraBanks);
 
-    for (int i = 0; i < extraBank.length; i++) {
-      extraBank[i] = new SNAParser.EXTENDEDDATA.EXTRABANK(parser);
-      extraBank[i].setDATA(new byte[0x4000]);
-    }
-
-    int extraBankIndex = 0;
-    for (int i = 0; i < 8; i++) {
-      if (bankIndex[i] < 0) {
-        continue;
+      for (int i = 0; i < extraBank.length; i++) {
+        extraBank[i] = new SNAParser.EXTENDEDDATA.EXTRABANK(parser);
+        extraBank[i].setDATA(new byte[0x4000]);
       }
-      final byte[] data = parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA();
-      final int heapoffset = bankIndex[i] * 0x4000;
-      for (int a = 0; a < data.length; a++) {
-        data[a] = (byte) module.readHeap(heapoffset + a);
+
+      int extraBankIndex = 0;
+      for (int i = 0; i < 8; i++) {
+        if (bankIndex[i] < 0) {
+          continue;
+        }
+        final byte[] data = parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA();
+        final int heapoffset = bankIndex[i] * 0x4000;
+        for (int a = 0; a < data.length; a++) {
+          data[a] = (byte) module.readHeap(heapoffset + a);
+        }
       }
     }
 

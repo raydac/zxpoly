@@ -17,18 +17,18 @@
 
 package com.igormaznitsa.zxpoly.formats;
 
-import static com.igormaznitsa.zxpoly.components.ZxPolyConstants.PORTw_ZXPOLY_BLOCK;
-import static java.util.Arrays.stream;
-
-
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
+
+import javax.swing.filechooser.FileFilter;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
-import javax.swing.filechooser.FileFilter;
+
+import static com.igormaznitsa.zxpoly.components.ZxPolyConstants.PORTw_ZXPOLY_BLOCK;
+import static java.util.Arrays.stream;
 
 public abstract class Snapshot extends FileFilter {
 
@@ -69,6 +69,11 @@ public abstract class Snapshot extends FileFilter {
     board.set3D00(0, true);
     board.setBoardMode(BoardMode.ZXPOLY, false);
     board.getMasterCpu().doReset();
+  }
+
+  static boolean isMode48(final ZxPolyModule module) {
+    final int port7FFD = module.read7FFD();
+    return (port7FFD & 0b00111000) == 0b00110000;
   }
 
   public abstract String getExtension();

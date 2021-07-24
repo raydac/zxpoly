@@ -54,11 +54,6 @@ public class FormatZ80 extends Snapshot {
     }
   }
 
-  private boolean isMode48(final ZxPolyModule module) {
-    final int port7FFD = module.read7FFD();
-    return (port7FFD & 0b00111000) == 0b00110000;
-  }
-
   @Override
   public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
     final Z80V3AParser parser = new Z80V3AParser();
@@ -102,7 +97,7 @@ public class FormatZ80 extends Snapshot {
     emulflags.setINPUTDEVICE((byte) 0);
 
     final ZxPolyModule module = board.getModules()[0];
-    final boolean mode48 = this.isMode48(module);
+    final boolean mode48 = isMode48(module);
 
     final Z80V3AParser.FLAGS flags = parser.makeFLAGS();
 
