@@ -1029,8 +1029,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     return this.moduleIndex == 0;
   }
 
-  public void lockZx48Mode() {
-    this.port7FFD.set(0b00110000);
+  public void makeAndLockZx48Mode() {
+    this.port7FFD.set(0b00_1_1_0_000);
     this.trdosRomActive = false;
   }
 

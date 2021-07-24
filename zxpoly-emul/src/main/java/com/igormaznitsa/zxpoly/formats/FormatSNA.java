@@ -54,7 +54,7 @@ public class FormatSNA extends Snapshot {
     }
 
     final ZxPolyModule module = board.getModules()[0];
-    final Z80 cpu = board.getMasterCpu();
+    final Z80 cpu = module.getCpu();
 
     cpu.setRegisterPair(Z80.REGPAIR_AF, parser.getREGAF());
     cpu.setRegisterPair(Z80.REGPAIR_BC, parser.getREGBC());
@@ -111,14 +111,13 @@ public class FormatSNA extends Snapshot {
       }
 
       int regSp = parser.getREGSP();
-      final int lowPc = parser.getRAMDUMP()[regSp - 0x4000] & 0xFF;
-      regSp = (regSp + 1) & 0xFFFF;
-      final int highPc = parser.getRAMDUMP()[regSp - 0x4000] & 0xFF;
-      regSp = (regSp + 1) & 0xFFFF;
-      parser.setREGSP((char) regSp);
+      final int lowPc = module.readMemory(cpu, 0, regSp++, false, false) & 0xFF;
+      final int highPc = module.readMemory(cpu, 0, regSp++, false, false) & 0xFF;
+
+      final int pcAddress = (highPc << 8) | lowPc;
 
       cpu.setRegister(Z80.REG_SP, regSp);
-      cpu.setRegister(Z80.REG_PC, (highPc << 8) | lowPc);
+      cpu.setRegister(Z80.REG_PC, pcAddress);
     }
   }
 

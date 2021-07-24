@@ -34,12 +34,9 @@ public abstract class Snapshot extends FileFilter {
 
   protected static final Logger LOGGER = Logger.getLogger("SNPSHT");
 
-  public void doMode48(final Motherboard board) {
-    LOGGER.info("Mode ZX-48");
-    board.set3D00(PORTw_ZXPOLY_BLOCK, true);
-    stream(board.getModules()).forEach(ZxPolyModule::lockZx48Mode);
-    board.setBoardMode(BoardMode.ZX128, false);
-    board.getMasterCpu().doReset();
+  static boolean isMode48(final ZxPolyModule module) {
+    final int port7FFD = module.read7FFD();
+    return (port7FFD & 0b00_1_1_1_111) == 0b00_1_1_0_000;
   }
 
   public void doMode128(final Motherboard board) {
@@ -56,11 +53,11 @@ public abstract class Snapshot extends FileFilter {
     board.getMasterCpu().doReset();
   }
 
-  public void doModeSpec256_48(final Motherboard board, final boolean mode16Colors) {
-    LOGGER.info("Mode Spec256.48");
+  public void doMode48(final Motherboard board) {
+    LOGGER.info("Mode ZX-48");
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
-    stream(board.getModules()).forEach(ZxPolyModule::lockZx48Mode);
-    board.setBoardMode(mode16Colors ? BoardMode.SPEC256_16 : BoardMode.SPEC256, false);
+    stream(board.getModules()).forEach(ZxPolyModule::makeAndLockZx48Mode);
+    board.setBoardMode(BoardMode.ZX128, false);
     board.getMasterCpu().doReset();
   }
 
@@ -71,9 +68,12 @@ public abstract class Snapshot extends FileFilter {
     board.getMasterCpu().doReset();
   }
 
-  static boolean isMode48(final ZxPolyModule module) {
-    final int port7FFD = module.read7FFD();
-    return (port7FFD & 0b00111000) == 0b00110000;
+  public void doModeSpec256_48(final Motherboard board, final boolean mode16Colors) {
+    LOGGER.info("Mode Spec256.48");
+    board.set3D00(PORTw_ZXPOLY_BLOCK, true);
+    stream(board.getModules()).forEach(ZxPolyModule::makeAndLockZx48Mode);
+    board.setBoardMode(mode16Colors ? BoardMode.SPEC256_16 : BoardMode.SPEC256, false);
+    board.getMasterCpu().doReset();
   }
 
   public abstract String getExtension();
