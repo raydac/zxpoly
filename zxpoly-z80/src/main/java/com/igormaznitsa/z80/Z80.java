@@ -1827,7 +1827,7 @@ public final class Z80 {
     final int address = _readPtr(ctx, REGPAIR_BC, regValue);
     final byte a = this.regSet[REG_A];
     this._writemem8(ctx, address, a);
-    this.setMemPtr((a << 8) | ((regValue + 1) & 0xFF));
+    this.setMemPtr((a << 8) | ((address + 1) & 0xFF));
   }
 
   private void doLD_mDE_A(final int ctx) {
@@ -1835,7 +1835,7 @@ public final class Z80 {
     final int address = _readPtr(ctx, REGPAIR_DE, regValue);
     final byte a = this.regSet[REG_A];
     this._writemem8(ctx, address, a);
-    this.setMemPtr((a << 8) | ((regValue + 1) & 0xFF));
+    this.setMemPtr((a << 8) | ((address + 1) & 0xFF));
   }
 
   private void doLD_HL_mem(final int ctx) {
