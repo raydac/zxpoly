@@ -425,7 +425,10 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
 
       final StringWriter writer = new StringWriter();
       configProperties.stringPropertyNames().forEach(propName -> {
-        writer.append(propName + '=' + configProperties.getProperty(propName) + '\n');
+        writer.append(propName)
+                .append(String.valueOf('='))
+                .append(configProperties.getProperty(propName))
+                .append(String.valueOf('\n'));
       });
 
       zos.write(writer.toString().getBytes(StandardCharsets.UTF_8));

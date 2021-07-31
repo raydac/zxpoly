@@ -17,8 +17,8 @@
 
 package com.igormaznitsa.zxpspritecorrector.files;
 
+import javax.swing.*;
 import java.util.Properties;
-import javax.swing.SwingUtilities;
 
 public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
 
@@ -91,7 +91,7 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         result.put("GFXLeveledOR", "0");
         result.put("GFXLeveledAND", "0");
         result.put("GFXScreenXORBuffered", "0");
-        result.put("UpColorsMixed", "64");
+        result.put("UpColorsMixed", "0");
         result.put("DownColorsMixed", "0");
         result.put("UpMixChgBright", "0");
         result.put("DownMixChgBright", "0");
@@ -100,17 +100,17 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         result.put("DownMixPaper", "0");
         result.put("BkMixed", "0");
         result.put("BkMixBkAttr", "0");
-        result.put("BkOverFF", "1");
+        result.put("BkOverFF", "0");
         result.put("HideSameInkPaper", "1");
-        result.put("zxpAlignRegs", "1PSsT");
+        result.put("zxpAlignRegs", "PSs");
         result.put("GFXColors16", "1");
 
         return result;
     }
 
     private static boolean isPropertySet(final String name, final Properties properties,
-                                         final boolean dflt) {
-        final String value = properties.getProperty(name, dflt ? "1" : "0");
+                                         final boolean defaultValue) {
+        final String value = properties.getProperty(name, defaultValue ? "1" : "0");
         return !"0".equals(value.trim());
     }
 
@@ -143,7 +143,7 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         this.checkDownMixPaper.setSelected(isPropertySet("DownMixPaper", properties, false));
         this.checkBkMixed.setSelected(isPropertySet("BkMixed", properties, false));
         this.checkBkMixBkAttr.setSelected(isPropertySet("BkMixBkAttr", properties, false));
-        this.checkBkOverFF.setSelected(isPropertySet("BkOverFF", properties, true));
+        this.checkBkOverFF.setSelected(isPropertySet("BkOverFF", properties, false));
 
         final String gfxRegisters = properties.getProperty("zxpAlignRegs", "");
 
