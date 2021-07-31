@@ -66,6 +66,14 @@ public final class AppOptions {
     preferences.putBoolean(Option.AUTOCS_FOR_CURSOR_KEYS.name(), flag);
   }
 
+  public synchronized boolean isOldColorTvOnStart() {
+    return preferences.getBoolean(Option.OLD_COLOR_TV_ON_START.name(), true);
+  }
+
+  public synchronized void setOldColorTvOnStart(final boolean flag) {
+    preferences.putBoolean(Option.OLD_COLOR_TV_ON_START.name(), flag);
+  }
+
   public synchronized VirtualKeyboardLook getKeyboardLook() {
     VirtualKeyboardLook result = VirtualKeyboardLook.DEFAULT;
     final String name = preferences.get(Option.KEYBOARD_LOOK.name(), result.name());
@@ -378,6 +386,7 @@ public final class AppOptions {
   }
 
   public enum Option {
+    OLD_COLOR_TV_ON_START,
     CONTENDED_RAM,
     INTERLACED_SCAN,
     AUTOCS_FOR_CURSOR_KEYS,

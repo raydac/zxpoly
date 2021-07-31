@@ -541,6 +541,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       }
     });
 
+    if (AppOptions.getInstance().isOldColorTvOnStart()) {
+      this.board.getVideoController().setTvFilterChain(TvFilterChain.OLDTV);
+    }
   }
 
   private static void setMenuEnable(final JMenuItem item, final boolean enable) {
@@ -1699,9 +1702,12 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
     menuViewVideoFilter.setText("Video filter");
     final ButtonGroup tvFilterGroup = new ButtonGroup();
+
+    final boolean oldTvFilterActivating = AppOptions.getInstance().isOldColorTvOnStart();
+
     for (final TvFilterChain chain : TvFilterChain.values()) {
       final JRadioButtonMenuItem tvFilterMenuItem =
-              new JRadioButtonMenuItem(chain.getText(), chain == TvFilterChain.NONE);
+              new JRadioButtonMenuItem(chain.getText(), oldTvFilterActivating ? chain == TvFilterChain.OLDTV : chain == TvFilterChain.NONE);
       tvFilterGroup.add(tvFilterMenuItem);
       tvFilterMenuItem.addActionListener(e -> {
         this.menuActionAnimatedGIF.setEnabled(chain.isGifCompatible());
