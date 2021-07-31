@@ -184,11 +184,17 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
         bankBytes[i] = (baseData & bitMask) == 0 ? 0 : (byte) 0xFF;
       } else {
         final int zxPolyColorIndex = ((cpu3 & bitMask) == 0 ? 0 : 0x08)
-            | ((cpu0 & bitMask) == 0 ? 0 : 0x04)
-            | ((cpu1 & bitMask) == 0 ? 0 : 0x02)
-            | ((cpu2 & bitMask) == 0 ? 0 : 0x01);
+                | ((cpu0 & bitMask) == 0 ? 0 : 0x04)
+                | ((cpu1 & bitMask) == 0 ? 0 : 0x02)
+                | ((cpu2 & bitMask) == 0 ? 0 : 0x01);
 
-        bankBytes[i] = MAP_ZXPOLY2SPEC256INDEX[zxPolyColorIndex];
+        if (zxPolyColorIndex == 0) {
+          bankBytes[i] = 0;
+        } else if (zxPolyColorIndex == 0xF) {
+          bankBytes[i] = (byte) 0xFF;
+        } else {
+          bankBytes[i] = MAP_ZXPOLY2SPEC256INDEX[zxPolyColorIndex];
+        }
       }
     }
     return bankBytes;
@@ -372,23 +378,23 @@ public class Spec256ZipPlugin extends AbstractFilePlugin {
   private byte[] makeGfx(final ZXPolyData data, final int... pageIndexes) throws IOException {
     final JBBPOut result = JBBPOut.BeginBin();
 
-    for (final int pindex : pageIndexes) {
-      final byte[] pageMask = getPhysicalMaskPage(pindex, data);
-      final byte[] baseData = getPhysicalBasePage(pindex, data);
+    for (final int page : pageIndexes) {
+      final byte[] pageMask = getPhysicalMaskPage(page, data);
+      final byte[] baseData = getPhysicalBasePage(page, data);
 
-      final byte[] cpuData0 = getPhysicalCpuPage(0, pindex, data);
-      final byte[] cpuData1 = getPhysicalCpuPage(1, pindex, data);
-      final byte[] cpuData2 = getPhysicalCpuPage(2, pindex, data);
-      final byte[] cpuData3 = getPhysicalCpuPage(3, pindex, data);
+      final byte[] cpuData0 = getPhysicalCpuPage(0, page, data);
+      final byte[] cpuData1 = getPhysicalCpuPage(1, page, data);
+      final byte[] cpuData2 = getPhysicalCpuPage(2, page, data);
+      final byte[] cpuData3 = getPhysicalCpuPage(3, page, data);
 
-      for (int offst = 0; offst < PAGE_SIZE; offst++) {
+      for (int offsetInPage = 0; offsetInPage < PAGE_SIZE; offsetInPage++) {
         result.Byte(makeSpec256Data(
-            cpuData0[offst],
-            cpuData1[offst],
-            cpuData2[offst],
-            cpuData3[offst],
-            baseData[offst],
-            pageMask[offst]));
+                cpuData0[offsetInPage],
+                cpuData1[offsetInPage],
+                cpuData2[offsetInPage],
+                cpuData3[offsetInPage],
+                baseData[offsetInPage],
+                pageMask[offsetInPage]));
       }
     }
 

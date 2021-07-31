@@ -324,10 +324,9 @@ public final class Motherboard implements ZxPolyConstants {
     this.beeper.updateState(tstatesIntReached, wallclockInt, tstates);
   }
 
-  public void syncSpec256GpuStates() {
-    final Z80 mainCpu = this.modules[0].getCpu();
+  public void syncGfxCpuState(final Z80 sourceCpu) {
     for (final Z80 spec256GfxCore : this.spec256GfxCores) {
-      spec256GfxCore.fillByState(mainCpu);
+      spec256GfxCore.fillByState(sourceCpu);
     }
   }
 
@@ -465,16 +464,16 @@ public final class Motherboard implements ZxPolyConstants {
         break;
         case SPEC256_16:
         case SPEC256: {
-          final int cores =
+          final int coreNumber =
                   this.boardMode == BoardMode.SPEC256_16 ? SPEC256_16_GFX_CORES : SPEC256_GFX_CORES;
           final ZxPolyModule masterModule = modules[0];
           final Z80 mainCpu = masterModule.getCpu();
           masterModule.saveInternalCopyForGfx();
           final int syncRegRecord = this.gfxSyncRegsRecord;
-          for (int i = 0; i < cores; i++) {
+          for (int i = 0; i < coreNumber; i++) {
             final Z80 gfxCore = this.spec256GfxCores[i];
             gfxCore.alignRegisterValuesWith(mainCpu, syncRegRecord);
-            masterModule.stepWithGfxCpu(i + 1, gfxCore, signalReset, startNewFrame);
+            masterModule.gfxGpuStep(i + 1, gfxCore);
           }
           masterModule.step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
         }

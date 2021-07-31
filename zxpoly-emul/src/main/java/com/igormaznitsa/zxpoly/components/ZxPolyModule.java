@@ -347,13 +347,10 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     return isHaltDetected;
   }
 
-  public void stepWithGfxCpu(final int ctx, final Z80 gfxCpu, final boolean signalReset,
-                             final boolean commonInt) {
-    this.localInt = false;
-    int sigReset = signalReset ? 0 : Z80.SIGNAL_IN_nRESET;
+  public void gfxGpuStep(final int ctx, final Z80 gfxCpu) {
     int sigWait = this.gfxWaitSignal ? 0 : Z80.SIGNAL_IN_nWAIT;
     gfxCpu.step(ctx,
-            sigReset | (this.gfxIntCounter != 0 ? 0 : Z80.SIGNAL_IN_nINT)
+            Z80.SIGNAL_IN_nRESET | (this.gfxIntCounter != 0 ? 0 : Z80.SIGNAL_IN_nINT)
                     | sigWait | (this.gfxNmiCounter != 0 ? 0 : Z80.SIGNAL_IN_nNMI));
   }
 

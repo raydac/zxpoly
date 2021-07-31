@@ -22,19 +22,15 @@ import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyConstants;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
+import org.apache.commons.io.IOUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.io.IOUtils;
 
 public class FormatSpec256 extends Snapshot {
 
@@ -68,16 +64,16 @@ public class FormatSpec256 extends Snapshot {
 
     final byte[] result = new byte[dataLen];
 
-    for (int offst = 0; offst < dataLen; offst += 8) {
+    for (int offset = 0; offset < dataLen; offset += 8) {
       for (int ctx = 0; ctx < 8; ctx++) {
         final int bitMask = 1 << ctx;
-        int acc = 0;
+        int accumulator = 0;
         for (int i = 0; i < 8; i++) {
-          if ((from.getGfxData()[offst + i] & bitMask) != 0) {
-            acc |= 1 << i;
+          if ((from.getGfxData()[offset + i] & bitMask) != 0) {
+            accumulator |= 1 << i;
           }
         }
-        result[offst + ctx] = (byte) acc;
+        result[offset + ctx] = (byte) accumulator;
       }
     }
 
@@ -270,7 +266,7 @@ public class FormatSpec256 extends Snapshot {
 
     board.setGfxLeveledLogicalOps(leveledXor, leveledAnd, leveledOr);
 
-    board.syncSpec256GpuStates();
+    board.syncGfxCpuState(cpu);
   }
 
   private String findProperty(final Spec256Arch arch, final String name, final BaseItem baseItem,

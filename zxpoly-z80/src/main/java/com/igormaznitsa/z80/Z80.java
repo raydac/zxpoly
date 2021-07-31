@@ -20,6 +20,8 @@ package com.igormaznitsa.z80;
 import java.util.Arrays;
 import java.util.Locale;
 
+import static java.lang.System.arraycopy;
+
 /**
  * Tables and some flag set algorithms were copied and adapted from
  * https://github.com/anotherlin/z80emu project, opcode decoding is based on
@@ -167,8 +169,8 @@ public final class Z80 {
     this.regPC = cpu.regPC;
     this.regR = cpu.regR;
     this.regSP = cpu.regSP;
-    System.arraycopy(cpu.regSet, 0, this.regSet, 0, cpu.regSet.length);
-    System.arraycopy(cpu.altRegSet, 0, this.altRegSet, 0, cpu.altRegSet.length);
+    arraycopy(cpu.regSet, 0, this.regSet, 0, cpu.regSet.length);
+    arraycopy(cpu.altRegSet, 0, this.altRegSet, 0, cpu.altRegSet.length);
     this.lastM1InstructionByte = cpu.lastM1InstructionByte;
     this.lastInstructionByte = cpu.lastInstructionByte;
     this.tiStates = cpu.tiStates;
@@ -235,31 +237,31 @@ public final class Z80 {
     return result;
   }
 
-  public Z80 fillByState(final Z80 src) {
-    this.prefix = src.prefix;
-    this.resetCycle = src.resetCycle;
-    this.iff1 = src.iff1;
-    this.iff2 = src.iff2;
-    this.im = src.im;
-    this.regI = src.regI;
-    this.regIX = src.regIX;
-    this.regIY = src.regIY;
-    this.regPC = src.regPC;
-    this.regR = src.regR;
-    this.regSP = src.regSP;
-    System.arraycopy(src.regSet, 0, this.regSet, 0, src.regSet.length);
-    System.arraycopy(src.altRegSet, 0, this.altRegSet, 0, src.altRegSet.length);
-    this.lastM1InstructionByte = src.lastM1InstructionByte;
-    this.lastInstructionByte = src.lastInstructionByte;
-    this.tiStates = src.tiStates;
-    this.cbDisplacementByte = src.cbDisplacementByte;
-    this.outSignals = src.outSignals;
-    this.prevInSignals = src.prevInSignals;
-    this.stepAllowsInterruption = src.stepAllowsInterruption;
-    this.detectedINT = src.detectedINT;
-    this.detectedNMI = src.detectedNMI;
-    this.insideBlockInstruction = src.insideBlockInstruction;
-    this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
+  public Z80 fillByState(final Z80 sourceCpu) {
+    this.prefix = sourceCpu.prefix;
+    this.resetCycle = sourceCpu.resetCycle;
+    this.iff1 = sourceCpu.iff1;
+    this.iff2 = sourceCpu.iff2;
+    this.im = sourceCpu.im;
+    this.regI = sourceCpu.regI;
+    this.regIX = sourceCpu.regIX;
+    this.regIY = sourceCpu.regIY;
+    this.regPC = sourceCpu.regPC;
+    this.regR = sourceCpu.regR;
+    this.regSP = sourceCpu.regSP;
+    arraycopy(sourceCpu.regSet, 0, this.regSet, 0, sourceCpu.regSet.length);
+    arraycopy(sourceCpu.altRegSet, 0, this.altRegSet, 0, sourceCpu.altRegSet.length);
+    this.lastM1InstructionByte = sourceCpu.lastM1InstructionByte;
+    this.lastInstructionByte = sourceCpu.lastInstructionByte;
+    this.tiStates = sourceCpu.tiStates;
+    this.cbDisplacementByte = sourceCpu.cbDisplacementByte;
+    this.outSignals = sourceCpu.outSignals;
+    this.prevInSignals = sourceCpu.prevInSignals;
+    this.stepAllowsInterruption = sourceCpu.stepAllowsInterruption;
+    this.detectedINT = sourceCpu.detectedINT;
+    this.detectedNMI = sourceCpu.detectedNMI;
+    this.insideBlockInstruction = sourceCpu.insideBlockInstruction;
+    this.insideBlockInstructionPrev = sourceCpu.insideBlockInstructionPrev;
     return this;
   }
 
@@ -674,12 +676,17 @@ public final class Z80 {
     this.regR = src.regR;
     this.insideBlockInstruction = src.insideBlockInstruction;
     this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
+    this.lastInstructionByte = src.lastInstructionByte;
+    this.lastM1InstructionByte = src.lastM1InstructionByte;
     this.prevInSignals = src.prevInSignals;
     this.stepAllowsInterruption = src.stepAllowsInterruption;
     this.detectedINT = src.detectedINT;
     this.detectedNMI = src.detectedNMI;
 
-    if (packedRegisterFlags != 0) {
+    if (packedRegisterFlags == 0) {
+      this.regPC = src.regPC;
+      this.regSP = src.regSP;
+    } else {
       //"AFBCDEHL XxYy10PSs afbcdehl"
       int pos = 0;
       while (packedRegisterFlags != 0) {
