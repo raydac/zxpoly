@@ -24,7 +24,8 @@ import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.mapper.Bin;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
-import java.awt.Rectangle;
+
+import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -103,7 +104,7 @@ public class ZXPolyData {
 
     final Parsed parsed = PARSER.parse(inStream).mapTo(new Parsed());
 
-    this.info = new Info(new ByteArrayInputStream(parsed.info));
+    this.info = new Info(new ByteArrayInputStream(parsed.info), true);
     this.basedata = parsed.array;
     this.mask = parsed.mask;
     this.zxpoly = new byte[4][];

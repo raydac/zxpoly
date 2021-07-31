@@ -417,7 +417,7 @@ public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
     }
     System.arraycopy(array, 0, extra, bankIndex, headerLength);
     return new ReadResult(
-            new ZXPolyData(new Info(name, 'C', startAddress, data.length, PAGE_SIZE, extra),
+            new ZXPolyData(new Info(name, 'C', startAddress, data.length, PAGE_SIZE, true, extra),
                     this, data), null);
   }
 

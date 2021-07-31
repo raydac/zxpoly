@@ -127,8 +127,8 @@ public final class NewDataDialog extends javax.swing.JDialog {
       java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOkActionPerformed
     final int len = ((Integer) spinnerSize.getValue());
     this.result = new AbstractFilePlugin.ReadResult(
-        new ZXPolyData(new Info("Undefined", '$', 0x4000, len, 0),
-            frame.getPico().getComponent(SCRPlugin.class), new byte[len]), null);
+        new ZXPolyData(new Info("Undefined", '$', 0x4000, len, 0, true),
+                frame.getPico().getComponent(SCRPlugin.class), new byte[len]), null);
     dispose();
   }//GEN-LAST:event_buttonOkActionPerformed
 

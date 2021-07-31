@@ -82,7 +82,7 @@ public class SCLPlugin extends AbstractFilePlugin {
           final int fileNumber = in.readByte();
           for (int i = 0; i < fileNumber; i++) {
             final SCLCatalogItem item = CATALOG_PARSER.parse(in).mapTo(new SCLCatalogItem());
-            result.add(new Info(item.name, item.type, item.start, item.length, -1));
+            result.add(new Info(item.name, item.type, item.start, item.length, -1, true));
           }
         } else {
           // it's not scl
@@ -122,8 +122,8 @@ public class SCLPlugin extends AbstractFilePlugin {
         }
         final long offset = in.getCounter();
         return new ReadResult(new ZXPolyData(
-            new Info(itemToRead.name, itemToRead.type, itemToRead.start, itemToRead.length,
-                (int) offset), this, in.readByteArray(itemToRead.sectors * 256)), null);
+                new Info(itemToRead.name, itemToRead.type, itemToRead.start, itemToRead.length,
+                        (int) offset, true), this, in.readByteArray(itemToRead.sectors * 256)), null);
 
       } else {
         throw new IllegalArgumentException("It's not a SCl file");

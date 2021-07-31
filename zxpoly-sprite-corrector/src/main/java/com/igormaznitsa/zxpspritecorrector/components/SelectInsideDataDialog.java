@@ -19,23 +19,25 @@ package com.igormaznitsa.zxpspritecorrector.components;
 
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
+
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import javax.swing.DefaultListModel;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.TableModel;
 
 public class SelectInsideDataDialog extends javax.swing.JDialog implements TableModel {
 
   private static final long serialVersionUID = -1593974231619108719L;
-  private final List<Info> list;
+  private final List<Info> infoList;
   private int result = -1;
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private javax.swing.JButton buttonCancel;
   private javax.swing.JButton buttonOk;
   private javax.swing.JScrollPane jScrollPane2;
-  private javax.swing.JTable tableItems;
+  private javax.swing.JTable itemTable;
 
   public SelectInsideDataDialog(final java.awt.Frame parent, final File file,
                                 final AbstractFilePlugin plugin) throws IOException {
@@ -44,22 +46,32 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
     this.setLocationRelativeTo(parent);
     this.setTitle(file.getName());
 
-    this.list = plugin.getImportingContainerFileList(file);
-    if (list == null) {
+    this.infoList = plugin.getImportingContainerFileList(file);
+    if (infoList == null) {
       throw new IOException("Can't get list of container items");
     }
 
-    final DefaultListModel<String> model = new DefaultListModel<>();
+    final DefaultListModel<Info> model = new DefaultListModel<>();
 
-    for (final Info s : list) {
-      model.addElement(s.toString());
+    for (final Info s : infoList) {
+      model.addElement(s);
     }
 
     this.buttonOk.setEnabled(false);
 
-    this.tableItems.setModel(this);
+    this.itemTable.setModel(this);
 
-    this.tableItems.getSelectionModel().addListSelectionListener(e -> buttonOk.setEnabled(true));
+    this.itemTable.getSelectionModel().addListSelectionListener(this::onItemSelection);
+  }
+
+  private void onItemSelection(final ListSelectionEvent event) {
+    final int selectedIndex = this.itemTable.getSelectedRow();
+    if (selectedIndex < 0) {
+      buttonOk.setEnabled(false);
+    } else {
+      final Info info = this.infoList.get(selectedIndex);
+      buttonOk.setEnabled(info.isSelectable());
+    }
   }
 
   /**
@@ -73,7 +85,7 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
     buttonCancel = new javax.swing.JButton();
     buttonOk = new javax.swing.JButton();
     jScrollPane2 = new javax.swing.JScrollPane();
-    tableItems = new javax.swing.JTable();
+    itemTable = new javax.swing.JTable();
 
     setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -87,26 +99,26 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
     buttonOk.setText("Ok");
     buttonOk.addActionListener(this::buttonOkActionPerformed);
 
-    tableItems.setModel(new javax.swing.table.DefaultTableModel(
-        new Object[][] {
+    itemTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object[][]{
 
-        },
-        new String[] {
+            },
+            new String[]{
 
-        }
+            }
     ));
-    tableItems.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-    jScrollPane2.setViewportView(tableItems);
+    itemTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+    jScrollPane2.setViewportView(itemTable);
 
     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
     getContentPane().setLayout(layout);
     layout.setHorizontalGroup(
-        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 127, Short.MAX_VALUE)
+                            .addContainerGap()
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                            .addGap(0, 127, Short.MAX_VALUE)
                         .addComponent(buttonOk)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(buttonCancel))
@@ -135,7 +147,7 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
 
   private void buttonOkActionPerformed(
       java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOkActionPerformed
-    this.result = this.tableItems.getSelectedRow();
+    this.result = this.itemTable.getSelectedRow();
     setVisible(false);
   }//GEN-LAST:event_buttonOkActionPerformed
 
@@ -152,7 +164,7 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
 
   @Override
   public int getRowCount() {
-    return this.list.size();
+    return this.infoList.size();
   }
 
   @Override
@@ -186,7 +198,7 @@ public class SelectInsideDataDialog extends javax.swing.JDialog implements Table
 
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
-    final Info row = this.list.get(rowIndex);
+    final Info row = this.infoList.get(rowIndex);
     switch (columnIndex) {
       case 0:
         return row.getName();

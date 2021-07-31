@@ -40,6 +40,7 @@ public abstract class AbstractFilePlugin extends FileFilter {
     super();
   }
 
+
   protected static String prepareNameForTRD(final String name, final int index) {
     String prepared;
     if (name.length() >= 8) {

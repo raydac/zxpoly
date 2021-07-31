@@ -224,7 +224,7 @@ public final class SNAPlugin extends AbstractFilePlugin {
 
           .End().toByteArray();
       return new ReadResult(new ZXPolyData(
-              new Info(name, 'C', snaFile.extendedData.regPC, data.length, 0, extra),
+              new Info(name, 'C', snaFile.extendedData.regPC, data.length, 0, true, extra),
               new Z80InZXPOutPlugin(), data), null);
     } else {
       LOGGER.info("SNA48 DETECTED");
@@ -276,7 +276,7 @@ public final class SNAPlugin extends AbstractFilePlugin {
           .Bits(JBBPBitNumber.BITS_2, 0)
           .End().toByteArray();
       return new ReadResult(
-              new ZXPolyData(new Info(name, 'C', startAddress, dataLength, 0, extra),
+              new ZXPolyData(new Info(name, 'C', startAddress, dataLength, 0, true, extra),
                       new Z80InZXPOutPlugin(), data), null);
     }
   }

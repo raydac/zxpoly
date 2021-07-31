@@ -76,7 +76,7 @@ public class TRDPlugin extends AbstractFilePlugin {
         for (int i = 0; i < 128; i++) {
           final TRDosCatalogItem item = CATALOG_PARSER.parse(in).mapTo(new TRDosCatalogItem());
           if (item.name.charAt(0) > 1) {
-            result.add(new Info(item.name, item.type, item.start, item.length, -1));
+            result.add(new Info(item.name, item.type, item.start, item.length, -1, true));
           }
         }
 
@@ -112,8 +112,8 @@ public class TRDPlugin extends AbstractFilePlugin {
         throw new IllegalStateException("Can't skip needed byte number [" + toskip + ']');
       }
       return new ReadResult(
-          new ZXPolyData(new Info(info.name, info.type, info.start, info.length, offsetToFile),
-              this, inStream.readByteArray(info.sectors << 8)), null);
+              new ZXPolyData(new Info(info.name, info.type, info.start, info.length, offsetToFile, true),
+                      this, inStream.readByteArray(info.sectors << 8)), null);
 
     } finally {
       JBBPUtils.closeQuietly(inStream);

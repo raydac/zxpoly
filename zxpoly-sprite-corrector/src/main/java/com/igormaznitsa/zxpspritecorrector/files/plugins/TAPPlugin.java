@@ -110,37 +110,37 @@ public class TAPPlugin extends AbstractFilePlugin {
             switch (standardflag) {
               case 0: {
                 // program header
-                result.add(new Info(extractHeaderName(data), 'B', address, datalen, -1));
+                result.add(new Info(extractHeaderName(data), 'B', address, datalen, -1, false));
               }
               break;
               case 1: {
                 // numeric data array header
-                result.add(new Info(extractHeaderName(data), 'N', address, datalen, -1));
+                result.add(new Info(extractHeaderName(data), 'N', address, datalen, -1, true));
               }
               break;
               case 2: {
                 // alphanumeric data array header
-                result.add(new Info(extractHeaderName(data), 'S', address, datalen, -1));
+                result.add(new Info(extractHeaderName(data), 'S', address, datalen, -1, true));
               }
               break;
               case 3: {
                 // code block
-                result.add(new Info(extractHeaderName(data), 'C', address, datalen, -1));
+                result.add(new Info(extractHeaderName(data), 'C', address, datalen, -1, true));
               }
               break;
               default: {
                 // unknown
-                result.add(new Info("<Unknown>", 'U', address, length, -1));
+                result.add(new Info("<Unknown>", 'U', address, length, -1, true));
               }
               break;
             }
           } else {
             if (flag == 0xFF) {
               // data block
-              result.add(new Info("<Code>", 'D', -1, length - 2, -1));
+              result.add(new Info("<Code>", 'D', -1, length - 2, -1, true));
             } else {
               // custom
-              result.add(new Info("<Unknown>", 'U', -1, length, -1));
+              result.add(new Info("<Unknown>", 'U', -1, length, -1, true));
             }
             in.skip(length - 1);
           }
@@ -160,7 +160,7 @@ public class TAPPlugin extends AbstractFilePlugin {
   public ReadResult readFrom(final String name, final byte[] dataArray, final int index) throws IOException {
     JBBPBitInputStream in = new JBBPBitInputStream(new ByteArrayInputStream(dataArray));
     try {
-      int curindex = 0;
+      int currentIndex = 0;
 
       while (in.hasAvailableData()) {
         final int length = in.readUnsignedShort(JBBPByteOrder.LITTLE_ENDIAN);
@@ -170,55 +170,55 @@ public class TAPPlugin extends AbstractFilePlugin {
         final Info info;
         if (flag == 0) {
           // standard rom
-          final int standardflag = in.readByte();
+          final int standardFlag = in.readByte();
           final byte[] data = in.readByteArray(length - 2);
-          final int datalen = extractDataLengthField(data);
+          final int dataLength = extractDataLengthField(data);
           final int address = extractStartAddressField(data);
 
-          switch (standardflag) {
+          switch (standardFlag) {
             case 0: {
               // program header
-              info = new Info(extractHeaderName(data), 'B', address, datalen, offset);
+              info = new Info(extractHeaderName(data), 'B', address, dataLength, offset, false);
             }
             break;
             case 1: {
               // numeric data array header
-              info = new Info(extractHeaderName(data), 'N', address, datalen, offset);
+              info = new Info(extractHeaderName(data), 'N', address, dataLength, offset, true);
             }
             break;
             case 2: {
               // alphanumeric data array header
-              info = new Info(extractHeaderName(data), 'S', address, datalen, offset);
+              info = new Info(extractHeaderName(data), 'S', address, dataLength, offset, true);
             }
             break;
             case 3: {
               // code block
-              info = new Info(extractHeaderName(data), 'C', address, datalen, offset);
+              info = new Info(extractHeaderName(data), 'C', address, dataLength, offset, true);
             }
             break;
             default: {
               // unknown
-              info = new Info("<Unknown>", 'U', address, length, offset);
+              info = new Info("<Unknown>", 'U', address, length, offset, true);
             }
             break;
           }
 
-          if (curindex < index) {
-            curindex++;
+          if (currentIndex < index) {
+            currentIndex++;
           } else {
             throw new IllegalArgumentException("Selected item is not a data block but a header");
           }
         } else {
           if (flag == 0xFF) {
             // data block
-            info = new Info("<Code>", 'D', -1, length - 2, offset);
+            info = new Info("<Code>", 'D', -1, length - 2, offset, true);
           } else {
             // custom
-            info = new Info("<Unknown>", 'U', -1, length, offset);
+            info = new Info("<Unknown>", 'U', -1, length, offset, true);
           }
 
-          if (curindex < index) {
-            curindex++;
+          if (currentIndex < index) {
+            currentIndex++;
             in.skip(length - 1);
           } else {
             return new ReadResult(new ZXPolyData(info, this, in.readByteArray(length - 1)), null);

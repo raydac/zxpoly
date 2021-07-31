@@ -121,8 +121,8 @@ public class LegacySZEPlugin extends AbstractFilePlugin {
       inStream.readFully(hobetaData);
 
       final Info info =
-          new Info(new String(hobetaName, StandardCharsets.US_ASCII), (char) (hobetaType & 0xFF),
-              hobetaStartAddress, hobetaLength, 0);
+              new Info(new String(hobetaName, StandardCharsets.US_ASCII), (char) (hobetaType & 0xFF),
+                      hobetaStartAddress, hobetaLength, 0, true);
 
       final byte[][] decodedZxPolyPlanes = new byte[4][hobetaData.length];
       for (int a = 0; a < hobetaData.length; a++) {
