@@ -1406,7 +1406,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           lastFullScreen.doLayout();
           vc.zoomForSize(this.scrollPanel.getViewportBorderBounds());
           SwingUtilities.invokeLater(() -> {
-            vc.zoomForSize(vc.getVisibleRect());
+            this.doVcSize();
             vc.setVkbShow(false);
             toggleButtonShowVkbd.setSelected(false);
           });
@@ -1420,7 +1420,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           vc.setEnableTrapMouse(mouseTrapOptionActive, true, false);
 
           this.scrollPanel.getViewport().setView(vc);
-          vc.zoomForSize(this.scrollPanel.getViewportBorderBounds());
+          this.doVcSize();
           vc.setFullScreenMode(false);
 
           this.scrollPanel.revalidate();
@@ -1434,7 +1434,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           this.repaint();
 
           SwingUtilities.invokeLater(() -> {
-            vc.zoomForSize(vc.getVisibleRect());
+            this.doVcSize();
             vc.setVkbShow(false);
             toggleButtonShowVkbd.setSelected(false);
           });
@@ -1445,6 +1445,10 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     } finally {
       this.lastFullScreenEventTime = System.currentTimeMillis();
     }
+  }
+
+  private void doVcSize() {
+    this.board.getVideoController().zoomForSize(this.scrollPanel.getBounds());
   }
 
   private void initComponents() {
@@ -1578,7 +1582,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       public void componentResized(final ComponentEvent e) {
         if (MainForm.this.getState() == MAXIMIZED_BOTH || MainForm.this.getState() == NORMAL) {
           final Rectangle rectangle = e.getComponent().getBounds();
-          MainForm.this.board.getVideoController().zoomForSize(rectangle);
+          doVcSize();
           MainForm.this.scrollPanel.revalidate();
           MainForm.this.repaint();
         }
