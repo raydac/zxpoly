@@ -9,6 +9,7 @@
 
 __2.2.1 (SNAPSHOT)__
 
+- Old Color TV filter is ON by default (can be turned off in preferences)
 - added support for interlace TV output (__by default ON__)
 - improvement of border render
 - added stereo sound for AY-channels (ABC by default, it is possible turn on ACB)
