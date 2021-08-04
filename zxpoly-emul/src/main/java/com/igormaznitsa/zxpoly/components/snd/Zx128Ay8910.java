@@ -4,7 +4,7 @@ import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 
-public final class Zx128Ay8910 implements IoDevice, AySounder {
+public final class Zx128Ay8910 implements IoDevice, SoundLevels {
 
   private final Motherboard motherboard;
   private final Ay8910Chip ay8910;
@@ -18,9 +18,9 @@ public final class Zx128Ay8910 implements IoDevice, AySounder {
 
   private void onAyLevels(final Ay8910Chip ay, final int levelA, final int levelB,
                           final int levelC) {
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AY_AMPLITUDE[levelA]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AY_AMPLITUDE[levelB]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AY_AMPLITUDE[levelC]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_16[levelA]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AMPLITUDE_16[levelB]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AMPLITUDE_16[levelC]);
   }
 
   @Override

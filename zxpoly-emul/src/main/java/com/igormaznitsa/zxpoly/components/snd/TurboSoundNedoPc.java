@@ -4,7 +4,7 @@ import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 
-public final class TurboSoundNedoPc implements IoDevice, AySounder {
+public final class TurboSoundNedoPc implements IoDevice, SoundLevels {
 
   private final Motherboard motherboard;
   private final Beeper beeper;
@@ -25,16 +25,16 @@ public final class TurboSoundNedoPc implements IoDevice, AySounder {
 
   private void onLevels0(final Ay8910Chip ay, final int levelA, final int levelB,
                          final int levelC) {
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AY_AMPLITUDE[levelA]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AY_AMPLITUDE[levelB]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AY_AMPLITUDE[levelC]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_16[levelA]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AMPLITUDE_16[levelB]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AMPLITUDE_16[levelC]);
   }
 
   private void onLevels1(final Ay8910Chip ay, final int levelA, final int levelB,
                          final int levelC) {
-    this.beeper.setChannelValue(Beeper.CHANNEL_TS_A, AY_AMPLITUDE[levelA]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_TS_B, AY_AMPLITUDE[levelB]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_TS_C, AY_AMPLITUDE[levelC]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_TS_A, AMPLITUDE_16[levelA]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_TS_B, AMPLITUDE_16[levelB]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_TS_C, AMPLITUDE_16[levelC]);
   }
 
   @Override

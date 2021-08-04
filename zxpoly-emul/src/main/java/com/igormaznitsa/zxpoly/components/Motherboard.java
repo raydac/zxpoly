@@ -20,10 +20,7 @@ package com.igormaznitsa.zxpoly.components;
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
-import com.igormaznitsa.zxpoly.components.snd.Beeper;
-import com.igormaznitsa.zxpoly.components.snd.CovoxFb;
-import com.igormaznitsa.zxpoly.components.snd.TurboSoundNedoPc;
-import com.igormaznitsa.zxpoly.components.snd.Zx128Ay8910;
+import com.igormaznitsa.zxpoly.components.snd.*;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardDecoration;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
@@ -32,12 +29,11 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.igormaznitsa.zxpoly.components.snd.Beeper.BEEPER_LEVELS;
 import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
 import static java.lang.Math.min;
 
 @SuppressWarnings({"unused", "FieldCanBeLocal", "NonAtomicOperationOnVolatileField"})
-public final class Motherboard implements ZxPolyConstants {
+public final class Motherboard implements ZxPolyConstants, SoundLevels {
 
   public static final int TRIGGER_NONE = 0;
   public static final int TRIGGER_DIFF_MODULESTATES = 1;
@@ -486,12 +482,13 @@ public final class Motherboard implements ZxPolyConstants {
       final int spentTstates = this.frameTiStatesCounter - prevFrameInt;
 
       final int feValue = this.video.getPortFE();
-      final int levelTapeOut = BEEPER_LEVELS[((feValue >> 3) & 1) == 0 ? 0 : 4];
-      final int levelSpeaker = BEEPER_LEVELS[((feValue >> 4) & 1) == 0 ? 0 : 7];
-      final int levelTapeIn = BEEPER_LEVELS[this.keyboard.isTapeIn() ? 3 : 0];
+      final int levelTapeOut = AMPLITUDE_16[((feValue >> 3) & 1) == 0 ? 0 : 12];
+      final int levelSpeaker = AMPLITUDE_16[((feValue >> 4) & 1) == 0 ? 0 : 13];
+      final int levelTapeIn = AMPLITUDE_16[this.keyboard.isTapeIn() ? 4 : 0];
 
-      this.beeper.setChannelValue(CHANNEL_BEEPER,
-              Math.min(255, levelSpeaker + levelTapeIn + levelTapeOut));
+      final int mixedLevels = Math.min(AMPLITUDE_16[15], levelSpeaker + levelTapeIn + levelTapeOut);
+
+      this.beeper.setChannelValue(CHANNEL_BEEPER, mixedLevels);
 
       for (final IoDevice device : this.ioDevicesPostStep) {
         device.postStep(spentTstates);

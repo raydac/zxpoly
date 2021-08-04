@@ -28,7 +28,7 @@ public final class CovoxFb implements IoDevice {
 
   @Override
   public void writeIo(ZxPolyModule module, int port, int value) {
-    if (!module.isTrdosActive() && (port & 0b100) == 0) {
+    if (!module.isTrdosActive() && (port & 0xFF) == 0xFB) {
       this.beeper.setChannelValue(CHANNEL_COVOX, value);
     }
   }

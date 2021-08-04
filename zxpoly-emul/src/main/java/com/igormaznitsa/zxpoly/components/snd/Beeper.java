@@ -36,7 +36,6 @@ import static java.lang.String.format;
 
 public final class Beeper {
 
-  public static final int AMPLITUDE_MAX = 255;
   public static final int CHANNEL_BEEPER = 0;
   public static final int CHANNEL_COVOX = 1;
   public static final int CHANNEL_AY_A = 2;
@@ -45,7 +44,6 @@ public final class Beeper {
   public static final int CHANNEL_TS_A = 5;
   public static final int CHANNEL_TS_B = 6;
   public static final int CHANNEL_TS_C = 7;
-  public static final int[] BEEPER_LEVELS;
   public static final AudioFormat AUDIO_FORMAT = SndBufferContainer.AUDIO_FORMAT;
   private static final Logger LOGGER = Logger.getLogger("Beeper");
   private static final IBeeper NULL_BEEPER = new IBeeper() {
@@ -71,12 +69,6 @@ public final class Beeper {
 
     }
   };
-
-  static {
-    BEEPER_LEVELS =
-            Arrays.stream(new double[]{0.0d, 0.065d, 0.18d, 0.254d, 0.80d, 0.87d, 0.93d, 1.0d})
-                    .mapToInt(d -> Math.min(AMPLITUDE_MAX, (int) Math.round(d * AMPLITUDE_MAX))).toArray();
-  }
 
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
   private final SoundChannelValueFilter[] soundChannelFilters = IntStream.range(0, 8).mapToObj(i -> new SoundChannelValueFilter()).toArray(SoundChannelValueFilter[]::new);

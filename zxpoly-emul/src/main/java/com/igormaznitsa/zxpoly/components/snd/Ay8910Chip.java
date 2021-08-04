@@ -1,7 +1,6 @@
 package com.igormaznitsa.zxpoly.components.snd;
 
 import java.util.Objects;
-import java.util.Random;
 
 public final class Ay8910Chip {
 
@@ -36,7 +35,6 @@ public final class Ay8910Chip {
   private static final int ENV_FLAG_ALTR = 0b0010;
   private static final int ENV_FLAG_ATTACK = 0b0100;
   private static final int ENV_FLAG_CONT = 0b1000;
-  private final Random rnd = new Random(System.nanoTime());
   private final Ay8910SignalConsumer signalConsumer;
   private boolean enfAttack = false;
   private boolean enfAlter = false;
@@ -77,84 +75,11 @@ public final class Ay8910Chip {
     this.addressLatch = address & 0xF;
   }
 
-  public void writeData(final int value) {
-    switch (this.addressLatch) {
-      case REG_TONE_PERIOD_A_FINE: {
-        this.tonePeriodA = (this.tonePeriodA & 0xF00) | value;
-      }
-      break;
-      case REG_TONE_PERIOD_A_ROUGH: {
-        this.tonePeriodA = (this.tonePeriodA & 0xFF) | ((value & 0xF) << 8);
-      }
-      break;
-      case REG_TONE_PERIOD_B_FINE: {
-        this.tonePeriodB = (this.tonePeriodB & 0x0F00) | value;
-      }
-      break;
-      case REG_TONE_PERIOD_B_ROUGH: {
-        this.tonePeriodB = (this.tonePeriodB & 0xFF) | ((value & 0xF) << 8);
-      }
-      break;
-      case REG_TONE_PERIOD_C_FINE: {
-        this.tonePeriodC = (this.tonePeriodC & 0x0F00) | value;
-      }
-      break;
-      case REG_TONE_PERIOD_C_ROUGH: {
-        this.tonePeriodC = (this.tonePeriodC & 0xFF) | ((value & 0xF) << 8);
-      }
-      break;
-      case REG_NOISE_PERIOD: {
-        this.noisePeriod = value & 0x1F;
-      }
-      break;
-      case REG_MIXER_CTRL: {
-        this.mixerControl = value;
-      }
-      break;
-      case REG_AMPL_A: {
-        this.amplitudeA = value & 0x1F;
-      }
-      break;
-      case REG_AMPL_B: {
-        this.amplitudeB = value & 0x1F;
-      }
-      break;
-      case REG_AMPL_C: {
-        this.amplitudeC = value & 0x1F;
-      }
-      break;
-      case REG_ENV_PERIOD_FINE: {
-        this.envelopePeriod = (this.envelopePeriod & 0xFF00) | value;
-      }
-      break;
-      case REG_ENV_PERIOD_ROUGH: {
-        this.envelopePeriod = (this.envelopePeriod & 0x00FF) | (value << 8);
-      }
-      break;
-      case REG_ENV_SHAPE: {
-        this.envelopeMode = value & 0xF;
-        this.enfAlter = (value & ENV_FLAG_ALTR) != 0;
-        this.enfAttack = (value & ENV_FLAG_ATTACK) != 0;
-        this.enfHold = (value & ENV_FLAG_HOLD) != 0;
-        this.enfCont = (value & ENV_FLAG_CONT) != 0;
-        this.envIndexCounter = 0;
-        this.envelopeVolume = this.enfAttack ? ENV_MIN : ENV_MAX;
-      }
-      break;
-      case REG_IO_A: {
-        this.ioPortA = value;
-      }
-      break;
-      case REG_IO_B: {
-        this.ioPortB = value;
-      }
-      break;
-      default: {
-        // IGNORE
-      }
-      break;
-    }
-  }
+  private static final int[] REG_DATA_MASK = new int[]{
+          0xFF, 0x0F, 0xFF, 0x0F, 0xFF, 0x0F, 0x1F, 0xFF,
+          0x1F, 0x1F, 0x1F, 0xFF, 0xFF, 0x0F, 0xFF, 0xFF
+  };
+  private int rngReg = 1;
 
   public int readData() {
     switch (this.addressLatch) {
@@ -212,9 +137,92 @@ public final class Ay8910Chip {
     }
   }
 
+  public void writeData(int value) {
+    value &= REG_DATA_MASK[this.addressLatch];
+
+    switch (this.addressLatch) {
+      case REG_TONE_PERIOD_A_FINE: {
+        this.tonePeriodA = (this.tonePeriodA & 0xF00) | value;
+      }
+      break;
+      case REG_TONE_PERIOD_A_ROUGH: {
+        this.tonePeriodA = (this.tonePeriodA & 0xFF) | (value << 8);
+      }
+      break;
+      case REG_TONE_PERIOD_B_FINE: {
+        this.tonePeriodB = (this.tonePeriodB & 0x0F00) | value;
+      }
+      break;
+      case REG_TONE_PERIOD_B_ROUGH: {
+        this.tonePeriodB = (this.tonePeriodB & 0xFF) | (value << 8);
+      }
+      break;
+      case REG_TONE_PERIOD_C_FINE: {
+        this.tonePeriodC = (this.tonePeriodC & 0x0F00) | value;
+      }
+      break;
+      case REG_TONE_PERIOD_C_ROUGH: {
+        this.tonePeriodC = (this.tonePeriodC & 0xFF) | (value << 8);
+      }
+      break;
+      case REG_NOISE_PERIOD: {
+        this.noisePeriod = value;
+      }
+      break;
+      case REG_MIXER_CTRL: {
+        this.mixerControl = value;
+      }
+      break;
+      case REG_AMPL_A: {
+        this.amplitudeA = value;
+      }
+      break;
+      case REG_AMPL_B: {
+        this.amplitudeB = value;
+      }
+      break;
+      case REG_AMPL_C: {
+        this.amplitudeC = value;
+      }
+      break;
+      case REG_ENV_PERIOD_FINE: {
+        this.envelopePeriod = (this.envelopePeriod & 0xFF00) | value;
+      }
+      break;
+      case REG_ENV_PERIOD_ROUGH: {
+        this.envelopePeriod = (this.envelopePeriod & 0x00FF) | (value << 8);
+      }
+      break;
+      case REG_ENV_SHAPE: {
+        this.envelopeMode = value & 0xF;
+        this.enfAlter = (value & ENV_FLAG_ALTR) != 0;
+        this.enfAttack = (value & ENV_FLAG_ATTACK) != 0;
+        this.enfHold = (value & ENV_FLAG_HOLD) != 0;
+        this.enfCont = (value & ENV_FLAG_CONT) != 0;
+        this.envIndexCounter = 0;
+        this.envelopeVolume = this.enfAttack ? ENV_MIN : ENV_MAX;
+      }
+      break;
+      case REG_IO_A: {
+        this.ioPortA = value;
+      }
+      break;
+      case REG_IO_B: {
+        this.ioPortB = value;
+      }
+      break;
+      default: {
+        // IGNORE
+      }
+      break;
+    }
+  }
+
   private void doRndNoise() {
+    rngReg ^= (((rngReg & 1) ^ ((rngReg >> 3) & 1)) << 17);
+    rngReg >>= 1;
     this.signalNcba =
-        this.rnd.nextBoolean() ? this.signalNcba & ~SIGNAL_N : this.signalNcba | SIGNAL_N;
+            (rngReg & 1) == 0 ? this.signalNcba & ~SIGNAL_N : this.signalNcba | SIGNAL_N;
   }
 
   private void processNoiseGen(final int audioTicks) {
@@ -316,6 +324,8 @@ public final class Ay8910Chip {
 
   public void reset() {
     this.addressLatch = 0;
+
+    this.rngReg = 1;
 
     final int ctrOffset = (int) (System.nanoTime() & 0x0F);
 
