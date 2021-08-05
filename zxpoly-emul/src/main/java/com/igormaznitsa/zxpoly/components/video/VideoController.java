@@ -1307,11 +1307,17 @@ public final class VideoController extends JComponent
     final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
 
     synchronized (this.outBorderLineColors) {
+      boolean first = true;
       for (int i = this.timingProfile.ulaFirstVisibleRow; i < this.timingProfile.ulaTotalRows; i++) {
         final int colorIndex = this.outBorderLineColors[i];
         g.setColor(this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[colorIndex]));
         rectangle.y = y;
-        g.fill(rectangle);
+        if (first) {
+          g.fill(g.getClipBounds());
+          first = false;
+        } else {
+          g.fill(rectangle);
+        }
         y += lineHeight;
       }
     }
