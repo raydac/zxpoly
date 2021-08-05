@@ -50,6 +50,7 @@ public final class CovoxFb implements IoDevice {
 
   @Override
   public void doReset() {
+    this.beeper.setChannelValue(CHANNEL_COVOX, 0);
   }
 
   @Override
