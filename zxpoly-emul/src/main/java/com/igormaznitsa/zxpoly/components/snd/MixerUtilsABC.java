@@ -19,7 +19,7 @@ public final class MixerUtilsABC extends MixerUtils {
     final int left = filters[CHANNEL_TS_A].update(spentTstates, values[CHANNEL_TS_A])
             + filters[CHANNEL_AY_A].update(spentTstates, values[CHANNEL_AY_A]);
 
-    return scaleLeft(left, middle);
+    return scaleLeft6(left, middle);
   }
 
   public static int mixRight_TS_CVX(final int[] values, final SoundChannelValueFilter[] filters, final int spentTstates) {
@@ -31,7 +31,7 @@ public final class MixerUtilsABC extends MixerUtils {
     final int right = filters[CHANNEL_AY_C].update(spentTstates, values[CHANNEL_AY_C])
             + filters[CHANNEL_TS_C].update(spentTstates, values[CHANNEL_TS_C]);
 
-    return scaleRight(right, middle);
+    return scaleRight6(right, middle);
   }
 
   public static int mixLeft_CVX(final int[] values, final SoundChannelValueFilter[] filters, final int spentTstates) {
@@ -41,7 +41,7 @@ public final class MixerUtilsABC extends MixerUtils {
 
     final int left = filters[CHANNEL_AY_A].update(spentTstates, values[CHANNEL_AY_A]);
 
-    return scaleLeft(left, middle);
+    return scaleLeft4(left, middle);
   }
 
   public static int mixRight_CVX(final int[] values, final SoundChannelValueFilter[] filters, final int spentTstates) {
@@ -51,7 +51,7 @@ public final class MixerUtilsABC extends MixerUtils {
 
     final int right = filters[CHANNEL_AY_C].update(spentTstates, values[CHANNEL_AY_C]);
 
-    return scaleRight(right, middle);
+    return scaleRight4(right, middle);
   }
 
   public static int mixLeft_TS(final int[] values, final SoundChannelValueFilter[] filters, final int spentTstates) {
@@ -62,7 +62,7 @@ public final class MixerUtilsABC extends MixerUtils {
     final int left = filters[CHANNEL_TS_A].update(spentTstates, values[CHANNEL_TS_A])
             + filters[CHANNEL_AY_A].update(spentTstates, values[CHANNEL_AY_A]);
 
-    return scaleLeft(left, middle);
+    return scaleLeft5(left, middle);
   }
 
   public static int mixRight_TS(final int[] values, final SoundChannelValueFilter[] filters, final int spentTstates) {
@@ -73,7 +73,7 @@ public final class MixerUtilsABC extends MixerUtils {
     final int right = filters[CHANNEL_AY_C].update(spentTstates, values[CHANNEL_AY_C])
             + filters[CHANNEL_TS_C].update(spentTstates, values[CHANNEL_TS_C]);
 
-    return scaleRight(right, middle);
+    return scaleRight5(right, middle);
   }
 
   public static int mixLeft(final int[] values, final SoundChannelValueFilter[] filters, final int spentTstates) {
@@ -82,7 +82,7 @@ public final class MixerUtilsABC extends MixerUtils {
 
     final int left = filters[CHANNEL_AY_A].update(spentTstates, values[CHANNEL_AY_A]);
 
-    return scaleLeft(left, middle);
+    return scaleLeft3(left, middle);
   }
 
   public static int mixRight(final int[] values, final SoundChannelValueFilter[] filters, final int spentTstates) {
@@ -91,7 +91,7 @@ public final class MixerUtilsABC extends MixerUtils {
 
     final int right = filters[CHANNEL_AY_C].update(spentTstates, values[CHANNEL_AY_C]);
 
-    return scaleRight(right, middle);
+    return scaleRight3(right, middle);
   }
 
 }
