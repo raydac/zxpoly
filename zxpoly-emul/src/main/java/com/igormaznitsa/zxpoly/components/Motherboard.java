@@ -145,20 +145,37 @@ public final class Motherboard implements ZxPolyConstants, SoundLevels {
     }
   }
 
-  private static boolean isSlowRamArea(final int address, final int port7FFD) {
+  private static boolean isContended(final int address, final int port7FFD) {
     final int pageStart = address & 0xC000;
     return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
   }
 
-  private static byte[] generateFrameContendDelays(final TimingProfile profile, final int... sequence) {
-    final byte[] resultDelays = new byte[profile.ulaFrameTact];
-
-    for (int row = profile.tstatesInFramePaperStart; row < profile.tstatesInBottomBorderStart; row += profile.ulaLineTime) {
-      for (int col = 0; col < profile.tstatesPaperLineTime; col++) {
-        resultDelays[row + col] = (byte) sequence[col % sequence.length];
+  private static byte[] generateFrameContendDelays(
+          final TimingProfile timing,
+          final int... contentions) {
+    final byte[] result = new byte[timing.ulaFrameTact];
+    for (int t = 0; t < timing.ulaFrameTact; t++) {
+      int shifted = (t + 1) + timing.ulaIntBegin;
+      if (shifted < 0) {
+        shifted += timing.ulaIntBegin;
       }
+      shifted %= timing.ulaFrameTact;
+
+      result[t] = 0;
+      int line = shifted / timing.ulaLineTime;
+      int pix = shifted % timing.ulaLineTime;
+      if (line < timing.ulaFirstPaperLine || line >= (timing.ulaFirstPaperLine + 192)) {
+        result[t] = 0;
+        continue;
+      }
+      int scrPix = pix - timing.ulaFirstPaperTact;
+      if (scrPix < 0 || scrPix >= 128) {
+        result[t] = 0;
+        continue;
+      }
+      result[t] = (byte) contentions[scrPix % contentions.length];
     }
-    return resultDelays;
+    return result;
   }
 
   public boolean isGfxLeveledXor() {
@@ -712,24 +729,38 @@ public final class Motherboard implements ZxPolyConstants, SoundLevels {
 
   int contendRam(final int port7FFD, final int address) {
     int result = 0;
-    if (this.contendedRam && isSlowRamArea(address, port7FFD)) {
-      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTact ? contendDelay[this.frameTiStatesCounter] & 0xFF : 0;
+    if (this.contendedRam && isContended(address, port7FFD)) {
+      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTact ? this.contendDelay[this.frameTiStatesCounter] & 0xFF : 0;
     }
     return result;
   }
 
   int contendPortEarly(final int port, final int port7FFD) {
     int result = 0;
-    if (this.contendedRam && isSlowRamArea(port, port7FFD)) {
-      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTact ? contendDelay[this.frameTiStatesCounter] & 0xFF : 0;
+    if (this.contendedRam && isContended(port, port7FFD)) {
+      result = this.contendDelay[this.frameTiStatesCounter % this.timingProfile.ulaFrameTact] & 0xFF;
     }
     return result;
   }
 
   int contendPortLate(final int port, final int port7FFD) {
     int result = 0;
-    if (this.contendedRam && (isUlaPort(port) || isSlowRamArea(port, port7FFD))) {
-      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTact ? contendDelay[this.frameTiStatesCounter] & 0xFF : 0;
+    if (this.contendedRam) {
+      final int shift = 1;
+      int frameTact = (this.frameTiStatesCounter + shift) % this.timingProfile.ulaFrameTact;
+      if (isUlaPort(port)) {
+        result = this.contendDelay[frameTact];
+      } else if (isContended(port, port7FFD)) {
+        result = this.contendDelay[frameTact];
+        frameTact += this.contendDelay[frameTact];
+        frameTact++;
+        frameTact %= this.timingProfile.ulaFrameTact;
+        result += this.contendDelay[frameTact];
+        frameTact += this.contendDelay[frameTact];
+        frameTact++;
+        frameTact %= this.timingProfile.ulaFrameTact;
+        result += this.contendDelay[frameTact];
+      }
     }
     return result;
   }

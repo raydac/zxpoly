@@ -1395,9 +1395,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           this.setMenuEnable(false);
           this.setVisible(false);
 
-          final boolean mouseTrapOptionActite = this.menuOptionsEnableTrapMouse.isSelected();
+          final boolean mouseTrapOptionActive = this.menuOptionsEnableTrapMouse.isSelected();
 
-          vc.setEnableTrapMouse(mouseTrapOptionActite, false, mouseTrapOptionActite);
+          vc.setEnableTrapMouse(mouseTrapOptionActive, false, mouseTrapOptionActive);
           vc.setFullScreenMode(true);
 
           gDevice.setFullScreenWindow(lastFullScreen);
@@ -1408,6 +1408,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           SwingUtilities.invokeLater(() -> {
             this.doVcSize();
             vc.setVkbShow(false);
+            vc.zoomForSize(gDevice.getDefaultConfiguration().getBounds());
             toggleButtonShowVkbd.setSelected(false);
           });
         } else {
