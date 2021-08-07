@@ -7,13 +7,14 @@
 
 # Changelog
 
-__2.2.1 (SNAPSHOT)__
+__2.2.1 (07-aug-2021)__
 
 - Old Color TV filter is ON by default (can be turned off in preferences)
 - added support for interlace TV output (__by default ON__)
 - improvement of border render
 - added stereo sound for AY-channels (ABC by default, it is possible turn on ACB)
-- minor refactoring
+- embedded JDK updated to Liberica OpenJDK 16.0.2+7
+- minor refactoring and improvements
 
 __2.2.0 (24-jun-2021)__
 
@@ -52,15 +53,15 @@ under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 
 # Pre-built versions
 
-![The Main Window of the Emulator](docs/screenshots/Gauntlet3_Screenshot.png)
+![The Main Window of the Emulator](docs/screenshots/zxpoly_alien8_Screenshot.png)
 
 | OS                                           |  Download link                                                                                                                                                                                | 
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0-windows-amd64-jdk.zip)__      |
-| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0-macos-amd64-jdk.zip)__            |
-| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0-macos-arm64-jdk.zip)__          |
-| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0-linux-amd64-jdk.tar.gz)__       |
-| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.2.0/zxpoly-emul-2.2.0.jar)__                               | 
+| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.1/zxpoly-emul-2.2.1-windows-amd64-jdk.zip)__      |
+| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.1/zxpoly-emul-2.2.1-macos-amd64-jdk.zip)__            |
+| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.1/zxpoly-emul-2.2.1-macos-arm64-jdk.zip)__          |
+| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.1/zxpoly-emul-2.2.1-linux-amd64-jdk.tar.gz)__       |
+| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.2.1/zxpoly-emul-2.2.1.jar)__                               | 
 
 Because the emulator is written in Java, its JAR file can be started just through command
 line `java -jar zxpoly-emul-2.2.0.jar`   
@@ -136,24 +137,45 @@ On Christmas 2017 I made some adaptation of the old game ["Official Father Chris
 Adapted game version in ZX-Poly emulator format can be downloaded [from here](adapted/OfficialFatherChristmas/OFCZXPOLY.zxp).   
 ![Official Father Christmas GIF](adapted/OfficialFatherChristmas/movie.gif)
 
-## "Adventures of Buratino" (1993) 
-I was playing with adaptation of the game for 512x384 (mode 5), program code works well but the game and without adaptation is so colorful and detailed that big effect is not visible. Also it was impossible to adapt the main hero sprites because the same sprites are used for both right and left walk through mirroring.   
-Adapted game version in ZX-Poly emulator format can be downloaded [from here](adapted/BuratinoAdventures/buratino_adventures.zxp).   
+## "Adventures of Buratino" (1993)
+
+I was playing with adaptation of the game for 512x384 (mode 5), program code works well but the game and without
+adaptation is so colorful and detailed that big effect is not visible. Also it was impossible to adapt the main hero
+sprites because the same sprites are used for both right and left walk through mirroring.   
+Adapted game version in ZX-Poly emulator format can be
+downloaded [from here](adapted/BuratinoAdventures/buratino_adventures.zxp).   
 ![Adventures of Buratino comparation](adapted/BuratinoAdventures/comparescr.png)
 
 ## "Flying Shark" (1987)
-In november 2019, I made some adaptation of "Flying Shark" game for ZX-Poly 256x192 (mode 7). It shows possibility of combination of standard ZX-Spectrum colorization (for game panels) and ZX-Poly colorization (for game field). Snapshot for ZX-Poly emulator can be downloaded [from here](/adapted/FlyShark/flyshark.zxp).   
+
+In november 2019, I made some adaptation of "Flying Shark" game for ZX-Poly 256x192 (mode 7). It shows possibility of
+combination of standard ZX-Spectrum colorization (for game panels) and ZX-Poly colorization (for game field). Snapshot
+for ZX-Poly emulator can be downloaded [from here](/adapted/FlyShark/flyshark.zxp).   
 ![Flying Shark animation](adapted/FlyShark/flyshark_video.gif)
 
+## "Alien 8" (1985)
+
+In 2021, during one evening I made adaptation of "Alien 8" game for ZX-Poly 256x192. Snapshot for ZX-Poly emulator can
+be downloaded [from here](/adapted/Alien8/Alien8.zxp).   
+![Alien 8 animation](adapted/Alien8/alien8_video.gif)
+
 # Support of Spec256 emulation
-Since 2.0.1 version, some restricted [Spec256 platform](http://www.emulatronia.com/emusdaqui/spec256/index-eng.htm) emulation added. Because there is real difference in work of ZX-Poly emulator (which based on parallel CPUs) and [Spec256](http://www.emulatronia.com/emusdaqui/spec256/index-eng.htm) (which based on CPU with 64bit virtual registers), not all games work well, but many of them can be started and playable.   
+
+Since 2.0.1 version, some restricted [Spec256 platform](http://www.emulatronia.com/emusdaqui/spec256/index-eng.htm)
+emulation added. Because there is real difference in work of ZX-Poly emulator (which based on parallel CPUs)
+and [Spec256](http://www.emulatronia.com/emusdaqui/spec256/index-eng.htm) (which based on CPU with 64bit virtual
+registers), not all games work well, but many of them can be started and playable.   
 ![ScoobyDoo for Spec256](docs/screenshots/Spec256emulationScoobyDoo.png)
 
 Known issues with emulation of listed games:
- - __Knight lore__ wrongly colored picture
- - __Bubbler__ losing colorization for some game elements
 
-In ZX-Poly emulator working in Spec256 mode, some CPU registers are syncronized every iteration (by default PC, SP and bits of F excluding C bit), but it works not for all games. In games which need another register set, there can be provided special `zxpAlignRegs` parameter in CFG file situated in snapshot archive. For instance `zxpAlignRegs=XxYyPSsHLb` means syncronization of IX,IY,PC,SP,H,L and B' registers.
+- __Knight lore__ wrongly colored picture
+- __Bubbler__ losing colorization for some game elements
+
+In ZX-Poly emulator working in Spec256 mode, some CPU registers are syncronized every iteration (by default PC, SP and
+bits of F excluding C bit), but it works not for all games. In games which need another register set, there can be
+provided special `zxpAlignRegs` parameter in CFG file situated in snapshot archive. For
+instance `zxpAlignRegs=XxYyPSsHLb` means syncronization of IX,IY,PC,SP,H,L and B' registers.
 
 # F.A.Q.
 ## Is there a hardware implementation?
