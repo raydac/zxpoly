@@ -501,7 +501,7 @@ public final class Motherboard implements ZxPolyConstants, SoundLevels {
       final int feValue = this.video.getPortFE();
       final int levelTapeOut = AMPLITUDE_16[((feValue >> 3) & 1) == 0 ? 0 : 14];
       final int levelSpeaker = AMPLITUDE_16[((feValue >> 4) & 1) == 0 ? 0 : 15];
-      final int levelTapeIn = AMPLITUDE_16[this.keyboard.isTapeIn() ? 4 : 0];
+      final int levelTapeIn = AMPLITUDE_16[this.keyboard.isTapeIn() ? 6 : 0];
 
       final int mixedLevels = Math.min(AMPLITUDE_16[15], levelSpeaker + levelTapeIn + levelTapeOut);
 

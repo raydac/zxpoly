@@ -74,6 +74,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
@@ -2655,12 +2656,21 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void menuLoadDriveMenuSelected(MenuEvent evt) {
-    final JMenuItem[] disks = new JMenuItem[]{this.menuFileSelectDiskA, this.menuFileSelectDiskB,
-            this.menuFileSelectDiskC, this.menuFileSelectDiskD};
-    for (int i = 0; i < 4; i++) {
-      final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
-      disks[i].setIcon(disk == null ? null : ICO_MDISK);
-    }
+    final JMenuItem[] menuItems = new JMenuItem[]{
+            this.menuFileSelectDiskA, this.menuFileSelectDiskB,
+            this.menuFileSelectDiskC, this.menuFileSelectDiskD
+    };
+    IntStream.range(0, 4).forEach(index -> {
+      final TrDosDisk diskInDrive = this.board.getBetaDiskInterface().getDiskInDrive(index);
+      final JMenuItem diskMenuItem = menuItems[index];
+      if (diskInDrive == null) {
+        diskMenuItem.setIcon(null);
+        diskMenuItem.setToolTipText(null);
+      } else {
+        diskMenuItem.setIcon(ICO_MDISK);
+        diskMenuItem.setToolTipText(diskInDrive.getSrcFile() == null ? null : diskInDrive.getSrcFile().getAbsolutePath());
+      }
+    });
   }
 
   private void menuOptionsEnableTrapMouseActionPerformed(ActionEvent evt) {
