@@ -64,7 +64,7 @@ under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 | ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.2.1/zxpoly-emul-2.2.1.jar)__                               | 
 
 Because the emulator is written in Java, its JAR file can be started just through command
-line `java -jar zxpoly-emul-2.2.0.jar`   
+line `java -jar zxpoly-emul-2.2.1.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in __File->Options->Active
 ROM__, the ROM will be downloaded from one of remote network resources.   
 ![Test-ROM](docs/screenshots/testromscr1.png)
@@ -127,7 +127,7 @@ To adapt old games, I have developed special utility called ZX-Poly Sprite corre
 is a very easy editor which shows images in data blocks and allows to redraw them. It supports import from Z80 and SNA
 snapshots and as the result it generates ZXP snapshots.   
 ![ZXPoly Sprite Corrector screenshot](docs/zxpoly_sprite_editor.png)   
-Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.2.0).
+Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.2.1).
 
 ## "Official Father Christmas" (1989)
 Original look of the game   
