@@ -226,7 +226,7 @@ public class HttpProcessor {
           while (!Thread.currentThread().isInterrupted() && wsChannelActive.get()) {
             final byte[] data = buffer.poll();
             if (data == null) {
-              Thread.onSpinWait();
+              Thread.yield();
             } else {
               wrapper.writeBinary(false, data);
             }
@@ -283,7 +283,7 @@ public class HttpProcessor {
           while (!this.stopped && !Thread.currentThread().isInterrupted()) {
             final byte[] data = buffer.poll();
             if (data == null) {
-              Thread.onSpinWait();
+              Thread.yield();
             } else {
               responseStream.write(data);
             }

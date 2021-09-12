@@ -472,7 +472,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     this.setLocationRelativeTo(null);
 
     this.mainCpuThread = new Thread(this::mainLoop, "zx-poly-main-cpu-thread");
-    this.mainCpuThread.setPriority(Thread.MAX_PRIORITY);
+    this.mainCpuThread.setPriority(Thread.NORM_PRIORITY);
     this.mainCpuThread.setDaemon(true);
     this.mainCpuThread.setUncaughtExceptionHandler((t, e) -> {
       LOGGER.severe("Detected exception in main thread, stopping application, see logs");
@@ -856,8 +856,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           }
           this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.ulaFrameTact, true, frameTiStates);
         }
-        Thread.onSpinWait();
       }
+      Thread.yield();
     }
   }
 

@@ -1,8 +1,5 @@
 package com.igormaznitsa.zxpoly.streamer;
 
-import static com.igormaznitsa.zxpoly.utils.Utils.closeQuietly;
-
-
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -13,6 +10,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.igormaznitsa.zxpoly.utils.Utils.closeQuietly;
+
+@SuppressWarnings("unused")
 public abstract class AbstractTcpSingleThreadServer {
   protected final BlockingQueue<byte[]> buffer;
 
@@ -54,10 +54,10 @@ public abstract class AbstractTcpSingleThreadServer {
   private volatile boolean stopped;
 
   public AbstractTcpSingleThreadServer(
-      final String id,
-      final int bufferSize,
-      final InetAddress address,
-      final int port
+          final String id,
+          final int bufferSize,
+          final InetAddress address,
+          final int port
   ) {
     this.id = id;
     this.buffer = new ArrayBlockingQueue<>(bufferSize);
@@ -105,7 +105,7 @@ public abstract class AbstractTcpSingleThreadServer {
   public String getServerAddress() {
     final ServerSocket serverSocket = this.serverSocket.get();
     return serverSocket == null ? "none" :
-        serverSocket.getInetAddress().getHostAddress() + ':' + serverSocket.getLocalPort();
+            serverSocket.getInetAddress().getHostAddress() + ':' + serverSocket.getLocalPort();
   }
 
   private void doWork() {
