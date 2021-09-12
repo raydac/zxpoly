@@ -857,7 +857,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.ulaFrameTact, true, frameTiStates);
         }
       }
-      Thread.yield();
+      Thread.onSpinWait();
     }
   }
 
