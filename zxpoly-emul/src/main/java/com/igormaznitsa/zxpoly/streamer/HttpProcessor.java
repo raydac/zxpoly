@@ -76,12 +76,9 @@ public class HttpProcessor {
 
   private void startTcpServer() {
     final TcpReader newReader =
-            new TcpReader("tcp-reader", 0x10000, 10, InetAddress.getLoopbackAddress(), 0, new TcpReader.TcpReaderDataProcessor() {
-              @Override
-              public boolean onIncomingData(final TcpReader source, final byte[] data) {
-                HttpProcessor.this.threadDataBuffers.forEach(b -> b.offer(data));
-                return false;
-              }
+            new TcpReader("tcp-reader", 0x10000, 10, InetAddress.getLoopbackAddress(), 0, (source, data) -> {
+              HttpProcessor.this.threadDataBuffers.forEach(b -> b.offer(data));
+              return false;
             });
 
     if (this.tcpReaderRef.compareAndSet(null, newReader)) {
@@ -228,7 +225,9 @@ public class HttpProcessor {
 
           while (!Thread.currentThread().isInterrupted() && wsChannelActive.get()) {
             final byte[] data = buffer.poll();
-            if (data != null) {
+            if (data == null) {
+              Thread.onSpinWait();
+            } else {
               wrapper.writeBinary(false, data);
             }
           }
@@ -283,7 +282,9 @@ public class HttpProcessor {
         try (final OutputStream responseStream = exchange.getResponseBody()) {
           while (!this.stopped && !Thread.currentThread().isInterrupted()) {
             final byte[] data = buffer.poll();
-            if (data != null) {
+            if (data == null) {
+              Thread.onSpinWait();
+            } else {
               responseStream.write(data);
             }
           }

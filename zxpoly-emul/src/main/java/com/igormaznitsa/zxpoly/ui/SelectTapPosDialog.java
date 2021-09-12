@@ -18,8 +18,9 @@
 package com.igormaznitsa.zxpoly.ui;
 
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
-import java.awt.Font;
-import javax.swing.ListSelectionModel;
+
+import javax.swing.*;
+import java.awt.*;
 
 @SuppressWarnings("unchecked")
 public class SelectTapPosDialog extends javax.swing.JDialog {
@@ -70,7 +71,7 @@ public class SelectTapPosDialog extends javax.swing.JDialog {
 
     tapBlockList.setFont(new java.awt.Font("Courier New", Font.PLAIN, 12)); // NOI18N
     tapBlockList.setModel(new javax.swing.AbstractListModel() {
-      String[] strings = {"Item 1", "Item 2", "Item 3", "Item 4", "Item 5"};
+      final String[] strings = {"Item 1", "Item 2", "Item 3", "Item 4", "Item 5"};
 
       public int getSize() {
         return strings.length;

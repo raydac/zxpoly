@@ -78,9 +78,7 @@ public class ReaderWav implements TapeSource {
   }
 
   private void fireActionListeners(final int id, final String command) {
-    SwingUtilities.invokeLater(() -> {
-      this.actionListeners.forEach(x -> x.actionPerformed(new ActionEvent(this, id, command)));
-    });
+    SwingUtilities.invokeLater(() -> this.actionListeners.forEach(x -> x.actionPerformed(new ActionEvent(this, id, command))));
   }
 
   @Override

@@ -165,7 +165,6 @@ public class OptionsPanel extends JPanel {
     this.keySelectorProtekJoystickDown.setKey(data.protekJoystickKeyDown);
   }
 
-  @SuppressWarnings("unchecked")
   private void initComponents() {
     GridBagConstraints gridBagConstraints;
 

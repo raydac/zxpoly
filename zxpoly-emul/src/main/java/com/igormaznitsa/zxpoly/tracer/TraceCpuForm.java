@@ -7,29 +7,16 @@ import com.igormaznitsa.z80.disasm.Z80Disasm;
 import com.igormaznitsa.zxpoly.MainForm;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
+import org.apache.commons.lang3.StringUtils;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.Locale;
-import javax.swing.Box;
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import org.apache.commons.lang3.StringUtils;
 
 public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
 
@@ -253,9 +240,7 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
   private static void int2hex4(final StringBuilder buffer, final int value) {
     final String str = Integer.toHexString(value).toUpperCase(Locale.ENGLISH);
     if (str.length() < 4) {
-      for (int i = 0; i < 4 - str.length(); i++) {
-        buffer.append('0');
-      }
+      buffer.append("0".repeat(4 - str.length()));
     }
     buffer.append(str);
   }

@@ -24,7 +24,9 @@ public class TcpWriter extends AbstractTcpSingleThreadServer {
     final OutputStream outStream = socket.getOutputStream();
     while (!this.isStopped() && !Thread.currentThread().isInterrupted()) {
       final byte[] next = this.buffer.poll();
-      if (next != null) {
+      if (next == null) {
+        Thread.onSpinWait();
+      } else {
         outStream.write(next);
       }
     }

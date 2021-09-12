@@ -90,12 +90,12 @@ public final class Z80Disasm {
       }
     }
 
-    NO_PREFIXED = noPrefixed.toArray(new Z80Instruction[noPrefixed.size()]);
-    CB_PREFIXED = cbPrefixed.toArray(new Z80Instruction[cbPrefixed.size()]);
-    DD_PREFIXED = ddPrefixed.toArray(new Z80Instruction[ddPrefixed.size()]);
-    FD_PREFIXED = fdPrefixed.toArray(new Z80Instruction[fdPrefixed.size()]);
-    DDCB_PREFIXED = ddcbPrefixed.toArray(new Z80Instruction[ddcbPrefixed.size()]);
-    FDCB_PREFIXED = fdcbPrefixed.toArray(new Z80Instruction[fdcbPrefixed.size()]);
+    NO_PREFIXED = noPrefixed.toArray(new Z80Instruction[0]);
+    CB_PREFIXED = cbPrefixed.toArray(new Z80Instruction[0]);
+    DD_PREFIXED = ddPrefixed.toArray(new Z80Instruction[0]);
+    FD_PREFIXED = fdPrefixed.toArray(new Z80Instruction[0]);
+    DDCB_PREFIXED = ddcbPrefixed.toArray(new Z80Instruction[0]);
+    FDCB_PREFIXED = fdcbPrefixed.toArray(new Z80Instruction[0]);
   }
 
   private Z80Disasm() {
@@ -105,7 +105,7 @@ public final class Z80Disasm {
                                                 final List<Z80Instruction> container,
                                                 final int offset, final int instructionsToDecode) {
     final List<Z80Instruction> result =
-        container == null ? new ArrayList<Z80Instruction>() : container;
+            container == null ? new ArrayList<>() : container;
 
     int off = offset;
 

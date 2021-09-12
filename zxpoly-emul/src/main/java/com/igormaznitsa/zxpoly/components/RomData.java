@@ -17,16 +17,16 @@
 
 package com.igormaznitsa.zxpoly.components;
 
-import static com.igormaznitsa.jbbp.utils.JBBPUtils.makeMask;
-import static java.lang.System.arraycopy;
-import static java.util.stream.Stream.of;
-
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
+
+import static com.igormaznitsa.jbbp.utils.JBBPUtils.makeMask;
+import static java.lang.System.arraycopy;
+import static java.util.stream.Stream.of;
 
 public final class RomData {
 
@@ -88,9 +88,7 @@ public final class RomData {
   public byte[] makeCopyPage(final int page) {
     final byte[] result = new byte[0x4000];
     final int offset = page * 0x4000;
-    for (int i = 0; i < 0x4000; i++) {
-      result[i] = this.data[offset + i];
-    }
+    System.arraycopy(this.data, offset + 0, result, 0, 0x4000);
     return result;
   }
 }

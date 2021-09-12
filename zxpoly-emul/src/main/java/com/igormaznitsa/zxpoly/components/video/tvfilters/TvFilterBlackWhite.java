@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 public final class TvFilterBlackWhite implements TvFilter {
 
-  private static final int MATRIX[][] = {
+  private static final int[][] MATRIX = {
           {0, 48, 12, 60, 3, 51, 15, 63},
           {32, 16, 44, 28, 35, 19, 47, 31},
           {8, 56, 4, 52, 11, 59, 7, 55},

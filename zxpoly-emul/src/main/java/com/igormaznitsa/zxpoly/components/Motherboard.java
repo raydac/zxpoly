@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
 import static java.lang.Math.min;
 
-@SuppressWarnings({"unused", "FieldCanBeLocal", "NonAtomicOperationOnVolatileField"})
+@SuppressWarnings({"unused", "NonAtomicOperationOnVolatileField"})
 public final class Motherboard implements ZxPolyConstants, SoundLevels {
 
   public static final int TRIGGER_NONE = 0;

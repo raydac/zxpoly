@@ -209,7 +209,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private JMenu menuView;
   private JMenu menuViewZoom;
   private JMenu menuViewVideoFilter;
-  private JToggleButton toggleButtonShowVkbd;
+  private final JToggleButton toggleButtonShowVkbd;
   private JMenuItem menuViewFullScreen;
   private JMenuItem menuViewZoomIn;
   private JMenuItem menuViewZoomOut;
@@ -403,13 +403,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       this.menuOptionsJoystickProtek.setSelected(true);
     }
 
-    this.menuOptionsJoystickKempston.addActionListener(e -> {
-      keyboardAndTapeModule.setKempstonJoystickActivated(menuOptionsJoystickKempston.isSelected());
-    });
+    this.menuOptionsJoystickKempston.addActionListener(e -> keyboardAndTapeModule.setKempstonJoystickActivated(menuOptionsJoystickKempston.isSelected()));
 
-    this.menuOptionsJoystickProtek.addActionListener(e -> {
-      keyboardAndTapeModule.setKempstonJoystickActivated(menuOptionsJoystickKempston.isSelected());
-    });
+    this.menuOptionsJoystickProtek.addActionListener(e -> keyboardAndTapeModule.setKempstonJoystickActivated(menuOptionsJoystickKempston.isSelected()));
 
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     manager.addKeyEventDispatcher(new KeyboardDispatcher(this));
@@ -573,9 +569,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
     final JComboBox<SourceSoundPort> comboBox =
             new JComboBox<>(variants.toArray(new SourceSoundPort[0]));
-    comboBox.addActionListener(x -> {
-      comboBox.setToolTipText(comboBox.getSelectedItem().toString());
-    });
+    comboBox.addActionListener(x -> comboBox.setToolTipText(comboBox.getSelectedItem().toString()));
     comboBox.setToolTipText(comboBox.getSelectedItem().toString());
 
     int maxStringLen = 0;
@@ -862,6 +856,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           }
           this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.ulaFrameTact, true, frameTiStates);
         }
+        Thread.onSpinWait();
       }
     }
   }

@@ -5,10 +5,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.OptionalInt;
+import java.util.*;
 
 public class KeyCodeChooser extends JPanel {
   private static final Map<Integer, String> KEY_NAMES;
@@ -96,11 +93,7 @@ public class KeyCodeChooser extends JPanel {
   public void setKey(final int key) {
     this.key = key < 0 ? OptionalInt.empty() : OptionalInt.of(key);
     final String name = KEY_NAMES.get(key);
-    if (name == null) {
-      this.textField.setText("<UNKNOWN>");
-    } else {
-      this.textField.setText(name);
-    }
+    this.textField.setText(Objects.requireNonNullElse(name, "<UNKNOWN>"));
 
   }
 }

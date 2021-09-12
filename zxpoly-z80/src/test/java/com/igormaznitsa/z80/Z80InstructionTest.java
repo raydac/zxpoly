@@ -17,13 +17,9 @@
 
 package com.igormaznitsa.z80;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class Z80InstructionTest {
 
@@ -39,13 +35,7 @@ public class Z80InstructionTest {
   public void testCompile_LD_IY_d_n() {
     final Z80Instruction ins = new Z80Instruction("FD36 d n   LD (IY+d),n");
 
-    final byte[] compiled = ins.compile("ld (iy+16),87", new Z80Instruction.ExpressionProcessor() {
-
-      @Override
-      public int evalExpression(final String expression) {
-        return Integer.parseInt(expression);
-      }
-    });
+    final byte[] compiled = ins.compile("ld (iy+16),87", Integer::parseInt);
 
     assertArrayEquals(new byte[] {(byte) 0xFD, (byte) 0x36, (byte) 0x10, 87}, compiled);
   }
@@ -54,13 +44,7 @@ public class Z80InstructionTest {
   public void testCompile_CALL_nn() {
     final Z80Instruction ins = new Z80Instruction("CD nn      CALL nn");
 
-    final byte[] compiled = ins.compile("call 16384", new Z80Instruction.ExpressionProcessor() {
-
-      @Override
-      public int evalExpression(final String expression) {
-        return Integer.parseInt(expression);
-      }
-    });
+    final byte[] compiled = ins.compile("call 16384", Integer::parseInt);
 
     assertArrayEquals(new byte[] {(byte) 0xCD, (byte) 0x00, (byte) 0x40}, compiled);
   }

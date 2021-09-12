@@ -175,10 +175,8 @@ public class FormatSpec256 extends Snapshot {
     if (!archive.getGfxRoms().isEmpty()) {
       LOGGER.info("provided adapted ROM");
       archive.getGfxRoms().stream()
-          .map(x -> modeSpec256colors16 ? adaptPageForColor16(x) : x)
-          .forEach(x -> {
-            module.writeGfxRomPage(decodeGfx(x));
-          });
+              .map(x -> modeSpec256colors16 ? adaptPageForColor16(x) : x)
+              .forEach(x -> module.writeGfxRomPage(decodeGfx(x)));
     }
 
     if (archive.is128()) {

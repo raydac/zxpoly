@@ -276,7 +276,9 @@ public final class Beeper {
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
           final byte[] dataBlock = soundDataQueue.poll();
-          if (dataBlock != null) {
+          if (dataBlock == null) {
+            Thread.onSpinWait();
+          } else {
             this.writeToLine(dataBlock);
           }
         }

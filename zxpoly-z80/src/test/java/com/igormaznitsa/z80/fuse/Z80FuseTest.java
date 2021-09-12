@@ -96,7 +96,6 @@ public class Z80FuseTest {
     final List<Pair<InfoIn, InfoExpected>> failedTests = new ArrayList<>();
 
     testList
-            .stream()
             // .filter(x -> x.getLeft().name.equals("eda3"))
             .forEach(test -> {
               printTestHeader(test);
@@ -133,9 +132,7 @@ public class Z80FuseTest {
     final StringBuilder buffer = new StringBuilder();
     buffer.append(test.getLeft().name);
     final int dots = 64 - test.getLeft().name.length();
-    for (int i = 0; i < dots; i++) {
-      buffer.append('.');
-    }
+    buffer.append(".".repeat(Math.max(0, dots)));
     System.out.print(buffer);
   }
 
@@ -330,7 +327,7 @@ public class Z80FuseTest {
         final int xorF = expectedF ^ foundF;
         String badFlagsInF = "ok";
         if (xorF != 0) {
-          String buffer = String.valueOf((xorF & 128) == 0 ? '_' : 'S') +
+          badFlagsInF = String.valueOf((xorF & 128) == 0 ? '_' : 'S') +
                   ((xorF & 64) == 0 ? '_' : 'Z') +
                   ((xorF & 32) == 0 ? '_' : 'Y') +
                   ((xorF & 16) == 0 ? '_' : 'H') +
@@ -338,7 +335,6 @@ public class Z80FuseTest {
                   ((xorF & 4) == 0 ? '_' : 'P') +
                   ((xorF & 2) == 0 ? '_' : 'N') +
                   ((xorF & 1) == 0 ? '_' : 'C');
-          badFlagsInF = buffer;
         }
 
         System.out.printf("%nAF expected 0x%X <> 0x%X, F is %s%n", (expected.af & afMask),

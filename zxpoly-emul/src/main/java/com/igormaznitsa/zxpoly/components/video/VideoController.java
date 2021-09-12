@@ -1681,8 +1681,7 @@ public final class VideoController extends JComponent
   private byte[] argb2rgb(final int[] argb) {
     final byte[] result = new byte[argb.length * 3];
     int j = 0;
-    for (int i = 0; i < argb.length; i++) {
-      final int value = argb[i];
+    for (final int value : argb) {
       result[j++] = (byte) (value >> 16);
       result[j++] = (byte) (value >> 8);
       result[j++] = (byte) value;
@@ -1860,6 +1859,6 @@ public final class VideoController extends JComponent
   public enum LineRenderMode {
     ALL,
     EVEN,
-    ODD;
+    ODD
   }
 }

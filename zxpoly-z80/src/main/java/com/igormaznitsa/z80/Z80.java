@@ -2840,31 +2840,30 @@ public final class Z80 {
   }
 
   public String getStateAsString() {
-    final StringBuilder result = new StringBuilder(512);
-    result.append("PC=").append(Utils.toHex(this.getRegister(Z80.REG_PC))).append(',');
-    result.append("SP=").append(Utils.toHex(this.getRegister(Z80.REG_SP))).append(',');
-    result.append("IX=").append(Utils.toHex(this.getRegister(Z80.REG_IX))).append(',');
-    result.append("IY=").append(Utils.toHex(this.getRegister(Z80.REG_IY))).append(',');
-    result.append("AF=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_AF))).append(',');
-    result.append("BC=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_BC))).append(',');
-    result.append("DE=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_DE))).append(',');
-    result.append("HL=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_HL))).append(',');
-    result.append("AF'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_AF, true)))
-            .append(',');
-    result.append("BC'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_BC, true)))
-            .append(',');
-    result.append("DE'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_DE, true)))
-            .append(',');
-    result.append("HL'=").append(Utils.toHex(this.getRegisterPair(Z80.REGPAIR_HL, true)))
-            .append(',');
-    result.append("R=").append(Utils.toHex(this.getRegister(Z80.REG_R))).append(',');
-    result.append("I=").append(Utils.toHex(this.getRegister(Z80.REG_I))).append(',');
-    result.append("IM=").append(this.getIM()).append(',');
-    result.append("IFF1=").append(this.iff1).append(',');
-    result.append("IFF2=").append(this.iff2).append(',');
-    result.append("M1ExeByte=").append(this.lastM1InstructionByte).append(',');
-    result.append("lastExeByte=").append(this.lastInstructionByte);
-    return result.toString();
+    String result = "PC=" + Utils.toHex(this.getRegister(Z80.REG_PC)) + ',' +
+            "SP=" + Utils.toHex(this.getRegister(Z80.REG_SP)) + ',' +
+            "IX=" + Utils.toHex(this.getRegister(Z80.REG_IX)) + ',' +
+            "IY=" + Utils.toHex(this.getRegister(Z80.REG_IY)) + ',' +
+            "AF=" + Utils.toHex(this.getRegisterPair(Z80.REGPAIR_AF)) + ',' +
+            "BC=" + Utils.toHex(this.getRegisterPair(Z80.REGPAIR_BC)) + ',' +
+            "DE=" + Utils.toHex(this.getRegisterPair(Z80.REGPAIR_DE)) + ',' +
+            "HL=" + Utils.toHex(this.getRegisterPair(Z80.REGPAIR_HL)) + ',' +
+            "AF'=" + Utils.toHex(this.getRegisterPair(Z80.REGPAIR_AF, true)) +
+            ',' +
+            "BC'=" + Utils.toHex(this.getRegisterPair(Z80.REGPAIR_BC, true)) +
+            ',' +
+            "DE'=" + Utils.toHex(this.getRegisterPair(Z80.REGPAIR_DE, true)) +
+            ',' +
+            "HL'=" + Utils.toHex(this.getRegisterPair(Z80.REGPAIR_HL, true)) +
+            ',' +
+            "R=" + Utils.toHex(this.getRegister(Z80.REG_R)) + ',' +
+            "I=" + Utils.toHex(this.getRegister(Z80.REG_I)) + ',' +
+            "IM=" + this.getIM() + ',' +
+            "IFF1=" + this.iff1 + ',' +
+            "IFF2=" + this.iff2 + ',' +
+            "M1ExeByte=" + this.lastM1InstructionByte + ',' +
+            "lastExeByte=" + this.lastInstructionByte;
+    return result;
   }
 
   public void doReset() {

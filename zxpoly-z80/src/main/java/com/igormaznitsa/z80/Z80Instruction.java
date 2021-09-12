@@ -21,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,7 +41,7 @@ public final class Z80Instruction {
     final List<Z80Instruction> list = new ArrayList<>(1500);
     final InputStream in =
         Z80Instruction.class.getClassLoader().getResourceAsStream("z80opcodes.lst");
-    try (final BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"))) {
+    try (final BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
       while (true) {
         final String line = reader.readLine();
         if (line == null) {
@@ -211,16 +212,22 @@ public final class Z80Instruction {
       while (m.find()) {
         final String str = m.group().trim();
         final int value;
-        if (str.equals("d")) {
-          value = SPEC_INDEX;
-        } else if (str.equals("e")) {
-          value = SPEC_OFFSET;
-        } else if (str.equals("nn")) {
-          value = SPEC_UNSIGNED_WORD;
-        } else if (str.equals("n")) {
-          value = SPEC_UNSIGNED_BYTE;
-        } else {
-          value = Integer.parseInt(str, 16);
+        switch (str) {
+          case "d":
+            value = SPEC_INDEX;
+            break;
+          case "e":
+            value = SPEC_OFFSET;
+            break;
+          case "nn":
+            value = SPEC_UNSIGNED_WORD;
+            break;
+          case "n":
+            value = SPEC_UNSIGNED_BYTE;
+            break;
+          default:
+            value = Integer.parseInt(str, 16);
+            break;
         }
         lst[index++] = value;
       }

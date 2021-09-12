@@ -1,9 +1,7 @@
 package com.igormaznitsa.zxpoly.ui;
 
+import javax.swing.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.swing.Icon;
-import javax.swing.JLabel;
-import javax.swing.SwingUtilities;
 
 public class JIndicatorLabel extends JLabel {
   private final Icon active;
@@ -41,9 +39,7 @@ public class JIndicatorLabel extends JLabel {
 
   public void setStatus(final boolean active) {
     if (this.status.compareAndSet(!active, active)) {
-      SwingUtilities.invokeLater(() -> {
-        updateForState();
-      });
+      SwingUtilities.invokeLater(() -> updateForState());
     }
   }
 }
