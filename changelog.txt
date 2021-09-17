@@ -1,3 +1,8 @@
+__2.2.2 (SNAPSHOT)__
+
+- decreased CPU usage
+- embedded JDK updated to Liberica OpenJDK 17+35
+
 __2.2.1 (07-aug-2021)__
 
 - Old Color TV filter is ON by default (can be turned off in preferences)

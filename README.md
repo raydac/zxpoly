@@ -7,6 +7,11 @@
 
 # Changelog
 
+__2.2.2 (SNAPSHOT)__
+
+- decreased CPU usage
+- embedded JDK updated to Liberica OpenJDK 17+35
+
 __2.2.1 (07-aug-2021)__
 
 - Old Color TV filter is ON by default (can be turned off in preferences)
@@ -15,17 +20,6 @@ __2.2.1 (07-aug-2021)__
 - added stereo sound for AY-channels (ABC by default, it is possible turn on ACB)
 - embedded JDK updated to Liberica OpenJDK 16.0.2+7
 - minor refactoring and improvements
-
-__2.2.0 (24-jun-2021)__
-
-- improved emulation of index mark for FDD
-- video output processing moved into end screen paint
-- improved emulation of Command Type I for FDD controller [#21](https://github.com/raydac/zxpoly/issues/21)
-- fixed emulation of Z80 [#30](https://github.com/raydac/zxpoly/issues/30)
-- updated Launch4J launcher for Windows
-- embedded JDK updated to Liberica OpenJDK 16.0.1+9
-- the sprite corrector now embedded into emulator
-- refactoring
 
 full [change log](changelog.txt)
 
