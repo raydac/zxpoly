@@ -15,8 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.igormaznitsa.zxpoly;
-
+import com.igormaznitsa.zxpoly.MainForm;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import org.apache.commons.lang3.SystemUtils;
 
@@ -28,7 +27,7 @@ import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-public class Application {
+public class ZXPoly {
 
   public static final String APP_TITLE = "ZX-Poly emulator";
   public static final String APP_VERSION = "v 2.2.2";
@@ -38,7 +37,7 @@ public class Application {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
       final Field awtAppClassNameField = toolkit.getClass().getDeclaredField("awtAppClassName");
       awtAppClassNameField.setAccessible(true);
-      awtAppClassNameField.set(toolkit, Application.APP_TITLE);
+      awtAppClassNameField.set(toolkit, ZXPoly.APP_TITLE);
     } catch (Exception ex) {
       //Do nothing
     }
