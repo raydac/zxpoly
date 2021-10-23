@@ -54,6 +54,15 @@
     </license>
   </licenses>
 
+  <profiles>
+    <profile>
+      <id>publish</id>
+      <modules>
+        <module>zxpoly-emul-win-launcher</module>
+      </modules>
+    </profile>
+  </profiles>
+
   <modules>
     <module>zxpoly-z80</module>
     <module>zxpoly-sprite-corrector</module>

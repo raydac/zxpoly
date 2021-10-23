@@ -17,7 +17,9 @@
       <outputDirectory>${project.build.finalName}${file.separator}</outputDirectory>
     </file>
     <file>
-      <source>${project.build.directory}${file.separator}zxpoly.exe</source>
+      <source>
+        ${project.basedir}${file.separator}..${file.separator}zxpoly-emul-win-launcher${file.separator}bin${file.separator}zxpoly.exe
+      </source>
       <destName>zxpoly.exe</destName>
       <outputDirectory>${project.build.finalName}${file.separator}</outputDirectory>
     </file>

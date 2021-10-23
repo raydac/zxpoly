@@ -72,6 +72,15 @@
                 <openjdk.bundled>17.0.1+12</openjdk.bundled>
                 <openjdk.provider>BELLSOFT</openjdk.provider>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.igormaznitsa</groupId>
+                    <artifactId>zxpoly-emul-win-launcher</artifactId>
+                    <version>${project.version}</version>
+                    <type>mvn-golang</type>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -268,66 +277,6 @@
                                         <module>jdk.management.agent</module>
                                         <module>jdk.crypto.ec</module>
                                     </addModules>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>com.akathist.maven.plugins.launch4j</groupId>
-                        <artifactId>launch4j-maven-plugin</artifactId>
-                        <configuration>
-                            <headerType>gui</headerType>
-                            <jar>${project.build.directory}/${project.artifactId}-${project.version}.jar</jar>
-                            <downloadUrl>http://www.oracle.com/technetwork/java/javase/downloads</downloadUrl>
-                            <classPath>
-                                <mainClass>ZXPoly</mainClass>
-                            </classPath>
-                            <icon>appico.ico</icon>
-                            <jre>
-                                <minVersion>1.8.0</minVersion>
-                                <jdkPreference>preferJre</jdkPreference>
-                                <initialHeapSize>512</initialHeapSize>
-                                <maxHeapSize>1024</maxHeapSize>
-                                <opts>
-                                    <opt>-server</opt>
-                                    <opt>-Dsun.rmi.transport.tcp.maxConnectionThreads=0</opt>
-                                    <opt>-XX:+DisableAttachMechanism</opt>
-                                    <opt>-Xverify:none</opt>
-                                    <opt>-Dsun.java2d.d3d=true</opt>
-                                    <opt>-Dsun.java2d.ddoffscreen=true</opt>
-                                    <opt>-Dsun.java2d.ddforcevram=true</opt>
-                                    <opt>-Dsun.java2d.ddscale=true</opt>
-                                    <opt>-Dsun.java2d.accthreshold=0</opt>
-                                    <opt>-Djava.library.path=%EXEDIR%</opt>
-                                </opts>
-                            </jre>
-                            <versionInfo>
-                                <fileVersion>2.2.2.0</fileVersion>
-                                <txtFileVersion>${project.version}</txtFileVersion>
-                                <fileDescription>ZX-Poly Emulator</fileDescription>
-                                <copyright>2015-2021 Igor Maznitsa</copyright>
-                                <productVersion>2.2.2.0</productVersion>
-                                <txtProductVersion>${project.version}</txtProductVersion>
-                                <productName>${project.name}</productName>
-                                <companyName>igormaznitsa.com</companyName>
-                                <internalName>${project.name}</internalName>
-                                <originalFilename>zxpoly_${project.version}.exe</originalFilename>
-                            </versionInfo>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>l4j-only-starter</id>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>launch4j</goal>
-                                </goals>
-                                <configuration>
-                                    <outfile>${project.build.directory}${file.separator}zxpoly.exe</outfile>
-                                    <dontWrapJar>true</dontWrapJar>
-                                    <jar>zxpoly-emul.jar</jar>
-                                    <jre>
-                                        <path>%EXEDIR%\jre</path>
-                                    </jre>
                                 </configuration>
                             </execution>
                         </executions>
