@@ -1,28 +1,27 @@
 package com.igormaznitsa.zxpoly.formats;
 
-import static java.util.Arrays.copyOf;
-import static java.util.Arrays.copyOfRange;
-import static org.apache.commons.compress.utils.IOUtils.readFully;
-
-
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import com.igormaznitsa.zxpoly.components.BoardMode;
+import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.RomData;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.igormaznitsa.zxpoly.components.video.VideoController;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 
-public class Spec256Arch {
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static java.util.Arrays.copyOf;
+import static java.util.Arrays.copyOfRange;
+import static org.apache.commons.compress.utils.IOUtils.readFully;
+
+public class Spec256Arch extends Snapshot {
 
   private static final int GFX_PAGE_SIZE = 0x4000 * 8;
 
@@ -32,7 +31,7 @@ public class Spec256Arch {
   private static final Pattern BKG_PATTERN = Pattern.compile("^.*\\.b([0-9]{2})$");
   private static final Pattern PALETTE_PATTERN = Pattern.compile("^.*\\.p(al|[0-9]{2})$");
   private static final Pattern SNA_NAME_PATTERN =
-      Pattern.compile("([^/]*).sna$", Pattern.CASE_INSENSITIVE);
+          Pattern.compile("([^/]*).sna$", Pattern.CASE_INSENSITIVE);
   private final SNAParser parsedSna;
   private final byte[] xorData;
   private final List<Spec256GfxPage> gfxRoms;
@@ -43,6 +42,56 @@ public class Spec256Arch {
   private final boolean mode128;
   private final String sha256;
   private final String snaName;
+
+  public Spec256Arch() {
+    this.parsedSna = null;
+    this.xorData = null;
+    this.gfxRoms = null;
+    this.gfxRamPages = null;
+    this.backgrounds = null;
+    this.palettes = null;
+    this.properties = null;
+    this.mode128 = false;
+    this.sha256 = null;
+    this.snaName = null;
+  }
+
+  @Override
+  public String getExtension() {
+    return "zip";
+  }
+
+  @Override
+  public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
+    throw new UnsupportedOperationException("Unsupported operation");
+  }
+
+  @Override
+  public byte[] saveToArray(final Motherboard board, final VideoController vc) throws IOException {
+    // TODO
+    throw new IOException("Not implemented yet");
+  }
+
+  @Override
+  public String getName() {
+    return "Spec256 snapshot";
+  }
+
+  @Override
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
+    return mode == BoardMode.SPEC256 || mode == BoardMode.SPEC256_16;
+  }
+
+  @Override
+  public boolean accept(final File f) {
+    return f != null &&
+            (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zip"));
+  }
+
+  @Override
+  public String getDescription() {
+    return "Spec256 Snapshot (*.zip)";
+  }
 
   public Spec256Arch(final RomData romData, final byte[] zipArchive) throws IOException {
     final FoundSna foundSna = findSna(zipArchive);

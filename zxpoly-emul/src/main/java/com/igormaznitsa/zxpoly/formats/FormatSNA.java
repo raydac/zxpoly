@@ -20,6 +20,7 @@ package com.igormaznitsa.zxpoly.formats;
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
@@ -40,6 +41,11 @@ public class FormatSNA extends Snapshot {
   @Override
   public String getExtension() {
     return "sna";
+  }
+
+  @Override
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
+    return mode == BoardMode.ZX128;
   }
 
   @Override
@@ -88,7 +94,7 @@ public class FormatSNA extends Snapshot {
       module.syncWriteHeapPage(5, Arrays.copyOfRange(parser.ramdump, 0, 0x4000));
       module.syncWriteHeapPage(2, Arrays.copyOfRange(parser.ramdump, 0x4000, 0x8000));
       module.syncWriteHeapPage(parser.getEXTENDEDDATA().getPORT7FFD() & 7,
-          Arrays.copyOfRange(parser.ramdump, 0x8000, 0xC000));
+              Arrays.copyOfRange(parser.ramdump, 0x8000, 0xC000));
 
       cpu.setRegister(Z80.REG_PC, parser.getEXTENDEDDATA().getREGPC());
       cpu.setRegister(Z80.REG_SP, parser.getREGSP());
@@ -102,7 +108,7 @@ public class FormatSNA extends Snapshot {
           continue;
         }
         module.syncWriteHeapPage(bankIndex[i],
-            parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA());
+                parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA());
       }
 
     } else {

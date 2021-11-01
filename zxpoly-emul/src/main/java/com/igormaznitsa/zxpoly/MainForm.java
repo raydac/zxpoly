@@ -75,6 +75,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
@@ -2516,7 +2517,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       File selected = chooseFileForSave("Save snapshot", this.lastSnapshotFolder, theFilter, false,
-              new FormatZXP(), new FormatZ80(), new FormatSNA());
+              Stream.of(new Spec256Arch(), new FormatZXP(), new FormatZ80(), new FormatSNA()).filter(x -> x.canMakeSnapshotForBoardMode(this.board.getBoardMode()))
+                      .toArray(Snapshot[]::new)
+      );
 
       if (selected != null) {
         this.lastSnapshotFolder = selected.getParentFile();

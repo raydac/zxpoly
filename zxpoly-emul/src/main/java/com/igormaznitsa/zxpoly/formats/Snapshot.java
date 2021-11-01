@@ -39,6 +39,10 @@ public abstract class Snapshot extends FileFilter {
     return (port7FFD & 0b00_1_1_1_111) == 0b00_1_1_0_000;
   }
 
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
+    return false;
+  }
+
   public void doMode128(final Motherboard board) {
     LOGGER.info("Turning on the ZX-128 mode");
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);

@@ -20,6 +20,7 @@ package com.igormaznitsa.zxpoly.formats;
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
@@ -52,6 +53,11 @@ public class FormatZ80 extends Snapshot {
       default:
         return false;
     }
+  }
+
+  @Override
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
+    return mode == BoardMode.ZX128;
   }
 
   @Override

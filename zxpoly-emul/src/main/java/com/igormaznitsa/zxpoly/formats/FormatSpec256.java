@@ -18,6 +18,7 @@
 package com.igormaznitsa.zxpoly.formats;
 
 import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyConstants;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
@@ -257,21 +258,26 @@ public class FormatSpec256 extends Snapshot {
         findProperty(archive, "GFXLeveledXOR", dbItem, "0"));
 
     final boolean leveledAnd = !"0".equals(
-        findProperty(archive, "GFXLeveledAND", dbItem, "0"));
+            findProperty(archive, "GFXLeveledAND", dbItem, "0"));
 
     final boolean leveledOr = !"0".equals(
-        findProperty(archive, "GFXLeveledOR", dbItem, "0"));
+            findProperty(archive, "GFXLeveledOR", dbItem, "0"));
 
     board.setGfxLeveledLogicalOps(leveledXor, leveledAnd, leveledOr);
 
     board.syncGfxCpuState(cpu);
   }
 
+  @Override
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
+    return mode == BoardMode.SPEC256_16 || mode == BoardMode.SPEC256;
+  }
+
   private String findProperty(final Spec256Arch arch, final String name, final BaseItem baseItem,
                               final String dflt) {
     return arch.getProperties()
-        .getProperty(name,
-            baseItem == null ? dflt : baseItem.findProperty(name, dflt));
+            .getProperty(name,
+                    baseItem == null ? dflt : baseItem.findProperty(name, dflt));
   }
 
   private int safeParseInt(final String str, final int dflt) {

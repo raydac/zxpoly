@@ -19,9 +19,11 @@ package com.igormaznitsa.zxpoly.formats;
 
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +34,11 @@ public class FormatZXP extends Snapshot {
   @Override
   public String getExtension() {
     return "zxp";
+  }
+
+  @Override
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
+    return mode == BoardMode.ZXPOLY;
   }
 
   @Override
@@ -61,7 +68,7 @@ public class FormatZXP extends Snapshot {
       snapshot.getREG_IY()[cpu] = (short) z80.getRegister(Z80.REG_IY);
 
       snapshot.getREG_IR()[cpu] =
-          (short) ((z80.getRegister(Z80.REG_I) << 8) | z80.getRegister(Z80.REG_R));
+              (short) ((z80.getRegister(Z80.REG_I) << 8) | z80.getRegister(Z80.REG_R));
 
       snapshot.getIFF()[cpu] = z80.isIFF1();
       snapshot.getIFF2()[cpu] = z80.isIFF2();
