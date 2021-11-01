@@ -45,7 +45,7 @@ public class FormatSNA extends Snapshot {
 
   @Override
   public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
-    return mode == BoardMode.ZX128;
+    return mode == BoardMode.ZX128 || mode == BoardMode.SPEC256 || mode == BoardMode.SPEC256_16;
   }
 
   @Override
@@ -128,7 +128,7 @@ public class FormatSNA extends Snapshot {
   }
 
   @Override
-  public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
+  public byte[] saveToArray(final Motherboard board, final VideoController vc) throws IOException {
     final SNAParser parser = new SNAParser();
 
     final ZxPolyModule module = board.getModules()[0];
@@ -174,10 +174,21 @@ public class FormatSNA extends Snapshot {
       lowRam[i + 0x8000] = (byte) module.readHeap(offsetPageTop + i);
     }
 
-    parser.setREGSP((char) cpu.getRegister(Z80.REG_SP));
-    parser.setRAMDUMP(lowRam);
+    if (isMode48(module)) {
+      int regSp = cpu.getRegister(Z80.REG_SP);
+      int regPc = cpu.getRegister(Z80.REG_PC);
 
-    if (!isMode48(module)) {
+      regSp = (regSp - 1) & 0xFFFF;
+      lowRam[regSp - 0x4000] = (byte) (regPc >> 8);
+      regSp = (regSp - 1) & 0xFFFF;
+      lowRam[regSp - 0x4000] = (byte) regPc;
+
+      parser.setREGSP((char) regSp);
+      parser.setRAMDUMP(lowRam);
+    } else {
+      parser.setREGSP((char) cpu.getRegister(Z80.REG_SP));
+      parser.setRAMDUMP(lowRam);
+
       SNAParser.EXTENDEDDATA extData = parser.makeEXTENDEDDATA();
 
       extData.setREGPC((char) cpu.getRegister(Z80.REG_PC));
@@ -199,9 +210,9 @@ public class FormatSNA extends Snapshot {
           continue;
         }
         final byte[] data = parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA();
-        final int heapoffset = bankIndex[i] * 0x4000;
+        final int heapOffset = bankIndex[i] * 0x4000;
         for (int a = 0; a < data.length; a++) {
-          data[a] = (byte) module.readHeap(heapoffset + a);
+          data[a] = (byte) module.readHeap(heapOffset + a);
         }
       }
     }

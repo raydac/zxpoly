@@ -23,19 +23,31 @@ import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyConstants;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.IOUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static com.igormaznitsa.zxpoly.formats.Spec256Arch.GFn_PATTERN;
+import static com.igormaznitsa.zxpoly.formats.Spec256Arch.readData;
+import static java.util.Objects.requireNonNull;
 
 public class FormatSpec256 extends Snapshot {
 
   private static final Map<String, BaseItem> APP_BASE = new HashMap<>();
+
+  private static byte[] lastReadSnapshot = null;
+  private static BaseItem lastBaseItem = null;
 
   static {
     try (InputStream in = FormatSpec256.class.getResourceAsStream("/spec256appbase.txt")) {
@@ -47,10 +59,10 @@ public class FormatSpec256 extends Snapshot {
         final Matcher matcher = BaseItem.PATTERN.matcher(str);
         if (matcher.find()) {
           APP_BASE.put
-              (matcher.group(2).toLowerCase(Locale.ENGLISH),
-                  new BaseItem(matcher.group(1).toLowerCase(Locale.ENGLISH),
-                      matcher.group(2).toLowerCase(Locale.ENGLISH),
-                      matcher.group(3)));
+                  (matcher.group(2).toLowerCase(Locale.ENGLISH),
+                          new BaseItem(matcher.group(1).toLowerCase(Locale.ENGLISH),
+                                  matcher.group(2).toLowerCase(Locale.ENGLISH),
+                                  matcher.group(3)));
         } else {
           throw new Error("Can't parse line: " + str);
         }
@@ -60,7 +72,7 @@ public class FormatSpec256 extends Snapshot {
     }
   }
 
-  private static Spec256Arch.Spec256GfxPage decodeGfx(Spec256Arch.Spec256GfxPage from) {
+  private static Spec256Arch.Spec256GfxOrigPage decodeGfx(Spec256Arch.Spec256GfxOrigPage from) {
     final int dataLen = from.getGfxData().length;
 
     final byte[] result = new byte[dataLen];
@@ -78,11 +90,11 @@ public class FormatSpec256 extends Snapshot {
       }
     }
 
-    return new Spec256Arch.Spec256GfxPage(from, result);
+    return new Spec256Arch.Spec256GfxOrigPage(from, result);
   }
 
-  private static Spec256Arch.Spec256GfxPage adaptPageForColor16(
-      final Spec256Arch.Spec256GfxPage page) {
+  private static Spec256Arch.Spec256GfxOrigPage adaptPageForColor16(
+          final Spec256Arch.Spec256GfxOrigPage page) {
     final byte[] origData = page.getOrigData();
     final byte[] gfxData = page.getGfxData();
     final byte[] newGfx = new byte[gfxData.length];
@@ -97,19 +109,100 @@ public class FormatSpec256 extends Snapshot {
         final byte oldGfx = gfxData[gfxAddr];
         if (oldGfx != 0 && oldGfx != (byte) 0xFF) {
           newGfx[gfxAddr] = cache
-              .computeIfAbsent(oldGfx, spindex -> {
-                byte zxpIndex = (byte) VideoController.toZxPolyIndex(spindex);
-                if (zxpIndex == 0) {
-                  zxpIndex = 8;
-                }
-                return zxpIndex;
-              });
+                  .computeIfAbsent(oldGfx, spindex -> {
+                    byte zxpIndex = (byte) VideoController.toZxPolyIndex(spindex);
+                    if (zxpIndex == 0) {
+                      zxpIndex = 8;
+                    }
+                    return zxpIndex;
+                  });
         } else {
           newGfx[gfxAddr] = oldGfx;
         }
       }
     }
-    return new Spec256Arch.Spec256GfxPage(page, newGfx);
+    return new Spec256Arch.Spec256GfxOrigPage(page, newGfx);
+  }
+
+  private static byte[] makeSna(final Motherboard motherboard, final VideoController vc) throws IOException {
+    return new FormatSNA().saveToArray(motherboard, vc);
+  }
+
+  private static Map<Integer, Spec256Arch.Spec256GfxPage> makeGfxPages(final Motherboard board) {
+    final BoardMode mode = board.getBoardMode();
+    switch (mode) {
+      case SPEC256:
+      case SPEC256_16: {
+        return IntStream.range(0, 8)
+                .mapToObj(x -> board.getModules()[0].getGfxRamPage(x))
+                .collect(Collectors.toMap(Spec256Arch.Spec256GfxPage::getPageIndex, Function.identity()));
+      }
+      default:
+        throw new Error("Unexpected board mode: " + mode);
+    }
+  }
+
+  private static byte[] makeSnapshotSpec256(final byte[] baseSpec256Archive, final BaseItem baseItem, final Motherboard board, final VideoController vc) throws IOException {
+    return replaceInArchive(baseSpec256Archive, baseItem, board.getModules()[0].read7FFD() & 7, makeSna(board, vc), makeGfxPages(board));
+  }
+
+  private static byte[] replaceInArchive(final byte[] zipArchive, final BaseItem baseItem, final int topPageIndex, final byte[] snaBody, final Map<Integer, Spec256Arch.Spec256GfxPage> gfxPages) throws IOException {
+    final ByteArrayOutputStream result = new ByteArrayOutputStream(zipArchive.length);
+    final ZipArchiveOutputStream output = new ZipArchiveOutputStream(result);
+
+    try (final ZipFile zipFile = new ZipFile(new SeekableInMemoryByteChannel(zipArchive))) {
+      final Enumeration<ZipArchiveEntry> iterator = zipFile.getEntries();
+      boolean configUpdated = false;
+      String snaName = null;
+      while (iterator.hasMoreElements()) {
+        final ZipArchiveEntry entry = iterator.nextElement();
+        if (entry.isDirectory()) {
+          continue;
+        }
+        final String normalizedName = entry.getName().replace('\\', '/').toLowerCase(Locale.ENGLISH);
+        if (normalizedName.endsWith(".sna")) {
+          snaName = entry.getName();
+          output.putArchiveEntry(new ZipArchiveEntry(snaName));
+          IOUtils.copy(new ByteArrayInputStream(snaBody), output);
+          output.closeArchiveEntry();
+        } else if (normalizedName.endsWith(".gfx")) {
+          output.putArchiveEntry(new ZipArchiveEntry(entry.getName()));
+          IOUtils.copy(new ByteArrayInputStream(gfxPages.get(5).packGfxData()), output);
+          IOUtils.copy(new ByteArrayInputStream(gfxPages.get(2).packGfxData()), output);
+          IOUtils.copy(new ByteArrayInputStream(gfxPages.get(topPageIndex).packGfxData()), output);
+          output.closeArchiveEntry();
+        } else {
+          final Matcher gfxMatcher = GFn_PATTERN.matcher(normalizedName);
+          if (gfxMatcher.find()) {
+            final int pageIndex = Integer.parseInt(gfxMatcher.group(1));
+            final Spec256Arch.Spec256GfxPage page = gfxPages.get(pageIndex);
+            if (page == null) {
+              throw new IOException("Can't find page " + pageIndex + "in GFX page map");
+            }
+            output.putArchiveEntry(new ZipArchiveEntry(entry.getName()));
+            IOUtils.copy(new ByteArrayInputStream(page.packGfxData()), output);
+            output.closeArchiveEntry();
+          } else {
+            if (normalizedName.endsWith(".cfg") && baseItem != null) {
+              output.putArchiveEntry(new ZipArchiveEntry(entry.getName()));
+              IOUtils.copy(new ByteArrayInputStream(baseItem.asConfig(readData(zipFile, entry))), output);
+              output.closeArchiveEntry();
+              configUpdated = true;
+            } else {
+              output.addRawArchiveEntry(entry, zipFile.getRawInputStream(entry));
+            }
+          }
+        }
+      }
+      if (baseItem != null && !configUpdated && snaName != null) {
+        final String configName = snaName.substring(0, snaName.lastIndexOf(".")) + ".CFG";
+        output.putArchiveEntry(new ZipArchiveEntry(configName));
+        output.write(baseItem.asConfig());
+        output.closeArchiveEntry();
+      }
+    }
+    output.finish();
+    return result.toByteArray();
   }
 
   @Override
@@ -122,7 +215,7 @@ public class FormatSpec256 extends Snapshot {
     }
 
     final boolean modeSpec256colors16 =
-        !"0".equals(findProperty(archive, "GFXColors16", dbItem, "0"));
+            !"0".equals(findProperty(archive, "GFXColors16", dbItem, "0"));
 
     LOGGER.info("Archive: " + archive);
     final SNAParser parser = archive.getParsedSna();
@@ -159,17 +252,17 @@ public class FormatSpec256 extends Snapshot {
     cpu.setIFF(iff, iff);
 
     final int[] pages =
-        archive.is128() ? new int[] {0, 1, 2, 3, 4, 5, 6, 7} : new int[] {5, 2, 0};
+            archive.is128() ? new int[]{0, 1, 2, 3, 4, 5, 6, 7} : new int[]{5, 2, 0};
 
     for (final int pageIndex : pages) {
       archive.getGfxRamPages().stream()
-          .filter(x -> x.getPageIndex() == pageIndex)
-          .findFirst()
-          .ifPresent(p -> {
-            LOGGER.info("Detected RAM page: " + p.getPageIndex());
-            module.syncWriteHeapPage(p.getPageIndex(), p.getOrigData());
-            module.writeGfxRamPage(decodeGfx(modeSpec256colors16 ? adaptPageForColor16(p) : p));
-          });
+              .filter(x -> x.getPageIndex() == pageIndex)
+              .findFirst()
+              .ifPresent(p -> {
+                LOGGER.info("Detected RAM page: " + p.getPageIndex());
+                module.syncWriteHeapPage(p.getPageIndex(), p.getOrigData());
+                module.writeGfxRamPage(decodeGfx(modeSpec256colors16 ? adaptPageForColor16(p) : p));
+              });
     }
 
     module.makeCopyOfRomToGfxRom();
@@ -226,7 +319,7 @@ public class FormatSpec256 extends Snapshot {
     }
 
     final Optional<Spec256Arch.Spec256Bkg> bkg = archive.getBackgrounds().stream()
-        .min(Comparator.comparingInt(Spec256Arch.Spec256Bkg::getIndex));
+            .min(Comparator.comparingInt(Spec256Arch.Spec256Bkg::getIndex));
     if (bkg.isPresent()) {
       LOGGER.info("Detected GFX background image");
       VideoController.setGfxBack(bkg.get());
@@ -238,24 +331,24 @@ public class FormatSpec256 extends Snapshot {
     board.setGfxAlignParams(findProperty(archive, "zxpAlignRegs", dbItem, "1PSsT"));
 
     VideoController
-        .setGfxBackOverFF(!"0".equals(findProperty(archive, "BkOverFF", dbItem, "0")));
+            .setGfxBackOverFF(!"0".equals(findProperty(archive, "BkOverFF", dbItem, "0")));
 
     VideoController
-        .setGfxHideSameInkPaper(
-            !"0".equals(findProperty(archive, "HideSameInkPaper", dbItem, "1")));
+            .setGfxHideSameInkPaper(
+                    !"0".equals(findProperty(archive, "HideSameInkPaper", dbItem, "1")));
 
     VideoController.setGfxDownColorsMixed(
-        safeParseInt(findProperty(archive, "DownColorsMixed", dbItem, "0"), 0));
+            safeParseInt(findProperty(archive, "DownColorsMixed", dbItem, "0"), 0));
 
     VideoController.setGfxUpColorsMixed(
-        safeParseInt(findProperty(archive, "UpColorsMixed", dbItem, "64"), 64));
+            safeParseInt(findProperty(archive, "UpColorsMixed", dbItem, "64"), 64));
 
     VideoController
-        .setGfxPaper00InkFF(!"0".equals(
-            findProperty(archive, "Paper00InkFF", dbItem, bkg.isPresent() ? "0" : "1")));
+            .setGfxPaper00InkFF(!"0".equals(
+                    findProperty(archive, "Paper00InkFF", dbItem, bkg.isPresent() ? "0" : "1")));
 
     final boolean leveledXor = !"0".equals(
-        findProperty(archive, "GFXLeveledXOR", dbItem, "0"));
+            findProperty(archive, "GFXLeveledXOR", dbItem, "0"));
 
     final boolean leveledAnd = !"0".equals(
             findProperty(archive, "GFXLeveledAND", dbItem, "0"));
@@ -266,6 +359,9 @@ public class FormatSpec256 extends Snapshot {
     board.setGfxLeveledLogicalOps(leveledXor, leveledAnd, leveledOr);
 
     board.syncGfxCpuState(cpu);
+
+    lastBaseItem = dbItem;
+    lastReadSnapshot = array;
   }
 
   @Override
@@ -295,7 +391,15 @@ public class FormatSpec256 extends Snapshot {
 
   @Override
   public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
-    throw new IOException("Save is unsupported");
+    final byte[] origSnapshot = Objects.requireNonNull(lastReadSnapshot, "Can't find last read Spec256 snapshot");
+
+    switch (board.getBoardMode()) {
+      case SPEC256_16:
+      case SPEC256:
+        return makeSnapshotSpec256(requireNonNull(origSnapshot, "Unexpectedly not found base archive"), lastBaseItem, board, vc);
+      default:
+        throw new IOException("Unsupported board mode: " + board.getBoardMode());
+    }
   }
 
   @Override
@@ -306,7 +410,7 @@ public class FormatSpec256 extends Snapshot {
   @Override
   public boolean accept(final File f) {
     return f != null
-        && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zip"));
+            && (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zip"));
   }
 
   @Override
@@ -316,19 +420,19 @@ public class FormatSpec256 extends Snapshot {
 
   private static class BaseItem {
     private static final Pattern PATTERN = Pattern.compile(
-        "^\\s*(\\S+)\\s*,\\s*([0-9a-f]+)\\s*(?:,\\s*([\\S]+)\\s*)?$");
+            "^\\s*(\\S+)\\s*,\\s*([0-9a-f]+)\\s*(?:,\\s*([\\S]+)\\s*)?$");
     private final String name;
     private final String sha256;
-    private final Properties defaultProperties;
+    private final Properties properties;
 
     private BaseItem(
-        final String name,
-        final String sha256,
-        final String defaultPropertiesList
+            final String name,
+            final String sha256,
+            final String defaultPropertiesList
     ) {
       this.name = name;
       this.sha256 = sha256;
-      this.defaultProperties = new Properties();
+      this.properties = new Properties();
       if (defaultPropertiesList != null && !defaultPropertiesList.trim().isEmpty()) {
         for (final String line : defaultPropertiesList.split(";")) {
           final String trimmed = line.trim();
@@ -337,7 +441,7 @@ public class FormatSpec256 extends Snapshot {
             if (pair.length != 2) {
               throw new Error("Can't find name-value: " + trimmed);
             } else {
-              this.defaultProperties.setProperty(pair[0].trim(), pair[1].trim());
+              this.properties.setProperty(pair[0].trim(), pair[1].trim());
             }
           }
         }
@@ -345,7 +449,33 @@ public class FormatSpec256 extends Snapshot {
     }
 
     private String findProperty(final String name, final String dflt) {
-      return this.defaultProperties.getProperty(name, dflt);
+      return this.properties.getProperty(name, dflt);
+    }
+
+    public byte[] asConfig(final byte[] configData) {
+      try {
+        final Properties parsed = new Properties();
+        parsed.load(new StringReader(new String(configData, StandardCharsets.UTF_8)));
+
+        for (final String name : this.properties.stringPropertyNames()) {
+          parsed.setProperty(name, this.properties.getProperty(name));
+        }
+        return parsed.stringPropertyNames()
+                .stream()
+                .map(x -> x + '=' + parsed.getProperty(x))
+                .collect(Collectors.joining("\n"))
+                .getBytes(StandardCharsets.UTF_8);
+      } catch (IOException ex) {
+        throw new Error("Unexpected error during config property save", ex);
+      }
+    }
+
+    public byte[] asConfig() {
+      return this.properties.stringPropertyNames()
+              .stream()
+              .map(x -> x + '=' + this.properties.getProperty(x))
+              .collect(Collectors.joining("\n"))
+              .getBytes(StandardCharsets.UTF_8);
     }
   }
 

@@ -581,7 +581,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     }
   }
 
-  public void writeGfxRomPage(final Spec256Arch.Spec256GfxPage page) {
+  public void writeGfxRomPage(final Spec256Arch.Spec256GfxOrigPage page) {
     synchronized (this.gfxRom) {
       int startOffset = page.getPageIndex() * GFX_PAGE_SIZE;
       final byte[] data = page.getGfxData();
@@ -589,7 +589,15 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     }
   }
 
-  public void writeGfxRamPage(final Spec256Arch.Spec256GfxPage page) {
+  public Spec256Arch.Spec256GfxPage getGfxRamPage(final int page) {
+    synchronized (this.gfxRam) {
+      final byte[] data = new byte[GFX_PAGE_SIZE];
+      System.arraycopy(this.gfxRam, page * GFX_PAGE_SIZE, data, 0, GFX_PAGE_SIZE);
+      return new Spec256Arch.Spec256GfxPage(page, data);
+    }
+  }
+
+  public void writeGfxRamPage(final Spec256Arch.Spec256GfxOrigPage page) {
     synchronized (this.gfxRam) {
       int startOffset = page.getPageIndex() * GFX_PAGE_SIZE;
       for (final byte gfxPageDatum : page.getGfxData()) {

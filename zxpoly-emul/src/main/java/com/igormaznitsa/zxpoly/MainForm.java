@@ -2517,7 +2517,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       File selected = chooseFileForSave("Save snapshot", this.lastSnapshotFolder, theFilter, false,
-              Stream.of(new Spec256Arch(), new FormatZXP(), new FormatZ80(), new FormatSNA()).filter(x -> x.canMakeSnapshotForBoardMode(this.board.getBoardMode()))
+              Stream.of(new FormatSpec256(), new FormatZXP(), new FormatZ80(), new FormatSNA()).filter(x -> x.canMakeSnapshotForBoardMode(this.board.getBoardMode()))
                       .toArray(Snapshot[]::new)
       );
 

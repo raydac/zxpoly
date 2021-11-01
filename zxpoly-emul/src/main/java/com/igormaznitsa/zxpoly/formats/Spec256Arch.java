@@ -1,17 +1,13 @@
 package com.igormaznitsa.zxpoly.formats;
 
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
-import com.igormaznitsa.zxpoly.components.BoardMode;
-import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.RomData;
-import com.igormaznitsa.zxpoly.components.video.VideoController;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -21,11 +17,11 @@ import static java.util.Arrays.copyOf;
 import static java.util.Arrays.copyOfRange;
 import static org.apache.commons.compress.utils.IOUtils.readFully;
 
-public class Spec256Arch extends Snapshot {
+public class Spec256Arch {
 
   private static final int GFX_PAGE_SIZE = 0x4000 * 8;
 
-  private static final Pattern GFn_PATTERN = Pattern.compile("^.*\\.gf(x|[0-7])$");
+  static final Pattern GFn_PATTERN = Pattern.compile("^.*\\.gf(x|[0-7])$");
   private static final Pattern ROM_ABC_PATTERN = Pattern.compile("^.*\\.gf([ab])$");
   private static final Pattern ROM_ROMNUM_PATTERN = Pattern.compile("^(?:.*/)?rom([01])\\.gfx$");
   private static final Pattern BKG_PATTERN = Pattern.compile("^.*\\.b([0-9]{2})$");
@@ -34,8 +30,8 @@ public class Spec256Arch extends Snapshot {
           Pattern.compile("([^/]*).sna$", Pattern.CASE_INSENSITIVE);
   private final SNAParser parsedSna;
   private final byte[] xorData;
-  private final List<Spec256GfxPage> gfxRoms;
-  private final List<Spec256GfxPage> gfxRamPages;
+  private final List<Spec256GfxOrigPage> gfxRoms;
+  private final List<Spec256GfxOrigPage> gfxRamPages;
   private final List<Spec256Bkg> backgrounds;
   private final List<Spec256Palette> palettes;
   private final Properties properties;
@@ -56,43 +52,6 @@ public class Spec256Arch extends Snapshot {
     this.snaName = null;
   }
 
-  @Override
-  public String getExtension() {
-    return "zip";
-  }
-
-  @Override
-  public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
-    throw new UnsupportedOperationException("Unsupported operation");
-  }
-
-  @Override
-  public byte[] saveToArray(final Motherboard board, final VideoController vc) throws IOException {
-    // TODO
-    throw new IOException("Not implemented yet");
-  }
-
-  @Override
-  public String getName() {
-    return "Spec256 snapshot";
-  }
-
-  @Override
-  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
-    return mode == BoardMode.SPEC256 || mode == BoardMode.SPEC256_16;
-  }
-
-  @Override
-  public boolean accept(final File f) {
-    return f != null &&
-            (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zip"));
-  }
-
-  @Override
-  public String getDescription() {
-    return "Spec256 Snapshot (*.zip)";
-  }
-
   public Spec256Arch(final RomData romData, final byte[] zipArchive) throws IOException {
     final FoundSna foundSna = findSna(zipArchive);
     if (foundSna == null) {
@@ -107,8 +66,8 @@ public class Spec256Arch extends Snapshot {
 
       final List<Spec256Bkg> listBackgrounds = new ArrayList<>();
       final List<Spec256Palette> listPalettes = new ArrayList<>();
-      final List<Spec256GfxPage> romPages = new ArrayList<>();
-      final List<Spec256GfxPage> ramPages = new ArrayList<>();
+      final List<Spec256GfxOrigPage> romPages = new ArrayList<>();
+      final List<Spec256GfxOrigPage> ramPages = new ArrayList<>();
       final Properties properties = new Properties();
       byte[] xorData = null;
       byte[] foundGfxSnapshot = null;
@@ -130,10 +89,10 @@ public class Spec256Arch extends Snapshot {
             final byte[] read = readData(zipFile, entry);
             if (read.length > 0) {
               romPages.add(
-                  new Spec256GfxPage(
-                      romPageIndex,
-                      romData.makeCopyPage(romPageIndex),
-                      copyOf(read, GFX_PAGE_SIZE)));
+                      new Spec256GfxOrigPage(
+                              romPageIndex,
+                              romData.makeCopyPage(romPageIndex),
+                              copyOf(read, GFX_PAGE_SIZE)));
             }
           } else {
             matcher = ROM_ROMNUM_PATTERN.matcher(name);
@@ -152,10 +111,10 @@ public class Spec256Arch extends Snapshot {
                     throw new Error("Detected unexpected ROM page index: " + matcher.group(1));
                 }
                 romPages.add(
-                    new Spec256GfxPage(
-                        romPageIndex,
-                        romData.makeCopyPage(romPageIndex),
-                        copyOf(read, GFX_PAGE_SIZE)));
+                        new Spec256GfxOrigPage(
+                                romPageIndex,
+                                romData.makeCopyPage(romPageIndex),
+                                copyOf(read, GFX_PAGE_SIZE)));
               }
             } else {
               matcher = GFn_PATTERN.matcher(name);
@@ -173,7 +132,7 @@ public class Spec256Arch extends Snapshot {
                   }
                   final int pageIndex = Integer.parseInt(suffix);
                   ramPages.add(
-                      new Spec256GfxPage(pageIndex, findRam(pageIndex, parsedSna), read));
+                          new Spec256GfxOrigPage(pageIndex, findRam(pageIndex, parsedSna), read));
                 }
               } else {
                 matcher = BKG_PATTERN.matcher(name);
@@ -226,19 +185,19 @@ public class Spec256Arch extends Snapshot {
       final byte[] gfxRam5 = copyOfRange(foundGfxSnapshot, 0, GFX_PAGE_SIZE);
       final byte[] gfxRam2 = copyOfRange(foundGfxSnapshot, GFX_PAGE_SIZE, GFX_PAGE_SIZE * 2);
       final byte[] gfxRamTop =
-          copyOfRange(foundGfxSnapshot, GFX_PAGE_SIZE * 2, GFX_PAGE_SIZE * 3);
+              copyOfRange(foundGfxSnapshot, GFX_PAGE_SIZE * 2, GFX_PAGE_SIZE * 3);
 
-      if (ramPages.stream().noneMatch(x -> x.pageIndex == 5)) {
+      if (ramPages.stream().noneMatch(x -> x.getPageIndex() == 5)) {
         ramPages.add(
-            new Spec256GfxPage(5, findRam(5, parsedSna), gfxRam5));
+                new Spec256GfxOrigPage(5, findRam(5, parsedSna), gfxRam5));
       }
-      if (ramPages.stream().noneMatch(x -> x.pageIndex == 2)) {
+      if (ramPages.stream().noneMatch(x -> x.getPageIndex() == 2)) {
         ramPages.add(
-            new Spec256GfxPage(2, findRam(2, parsedSna), gfxRam2));
+                new Spec256GfxOrigPage(2, findRam(2, parsedSna), gfxRam2));
       }
-      if (ramPages.stream().noneMatch(x -> x.pageIndex == topRamPageIndex)) {
-        ramPages.add(new Spec256GfxPage(topRamPageIndex,
-            findRam(topRamPageIndex, parsedSna), gfxRamTop));
+      if (ramPages.stream().noneMatch(x -> x.getPageIndex() == topRamPageIndex)) {
+        ramPages.add(new Spec256GfxOrigPage(topRamPageIndex,
+                findRam(topRamPageIndex, parsedSna), gfxRamTop));
       }
 
       this.gfxRamPages = Collections.unmodifiableList(ramPages);
@@ -270,9 +229,9 @@ public class Spec256Arch extends Snapshot {
           String parsedSnaName = matcher.group(1);
           final byte[] snaFileBody = readData(zipFile, entry);
           return new FoundSna(
-              parsedSnaName,
-              snaFileBody,
-              new SNAParser().read(new JBBPBitInputStream(new ByteArrayInputStream(snaFileBody)))
+                  parsedSnaName,
+                  snaFileBody,
+                  new SNAParser().read(new JBBPBitInputStream(new ByteArrayInputStream(snaFileBody)))
           );
         }
       }
@@ -297,7 +256,7 @@ public class Spec256Arch extends Snapshot {
         if (pageIndex == topPageIndex) {
           return copyOfRange(parsedSna.ramdump, 0x8000, 0xC000);
         } else {
-          final int[] pages = new int[] {0, 1, 2, 3, 4, 5, 6, 7};
+          final int[] pages = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
           pages[5] = -1;
           pages[2] = -1;
           pages[topPageIndex] = -1;
@@ -317,8 +276,8 @@ public class Spec256Arch extends Snapshot {
     }
   }
 
-  private static byte[] readData(final ZipFile file, final ZipArchiveEntry entry)
-      throws IOException {
+  static byte[] readData(final ZipFile file, final ZipArchiveEntry entry)
+          throws IOException {
     final byte[] result = new byte[(int) entry.getSize()];
     final int size = readFully(file.getInputStream(entry), result);
     if (size != result.length) {
@@ -343,11 +302,11 @@ public class Spec256Arch extends Snapshot {
     return this.xorData;
   }
 
-  public List<Spec256GfxPage> getGfxRoms() {
+  public List<Spec256GfxOrigPage> getGfxRoms() {
     return this.gfxRoms;
   }
 
-  public List<Spec256GfxPage> getGfxRamPages() {
+  public List<Spec256GfxOrigPage> getGfxRamPages() {
     return this.gfxRamPages;
   }
 
@@ -387,31 +346,53 @@ public class Spec256Arch extends Snapshot {
   public static class Spec256GfxPage {
     private final int pageIndex;
     private final byte[] gfxData;
-    private final byte[] origData;
 
-    public Spec256GfxPage(final int pageIndex, final byte[] origData, final byte[] gfxData) {
+    public Spec256GfxPage(final int pageIndex, final byte[] gfxData) {
       this.pageIndex = pageIndex;
-      this.origData = origData;
-      this.gfxData = gfxData.clone();
+      this.gfxData = gfxData;
     }
 
-    public Spec256GfxPage(final Spec256GfxPage orig, final byte[] newGfxData) {
-      this.pageIndex = orig.pageIndex;
+    public int getPageIndex() {
+      return this.pageIndex;
+    }
+
+    public byte[] packGfxData() {
+      final byte[] result = new byte[this.gfxData.length];
+
+      for (int offset = 0; offset < this.gfxData.length; offset += 8) {
+        for (int ctx = 0; ctx < 8; ctx++) {
+          final int bitMask = 1 << ctx;
+          for (int i = 0; i < 8; i++) {
+            result[offset + ctx] |= (byte) ((this.gfxData[offset + i] & bitMask) != 0 ? 1 << i : 0);
+          }
+        }
+      }
+
+      return result;
+    }
+
+    public byte[] getGfxData() {
+      return this.gfxData;
+    }
+  }
+
+  public static class Spec256GfxOrigPage extends Spec256GfxPage {
+    private final byte[] origData;
+
+    public Spec256GfxOrigPage(final int pageIndex, final byte[] origData, final byte[] gfxData) {
+      super(pageIndex, gfxData);
+      this.origData = origData;
+    }
+
+    public Spec256GfxOrigPage(final Spec256GfxOrigPage orig, final byte[] newGfxData) {
+      super(orig.getPageIndex(), newGfxData);
       this.origData = orig.origData;
-      this.gfxData = newGfxData;
     }
 
     public byte[] getOrigData() {
       return this.origData;
     }
 
-    public byte[] getGfxData() {
-      return this.gfxData;
-    }
-
-    public int getPageIndex() {
-      return this.pageIndex;
-    }
   }
 
   public static class Spec256Palette {

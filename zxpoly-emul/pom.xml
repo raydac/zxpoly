@@ -15,6 +15,7 @@
 
     <properties>
         <jinput.version>2.0.9</jinput.version>
+        <openjdk.version>17.0.1+12</openjdk.version>
     </properties>
 
     <dependencies>
@@ -69,7 +70,7 @@
             <id>publish</id>
             <properties>
                 <openjdk.bundled.type>jdk</openjdk.bundled.type>
-                <openjdk.bundled>17.0.1+12</openjdk.bundled>
+                <openjdk.bundled>${openjdk.version}</openjdk.bundled>
                 <openjdk.provider>BELLSOFT</openjdk.provider>
             </properties>
             <dependencies>
