@@ -428,7 +428,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         menuItem.addMenuListener(new MenuListener() {
           @Override
           public void menuSelected(MenuEvent e) {
-            MainForm.this.stepSemaphor.lock();
+            suspendSteps();
             MainForm.this.keyboardAndTapeModule.doReset();
             if (e.getSource() == menuOptions) {
               menuOptionsOnlyJoystickEvents.setState(keyboardAndTapeModule.isOnlyJoystickEvents());
@@ -442,12 +442,12 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
           @Override
           public void menuDeselected(MenuEvent e) {
-            MainForm.this.stepSemaphor.unlock();
+            MainForm.this.resumeSteps();
           }
 
           @Override
           public void menuCanceled(MenuEvent e) {
-            MainForm.this.stepSemaphor.unlock();
+            MainForm.this.resumeSteps();
           }
         });
       }
@@ -1015,7 +1015,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void menuOptionsEnableVideoStreamActionPerformed(final ActionEvent actionEvent) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
       if (this.menuOptionsEnableVideoStream.isSelected()) {
         if (AppOptions.getInstance().isGrabSound()
@@ -1052,7 +1052,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         this.videoStreamer.stop();
       }
     } finally {
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
@@ -1068,7 +1068,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void menuOptionsEnableSpeakerActionPerformed(final ActionEvent actionEvent) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
       if (this.menuOptionsEnableSpeaker.isSelected()) {
         final Optional<SourceSoundPort> port =
@@ -1086,12 +1086,12 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       }
       AppOptions.getInstance().setSoundTurnedOn(this.menuOptionsEnableSpeaker.isSelected());
     } finally {
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
   private void menuServiceGameControllerActionPerformed(final ActionEvent actionEvent) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
       if (!this.keyboardAndTapeModule.isControllerEngineAllowed()) {
         showMessageDialog(this, "Can't init game controller engine!", "Error",
@@ -1114,7 +1114,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         }
       }
     } finally {
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
@@ -1198,9 +1198,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void loadDiskIntoDrive(final int drive) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
-      this.turnZxKeyboardOff();
       final char diskName;
       switch (drive) {
         case BetaDiscInterface.DRIVE_A:
@@ -1228,8 +1227,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         this.setDisk(drive, selectedFile, filter.get());
       }
     } finally {
-      this.turnZxKeyboardOn();
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
@@ -1257,9 +1255,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void menuFileLoadSnapshotActionPerformed(ActionEvent evt) {
-    stepSemaphor.lock();
+    this.suspendSteps();
     try {
-      this.turnZxKeyboardOff();
       if (AppOptions.getInstance().isTestRomActive()) {
         final JHtmlLabel label = new JHtmlLabel(
                 "<html><body>ZX-Spectrum 128 ROM is required to load snapshots.<br>Go to menu <b><i><a href=\"rom\">File->Options</i></b></i> and choose ROM 128.</body></html>");
@@ -1283,13 +1280,12 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         this.setSnapshotFile(selected, theFilter.get());
       }
     } finally {
-      this.turnZxKeyboardOn();
-      stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
   private void setSnapshotFile(final File selected, FileFilter theFilter) {
-    stepSemaphor.lock();
+    this.stepSemaphor.lock();
     try {
       this.board.forceResetAllCpu();
       this.board.resetIoDevices();
@@ -1589,7 +1585,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
     this.menuServiceStartEditor = new JMenuItem("ZX-Sprite corrector", ICO_SPRITECORRECTOR);
     this.menuServiceStartEditor.addActionListener(e -> {
-      this.stepSemaphor.lock();
+      this.suspendSteps();
       try {
         SpriteCorrectorMainFrame spriteCorrector = this.spriteCorrectorMainFrame.get();
         if (spriteCorrector != null && spriteCorrector.isDisplayable()) {
@@ -1618,7 +1614,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           }
         }
       } finally {
-        this.stepSemaphor.unlock();
+        this.resumeSteps();
       }
     });
 
@@ -2063,10 +2059,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void menuFileLoadPokeActionPerformed(ActionEvent evt) {
-    stepSemaphor.lock();
+    this.suspendSteps();
     try {
-      this.turnZxKeyboardOff();
-
       final JFileChooser trainerFileChooser = new JFileChooser(this.lastPokeFileFolder);
       trainerFileChooser.setDialogTitle("Select trainer");
       trainerFileChooser.setMultiSelectionEnabled(false);
@@ -2089,8 +2083,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         }
       }
     } finally {
-      this.turnZxKeyboardOn();
-      stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
@@ -2179,9 +2172,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void menuFileLoadTapActionPerformed(ActionEvent evt) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
-      this.turnZxKeyboardOff();
       final File selectedTapFile =
               chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter(),
                       new WavFileFilter());
@@ -2189,15 +2181,13 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         this.setTapFile(selectedTapFile);
       }
     } finally {
-      this.turnZxKeyboardOn();
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
   private void menuTapExportAsWavActionPerformed(ActionEvent evt) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
-      this.turnZxKeyboardOff();
       final byte[] wav = this.keyboardAndTapeModule.getTap().getAsWAV();
       File fileToSave = chooseFileForSave("Select WAV file", null, null, true, new WavFileFilter());
       if (fileToSave != null) {
@@ -2215,8 +2205,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       showMessageDialog(this, "Can't export as WAV", ex.getMessage(),
               JOptionPane.ERROR_MESSAGE);
     } finally {
-      this.turnZxKeyboardOn();
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
@@ -2254,9 +2243,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void menuServiceSaveScreenActionPerformed(ActionEvent evt) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
-      this.turnZxKeyboardOff();
       final RenderedImage img = this.board.getVideoController().makeCopyOfCurrentPicture();
       final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       ImageIO.write(img, "png", buffer);
@@ -2275,16 +2263,14 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
               JOptionPane.ERROR_MESSAGE);
       LOGGER.log(Level.SEVERE, "Can't make screenshot", ex);
     } finally {
-      this.turnZxKeyboardOn();
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
 
   }
 
   private void menuFileOptionsActionPerformed(ActionEvent evt) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
-      this.turnZxKeyboardOff();
       final OptionsPanel optionsPanel = new OptionsPanel(null);
       if (showConfirmDialog(this, new JScrollPane(optionsPanel), "Preferences", JOptionPane.OK_CANCEL_OPTION,
               JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
@@ -2294,19 +2280,16 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
                 JOptionPane.WARNING_MESSAGE);
       }
     } finally {
-      this.turnZxKeyboardOn();
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
   private void menuHelpAboutActionPerformed(ActionEvent evt) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
-      this.turnZxKeyboardOff();
       new AboutDialog(this).setVisible(true);
     } finally {
-      this.turnZxKeyboardOn();
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
@@ -2347,9 +2330,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void menuServiceSaveScreenAllVRAMActionPerformed(ActionEvent evt) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
-      this.turnZxKeyboardOff();
       final RenderedImage[] images =
               this.board.getVideoController().renderAllModuleVideoMemoryInZx48Mode();
 
@@ -2379,8 +2361,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
               JOptionPane.ERROR_MESSAGE);
       LOGGER.log(Level.SEVERE, "Can't make screenshot", ex);
     } finally {
-      this.turnZxKeyboardOn();
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
@@ -2394,9 +2375,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void menuActionAnimatedGIFActionPerformed(ActionEvent evt) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
-      this.turnZxKeyboardOff();
       AnimationEncoder encoder = this.currentAnimationEncoder.get();
       if (encoder == null) {
         final AnimatedGifTunePanel panel = new AnimatedGifTunePanel(this.lastAnimGifOptions);
@@ -2436,8 +2416,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         }
       }
     } finally {
-      this.turnZxKeyboardOn();
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
@@ -2457,7 +2436,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void menuTriggerModuleCPUDesyncActionPerformed(ActionEvent evt) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
       if (this.menuTriggerModuleCPUDesync.isSelected()) {
         this.board.setTrigger(Motherboard.TRIGGER_DIFF_MODULESTATES);
@@ -2465,12 +2444,12 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         this.board.resetTrigger(Motherboard.TRIGGER_DIFF_MODULESTATES);
       }
     } finally {
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
   private void menuTriggerDiffMemActionPerformed(ActionEvent evt) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
       if (this.menuTriggerDiffMem.isSelected()) {
         final AddressPanel panel = new AddressPanel(this.board.getMemTriggerAddress());
@@ -2495,12 +2474,12 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         this.board.resetTrigger(Motherboard.TRIGGER_DIFF_MEM_ADDR);
       }
     } finally {
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
   private void menuTriggerExeCodeDiffActionPerformed(ActionEvent evt) {
-    this.stepSemaphor.lock();
+    this.suspendSteps();
     try {
       if (this.menuTriggerExeCodeDiff.isSelected()) {
         this.board.setTrigger(Motherboard.TRIGGER_DIFF_EXE_CODE);
@@ -2508,12 +2487,22 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         this.board.resetTrigger(Motherboard.TRIGGER_DIFF_EXE_CODE);
       }
     } finally {
-      this.stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
+  private void suspendSteps() {
+    this.turnZxKeyboardOff();
+    this.stepSemaphor.lock();
+  }
+
+  private void resumeSteps() {
+    this.turnZxKeyboardOn();
+    this.stepSemaphor.unlock();
+  }
+
   private void menuServiceMakeSnapshotActionPerformed(ActionEvent evt) {
-    stepSemaphor.lock();
+    this.suspendSteps();
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       File selected = chooseFileForSave("Save snapshot", this.lastSnapshotFolder, theFilter, false,
@@ -2553,7 +2542,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         }
       }
     } finally {
-      stepSemaphor.unlock();
+      this.resumeSteps();
     }
   }
 
@@ -2748,6 +2737,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     chooser.setAcceptAllFileFilterUsed(allowAcceptAll);
     chooser.setMultiSelectionEnabled(false);
     chooser.setDialogTitle(title);
+    if (filters.length != 0 && !allowAcceptAll) {
+      chooser.setFileFilter(filters[0]);
+    }
     chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
     final File result;
