@@ -195,6 +195,31 @@ public final class VideoController extends JComponent
     }
   }
 
+  public static int toSpec256Index(final int zxPolyIndex) {
+    if (zxPolyIndex > 15) return zxPolyIndex;
+
+    final int zxPolyArgb = PALETTE_ZXPOLY[zxPolyIndex];
+    final int sr = (zxPolyArgb >>> 16) & 0xFF;
+    final int sg = (zxPolyArgb >>> 8) & 0xFF;
+    final int sb = zxPolyArgb & 0xFF;
+
+    double minDistance = Double.MAX_VALUE;
+    int spec256index = 1;
+    for (int i = 1; i < 0xFE; i++) {
+      final int spec256argb = PALETTE_SPEC256[i];
+      final double dr = sr - ((spec256argb >>> 16) & 0xFF);
+      final double dg = sg - ((spec256argb >>> 8) & 0xFF);
+      final double db = sb - (spec256argb & 0xFF);
+
+      final double dist = Math.sqrt(Math.pow(dr, 2) + Math.pow(dg, 2) + Math.pow(db, 2));
+      if (Double.compare(dist, minDistance) < 0) {
+        spec256index = i;
+        minDistance = dist;
+      }
+    }
+    return spec256index;
+  }
+
   public static int toZxPolyIndex(final byte spec256PaletteIndex) {
     final int spec256argb = PALETTE_SPEC256[spec256PaletteIndex & 0xFF];
     final int sr = (spec256argb >>> 16) & 0xFF;

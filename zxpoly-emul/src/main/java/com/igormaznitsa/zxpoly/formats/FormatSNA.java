@@ -85,6 +85,8 @@ public class FormatSNA extends Snapshot {
     vc.writeIo(module, 0xFE, parser.getBORDERCOLOR() & 7);
     vc.setBorderColor(parser.getBORDERCOLOR() & 7);
 
+    final int pcReg;
+
     if (sna128) {
       final int[] bankIndex = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
       bankIndex[2] = -1;
@@ -96,7 +98,9 @@ public class FormatSNA extends Snapshot {
       module.syncWriteHeapPage(parser.getEXTENDEDDATA().getPORT7FFD() & 7,
               Arrays.copyOfRange(parser.ramdump, 0x8000, 0xC000));
 
-      cpu.setRegister(Z80.REG_PC, parser.getEXTENDEDDATA().getREGPC());
+      pcReg = parser.getEXTENDEDDATA().getREGPC();
+
+      cpu.setRegister(Z80.REG_PC, pcReg);
       cpu.setRegister(Z80.REG_SP, parser.getREGSP());
       module.write7FFD(parser.getEXTENDEDDATA().getPORT7FFD(), true);
       module.setTrdosActive(parser.getEXTENDEDDATA().getONTRDOS() != 0);
@@ -117,14 +121,17 @@ public class FormatSNA extends Snapshot {
       }
 
       int regSp = parser.getREGSP();
-      final int lowPc = module.readMemory(cpu, 0, regSp++, false, false) & 0xFF;
-      final int highPc = module.readMemory(cpu, 0, regSp++, false, false) & 0xFF;
+      final int lowPc = module.readMemory(cpu, 0, regSp, false, false) & 0xFF;
+      regSp = (regSp + 1) & 0xFFFF;
+      final int highPc = module.readMemory(cpu, 0, regSp, false, false) & 0xFF;
+      regSp = (regSp + 1) & 0xFFFF;
 
-      final int pcAddress = (highPc << 8) | lowPc;
+      pcReg = (highPc << 8) | lowPc;
 
       cpu.setRegister(Z80.REG_SP, regSp);
-      cpu.setRegister(Z80.REG_PC, pcAddress);
+      cpu.setRegister(Z80.REG_PC, pcReg);
     }
+    LOGGER.info("Start address: " + pcReg);
   }
 
   @Override
