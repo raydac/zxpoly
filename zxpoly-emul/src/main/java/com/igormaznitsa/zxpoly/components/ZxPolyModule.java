@@ -521,8 +521,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         result = memoryByteForAddress(valueAt7ffd, this.trdosRomActive, address);
       }
       break;
-      case SPEC256:
-      case SPEC256_16: {
+      case SPEC256: {
         if (ctx == 0 || cmdOrPrefix) {
           result = memoryByteForAddress(valueAt7ffd, this.trdosRomActive, address);
         } else {
@@ -758,8 +757,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         }
       }
       break;
-      case SPEC256:
-      case SPEC256_16: {
+      case SPEC256: {
         if (address >= 0x4000) {
           if (ctx == 0) {
             final int ramOffsetInHeap = ramOffset2HeapAddress(value7FFD, address);

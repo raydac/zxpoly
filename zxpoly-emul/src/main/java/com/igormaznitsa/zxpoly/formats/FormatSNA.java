@@ -45,7 +45,7 @@ public class FormatSNA extends Snapshot {
 
   @Override
   public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
-    return mode == BoardMode.ZX128 || mode == BoardMode.SPEC256 || mode == BoardMode.SPEC256_16;
+    return mode == BoardMode.ZX128 || mode == BoardMode.SPEC256;
   }
 
   @Override

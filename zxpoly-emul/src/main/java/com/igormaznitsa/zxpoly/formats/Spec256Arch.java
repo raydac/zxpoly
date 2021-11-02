@@ -2,7 +2,6 @@ package com.igormaznitsa.zxpoly.formats;
 
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.zxpoly.components.RomData;
-import com.igormaznitsa.zxpoly.components.video.VideoController;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -357,7 +356,7 @@ public class Spec256Arch {
       return this.pageIndex;
     }
 
-    public byte[] packGfxData(final boolean forced16colors) {
+    public byte[] packGfxData() {
       final byte[] result = new byte[this.gfxData.length];
 
       for (int offset = 0; offset < this.gfxData.length; offset += 8) {
@@ -366,16 +365,6 @@ public class Spec256Arch {
           for (int i = 0; i < 8; i++) {
             result[offset + ctx] |= (byte) ((this.gfxData[offset + i] & bitMask) != 0 ? 1 << i : 0);
           }
-        }
-      }
-
-      if (forced16colors) {
-        for (int i = 0; i < result.length; i++) {
-          int value = result[i] & 0xFF;
-          if (value != 0 && value != 0xFF) {
-            value = VideoController.toSpec256Index(value);
-          }
-          result[i] = (byte) value;
         }
       }
 

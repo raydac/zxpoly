@@ -50,10 +50,10 @@ public abstract class Snapshot extends FileFilter {
     board.getMasterCpu().doReset();
   }
 
-  public void doModeSpec256_128(final Motherboard board, final boolean mode16Colors) {
+  public void doModeSpec256_128(final Motherboard board) {
     LOGGER.info("Turning on the Spec256.128 mode");
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
-    board.setBoardMode(mode16Colors ? BoardMode.SPEC256_16 : BoardMode.SPEC256, false);
+    board.setBoardMode(BoardMode.SPEC256, false);
     board.getMasterCpu().doReset();
   }
 
@@ -72,11 +72,11 @@ public abstract class Snapshot extends FileFilter {
     board.getMasterCpu().doReset();
   }
 
-  public void doModeSpec256_48(final Motherboard board, final boolean mode16Colors) {
+  public void doModeSpec256_48(final Motherboard board) {
     LOGGER.info("Turning on the Spec256.48 mode");
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
     stream(board.getModules()).forEach(ZxPolyModule::makeAndLockZx48Mode);
-    board.setBoardMode(mode16Colors ? BoardMode.SPEC256_16 : BoardMode.SPEC256, false);
+    board.setBoardMode(BoardMode.SPEC256, false);
     board.getMasterCpu().doReset();
   }
 

@@ -129,23 +129,20 @@ public class FormatSpec256 extends Snapshot {
 
   private static Map<Integer, Spec256Arch.Spec256GfxPage> makeGfxPages(final Motherboard board) {
     final BoardMode mode = board.getBoardMode();
-    switch (mode) {
-      case SPEC256:
-      case SPEC256_16: {
-        return IntStream.range(0, 8)
-                .mapToObj(x -> board.getModules()[0].getGfxRamPage(x))
-                .collect(Collectors.toMap(Spec256Arch.Spec256GfxPage::getPageIndex, Function.identity()));
-      }
-      default:
-        throw new Error("Unexpected board mode: " + mode);
+
+    if (mode == BoardMode.SPEC256) {
+      return IntStream.range(0, 8)
+              .mapToObj(x -> board.getModules()[0].getGfxRamPage(x))
+              .collect(Collectors.toMap(Spec256Arch.Spec256GfxPage::getPageIndex, Function.identity()));
     }
+    throw new Error("Unexpected board mode: " + mode);
   }
 
-  private static byte[] makeSnapshotSpec256(final byte[] baseSpec256Archive, final boolean forced16colors, final BaseItem baseItem, final Motherboard board, final VideoController vc) throws IOException {
-    return replaceInArchive(baseSpec256Archive, forced16colors, baseItem, board.getModules()[0].read7FFD() & 7, makeSna(board, vc), makeGfxPages(board));
+  private static byte[] makeSnapshotSpec256(final byte[] baseSpec256Archive, final BaseItem baseItem, final Motherboard board, final VideoController vc) throws IOException {
+    return replaceInArchive(baseSpec256Archive, baseItem, board.getModules()[0].read7FFD() & 7, makeSna(board, vc), makeGfxPages(board));
   }
 
-  private static byte[] replaceInArchive(final byte[] zipArchive, final boolean forced16colors, final BaseItem baseItem, final int topPageIndex, final byte[] snaBody, final Map<Integer, Spec256Arch.Spec256GfxPage> gfxPages) throws IOException {
+  private static byte[] replaceInArchive(final byte[] zipArchive, final BaseItem baseItem, final int topPageIndex, final byte[] snaBody, final Map<Integer, Spec256Arch.Spec256GfxPage> gfxPages) throws IOException {
     final ByteArrayOutputStream result = new ByteArrayOutputStream(zipArchive.length);
     final ZipArchiveOutputStream output = new ZipArchiveOutputStream(result);
 
@@ -166,9 +163,9 @@ public class FormatSpec256 extends Snapshot {
           output.closeArchiveEntry();
         } else if (normalizedName.endsWith(".gfx")) {
           output.putArchiveEntry(new ZipArchiveEntry(entry.getName()));
-          IOUtils.copy(new ByteArrayInputStream(gfxPages.get(5).packGfxData(forced16colors)), output);
-          IOUtils.copy(new ByteArrayInputStream(gfxPages.get(2).packGfxData(forced16colors)), output);
-          IOUtils.copy(new ByteArrayInputStream(gfxPages.get(topPageIndex).packGfxData(forced16colors)), output);
+          IOUtils.copy(new ByteArrayInputStream(gfxPages.get(5).packGfxData()), output);
+          IOUtils.copy(new ByteArrayInputStream(gfxPages.get(2).packGfxData()), output);
+          IOUtils.copy(new ByteArrayInputStream(gfxPages.get(topPageIndex).packGfxData()), output);
           output.closeArchiveEntry();
         } else {
           final Matcher gfxMatcher = GFn_PATTERN.matcher(normalizedName);
@@ -179,7 +176,7 @@ public class FormatSpec256 extends Snapshot {
               throw new IOException("Can't find page " + pageIndex + "in GFX page map");
             }
             output.putArchiveEntry(new ZipArchiveEntry(entry.getName()));
-            IOUtils.copy(new ByteArrayInputStream(page.packGfxData(forced16colors)), output);
+            IOUtils.copy(new ByteArrayInputStream(page.packGfxData()), output);
             output.closeArchiveEntry();
           } else {
             if (normalizedName.endsWith(".cfg") && baseItem != null) {
@@ -213,16 +210,13 @@ public class FormatSpec256 extends Snapshot {
       LOGGER.info("Application not found in Spec256 app base");
     }
 
-    final boolean modeSpec256colors16 =
-            !"0".equals(findProperty(archive, "GFXColors16", dbItem, "0"));
-
     LOGGER.info("Archive: " + archive);
     final SNAParser parser = archive.getParsedSna();
 
     if (archive.is128()) {
-      doModeSpec256_128(board, modeSpec256colors16);
+      doModeSpec256_128(board);
     } else {
-      doModeSpec256_48(board, modeSpec256colors16);
+      doModeSpec256_48(board);
     }
 
     final ZxPolyModule module = board.getModules()[0];
@@ -260,15 +254,14 @@ public class FormatSpec256 extends Snapshot {
               .ifPresent(p -> {
                 LOGGER.info("Detected RAM page: " + p.getPageIndex());
                 module.syncWriteHeapPage(p.getPageIndex(), p.getOrigData());
-                module.writeGfxRamPage(decodeGfx(modeSpec256colors16 ? adaptPageForColor16(p) : p));
+                module.writeGfxRamPage(decodeGfx(p));
               });
     }
 
     module.makeCopyOfRomToGfxRom();
     if (!archive.getGfxRoms().isEmpty()) {
       LOGGER.info("provided adapted ROM");
-      archive.getGfxRoms().stream()
-              .map(x -> modeSpec256colors16 ? adaptPageForColor16(x) : x)
+      archive.getGfxRoms()
               .forEach(x -> module.writeGfxRomPage(decodeGfx(x)));
     }
 
@@ -311,11 +304,7 @@ public class FormatSpec256 extends Snapshot {
     board.set3D00(0b1_00_000_0_1, true);
     vc.setBorderColor(parser.getBORDERCOLOR() & 7);
 
-    if (modeSpec256colors16) {
-      vc.setVideoMode(ZxPolyConstants.VIDEOMODE_SPEC256_16);
-    } else {
-      vc.setVideoMode(ZxPolyConstants.VIDEOMODE_SPEC256);
-    }
+    vc.setVideoMode(ZxPolyConstants.VIDEOMODE_SPEC256);
 
     final Optional<Spec256Arch.Spec256Bkg> bkg = archive.getBackgrounds().stream()
             .min(Comparator.comparingInt(Spec256Arch.Spec256Bkg::getIndex));
@@ -365,7 +354,7 @@ public class FormatSpec256 extends Snapshot {
 
   @Override
   public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
-    return mode == BoardMode.SPEC256_16 || mode == BoardMode.SPEC256;
+    return mode == BoardMode.SPEC256;
   }
 
   private String findProperty(final Spec256Arch arch, final String name, final BaseItem baseItem,
@@ -393,9 +382,8 @@ public class FormatSpec256 extends Snapshot {
     final byte[] origSnapshot = Objects.requireNonNull(lastReadSnapshot, "Can't find last read Spec256 snapshot");
 
     switch (board.getBoardMode()) {
-      case SPEC256_16:
       case SPEC256:
-        return makeSnapshotSpec256(requireNonNull(origSnapshot, "Unexpectedly not found base archive"), board.getBoardMode() == BoardMode.SPEC256_16, lastBaseItem, board, vc);
+        return makeSnapshotSpec256(requireNonNull(origSnapshot, "Unexpectedly not found base archive"), lastBaseItem, board, vc);
       default:
         throw new IOException("Unsupported board mode: " + board.getBoardMode());
     }

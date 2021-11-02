@@ -195,31 +195,6 @@ public final class VideoController extends JComponent
     }
   }
 
-  public static int toSpec256Index(final int zxPolyIndex) {
-    if (zxPolyIndex > 15) return zxPolyIndex;
-
-    final int zxPolyArgb = PALETTE_ZXPOLY[zxPolyIndex];
-    final int sr = (zxPolyArgb >>> 16) & 0xFF;
-    final int sg = (zxPolyArgb >>> 8) & 0xFF;
-    final int sb = zxPolyArgb & 0xFF;
-
-    double minDistance = Double.MAX_VALUE;
-    int spec256index = 1;
-    for (int i = 1; i < 0xFE; i++) {
-      final int spec256argb = PALETTE_SPEC256[i];
-      final double dr = sr - ((spec256argb >>> 16) & 0xFF);
-      final double dg = sg - ((spec256argb >>> 8) & 0xFF);
-      final double db = sb - (spec256argb & 0xFF);
-
-      final double dist = Math.sqrt(Math.pow(dr, 2) + Math.pow(dg, 2) + Math.pow(db, 2));
-      if (Double.compare(dist, minDistance) < 0) {
-        spec256index = i;
-        minDistance = dist;
-      }
-    }
-    return spec256index;
-  }
-
   public static int toZxPolyIndex(final byte spec256PaletteIndex) {
     final int spec256argb = PALETTE_SPEC256[spec256PaletteIndex & 0xFF];
     final int sr = (spec256argb >>> 16) & 0xFF;
@@ -362,116 +337,6 @@ public final class VideoController extends JComponent
           break;
           default:
             throw new Error("Unexpected mode");
-        }
-      }
-    }
-  }
-
-  private static void fillDataBufferForSpec256x16VideoMode(
-          final LineRenderMode renderLines,
-          final ZxPolyModule[] modules,
-          final int[] pixelRgbBuffer,
-          final boolean flashActive
-  ) {
-    final int[] preRenderedBack = gfxPrerenderedBack;
-    final boolean bkOverFF = gfxBackOverFF;
-    final boolean paper00inkFF = gfxPaper00InkFF;
-    final boolean hideSameInkPaper = gfxHideSameInkPaper;
-
-    final int downAttrMixedIndex = gfxDownColorsMixed;
-    final int upAttrMixedIndex = 0xFF - gfxUpColorsMixed;
-
-    final ZxPolyModule sourceModule = modules[0];
-    int offset = 0;
-    int attributeOffset = 0;
-    int lineY;
-    for (int i = 0; i < 0x1800; i++) {
-      if ((i & 0x1F) == 0) {
-        // the first byte in the line
-        lineY = extractYFromAddress(i);
-        offset = lineY << 10;
-        attributeOffset = calcAttributeAddressZxMode(i);
-      }
-
-      final int attrOffset = attributeOffset++;
-      long pixelData = sourceModule.readGfxVideo16(i);
-      int origData = sourceModule.readVideo(i);
-
-      final int attrData = sourceModule.readVideo(attrOffset);
-      final int inkColor = extractInkColorSpec256(attrData, flashActive);
-      final int paperColor = extractPaperColor(attrData, flashActive);
-
-      int x = 8;
-      while (x-- > 0) {
-        final int colorIndex = (int) ((pixelData >>> 35) & 0x1F);
-        final boolean origPixelSet = (origData & 0x80) != 0;
-
-        int color = PALETTE_ZXPOLY[colorIndex & 0xF];
-        boolean draw = true;
-
-        final boolean mixWithAttributes =
-                colorIndex < downAttrMixedIndex || colorIndex > upAttrMixedIndex;
-
-        if (preRenderedBack == null) {
-          // No GFX Background
-          if (hideSameInkPaper && inkColor == paperColor) {
-            color = inkColor;
-          } else if (paper00inkFF) {
-            if (colorIndex == 0) {
-              color = paperColor;
-            } else if (colorIndex == 0x1F) {
-              color = inkColor;
-            }
-          }
-        } else {
-          // GFX Background is presented
-          final boolean backShouldBeShown = ((attrData & 0x80) != 0 && flashActive)
-                  || (hideSameInkPaper && inkColor == paperColor);
-
-          if (paper00inkFF) {
-            if (colorIndex == 0) {
-              color = paperColor;
-            } else if (colorIndex == 0x1F) {
-              color = inkColor;
-            } else {
-              draw = !backShouldBeShown;
-            }
-          } else {
-            draw = !(backShouldBeShown || (colorIndex == 0 || (bkOverFF && colorIndex == 0x1F)));
-          }
-        }
-
-        if (draw && mixWithAttributes) {
-          color = mixRgb(origPixelSet ? inkColor : paperColor, color);
-        }
-
-        pixelData <<= 5;
-        origData <<= 1;
-
-        final int theColor = draw ? color : preRenderedBack[offset];
-        switch (renderLines) {
-          case ALL: {
-            pixelRgbBuffer[offset++] = theColor;
-            pixelRgbBuffer[offset] = theColor;
-            offset += SCREEN_WIDTH;
-            pixelRgbBuffer[offset--] = theColor;
-            pixelRgbBuffer[offset] = theColor;
-            offset -= SCREEN_WIDTH - 2;
-          }
-          break;
-          case EVEN: {
-            pixelRgbBuffer[offset++] = theColor;
-            pixelRgbBuffer[offset++] = theColor;
-          }
-          break;
-          case ODD: {
-            pixelRgbBuffer[SCREEN_WIDTH + offset++] = theColor;
-            pixelRgbBuffer[SCREEN_WIDTH + offset++] = theColor;
-          }
-          break;
-          default: {
-            throw new Error("Unexpected mode");
-          }
         }
       }
     }
@@ -1132,21 +997,11 @@ public final class VideoController extends JComponent
         return "ZX-Poly 256x192M1";
       case VIDEOMODE_SPEC256:
         return "SPEC256 256x192";
-      case VIDEOMODE_SPEC256_16:
-        return "SPEC256 256x192 16 colors";
       default:
         return "Unknown [" + code + ']';
     }
   }
 
-  public static int spec256rgbColorToIndex(int rgbPixel) {
-    for (int i = 0; i < PALETTE_SPEC256.length; i++) {
-      if (rgbPixel == PALETTE_SPEC256[i]) {
-        return i;
-      }
-    }
-    return -1;
-  }
 
   @Override
   public void init() {
@@ -1420,15 +1275,6 @@ public final class VideoController extends JComponent
       break;
       case VIDEOMODE_SPEC256: {
         fillDataBufferForSpec256VideoMode(
-                renderLines,
-                this.modules,
-                this.bufferImageRgbData,
-                this.board.isFlashActive()
-        );
-      }
-      break;
-      case VIDEOMODE_SPEC256_16: {
-        fillDataBufferForSpec256x16VideoMode(
                 renderLines,
                 this.modules,
                 this.bufferImageRgbData,

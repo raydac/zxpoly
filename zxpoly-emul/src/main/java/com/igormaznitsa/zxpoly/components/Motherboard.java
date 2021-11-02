@@ -43,7 +43,6 @@ public final class Motherboard implements ZxPolyConstants, SoundLevels {
   private static final Logger LOGGER = Logger.getLogger("MB");
 
   private static final int SPEC256_GFX_CORES = 8;
-  private static final int SPEC256_16_GFX_CORES = 5;
   private final byte[] contendDelay;
   private final ZxPolyModule[] modules;
   private final Z80[] spec256GfxCores;
@@ -475,15 +474,12 @@ public final class Motherboard implements ZxPolyConstants, SoundLevels {
           modules[0].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
         }
         break;
-        case SPEC256_16:
         case SPEC256: {
-          final int coreNumber =
-                  this.boardMode == BoardMode.SPEC256_16 ? SPEC256_16_GFX_CORES : SPEC256_GFX_CORES;
           final ZxPolyModule masterModule = modules[0];
           final Z80 mainCpu = masterModule.getCpu();
           masterModule.saveInternalCopyForGfx();
           final int syncRegRecord = this.gfxSyncRegsRecord;
-          for (int i = 0; i < coreNumber; i++) {
+          for (int i = 0; i < SPEC256_GFX_CORES; i++) {
             final Z80 gfxCore = this.spec256GfxCores[i];
             gfxCore.alignRegisterValuesWith(mainCpu, syncRegRecord);
             masterModule.gfxGpuStep(i + 1, gfxCore);
