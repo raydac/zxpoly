@@ -58,7 +58,6 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox checkGFXLeveledOR;
     private javax.swing.JCheckBox checkGFXLeveledXOR;
     private javax.swing.JCheckBox checkGFXScreenXORBuffered;
-    private javax.swing.JCheckBox checkGFXColors16;
     private javax.swing.JCheckBox checkPaper00InkFF;
     private javax.swing.JCheckBox checkUpMixPaper;
     private javax.swing.JCheckBox checkUseBrightInMix;
@@ -133,8 +132,6 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         this.checkGFXLeveledAND.setSelected(isPropertySet("GFXLeveledAND", properties, false));
         this.checkGFXScreenXORBuffered
             .setSelected(isPropertySet("GFXScreenXORBuffered", properties, false));
-        this.checkGFXColors16
-            .setSelected(isPropertySet("GFXColors16", properties, false));
         this.checkPaper00InkFF
             .setSelected(isPropertySet("Paper00InkFF", properties, false));
         this.checkUseBrightInMix.setSelected(isPropertySet("UseBrightInMix", properties, false));
@@ -234,8 +231,6 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         properties.setProperty("GFXLeveledAND", this.checkGFXLeveledAND.isSelected() ? "1" : "0");
         properties.setProperty("GFXScreenXORBuffered",
             this.checkGFXScreenXORBuffered.isSelected() ? "1" : "0");
-        properties.setProperty("GFXColors16",
-            this.checkGFXColors16.isSelected() ? "1" : "0");
         properties.setProperty("Paper00InkFF",
             this.checkPaper00InkFF.isSelected() ? "1" : "0");
         properties.setProperty("UseBrightInMix", this.checkUseBrightInMix.isSelected() ? "1" : "0");
@@ -294,7 +289,6 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         checkGFXLeveledOR = new javax.swing.JCheckBox();
         checkGFXLeveledAND = new javax.swing.JCheckBox();
         checkGFXScreenXORBuffered = new javax.swing.JCheckBox();
-        checkGFXColors16 = new javax.swing.JCheckBox();
         checkPaper00InkFF = new javax.swing.JCheckBox();
         checkBkMixed = new javax.swing.JCheckBox();
         checkBkMixBkAttr = new javax.swing.JCheckBox();
@@ -641,22 +635,12 @@ public class Spec256ConfigEditorPanel extends javax.swing.JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         jPanel1.add(checkGFXScreenXORBuffered, gridBagConstraints);
 
-        checkGFXColors16.setText("GFXColors16");
-        checkGFXColors16.setToolTipText(
-            "provides hint to emulator that only 16 colors of ZX-Palette in use");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-        jPanel1.add(checkGFXColors16, gridBagConstraints);
-
         checkPaper00InkFF.setText("Paper00InkFF");
         checkPaper00InkFF.setToolTipText(
             "force drawing paper color over #00 and ink color over #FF palette indexes");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         jPanel1.add(checkPaper00InkFF, gridBagConstraints);
