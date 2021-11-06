@@ -48,7 +48,7 @@ public class ZXPoly {
     if (uiScale != null) {
       if (System.getProperty("sun.java2d.uiScale", null) == null) {
         System.out.println("Detected scale UI: " + uiScale);
-        System.setProperty("sun.java2d.uiScale", uiScale.trim());
+        System.setProperty("sun.java2d.uiScale", uiScale.trim() + 'x');
         System.setProperty("sun.java2d.uiScale.enabled", "true");
       } else {
         System.out.println("Detected provided sun.java2d.uiScale property: " + System.getProperty("sun.java2d.uiScale", null));
