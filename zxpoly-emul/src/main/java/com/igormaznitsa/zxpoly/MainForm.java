@@ -236,6 +236,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private JCheckBoxMenuItem menuOptionsShowIndicators;
   private JCheckBoxMenuItem menuOptionsTurbo;
   private JCheckBoxMenuItem menuOptionsOnlyJoystickEvents;
+  private final ImageIcon sysIcon;
+  private JMenu menuOptionsLookAndFeel;
   private JMenu menuOptionsJoystickSelect;
   private JRadioButtonMenuItem menuOptionsJoystickKempston;
   private JRadioButtonMenuItem menuOptionsJoystickProtek;
@@ -269,9 +271,12 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private Optional<SourceSoundPort> preTurboSourceSoundPort = Optional.empty();
 
   private final TimingProfile timingProfile;
+  private JMenu menuOptionsScaleUi;
 
   public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
+
+    this.sysIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/sys.png")));
 
     this.timingProfile = TimingProfile.SPEC128;
 
@@ -1514,6 +1519,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     menuOptionsTurbo = new JCheckBoxMenuItem();
     menuOptionsOnlyJoystickEvents = new JCheckBoxMenuItem();
     menuOptionsJoystickSelect = new JMenu();
+    menuOptionsLookAndFeel = new JMenu();
+    menuOptionsScaleUi = new JMenu();
     menuOptionsJoystickKempston = new JRadioButtonMenuItem();
     menuOptionsJoystickProtek = new JRadioButtonMenuItem();
     menuOptionsEnableTrapMouse = new JCheckBoxMenuItem();
@@ -2001,6 +2008,18 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
             .addActionListener(this::menuOptionsEnableVideoStreamActionPerformed);
     menuOptions.add(menuOptionsEnableVideoStream);
 
+    menuOptionsLookAndFeel.setText("Look & Feel");
+    menuOptionsLookAndFeel.setIcon(this.sysIcon);
+    fillLookAndFeelMenu(menuOptionsLookAndFeel);
+
+    menuOptionsScaleUi.setText("App. UI scale");
+    menuOptionsScaleUi.setIcon(this.sysIcon);
+    fillUiScale(menuOptionsScaleUi);
+
+    menuOptions.addSeparator();
+    menuOptions.add(menuOptionsLookAndFeel);
+    menuOptions.add(menuOptionsScaleUi);
+
     menuBar.add(menuOptions);
 
     menuHelp.setText("Help");
@@ -2031,6 +2050,59 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     setJMenuBar(menuBar);
 
     pack();
+  }
+
+  private void fillUiScale(final JMenu menu) {
+    final String selectedScale = AppOptions.getInstance().getUiScale();
+
+    final ButtonGroup buttonGroup = new ButtonGroup();
+    Stream.of("None", "1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5")
+            .forEach(scale -> {
+              final boolean none = scale.equalsIgnoreCase("none");
+              final JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(none ? scale : "x" + scale, (selectedScale == null && none) || scale.equalsIgnoreCase(selectedScale));
+              menuItem.addItemListener(e -> {
+                LOGGER.info("Select UI scale: " + scale);
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                  if (none) {
+                    AppOptions.getInstance().setUiScale(null);
+                  } else {
+                    AppOptions.getInstance().setUiScale(scale);
+                  }
+                  JOptionPane.showMessageDialog(MainForm.this, "Application restart required!", "Restart required", JOptionPane.WARNING_MESSAGE);
+                }
+              });
+              buttonGroup.add(menuItem);
+              menu.add(menuItem);
+            });
+  }
+
+  private void fillLookAndFeelMenu(final JMenu menu) {
+    final String selectedClass = AppOptions.getInstance().getUiLfClass();
+    final ButtonGroup buttonGroup = new ButtonGroup();
+    final List<UIManager.LookAndFeelInfo> installedLookAndFeels = new ArrayList<>(List.of(UIManager.getInstalledLookAndFeels()));
+    installedLookAndFeels.sort(Comparator.comparing(UIManager.LookAndFeelInfo::getName));
+
+    installedLookAndFeels.forEach(lf -> {
+      final JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(lf.getName(), lf.getClassName().equals(selectedClass));
+      menuItem.addItemListener(e -> {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          try {
+            UIManager.setLookAndFeel(lf.getClassName());
+            SwingUtilities.invokeLater(() -> {
+              SwingUtilities.updateComponentTreeUI(MainForm.this);
+            });
+            AppOptions.getInstance().setUiLfClass(lf.getClassName());
+            AppOptions.getInstance().flush();
+          } catch (Exception ex) {
+            LOGGER.warning("Can't change L&F: " + ex.getMessage());
+          }
+        }
+      });
+      buttonGroup.add(menuItem);
+      menu.add(menuItem);
+    });
+
+
   }
 
   private void menuOptionsOnlyKempstonEvents(final ActionEvent actionEvent) {

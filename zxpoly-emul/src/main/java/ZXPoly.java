@@ -44,6 +44,17 @@ public class ZXPoly {
   }
 
   public static void main(final String... args) {
+    final String uiScale = AppOptions.getInstance().getUiScale();
+    if (uiScale != null) {
+      if (System.getProperty("sun.java2d.uiScale", null) == null) {
+        System.out.println("Detected scale UI: " + uiScale);
+        System.setProperty("sun.java2d.uiScale", uiScale.trim());
+        System.setProperty("sun.java2d.uiScale.enabled", "true");
+      } else {
+        System.out.println("Detected provided sun.java2d.uiScale property: " + System.getProperty("sun.java2d.uiScale", null));
+      }
+    }
+
     for (final Handler h : Logger.getLogger("").getHandlers()) {
       h.setFormatter(new Formatter() {
 
@@ -60,10 +71,12 @@ public class ZXPoly {
 
     SwingUtilities.invokeLater(() -> {
       final MainForm form;
+
+      final String uiLfClass = AppOptions.getInstance().getUiLfClass();
       try {
-        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        UIManager.setLookAndFeel(uiLfClass);
       } catch (Exception ex) {
-        System.err.println("Can't select system L&F");
+        System.err.println("Can't select L&F: " + uiLfClass);
       }
 
       try {

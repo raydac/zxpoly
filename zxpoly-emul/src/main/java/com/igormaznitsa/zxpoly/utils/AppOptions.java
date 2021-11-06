@@ -22,6 +22,7 @@ import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 
+import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.net.InetAddress;
@@ -196,6 +197,30 @@ public final class AppOptions {
 
   public synchronized void setVkbdApart(final boolean value) {
     preferences.putBoolean(Option.VKBD_APART.name(), value);
+  }
+
+  public String getUiLfClass() {
+    return preferences.get(Option.UI_LF_CLASS.name(), UIManager.getSystemLookAndFeelClassName());
+  }
+
+  public void setUiLfClass(final String className) {
+    if (className == null) {
+      this.preferences.remove(Option.UI_LF_CLASS.name());
+    } else {
+      this.preferences.put(Option.UI_LF_CLASS.name(), className);
+    }
+  }
+
+  public String getUiScale() {
+    return preferences.get(Option.UI_SCALE.name(), null);
+  }
+
+  public void setUiScale(final String uiScale) {
+    if (uiScale == null) {
+      this.preferences.remove(Option.UI_SCALE.name());
+    } else {
+      this.preferences.put(Option.UI_SCALE.name(), uiScale);
+    }
   }
 
   public synchronized boolean isCovoxFb() {
@@ -386,6 +411,8 @@ public final class AppOptions {
   }
 
   public enum Option {
+    UI_LF_CLASS,
+    UI_SCALE,
     OLD_COLOR_TV_ON_START,
     CONTENDED_RAM,
     INTERLACED_SCAN,

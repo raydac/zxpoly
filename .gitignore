@@ -19,3 +19,6 @@
 .settings
 /zxpoly-emul/nb-configuration.xml
 /zxpoly-emul/nbactions.xml
+bin/
+*.syso
+versioninfo.go
