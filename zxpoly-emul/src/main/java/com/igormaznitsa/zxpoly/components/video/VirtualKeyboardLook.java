@@ -4,7 +4,8 @@ import java.io.IOException;
 
 public enum VirtualKeyboardLook {
   DEFAULT("default"),
-  ZX48("zx48");
+  ZX48("zx48"),
+  AMBRO_ZXPLUS("ambrozxplus");
 
   private final String baseName;
 
