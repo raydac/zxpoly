@@ -29,7 +29,12 @@ public enum TzxBlock {
   MESSAGE_BLOCK(0x31, TzxBlockMessage::new),
   ARCHIVE_INFO(0x32, TzxBlockArchiveInfo::new),
   HARDWARE_TYPE(0x33, TzxBlockHardwareType::new),
+  EMULATION_INFO(0x34, TzxBlockEmulationinfo::new),
   CUSTOM_INFO(0x35, TzxBlockCustomInfo::new),
+  SNAPSHOT(0x40, TzxBlockSnapshot::new),
+  KANSAS_CITY_STANDARD(0x4B, TzxBlockKansasCityStandard::new),
+  C64ROM(0x16, TzxBlockC64Rom::new),
+  C64TURBO(0x17, TzxBlockC64Turbo::new),
   GLUE(0x5A, TzxBlockGlue::new),
   UNKNOWN(-1, in -> {
     throw new IOException("UNKNOWN BLOCK");

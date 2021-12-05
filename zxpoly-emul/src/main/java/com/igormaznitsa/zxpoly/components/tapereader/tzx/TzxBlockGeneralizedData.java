@@ -31,18 +31,15 @@ public class TzxBlockGeneralizedData extends AbstractTzxBlock {
     this.totalNumberOfSymbolsInPilotSyncBlock = readDWord(inputStream);
     this.maximumNumberOfPulsesPerPilotSyncSymbol = inputStream.readByte();
 
-    int readAsp = inputStream.readByte();
-    if (readAsp == 0) {
-      readAsp = 256;
-    }
-    this.numberOfPilotSyncSymbolsInAbcTable = readAsp;
+    final int readAsp = inputStream.readByte();
+    this.numberOfPilotSyncSymbolsInAbcTable = readAsp == 0 ? 256 : readAsp;
 
     this.totalNumberOfSymbolsInDataStream = readDWord(inputStream);
     this.maximumNumberOfPulsesPerDataSymbol = inputStream.readByte();
     this.numberOfDataSymbolsInAbcTable = inputStream.readByte();
 
     if (this.totalNumberOfSymbolsInPilotSyncBlock > 0) {
-      this.pilotAndSyncDefTable = new Symdef[(int) this.totalNumberOfSymbolsInPilotSyncBlock];
+      this.pilotAndSyncDefTable = new Symdef[(int) this.numberOfPilotSyncSymbolsInAbcTable];
       for (int i = 0; i < this.pilotAndSyncDefTable.length; i++) {
         this.pilotAndSyncDefTable[i] = new Symdef(this.maximumNumberOfPulsesPerPilotSyncSymbol, inputStream);
       }
