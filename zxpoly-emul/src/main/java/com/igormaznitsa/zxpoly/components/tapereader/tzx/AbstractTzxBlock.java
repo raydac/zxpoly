@@ -14,16 +14,16 @@ public abstract class AbstractTzxBlock {
   }
 
   protected static int readThreeByteValue(final JBBPBitInputStream inputStream) throws IOException {
-    final int len0 = inputStream.readByte();
-    final int len1 = inputStream.readByte();
     final int len2 = inputStream.readByte();
+    final int len1 = inputStream.readByte();
+    final int len0 = inputStream.readByte();
     return (len0 << 16) | (len1 << 8) | len2;
   }
 
   protected static void writeThreeByteValue(final JBBPBitOutputStream outputStream, final int value) throws IOException {
-    final int len0 = (value >> 16) & 0xFF;
+    final int len2 = (value >> 16) & 0xFF;
     final int len1 = (value >> 8) & 0xFF;
-    final int len2 = value & 0xFF;
+    final int len0 = value & 0xFF;
     outputStream.write(len0);
     outputStream.write(len1);
     outputStream.write(len2);

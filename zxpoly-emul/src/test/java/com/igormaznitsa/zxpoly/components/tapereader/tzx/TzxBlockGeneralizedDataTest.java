@@ -1,16 +1,14 @@
 package com.igormaznitsa.zxpoly.components.tapereader.tzx;
 
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
-import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import static org.junit.Assert.*;
 
-public class TzxBlockGeneralizedDataTest {
+public class TzxBlockGeneralizedDataTest extends AbstractTzxTest {
   @Test
   public void testDocCase_1() throws IOException {
     final byte[] testData = new byte[]{
@@ -53,20 +51,6 @@ public class TzxBlockGeneralizedDataTest {
     assertFalse(jbbpBitInputStream.hasAvailableData());
     assertEquals(19, read.getDataStream().length);
     assertArrayEquals(testData, asByteArray(read));
-  }
-
-  private byte[] asByteArray(final AbstractTzxBlock block) throws IOException {
-    final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    final JBBPBitOutputStream jbbpBitOutputStream = new JBBPBitOutputStream(outputStream);
-    block.write(jbbpBitOutputStream);
-    jbbpBitOutputStream.flush();
-    jbbpBitOutputStream.close();
-
-    byte[] saved = outputStream.toByteArray();
-    byte[] withoutId = new byte[saved.length - 1];
-    System.arraycopy(saved, 1, withoutId, 0, withoutId.length);
-
-    return withoutId;
   }
 
   @Test

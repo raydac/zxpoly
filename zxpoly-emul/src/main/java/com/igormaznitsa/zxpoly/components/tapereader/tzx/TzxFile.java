@@ -51,6 +51,12 @@ public class TzxFile {
 
   public void write(final OutputStream outputStream) throws IOException {
     final JBBPBitOutputStream jbbpBitOutputStream = new JBBPBitOutputStream(outputStream);
+
+    jbbpBitOutputStream.write("ZXTape!".getBytes(StandardCharsets.ISO_8859_1));
+    jbbpBitOutputStream.write(0x1A);
+    jbbpBitOutputStream.write(this.revisionMajor);
+    jbbpBitOutputStream.write(this.revisionMinor);
+
     for (final AbstractTzxBlock block : this.blockList) {
       block.write(jbbpBitOutputStream);
     }
