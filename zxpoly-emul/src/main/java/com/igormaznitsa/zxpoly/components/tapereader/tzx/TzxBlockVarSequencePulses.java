@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockVarSequencePulses extends AbstractTzxBlock {
+public class TzxBlockVarSequencePulses extends AbstractTzxBlock implements DataBlock {
   private final int[] pulsesLengths;
 
   public TzxBlockVarSequencePulses(final JBBPBitInputStream inputStream) throws IOException {

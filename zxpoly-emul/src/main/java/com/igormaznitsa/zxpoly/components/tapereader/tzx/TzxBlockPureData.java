@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockPureData extends AbstractTzxBlock {
+public class TzxBlockPureData extends AbstractTzxBlock implements DataBlock {
   private final int lengthZeroBitPulse;
   private final int lengthOneBitPulse;
   private final int usedBitsInLastByte;

@@ -6,7 +6,7 @@ import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 
 import java.io.IOException;
 
-public class TzxBlockCallSequence extends AbstractTzxBlock {
+public class TzxBlockCallSequence extends AbstractTzxBlock implements FlowManagementBlock {
 
   private final short[] offsets;
 

@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockEmulationinfo extends AbstractTzxBlock {
+public class TzxBlockEmulationinfo extends AbstractTzxBlock implements InformationBlock {
 
   private final int generalEmulationFlags;
   private final int screenRefreshDelay;

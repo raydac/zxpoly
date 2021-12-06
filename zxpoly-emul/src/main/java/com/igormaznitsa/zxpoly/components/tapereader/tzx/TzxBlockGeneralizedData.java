@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockGeneralizedData extends AbstractTzxBlock {
+public class TzxBlockGeneralizedData extends AbstractTzxBlock implements DataBlock {
 
   private final long blockLength;
   private final int pauseAfterBlockMs;

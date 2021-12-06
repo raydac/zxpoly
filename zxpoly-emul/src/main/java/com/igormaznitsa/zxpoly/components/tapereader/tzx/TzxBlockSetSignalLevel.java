@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockSetSignalLevel extends AbstractTzxBlock {
+public class TzxBlockSetSignalLevel extends AbstractTzxBlock implements SystemBlock {
 
   private final int signalLevel;
 

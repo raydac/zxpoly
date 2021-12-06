@@ -6,7 +6,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import java.io.IOException;
 import java.util.function.Function;
 
-public class TzxBlockHardwareType extends AbstractTzxBlock {
+public class TzxBlockHardwareType extends AbstractTzxBlock implements InformationBlock {
 
   private final HwInfo[] hwInfos;
 

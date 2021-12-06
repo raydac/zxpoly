@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockGlue extends AbstractTzxBlock {
+public class TzxBlockGlue extends AbstractTzxBlock implements SystemBlock {
 
   private final byte[] data;
 

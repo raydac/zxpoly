@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockPauseOrStop extends AbstractTzxBlock {
+public class TzxBlockPauseOrStop extends AbstractTzxBlock implements FlowManagementBlock {
 
   private final int pauseDurationMs;
 
