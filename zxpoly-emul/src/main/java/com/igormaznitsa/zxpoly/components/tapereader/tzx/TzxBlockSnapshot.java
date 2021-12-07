@@ -10,7 +10,7 @@ public class TzxBlockSnapshot extends AbstractTzxBlock implements DataBlock, Dep
   private final byte[] data;
 
   public TzxBlockSnapshot(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.SNAPSHOT.getId());
+    super(TzxBlockId.SNAPSHOT.getId());
 
     this.type = inputStream.read();
     final int length = readThreeByteValue(inputStream);
@@ -21,8 +21,9 @@ public class TzxBlockSnapshot extends AbstractTzxBlock implements DataBlock, Dep
     return type;
   }
 
-  public byte[] getData() {
-    return data;
+  @Override
+  public int getDataLength() {
+    return this.data.length;
   }
 
   @Override

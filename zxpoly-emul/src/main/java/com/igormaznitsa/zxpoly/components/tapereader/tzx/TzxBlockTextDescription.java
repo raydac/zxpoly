@@ -11,7 +11,7 @@ public class TzxBlockTextDescription extends AbstractTzxBlock implements Informa
   private final String text;
 
   public TzxBlockTextDescription(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.TEXT_DESCRIPTION.getId());
+    super(TzxBlockId.TEXT_DESCRIPTION.getId());
     final int chars = inputStream.readByte();
     this.text = new String(inputStream.readByteArray(chars), StandardCharsets.ISO_8859_1);
   }

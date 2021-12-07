@@ -10,7 +10,7 @@ public class TzxBlockPureTone extends AbstractTzxBlock implements DataBlock {
   private final int numberOfPulses;
 
   public TzxBlockPureTone(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.PURE_TONE.getId());
+    super(TzxBlockId.PURE_TONE.getId());
     this.lengthOnePluseTstates = readWord(inputStream);
     this.numberOfPulses = readWord(inputStream);
   }
@@ -20,6 +20,11 @@ public class TzxBlockPureTone extends AbstractTzxBlock implements DataBlock {
   }
 
   public int getNumberOfPulses() {
+    return this.numberOfPulses;
+  }
+
+  @Override
+  public int getDataLength() {
     return this.numberOfPulses;
   }
 

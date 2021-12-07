@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Reader fpr TZX 1.20
@@ -32,9 +33,13 @@ public class TzxFile {
 
     final List<AbstractTzxBlock> blocks = new ArrayList<>();
     while (jbbpBitInputStream.hasAvailableData()) {
-      blocks.add(TzxBlock.readNextBlock(jbbpBitInputStream));
+      blocks.add(TzxBlockId.readNextBlock(jbbpBitInputStream));
     }
     this.blockList = Collections.unmodifiableList(blocks);
+  }
+
+  public Stream<AbstractTzxBlock> stream() {
+    return this.blockList.stream();
   }
 
   public List<AbstractTzxBlock> getBlockList() {

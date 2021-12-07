@@ -12,7 +12,7 @@ public class TzxBlockSelect extends AbstractTzxBlock implements FlowManagementBl
   private final Selection[] selections;
 
   public TzxBlockSelect(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.SELECT_BLOCK.getId());
+    super(TzxBlockId.SELECT_BLOCK.getId());
     this.blockLength = readWord(inputStream);
     final int numberPfSelections = inputStream.readByte();
     this.selections = new Selection[numberPfSelections];

@@ -12,7 +12,7 @@ public class TzxBlockArchiveInfo extends AbstractTzxBlock implements Information
   private final Text[] texts;
 
   public TzxBlockArchiveInfo(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.ARCHIVE_INFO.getId());
+    super(TzxBlockId.ARCHIVE_INFO.getId());
     this.blockLength = readWord(inputStream);
     final int textItems = inputStream.readByte();
     this.texts = new Text[textItems];

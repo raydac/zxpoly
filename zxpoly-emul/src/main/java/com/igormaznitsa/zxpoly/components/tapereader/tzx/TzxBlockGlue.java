@@ -10,7 +10,7 @@ public class TzxBlockGlue extends AbstractTzxBlock implements SystemBlock {
   private final byte[] data;
 
   public TzxBlockGlue(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.GLUE.getId());
+    super(TzxBlockId.GLUE.getId());
     this.data = inputStream.readByteArray(9);
   }
 

@@ -11,7 +11,7 @@ public class TzxBlockCallSequence extends AbstractTzxBlock implements FlowManage
   private final short[] offsets;
 
   public TzxBlockCallSequence(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.CALL_SEQUENCE.getId());
+    super(TzxBlockId.CALL_SEQUENCE.getId());
     final int number = readWord(inputStream);
     this.offsets = new short[number];
     for (int i = 0; i < number; i++) {

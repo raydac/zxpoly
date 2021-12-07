@@ -28,7 +28,7 @@ public class TzxBlockC64Rom extends AbstractTzxBlock implements DeprecatedBlock,
   private final byte[] data;
 
   public TzxBlockC64Rom(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.C64ROM.getId());
+    super(TzxBlockId.C64ROM.getId());
 
     this.blockLength = readDWord(inputStream);
     this.pilotTonePulseEndAddress = readWord(inputStream);
@@ -125,8 +125,9 @@ public class TzxBlockC64Rom extends AbstractTzxBlock implements DeprecatedBlock,
     return pauseAfterBlockInMs;
   }
 
-  public byte[] getData() {
-    return data;
+  @Override
+  public int getDataLength() {
+    return this.data.length;
   }
 
   @Override

@@ -17,7 +17,7 @@ public class TzxBlockTurboSpeedData extends AbstractTzxBlock implements DataBloc
   private final int usedBitsInLastByte;
 
   public TzxBlockTurboSpeedData(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.TURBO_SPEED_DATA_BLOCK.getId());
+    super(TzxBlockId.TURBO_SPEED_DATA_BLOCK.getId());
 
     this.lengthPilotPulse = readWord(inputStream);
     this.lengthSyncFirstPulse = readWord(inputStream);
@@ -51,8 +51,9 @@ public class TzxBlockTurboSpeedData extends AbstractTzxBlock implements DataBloc
     return pauseAfterBlockMs;
   }
 
-  public byte[] getData() {
-    return data;
+  @Override
+  public int getDataLength() {
+    return this.data.length;
   }
 
   public int getLengthPilotPulse() {

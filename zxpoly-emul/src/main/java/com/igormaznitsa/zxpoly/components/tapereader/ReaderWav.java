@@ -18,16 +18,20 @@ public class ReaderWav implements TapeSource {
   private final InMemoryWavFile wavFile;
   private final AtomicLong tstateCounter = new AtomicLong(0L);
   private final List<ActionListener> actionListeners = new CopyOnWriteArrayList<>();
-  private volatile boolean playing;
-
-  private volatile float bias = 0.01f;
-
   private final TimingProfile timingProfile;
+  private volatile boolean playing;
+  private volatile float bias = 0.01f;
+  private volatile TapeContext tapeContext;
 
   public ReaderWav(final TimingProfile timingProfile, final String name, final File file) throws IOException {
     this.timingProfile = timingProfile;
     this.name = name;
     this.wavFile = new InMemoryWavFile(file, timingProfile.ulaFrameTact * 50);
+  }
+
+  @Override
+  public void setTapeContext(final TapeContext context) {
+    this.tapeContext = context;
   }
 
   @Override

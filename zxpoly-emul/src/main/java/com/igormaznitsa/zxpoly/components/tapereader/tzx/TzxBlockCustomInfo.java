@@ -13,7 +13,7 @@ public class TzxBlockCustomInfo extends AbstractTzxBlock implements InformationB
   private final byte[] customInfo;
 
   public TzxBlockCustomInfo(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.CUSTOM_INFO.getId());
+    super(TzxBlockId.CUSTOM_INFO.getId());
     this.idString = new String(inputStream.readByteArray(10), StandardCharsets.ISO_8859_1);
     final long length = readDWord(inputStream);
     this.customInfo = inputStream.readByteArray((int) length);

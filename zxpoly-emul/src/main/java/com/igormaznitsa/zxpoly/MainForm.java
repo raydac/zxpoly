@@ -26,6 +26,7 @@ import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk;
 import com.igormaznitsa.zxpoly.components.snd.Beeper;
 import com.igormaznitsa.zxpoly.components.snd.SourceSoundPort;
+import com.igormaznitsa.zxpoly.components.tapereader.TapeContext;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSourceFactory;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
@@ -85,7 +86,7 @@ import static javax.swing.JOptionPane.showMessageDialog;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static org.apache.commons.lang3.StringUtils.repeat;
 
-public final class MainForm extends javax.swing.JFrame implements ActionListener {
+public final class MainForm extends javax.swing.JFrame implements ActionListener, TapeContext {
 
   public static final Logger LOGGER = Logger.getLogger("UI");
   public static final Duration TIMER_INT_DELAY_MILLISECONDS = Duration.ofMillis(20);
@@ -511,6 +512,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
               final String extension = FilenameUtils.getExtension(f.getName()).toLowerCase(Locale.ENGLISH);
               switch (extension) {
                 case "wav":
+                case "tzx":
                 case "tap": {
                   LOGGER.info("Activating TAP file: " + f);
                   setTapFile(f);
@@ -2228,7 +2230,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         this.keyboardAndTapeModule.getTap().removeActionListener(this);
       }
 
-      final TapeSource source = TapeSourceFactory.makeSource(this.timingProfile, tapFile);
+      final TapeSource source = TapeSourceFactory.makeSource(this.timingProfile, tapFile, this);
       source.addActionListener(this);
       this.keyboardAndTapeModule.setTap(source);
       LOGGER.info("Loaded TAP, total data size " + source.size() + " bytes");
@@ -2247,7 +2249,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     this.suspendSteps();
     try {
       final File selectedTapFile =
-              chooseFileForOpen("Load Tape", this.lastTapFolder, null, new TapFileFilter(),
+              chooseFileForOpen("Load Tape", this.lastTapFolder, null,
+                      new TapFileFilter(),
+                      new TzxFileFilter(),
                       new WavFileFilter());
       if (selectedTapFile != null) {
         this.setTapFile(selectedTapFile);
@@ -2885,6 +2889,20 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     @Override
     public String getDescription() {
       return "TAP file (*.tap)";
+    }
+
+  }
+
+  private static class TzxFileFilter extends FileFilter {
+
+    @Override
+    public boolean accept(final File f) {
+      return f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".tzx");
+    }
+
+    @Override
+    public String getDescription() {
+      return "TZX file (*.tzx)";
     }
 
   }

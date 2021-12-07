@@ -24,7 +24,7 @@ public class TzxBlockGeneralizedData extends AbstractTzxBlock implements DataBlo
   private final int numberOfDataSymbolsInAbcTable;
 
   public TzxBlockGeneralizedData(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.GENERALIZED_DATA_BLOCK.getId());
+    super(TzxBlockId.GENERALIZED_DATA_BLOCK.getId());
 
     this.blockLength = readDWord(inputStream);
     this.pauseAfterBlockMs = readWord(inputStream);
@@ -194,5 +194,8 @@ public class TzxBlockGeneralizedData extends AbstractTzxBlock implements DataBlo
     }
   }
 
-
+  @Override
+  public int getDataLength() {
+    return this.dataStream == null ? 0 : this.dataStream.length;
+  }
 }

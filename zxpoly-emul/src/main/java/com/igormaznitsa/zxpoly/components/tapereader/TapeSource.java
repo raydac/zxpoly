@@ -1,10 +1,13 @@
 package com.igormaznitsa.zxpoly.components.tapereader;
 
+import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import javax.swing.ListModel;
 
 public interface TapeSource {
+
+  void setTapeContext(TapeContext context);
+
   boolean isHi();
 
   void updateForSpentMachineCycles(long spentTstates);

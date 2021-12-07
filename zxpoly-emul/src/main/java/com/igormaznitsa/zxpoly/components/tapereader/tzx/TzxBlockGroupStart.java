@@ -11,7 +11,7 @@ public class TzxBlockGroupStart extends AbstractTzxBlock implements InformationB
   private final String groupName;
 
   public TzxBlockGroupStart(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.GROUP_START.getId());
+    super(TzxBlockId.GROUP_START.getId());
     final int length = inputStream.readByte();
     this.groupName = new String(inputStream.readByteArray(length), StandardCharsets.ISO_8859_1);
   }

@@ -7,7 +7,7 @@ import java.io.IOException;
 public class TzxBlockGroupEnd extends AbstractTzxBlock implements InformationBlock {
 
   public TzxBlockGroupEnd(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.GROUP_END.getId());
+    super(TzxBlockId.GROUP_END.getId());
   }
 
 

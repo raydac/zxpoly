@@ -21,7 +21,7 @@ public class TzxBlockC64Turbo extends AbstractTzxBlock implements DeprecatedBloc
   private final byte[] data;
 
   public TzxBlockC64Turbo(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.C64TURBO.getId());
+    super(TzxBlockId.C64TURBO.getId());
 
     this.blockLength = readDWord(inputStream);
     this.zeroBitPulse = readWord(inputStream);
@@ -103,7 +103,8 @@ public class TzxBlockC64Turbo extends AbstractTzxBlock implements DeprecatedBloc
     return pauseAfterBlockInMs;
   }
 
-  public byte[] getData() {
-    return data;
+  @Override
+  public int getDataLength() {
+    return this.data.length;
   }
 }

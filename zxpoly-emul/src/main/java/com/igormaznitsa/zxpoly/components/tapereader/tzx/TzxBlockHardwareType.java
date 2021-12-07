@@ -11,7 +11,7 @@ public class TzxBlockHardwareType extends AbstractTzxBlock implements Informatio
   private final HwInfo[] hwInfos;
 
   public TzxBlockHardwareType(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.HARDWARE_TYPE.getId());
+    super(TzxBlockId.HARDWARE_TYPE.getId());
     final int items = inputStream.readByte();
     this.hwInfos = new HwInfo[items];
     for (int i = 0; i < this.hwInfos.length; i++) {

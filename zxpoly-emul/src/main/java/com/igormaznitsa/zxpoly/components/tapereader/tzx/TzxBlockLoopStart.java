@@ -10,7 +10,7 @@ public class TzxBlockLoopStart extends AbstractTzxBlock implements FlowManagemen
   private final int repetitions;
 
   public TzxBlockLoopStart(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.LOOP_START.getId());
+    super(TzxBlockId.LOOP_START.getId());
     this.repetitions = readWord(inputStream);
   }
 

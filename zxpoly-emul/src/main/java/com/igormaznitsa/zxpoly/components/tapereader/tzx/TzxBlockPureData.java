@@ -13,7 +13,7 @@ public class TzxBlockPureData extends AbstractTzxBlock implements DataBlock {
   private final byte[] data;
 
   public TzxBlockPureData(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.PURE_DATA_BLOCK.getId());
+    super(TzxBlockId.PURE_DATA_BLOCK.getId());
 
     this.lengthZeroBitPulse = readWord(inputStream);
     this.lengthOneBitPulse = readWord(inputStream);
@@ -40,8 +40,9 @@ public class TzxBlockPureData extends AbstractTzxBlock implements DataBlock {
     return pauseAfterBlockMs;
   }
 
-  public byte[] getData() {
-    return data;
+  @Override
+  public int getDataLength() {
+    return this.data.length;
   }
 
   @Override

@@ -10,7 +10,7 @@ public class TzxBlockSetSignalLevel extends AbstractTzxBlock implements SystemBl
   private final int signalLevel;
 
   public TzxBlockSetSignalLevel(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.SET_SIGNAL_LEVEL.getId());
+    super(TzxBlockId.SET_SIGNAL_LEVEL.getId());
     if (readDWord(inputStream) != 1L) throw new IOException("Unexpected length of set signal block");
     this.signalLevel = inputStream.readByte();
   }

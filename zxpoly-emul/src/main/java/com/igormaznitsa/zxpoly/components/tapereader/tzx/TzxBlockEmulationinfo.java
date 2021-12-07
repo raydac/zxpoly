@@ -13,7 +13,7 @@ public class TzxBlockEmulationinfo extends AbstractTzxBlock implements Informati
   private final int reserved;
 
   public TzxBlockEmulationinfo(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.EMULATION_INFO.getId());
+    super(TzxBlockId.EMULATION_INFO.getId());
 
     this.generalEmulationFlags = readWord(inputStream);
     this.screenRefreshDelay = inputStream.readByte();

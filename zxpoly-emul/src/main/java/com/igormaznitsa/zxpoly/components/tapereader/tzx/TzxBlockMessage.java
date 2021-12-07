@@ -12,7 +12,7 @@ public class TzxBlockMessage extends AbstractTzxBlock implements InformationBloc
   private final String text;
 
   public TzxBlockMessage(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.MESSAGE_BLOCK.getId());
+    super(TzxBlockId.MESSAGE_BLOCK.getId());
     this.timeInSeconds = inputStream.readByte();
     final int chars = inputStream.readByte();
     this.text = new String(inputStream.readByteArray(chars), StandardCharsets.ISO_8859_1);

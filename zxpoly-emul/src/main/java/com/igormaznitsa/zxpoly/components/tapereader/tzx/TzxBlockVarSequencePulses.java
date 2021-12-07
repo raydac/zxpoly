@@ -9,13 +9,18 @@ public class TzxBlockVarSequencePulses extends AbstractTzxBlock implements DataB
   private final int[] pulsesLengths;
 
   public TzxBlockVarSequencePulses(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.VAR_SEQUENCE_PULSES.getId());
+    super(TzxBlockId.VAR_SEQUENCE_PULSES.getId());
     final int pulses = inputStream.readByte();
     this.pulsesLengths = readWordArray(inputStream, pulses);
   }
 
   public int[] getPulsesLengths() {
     return pulsesLengths;
+  }
+
+  @Override
+  public int getDataLength() {
+    return this.pulsesLengths.length * 2;
   }
 
   @Override

@@ -12,19 +12,36 @@ public final class TapeSourceFactory {
 
   }
 
-  public static TapeSource makeSource(final TimingProfile timingProfile, File selectedTapFile) throws IOException {
+  public static TapeSource makeSource(final TimingProfile timingProfile, File selectedTapFile, final TapeContext tapeContext) throws IOException {
     final String extension = FilenameUtils.getExtension(selectedTapFile.getName()).toLowerCase(
             Locale.ENGLISH);
-    if (extension.equals("tap")) {
-      try (final InputStream inputStream = new BufferedInputStream(
-              new FileInputStream(selectedTapFile))) {
-        return new ReaderTap(selectedTapFile.getName(), inputStream);
+
+    final TapeSource result;
+
+    switch (extension) {
+      case "tap": {
+        try (final InputStream inputStream = new BufferedInputStream(
+                new FileInputStream(selectedTapFile))) {
+          result = new ReaderTap(selectedTapFile.getName(), inputStream);
+        }
       }
-    } else if (extension.equals("wav")) {
-      return new ReaderWav(timingProfile, selectedTapFile.getName(), selectedTapFile);
-    } else {
-      throw new IllegalArgumentException("Unsupported tape container: " + extension);
+      break;
+      case "wav": {
+        result = new ReaderWav(timingProfile, selectedTapFile.getName(), selectedTapFile);
+      }
+      break;
+      case "tzx": {
+        try (final InputStream inputStream = new BufferedInputStream(
+                new FileInputStream(selectedTapFile))) {
+          result = new ReaderTzx(timingProfile, selectedTapFile.getName(), inputStream);
+        }
+      }
+      break;
+      default:
+        throw new IllegalArgumentException("Unsupported tape container: " + extension);
     }
+    result.setTapeContext(tapeContext);
+    return result;
   }
 
 }

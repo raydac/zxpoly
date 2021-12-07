@@ -19,7 +19,7 @@ public class TzxBlockKansasCityStandard extends AbstractTzxBlock implements Data
   private final byte[] data;
 
   public TzxBlockKansasCityStandard(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.KANSAS_CITY_STANDARD.getId());
+    super(TzxBlockId.KANSAS_CITY_STANDARD.getId());
 
     this.blockLength = readDWord(inputStream);
     this.pauseAfterBlockInMs = readWord(inputStream);
@@ -93,8 +93,9 @@ public class TzxBlockKansasCityStandard extends AbstractTzxBlock implements Data
     return flags;
   }
 
-  public byte[] getData() {
-    return data;
+  @Override
+  public int getDataLength() {
+    return this.data.length;
   }
 
   @Override

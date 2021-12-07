@@ -10,7 +10,7 @@ public class TzxBlockStandardSpeedData extends AbstractTzxBlock implements DataB
   private final byte[] data;
 
   public TzxBlockStandardSpeedData(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.STANDARD_SPEED_DATA_BLOCK.getId());
+    super(TzxBlockId.STANDARD_SPEED_DATA_BLOCK.getId());
     this.pauseAfterBlockMs = readWord(inputStream);
     final int dataLength = readWord(inputStream);
     this.data = inputStream.readByteArray(dataLength);
@@ -20,8 +20,9 @@ public class TzxBlockStandardSpeedData extends AbstractTzxBlock implements DataB
     return pauseAfterBlockMs;
   }
 
-  public byte[] getData() {
-    return data;
+  @Override
+  public int getDataLength() {
+    return this.data.length;
   }
 
   @Override

@@ -10,7 +10,7 @@ public class TzxBlockJumpTo extends AbstractTzxBlock implements FlowManagementBl
   private final short offset;
 
   public TzxBlockJumpTo(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.JUMP_TO_BLOCK.getId());
+    super(TzxBlockId.JUMP_TO_BLOCK.getId());
     this.offset = (short) readWord(inputStream);
   }
 

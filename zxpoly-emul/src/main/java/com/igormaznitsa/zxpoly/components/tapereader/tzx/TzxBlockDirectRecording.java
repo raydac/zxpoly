@@ -13,7 +13,7 @@ public class TzxBlockDirectRecording extends AbstractTzxBlock implements DataBlo
   private final byte[] data;
 
   public TzxBlockDirectRecording(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.DIRECT_RECORDING_BLOCK.getId());
+    super(TzxBlockId.DIRECT_RECORDING_BLOCK.getId());
 
     this.numberTstatesPerSample = readWord(inputStream);
     this.pauseAfterBlockMs = readWord(inputStream);
@@ -45,7 +45,8 @@ public class TzxBlockDirectRecording extends AbstractTzxBlock implements DataBlo
     return usedBitsInLastByte;
   }
 
-  public byte[] getData() {
-    return data;
+  @Override
+  public int getDataLength() {
+    return this.data.length;
   }
 }

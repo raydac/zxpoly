@@ -8,7 +8,7 @@ import java.io.IOException;
 public class TzxBlockStopTapeIf48k extends AbstractTzxBlock implements FlowManagementBlock {
 
   public TzxBlockStopTapeIf48k(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.STOP_TAPE_IF_48K.getId());
+    super(TzxBlockId.STOP_TAPE_IF_48K.getId());
     if (readDWord(inputStream) != 0L) throw new IOException("Unexpected length of stop tape block");
   }
 

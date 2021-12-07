@@ -17,15 +17,14 @@
 
 package com.igormaznitsa.zxpoly.components.tapereader;
 
-import static com.igormaznitsa.jbbp.io.JBBPOut.BeginBin;
-import static java.lang.Integer.toHexString;
-
-
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.zxpoly.components.TapFormatParser;
 import com.igormaznitsa.zxpoly.components.TapFormatParser.TAPBLOCK;
+
+import javax.swing.*;
+import javax.swing.event.ListDataListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayOutputStream;
@@ -39,9 +38,9 @@ import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.ListModel;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ListDataListener;
+
+import static com.igormaznitsa.jbbp.io.JBBPOut.BeginBin;
+import static java.lang.Integer.toHexString;
 
 final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
 
@@ -69,6 +68,8 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
   private int buffered;
   private int controlChecksum;
 
+  private volatile TapeContext tapeContext;
+
   public ReaderTap(final String name, final InputStream tap) throws IOException {
     this.name = name;
     final TapFormatParser tapParser = new TapFormatParser().read(new JBBPBitInputStream(tap));
@@ -93,6 +94,11 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
       item.next = null;
       LOGGER.log(Level.INFO, "Pointer to " + makeDescription(this.current));
     }
+  }
+
+  @Override
+  public void setTapeContext(final TapeContext context) {
+    this.tapeContext = context;
   }
 
   @Override
@@ -246,20 +252,20 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
     final JBBPOut out = BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
 
     return out.
-        Byte("RIFF").
-        Int(data.size() + 40).
-        Byte("WAVE").
-        Byte("fmt ").
-        Int(16). // Size
-        Short(1). // Audio format
-        Short(1). // Num channels
-        Int(FREQ).// Sample rate
-        Int(FREQ). // Byte rate
-        Short(1). // Block align
-        Short(8). // Bits per sample
-        Byte("data").
-        Int(data.size()).
-        Byte(data.toByteArray()).End().toByteArray();
+            Byte("RIFF").
+            Int(data.size() + 40).
+            Byte("WAVE").
+            Byte("fmt ").
+            Int(16). // Size
+                    Short(1). // Audio format
+                    Short(1). // Num channels
+                    Int(FREQ).// Sample rate
+                    Int(FREQ). // Byte rate
+                    Short(1). // Block align
+                    Short(8). // Bits per sample
+                    Byte("data").
+            Int(data.size()).
+            Byte(data.toByteArray()).End().toByteArray();
   }
 
   private String makeDescription(final TapBlock block) {
@@ -365,7 +371,7 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
           if (this.counterMain < 0L) {
             LOGGER.log(Level.INFO, "PILOT (" + (block.isHeader() ? "header" : "data") + ')');
             this.counterMain =
-                block.isHeader() ? IMPULSNUMBER_PILOT_HEADER : IMPULSNUMBER_PILOT_DATA;
+                    block.isHeader() ? IMPULSNUMBER_PILOT_HEADER : IMPULSNUMBER_PILOT_DATA;
             this.signalInState = !this.signalInState;
             this.counterEx = PULSELEN_PILOT;
           } else {
@@ -416,7 +422,7 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
         case FLAG: {
           if (this.counterMain < 0L) {
             LOGGER.log(Level.INFO,
-                "FLAG (#" + toHexString(block.flag & 0xFF).toUpperCase(Locale.ENGLISH) + ')');
+                    "FLAG (#" + toHexString(block.flag & 0xFF).toUpperCase(Locale.ENGLISH) + ')');
             this.controlChecksum = 0;
             this.counterMain = 0L;
             loadDataByteToRead(block.flag & 0xFF);
@@ -431,7 +437,7 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
         case DATA: {
           if (this.counterMain < 0L) {
             LOGGER.log(Level.INFO, "DATA (len=#"
-                + toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH) + ')');
+                    + toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH) + ')');
             this.counterMain = 0L;
             loadDataByteToRead(block.data[(int) this.counterMain++]);
           } else {
@@ -449,13 +455,13 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
         case CHECKSUM: {
           if (this.counterMain < 0L) {
             LOGGER.log(Level.INFO,
-                "CHK (xor=#" + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)
-                    + ')');
+                    "CHK (xor=#" + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)
+                            + ')');
             if ((block.checksum & 0xFF) != (this.controlChecksum & 0xFF)) {
               LOGGER.log(Level.WARNING, "Different XOR sum : at file #"
-                  + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)
-                  + ", calculated #"
-                  + toHexString(this.controlChecksum & 0xFF).toUpperCase(Locale.ENGLISH));
+                      + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)
+                      + ", calculated #"
+                      + toHexString(this.controlChecksum & 0xFF).toUpperCase(Locale.ENGLISH));
             }
             this.counterMain = 0L;
             loadDataByteToRead(block.checksum & 0xFF);

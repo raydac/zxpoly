@@ -21,7 +21,7 @@ public class TzxBlockCSWRecording extends AbstractTzxBlock implements DataBlock 
   private final byte[] data;
 
   public TzxBlockCSWRecording(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.CSW_RECORDING_BLOCK.getId());
+    super(TzxBlockId.CSW_RECORDING_BLOCK.getId());
 
     this.blockLength = readDWord(inputStream);
     this.pauseAfterBlockMs = readWord(inputStream);
@@ -105,7 +105,8 @@ public class TzxBlockCSWRecording extends AbstractTzxBlock implements DataBlock 
     return numberStoredPulses;
   }
 
-  public byte[] getData() {
-    return data;
+  @Override
+  public int getDataLength() {
+    return this.data.length;
   }
 }

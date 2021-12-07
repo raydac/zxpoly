@@ -10,7 +10,7 @@ public class TzxBlockPauseOrStop extends AbstractTzxBlock implements FlowManagem
   private final int pauseDurationMs;
 
   public TzxBlockPauseOrStop(final JBBPBitInputStream inputStream) throws IOException {
-    super(TzxBlock.PAUSE_OR_STOP.getId());
+    super(TzxBlockId.PAUSE_OR_STOP.getId());
     this.pauseDurationMs = readWord(inputStream);
   }
 

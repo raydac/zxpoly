@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import java.io.IOException;
 import java.util.Locale;
 
-public enum TzxBlock {
+public enum TzxBlockId {
   STANDARD_SPEED_DATA_BLOCK(0x10, TzxBlockStandardSpeedData::new),
   TURBO_SPEED_DATA_BLOCK(0x11, TzxBlockTurboSpeedData::new),
   PURE_TONE(0x12, TzxBlockPureTone::new),
@@ -43,15 +43,15 @@ public enum TzxBlock {
   private final int id;
   private final TzxReadFunction readFunction;
 
-  TzxBlock(final int id, final TzxReadFunction readFunction) {
+  TzxBlockId(final int id, final TzxReadFunction readFunction) {
     this.id = id;
     this.readFunction = readFunction;
   }
 
   public static AbstractTzxBlock readNextBlock(final JBBPBitInputStream inputStream) throws IOException {
     final int id = inputStream.readByte();
-    TzxBlock block = UNKNOWN;
-    for (final TzxBlock b : values()) {
+    TzxBlockId block = UNKNOWN;
+    for (final TzxBlockId b : values()) {
       if (b.id == id) {
         block = b;
         break;
