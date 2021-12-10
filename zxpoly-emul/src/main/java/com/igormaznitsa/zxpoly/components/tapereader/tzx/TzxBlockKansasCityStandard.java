@@ -6,7 +6,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockKansasCityStandard extends AbstractTzxBlock implements DataBlock {
+public class TzxBlockKansasCityStandard extends AbstractTzxBlock implements SoundDataBlock {
 
   private final long blockLength;
   private final int pauseAfterBlockInMs;
@@ -96,6 +96,11 @@ public class TzxBlockKansasCityStandard extends AbstractTzxBlock implements Data
   @Override
   public int getDataLength() {
     return this.data.length;
+  }
+
+  @Override
+  public byte[] extractData() throws IOException {
+    return this.data;
   }
 
   @Override

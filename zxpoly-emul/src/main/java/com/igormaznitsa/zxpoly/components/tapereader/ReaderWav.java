@@ -1,5 +1,6 @@
 package com.igormaznitsa.zxpoly.components.tapereader;
 
+import com.igormaznitsa.zxpoly.components.tapereader.wave.FileSeekableContainer;
 import com.igormaznitsa.zxpoly.components.tapereader.wave.InMemoryWavFile;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 
@@ -8,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
@@ -26,7 +28,9 @@ public class ReaderWav implements TapeSource {
   public ReaderWav(final TimingProfile timingProfile, final String name, final File file) throws IOException {
     this.timingProfile = timingProfile;
     this.name = name;
-    this.wavFile = new InMemoryWavFile(file, timingProfile.ulaFrameTact * 50);
+    try (final FileSeekableContainer container = new FileSeekableContainer(new RandomAccessFile(file, "r"))) {
+      this.wavFile = new InMemoryWavFile(container, timingProfile.ulaFrameTact * 50L);
+    }
   }
 
   @Override

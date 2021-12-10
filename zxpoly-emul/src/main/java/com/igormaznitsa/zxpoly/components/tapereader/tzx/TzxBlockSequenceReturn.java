@@ -10,5 +10,8 @@ public class TzxBlockSequenceReturn extends AbstractTzxBlock implements FlowMana
     super(TzxBlockId.RETURN_FROM_SEQUENCE.getId());
   }
 
-
+  @Override
+  public short[] getOffsets() {
+    return ZERO;
+  }
 }

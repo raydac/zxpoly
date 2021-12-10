@@ -19,6 +19,7 @@ public class TzxBlockCallSequence extends AbstractTzxBlock implements FlowManage
     }
   }
 
+  @Override
   public short[] getOffsets() {
     return offsets;
   }

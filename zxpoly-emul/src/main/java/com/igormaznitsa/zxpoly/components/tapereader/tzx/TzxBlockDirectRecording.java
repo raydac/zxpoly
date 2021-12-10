@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockDirectRecording extends AbstractTzxBlock implements DataBlock {
+public class TzxBlockDirectRecording extends AbstractTzxBlock implements SoundDataBlock {
 
   private final int numberTstatesPerSample;
   private final int pauseAfterBlockMs;
@@ -48,5 +48,10 @@ public class TzxBlockDirectRecording extends AbstractTzxBlock implements DataBlo
   @Override
   public int getDataLength() {
     return this.data.length;
+  }
+
+  @Override
+  public byte[] extractData() throws IOException {
+    return this.data;
   }
 }

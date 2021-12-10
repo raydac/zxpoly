@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockStopTapeIf48k extends AbstractTzxBlock implements FlowManagementBlock {
+public class TzxBlockStopTapeIf48k extends AbstractTzxBlock implements ControlBlock {
 
   public TzxBlockStopTapeIf48k(final JBBPBitInputStream inputStream) throws IOException {
     super(TzxBlockId.STOP_TAPE_IF_48K.getId());

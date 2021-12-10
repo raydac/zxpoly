@@ -6,7 +6,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class TzxBlockSelect extends AbstractTzxBlock implements FlowManagementBlock, InformationBlock {
+public class TzxBlockSelect extends AbstractTzxBlock implements UserInteractiveBlock, InformationBlock {
 
   private final int blockLength;
   private final Selection[] selections;

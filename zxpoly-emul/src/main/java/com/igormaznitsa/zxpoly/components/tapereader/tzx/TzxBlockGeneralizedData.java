@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockGeneralizedData extends AbstractTzxBlock implements DataBlock {
+public class TzxBlockGeneralizedData extends AbstractTzxBlock implements SoundDataBlock {
 
   private final long blockLength;
   private final int pauseAfterBlockMs;
@@ -148,6 +148,17 @@ public class TzxBlockGeneralizedData extends AbstractTzxBlock implements DataBlo
     return this.pauseAfterBlockMs;
   }
 
+  @Override
+  public int getDataLength() {
+    return this.dataStream == null ? 0 : this.dataStream.length;
+  }
+
+  //TODO fix
+  @Override
+  public byte[] extractData() throws IOException {
+    return this.dataStream == null ? new byte[0] : this.dataStream;
+  }
+
   public static final class Prle {
     private final int symbol;
     private final int numberOfRepetitions;
@@ -192,10 +203,5 @@ public class TzxBlockGeneralizedData extends AbstractTzxBlock implements DataBlo
     public int[] getPulseLengths() {
       return pulseLengths;
     }
-  }
-
-  @Override
-  public int getDataLength() {
-    return this.dataStream == null ? 0 : this.dataStream.length;
   }
 }

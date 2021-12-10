@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockPureData extends AbstractTzxBlock implements DataBlock {
+public class TzxBlockPureData extends AbstractTzxBlock implements SoundDataBlock {
   private final int lengthZeroBitPulse;
   private final int lengthOneBitPulse;
   private final int usedBitsInLastByte;
@@ -43,6 +43,11 @@ public class TzxBlockPureData extends AbstractTzxBlock implements DataBlock {
   @Override
   public int getDataLength() {
     return this.data.length;
+  }
+
+  @Override
+  public byte[] extractData() throws IOException {
+    return this.data;
   }
 
   @Override

@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
-public class TzxBlockCSWRecording extends AbstractTzxBlock implements DataBlock {
+public class TzxBlockCSWRecording extends AbstractTzxBlock implements SoundDataBlock {
 
   public static final int COMPRESSION_RLE = 1;
   public static final int COMPRESSION_ZRLE = 2;
@@ -31,7 +31,8 @@ public class TzxBlockCSWRecording extends AbstractTzxBlock implements DataBlock 
     this.data = inputStream.readByteArray((int) (blockLength - 10));
   }
 
-  public byte[] decompressData() throws IOException {
+  @Override
+  public byte[] extractData() throws IOException {
     switch (this.compressionType) {
       case COMPRESSION_RLE:
         return this.decompressRle();

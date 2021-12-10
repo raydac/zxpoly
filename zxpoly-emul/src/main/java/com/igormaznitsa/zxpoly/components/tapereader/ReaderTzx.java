@@ -1,41 +1,38 @@
 package com.igormaznitsa.zxpoly.components.tapereader;
 
-import com.igormaznitsa.zxpoly.components.tapereader.tzx.AbstractTzxBlock;
-import com.igormaznitsa.zxpoly.components.tapereader.tzx.DataBlock;
 import com.igormaznitsa.zxpoly.components.tapereader.tzx.TzxFile;
+import com.igormaznitsa.zxpoly.components.tapereader.tzx.TzxWavRenderer;
+import com.igormaznitsa.zxpoly.components.tapereader.wave.ByteArraySeekableContainer;
+import com.igormaznitsa.zxpoly.components.tapereader.wave.InMemoryWavFile;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 
 import javax.swing.*;
-import javax.swing.event.ListDataListener;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class ReaderTzx implements ListModel<ReaderTzx.TzxBlockRef>, TapeSource {
+public class ReaderTzx implements TapeSource {
 
-  private final List<TzxBlockRef> navigableBlocks;
+  private final List<ActionListener> actionListeners = new CopyOnWriteArrayList<>();
+  private final AtomicLong tstateCounter = new AtomicLong(0L);
   private final TzxFile tzxFile;
   private final String name;
   private final TimingProfile timingProfile;
+  private final InMemoryWavFile inMemoryWavFile;
   private volatile TapeContext tapeContext;
+  private volatile boolean playing;
+  private volatile float bias = 0.01f;
 
   public ReaderTzx(final TimingProfile timingProfile, final String name, final InputStream tap) throws IOException {
     this.timingProfile = timingProfile;
     this.name = name;
     this.tzxFile = new TzxFile(tap);
 
-    final List<TzxBlockRef> navigableList = new ArrayList<>();
-    for (int i = 0; i < this.tzxFile.getBlockList().size(); i++) {
-      final AbstractTzxBlock block = this.tzxFile.getBlockList().get(i);
-      if (block instanceof DataBlock) {
-        navigableList.add(new TzxBlockRef(block, i));
-      }
-    }
-
-    this.navigableBlocks = Collections.unmodifiableList(navigableList);
+    this.inMemoryWavFile = new InMemoryWavFile(new ByteArraySeekableContainer(this.getAsWAV()), timingProfile.ulaFrameTact * 50L);
   }
 
   @Override
@@ -44,78 +41,9 @@ public class ReaderTzx implements ListModel<ReaderTzx.TzxBlockRef>, TapeSource {
   }
 
   @Override
-  public boolean isHi() {
-    return false;
-  }
-
-  @Override
-  public void updateForSpentMachineCycles(final long spentTstates) {
-
-  }
-
-  @Override
   public void dispose() {
-
-  }
-
-  @Override
-  public boolean isPlaying() {
-    return false;
-  }
-
-  @Override
-  public void rewindToStart() {
-
-  }
-
-  @Override
-  public boolean rewindToNextBlock() {
-    return false;
-  }
-
-  @Override
-  public boolean rewindToPrevBlock() {
-    return false;
-  }
-
-  @Override
-  public boolean isNavigable() {
-    return true;
-  }
-
-  @Override
-  public void stopPlay() {
-
-  }
-
-  @Override
-  public boolean startPlay() {
-    return false;
-  }
-
-  @Override
-  public byte[] getAsWAV() throws IOException {
-    return new byte[0];
-  }
-
-  @Override
-  public void removeActionListener(ActionListener listener) {
-
-  }
-
-  @Override
-  public void addActionListener(ActionListener listener) {
-
-  }
-
-  @Override
-  public void setCurrent(final int selected) {
-
-  }
-
-  @Override
-  public int getCurrentBlockIndex() {
-    return 0;
+    this.stopPlay();
+    this.actionListeners.clear();
   }
 
   @Override
@@ -124,24 +52,113 @@ public class ReaderTzx implements ListModel<ReaderTzx.TzxBlockRef>, TapeSource {
   }
 
   @Override
+  public boolean isHi() {
+    if (this.playing) {
+      try {
+        final float value = this.inMemoryWavFile.readAtPosition(this.tstateCounter.get());
+        return value > this.bias;
+      } catch (ArrayIndexOutOfBoundsException ex) {
+        this.stopPlay();
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  @Override
   public boolean isThresholdAllowed() {
-    return false;
+    return true;
   }
 
   @Override
   public float getThreshold() {
-    return 0;
+    return this.bias;
   }
 
   @Override
   public void setThreshold(float threshold) {
-
+    this.bias = Math.max(0.0f, Math.min(threshold, 1.0f));
   }
 
   @Override
   public int size() {
-    return this.tzxFile.stream()
-            .filter(x -> x instanceof DataBlock).mapToInt(b -> ((DataBlock) b).getDataLength()).sum();
+    return this.inMemoryWavFile.size();
+  }
+
+  private void fireActionListeners(final int id, final String command) {
+    SwingUtilities.invokeLater(() -> this.actionListeners.forEach(x -> x.actionPerformed(new ActionEvent(this, id, command))));
+  }
+
+  @Override
+  public void updateForSpentMachineCycles(final long spentTstates) {
+    if (this.playing) {
+      this.tstateCounter.addAndGet(spentTstates);
+    }
+  }
+
+  @Override
+  public boolean isPlaying() {
+    return this.playing;
+  }
+
+  @Override
+  public void rewindToStart() {
+    this.stopPlay();
+    this.tstateCounter.set(0L);
+  }
+
+  @Override
+  public boolean rewindToNextBlock() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean rewindToPrevBlock() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isNavigable() {
+    return false;
+  }
+
+  @Override
+  public void stopPlay() {
+    this.playing = false;
+    this.fireActionListeners(0, "stop");
+  }
+
+  @Override
+  public boolean startPlay() {
+    this.playing = true;
+    this.fireActionListeners(1, "play");
+    return this.playing;
+  }
+
+  @Override
+  public byte[] getAsWAV() throws IOException {
+    return new TzxWavRenderer(TzxWavRenderer.Freq.FREQ_22050, this.tzxFile).render();
+  }
+
+  @Override
+  public void removeActionListener(final ActionListener listener) {
+    this.actionListeners.remove(listener);
+  }
+
+  @Override
+  public void addActionListener(final ActionListener listener) {
+    this.actionListeners.add(listener);
+  }
+
+  @Override
+  public void setCurrent(int index) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int getCurrentBlockIndex() {
+    return -1;
   }
 
   @Override
@@ -150,42 +167,8 @@ public class ReaderTzx implements ListModel<ReaderTzx.TzxBlockRef>, TapeSource {
   }
 
   @Override
-  public ListModel<?> getBlockListModel() {
-    return this;
+  public ListModel getBlockListModel() {
+    throw new UnsupportedOperationException();
   }
 
-  @Override
-  public int getSize() {
-    return this.navigableBlocks.size();
-  }
-
-  @Override
-  public TzxBlockRef getElementAt(final int index) {
-    return this.navigableBlocks.get(index);
-  }
-
-  @Override
-  public void addListDataListener(ListDataListener l) {
-
-  }
-
-  @Override
-  public void removeListDataListener(ListDataListener l) {
-
-  }
-
-  public static final class TzxBlockRef {
-    private final AbstractTzxBlock tzxBlock;
-    private final int blockIndex;
-
-    private TzxBlockRef(final AbstractTzxBlock tzxBlock, final int blockIndex) {
-      this.blockIndex = blockIndex;
-      this.tzxBlock = tzxBlock;
-    }
-
-    @Override
-    public String toString() {
-      return "Block #" + blockIndex;
-    }
-  }
 }

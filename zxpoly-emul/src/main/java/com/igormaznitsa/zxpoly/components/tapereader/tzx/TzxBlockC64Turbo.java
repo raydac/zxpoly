@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockC64Turbo extends AbstractTzxBlock implements DeprecatedBlock, DataBlock {
+public class TzxBlockC64Turbo extends AbstractTzxBlock implements DeprecatedBlock, SoundDataBlock {
 
   private final long blockLength;
   private final int zeroBitPulse;
@@ -106,5 +106,10 @@ public class TzxBlockC64Turbo extends AbstractTzxBlock implements DeprecatedBloc
   @Override
   public int getDataLength() {
     return this.data.length;
+  }
+
+  @Override
+  public byte[] extractData() throws IOException {
+    return this.data;
   }
 }

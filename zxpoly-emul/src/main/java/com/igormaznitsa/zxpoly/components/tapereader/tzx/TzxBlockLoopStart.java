@@ -19,6 +19,11 @@ public class TzxBlockLoopStart extends AbstractTzxBlock implements FlowManagemen
   }
 
   @Override
+  public short[] getOffsets() {
+    return NEXT;
+  }
+
+  @Override
   public void write(final JBBPBitOutputStream outputStream) throws IOException {
     super.write(outputStream);
     writeWord(outputStream, this.repetitions);

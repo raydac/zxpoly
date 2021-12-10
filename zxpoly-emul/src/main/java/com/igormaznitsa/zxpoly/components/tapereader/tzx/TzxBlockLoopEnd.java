@@ -10,5 +10,8 @@ public class TzxBlockLoopEnd extends AbstractTzxBlock implements FlowManagementB
     super(TzxBlockId.LOOP_END.getId());
   }
 
-
+  @Override
+  public short[] getOffsets() {
+    return ZERO;
+  }
 }

@@ -1,8 +1,6 @@
 package com.igormaznitsa.zxpoly.components.tapereader.wave;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 public final class InMemoryWavFile {
 
@@ -16,72 +14,70 @@ public final class InMemoryWavFile {
 
   private final double tstatesPerBlock;
 
-  public InMemoryWavFile(final File file, final long tstatesPerSecond) throws IOException {
-    try (final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
-      final long fileSize = file.length();
+  public InMemoryWavFile(final SeekableContainer seekableContainer, final long tstatesPerSecond) throws IOException {
+    final long fileSize = seekableContainer.length();
 
-      if (!is("RIFF", readChunkId(randomAccessFile))) {
-        throw new IOException("It is not RIFF container");
-      }
-      final int chunkSize = readInt(randomAccessFile);
-      if (chunkSize < 36) {
-        throw new IOException("Wrong container length in WAV file");
-      }
-      if (!is("WAVE", readChunkId(randomAccessFile))) {
-        throw new IOException("It is not WAV file");
-      }
+    if (!is("RIFF", readChunkId(seekableContainer))) {
+      throw new IOException("It is not RIFF container");
+    }
+    final int chunkSize = readInt(seekableContainer);
+    if (chunkSize < 36) {
+      throw new IOException("Wrong container length in WAV file");
+    }
+    if (!is("WAVE", readChunkId(seekableContainer))) {
+      throw new IOException("It is not WAV file");
+    }
 
-      final long startSubchunksPos = randomAccessFile.getFilePointer();
-      if (!posToChunk(randomAccessFile, "fmt ", startSubchunksPos, fileSize)) {
-        throw new IOException("Can't find 'fmt' chunk");
-      }
+    final long startSubChunksPos = seekableContainer.getFilePointer();
+    if (!posToChunk(seekableContainer, "fmt ", startSubChunksPos, fileSize)) {
+      throw new IOException("Can't find 'fmt' chunk");
+    }
 
-      final long formatChunkSize = readChunkSize(randomAccessFile);
-      if (formatChunkSize < 16) {
-        throw new IOException("'fmt' chunk has size less than 16");
-      }
-      this.audioFormat = readShort(randomAccessFile);
-      this.numChannels = readShort(randomAccessFile);
-      this.sampleRate = readInt(randomAccessFile);
-      this.byteRate = readInt(randomAccessFile);
-      this.blockAlign = readShort(randomAccessFile);
-      this.bitsPerSample = readShort(randomAccessFile);
+    final long formatChunkSize = readChunkSize(seekableContainer);
+    if (formatChunkSize < 16) {
+      throw new IOException("'fmt' chunk has size less than 16");
+    }
+    this.audioFormat = readShort(seekableContainer);
+    this.numChannels = readShort(seekableContainer);
+    this.sampleRate = readInt(seekableContainer);
+    this.byteRate = readInt(seekableContainer);
+    this.blockAlign = readShort(seekableContainer);
+    this.bitsPerSample = readShort(seekableContainer);
 
-      if (this.audioFormat != 1 && this.audioFormat != 3) {
-        throw new IOException("Only PCM format is supported: " + this.audioFormat);
-      }
+    if (this.audioFormat != 1 && this.audioFormat != 3) {
+      throw new IOException("Only PCM format is supported: " + this.audioFormat);
+    }
 
-      if (this.bitsPerSample != 8 && this.bitsPerSample != 16 && this.bitsPerSample != 24 &&
-          this.bitsPerSample != 32) {
-        throw new IOException(
-            "Unsupported bit sample size: " + this.bitsPerSample);
-      }
+    if (this.bitsPerSample != 8 && this.bitsPerSample != 16 && this.bitsPerSample != 24 &&
+            this.bitsPerSample != 32) {
+      throw new IOException(
+              "Unsupported bit sample size: " + this.bitsPerSample);
+    }
 
-      if (!posToChunk(randomAccessFile, "data", startSubchunksPos, fileSize)) {
-        throw new IOException("Can't find chunk 'data'");
-      }
+    if (!posToChunk(seekableContainer, "data", startSubChunksPos, fileSize)) {
+      throw new IOException("Can't find chunk 'data'");
+    }
 
-      final long dataLength = readChunkSize(randomAccessFile);
+    final long dataLength = readChunkSize(seekableContainer);
       if (dataLength >= Integer.MAX_VALUE) {
         throw new IOException("Too big WAV file to be cached: " + dataLength + " bytes");
       }
       this.wavData = new byte[(int) dataLength];
 
-      randomAccessFile.readFully(this.wavData);
+    seekableContainer.readFully(this.wavData);
 
       this.tstatesPerBlock = (double) this.sampleRate / (double) tstatesPerSecond;
-    }
   }
 
-  private static int readChunkId(final RandomAccessFile file) throws IOException {
+  private static int readChunkId(final SeekableContainer file) throws IOException {
     return file.readInt();
   }
 
-  private static long readChunkSize(final RandomAccessFile file) throws IOException {
+  private static long readChunkSize(final SeekableContainer file) throws IOException {
     return (long) readInt(file) & 0xFFFFFFFFL;
   }
 
-  private static int readInt(final RandomAccessFile file) throws IOException {
+  private static int readInt(final SeekableContainer file) throws IOException {
     int value = file.readInt();
     int result = 0;
     for (int i = 0; i < 4; i++) {
@@ -91,24 +87,24 @@ public final class InMemoryWavFile {
     return result;
   }
 
-  private static int readShort(final RandomAccessFile file) throws IOException {
+  private static int readShort(final SeekableContainer file) throws IOException {
     final int value = file.readUnsignedShort();
     return ((value & 0xFF) << 8) | (value >>> 8);
   }
 
   private static boolean is(final String text, final int value) {
     final int textAsInt = ((text.charAt(0) & 0xFF) << 24)
-        | ((text.charAt(1) & 0xFF) << 16)
-        | ((text.charAt(2) & 0xFF) << 8)
-        | (text.charAt(3) & 0xFF);
+            | ((text.charAt(1) & 0xFF) << 16)
+            | ((text.charAt(2) & 0xFF) << 8)
+            | (text.charAt(3) & 0xFF);
     return textAsInt == value;
   }
 
   private static boolean posToChunk(
-      final RandomAccessFile file,
-      final String chunkName,
-      final long from,
-      final long length
+          final SeekableContainer file,
+          final String chunkName,
+          final long from,
+          final long length
   ) throws IOException {
     file.seek(from);
     while (file.getFilePointer() < length) {
@@ -161,7 +157,7 @@ public final class InMemoryWavFile {
 
   public float readAtPosition(final long tstatePosition) {
     long blockPosition =
-        Math.round(this.tstatesPerBlock * tstatePosition) * this.blockAlign;
+            Math.round(this.tstatesPerBlock * tstatePosition) * this.blockAlign;
 
     if (this.numChannels == 1) {
       switch (this.bitsPerSample) {

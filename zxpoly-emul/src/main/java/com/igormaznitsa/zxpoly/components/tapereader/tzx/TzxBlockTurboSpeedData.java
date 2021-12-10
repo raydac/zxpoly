@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockTurboSpeedData extends AbstractTzxBlock implements DataBlock {
+public class TzxBlockTurboSpeedData extends AbstractTzxBlock implements SoundDataBlock {
   private final int pauseAfterBlockMs;
   private final byte[] data;
   private final int lengthPilotPulse;
@@ -30,6 +30,11 @@ public class TzxBlockTurboSpeedData extends AbstractTzxBlock implements DataBloc
     this.pauseAfterBlockMs = readWord(inputStream);
     final int dataLength = readThreeByteValue(inputStream);
     this.data = inputStream.readByteArray(dataLength);
+  }
+
+  @Override
+  public byte[] extractData() throws IOException {
+    return this.data;
   }
 
   @Override
