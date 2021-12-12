@@ -30,21 +30,10 @@ public class ReaderTzx implements TapeSource, ListModel<TzxWavRenderer.RenderRes
   private final TimingProfile timingProfile;
   private final InMemoryWavFile inMemoryWavFile;
   private final TzxWavRenderer.RenderResult renderedWav;
+  private final AtomicInteger blockIndex = new AtomicInteger(0);
   private volatile TapeContext tapeContext;
   private volatile boolean playing;
   private volatile float bias = 0.01f;
-  private final AtomicInteger blockIndex = new AtomicInteger(0);
-
-  @Override
-  public void setTapeContext(final TapeContext context) {
-    this.tapeContext = context;
-  }
-
-  @Override
-  public void dispose() {
-    this.stopPlay();
-    this.actionListeners.clear();
-  }
 
   public ReaderTzx(final TimingProfile timingProfile, final String name, final InputStream tap) throws IOException {
     this.timingProfile = timingProfile;
@@ -56,8 +45,20 @@ public class ReaderTzx implements TapeSource, ListModel<TzxWavRenderer.RenderRes
 
     final long startTime = System.currentTimeMillis();
     this.renderedWav = this.renderAsWav();
+//    FileUtils.writeByteArrayToFile(new File("test.wav"),this.renderedWav.getWav());
     LOGGER.info(String.format("TZX to WAV conversion took %d ms, size %d bytes", (System.currentTimeMillis() - startTime), this.renderedWav.getWav().length));
     this.inMemoryWavFile = new InMemoryWavFile(new ByteArraySeekableContainer(this.renderedWav.getWav()), timingProfile.ulaFrameTact * 50L);
+  }
+
+  @Override
+  public void setTapeContext(final TapeContext context) {
+    this.tapeContext = context;
+  }
+
+  @Override
+  public void dispose() {
+    this.stopPlay();
+    this.actionListeners.clear();
   }
 
   @Override

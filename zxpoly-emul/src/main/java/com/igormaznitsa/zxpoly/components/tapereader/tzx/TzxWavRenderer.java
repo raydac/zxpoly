@@ -27,7 +27,6 @@ public class TzxWavRenderer {
   private static final int PULSELEN_ONE = 1710;
   private static final int SIGNAL_HI = 0xFE;
   private static final int SIGNAL_LOW = 0x01;
-  private static final int SIGNAL_PAUSE = SIGNAL_LOW;
   private static final int TSTATES_PER_SECOND = 3_500_000;
   private final TzxFile tzxFile;
   private final Freq freq;
@@ -92,6 +91,8 @@ public class TzxWavRenderer {
     final JBBPOut out = BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
     final List<AbstractTzxBlock> blockList = this.tzxFile.getBlockList();
 
+    boolean signalLevel = false;
+
     int blockPointer = 0;
     while (blockPointer < blockList.size()) {
       final AbstractTzxBlock block = blockList.get(blockPointer);
@@ -151,12 +152,13 @@ public class TzxWavRenderer {
             namedOffsets.add(new RenderResult.NamedOffsets("__data__", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
           }
 
-          this.writeTapData(dataTargetStream,
+          signalLevel = false;
+
+          signalLevel = this.writeTapData(signalLevel, dataTargetStream,
                   flag < 128 ? IMPULSNUMBER_PILOT_HEADER : IMPULSNUMBER_PILOT_DATA,
                   PULSELEN_PILOT,
                   PULSELEN_SYNC1,
                   PULSELEN_SYNC2,
-                  PULSELEN_SYNC3,
                   PULSELEN_ZERO,
                   PULSELEN_ONE,
                   8,
@@ -175,12 +177,14 @@ public class TzxWavRenderer {
             namedOffsets.add(new RenderResult.NamedOffsets("__data__ {turbo}", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
           }
 
-          this.writeTapData(dataTargetStream,
+          signalLevel = false;
+
+          signalLevel = this.writeTapData(signalLevel,
+                  dataTargetStream,
                   dataBlock.getLengthPilotTone(),
                   dataBlock.getLengthPilotPulse(),
                   dataBlock.getLengthSyncFirstPulse(),
                   dataBlock.getLengthSyncSecondPulse(),
-                  PULSELEN_SYNC3,
                   dataBlock.getLengthZeroBitPulse(),
                   dataBlock.getLengthOneBitPulse(),
                   dataBlock.getUsedBitsInLastByte(),
@@ -203,10 +207,10 @@ public class TzxWavRenderer {
           final TzxBlockPureData dataBlock = (TzxBlockPureData) block;
           final byte[] tapData = dataBlock.extractData();
 
-          namedOffsets.add(new RenderResult.NamedOffsets("__pure_data__", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
+          namedOffsets.add(new RenderResult.NamedOffsets("__pure_data__(pause: " + dataBlock.getPauseAfterBlockMs() + " ms)", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
 
-          this.writeTapData(dataTargetStream,
-                  -1,
+          signalLevel = this.writeTapData(signalLevel,
+                  dataTargetStream,
                   -1,
                   -1,
                   -1,
@@ -221,22 +225,22 @@ public class TzxWavRenderer {
         } else if (block instanceof TzxBlockPureTone) {
           final TzxBlockPureTone dataBlock = (TzxBlockPureTone) block;
 
-          namedOffsets.add(new RenderResult.NamedOffsets("__pure_tone__", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
+          namedOffsets.add(new RenderResult.NamedOffsets("__pure_tone__[" + dataBlock.getNumberOfPulses() + ']', WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
 
           for (int i = 0; i < dataBlock.getNumberOfPulses(); i++) {
-            this.writtenTicks = this.writeSignalLevel(this.writtenTicks, dataTargetStream, dataBlock.getLengthOfPulseInTstates(), SIGNAL_HI);
-            this.writtenTicks = this.writeSignalLevel(this.writtenTicks, dataTargetStream, dataBlock.getLengthOfPulseInTstates(), SIGNAL_LOW);
+            this.writtenTicks = this.writeSignalLevel(this.writtenTicks, dataTargetStream, dataBlock.getLengthOfPulseInTstates(), signalLevel ? SIGNAL_HI : SIGNAL_LOW);
+            signalLevel = !signalLevel;
           }
 
           blockPointer++;
         } else if (block instanceof TzxBlockVarSequencePulses) {
           final TzxBlockVarSequencePulses dataBlock = (TzxBlockVarSequencePulses) block;
 
-          namedOffsets.add(new RenderResult.NamedOffsets("__pulses_seq__", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
+          namedOffsets.add(new RenderResult.NamedOffsets("__pulses_seq__[" + dataBlock.getPulsesLengths().length + "]", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
 
           for (final int pulseLen : dataBlock.getPulsesLengths()) {
-            this.writtenTicks = this.writeSignalLevel(this.writtenTicks, dataTargetStream, pulseLen, SIGNAL_HI);
-            this.writtenTicks = this.writeSignalLevel(this.writtenTicks, dataTargetStream, pulseLen, SIGNAL_LOW);
+            this.writtenTicks = this.writeSignalLevel(this.writtenTicks, dataTargetStream, pulseLen, signalLevel ? SIGNAL_HI : SIGNAL_LOW);
+            signalLevel = !signalLevel;
           }
 
           blockPointer++;
@@ -269,13 +273,13 @@ public class TzxWavRenderer {
     return new RenderResult(namedOffsets, wav);
   }
 
-  private void writeTapData(
+  private boolean writeTapData(
+          final boolean initialSignalLevel,
           final JBBPBitOutputStream outputStream,
           final int lenPilotTone,
           final int lenPilotPulse,
           final int lenSync1pulse,
           final int lenSync2pulse,
-          final int lenSync3pulse,
           final int lenZeroBitPulse,
           final int lenOneBitPulse,
           final int bitsInLastByte,
@@ -283,7 +287,8 @@ public class TzxWavRenderer {
           final byte[] tapeData
   ) throws IOException {
 
-    boolean level = false;
+    boolean level = initialSignalLevel;
+
     if (lenPilotTone > 0) {
       for (int i = 0; i < lenPilotTone; i++) {
         this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenPilotPulse, level ? SIGNAL_HI : SIGNAL_LOW);
@@ -291,15 +296,13 @@ public class TzxWavRenderer {
       }
     }
 
-    if (!level) {
-      this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenPilotPulse, SIGNAL_LOW);
-    }
-
     if (lenSync1pulse > 0) {
-      this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenSync1pulse, SIGNAL_HI);
+      this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenSync1pulse, level ? SIGNAL_HI : SIGNAL_LOW);
+      level = !level;
     }
     if (lenSync2pulse > 0) {
-      this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenSync2pulse, SIGNAL_LOW);
+      this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenSync2pulse, level ? SIGNAL_HI : SIGNAL_LOW);
+      level = !level;
     }
 
     for (int i = 0; i < tapeData.length; i++) {
@@ -309,30 +312,33 @@ public class TzxWavRenderer {
       int bitMask = 0x80;
       while (bitCounter > 0) {
         final int signalLength = (nextDataByte & bitMask) == 0 ? lenZeroBitPulse : lenOneBitPulse;
-        this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, signalLength, SIGNAL_HI);
-        this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, signalLength, SIGNAL_LOW);
+        this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, signalLength, level ? SIGNAL_HI : SIGNAL_LOW);
+        level = !level;
+        this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, signalLength, level ? SIGNAL_HI : SIGNAL_LOW);
+        level = !level;
         bitMask >>= 1;
         bitCounter--;
       }
     }
 
-    if (lenSync3pulse > 0) {
-      this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenSync3pulse, SIGNAL_HI);
+    if (!pauseAfterBlock.isZero()) {
+      if (level) {
+        this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, PULSELEN_SYNC3, SIGNAL_HI);
+      }
+      level = false;
+      this.writtenTicks = writeSilence(this.writtenTicks, outputStream, pauseAfterBlock, level);
     }
 
-    if (!pauseAfterBlock.isZero()) {
-      this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, asTicks(pauseAfterBlock), SIGNAL_PAUSE);
-    }
+    return level;
   }
 
-  private int asTicks(final Duration delay) {
-    if (delay.isZero()) {
-      return 0;
-    } else {
-      final double cpuClkNanosec = 1000_000_000.0d / TSTATES_PER_SECOND;
-      final int ticks = (int) Math.round((double) delay.toNanos() / cpuClkNanosec);
-      return ticks < 0 ? Integer.MAX_VALUE : ticks;
+  private long writeSilence(final long tickCounter, final JBBPBitOutputStream outputStream, final Duration delay, final boolean level) throws IOException {
+    final long samples = (delay.toMillis() * this.freq.getFreq()) / 1000L;
+    final long ticks = ((delay.toMillis() + 500) * TSTATES_PER_SECOND) / 1000L;
+    for (int i = 0; i < samples; i++) {
+      outputStream.write(level ? SIGNAL_HI : SIGNAL_LOW);
     }
+    return tickCounter + ticks;
   }
 
   private long writeSignalLevel(final long tickCounter, final JBBPBitOutputStream outputStream, final int pulseTicks, final int level) throws IOException {
