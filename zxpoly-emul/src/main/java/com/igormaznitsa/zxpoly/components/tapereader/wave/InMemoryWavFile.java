@@ -12,6 +12,7 @@ public final class InMemoryWavFile {
   private final int blockAlign;
   private final int bitsPerSample;
 
+  private final long wavDataStartOffset;
   private final double tstatesPerBlock;
 
   public InMemoryWavFile(final SeekableContainer seekableContainer, final long tstatesPerSecond) throws IOException {
@@ -59,14 +60,15 @@ public final class InMemoryWavFile {
     }
 
     final long dataLength = readChunkSize(seekableContainer);
-      if (dataLength >= Integer.MAX_VALUE) {
-        throw new IOException("Too big WAV file to be cached: " + dataLength + " bytes");
-      }
-      this.wavData = new byte[(int) dataLength];
+    if (dataLength >= Integer.MAX_VALUE) {
+      throw new IOException("Too big WAV file to be cached: " + dataLength + " bytes");
+    }
+    this.wavData = new byte[(int) dataLength];
 
+    this.wavDataStartOffset = seekableContainer.getFilePointer();
     seekableContainer.readFully(this.wavData);
 
-      this.tstatesPerBlock = (double) this.sampleRate / (double) tstatesPerSecond;
+    this.tstatesPerBlock = (double) this.sampleRate / (double) tstatesPerSecond;
   }
 
   private static int readChunkId(final SeekableContainer file) throws IOException {
@@ -153,6 +155,14 @@ public final class InMemoryWavFile {
     } else {
       return (float) result / (float) Integer.MAX_VALUE;
     }
+  }
+
+  public long findTstatesForWavDataPosition(final long wavFileOffset) {
+    return Math.round((wavFileOffset - this.wavDataStartOffset) / this.tstatesPerBlock);
+  }
+
+  public long calcPositionInWavData(final long tstatePosition) {
+    return Math.round(this.tstatesPerBlock * tstatePosition) * this.blockAlign;
   }
 
   public float readAtPosition(final long tstatePosition) {

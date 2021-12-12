@@ -208,6 +208,7 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
     }
   }
 
+  @Override
   public synchronized boolean rewindToNextBlock() {
     stopPlay();
     return toNextBlock();
