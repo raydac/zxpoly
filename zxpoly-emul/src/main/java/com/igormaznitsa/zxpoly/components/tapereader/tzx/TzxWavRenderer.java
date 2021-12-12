@@ -16,7 +16,7 @@ import java.util.Optional;
 import static com.igormaznitsa.jbbp.io.JBBPOut.BeginBin;
 
 public class TzxWavRenderer {
-  public static final long WAV_HEADER_LENGTH = 32L;
+  public static final long WAV_HEADER_LENGTH = 44L;
   private static final int IMPULSNUMBER_PILOT_HEADER = 8063;
   private static final int IMPULSNUMBER_PILOT_DATA = 3223;
   private static final int PULSELEN_PILOT = 2168;
@@ -156,6 +156,7 @@ public class TzxWavRenderer {
                   PULSELEN_PILOT,
                   PULSELEN_SYNC1,
                   PULSELEN_SYNC2,
+                  PULSELEN_SYNC3,
                   PULSELEN_ZERO,
                   PULSELEN_ONE,
                   8,
@@ -179,6 +180,7 @@ public class TzxWavRenderer {
                   dataBlock.getLengthPilotPulse(),
                   dataBlock.getLengthSyncFirstPulse(),
                   dataBlock.getLengthSyncSecondPulse(),
+                  PULSELEN_SYNC3,
                   dataBlock.getLengthZeroBitPulse(),
                   dataBlock.getLengthOneBitPulse(),
                   dataBlock.getUsedBitsInLastByte(),
@@ -198,14 +200,46 @@ public class TzxWavRenderer {
           //TODO
           throw new IOException("Unsupported block yet");
         } else if (block instanceof TzxBlockPureData) {
-          //TODO
-          throw new IOException("Unsupported block yet");
+          final TzxBlockPureData dataBlock = (TzxBlockPureData) block;
+          final byte[] tapData = dataBlock.extractData();
+
+          namedOffsets.add(new RenderResult.NamedOffsets("__pure_data__", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
+
+          this.writeTapData(dataTargetStream,
+                  -1,
+                  -1,
+                  -1,
+                  -1,
+                  -1,
+                  dataBlock.getLengthZeroBitPulse(),
+                  dataBlock.getLengthOneBitPulse(),
+                  dataBlock.getUsedBitsInLastByte(),
+                  Duration.ofMillis(dataBlock.getPauseAfterBlockMs()),
+                  tapData);
+
+          blockPointer++;
         } else if (block instanceof TzxBlockPureTone) {
-          //TODO
-          throw new IOException("Unsupported block yet");
+          final TzxBlockPureTone dataBlock = (TzxBlockPureTone) block;
+
+          namedOffsets.add(new RenderResult.NamedOffsets("__pure_tone__", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
+
+          for (int i = 0; i < dataBlock.getNumberOfPulses(); i++) {
+            this.writtenTicks = this.writeSignalLevel(this.writtenTicks, dataTargetStream, dataBlock.getLengthOfPulseInTstates(), SIGNAL_HI);
+            this.writtenTicks = this.writeSignalLevel(this.writtenTicks, dataTargetStream, dataBlock.getLengthOfPulseInTstates(), SIGNAL_LOW);
+          }
+
+          blockPointer++;
         } else if (block instanceof TzxBlockVarSequencePulses) {
-          //TODO
-          throw new IOException("Unsupported block yet");
+          final TzxBlockVarSequencePulses dataBlock = (TzxBlockVarSequencePulses) block;
+
+          namedOffsets.add(new RenderResult.NamedOffsets("__pulses_seq__", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
+
+          for (final int pulseLen : dataBlock.getPulsesLengths()) {
+            this.writtenTicks = this.writeSignalLevel(this.writtenTicks, dataTargetStream, pulseLen, SIGNAL_HI);
+            this.writtenTicks = this.writeSignalLevel(this.writtenTicks, dataTargetStream, pulseLen, SIGNAL_LOW);
+          }
+
+          blockPointer++;
         } else {
           throw new Error("Unexpected data block: " + block.getClass().getSimpleName());
         }
@@ -241,6 +275,7 @@ public class TzxWavRenderer {
           final int lenPilotPulse,
           final int lenSync1pulse,
           final int lenSync2pulse,
+          final int lenSync3pulse,
           final int lenZeroBitPulse,
           final int lenOneBitPulse,
           final int bitsInLastByte,
@@ -249,17 +284,23 @@ public class TzxWavRenderer {
   ) throws IOException {
 
     boolean level = false;
-    for (int i = 0; i < lenPilotTone; i++) {
-      this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenPilotPulse, level ? SIGNAL_HI : SIGNAL_LOW);
-      level = !level;
+    if (lenPilotTone > 0) {
+      for (int i = 0; i < lenPilotTone; i++) {
+        this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenPilotPulse, level ? SIGNAL_HI : SIGNAL_LOW);
+        level = !level;
+      }
     }
 
     if (!level) {
       this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenPilotPulse, SIGNAL_LOW);
     }
 
-    this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenSync1pulse, SIGNAL_HI);
-    this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenSync2pulse, SIGNAL_LOW);
+    if (lenSync1pulse > 0) {
+      this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenSync1pulse, SIGNAL_HI);
+    }
+    if (lenSync2pulse > 0) {
+      this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenSync2pulse, SIGNAL_LOW);
+    }
 
     for (int i = 0; i < tapeData.length; i++) {
       final boolean lastByte = i == tapeData.length - 1;
@@ -275,7 +316,9 @@ public class TzxWavRenderer {
       }
     }
 
-    this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, PULSELEN_SYNC3, SIGNAL_HI);
+    if (lenSync3pulse > 0) {
+      this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, lenSync3pulse, SIGNAL_HI);
+    }
 
     if (!pauseAfterBlock.isZero()) {
       this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, asTicks(pauseAfterBlock), SIGNAL_PAUSE);
