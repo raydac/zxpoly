@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockPauseOrStop extends AbstractTzxBlock implements ControlBlock {
+public class TzxBlockPauseOrStop extends AbstractTzxBlock implements SoundDataBlock {
 
   private final int pauseDurationMs;
 
@@ -14,8 +14,18 @@ public class TzxBlockPauseOrStop extends AbstractTzxBlock implements ControlBloc
     this.pauseDurationMs = readWord(inputStream);
   }
 
+  @Override
+  public int getDataLength() {
+    return 0;
+  }
+
+  @Override
+  public byte[] extractData() throws IOException {
+    return new byte[0];
+  }
+
   public int getPauseDurationMs() {
-    return pauseDurationMs;
+    return this.pauseDurationMs;
   }
 
   @Override

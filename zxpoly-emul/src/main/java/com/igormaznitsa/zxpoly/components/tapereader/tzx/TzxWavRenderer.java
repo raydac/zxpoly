@@ -97,7 +97,15 @@ public class TzxWavRenderer {
     while (blockPointer < blockList.size()) {
       final AbstractTzxBlock block = blockList.get(blockPointer);
 
-      if (block instanceof FlowManagementBlock) {
+      if (block instanceof InformationBlock) {
+        if (block instanceof TzxBlockGroupStart) {
+          final TzxBlockGroupStart groupStart = (TzxBlockGroupStart) block;
+          namedOffsets.add(new RenderResult.NamedOffsets("GROUP: " + groupStart.getGroupName(), WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
+          blockPointer++;
+        } else {
+          blockPointer++;
+        }
+      } else if (block instanceof FlowManagementBlock) {
         final short[] offsets = ((FlowManagementBlock) block).getOffsets();
         if (block instanceof TzxBlockCallSequence) {
           final TzxBlockCallSequence callSequence = (TzxBlockCallSequence) block;
@@ -140,7 +148,29 @@ public class TzxWavRenderer {
           throw new Error("Unexpected management block type: " + block.getClass().getSimpleName());
         }
       } else if (block instanceof SoundDataBlock) {
-        if (block instanceof TzxBlockStandardSpeedData) {
+        if (block instanceof TzxBlockStopTapeIf48k) {
+          if (signalLevel) {
+            this.writtenTicks = writeSignalLevel(this.writtenTicks, dataTargetStream, PULSELEN_SYNC3, SIGNAL_HI);
+            signalLevel = false;
+          }
+
+          namedOffsets.add(new RenderResult.NamedOffsets("<<STOP TAPE>>", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
+          this.writtenTicks = writeSilence(this.writtenTicks, dataTargetStream, Duration.ofSeconds(5), false);
+
+          blockPointer++;
+        } else if (block instanceof TzxBlockPauseOrStop) {
+          final TzxBlockPauseOrStop dataBlock = (TzxBlockPauseOrStop) block;
+
+          if (signalLevel) {
+            this.writtenTicks = writeSignalLevel(this.writtenTicks, dataTargetStream, PULSELEN_SYNC3, SIGNAL_HI);
+            signalLevel = false;
+          }
+
+          namedOffsets.add(new RenderResult.NamedOffsets("__pause or stop__[" + dataBlock.getPauseDurationMs() + " ms]", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
+          this.writtenTicks = writeSilence(this.writtenTicks, dataTargetStream, Duration.ofMillis(dataBlock.getPauseDurationMs()), false);
+
+          blockPointer++;
+        } else if (block instanceof TzxBlockStandardSpeedData) {
           final TzxBlockStandardSpeedData dataBlock = (TzxBlockStandardSpeedData) block;
 
           final byte[] tapData = dataBlock.extractData();
@@ -154,7 +184,10 @@ public class TzxWavRenderer {
 
           signalLevel = false;
 
-          signalLevel = this.writeTapData(signalLevel, dataTargetStream,
+          signalLevel = this.writeTapData(
+                  namedOffsets,
+                  signalLevel,
+                  dataTargetStream,
                   flag < 128 ? IMPULSNUMBER_PILOT_HEADER : IMPULSNUMBER_PILOT_DATA,
                   PULSELEN_PILOT,
                   PULSELEN_SYNC1,
@@ -179,7 +212,9 @@ public class TzxWavRenderer {
 
           signalLevel = false;
 
-          signalLevel = this.writeTapData(signalLevel,
+          signalLevel = this.writeTapData(
+                  namedOffsets,
+                  signalLevel,
                   dataTargetStream,
                   dataBlock.getLengthPilotTone(),
                   dataBlock.getLengthPilotPulse(),
@@ -209,7 +244,9 @@ public class TzxWavRenderer {
 
           namedOffsets.add(new RenderResult.NamedOffsets("__pure_data__(pause: " + dataBlock.getPauseAfterBlockMs() + " ms)", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
 
-          signalLevel = this.writeTapData(signalLevel,
+          signalLevel = this.writeTapData(
+                  namedOffsets,
+                  signalLevel,
                   dataTargetStream,
                   -1,
                   -1,
@@ -252,6 +289,12 @@ public class TzxWavRenderer {
       }
     }
 
+    // add pause in the end
+    if (signalLevel) {
+      this.writtenTicks = writeSignalLevel(this.writtenTicks, dataTargetStream, PULSELEN_SYNC3, SIGNAL_HI);
+    }
+    this.writtenTicks = writeSilence(this.writtenTicks, dataTargetStream, Duration.ofMillis(500), false);
+
     dataTargetStream.flush();
 
     final byte[] wav = out.
@@ -274,6 +317,7 @@ public class TzxWavRenderer {
   }
 
   private boolean writeTapData(
+          final List<RenderResult.NamedOffsets> namedOffsets,
           final boolean initialSignalLevel,
           final JBBPBitOutputStream outputStream,
           final int lenPilotTone,
@@ -326,6 +370,7 @@ public class TzxWavRenderer {
         this.writtenTicks = writeSignalLevel(this.writtenTicks, outputStream, PULSELEN_SYNC3, SIGNAL_HI);
       }
       level = false;
+      namedOffsets.add(new RenderResult.NamedOffsets("__pause__ [" + pauseAfterBlock.toMillis() + " ms]", WAV_HEADER_LENGTH + outputStream.getCounter()));
       this.writtenTicks = writeSilence(this.writtenTicks, outputStream, pauseAfterBlock, level);
     }
 
