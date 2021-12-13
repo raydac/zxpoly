@@ -362,7 +362,7 @@ public class TzxWavRenderer {
   }
 
   private long writeSilence(final long tickCounter, final JBBPBitOutputStream outputStream, final Duration delay, final boolean level) throws IOException {
-    final long ticks = ((delay.toMillis() + 500) * TSTATES_PER_SECOND) / 1000L;
+    final long ticks = (delay.toMillis() * TSTATES_PER_SECOND) / 1000L;
     return writeSignalLevel(tickCounter, outputStream, (int) ticks, level ? SIGNAL_HI : SIGNAL_LOW);
   }
 
