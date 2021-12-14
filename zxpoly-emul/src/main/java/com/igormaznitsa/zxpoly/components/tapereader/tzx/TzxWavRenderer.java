@@ -3,6 +3,7 @@ package com.igormaznitsa.zxpoly.components.tapereader.tzx;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
+import com.igormaznitsa.zxpoly.utils.SpectrumUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -48,7 +49,7 @@ public class TzxWavRenderer {
     for (final char c : new String(name, StandardCharsets.ISO_8859_1).toCharArray()) {
       result.append(Character.isISOControl(c) ? ' ' : c);
     }
-    return result.toString();
+    return SpectrumUtils.fromZxString(result.toString());
   }
 
   public synchronized RenderResult render() throws IOException {
@@ -69,7 +70,7 @@ public class TzxWavRenderer {
       if (block instanceof InformationBlock) {
         if (block instanceof TzxBlockGroupStart) {
           final TzxBlockGroupStart groupStart = (TzxBlockGroupStart) block;
-          namedOffsets.add(new RenderResult.NamedOffsets("GROUP: " + groupStart.getGroupName(), WAV_HEADER_LENGTH + dataStream.getCounter()));
+          namedOffsets.add(new RenderResult.NamedOffsets("GROUP>> " + groupStart.getGroupName(), WAV_HEADER_LENGTH + dataStream.getCounter()));
         }
         blockPointer++;
       } else if (block instanceof FlowManagementBlock) {
@@ -116,7 +117,7 @@ public class TzxWavRenderer {
         }
       } else if (block instanceof SoundDataBlock) {
         if (block instanceof TzxBlockStopTapeIf48k) {
-          namedOffsets.add(new RenderResult.NamedOffsets("<<STOP TAPE>>", WAV_HEADER_LENGTH + dataStream.getCounter()));
+          namedOffsets.add(new RenderResult.NamedOffsets("-==STOP TAPE IF ZX48==-", WAV_HEADER_LENGTH + dataStream.getCounter()));
           nextLevel = writePause(nextLevel, dataStream, Duration.ofSeconds(1), DataType.PAUSE);
           nextLevel = writePause(nextLevel, dataStream, Duration.ofSeconds(4), DataType.STOP_TAPE_IF_ZX48);
           blockPointer++;
@@ -126,11 +127,11 @@ public class TzxWavRenderer {
           Duration duration = Duration.ofMillis(dataBlock.getPauseDurationMs());
 
           if (duration.isZero()) {
-            namedOffsets.add(new RenderResult.NamedOffsets("<<STOP TAPE>>", WAV_HEADER_LENGTH + dataStream.getCounter()));
+            namedOffsets.add(new RenderResult.NamedOffsets("-==STOP TAPE==-", WAV_HEADER_LENGTH + dataStream.getCounter()));
             nextLevel = writePause(nextLevel, dataStream, Duration.ofSeconds(1), DataType.PAUSE);
             nextLevel = writePause(nextLevel, dataStream, Duration.ofSeconds(4), DataType.STOP_TAPE);
           } else {
-            namedOffsets.add(new RenderResult.NamedOffsets("__stop-pause__[" + dataBlock.getPauseDurationMs() + " ms]", WAV_HEADER_LENGTH + dataStream.getCounter()));
+            namedOffsets.add(new RenderResult.NamedOffsets("...stop-pause [" + dataBlock.getPauseDurationMs() + " ms]", WAV_HEADER_LENGTH + dataStream.getCounter()));
             nextLevel = writePause(nextLevel, dataStream, duration, DataType.PAUSE);
           }
 
@@ -144,7 +145,7 @@ public class TzxWavRenderer {
           if (flag < 128) {
             namedOffsets.add(new RenderResult.NamedOffsets(extractNameFromTapHeader(tapData), WAV_HEADER_LENGTH + dataStream.getCounter()));
           } else {
-            namedOffsets.add(new RenderResult.NamedOffsets("__data__", WAV_HEADER_LENGTH + dataStream.getCounter()));
+            namedOffsets.add(new RenderResult.NamedOffsets("...std.data...", WAV_HEADER_LENGTH + dataStream.getCounter()));
           }
 
           nextLevel = this.writeTapData(
@@ -175,7 +176,7 @@ public class TzxWavRenderer {
           if (flag < 128) {
             namedOffsets.add(new RenderResult.NamedOffsets(extractNameFromTapHeader(tapData) + " {turbo}", WAV_HEADER_LENGTH + dataStream.getCounter()));
           } else {
-            namedOffsets.add(new RenderResult.NamedOffsets("__data__ {turbo}", WAV_HEADER_LENGTH + dataStream.getCounter()));
+            namedOffsets.add(new RenderResult.NamedOffsets("...turbo.data...", WAV_HEADER_LENGTH + dataStream.getCounter()));
           }
 
           nextLevel = this.writeTapData(
@@ -203,7 +204,7 @@ public class TzxWavRenderer {
         } else if (block instanceof TzxBlockDirectRecording) {
           final TzxBlockDirectRecording directRecording = (TzxBlockDirectRecording) block;
 
-          namedOffsets.add(new RenderResult.NamedOffsets("__direct recording__(pause: " + directRecording.getPauseAfterBlockMs() + " ms)", WAV_HEADER_LENGTH + dataStream.getCounter()));
+          namedOffsets.add(new RenderResult.NamedOffsets("...direct.recording... [pause: " + directRecording.getPauseAfterBlockMs() + " ms]", WAV_HEADER_LENGTH + dataStream.getCounter()));
 
           nextLevel = this.writeDirectRecording(
                   dataStream,
@@ -224,7 +225,7 @@ public class TzxWavRenderer {
           final TzxBlockPureData dataBlock = (TzxBlockPureData) block;
           final byte[] tapData = dataBlock.extractData();
 
-          namedOffsets.add(new RenderResult.NamedOffsets("__pure_data__(pause: " + dataBlock.getPauseAfterBlockMs() + " ms)", WAV_HEADER_LENGTH + dataStream.getCounter()));
+          namedOffsets.add(new RenderResult.NamedOffsets("...pure.data... [pause: " + dataBlock.getPauseAfterBlockMs() + " ms]", WAV_HEADER_LENGTH + dataStream.getCounter()));
 
           nextLevel = this.writeTapData(
                   namedOffsets,
@@ -249,7 +250,7 @@ public class TzxWavRenderer {
         } else if (block instanceof TzxBlockPureTone) {
           final TzxBlockPureTone dataBlock = (TzxBlockPureTone) block;
 
-          namedOffsets.add(new RenderResult.NamedOffsets("__pure_tone__[" + dataBlock.getNumberOfPulses() + ']', WAV_HEADER_LENGTH + dataStream.getCounter()));
+          namedOffsets.add(new RenderResult.NamedOffsets("...pure.tone... [pulses=" + dataBlock.getNumberOfPulses() + ']', WAV_HEADER_LENGTH + dataStream.getCounter()));
 
           for (int i = 0; i < dataBlock.getNumberOfPulses(); i++) {
             this.writeSignalLevel(dataStream, dataBlock.getLengthOfPulseInTstates(), nextLevel, DataType.PURE_TONE);
@@ -260,7 +261,7 @@ public class TzxWavRenderer {
         } else if (block instanceof TzxBlockVarSequencePulses) {
           final TzxBlockVarSequencePulses dataBlock = (TzxBlockVarSequencePulses) block;
 
-          namedOffsets.add(new RenderResult.NamedOffsets("__pulses_seq__[" + dataBlock.getPulsesLengths().length + "]", WAV_HEADER_LENGTH + dataStream.getCounter()));
+          namedOffsets.add(new RenderResult.NamedOffsets("...seq.pulses...[pulses=" + dataBlock.getPulsesLengths().length + "]", WAV_HEADER_LENGTH + dataStream.getCounter()));
 
           for (final int pulseLen : dataBlock.getPulsesLengths()) {
             this.writeSignalLevel(dataStream, pulseLen, nextLevel, DataType.SEQ_PULSES);
@@ -338,7 +339,7 @@ public class TzxWavRenderer {
     }
 
     if (!pauseAfterBlock.isZero()) {
-      namedOffsets.add(new RenderResult.NamedOffsets("__pause__ [" + pauseAfterBlock.toMillis() + " ms]", WAV_HEADER_LENGTH + outputStream.getCounter()));
+      namedOffsets.add(new RenderResult.NamedOffsets("...pause... [" + pauseAfterBlock.toMillis() + " ms]", WAV_HEADER_LENGTH + outputStream.getCounter()));
       nextLevel = writePause(nextLevel, outputStream, pauseAfterBlock, DataType.PAUSE);
     }
 
