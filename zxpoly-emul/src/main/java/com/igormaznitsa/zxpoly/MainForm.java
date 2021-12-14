@@ -2230,7 +2230,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         this.keyboardAndTapeModule.getTap().removeActionListener(this);
       }
 
-      final TapeSource source = TapeSourceFactory.makeSource(this.timingProfile, tapFile, this);
+      final TapeSource source = TapeSourceFactory.makeSource(this, this.timingProfile, tapFile);
       source.addActionListener(this);
       this.keyboardAndTapeModule.setTap(source);
       LOGGER.info("Loaded TAP, total data size " + source.size() + " bytes");
@@ -2282,6 +2282,21 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
               JOptionPane.ERROR_MESSAGE);
     } finally {
       this.resumeSteps();
+    }
+  }
+
+  @Override
+  public void onTapeSignal(final TapeSource tapeSource, final ControlSignal controlSignal) {
+    switch (controlSignal) {
+      case STOP_TAPE:
+        this.keyboardAndTapeModule.getTap().stopPlay();
+        break;
+      case STOP_TAPE_IF_ZX48: {
+        if (this.board.isMode48k()) {
+          this.keyboardAndTapeModule.getTap().stopPlay();
+        }
+      }
+      break;
     }
   }
 

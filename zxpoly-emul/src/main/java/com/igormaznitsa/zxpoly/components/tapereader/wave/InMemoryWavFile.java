@@ -165,6 +165,10 @@ public final class InMemoryWavFile {
     return Math.round(this.tstatesPerBlock * tstatePosition) * this.blockAlign;
   }
 
+  public long calcPositionInWavFile(final long tstatePosition) {
+    return this.calcPositionInWavData(tstatePosition) + this.wavDataStartOffset;
+  }
+
   public float readAtPosition(final long tstatePosition) {
     long blockPosition =
             Math.round(this.tstatesPerBlock * tstatePosition) * this.blockAlign;

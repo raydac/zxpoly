@@ -786,4 +786,8 @@ public final class Motherboard implements ZxPolyConstants, SoundLevels {
   public void doNop() {
     this.frameTiStatesCounter += 4;
   }
+
+  public boolean isMode48k() {
+    return this.modules[0].is48mode();
+  }
 }

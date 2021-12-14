@@ -31,29 +31,10 @@ public class ReaderTzx implements TapeSource, ListModel<TzxWavRenderer.RenderRes
   private final InMemoryWavFile inMemoryWavFile;
   private final TzxWavRenderer.RenderResult renderedWav;
   private final AtomicInteger blockIndex = new AtomicInteger(0);
-  private volatile TapeContext tapeContext;
   private volatile boolean playing;
   private volatile float bias = 0.01f;
-
-  public ReaderTzx(final TimingProfile timingProfile, final String name, final InputStream tap) throws IOException {
-    this.timingProfile = timingProfile;
-    this.name = name;
-    this.tzxFile = new TzxFile(tap);
-
-    this.tzxFile.getBlockList()
-            .forEach(x -> LOGGER.info("Found block: " + x.getClass().getSimpleName()));
-
-    final long startTime = System.currentTimeMillis();
-    this.renderedWav = this.renderAsWav();
-
-    LOGGER.info(String.format("TZX to WAV conversion took %d ms, size %d bytes", (System.currentTimeMillis() - startTime), this.renderedWav.getWav().length));
-    this.inMemoryWavFile = new InMemoryWavFile(new ByteArraySeekableContainer(this.renderedWav.getWav()), timingProfile.ulaFrameTact * 50L);
-  }
-
-  @Override
-  public void setTapeContext(final TapeContext context) {
-    this.tapeContext = context;
-  }
+  private final TapeContext tapeContext;
+  private final TzxWavRenderer.DataType SIGNAL_STOP_TAPE = TzxWavRenderer.DataType.STOP_TAPE;
 
   @Override
   public void dispose() {
@@ -110,10 +91,56 @@ public class ReaderTzx implements TapeSource, ListModel<TzxWavRenderer.RenderRes
     SwingUtilities.invokeLater(() -> this.actionListeners.forEach(x -> x.actionPerformed(new ActionEvent(this, id, command))));
   }
 
+  private final TzxWavRenderer.DataType SIGNAL_STOP_TAPE_IF_ZX48 = TzxWavRenderer.DataType.STOP_TAPE_IF_ZX48;
+
+  public ReaderTzx(final TapeContext context, final TimingProfile timingProfile, final String name, final InputStream tap) throws IOException {
+    this.tapeContext = context;
+    this.timingProfile = timingProfile;
+    this.name = name;
+    this.tzxFile = new TzxFile(tap);
+
+    this.tzxFile.getBlockList()
+            .forEach(x -> LOGGER.info("Found block: " + x.getClass().getSimpleName()));
+
+    final long startTime = System.currentTimeMillis();
+    this.renderedWav = this.renderAsWav();
+
+    LOGGER.info(String.format("TZX to WAV conversion took %d ms, size %d bytes", (System.currentTimeMillis() - startTime), this.renderedWav.getWavData().length));
+    this.inMemoryWavFile = new InMemoryWavFile(new ByteArraySeekableContainer(this.renderedWav.getWavData()), timingProfile.ulaFrameTact * 50L);
+  }
+
   @Override
   public void updateForSpentMachineCycles(final long spentTstates) {
     if (this.playing) {
       this.tStateCounter.addAndGet(spentTstates);
+      final int wavFilePosition = (int) this.inMemoryWavFile.calcPositionInWavFile(this.tStateCounter.get());
+      if (wavFilePosition < this.renderedWav.getControlData().length) {
+        final int controlCode = this.renderedWav.getControlData()[wavFilePosition];
+        boolean rewindUntilControlChange = false;
+
+        if (controlCode == SIGNAL_STOP_TAPE.ordinal()) {
+          LOGGER.info("Sending signal 'stop tape'");
+          this.tapeContext.onTapeSignal(this, TapeContext.ControlSignal.STOP_TAPE);
+          rewindUntilControlChange = true;
+        } else if (controlCode == SIGNAL_STOP_TAPE_IF_ZX48.ordinal()) {
+          LOGGER.info("Sending signal 'stop tape if zx48'");
+          this.tapeContext.onTapeSignal(this, TapeContext.ControlSignal.STOP_TAPE_IF_ZX48);
+          rewindUntilControlChange = true;
+        }
+        if (rewindUntilControlChange) {
+          for (; ; ) {
+            final int position = (int) this.inMemoryWavFile.calcPositionInWavFile(this.tStateCounter.addAndGet(4L));
+            if (position < this.renderedWav.getControlData().length) {
+              if (controlCode != this.renderedWav.getControlData()[position]) {
+                break;
+              }
+            } else {
+              this.playing = false;
+              break;
+            }
+          }
+        }
+      }
     }
   }
 
@@ -134,7 +161,7 @@ public class ReaderTzx implements TapeSource, ListModel<TzxWavRenderer.RenderRes
       try {
         final float value = this.inMemoryWavFile.readAtPosition(this.tStateCounter.get());
         return value > this.bias;
-      } catch (ArrayIndexOutOfBoundsException ex) {
+      } catch (final ArrayIndexOutOfBoundsException ex) {
         this.stopPlay();
         return false;
       }
@@ -200,7 +227,7 @@ public class ReaderTzx implements TapeSource, ListModel<TzxWavRenderer.RenderRes
 
   @Override
   public byte[] getAsWAV() throws IOException {
-    return this.renderedWav.getWav();
+    return this.renderedWav.getWavData();
   }
 
   @Override

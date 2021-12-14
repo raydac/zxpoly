@@ -67,10 +67,10 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
   private int mask;
   private int buffered;
   private int controlChecksum;
+  private final TapeContext tapeContext;
 
-  private volatile TapeContext tapeContext;
-
-  public ReaderTap(final String name, final InputStream tap) throws IOException {
+  public ReaderTap(final TapeContext tapeContext, final String name, final InputStream tap) throws IOException {
+    this.tapeContext = tapeContext;
     this.name = name;
     final TapFormatParser tapParser = new TapFormatParser().read(new JBBPBitInputStream(tap));
     if (tapParser.getTAPBLOCK().length == 0) {
@@ -94,11 +94,6 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
       item.next = null;
       LOGGER.log(Level.INFO, "Pointer to " + makeDescription(this.current));
     }
-  }
-
-  @Override
-  public void setTapeContext(final TapeContext context) {
-    this.tapeContext = context;
   }
 
   @Override

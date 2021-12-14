@@ -6,8 +6,6 @@ import java.io.IOException;
 
 public interface TapeSource {
 
-  void setTapeContext(TapeContext context);
-
   boolean isHi();
 
   void updateForSpentMachineCycles(long spentTstates);

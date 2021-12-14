@@ -358,6 +358,10 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     return (this.port7FFD.get() & PORTw_ZX128_LOCK) != 0;
   }
 
+  public boolean is48mode() {
+    return (this.port7FFD.get() & (PORTw_ZX128_LOCK | PORTw_ZX128_48ROM)) != (PORTw_ZX128_LOCK | PORTw_ZX128_48ROM);
+  }
+
   public long readGfxVideo(final int videoOffset) {
     int offset;
     if ((this.port7FFD.get() & PORTw_ZX128_SCREEN) == 0) {

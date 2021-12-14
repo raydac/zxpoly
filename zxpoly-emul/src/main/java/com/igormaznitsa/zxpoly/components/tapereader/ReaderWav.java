@@ -23,19 +23,15 @@ public class ReaderWav implements TapeSource {
   private final TimingProfile timingProfile;
   private volatile boolean playing;
   private volatile float bias = 0.01f;
-  private volatile TapeContext tapeContext;
+  private final TapeContext tapeContext;
 
-  public ReaderWav(final TimingProfile timingProfile, final String name, final File file) throws IOException {
+  public ReaderWav(final TapeContext tapeContext, final TimingProfile timingProfile, final String name, final File file) throws IOException {
+    this.tapeContext = tapeContext;
     this.timingProfile = timingProfile;
     this.name = name;
     try (final FileSeekableContainer container = new FileSeekableContainer(new RandomAccessFile(file, "r"))) {
       this.wavFile = new InMemoryWavFile(container, timingProfile.ulaFrameTact * 50L);
     }
-  }
-
-  @Override
-  public void setTapeContext(final TapeContext context) {
-    this.tapeContext = context;
   }
 
   @Override
