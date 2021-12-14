@@ -45,7 +45,7 @@ public class ReaderTzx implements TapeSource, ListModel<TzxWavRenderer.RenderRes
 
     final long startTime = System.currentTimeMillis();
     this.renderedWav = this.renderAsWav();
-//    FileUtils.writeByteArrayToFile(new File("test.wav"),this.renderedWav.getWav());
+
     LOGGER.info(String.format("TZX to WAV conversion took %d ms, size %d bytes", (System.currentTimeMillis() - startTime), this.renderedWav.getWav().length));
     this.inMemoryWavFile = new InMemoryWavFile(new ByteArraySeekableContainer(this.renderedWav.getWav()), timingProfile.ulaFrameTact * 50L);
   }

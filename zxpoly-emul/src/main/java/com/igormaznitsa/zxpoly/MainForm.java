@@ -2250,8 +2250,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     try {
       final File selectedTapFile =
               chooseFileForOpen("Load Tape", this.lastTapFolder, null,
-                      new TapFileFilter(),
                       new TzxFileFilter(),
+                      new TapFileFilter(),
                       new WavFileFilter());
       if (selectedTapFile != null) {
         this.setTapFile(selectedTapFile);
