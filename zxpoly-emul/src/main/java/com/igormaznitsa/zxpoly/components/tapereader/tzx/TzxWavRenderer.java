@@ -210,8 +210,19 @@ public class TzxWavRenderer {
           //TODO
           throw new IOException("Unsupported block yet");
         } else if (block instanceof TzxBlockDirectRecording) {
-          //TODO
-          throw new IOException("Unsupported block yet");
+          final TzxBlockDirectRecording directRecording = (TzxBlockDirectRecording) block;
+
+          namedOffsets.add(new RenderResult.NamedOffsets("__direct recording__(pause: " + directRecording.getPauseAfterBlockMs() + " ms)", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
+
+          nextLevel = this.writeDirectRecording(
+                  dataTargetStream,
+                  directRecording.getNumberTstatesPerSample(),
+                  directRecording.getUsedBitsInLastByte(),
+                  Duration.ofMillis(directRecording.getPauseAfterBlockMs()),
+                  directRecording.extractData()
+          );
+
+          blockPointer++;
         } else if (block instanceof TzxBlockGeneralizedData) {
           //TODO
           throw new IOException("Unsupported block yet");
@@ -345,6 +356,36 @@ public class TzxWavRenderer {
     if (!pauseAfterBlock.isZero()) {
       namedOffsets.add(new RenderResult.NamedOffsets("__pause__ [" + pauseAfterBlock.toMillis() + " ms]", WAV_HEADER_LENGTH + outputStream.getCounter()));
       nextLevel = writePause(nextLevel, outputStream, pauseAfterBlock);
+    }
+
+    return nextLevel;
+  }
+
+  private boolean writeDirectRecording(
+          final JBBPBitOutputStream outputStream,
+          final int ticksPerSample,
+          final int bitsInLastByte,
+          final Duration pauseAfterBlock,
+          final byte[] data
+  ) throws IOException {
+
+    boolean nextLevel = false;
+
+    for (int i = 0; i < data.length; i++) {
+      final boolean lastByte = i == data.length - 1;
+      int bitCounter = lastByte ? bitsInLastByte : 8;
+      final int nextDataByte = data[i];
+      int bitMask = 0x80;
+      while (bitCounter > 0) {
+        nextLevel = (nextDataByte & bitMask) != 0;
+        writeSignalLevel(outputStream, ticksPerSample, nextLevel);
+        bitMask >>= 1;
+        bitCounter--;
+      }
+    }
+
+    if (!pauseAfterBlock.isZero()) {
+      nextLevel = writePause(false, outputStream, pauseAfterBlock);
     }
 
     return nextLevel;
