@@ -148,8 +148,15 @@ public class TzxWavRenderer {
         } else if (block instanceof TzxBlockPauseOrStop) {
           final TzxBlockPauseOrStop dataBlock = (TzxBlockPauseOrStop) block;
 
-          namedOffsets.add(new RenderResult.NamedOffsets("__pause or stop__[" + dataBlock.getPauseDurationMs() + " ms]", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
-          nextLevel = writePause(nextLevel, dataTargetStream, Duration.ofMillis(dataBlock.getPauseDurationMs()));
+          Duration duration = Duration.ofMillis(dataBlock.getPauseDurationMs());
+
+          if (duration.isZero()) {
+            namedOffsets.add(new RenderResult.NamedOffsets("<<STOP TAPE>>", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
+            duration = Duration.ofSeconds(10);
+          } else {
+            namedOffsets.add(new RenderResult.NamedOffsets("__stop-pause__[" + dataBlock.getPauseDurationMs() + " ms]", WAV_HEADER_LENGTH + dataTargetStream.getCounter()));
+          }
+          nextLevel = writePause(nextLevel, dataTargetStream, duration);
 
           blockPointer++;
         } else if (block instanceof TzxBlockStandardSpeedData) {
