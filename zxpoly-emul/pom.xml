@@ -137,12 +137,12 @@
                                 </configuration>
                             </execution>
                             <execution>
-                                <id>cache-macos-jdk-arm64</id>
+                                <id>cache-macos-jdk-aarch64</id>
                                 <goals>
                                     <goal>cache-jdk</goal>
                                 </goals>
                                 <configuration>
-                                    <jdkPathProperty>mvnjlink.jdk.macos.arm64.path</jdkPathProperty>
+                                    <jdkPathProperty>mvnjlink.jdk.macos.aarch64.path</jdkPathProperty>
                                     <provider>${openjdk.provider}</provider>
                                     <providerConfig>
                                         <type>${openjdk.bundled.type}</type>
@@ -268,9 +268,9 @@
                                     <toolJdk>${mvnjlink.jdk.work.path}</toolJdk>
                                     <jdepsReportPath>${project.build.directory}${file.separator}jdeps.out
                                     </jdepsReportPath>
-                                    <output>${project.build.directory}${file.separator}jre_macos_arm64</output>
+                                    <output>${project.build.directory}${file.separator}jre_macos_aarch64</output>
                                     <modulePaths>
-                                        <path>${mvnjlink.jdk.macos.arm64.path}${file.separator}jmods</path>
+                                        <path>${mvnjlink.jdk.macos.aarch64.path}${file.separator}jmods</path>
                                     </modulePaths>
                                     <options>
                                         <option>--compress=2</option>
@@ -341,9 +341,9 @@
                                 </goals>
                                 <configuration>
                                     <appendAssemblyId>false</appendAssemblyId>
-                                    <finalName>${project.build.finalName}-macos-arm64-jdk</finalName>
+                                    <finalName>${project.build.finalName}-macos-aarch64-jdk</finalName>
                                     <descriptors>
-                                        <descriptor>src${file.separator}assembly${file.separator}mac_arm.xml
+                                        <descriptor>src/assembly/mac_aarch.xml
                                         </descriptor>
                                     </descriptors>
                                 </configuration>
@@ -370,7 +370,7 @@
                                 </configuration>
                             </execution>
                             <execution>
-                                <id>remove-manifest-from-mac-arm64-jar</id>
+                                <id>remove-manifest-from-mac-aarch64-jar</id>
                                 <goals>
                                     <goal>remove</goal>
                                 </goals>
@@ -378,7 +378,7 @@
                                 <configuration>
                                     <fileset>
                                         <directory>
-                                            ${project.build.directory}${file.separator}${project.build.finalName}-macos-arm64-jdk.jar${file.separator}META-INF
+                                            ${project.build.directory}${file.separator}${project.build.finalName}-macos-aarch64-jdk.jar${file.separator}META-INF
                                         </directory>
                                     </fileset>
                                 </configuration>
@@ -413,10 +413,10 @@
                                 </goals>
                                 <configuration>
                                     <sourceFile>
-                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-arm64-jdk.jar
+                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-aarch64-jdk.jar
                                     </sourceFile>
                                     <destinationFile>
-                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-arm64-jdk.zip
+                                        ${project.build.directory}${file.separator}${project.build.finalName}-macos-aarch64-jdk.zip
                                     </destinationFile>
                                 </configuration>
                             </execution>
