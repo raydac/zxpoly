@@ -4,7 +4,7 @@ import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 
-public final class TurboSoundNedoPc implements IoDevice, SoundLevels {
+public final class TurboSoundNedoPc implements IoDevice {
 
   private final Motherboard motherboard;
   private final Beeper beeper;
@@ -13,8 +13,10 @@ public final class TurboSoundNedoPc implements IoDevice, SoundLevels {
   private final Ay8910Chip chipAy1;
 
   private Ay8910Chip selectedChip;
+  private final int[] audioLevels;
 
   public TurboSoundNedoPc(final Motherboard motherboard) {
+    this.audioLevels = motherboard.getSoundLevels().getLevels();
     this.motherboard = motherboard;
     this.beeper = this.motherboard.getBeeper();
     this.chipAy0 = new Ay8910Chip(this::onLevels0);
@@ -25,16 +27,16 @@ public final class TurboSoundNedoPc implements IoDevice, SoundLevels {
 
   private void onLevels0(final Ay8910Chip ay, final int levelA, final int levelB,
                          final int levelC) {
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_16[levelA]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AMPLITUDE_16[levelB]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AMPLITUDE_16[levelC]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, this.audioLevels[levelA]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, this.audioLevels[levelB]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, this.audioLevels[levelC]);
   }
 
   private void onLevels1(final Ay8910Chip ay, final int levelA, final int levelB,
                          final int levelC) {
-    this.beeper.setChannelValue(Beeper.CHANNEL_TS_A, AMPLITUDE_16[levelA]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_TS_B, AMPLITUDE_16[levelB]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_TS_C, AMPLITUDE_16[levelC]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_TS_A, this.audioLevels[levelA]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_TS_B, this.audioLevels[levelB]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_TS_C, this.audioLevels[levelC]);
   }
 
   @Override

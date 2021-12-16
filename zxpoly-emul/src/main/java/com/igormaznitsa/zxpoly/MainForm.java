@@ -382,6 +382,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     }
 
     this.board = new Motherboard(
+            AppOptions.getInstance().getVolumeProfile(),
             this.timingProfile,
             BASE_ROM,
             AppOptions.getInstance().getDefaultBoardMode(),

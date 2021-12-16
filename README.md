@@ -9,6 +9,7 @@
 
 __2.2.2 (SNAPSHOT)__
 
+- added option 'Volume profile' to select audio volume profile
 - added support for TZX tape snapshots [#10](https://github.com/raydac/zxpoly/issues/10)
 - added keyboard skins provided by @Alessandro1970
 - provided way to change L&F and application UI scale

@@ -18,6 +18,7 @@
 package com.igormaznitsa.zxpoly.utils;
 
 import com.igormaznitsa.zxpoly.components.BoardMode;
+import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -86,6 +87,17 @@ public final class AppOptions {
     return result;
   }
 
+  public synchronized VolumeProfile getVolumeProfile() {
+    VolumeProfile result = VolumeProfile.DEFAULT;
+    final String name = preferences.get(Option.VOLUME_PROFILE.name(), result.name());
+    try {
+      result = VolumeProfile.valueOf(name);
+    } catch (IllegalArgumentException ex) {
+      result = VolumeProfile.DEFAULT;
+    }
+    return result;
+  }
+
   public synchronized String getCustomRomPath() {
     return preferences.get(Option.CUSTOM_ROM_PATH.name(), null);
   }
@@ -100,6 +112,10 @@ public final class AppOptions {
 
   public synchronized void setKeyboardLook(final VirtualKeyboardLook look) {
     preferences.put(Option.KEYBOARD_LOOK.name(), look.name());
+  }
+
+  public synchronized void setVolumeProfile(final VolumeProfile volumeProfile) {
+    preferences.put(Option.VOLUME_PROFILE.name(), volumeProfile.name());
   }
 
   public synchronized String getAddress() {
@@ -411,6 +427,7 @@ public final class AppOptions {
   }
 
   public enum Option {
+    VOLUME_PROFILE,
     UI_LF_CLASS,
     UI_SCALE,
     OLD_COLOR_TV_ON_START,

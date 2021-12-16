@@ -33,7 +33,7 @@ import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
 import static java.lang.Math.min;
 
 @SuppressWarnings({"unused", "NonAtomicOperationOnVolatileField"})
-public final class Motherboard implements ZxPolyConstants, SoundLevels {
+public final class Motherboard implements ZxPolyConstants {
 
   public static final int TRIGGER_NONE = 0;
   public static final int TRIGGER_DIFF_MODULESTATES = 1;
@@ -74,8 +74,11 @@ public final class Motherboard implements ZxPolyConstants, SoundLevels {
   private volatile boolean gfxLeveledAnd = false;
   private int frameTiStatesCounter = 0;
   private final TimingProfile timingProfile;
+  private final VolumeProfile soundLevels;
+  private final int[] audioLevels;
 
   public Motherboard(
+          final VolumeProfile soundLevels,
           final TimingProfile timingProfile,
           final RomData rom,
           final BoardMode boardMode,
@@ -86,14 +89,13 @@ public final class Motherboard implements ZxPolyConstants, SoundLevels {
           final boolean allowKempstonMouse,
           final VirtualKeyboardDecoration vkbdContainer
   ) {
-    if (rom == null) {
-      throw new NullPointerException("ROM must not be null");
-    }
+    this.soundLevels = soundLevels;
+    this.audioLevels = this.soundLevels.getLevels();
     this.timingProfile = timingProfile;
     this.modules = new ZxPolyModule[4];
     final List<IoDevice> ioDevices = new ArrayList<>();
     for (int i = 0; i < this.modules.length; i++) {
-      this.modules[i] = new ZxPolyModule(timingProfile, this, rom, i);
+      this.modules[i] = new ZxPolyModule(timingProfile, this, Objects.requireNonNull(rom, "ROM must not be null"), i);
       ioDevices.add(this.modules[i]);
     }
 
@@ -142,6 +144,10 @@ public final class Motherboard implements ZxPolyConstants, SoundLevels {
     for (int i = 0; i < SPEC256_GFX_CORES; i++) {
       this.spec256GfxCores[i] = new Z80(this.modules[0].getCpu());
     }
+  }
+
+  public VolumeProfile getSoundLevels() {
+    return this.soundLevels;
   }
 
   private static boolean isContended(final int address, final int port7FFD) {
@@ -495,11 +501,11 @@ public final class Motherboard implements ZxPolyConstants, SoundLevels {
       final int spentTstates = this.frameTiStatesCounter - prevFrameInt;
 
       final int feValue = this.video.getPortFE();
-      final int levelTapeOut = AMPLITUDE_16[((feValue >> 3) & 1) == 0 ? 0 : 14];
-      final int levelSpeaker = AMPLITUDE_16[((feValue >> 4) & 1) == 0 ? 0 : 15];
-      final int levelTapeIn = AMPLITUDE_16[this.keyboard.isTapeIn() ? 6 : 0];
+      final int levelTapeOut = this.audioLevels[((feValue >> 3) & 1) == 0 ? 0 : 14];
+      final int levelSpeaker = this.audioLevels[((feValue >> 4) & 1) == 0 ? 0 : 15];
+      final int levelTapeIn = this.audioLevels[this.keyboard.isTapeIn() ? 6 : 0];
 
-      final int mixedLevels = Math.min(AMPLITUDE_16[15], levelSpeaker + levelTapeIn + levelTapeOut);
+      final int mixedLevels = Math.min(this.audioLevels[15], levelSpeaker + levelTapeIn + levelTapeOut);
 
       this.beeper.setChannelValue(CHANNEL_BEEPER, mixedLevels);
 

@@ -4,13 +4,15 @@ import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 
-public final class Zx128Ay8910 implements IoDevice, SoundLevels {
+public final class Zx128Ay8910 implements IoDevice {
 
   private final Motherboard motherboard;
   private final Ay8910Chip ay8910;
   private final Beeper beeper;
+  private final int[] audioLevels;
 
   public Zx128Ay8910(final Motherboard motherboard) {
+    this.audioLevels = motherboard.getSoundLevels().getLevels();
     this.motherboard = motherboard;
     this.ay8910 = new Ay8910Chip(this::onAyLevels);
     this.beeper = this.motherboard.getBeeper();
@@ -18,9 +20,9 @@ public final class Zx128Ay8910 implements IoDevice, SoundLevels {
 
   private void onAyLevels(final Ay8910Chip ay, final int levelA, final int levelB,
                           final int levelC) {
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, AMPLITUDE_16[levelA]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, AMPLITUDE_16[levelB]);
-    this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, AMPLITUDE_16[levelC]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_A, this.audioLevels[levelA]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_B, this.audioLevels[levelB]);
+    this.beeper.setChannelValue(Beeper.CHANNEL_AY_C, this.audioLevels[levelC]);
   }
 
   @Override
