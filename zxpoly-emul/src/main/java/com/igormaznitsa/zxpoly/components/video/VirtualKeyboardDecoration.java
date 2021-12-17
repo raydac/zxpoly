@@ -12,8 +12,10 @@ public final class VirtualKeyboardDecoration {
   private static final String PATH = "/com/igormaznitsa/zxpoly/keyboard/";
   private final BufferedImage keyBoardImage;
   private final Rectangle[] keyCoords;
+  private final String id;
 
   VirtualKeyboardDecoration(final String id) throws IOException {
+    this.id = id;
     final Properties properties = new Properties();
     final String propertiesResource = PATH + id + ".properties";
     try (final InputStream stream = Objects.requireNonNull(VirtualKeyboardDecoration.class.getResourceAsStream(propertiesResource), "Can't find " + propertiesResource)) {
@@ -100,6 +102,10 @@ public final class VirtualKeyboardDecoration {
     } catch (NumberFormatException ex) {
       throw new IllegalArgumentException("Wrong number in key '" + key + "' coordinates: " + coords);
     }
+  }
+
+  public String getId() {
+    return this.id;
   }
 
   public int findPressedKeyBits(final Point point) {

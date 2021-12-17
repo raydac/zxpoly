@@ -26,6 +26,7 @@ import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk;
 import com.igormaznitsa.zxpoly.components.snd.Beeper;
 import com.igormaznitsa.zxpoly.components.snd.SourceSoundPort;
+import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeContext;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSourceFactory;
@@ -376,13 +377,17 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     final VirtualKeyboardDecoration vkbdContainer;
     try {
       vkbdContainer = AppOptions.getInstance().getKeyboardLook().load();
+      LOGGER.info("Virtual keyboard profile: " + vkbdContainer.getId());
     } catch (Exception ex) {
       LOGGER.log(Level.SEVERE, "Can't load virtual keyboard: " + ex.getMessage(), ex);
       throw new Error("Can't load virtual keyboard");
     }
 
+    final VolumeProfile volumeProfile = AppOptions.getInstance().getVolumeProfile();
+    LOGGER.info("Selected volume profile: " + volumeProfile.name());
+
     this.board = new Motherboard(
-            AppOptions.getInstance().getVolumeProfile(),
+            volumeProfile,
             this.timingProfile,
             BASE_ROM,
             AppOptions.getInstance().getDefaultBoardMode(),

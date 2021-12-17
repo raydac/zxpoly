@@ -88,12 +88,12 @@ public final class AppOptions {
   }
 
   public synchronized VolumeProfile getVolumeProfile() {
-    VolumeProfile result = VolumeProfile.DEFAULT;
+    VolumeProfile result = VolumeProfile.EXPONENTIAL;
     final String name = preferences.get(Option.VOLUME_PROFILE.name(), result.name());
     try {
       result = VolumeProfile.valueOf(name);
     } catch (IllegalArgumentException ex) {
-      result = VolumeProfile.DEFAULT;
+      result = VolumeProfile.EXPONENTIAL;
     }
     return result;
   }
