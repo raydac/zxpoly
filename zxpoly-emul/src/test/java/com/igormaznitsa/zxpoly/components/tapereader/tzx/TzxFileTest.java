@@ -25,7 +25,9 @@ public class TzxFileTest extends AbstractTzxTest {
           "wizardswarrior",
           "worldgames",
           "silvas",
-          "xevious"
+          "xevious",
+          "sII",
+          "tlc"
   };
 
   @Test
