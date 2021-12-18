@@ -24,7 +24,8 @@ public class TzxFileTest extends AbstractTzxTest {
           "wcc",
           "wizardswarrior",
           "worldgames",
-          "silvas"
+          "silvas",
+          "xevious"
   };
 
   @Test

@@ -14,7 +14,7 @@ public class TzxBlockCustomInfo extends AbstractTzxBlock implements InformationB
 
   public TzxBlockCustomInfo(final JBBPBitInputStream inputStream) throws IOException {
     super(TzxBlockId.CUSTOM_INFO.getId());
-    this.idString = new String(inputStream.readByteArray(10), StandardCharsets.ISO_8859_1);
+    this.idString = new String(inputStream.readByteArray(0x10), StandardCharsets.ISO_8859_1);
     final long length = readDWord(inputStream);
     this.customInfo = inputStream.readByteArray((int) length);
   }
@@ -22,7 +22,7 @@ public class TzxBlockCustomInfo extends AbstractTzxBlock implements InformationB
   @Override
   public void write(final JBBPBitOutputStream outputStream) throws IOException {
     super.write(outputStream);
-    outputStream.write(Arrays.copyOf(this.idString.getBytes(StandardCharsets.ISO_8859_1), 10));
+    outputStream.write(Arrays.copyOf(this.idString.getBytes(StandardCharsets.ISO_8859_1), 0x10));
     writeDWord(outputStream, this.customInfo.length);
     outputStream.write(this.customInfo);
   }
