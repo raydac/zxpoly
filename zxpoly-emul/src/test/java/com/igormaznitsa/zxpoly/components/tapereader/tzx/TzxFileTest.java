@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TzxFileTest extends AbstractTzxTest {
 
@@ -27,13 +28,17 @@ public class TzxFileTest extends AbstractTzxTest {
           "silvas",
           "xevious",
           "sII",
-          "tlc"
+          "tlc",
+          "test_control_blocks",
+          "trailing-pause-block",
+          "vallation",
+          "dvIII"
   };
 
   @Test
-  public void testReadWrite() throws IOException {
+  public void testReadRenderWrite() throws IOException {
     for (final String game : TEST_GAMES) {
-      System.out.println("Test: " + game);
+      System.out.println("TZX test: " + game);
       final byte[] data = readTestResource(game);
       final TzxFile parsed = new TzxFile(new ByteArrayInputStream(data));
 
@@ -43,6 +48,9 @@ public class TzxFileTest extends AbstractTzxTest {
 
       final byte[] savedResult = buffer.toByteArray();
       assertArrayEquals(data, savedResult);
+
+      final TzxWavRenderer.RenderResult renderResult = new TzxWavRenderer(TzxWavRenderer.Freq.FREQ_44100, parsed).render();
+      assertTrue(renderResult.getWavData().length > 0);
     }
   }
 

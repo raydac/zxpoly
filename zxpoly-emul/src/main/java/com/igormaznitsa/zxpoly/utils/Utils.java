@@ -148,6 +148,14 @@ public final class Utils {
     }
   }
 
+  public static int minimalRequiredBitsFor(int number) {
+    int r = 0;
+    while ((number >>>= 1) != 0) {
+      r++;
+    }
+    return r + 1;
+  }
+
   public static InputStream findResourceOrError(final String resource) {
     final InputStream result = Utils.class.getClassLoader().getResourceAsStream(resource);
     if (result == null) {

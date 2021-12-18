@@ -4,6 +4,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.zxpoly.utils.SpectrumUtils;
+import com.igormaznitsa.zxpoly.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -39,10 +40,10 @@ public class TzxWavRenderer {
     this.tstatesPerSample = (double) this.freq.getFreq() / (double) TSTATES_PER_SECOND;
   }
 
-  private static String extractNameFromTapHeader(final byte[] data) {
+  private static String extractNameFromTapHeader(final boolean turbo, final byte[] data) {
     final byte[] name = new byte[10];
     if (data.length < 12) return "<UNKNOWN>";
-    System.arraycopy(data, 2, name, 0, name.length);
+    System.arraycopy(data, turbo ? 1 : 2, name, 0, name.length);
 
     final StringBuilder result = new StringBuilder();
 
@@ -143,7 +144,7 @@ public class TzxWavRenderer {
           final int flag = tapData[0] & 0xFF;
 
           if (flag < 128) {
-            namedOffsets.add(new RenderResult.NamedOffsets(extractNameFromTapHeader(tapData), WAV_HEADER_LENGTH + dataStream.getCounter()));
+            namedOffsets.add(new RenderResult.NamedOffsets(extractNameFromTapHeader(false, tapData), WAV_HEADER_LENGTH + dataStream.getCounter()));
           } else {
             namedOffsets.add(new RenderResult.NamedOffsets("...std.data...", WAV_HEADER_LENGTH + dataStream.getCounter()));
           }
@@ -174,7 +175,7 @@ public class TzxWavRenderer {
           final int flag = tapData[0] & 0xFF;
 
           if (flag < 128) {
-            namedOffsets.add(new RenderResult.NamedOffsets(extractNameFromTapHeader(tapData) + " {turbo}", WAV_HEADER_LENGTH + dataStream.getCounter()));
+            namedOffsets.add(new RenderResult.NamedOffsets(extractNameFromTapHeader(true, tapData) + " {turbo}", WAV_HEADER_LENGTH + dataStream.getCounter()));
           } else {
             namedOffsets.add(new RenderResult.NamedOffsets("...turbo.data...", WAV_HEADER_LENGTH + dataStream.getCounter()));
           }
@@ -200,7 +201,7 @@ public class TzxWavRenderer {
           blockPointer++;
         } else if (block instanceof TzxBlockCSWRecording) {
           //TODO
-          throw new IOException("Unsupported block yet");
+          throw new IOException("Unsupported TzxBlockCSWRecording block yet");
         } else if (block instanceof TzxBlockDirectRecording) {
           final TzxBlockDirectRecording directRecording = (TzxBlockDirectRecording) block;
 
@@ -216,11 +217,18 @@ public class TzxWavRenderer {
 
           blockPointer++;
         } else if (block instanceof TzxBlockGeneralizedData) {
-          //TODO
-          throw new IOException("Unsupported block yet");
+          final TzxBlockGeneralizedData dataBlock = (TzxBlockGeneralizedData) block;
+
+          namedOffsets.add(new RenderResult.NamedOffsets("...generalized.data... [dSymbols=" + dataBlock.getTotalNumberOfSymbolsInDataStream() + ",dChar=" + Utils.minimalRequiredBitsFor(dataBlock.getNumberOfDataSymbolsInAbcTable() - 1) + ']', WAV_HEADER_LENGTH + dataStream.getCounter()));
+
+          nextLevel = dataBlock.decodeRecordsAsPulses(nextLevel, (ticks, level) -> {
+            this.writeSignalLevel(dataStream, ticks, level, DataType.GENERALIZED_DATA);
+          });
+
+          blockPointer++;
         } else if (block instanceof TzxBlockKansasCityStandard) {
           //TODO
-          throw new IOException("Unsupported block yet");
+          throw new IOException("Unsupported TzxBlockKansasCityStandard block yet");
         } else if (block instanceof TzxBlockPureData) {
           final TzxBlockPureData dataBlock = (TzxBlockPureData) block;
           final byte[] tapData = dataBlock.extractData();
@@ -436,7 +444,8 @@ public class TzxWavRenderer {
     STD_SYNC2,
     STD_DATA,
     STOP_TAPE,
-    STOP_TAPE_IF_ZX48;
+    STOP_TAPE_IF_ZX48,
+    GENERALIZED_DATA;
   }
 
   public enum Freq {
