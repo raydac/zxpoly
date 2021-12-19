@@ -80,7 +80,8 @@ public class TzxWavRenderer {
         } else if (block instanceof TzxBlockMessage) {
           final TzxBlockMessage message = (TzxBlockMessage) block;
           if (this.logger != null) {
-            this.logger.info("TzxMessage: " + message.getText());
+            final String messageText = message.getText().replace('\r', ' ').replace('\t', ' ').replace('\n', ' ');
+            this.logger.info("TzxMessage: " + messageText);
           }
         }
         blockPointer++;
