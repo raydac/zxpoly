@@ -6,7 +6,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class TzxBlockArchiveInfo extends AbstractTzxBlock implements InformationBlock {
+public class TzxBlockArchiveInfo extends AbstractTzxInformationBlock {
 
   private final int blockLength;
   private final Text[] texts;

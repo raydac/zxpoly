@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockSetSignalLevel extends AbstractTzxBlock implements SoundDataBlock {
+public class TzxBlockSetSignalLevel extends AbstractTzxSoundDataBlock {
 
   private final int signalLevel;
 

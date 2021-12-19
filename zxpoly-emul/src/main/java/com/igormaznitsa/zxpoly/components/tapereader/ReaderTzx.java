@@ -222,7 +222,7 @@ public class ReaderTzx implements TapeSource, ListModel<TzxWavRenderer.RenderRes
   }
 
   private TzxWavRenderer.RenderResult renderAsWav() throws IOException {
-    return new TzxWavRenderer(TzxWavRenderer.Freq.FREQ_44100, this.tzxFile).render();
+    return new TzxWavRenderer(TzxWavRenderer.Freq.FREQ_44100, this.tzxFile, LOGGER).render();
   }
 
   @Override

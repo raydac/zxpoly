@@ -12,7 +12,7 @@ import java.io.IOException;
 import static com.igormaznitsa.jbbp.utils.JBBPUtils.reverseBitsInByte;
 import static com.igormaznitsa.zxpoly.utils.Utils.minimalRequiredBitsFor;
 
-public class TzxBlockGeneralizedData extends AbstractTzxBlock implements SoundDataBlock {
+public class TzxBlockGeneralizedData extends AbstractTzxSoundDataBlock {
 
   private final long blockLength;
   private final int pauseAfterBlockMs;

@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockPauseOrStop extends AbstractTzxBlock implements SoundDataBlock {
+public class TzxBlockPauseOrStop extends AbstractTzxSoundDataBlock {
 
   private final int pauseDurationMs;
 

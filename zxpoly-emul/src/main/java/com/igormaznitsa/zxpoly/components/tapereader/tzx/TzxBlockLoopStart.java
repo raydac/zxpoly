@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockLoopStart extends AbstractTzxBlock implements FlowManagementBlock {
+public class TzxBlockLoopStart extends AbstractTzxFlowManagementBlock {
 
   private final int repetitions;
 

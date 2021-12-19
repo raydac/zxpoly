@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockPureData extends AbstractTzxBlock implements SoundDataBlock {
+public class TzxBlockPureData extends AbstractTzxSoundDataBlock {
   private final int lengthZeroBitPulse;
   private final int lengthOneBitPulse;
   private final int usedBitsInLastByte;

@@ -4,7 +4,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 
 import java.io.IOException;
 
-public class TzxBlockLoopEnd extends AbstractTzxBlock implements FlowManagementBlock {
+public class TzxBlockLoopEnd extends AbstractTzxFlowManagementBlock {
 
   public TzxBlockLoopEnd(final JBBPBitInputStream inputStream) throws IOException {
     super(TzxBlockId.LOOP_END.getId());

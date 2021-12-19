@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class TzxBlockCustomInfo extends AbstractTzxBlock implements InformationBlock {
+public class TzxBlockCustomInfo extends AbstractTzxInformationBlock {
 
   private final String idString;
   private final byte[] customInfo;

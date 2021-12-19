@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
-public class TzxBlockCSWRecording extends AbstractTzxBlock implements SoundDataBlock {
+public class TzxBlockCSWRecording extends AbstractTzxSoundDataBlock {
 
   public static final int COMPRESSION_RLE = 1;
   public static final int COMPRESSION_ZRLE = 2;

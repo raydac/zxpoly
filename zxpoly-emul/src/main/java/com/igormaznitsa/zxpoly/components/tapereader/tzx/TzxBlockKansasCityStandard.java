@@ -6,7 +6,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockKansasCityStandard extends AbstractTzxBlock implements SoundDataBlock {
+public class TzxBlockKansasCityStandard extends AbstractTzxSoundDataBlock {
 
   private final long blockLength;
   private final int pauseAfterBlockInMs;

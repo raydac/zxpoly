@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockDirectRecording extends AbstractTzxBlock implements SoundDataBlock {
+public class TzxBlockDirectRecording extends AbstractTzxSoundDataBlock {
 
   private final int numberTstatesPerSample;
   private final int pauseAfterBlockMs;

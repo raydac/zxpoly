@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockPureTone extends AbstractTzxBlock implements SoundDataBlock {
+public class TzxBlockPureTone extends AbstractTzxSoundDataBlock {
   private final int lengthOnePluseTstates;
   private final int numberOfPulses;
 

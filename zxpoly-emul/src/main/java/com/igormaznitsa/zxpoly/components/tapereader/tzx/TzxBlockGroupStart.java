@@ -6,7 +6,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class TzxBlockGroupStart extends AbstractTzxBlock implements InformationBlock {
+public class TzxBlockGroupStart extends AbstractTzxInformationBlock {
 
   private final String groupName;
 

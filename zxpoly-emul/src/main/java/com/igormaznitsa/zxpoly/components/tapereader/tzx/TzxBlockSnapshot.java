@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockSnapshot extends AbstractTzxBlock implements SoundDataBlock, DeprecatedBlock {
+public class TzxBlockSnapshot extends AbstractTzxSoundDataBlock implements TzxDeprecatedBlock {
   private final int type;
   private final byte[] data;
 

@@ -6,7 +6,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class TzxBlockMessage extends AbstractTzxBlock implements InformationBlock {
+public class TzxBlockMessage extends AbstractTzxInformationBlock {
 
   private final int timeInSeconds;
   private final String text;

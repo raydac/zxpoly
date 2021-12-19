@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 public class TzxWavRenderer {
   public static final int WAV_HEADER_LENGTH = 44;
@@ -33,8 +34,10 @@ public class TzxWavRenderer {
   private final List<Repeat> repeatStack = new ArrayList<>();
   private final List<List<Integer>> callStack = new ArrayList<>();
   private final double tstatesPerSample;
+  private final Logger logger;
 
-  public TzxWavRenderer(final Freq freq, final TzxFile tzxFile) {
+  public TzxWavRenderer(final Freq freq, final TzxFile tzxFile, final Logger logger) {
+    this.logger = logger;
     this.freq = Objects.requireNonNull(freq);
     this.tzxFile = Objects.requireNonNull(tzxFile);
     this.tstatesPerSample = (double) this.freq.getFreq() / (double) TSTATES_PER_SECOND;
@@ -68,14 +71,21 @@ public class TzxWavRenderer {
     while (blockPointer < blockList.size()) {
       final AbstractTzxBlock block = blockList.get(blockPointer);
 
-      if (block instanceof InformationBlock) {
+      if (block instanceof AbstractTzxSystemBlock) {
+        blockPointer++;
+      } else if (block instanceof AbstractTzxInformationBlock) {
         if (block instanceof TzxBlockGroupStart) {
           final TzxBlockGroupStart groupStart = (TzxBlockGroupStart) block;
           namedOffsets.add(new RenderResult.NamedOffsets("GROUP>> " + groupStart.getGroupName(), WAV_HEADER_LENGTH + dataStream.getCounter()));
+        } else if (block instanceof TzxBlockMessage) {
+          final TzxBlockMessage message = (TzxBlockMessage) block;
+          if (this.logger != null) {
+            this.logger.info("TzxMessage: " + message.getText());
+          }
         }
         blockPointer++;
-      } else if (block instanceof FlowManagementBlock) {
-        final short[] offsets = ((FlowManagementBlock) block).getOffsets();
+      } else if (block instanceof AbstractTzxFlowManagementBlock) {
+        final short[] offsets = ((AbstractTzxFlowManagementBlock) block).getOffsets();
         if (block instanceof TzxBlockCallSequence) {
           final TzxBlockCallSequence callSequence = (TzxBlockCallSequence) block;
           final List<Integer> callIndexes = new ArrayList<>();
@@ -116,7 +126,7 @@ public class TzxWavRenderer {
         } else {
           throw new Error("Unexpected management block type: " + block.getClass().getSimpleName());
         }
-      } else if (block instanceof SoundDataBlock) {
+      } else if (block instanceof AbstractTzxSoundDataBlock) {
         if (block instanceof TzxBlockSetSignalLevel) {
           final TzxBlockSetSignalLevel dataBlock = (TzxBlockSetSignalLevel) block;
           namedOffsets.add(new RenderResult.NamedOffsets("...set.level [" + dataBlock.getLevel() + "]...", WAV_HEADER_LENGTH + dataStream.getCounter()));

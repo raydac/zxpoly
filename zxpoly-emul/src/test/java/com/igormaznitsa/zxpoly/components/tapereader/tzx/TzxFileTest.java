@@ -49,7 +49,7 @@ public class TzxFileTest extends AbstractTzxTest {
       final byte[] savedResult = buffer.toByteArray();
       assertArrayEquals(data, savedResult);
 
-      final TzxWavRenderer.RenderResult renderResult = new TzxWavRenderer(TzxWavRenderer.Freq.FREQ_44100, parsed).render();
+      final TzxWavRenderer.RenderResult renderResult = new TzxWavRenderer(TzxWavRenderer.Freq.FREQ_44100, parsed, null).render();
       assertTrue(renderResult.getWavData().length > 0);
     }
   }

@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockJumpTo extends AbstractTzxBlock implements FlowManagementBlock {
+public class TzxBlockJumpTo extends AbstractTzxFlowManagementBlock {
 
   private final short[] offsets;
 
