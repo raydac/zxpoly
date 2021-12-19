@@ -5,7 +5,7 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 
-public class TzxBlockSetSignalLevel extends AbstractTzxBlock implements SystemBlock {
+public class TzxBlockSetSignalLevel extends AbstractTzxBlock implements SoundDataBlock {
 
   private final int signalLevel;
 
@@ -20,6 +20,20 @@ public class TzxBlockSetSignalLevel extends AbstractTzxBlock implements SystemBl
     super.write(outputStream);
     writeDWord(outputStream, 1L);
     outputStream.write(this.signalLevel);
+  }
+
+  @Override
+  public int getDataLength() {
+    return 1;
+  }
+
+  public int getLevel() {
+    return this.signalLevel;
+  }
+
+  @Override
+  public byte[] extractData() throws IOException {
+    return new byte[]{(byte) this.signalLevel};
   }
 
   public int getSignalLevel() {

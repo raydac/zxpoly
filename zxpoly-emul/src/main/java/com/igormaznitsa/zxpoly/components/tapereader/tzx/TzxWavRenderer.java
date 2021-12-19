@@ -117,7 +117,12 @@ public class TzxWavRenderer {
           throw new Error("Unexpected management block type: " + block.getClass().getSimpleName());
         }
       } else if (block instanceof SoundDataBlock) {
-        if (block instanceof TzxBlockStopTapeIf48k) {
+        if (block instanceof TzxBlockSetSignalLevel) {
+          final TzxBlockSetSignalLevel dataBlock = (TzxBlockSetSignalLevel) block;
+          namedOffsets.add(new RenderResult.NamedOffsets("...set.level [" + dataBlock.getLevel() + "]...", WAV_HEADER_LENGTH + dataStream.getCounter()));
+          nextLevel = dataBlock.getLevel() > 0;
+          blockPointer++;
+        } else if (block instanceof TzxBlockStopTapeIf48k) {
           namedOffsets.add(new RenderResult.NamedOffsets("-==STOP TAPE IF ZX48==-", WAV_HEADER_LENGTH + dataStream.getCounter()));
           nextLevel = writePause(nextLevel, dataStream, Duration.ofSeconds(1), DataType.PAUSE);
           nextLevel = writePause(nextLevel, dataStream, Duration.ofSeconds(4), DataType.STOP_TAPE_IF_ZX48);
