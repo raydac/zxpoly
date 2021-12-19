@@ -1,4 +1,4 @@
-__2.2.2 (SNAPSHOT)__
+__2.2.2 (19-dec-2021)__
 
 - added option 'Volume profile' to select audio volume profile
 - added support for TZX tape snapshots [#10](https://github.com/raydac/zxpoly/issues/10)
