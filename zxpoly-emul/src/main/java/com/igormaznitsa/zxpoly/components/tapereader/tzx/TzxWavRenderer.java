@@ -82,6 +82,7 @@ public class TzxWavRenderer {
           if (this.logger != null) {
             final String messageText = message.getText().replace('\r', ' ').replace('\t', ' ').replace('\n', ' ');
             this.logger.info("TzxMessage: " + messageText);
+            namedOffsets.add(new RenderResult.NamedOffsets("MESSAGE: " + messageText, WAV_HEADER_LENGTH + dataStream.getCounter()));
           }
         }
         blockPointer++;
