@@ -64,7 +64,7 @@ under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 | ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.2.2/zxpoly-emul-2.2.2.jar)__                          | 
 
 Because the emulator is written in Java, its JAR file can be started just through command
-line `java -jar zxpoly-emul-2.2.1.jar`   
+line `java -jar zxpoly-emul-2.2.2.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in __File->Options->Active
 ROM__, the ROM will be downloaded from one of remote network resources.   
 ![Test-ROM](docs/screenshots/testromscr1.png)
