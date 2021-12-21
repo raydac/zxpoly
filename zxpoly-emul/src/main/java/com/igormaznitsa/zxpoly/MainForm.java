@@ -109,9 +109,6 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private static final Icon ICO_ZX128 = new ImageIcon(Utils.loadIcon("zx128.png"));
   private static final Icon ICO_ZX128_DIS =
           UIManager.getLookAndFeel().getDisabledIcon(null, ICO_ZX128);
-  private static final Icon ICO_EMUL_PLAY = new ImageIcon(Utils.loadIcon("emul_play.png"));
-  private static final Icon ICO_EMUL_PAUSE = new ImageIcon(Utils.loadIcon("emul_pause.png"));
-  private static final Icon ICO_EMUL_VKBD = new ImageIcon(Utils.loadIcon("vkbd.png"));
   private static final Icon ICO_SPRITECORRECTOR = new ImageIcon(Utils.loadIcon("spritecorrector.png"));
   private static final String TEXT_START_ANIM_GIF = "Record AGIF";
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
@@ -212,7 +209,6 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private JMenu menuView;
   private JMenu menuViewZoom;
   private JMenu menuViewVideoFilter;
-  private final JToggleButton toggleButtonShowVkbd;
   private JMenuItem menuViewFullScreen;
   private JMenuItem menuViewZoomIn;
   private JMenuItem menuViewZoomOut;
@@ -298,38 +294,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
     this.menuBar.add(Box.createHorizontalGlue());
 
-    this.toggleButtonShowVkbd = new JToggleButton();
-    this.toggleButtonShowVkbd.setIcon(ICO_EMUL_VKBD);
-    this.toggleButtonShowVkbd.setFocusable(false);
-    this.toggleButtonShowVkbd.setRolloverEnabled(false);
-    this.toggleButtonShowVkbd.setToolTipText("Show/Hide virtual keyboard");
-    this.toggleButtonShowVkbd.addActionListener(e -> {
-      final JToggleButton source = (JToggleButton) e.getSource();
-      showVirtualKeyboard(source.isSelected());
-    });
-
-    final JToggleButton buttonStartPause = new JToggleButton();
-    buttonStartPause.setFocusable(false);
-
-    buttonStartPause.setIcon(ICO_EMUL_PAUSE);
-    buttonStartPause.setRolloverEnabled(false);
-    buttonStartPause.setToolTipText("Play/Pause emulation");
-
-    buttonStartPause.addActionListener(e -> {
-      final JToggleButton source = (JToggleButton) e.getSource();
-      if (source.isSelected()) {
-        MainForm.this.stepSemaphor.lock();
-        source.setIcon(ICO_EMUL_PLAY);
-        LOGGER.info("Emulator is paused by PLAY/PAUSE button");
-      } else {
-        MainForm.this.stepSemaphor.unlock();
-        source.setIcon(ICO_EMUL_PAUSE);
-        LOGGER.info("Emulator is started by PLAY/PAUSE button");
-      }
-    });
-
-    this.menuBar.add(this.toggleButtonShowVkbd);
-    this.menuBar.add(buttonStartPause);
+    addFastButtons(this.menuBar, List.of(FastButton.VIRTUAL_KEYBOARD, FastButton.START_PAUSE));
 
     this.setTitle(title);
 
@@ -555,6 +520,48 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     if (AppOptions.getInstance().isOldColorTvOnStart()) {
       this.board.getVideoController().setTvFilterChain(TvFilterChain.OLDTV);
     }
+  }
+
+  private void addFastButtons(final JMenuBar menuBar, final List<FastButton> fastButtons) {
+    fastButtons.forEach(b -> {
+      final AbstractButton abstractButton;
+      if (b.getButtonClass().isAssignableFrom(JToggleButton.class)) {
+        abstractButton = new JToggleButton();
+        abstractButton.setRolloverEnabled(false);
+      } else {
+        throw new Error("Unexpected button class: " + b.getButtonClass());
+      }
+      abstractButton.setName(b.getComponentName());
+      abstractButton.setIcon(b.getIcon());
+      abstractButton.setSelectedIcon(b.getIconSelected());
+      abstractButton.setToolTipText(b.getToolTip());
+      abstractButton.setFocusable(false);
+
+      switch (b) {
+        case START_PAUSE: {
+          abstractButton.addActionListener(e -> {
+            final JToggleButton source = (JToggleButton) e.getSource();
+            if (source.isSelected()) {
+              MainForm.this.stepSemaphor.lock();
+            } else {
+              MainForm.this.stepSemaphor.unlock();
+            }
+          });
+        }
+        break;
+        case VIRTUAL_KEYBOARD: {
+          abstractButton.addActionListener(e -> {
+            final JToggleButton source = (JToggleButton) e.getSource();
+            showVirtualKeyboard(source.isSelected());
+          });
+        }
+        break;
+        default: {
+          throw new Error("Unexpected fast button: " + b);
+        }
+      }
+      menuBar.add(abstractButton);
+    });
   }
 
   private static void setMenuEnable(final JMenuItem item, final boolean enable) {
@@ -1358,6 +1365,24 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     }
   }
 
+  private void selectFastButton(final FastButton fastButton, final boolean select) {
+    Component component = null;
+    for (final Component c : this.menuBar.getComponents()) {
+      if (c.getName() != null && c.getName().equals(fastButton.getComponentName())) {
+        component = c;
+        break;
+      }
+    }
+
+    if (component != null) {
+      if (fastButton.getButtonClass().isAssignableFrom(JToggleButton.class)) {
+        ((JToggleButton) component).setSelected(select);
+      } else if (fastButton.getButtonClass().isAssignableFrom(JButton.class) && select) {
+        ((JButton) component).doClick();
+      }
+    }
+  }
+
   private void doFullScreen() {
     try {
       if (System.currentTimeMillis() - this.lastFullScreenEventTime > 1000L) {
@@ -1415,7 +1440,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
             this.doVcSize();
             vc.setVkbShow(false);
             vc.zoomForSize(gDevice.getDefaultConfiguration().getBounds());
-            toggleButtonShowVkbd.setSelected(false);
+            selectFastButton(FastButton.VIRTUAL_KEYBOARD, false);
           });
         } else {
           lastFullScreen.getContentPane().removeAll();
@@ -1443,7 +1468,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           SwingUtilities.invokeLater(() -> {
             this.doVcSize();
             vc.setVkbShow(false);
-            toggleButtonShowVkbd.setSelected(false);
+            selectFastButton(FastButton.VIRTUAL_KEYBOARD, false);
           });
         }
       } else {
@@ -2181,7 +2206,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
   public void showVirtualKeyboard(final boolean show) {
     this.board.getVideoController().setVkbShow(show);
-    this.toggleButtonShowVkbd.setSelected(show);
+    this.selectFastButton(FastButton.VIRTUAL_KEYBOARD, show);
   }
 
   private void menuOptionsTurboActionPerformed(ActionEvent evt) {
