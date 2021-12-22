@@ -15,6 +15,14 @@ public enum FastButton {
   private final ImageIcon iconSelected;
   private final String toolTip;
 
+  public static FastButton findForComponentName(final String componentName) {
+    if (componentName == null) return null;
+    for (final FastButton b : values()) {
+      if (b.getComponentName().equals(componentName)) return b;
+    }
+    return null;
+  }
+
   FastButton(final String title, final String toolTip, final String icon, final String iconSelected, final Class<? extends AbstractButton> buttonClass) {
     if (icon != null) {
       this.icon = new ImageIcon(Utils.loadIcon(icon));

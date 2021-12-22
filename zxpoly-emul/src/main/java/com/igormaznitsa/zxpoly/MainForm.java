@@ -76,6 +76,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -523,6 +524,10 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void addFastButtons(final JMenuBar menuBar, final List<FastButton> fastButtons) {
+    Arrays.stream(menuBar.getComponents())
+            .filter(c -> FastButton.findForComponentName(c.getName()) != null)
+            .collect(Collectors.toList()).forEach(menuBar::remove);
+
     fastButtons.forEach(b -> {
       final AbstractButton abstractButton;
       if (b.getButtonClass().isAssignableFrom(JToggleButton.class)) {
