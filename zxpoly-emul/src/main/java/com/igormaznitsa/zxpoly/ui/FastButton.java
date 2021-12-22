@@ -6,14 +6,15 @@ import javax.swing.*;
 
 public enum FastButton {
 
-  VIRTUAL_KEYBOARD("Virtual keyboard", "Show virtual keyboard", "vkbd.png", null, JToggleButton.class),
-  START_PAUSE("Play/pause emulation", "Play/Pause emulation", "emul_pause.png", "emul_play.png", JToggleButton.class);
+  VIRTUAL_KEYBOARD(false, "Virtual keyboard", "Show virtual keyboard", "vkbd.png", null, JToggleButton.class),
+  START_PAUSE(false, "Play/pause emulation", "Play/Pause emulation", "emul_pause.png", "emul_play.png", JToggleButton.class);
 
   private final String title;
   private final Class<? extends AbstractButton> buttonClass;
   private final ImageIcon icon;
   private final ImageIcon iconSelected;
   private final String toolTip;
+  private final boolean optional;
 
   public static FastButton findForComponentName(final String componentName) {
     if (componentName == null) return null;
@@ -23,7 +24,8 @@ public enum FastButton {
     return null;
   }
 
-  FastButton(final String title, final String toolTip, final String icon, final String iconSelected, final Class<? extends AbstractButton> buttonClass) {
+  FastButton(final boolean optional, final String title, final String toolTip, final String icon, final String iconSelected, final Class<? extends AbstractButton> buttonClass) {
+    this.optional = optional;
     if (icon != null) {
       this.icon = new ImageIcon(Utils.loadIcon(icon));
     } else {
@@ -39,6 +41,10 @@ public enum FastButton {
     this.toolTip = toolTip;
     this.title = title;
     this.buttonClass = buttonClass;
+  }
+
+  public boolean isOptional() {
+    return this.optional;
   }
 
   public String getComponentName() {

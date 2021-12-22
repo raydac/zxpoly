@@ -185,6 +185,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private final Thread mainCpuThread;
   private final javax.swing.Timer infoBarUpdateTimer;
   private final AtomicReference<SpriteCorrectorMainFrame> spriteCorrectorMainFrame = new AtomicReference<>();
+  private final ImageIcon sysIcon;
+  private final TimingProfile timingProfile;
   private volatile long lastFullScreenEventTime = 0L;
   private volatile boolean turboMode = false;
   private volatile boolean zxKeyboardProcessingAllowed = true;
@@ -235,7 +237,6 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private JCheckBoxMenuItem menuOptionsShowIndicators;
   private JCheckBoxMenuItem menuOptionsTurbo;
   private JCheckBoxMenuItem menuOptionsOnlyJoystickEvents;
-  private final ImageIcon sysIcon;
   private JMenu menuOptionsLookAndFeel;
   private JMenu menuOptionsJoystickSelect;
   private JRadioButtonMenuItem menuOptionsJoystickKempston;
@@ -268,8 +269,6 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private JScrollPane scrollPanel;
   private File lastPokeFileFolder = null;
   private Optional<SourceSoundPort> preTurboSourceSoundPort = Optional.empty();
-
-  private final TimingProfile timingProfile;
   private JMenu menuOptionsScaleUi;
 
   public MainForm(final String title, final String romPath) {
@@ -523,10 +522,34 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     }
   }
 
+  private static void setMenuEnable(final JMenuItem item, final boolean enable) {
+    if (item instanceof JMenu) {
+      final JMenu jm = (JMenu) item;
+      jm.setEnabled(enable);
+      for (int i = 0; i < jm.getItemCount(); i++) {
+        setMenuEnable(jm.getItem(i), enable);
+      }
+    } else {
+      if (item != null) {
+        item.setEnabled(enable);
+      }
+    }
+  }
+
   private void addFastButtons(final JMenuBar menuBar, final List<FastButton> fastButtons) {
     Arrays.stream(menuBar.getComponents())
             .filter(c -> FastButton.findForComponentName(c.getName()) != null)
             .collect(Collectors.toList()).forEach(menuBar::remove);
+
+    final JPopupMenu popupMenu = new JPopupMenu("Fast buttons");
+
+    for (final FastButton fb : FastButton.values()) {
+      final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(fb.getTitle(), fastButtons.contains(fb));
+      menuItem.setEnabled(fb.isOptional());
+      popupMenu.add(menuItem);
+    }
+
+    menuBar.setComponentPopupMenu(popupMenu);
 
     fastButtons.forEach(b -> {
       final AbstractButton abstractButton;
@@ -567,20 +590,6 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       }
       menuBar.add(abstractButton);
     });
-  }
-
-  private static void setMenuEnable(final JMenuItem item, final boolean enable) {
-    if (item instanceof JMenu) {
-      final JMenu jm = (JMenu) item;
-      jm.setEnabled(enable);
-      for (int i = 0; i < jm.getItemCount(); i++) {
-        setMenuEnable(jm.getItem(i), enable);
-      }
-    } else {
-      if (item != null) {
-        item.setEnabled(enable);
-      }
-    }
   }
 
   private void doOnShutdown() {
