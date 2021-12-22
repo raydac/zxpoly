@@ -20,6 +20,7 @@ package com.igormaznitsa.zxpoly.utils;
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
+import com.igormaznitsa.zxpoly.ui.FastButton;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 
@@ -27,10 +28,15 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.net.InetAddress;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class AppOptions {
 
@@ -178,12 +184,12 @@ public final class AppOptions {
 
   public synchronized String getFfmpegPath() {
     return preferences
-        .get(Option.STREAM_FFMPEGPATH.name(), SystemUtils.IS_OS_WINDOWS ? "ffmpeg.exe" : "ffmpeg");
+            .get(Option.STREAM_FFMPEGPATH.name(), SystemUtils.IS_OS_WINDOWS ? "ffmpeg.exe" : "ffmpeg");
   }
 
   public synchronized void setFfmpegPath(final String path) {
     preferences.put(Option.STREAM_FFMPEGPATH.name(),
-        path == null ? (SystemUtils.IS_OS_WINDOWS ? "ffmpeg.exe" : "ffmpeg") : path);
+            path == null ? (SystemUtils.IS_OS_WINDOWS ? "ffmpeg.exe" : "ffmpeg") : path);
   }
 
   public synchronized boolean isGrabSound() {
@@ -229,6 +235,34 @@ public final class AppOptions {
 
   public String getUiScale() {
     return preferences.get(Option.UI_SCALE.name(), null);
+  }
+
+  public List<FastButton> getFastButtons() {
+    final String buttons = preferences.get(Option.FAST_BUTTONS.name(), null);
+    if (buttons == null) {
+      return List.of();
+    } else {
+      return Arrays.stream(buttons.split(","))
+              .flatMap(x -> {
+                try {
+                  return Stream.of(FastButton.valueOf(x.trim().toUpperCase(Locale.ENGLISH)));
+                } catch (IllegalArgumentException ex) {
+                  return Stream.empty();
+                }
+              })
+              .filter(FastButton::isOptional)
+              .distinct()
+              .collect(Collectors.toList());
+    }
+  }
+
+  public void setFastButtons(final List<FastButton> fastButtons) {
+    final String packetValue = fastButtons.stream()
+            .filter(FastButton::isOptional)
+            .distinct()
+            .map(FastButton::name)
+            .collect(Collectors.joining(","));
+    this.preferences.put(Option.FAST_BUTTONS.name(), packetValue);
   }
 
   public void setUiScale(final String uiScale) {
@@ -379,11 +413,11 @@ public final class AppOptions {
   public enum Rom {
     TEST("ROM TEST", AppOptions.TEST_ROM),
     ZX128WOS("ROM ZX-128 TRDOS (WoS)",
-        "http://wos.meulie.net/pub/sinclair/emulators/pc/russian/ukv12f5.zip"),
+            "http://wos.meulie.net/pub/sinclair/emulators/pc/russian/ukv12f5.zip"),
     ZX128ARCH("ROM ZX-128 TRDOS (Archive.org)",
-        "https://archive.org/download/World_of_Spectrum_June_2017_Mirror/World%20of%20Spectrum%20June%202017%20Mirror.zip/World%20of%20Spectrum%20June%202017%20Mirror/sinclair/emulators/pc/russian/ukv12f5.zip"),
+            "https://archive.org/download/World_of_Spectrum_June_2017_Mirror/World%20of%20Spectrum%20June%202017%20Mirror.zip/World%20of%20Spectrum%20June%202017%20Mirror/sinclair/emulators/pc/russian/ukv12f5.zip"),
     ZX128PDP11RU("ROM ZX-128 TRDOS (Pdp-11.ru)",
-        "http://mirrors.pdp-11.ru/_zx/vtrdos.ru/emulz/UKV12F5.ZIP"),
+            "http://mirrors.pdp-11.ru/_zx/vtrdos.ru/emulz/UKV12F5.ZIP"),
     ZX128VTRDOS("ROM ZX-128 TRDOS (VTR-DOS)", "http://trd.speccy.cz/emulz/UKV12F5.ZIP");
 
     private final String title;
@@ -427,6 +461,7 @@ public final class AppOptions {
   }
 
   public enum Option {
+    FAST_BUTTONS,
     VOLUME_PROFILE,
     UI_LF_CLASS,
     UI_SCALE,

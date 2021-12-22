@@ -5,7 +5,9 @@ import com.igormaznitsa.zxpoly.utils.Utils;
 import javax.swing.*;
 
 public enum FastButton {
-
+  TAPE_PLAY_STOP(true, "Tape PLAY/STOP", "Tape Play/Stop", "fb_tape.png", null, JToggleButton.class),
+  TURBO_MODE(true, "Turbo mode", "Stop delay emulation for CPU", "fb_turbomode.png", null, JToggleButton.class),
+  ZX_KEYBOARD_OFF(true, "ZX-Keyboard Off", "Stop emulation of ZX keyboard events with PC keyboard", "fb_zxkbd_disable.png", null, JToggleButton.class),
   VIRTUAL_KEYBOARD(false, "Virtual keyboard", "Show virtual keyboard", "vkbd.png", null, JToggleButton.class),
   START_PAUSE(false, "Play/pause emulation", "Play/Pause emulation", "emul_pause.png", "emul_play.png", JToggleButton.class);
 

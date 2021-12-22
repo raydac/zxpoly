@@ -28,6 +28,7 @@ import net.java.games.input.Controller;
 import net.java.games.input.ControllerEvent;
 import net.java.games.input.ControllerListener;
 
+import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -170,6 +171,21 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private final long cursorCsMask = AppOptions.getInstance().getAutoCsForCursorKeys() ? ZXKEY_CS : 0L;
   private volatile boolean activatedKempstonJoystick = true;
   private final TimingProfile timingProfile;
+
+  private final List<TapeStateChangeListener> tapeStateChangeListeners = new CopyOnWriteArrayList<>();
+
+  public void addTapeStateChangeListener(final TapeStateChangeListener listener) {
+    this.tapeStateChangeListeners.add(listener);
+  }
+
+  public void removeTapeStateChangeListener(final TapeStateChangeListener listener) {
+    this.tapeStateChangeListeners.remove(listener);
+  }
+
+  public void setTap(final TapeSource tap) {
+    this.tap.set(tap);
+    this.fireTapeStateChangeListeners();
+  }
 
   public KeyboardKempstonAndTapeIn(final TimingProfile timingProfile, final Motherboard board, final boolean kempstonMouseAllowed) {
     this.timingProfile = timingProfile;
@@ -383,8 +399,24 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     return this.tap.get();
   }
 
-  public void setTap(final TapeSource tap) {
-    this.tap.set(tap);
+  private void fireTapeStateChangeListeners() {
+    if (SwingUtilities.isEventDispatchThread()) {
+      this.tapeStateChangeListeners.forEach(x -> x.onTapeStateChanged(this));
+    } else {
+      SwingUtilities.invokeLater(() -> this.tapeStateChangeListeners.forEach(x -> x.onTapeStateChanged(this)));
+    }
+  }
+
+  @Override
+  public void postStep(final int spentTstates) {
+    final TapeSource currentTap = this.getTap();
+    if (currentTap != null) {
+      final boolean playing = currentTap.isPlaying();
+      currentTap.updateForSpentMachineCycles(spentTstates);
+      if (playing != currentTap.isPlaying()) {
+        fireTapeStateChangeListeners();
+      }
+    }
   }
 
   public boolean onKeyEvent(final KeyEvent evt) {
@@ -686,12 +718,9 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     return consumed;
   }
 
-  @Override
-  public void postStep(final int spentTstates) {
-    final TapeSource currentTap = this.getTap();
-    if (currentTap != null) {
-      currentTap.updateForSpentMachineCycles(spentTstates);
-    }
+  @FunctionalInterface
+  public interface TapeStateChangeListener {
+    void onTapeStateChanged(KeyboardKempstonAndTapeIn source);
   }
 
   @Override

@@ -294,7 +294,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
     this.menuBar.add(Box.createHorizontalGlue());
 
-    addFastButtons(this.menuBar, List.of(FastButton.VIRTUAL_KEYBOARD, FastButton.START_PAUSE));
+    this.loadFastButtons();
 
     this.setTitle(title);
 
@@ -520,6 +520,10 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     if (AppOptions.getInstance().isOldColorTvOnStart()) {
       this.board.getVideoController().setTvFilterChain(TvFilterChain.OLDTV);
     }
+
+    this.keyboardAndTapeModule.addTapeStateChangeListener(e -> {
+      this.setFastButtonState(FastButton.TAPE_PLAY_STOP, e.getTap() != null && e.getTap().isPlaying());
+    });
   }
 
   private static void setMenuEnable(final JMenuItem item, final boolean enable) {
@@ -536,7 +540,16 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     }
   }
 
-  private void addFastButtons(final JMenuBar menuBar, final List<FastButton> fastButtons) {
+  private void loadFastButtons() {
+    final List<FastButton> fastButtonsInOptions = AppOptions.getInstance().getFastButtons();
+    formFastButtons(this.menuBar,
+            Arrays.stream(FastButton.values())
+                    .filter(x -> !x.isOptional() || fastButtonsInOptions.contains(x))
+                    .collect(Collectors.toList())
+    );
+  }
+
+  private void formFastButtons(final JMenuBar menuBar, final List<FastButton> fastButtons) {
     Arrays.stream(menuBar.getComponents())
             .filter(c -> FastButton.findForComponentName(c.getName()) != null)
             .collect(Collectors.toList()).forEach(menuBar::remove);
@@ -544,8 +557,21 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     final JPopupMenu popupMenu = new JPopupMenu("Fast buttons");
 
     for (final FastButton fb : FastButton.values()) {
-      final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(fb.getTitle(), fastButtons.contains(fb));
+      final boolean selected = fastButtons.contains(fb) || !fb.isOptional();
+      final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(fb.getTitle(), selected);
       menuItem.setEnabled(fb.isOptional());
+
+      if (fb.isOptional()) {
+        menuItem.addActionListener(e -> {
+          final List<FastButton> newList = new ArrayList<>(fastButtons);
+          newList.remove(fb);
+          if (((JCheckBoxMenuItem) e.getSource()).isSelected()) {
+            newList.add(fb);
+          }
+          AppOptions.getInstance().setFastButtons(newList);
+          loadFastButtons();
+        });
+      }
       popupMenu.add(menuItem);
     }
 
@@ -566,6 +592,33 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       abstractButton.setFocusable(false);
 
       switch (b) {
+        case TAPE_PLAY_STOP: {
+          abstractButton.addActionListener(e -> {
+            final JToggleButton source = (JToggleButton) e.getSource();
+            if (source.isSelected()) {
+              if (!this.setTapePlay(true)) {
+                source.setSelected(false);
+              }
+            } else {
+              this.setTapePlay(false);
+            }
+          });
+        }
+        break;
+        case TURBO_MODE: {
+          abstractButton.addActionListener(e -> {
+            final JToggleButton source = (JToggleButton) e.getSource();
+            this.setTurboMode(source.isSelected());
+          });
+        }
+        break;
+        case ZX_KEYBOARD_OFF: {
+          abstractButton.addActionListener(e -> {
+            final JToggleButton source = (JToggleButton) e.getSource();
+            this.setDisableZxKeyboardEvents(source.isSelected());
+          });
+        }
+        break;
         case START_PAUSE: {
           abstractButton.addActionListener(e -> {
             final JToggleButton source = (JToggleButton) e.getSource();
@@ -590,6 +643,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       }
       menuBar.add(abstractButton);
     });
+
+    menuBar.revalidate();
+    menuBar.repaint();
   }
 
   private void doOnShutdown() {
@@ -747,6 +803,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     final boolean navigable;
     final boolean sensitivity;
     if (reader == null) {
+      this.setFastButtonState(FastButton.TAPE_PLAY_STOP, false);
       this.menuTap.setEnabled(false);
       this.menuTapPlay.setSelected(false);
       this.menuTapExportAs.setEnabled(false);
@@ -755,6 +812,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     } else {
       this.menuTap.setEnabled(true);
       this.menuTapPlay.setSelected(reader.isPlaying());
+      this.setFastButtonState(FastButton.TAPE_PLAY_STOP, reader.isPlaying());
       this.menuTapExportAs.setEnabled(reader.canGenerateWav());
       navigable = reader.isNavigable();
       sensitivity = reader.isThresholdAllowed();
@@ -1029,7 +1087,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   public void setTurboMode(final boolean value) {
+    this.setFastButtonState(FastButton.TURBO_MODE, value);
     this.turboMode = value;
+    LOGGER.info("Turbo-mode: " + value);
   }
 
   private void blinkScreen(final long sessionIntCounter) {
@@ -1379,7 +1439,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     }
   }
 
-  private void selectFastButton(final FastButton fastButton, final boolean select) {
+  private void setFastButtonState(final FastButton fastButton, final boolean select) {
     Component component = null;
     for (final Component c : this.menuBar.getComponents()) {
       if (c.getName() != null && c.getName().equals(fastButton.getComponentName())) {
@@ -1454,7 +1514,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
             this.doVcSize();
             vc.setVkbShow(false);
             vc.zoomForSize(gDevice.getDefaultConfiguration().getBounds());
-            selectFastButton(FastButton.VIRTUAL_KEYBOARD, false);
+            setFastButtonState(FastButton.VIRTUAL_KEYBOARD, false);
           });
         } else {
           lastFullScreen.getContentPane().removeAll();
@@ -1482,7 +1542,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           SwingUtilities.invokeLater(() -> {
             this.doVcSize();
             vc.setVkbShow(false);
-            selectFastButton(FastButton.VIRTUAL_KEYBOARD, false);
+            setFastButtonState(FastButton.VIRTUAL_KEYBOARD, false);
           });
         }
       } else {
@@ -2148,13 +2208,16 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       buttonGroup.add(menuItem);
       menu.add(menuItem);
     });
+  }
 
-
+  private void setDisableZxKeyboardEvents(final boolean disable) {
+    this.keyboardAndTapeModule.setOnlyJoystickEvents(disable);
+    this.setFastButtonState(FastButton.ZX_KEYBOARD_OFF, disable);
+    LOGGER.info("Only Kempston events: " + disable);
   }
 
   private void menuOptionsOnlyKempstonEvents(final ActionEvent actionEvent) {
-    this.keyboardAndTapeModule.setOnlyJoystickEvents(this.menuOptionsOnlyJoystickEvents.isSelected());
-    LOGGER.info("Only Kempston events: " + this.menuOptionsOnlyJoystickEvents.isSelected());
+    this.setDisableZxKeyboardEvents(this.menuOptionsOnlyJoystickEvents.isSelected());
   }
 
   private void menuTapThresholdActionPerformed(final ActionEvent actionEvent) {
@@ -2220,7 +2283,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
   public void showVirtualKeyboard(final boolean show) {
     this.board.getVideoController().setVkbShow(show);
-    this.selectFastButton(FastButton.VIRTUAL_KEYBOARD, show);
+    this.setFastButtonState(FastButton.VIRTUAL_KEYBOARD, show);
   }
 
   private void menuOptionsTurboActionPerformed(ActionEvent evt) {
@@ -2345,13 +2408,20 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     }
   }
 
-  private void menuTapPlayActionPerformed(ActionEvent evt) {
-    if (this.menuTapPlay.isSelected()) {
+  private boolean setTapePlay(final boolean play) {
+    if (this.keyboardAndTapeModule.getTap() == null) return false;
+    if (play && this.keyboardAndTapeModule.getTap().isPlaying()) return true;
+    if (play) {
       this.keyboardAndTapeModule.getTap().startPlay();
     } else {
       this.keyboardAndTapeModule.getTap().stopPlay();
     }
     updateTapeMenu();
+    return true;
+  }
+
+  private void menuTapPlayActionPerformed(ActionEvent evt) {
+    this.setTapePlay(this.menuTapPlay.isSelected());
   }
 
   private void menuTapPrevBlockActionPerformed(ActionEvent evt) {
