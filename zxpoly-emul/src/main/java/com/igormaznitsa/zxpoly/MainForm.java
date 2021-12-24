@@ -164,7 +164,6 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private final ZxVideoStreamer videoStreamer;
   private final Timer wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS);
   private final Runnable traceWindowsUpdater = new Runnable() {
-
     @Override
     public void run() {
       int index = 0;
@@ -932,10 +931,6 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         if (notifyRepaintScreen) {
           this.repaintScreen();
         }
-
-        if (this.activeTracerWindowCounter.get() > 0) {
-          updateTracerWindowsForStep();
-        }
       } else {
         final int frameTiStates = this.board.getFrameTiStates();
         if (this.wallClock.completed()) {
@@ -949,6 +944,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           }
           this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.ulaFrameTact, true, frameTiStates);
         }
+      }
+      if (this.activeTracerWindowCounter.get() > 0) {
+        updateTracerWindowsForStep();
       }
       Thread.onSpinWait();
     }
