@@ -131,8 +131,6 @@ public final class Z80 {
   private boolean stepAllowsInterruption;
   private boolean detectedNMI;
   private boolean detectedINT;
-  private boolean insideBlockInstructionPrev;
-  private boolean insideBlockInstruction;
   private int resetCycle = 0;
 
   private int internalRegQ;
@@ -180,8 +178,6 @@ public final class Z80 {
     this.stepAllowsInterruption = cpu.stepAllowsInterruption;
     this.detectedINT = cpu.detectedINT;
     this.detectedNMI = cpu.detectedNMI;
-    this.insideBlockInstruction = cpu.insideBlockInstruction;
-    this.insideBlockInstructionPrev = cpu.insideBlockInstructionPrev;
     this.bus = cpu.bus;
   }
 
@@ -260,8 +256,6 @@ public final class Z80 {
     this.stepAllowsInterruption = sourceCpu.stepAllowsInterruption;
     this.detectedINT = sourceCpu.detectedINT;
     this.detectedNMI = sourceCpu.detectedNMI;
-    this.insideBlockInstruction = sourceCpu.insideBlockInstruction;
-    this.insideBlockInstructionPrev = sourceCpu.insideBlockInstructionPrev;
     return this;
   }
 
@@ -412,10 +406,6 @@ public final class Z80 {
     return this.tiStates;
   }
 
-  public boolean isInsideBlockLoop() {
-    return this.insideBlockInstruction;
-  }
-
   private void _reset(final int cycle) {
     switch (cycle % 3) {
       case 0: {
@@ -448,9 +438,6 @@ public final class Z80 {
     this.im = 0;
     this.cbDisplacementByte = -1;
 
-    this.insideBlockInstruction = false;
-    this.insideBlockInstructionPrev = false;
-
     this.stepAllowsInterruption = false;
 
     this.prefix = 0;
@@ -471,8 +458,6 @@ public final class Z80 {
 
     this.iff1 = false;
     this.iff2 = false;
-
-    this.insideBlockInstructionPrev = this.insideBlockInstruction;
 
     this.detectedINT = false;
 
@@ -516,7 +501,6 @@ public final class Z80 {
     this.bus.onInterrupt(this, ctx, true);
 
     _resetHalt();
-    this.insideBlockInstructionPrev = this.insideBlockInstruction;
     this.iff1 = false;
     this.detectedNMI = false;
     this.detectedINT = false;
@@ -674,8 +658,6 @@ public final class Z80 {
     this.im = src.im;
     this.regI = src.regI;
     this.regR = src.regR;
-    this.insideBlockInstruction = src.insideBlockInstruction;
-    this.insideBlockInstructionPrev = src.insideBlockInstructionPrev;
     this.lastInstructionByte = src.lastInstructionByte;
     this.lastM1InstructionByte = src.lastM1InstructionByte;
     this.prevInSignals = src.prevInSignals;
@@ -1036,34 +1018,6 @@ public final class Z80 {
   }
 
   /**
-   * Process whole instruction or send signals and block operations will be
-   * processed entirely.
-   *
-   * @param ctx         context of method call, will be propagated to all sub-calls
-   * @param signalRESET true sends the RESET signal to the CPU
-   * @param signalNMI   true sends the NMI signal to the CPU
-   * @param signalNT    true sends the INT signal to the CPU
-   * @return spent machine cycles during execution
-   */
-  public int nextInstruction_SkipBlockInstructions(final int ctx, final boolean signalRESET,
-                                                   final boolean signalNMI,
-                                                   final boolean signalNT) {
-    int flag = (signalNT ? 0 : SIGNAL_IN_nINT)
-            | (signalNMI ? 0 : SIGNAL_IN_nNMI)
-            | (signalRESET ? 0 : SIGNAL_IN_nRESET)
-            | SIGNAL_IN_nWAIT;
-
-    int spentTstates = 0;
-
-    while (step(ctx, flag) || this.insideBlockInstruction) {
-      flag = SIGNAL_IN_ALL_INACTIVE;
-      spentTstates += this.getStepTstates();
-    }
-    spentTstates += this.getStepTstates();
-    return spentTstates;
-  }
-
-  /**
    * Process one step.
    *
    * @param ctx             context of method call, will be propagated to all sub-calls
@@ -1119,7 +1073,6 @@ public final class Z80 {
     this.lastInstructionByte = commandByte;
 
     boolean commandCompleted = true;
-    this.insideBlockInstruction = false;
 
     switch (this.prefix) {
       case 0xDD:
@@ -1525,7 +1478,7 @@ public final class Z80 {
               final int z = extractZ(commandByte);
               final int y = extractY(commandByte);
               if (z <= 3 && y >= 4) {
-                this.insideBlockInstruction = doBLI(ctx, y, z);
+                doBLI(ctx, y, z);
               } else {
                 doNONI();
               }
@@ -2110,8 +2063,6 @@ public final class Z80 {
     this.iff1 = false;
     this.iff2 = false;
     this.stepAllowsInterruption = false;
-    this.insideBlockInstruction = false;
-    this.insideBlockInstructionPrev = false;
     this.detectedINT = false;
   }
 
@@ -2119,8 +2070,6 @@ public final class Z80 {
     this.iff1 = true;
     this.iff2 = true;
     this.stepAllowsInterruption = false;
-    this.insideBlockInstruction = false;
-    this.insideBlockInstructionPrev = false;
     this.detectedINT = false;
   }
 
@@ -2422,7 +2371,6 @@ public final class Z80 {
   private void doRETI(final int ctx) {
     this.iff1 = this.iff2; // all RET(N/I) commands make copy
     // see https://wwwold.fizyka.umk.pl/~jacek/zx/faq/reference/z80reference.htm
-    this.insideBlockInstruction = this.insideBlockInstructionPrev;
     this.detectedINT = false;
     doRET(ctx);
     this.bus.onRETI(this, ctx);
@@ -2430,7 +2378,6 @@ public final class Z80 {
 
   private void doRETN(final int ctx) {
     this.iff1 = this.iff2;
-    this.insideBlockInstruction = this.insideBlockInstructionPrev;
     this.detectedINT = false;
     this.detectedNMI = false;
     doRET(ctx);

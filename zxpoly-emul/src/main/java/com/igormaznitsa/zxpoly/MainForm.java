@@ -170,7 +170,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       for (final TraceCpuForm form : cpuTracers) {
         if (form != null) {
           final Z80 cpu = board.getModules()[index++].getCpu();
-          if (cpu.getPrefixInProcessing() == 0 && !cpu.isInsideBlockLoop()) {
+          if (cpu.getPrefixInProcessing() == 0) {
             form.refresh();
           }
         }
