@@ -6,7 +6,8 @@ public enum VirtualKeyboardLook {
   DEFAULT("default"),
   ZX48("zx48"),
   AMBRO_ZXPLUS("ambrozxplus"),
-  AMBRO_TIMEX("ambrotimex");
+  AMBRO_TIMEX("ambrotimex"),
+  AMBRO_TIMEX2048PAL("ambrotimex2048pal");
 
   private final String baseName;
 
