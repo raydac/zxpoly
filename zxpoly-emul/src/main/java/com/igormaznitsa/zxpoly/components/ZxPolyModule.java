@@ -638,16 +638,16 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     final byte result;
     if (address < 0x4000) {
-      if ((valueAt7FFD & PORTw_ZX128_ROMRAM) == 0) {
+      if ((valueAt7FFD & PORTw_ZX128_ROMRAM) != 0 && this.board.getBoardMode() == BoardMode.ZXPOLY) {
+        //RAM0
+        result = (byte) this.board.readRam(this, ramAddress);
+      } else {
         if (this.trdosEnabled && trDosActive) {
           result = (byte) this.romData.get().readAdress(address + 0x8000);
         } else {
           result =
                   (byte) this.romData.get().readAdress(address + ((valueAt7FFD >> 4) & 1) * 0x4000);
         }
-      } else {
-        //RAM0
-        result = (byte) this.board.readRam(this, ramAddress);
       }
     } else {
       result = (byte) this.board.readRam(this, ramAddress);
