@@ -17,21 +17,20 @@
 
 package com.igormaznitsa.z80;
 
-import static org.junit.Assert.assertFalse;
-
-
 import java.util.Arrays;
+
+import static org.junit.Assert.assertFalse;
 
 public final class TestBus implements Z80CPUBus {
 
   private final byte[] memory = new byte[0x10000];
   private final byte[] ports = new byte[0x10000];
-  private final byte dataBuSState;
+  private final byte dataBusState;
   private boolean reti;
 
   public TestBus(final int busState, final int address, final int... codes) {
     block(address, codes);
-    this.dataBuSState = (byte) busState;
+    this.dataBusState = (byte) busState;
   }
 
   public void fillPortsBy(final byte value) {
@@ -113,7 +112,7 @@ public final class TestBus implements Z80CPUBus {
 
   @Override
   public byte onCPURequestDataLines(final Z80 cpu, final int ctx) {
-    return this.dataBuSState;
+    return this.dataBusState;
   }
 
   @Override

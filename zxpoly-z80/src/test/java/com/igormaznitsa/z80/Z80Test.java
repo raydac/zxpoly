@@ -17,14 +17,11 @@
 
 package com.igormaznitsa.z80;
 
+import org.junit.Test;
+
 import static com.igormaznitsa.z80.Z80.FLAG_H;
 import static com.igormaznitsa.z80.Z80.FLAG_N;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-
-import org.junit.Test;
+import static org.junit.Assert.*;
 
 public class Z80Test extends AbstractZ80Test {
 
@@ -3501,9 +3498,16 @@ public class Z80Test extends AbstractZ80Test {
     assertEquals(23, cpu.getRight().intValue());
   }
 
+  private static int readStackTop(final TestBus testBus, final Z80 cpu) {
+    final int spAddress = cpu.getSP();
+    final int low = testBus.readMemory(cpu, 111, spAddress, false, false);
+    final int high = testBus.readMemory(cpu, 111, spAddress + 1, false, false);
+    return ((high & 0XFF) << 8) | (low & 0xFF);
+  }
+
   @Test
-  public void testCommand_HALT() {
-    final TestBus tb = new TestBus(0, 0, 0x76, 0xFB);
+  public void testCommand_HALT_IM1() {
+    final TestBus tb = new TestBus(0, 0, 0x00, 0x76, 0xFB);
     tb.block(0x38, 0xED, 0x45); //RETN
 
     final Z80 cpu = new Z80(tb);
@@ -3513,40 +3517,121 @@ public class Z80Test extends AbstractZ80Test {
 
     assertEquals(Z80.SIGNAL_OUT_ALL_INACTIVE, cpu.getState());
 
+    // NOP
     cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
-    assertTrue((cpu.getState() & Z80.SIGNAL_OUT_nHALT) == 0);
-    assertEquals(0, cpu.getRegister(Z80.REG_PC));
+    assertEquals(Z80.SIGNAL_OUT_ALL_INACTIVE, (Z80.SIGNAL_IN_ALL_INACTIVE & cpu.getState()));
+    assertEquals(1, cpu.getRegister(Z80.REG_PC));
     assertEquals(4, cpu.getStepTstates());
 
+    // HALT
     cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
-    assertTrue((cpu.getState() & Z80.SIGNAL_OUT_nHALT) == 0);
-    assertEquals(0, cpu.getRegister(Z80.REG_PC));
+    assertEquals(0, (cpu.getState() & Z80.SIGNAL_OUT_nHALT));
+    assertEquals(1, cpu.getRegister(Z80.REG_PC));
     assertEquals(4, cpu.getStepTstates());
 
+    // HALT
     cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
-    assertTrue((cpu.getState() & Z80.SIGNAL_OUT_nHALT) == 0);
-    assertEquals(0, cpu.getRegister(Z80.REG_PC));
+    assertEquals(0, (cpu.getState() & Z80.SIGNAL_OUT_nHALT));
+    assertEquals(1, cpu.getRegister(Z80.REG_PC));
     assertEquals(4, cpu.getStepTstates());
 
+    // HALT
+    cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0, (cpu.getState() & Z80.SIGNAL_OUT_nHALT));
+    assertEquals(1, cpu.getRegister(Z80.REG_PC));
+    assertEquals(4, cpu.getStepTstates());
+
+    // HALT + INT
     cpu.step(111, ~Z80.SIGNAL_IN_nINT);
+
+    // in interruption, pointed to RETN prefix
+    assertFalse(cpu.isIFF1());
+    assertFalse(cpu.isIFF2());
+
     assertEquals(0x38, cpu.getPC());
     assertEquals(0xFFFD, cpu.getSP());
-    assertFalse(cpu.isIFF1());
-    assertFalse(cpu.isIFF2());
+    assertEquals(0x0002, readStackTop(tb, cpu));
 
-    // RETN
+    // RETN prefix
     cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
     assertEquals(0x39, cpu.getPC());
-
+    assertEquals(0xFFFD, cpu.getSP());
+    // RETN command
     cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
-    assertEquals(0x01, cpu.getPC());
+    assertEquals(0x02, cpu.getPC());
     assertEquals(0xFFFF, cpu.getSP());
+
+    // returned to the next command after HALT
+    // EI
+    cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0x03, cpu.getPC());
+    assertEquals(0xFFFF, cpu.getSP());
+    assertTrue(cpu.isIFF1());
+    assertTrue(cpu.isIFF2());
+  }
+
+  @Test
+  public void testCommand_HALT_IM2() {
+    final TestBus tb = new TestBus(0x10, 0, 0x00, 0x76, 0xFB);
+    tb.block(0x10, 0x45); // Interruption vector to 0x0045
+    tb.block(0x45, 0xED, 0x45); //RETN
+
+    final Z80 cpu = new Z80(tb);
+    cpu.setRegister(Z80.REG_SP, 0xFFFF);
+    cpu.setIM(2);
+    cpu.setIFF(true, true);
+
+    assertEquals(Z80.SIGNAL_OUT_ALL_INACTIVE, cpu.getState());
+
+    // NOP
+    cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(Z80.SIGNAL_OUT_ALL_INACTIVE, (Z80.SIGNAL_IN_ALL_INACTIVE & cpu.getState()));
+    assertEquals(1, cpu.getRegister(Z80.REG_PC));
+    assertEquals(4, cpu.getStepTstates());
+
+    // HALT
+    cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0, (cpu.getState() & Z80.SIGNAL_OUT_nHALT));
+    assertEquals(1, cpu.getRegister(Z80.REG_PC));
+    assertEquals(4, cpu.getStepTstates());
+
+    // HALT
+    cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0, (cpu.getState() & Z80.SIGNAL_OUT_nHALT));
+    assertEquals(1, cpu.getRegister(Z80.REG_PC));
+    assertEquals(4, cpu.getStepTstates());
+
+    // HALT
+    cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0, (cpu.getState() & Z80.SIGNAL_OUT_nHALT));
+    assertEquals(1, cpu.getRegister(Z80.REG_PC));
+    assertEquals(4, cpu.getStepTstates());
+
+    // HALT + INT
+    cpu.step(111, ~Z80.SIGNAL_IN_nINT);
+
+    // in interruption, pointed to RETN prefix
     assertFalse(cpu.isIFF1());
     assertFalse(cpu.isIFF2());
 
-    // EI
+    assertEquals(0x45, cpu.getPC());
+    assertEquals(0xFFFD, cpu.getSP());
+    assertEquals(0x0002, readStackTop(tb, cpu));
+
+    // RETN prefix
+    cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0x46, cpu.getPC());
+    assertEquals(0xFFFD, cpu.getSP());
+    // RETN command
     cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
     assertEquals(0x02, cpu.getPC());
+    assertEquals(0xFFFF, cpu.getSP());
+
+    // returned to the next command after HALT
+    // EI
+    cpu.step(111, Z80.SIGNAL_IN_ALL_INACTIVE);
+    assertEquals(0x03, cpu.getPC());
+    assertEquals(0xFFFF, cpu.getSP());
     assertTrue(cpu.isIFF1());
     assertTrue(cpu.isIFF2());
   }
@@ -4284,7 +4369,7 @@ public class Z80Test extends AbstractZ80Test {
 
     assertEquals(14, cpu.nextInstruction(111, false, false, false));
 
-    assertTrue(cpu.isIFF1());
+    assertFalse(cpu.isIFF1());
     assertTrue(cpu.isIFF2());
     assertEquals(0x2002, cpu.getRegister(Z80.REG_SP));
     assertEquals(0x18B5, cpu.getRegister(Z80.REG_PC));

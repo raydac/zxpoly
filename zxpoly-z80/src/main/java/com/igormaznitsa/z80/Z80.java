@@ -2369,8 +2369,6 @@ public final class Z80 {
   }
 
   private void doRETI(final int ctx) {
-    this.iff1 = this.iff2; // all RET(N/I) commands make copy
-    // see https://wwwold.fizyka.umk.pl/~jacek/zx/faq/reference/z80reference.htm
     this.detectedINT = false;
     doRET(ctx);
     this.bus.onRETI(this, ctx);
