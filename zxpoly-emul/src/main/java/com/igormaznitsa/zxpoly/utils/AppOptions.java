@@ -410,67 +410,17 @@ public final class AppOptions {
     return configFolder;
   }
 
-  public enum Rom {
-    TEST("ROM TEST", AppOptions.TEST_ROM),
-    ZX128WOS("ROM ZX-128 TRDOS (WoS)",
-            "http://wos.meulie.net/pub/sinclair/emulators/pc/russian/ukv12f5.zip"),
-    ZX128ARCH("ROM ZX-128 TRDOS (Archive.org)",
-            "https://archive.org/download/World_of_Spectrum_June_2017_Mirror/World%20of%20Spectrum%20June%202017%20Mirror.zip/World%20of%20Spectrum%20June%202017%20Mirror/sinclair/emulators/pc/russian/ukv12f5.zip"),
-    ZX128PDP11RU("ROM ZX-128 TRDOS (Pdp-11.ru)",
-            "http://mirrors.pdp-11.ru/_zx/vtrdos.ru/emulz/UKV12F5.ZIP"),
-    ZX128VTRDOS("ROM ZX-128 TRDOS (VTR-DOS)", "http://trd.speccy.cz/emulz/UKV12F5.ZIP");
-
-    private final String title;
-    private final String link;
-
-    Rom(final String title, final String link) {
-      this.title = title;
-      this.link = link;
-    }
-
-    public static Rom findForTitle(final String title, final Rom dflt) {
-      for (final Rom r : Rom.values()) {
-        if (r.title.equalsIgnoreCase(title)) {
-          return r;
-        }
-      }
-      return dflt;
-    }
-
-    public static Rom findForLink(final String link, final Rom dflt) {
-      for (final Rom r : Rom.values()) {
-        if (r.link.equals(link)) {
-          return r;
-        }
-      }
-      return dflt;
-    }
-
-    @Override
-    public String toString() {
-      return this.title;
-    }
-
-    public String getTitle() {
-      return this.title;
-    }
-
-    public String getLink() {
-      return this.link;
-    }
-  }
-
-  public enum Option {
-    FAST_BUTTONS,
-    VOLUME_PROFILE,
-    UI_LF_CLASS,
-    UI_SCALE,
-    OLD_COLOR_TV_ON_START,
-    CONTENDED_RAM,
-    INTERLACED_SCAN,
-    AUTOCS_FOR_CURSOR_KEYS,
-    CUSTOM_ROM_PATH,
-    STREAM_FFMPEGPATH,
+    public enum Option {
+      FAST_BUTTONS,
+      VOLUME_PROFILE,
+      UI_LF_CLASS,
+      UI_SCALE,
+      OLD_COLOR_TV_ON_START,
+      CONTENDED_RAM,
+      INTERLACED_SCAN,
+      AUTOCS_FOR_CURSOR_KEYS,
+      CUSTOM_ROM_PATH,
+      STREAM_FFMPEGPATH,
     STREAM_GRABSOUND,
     STREAM_ADDR,
     STREAM_PORT,

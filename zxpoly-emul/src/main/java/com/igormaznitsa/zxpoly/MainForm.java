@@ -287,22 +287,6 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     expectedIntTicksBetweenFrames = intBetweenFrames;
 
     LOGGER.log(Level.INFO, "INT ticks between frames: " + expectedIntTicksBetweenFrames);
-    initComponents();
-
-    this.interlaceScan = AppOptions.getInstance().isInterlacedScan();
-
-    this.menuBar.add(Box.createHorizontalGlue());
-
-    this.loadFastButtons();
-
-    this.setTitle(title);
-
-    this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
-    this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
-
-    this.getInputContext().selectInputMethod(Locale.ENGLISH);
-
-    this.setIconImage(Utils.loadIcon("appico.png"));
 
     byte[] bootstrapRom = null;
     final File bootstrapRomFile = new File(ROM_BOOTSTRAP_FILE_NAME);
@@ -318,18 +302,36 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       }
     }
 
+    final RomSource rom = RomSource.findForLink(romPath, RomSource.UNKNOWN);
     try {
-      BASE_ROM = loadRom(romPath, bootstrapRom);
+      BASE_ROM = loadRom(romPath, rom.getRom48names(), rom.getRom128names(), rom.getTrDosNames(), bootstrapRom);
     } catch (Exception ex) {
       showMessageDialog(this, "Can't load Spec128 ROM for error: " + ex.getMessage());
       try {
-        BASE_ROM = loadRom(null, bootstrapRom);
+        BASE_ROM = loadRom(null, rom.getRom48names(), rom.getRom128names(), rom.getTrDosNames(), bootstrapRom);
       } catch (Exception exx) {
         ex.printStackTrace();
         showMessageDialog(this, "Can't load TEST ROM: " + ex.getMessage());
         System.exit(-1);
       }
     }
+
+    initComponents(BASE_ROM.isTrdosPresented());
+
+    this.interlaceScan = AppOptions.getInstance().isInterlacedScan();
+
+    this.menuBar.add(Box.createHorizontalGlue());
+
+    this.loadFastButtons();
+
+    this.setTitle(title);
+
+    this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
+    this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
+
+    this.getInputContext().selectInputMethod(Locale.ENGLISH);
+
+    this.setIconImage(Utils.loadIcon("appico.png"));
 
     final boolean allowKempstonMouse = AppOptions.getInstance().isKempstonMouseAllowed();
 
@@ -498,8 +500,10 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
                 break;
                 case "trd":
                 case "scl": {
-                  LOGGER.info("Activating disk file into drive A: " + f);
-                  setDisk(BetaDiscInterface.DRIVE_A, f, FILTER_FORMAT_ALL_DISK);
+                  if (board.isBetaDiskPresented()) {
+                    LOGGER.info("Activating disk file into drive A: " + f);
+                    setDisk(BetaDiscInterface.DRIVE_A, f, FILTER_FORMAT_ALL_DISK);
+                  }
                 }
                 break;
                 default: {
@@ -725,7 +729,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     }
   }
 
-  private RomData loadRom(final String romPath, final byte[] predefinedRomData) throws Exception {
+  private RomData loadRom(final String romPath, final Set<String> rom48names, final Set<String> rom128names, final Set<String> trdosNames, final byte[] predefinedRomData) throws Exception {
     if (predefinedRomData != null) {
       LOGGER.warning("Provided predefined ROM data, length " + predefinedRomData.length + " bytes");
       final byte[] normalized;
@@ -758,7 +762,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
           if (load) {
             LOGGER.log(Level.INFO, "Load ROM from external URL: " + romPath);
-            result = RomLoader.getROMFrom(romPath);
+            result = RomLoader.getROMFrom(romPath, rom48names, rom128names, trdosNames);
             if (cacheFolder.isDirectory() || cacheFolder.mkdirs()) {
               FileUtils.writeByteArrayToFile(cachedRom, result.getAsArray());
               LOGGER.log(Level.INFO, "Loaded ROM saved in cache as file : " + romPath);
@@ -1420,7 +1424,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       final TapeSource tapeFileReader = keyboardAndTapeModule.getTap();
       labelTapeUsage.setStatus(tapeFileReader != null && tapeFileReader.isPlaying());
       labelMouseUsage.setStatus(board.getVideoController().isMouseTrapActive());
-      labelDiskUsage.setStatus(board.getBetaDiskInterface().isActive());
+      labelDiskUsage.setStatus(board.isBetaDiskPresented() && board.getBetaDiskInterface().isActive());
       labelZX128.setStatus(board.getBoardMode() != BoardMode.ZXPOLY);
 
       indicatorCpu0.updateForState(board.getCpuActivity(0));
@@ -1555,7 +1559,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     this.board.getVideoController().zoomForSize(this.scrollPanel.getBounds());
   }
 
-  private void initComponents() {
+  private void initComponents(final boolean trdosEnabled) {
     GridBagConstraints gridBagConstraints;
 
     scrollPanel = new JScrollPane();
@@ -1863,29 +1867,32 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       }
     });
 
-    menuFileSelectDiskA.setText("Drive A");
-    menuFileSelectDiskA.addActionListener(this::menuFileSelectDiskAActionPerformed);
-    menuLoadDrive.add(menuFileSelectDiskA);
+    if (trdosEnabled) {
+      menuFileSelectDiskA.setText("Drive A");
+      menuFileSelectDiskA.addActionListener(this::menuFileSelectDiskAActionPerformed);
+      menuLoadDrive.add(menuFileSelectDiskA);
 
-    menuFileSelectDiskB.setText("Drive B");
-    menuFileSelectDiskB.addActionListener(this::menuFileSelectDiskBActionPerformed);
-    menuLoadDrive.add(menuFileSelectDiskB);
+      menuFileSelectDiskB.setText("Drive B");
+      menuFileSelectDiskB.addActionListener(this::menuFileSelectDiskBActionPerformed);
+      menuLoadDrive.add(menuFileSelectDiskB);
 
-    menuFileSelectDiskC.setText("Drive C");
-    menuFileSelectDiskC.addActionListener(this::menuFileSelectDiskCActionPerformed);
-    menuLoadDrive.add(menuFileSelectDiskC);
+      menuFileSelectDiskC.setText("Drive C");
+      menuFileSelectDiskC.addActionListener(this::menuFileSelectDiskCActionPerformed);
+      menuLoadDrive.add(menuFileSelectDiskC);
 
-    menuFileSelectDiskD.setText("Drive D");
-    menuFileSelectDiskD.addActionListener(this::menuFileSelectDiskDActionPerformed);
-    menuLoadDrive.add(menuFileSelectDiskD);
+      menuFileSelectDiskD.setText("Drive D");
+      menuFileSelectDiskD.addActionListener(this::menuFileSelectDiskDActionPerformed);
+      menuLoadDrive.add(menuFileSelectDiskD);
 
-    menuFile.add(menuLoadDrive);
+      menuFile.add(menuLoadDrive);
 
-    menuFileFlushDiskChanges.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/diskflush.png")))); // NOI18N
-    menuFileFlushDiskChanges.setText("Flush disk changes");
-    menuFileFlushDiskChanges.addActionListener(this::menuFileFlushDiskChangesActionPerformed);
-    menuFile.add(menuFileFlushDiskChanges);
+      menuFileFlushDiskChanges.setIcon(new ImageIcon(
+              Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/diskflush.png")))); // NOI18N
+      menuFileFlushDiskChanges.setText("Flush disk changes");
+      menuFileFlushDiskChanges.addActionListener(this::menuFileFlushDiskChangesActionPerformed);
+      menuFile.add(menuFileFlushDiskChanges);
+    }
+
     menuFile.add(jSeparator1);
 
     menuFileOptions.setIcon(new ImageIcon(
@@ -2751,12 +2758,14 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void menuFileMenuSelected(final MenuEvent evt) {
-    boolean hasChangedDisk = false;
-    for (int i = 0; i < 4; i++) {
-      final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
-      hasChangedDisk |= (disk != null && disk.isChanged());
+    if (this.board.isBetaDiskPresented()) {
+      boolean hasChangedDisk = false;
+      for (int i = 0; i < 4; i++) {
+        final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
+        hasChangedDisk |= (disk != null && disk.isChanged());
+      }
+      this.menuFileFlushDiskChanges.setEnabled(hasChangedDisk);
     }
-    this.menuFileFlushDiskChanges.setEnabled(hasChangedDisk);
   }
 
   private void menuFileFlushDiskChangesActionPerformed(ActionEvent evt) {
@@ -2810,9 +2819,11 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     }
 
     boolean hasChangedDisk = false;
-    for (int i = 0; i < 4; i++) {
-      final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
-      hasChangedDisk |= (disk != null && disk.isChanged());
+    if (this.board.isBetaDiskPresented()) {
+      for (int i = 0; i < 4; i++) {
+        final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
+        hasChangedDisk |= (disk != null && disk.isChanged());
+      }
     }
 
     boolean close = false;

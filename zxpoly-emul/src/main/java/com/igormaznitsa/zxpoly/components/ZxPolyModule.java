@@ -72,6 +72,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   private boolean gfxWaitSignal;
   private int gfxIntCounter;
   private int gfxNmiCounter;
+  private final boolean trdosEnabled;
 
   private static final int GFX_PAGE_SIZE = 0x4000 * 8;
 
@@ -81,6 +82,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   public ZxPolyModule(final TimingProfile timingProfile, final Motherboard board, final RomData romData, final int index) {
     this.timingProfile = timingProfile;
     this.romData.set(Objects.requireNonNull(romData));
+    this.trdosEnabled = romData.isTrdosPresented();
     this.board = Objects.requireNonNull(board);
     this.moduleIndex = index;
 
@@ -204,11 +206,15 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   public boolean isTrdosActive() {
-    return this.trdosRomActive;
+    return this.trdosEnabled && this.trdosRomActive;
   }
 
   public void setTrdosActive(final boolean active) {
-    this.trdosRomActive = active;
+    if (active && !this.trdosEnabled) {
+      throw new IllegalStateException("Can't activate TR-DOS mode because TR-DOS ROM not presented");
+    } else {
+      this.trdosRomActive = active;
+    }
   }
 
   @Override
@@ -487,10 +493,12 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       this.lastM1Address = address;
       final int address_h = address >>> 8;
 
-      if (this.trdosRomActive) {
-        this.trdosRomActive = address_h < 0x40;
-      } else {
-        this.trdosRomActive = basic48selected && address_h == 0x3D;
+      if (this.trdosEnabled) {
+        if (this.trdosRomActive) {
+          this.trdosRomActive = address_h < 0x40;
+        } else {
+          this.trdosRomActive = basic48selected && address_h == 0x3D;
+        }
       }
     }
 
@@ -640,7 +648,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     final byte result;
     if (address < 0x4000) {
       if ((valueAt7FFD & PORTw_ZX128_ROMRAM) == 0) {
-        if (trDosActive) {
+        if (this.trdosEnabled && trDosActive) {
           result = (byte) this.romData.get().readAdress(address + 0x8000);
         } else {
           result =

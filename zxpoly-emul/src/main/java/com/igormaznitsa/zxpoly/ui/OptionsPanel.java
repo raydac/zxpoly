@@ -21,7 +21,7 @@ import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
-import com.igormaznitsa.zxpoly.utils.AppOptions.Rom;
+import com.igormaznitsa.zxpoly.utils.RomSource;
 
 import javax.swing.*;
 import java.awt.*;
@@ -98,7 +98,7 @@ public class OptionsPanel extends JPanel {
   public OptionsPanel(final DataContainer dataContainer) {
     initComponents();
     this.comboRomSource.removeAllItems();
-    Arrays.stream(Rom.values()).forEach(x -> this.comboRomSource.addItem(x.getTitle()));
+    Arrays.stream(RomSource.values()).filter(x -> x != RomSource.UNKNOWN).forEach(x -> this.comboRomSource.addItem(x.getTitle()));
 
     final List<String> addressList = new ArrayList<>();
 
@@ -128,7 +128,7 @@ public class OptionsPanel extends JPanel {
     this.fillByDataContainer(dataContainer == null ? new DataContainer() : dataContainer);
 
     this.comboRomSource.addActionListener(e -> {
-      if (Rom.TEST.getTitle().equals(this.comboRomSource.getSelectedItem())) {
+      if (RomSource.TEST.getTitle().equals(this.comboRomSource.getSelectedItem())) {
         this.checkZx128ByDefault.setSelected(false);
       }
     });
@@ -151,7 +151,7 @@ public class OptionsPanel extends JPanel {
     this.textFfmpegPath.setText(data.ffmpegPath);
     this.comboNetAdddr.setSelectedItem(data.inetAddress);
     this.spinnerFramesPerSec.setValue(data.frameRate);
-    this.comboRomSource.setSelectedItem(Rom.findForLink(data.activeRom, Rom.TEST).getTitle());
+    this.comboRomSource.setSelectedItem(RomSource.findForLink(data.activeRom, RomSource.TEST).getTitle());
     this.comboKeyboardLook.setSelectedItem(data.keyboardLook);
     this.comboVolumeProfile.setSelectedItem(data.volumeProfile);
     this.checkAutoiCsForCursorKeys.setSelected(data.autoCsForCursorKeys);
@@ -736,8 +736,8 @@ public class OptionsPanel extends JPanel {
     }
 
     public DataContainer(final OptionsPanel optionsPanel) {
-      final Rom rom =
-              Rom.findForTitle(requireNonNull(optionsPanel.comboRomSource.getSelectedItem()).toString(), Rom.TEST);
+      final RomSource rom =
+              RomSource.findForTitle(requireNonNull(optionsPanel.comboRomSource.getSelectedItem()).toString(), RomSource.TEST);
 
       this.keyboardLook = (VirtualKeyboardLook) optionsPanel.comboKeyboardLook.getSelectedItem();
       this.volumeProfile = (VolumeProfile) optionsPanel.comboVolumeProfile.getSelectedItem();
@@ -760,7 +760,7 @@ public class OptionsPanel extends JPanel {
       this.covoxFb = optionsPanel.checkCovoxFb.isSelected();
       this.turboSound = optionsPanel.checkTurboSound.isSelected();
       this.kempstonMouseAllowed = optionsPanel.checkKempstonMouseAllowed.isSelected();
-      this.zx128byDefault = rom != Rom.TEST && optionsPanel.checkZx128ByDefault.isSelected();
+      this.zx128byDefault = rom != RomSource.TEST && optionsPanel.checkZx128ByDefault.isSelected();
 
       this.kempstonKeyDown = optionsPanel.keySelectorKempstonDown.getKey().orElse(-1);
       this.kempstonKeyUp = optionsPanel.keySelectorKempstonUp.getKey().orElse(-1);

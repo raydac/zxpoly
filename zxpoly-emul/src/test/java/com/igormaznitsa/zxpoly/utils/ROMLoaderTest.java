@@ -17,16 +17,19 @@
 package com.igormaznitsa.zxpoly.utils;
 
 import com.igormaznitsa.zxpoly.components.RomData;
-import org.junit.Test;
-import static org.junit.Assert.*;
 import org.junit.Ignore;
+import org.junit.Test;
+
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
 
 @Ignore
 public class ROMLoaderTest {
   
   @Test
   public void testLoadAndExtractROMFromArchiveVTRD() throws Exception {
-    final RomData data = RomLoader.getROMFrom("http://trd.speccy.cz/emulz/UKV12F5.ZIP");
+    final RomData data = RomLoader.getROMFrom("http://trd.speccy.cz/emulz/UKV12F5.ZIP", Set.of(), Set.of(), Set.of());
     assertEquals(0x4000*3,data.getAsArray().length);
     assertEquals("48.rom",0xAF,data.getAsArray()[0x01] & 0xFF);
     assertEquals("128tr.rom",0x01,data.getAsArray()[0x4001] & 0xFF);
@@ -36,7 +39,7 @@ public class ROMLoaderTest {
   
   @Test
   public void testLoadAndExtractROMFromArchiveWOS() throws Exception {
-    final RomData data = RomLoader.getROMFrom("ftp://anonymous:anonymous@ftp.worldofspectrum.org/pub/sinclair/emulators/pc/russian/ukv12f5.zip");
+    final RomData data = RomLoader.getROMFrom("ftp://anonymous:anonymous@ftp.worldofspectrum.org/pub/sinclair/emulators/pc/russian/ukv12f5.zip", Set.of(), Set.of(), Set.of());
     assertEquals(0x4000*3,data.getAsArray().length);
     assertEquals("48.rom",0xAF,data.getAsArray()[0x01] & 0xFF);
     assertEquals("128tr.rom",0x01,data.getAsArray()[0x4001] & 0xFF);

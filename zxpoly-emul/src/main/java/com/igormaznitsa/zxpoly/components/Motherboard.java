@@ -104,10 +104,15 @@ public final class Motherboard implements ZxPolyConstants {
     this.contendedRam = contendedRam;
     this.boardMode = boardMode;
     this.beeper = new Beeper(timingProfile, useAcbSoundScheme, enableCovoxFb, useTurboSound);
-    this.betaDisk = new BetaDiscInterface(this.timingProfile, this);
+    if (rom.isTrdosPresented()) {
+      LOGGER.info("TR-DOS presented in ROM, creating BetaDiskInterface");
+      this.betaDisk = new BetaDiscInterface(this.timingProfile, this);
+      ioDevices.add(this.betaDisk);
+    } else {
+      LOGGER.warning("TR-DOS is not presented in ROM, BetaDiskInterface disabled");
+      this.betaDisk = null;
+    }
     this.romData = rom;
-
-    ioDevices.add(this.betaDisk);
 
     this.keyboard = new KeyboardKempstonAndTapeIn(timingProfile, this, allowKempstonMouse);
     ioDevices.add(keyboard);
@@ -144,6 +149,10 @@ public final class Motherboard implements ZxPolyConstants {
     for (int i = 0; i < SPEC256_GFX_CORES; i++) {
       this.spec256GfxCores[i] = new Z80(this.modules[0].getCpu());
     }
+  }
+
+  public boolean isBetaDiskPresented() {
+    return this.betaDisk != null;
   }
 
   public VolumeProfile getSoundLevels() {

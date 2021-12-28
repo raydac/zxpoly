@@ -33,6 +33,8 @@ public final class RomData {
   private final String source;
   private final byte[] data;
   private final int addressMask;
+  private final boolean trdosPresented;
+
 
   public RomData(final String source, final byte[]... args) {
     this.source = source;
@@ -46,6 +48,7 @@ public final class RomData {
     }
     this.data = result;
     this.addressMask = makeMask(((size / 0x4000) * 0x4000) == size ? size - 1 : size);
+    this.trdosPresented = args.length > 2;
   }
 
   public RomData(final String source, final byte[] array) {
@@ -55,10 +58,16 @@ public final class RomData {
       throw new IllegalArgumentException("Rom data must not be greater than 64k");
     }
 
+    this.trdosPresented = array.length > 0x8000;
+
     final int size = ((array.length + 0x3FFF) / 0x4000) * 0x4000;
     this.data = new byte[size];
     this.addressMask = makeMask(size - 1);
     arraycopy(array, 0, this.data, 0, array.length);
+  }
+
+  public boolean isTrdosPresented() {
+    return this.trdosPresented;
   }
 
   public static RomData read(final File file) throws IOException {

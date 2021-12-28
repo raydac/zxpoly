@@ -18,21 +18,13 @@
 package com.igormaznitsa.zxpoly.utils;
 
 import com.igormaznitsa.zxpoly.components.RomData;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveInputStream;
+import org.apache.commons.compress.archivers.ar.ArArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -54,11 +46,23 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 
-public class RomLoader {
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Locale;
+import java.util.Set;
 
-  private static final String ROM_48 = "48.rom";
-  private static final String ROM_128TR = "128tr.rom";
-  private static final String ROM_TRDOS = "trdos.rom";
+public class RomLoader {
 
   public RomLoader() {
 
@@ -159,7 +163,112 @@ public class RomLoader {
     }
   }
 
-  public static RomData getROMFrom(final String url) throws IOException {
+  private static RomData extractFromTarGz(final String url, final Set<String> rom48names, final Set<String> rom128names, final Set<String> trdosNames, final byte[] archive) throws IOException {
+    try (final ArchiveInputStream archiveStream = new TarArchiveInputStream(new GzipCompressorInputStream(new ByteArrayInputStream(archive)))) {
+      return extractFromArchive(url, rom48names, rom128names, trdosNames, archiveStream);
+    }
+  }
+
+  private static RomData extractFromTarXz(final String url, final Set<String> rom48names, final Set<String> rom128names, final Set<String> trdosNames, final byte[] archive) throws IOException {
+    try (final ArchiveInputStream archiveStream = new TarArchiveInputStream(new XZCompressorInputStream(new ByteArrayInputStream(archive)))) {
+      return extractFromArchive(url, rom48names, rom128names, trdosNames, archiveStream);
+    }
+  }
+
+  private static RomData extractFromDeb(final String url, final Set<String> rom48names, final Set<String> rom128names, final Set<String> trdosNames, final byte[] archive) throws IOException {
+    byte[] data = null;
+    try (final ArchiveInputStream archiveStream = new ArArchiveInputStream(new ByteArrayInputStream(archive))) {
+      while (!Thread.currentThread().isInterrupted()) {
+        final ArchiveEntry entry = archiveStream.getNextEntry();
+        if (entry == null) {
+          break;
+        }
+
+        if (!archiveStream.canReadEntryData(entry) || entry.isDirectory()) {
+          continue;
+        }
+
+        if (entry.getName().equalsIgnoreCase("data.tar.xz")) {
+          data = IOUtils.readFully(archiveStream, (int) entry.getSize());
+          break;
+        }
+      }
+    }
+    if (data == null) {
+      throw new IOException("Can't find data.tar.xz in deb archive: " + url);
+    } else {
+      return extractFromTarXz(url, rom48names, rom128names, trdosNames, data);
+    }
+  }
+
+  private static RomData extractFromZip(final String url, final Set<String> rom48names, final Set<String> rom128names, final Set<String> trdosNames, final byte[] archive) throws IOException {
+    try (final ArchiveInputStream archiveStream = new ZipArchiveInputStream(new ByteArrayInputStream(archive))) {
+      return extractFromArchive(url, rom48names, rom128names, trdosNames, archiveStream);
+    }
+  }
+
+  private static RomData extractFromArchive(final String url, final Set<String> rom48names, final Set<String> rom128names, final Set<String> trdosNames, final ArchiveInputStream archiveStream) throws IOException {
+    byte[] rom48 = null;
+    byte[] rom128 = null;
+    byte[] romTrDos = null;
+
+    while (!Thread.currentThread().isInterrupted()) {
+      final ArchiveEntry entry = archiveStream.getNextEntry();
+      if (entry == null) {
+        break;
+      }
+
+      if (!archiveStream.canReadEntryData(entry) || entry.isDirectory()) {
+        continue;
+      }
+
+      String normalizedEntryName = entry.getName().trim().toLowerCase(Locale.ENGLISH).replace('\\', '/');
+
+      final int lastFolderChar = normalizedEntryName.lastIndexOf('/');
+      if (lastFolderChar >= 0) {
+        normalizedEntryName = normalizedEntryName.substring(lastFolderChar + 1);
+      }
+
+      if (rom48names.contains(normalizedEntryName)) {
+        final int size = (int) entry.getSize();
+        if (size > 16384) {
+          throw new IOException("ROM 48 has too big size");
+        }
+        rom48 = new byte[16384];
+        IOUtils.readFully(archiveStream, rom48, 0, size);
+      } else if (rom128names.contains(normalizedEntryName)) {
+        final int size = (int) entry.getSize();
+        if (size > 16384) {
+          throw new IOException("ROM 128 has too big size");
+        }
+        rom128 = new byte[16384];
+        IOUtils.readFully(archiveStream, rom128, 0, size);
+      } else if (trdosNames.contains(normalizedEntryName)) {
+        final int size = (int) entry.getSize();
+        if (size > 16384) {
+          throw new IOException("ROM TR-DOS has too big size");
+        }
+        romTrDos = new byte[16384];
+        IOUtils.readFully(archiveStream, romTrDos, 0, size);
+      }
+    }
+
+    if (rom48 == null) {
+      throw new IOException("Rom 48 not found");
+    }
+
+    if (rom128 == null) {
+      throw new IOException("Rom 128 not found");
+    }
+
+    if (romTrDos == null) {
+      return new RomData(url, rom128, rom48);
+    } else {
+      return new RomData(url, rom128, rom48, romTrDos);
+    }
+  }
+
+  public static RomData getROMFrom(final String url, final Set<String> rom48names, final Set<String> rom128names, final Set<String> trdosNames) throws IOException {
     final URI uri;
     try {
       uri = new URI(url);
@@ -188,56 +297,15 @@ public class RomLoader {
       throw new IllegalArgumentException("Unsupported scheme [" + scheme + ']');
     }
 
-    final ZipArchiveInputStream in = new ZipArchiveInputStream(new ByteArrayInputStream(loaded));
-
-    byte[] rom48 = null;
-    byte[] rom128 = null;
-    byte[] romTrDos = null;
-
-    while (!Thread.currentThread().isInterrupted()) {
-      final ZipArchiveEntry entry = in.getNextZipEntry();
-      if (entry == null) {
-        break;
-      }
-
-      if (entry.isDirectory()) {
-        continue;
-      }
-
-      if (ROM_48.equalsIgnoreCase(entry.getName())) {
-        final int size = (int) entry.getSize();
-        if (size > 16384) {
-          throw new IOException("ROM 48 has too big size");
-        }
-        rom48 = new byte[16384];
-        IOUtils.readFully(in, rom48, 0, size);
-      } else if (ROM_128TR.equalsIgnoreCase(entry.getName())) {
-        final int size = (int) entry.getSize();
-        if (size > 16384) {
-          throw new IOException("ROM 128TR has too big size");
-        }
-        rom128 = new byte[16384];
-        IOUtils.readFully(in, rom128, 0, size);
-      } else if (ROM_TRDOS.equalsIgnoreCase(entry.getName())) {
-        final int size = (int) entry.getSize();
-        if (size > 16384) {
-          throw new IOException("ROM TRDOS has too big size");
-        }
-        romTrDos = new byte[16384];
-        IOUtils.readFully(in, romTrDos, 0, size);
-      }
+    final String resourceInLowerCase = url.trim().toLowerCase(Locale.ENGLISH);
+    if (resourceInLowerCase.endsWith(".zip")) {
+      return extractFromZip(url, rom48names, rom128names, trdosNames, loaded);
+    } else if (resourceInLowerCase.endsWith(".tar.gz")) {
+      return extractFromTarGz(url, rom48names, rom128names, trdosNames, loaded);
+    } else if (resourceInLowerCase.endsWith(".deb")) {
+      return extractFromDeb(url, rom48names, rom128names, trdosNames, loaded);
+    } else {
+      throw new IOException("Can't process resource extension: " + url);
     }
-
-    if (rom48 == null) {
-      throw new IOException(ROM_48 + " not found");
-    }
-    if (rom128 == null) {
-      throw new IOException(ROM_128TR + " not found");
-    }
-    if (romTrDos == null) {
-      throw new IOException(ROM_TRDOS + " not found");
-    }
-
-    return new RomData(url, rom128, rom48, romTrDos);
   }
 }
