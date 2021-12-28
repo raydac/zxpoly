@@ -15,35 +15,6 @@ import static com.igormaznitsa.zxpoly.utils.Utils.closeQuietly;
 @SuppressWarnings("unused")
 public abstract class AbstractTcpSingleThreadServer {
   protected final BlockingQueue<byte[]> buffer;
-
-  public String getId() {
-    return this.id;
-  }
-
-  public interface TcpServerListener {
-
-    default void onEstablishing(AbstractTcpSingleThreadServer source, ServerSocket socket,
-                                Throwable error) {
-
-    }
-
-    default void onConnected(AbstractTcpSingleThreadServer source, Socket socket) {
-
-    }
-
-    default void onClientError(AbstractTcpSingleThreadServer source, Throwable error) {
-
-    }
-
-    default void onDone(AbstractTcpSingleThreadServer source) {
-
-    }
-
-    default void onConnectionDone(AbstractTcpSingleThreadServer source, Socket socket) {
-
-    }
-  }
-
   private final String id;
   private final InetAddress address;
   private final int port;
@@ -52,7 +23,6 @@ public abstract class AbstractTcpSingleThreadServer {
   private final AtomicReference<Socket> currentSocket = new AtomicReference<>();
   private final List<TcpServerListener> listeners = new CopyOnWriteArrayList<>();
   private volatile boolean stopped;
-
   public AbstractTcpSingleThreadServer(
           final String id,
           final int bufferSize,
@@ -63,6 +33,10 @@ public abstract class AbstractTcpSingleThreadServer {
     this.buffer = new ArrayBlockingQueue<>(bufferSize);
     this.address = address;
     this.port = port;
+  }
+
+  public String getId() {
+    return this.id;
   }
 
   protected boolean isStopped() {
@@ -153,4 +127,28 @@ public abstract class AbstractTcpSingleThreadServer {
   }
 
   protected abstract void doBusiness(Socket socket) throws Exception;
+
+  public interface TcpServerListener {
+
+    default void onEstablishing(AbstractTcpSingleThreadServer source, ServerSocket socket,
+                                Throwable error) {
+
+    }
+
+    default void onConnected(AbstractTcpSingleThreadServer source, Socket socket) {
+
+    }
+
+    default void onClientError(AbstractTcpSingleThreadServer source, Throwable error) {
+
+    }
+
+    default void onDone(AbstractTcpSingleThreadServer source) {
+
+    }
+
+    default void onConnectionDone(AbstractTcpSingleThreadServer source, Socket socket) {
+
+    }
+  }
 }

@@ -26,13 +26,11 @@ final class SndBufferContainer {
   private static final int SAMPLES_PER_INT = SND_FREQ / 50;
   public static final int SND_BUFFER_SIZE = SAMPLES_PER_INT * FRAME_SIZE;
   private final byte[][] allSndBuffers;
+  private final TimingProfile timingProfile;
   private byte[] soundBuffer;
   private int bufferIndex;
-
   private int tstatesIntCounter = 0;
   private int lastWrittenPosition = 0;
-
-  private final TimingProfile timingProfile;
 
   public SndBufferContainer(final TimingProfile timingProfile) {
     this.timingProfile = timingProfile;

@@ -132,8 +132,8 @@ public class FormatZXP extends Snapshot {
       z80.setIM(snapshot.getREG_IM()[cpu]);
 
       module.fillPortByValues(snapshot.getModulePorts(cpu)[0], snapshot.getModulePorts(cpu)[1],
-          snapshot.getModulePorts(cpu)[2], snapshot.getModulePorts(cpu)[3],
-          snapshot.getModulePorts(cpu)[4]);
+              snapshot.getModulePorts(cpu)[2], snapshot.getModulePorts(cpu)[3],
+              snapshot.getModulePorts(cpu)[4]);
 
       final ZXPParser.PAGES memory = snapshot.getPAGES()[cpu];
 
@@ -154,7 +154,7 @@ public class FormatZXP extends Snapshot {
   @Override
   public boolean accept(final File f) {
     return f != null &&
-        (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zxp"));
+            (f.isDirectory() || f.getName().toLowerCase(Locale.ENGLISH).endsWith(".zxp"));
   }
 
   @Override

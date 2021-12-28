@@ -19,8 +19,12 @@
 
 package com.igormaznitsa.zxpoly.utils;
 
-import java.awt.Cursor;
-import java.awt.Point;
+import javax.swing.*;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.View;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLDocument;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -28,12 +32,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
-import javax.swing.Icon;
-import javax.swing.JLabel;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.View;
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLDocument;
 
 /**
  * Small adaptation of javax.swing.JLabel to catch clicks on HTML links in the
@@ -154,7 +152,7 @@ public class JHtmlLabel extends JLabel {
   @Override
   public void setText(final String text) {
     super.setText(text.toLowerCase(Locale.ENGLISH).trim().startsWith("<html>") ?  //NOI18N
-        text : "<html>" + text + "</html>"); //NOI18N
+            text : "<html>" + text + "</html>"); //NOI18N
     this.linkCache = null;
   }
 

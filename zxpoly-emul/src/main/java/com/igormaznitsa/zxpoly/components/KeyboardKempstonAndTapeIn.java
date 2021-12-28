@@ -43,8 +43,6 @@ import static net.java.games.input.ControllerEnvironment.getDefaultEnvironment;
 
 public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
-  private static final Logger LOGGER = Logger.getLogger("InController");
-
   public static final long ZXKEY_CS =
           0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000001L;
   public static final long ZXKEY_Z =
@@ -55,7 +53,6 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
           0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00001000L;
   public static final long ZXKEY_V =
           0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00010000L;
-
   public static final long ZXKEY_A =
           0b00000000_00000000_00000000_00000000_00000000_00000000_00000001_00000000L;
   public static final long ZXKEY_S =
@@ -66,7 +63,6 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
           0b00000000_00000000_00000000_00000000_00000000_00000000_00001000_00000000L;
   public static final long ZXKEY_G =
           0b00000000_00000000_00000000_00000000_00000000_00000000_00010000_00000000L;
-
   public static final long ZXKEY_Q =
           0b00000000_00000000_00000000_00000000_00000000_00000001_00000000_00000000L;
   public static final long ZXKEY_W =
@@ -77,7 +73,6 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
           0b00000000_00000000_00000000_00000000_00000000_00001000_00000000_00000000L;
   public static final long ZXKEY_T =
           0b00000000_00000000_00000000_00000000_00000000_00010000_00000000_00000000L;
-
   public static final long ZXKEY_1 =
           0b00000000_00000000_00000000_00000000_00000001_00000000_00000000_00000000L;
   public static final long ZXKEY_2 =
@@ -88,7 +83,6 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
           0b00000000_00000000_00000000_00000000_00001000_00000000_00000000_00000000L;
   public static final long ZXKEY_5 =
           0b00000000_00000000_00000000_00000000_00010000_00000000_00000000_00000000L;
-
   public static final long ZXKEY_0 =
           0b00000000_00000000_00000000_00000001_00000000_00000000_00000000_00000000L;
   public static final long ZXKEY_9 =
@@ -99,7 +93,6 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
           0b00000000_00000000_00000000_00001000_00000000_00000000_00000000_00000000L;
   public static final long ZXKEY_6 =
           0b00000000_00000000_00000000_00010000_00000000_00000000_00000000_00000000L;
-
   public static final long ZXKEY_P =
           0b00000000_00000000_00000001_00000000_00000000_00000000_00000000_00000000L;
   public static final long ZXKEY_O =
@@ -110,7 +103,6 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
           0b00000000_00000000_00001000_00000000_00000000_00000000_00000000_00000000L;
   public static final long ZXKEY_Y =
           0b00000000_00000000_00010000_00000000_00000000_00000000_00000000_00000000L;
-
   public static final long ZXKEY_EN =
           0b00000000_00000001_00000000_00000000_00000000_00000000_00000000_00000000L;
   public static final long ZXKEY_L =
@@ -121,7 +113,6 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
           0b00000000_00001000_00000000_00000000_00000000_00000000_00000000_00000000L;
   public static final long ZXKEY_H =
           0b00000000_00010000_00000000_00000000_00000000_00000000_00000000_00000000L;
-
   public static final long ZXKEY_SP =
           0b00000001_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
   public static final long ZXKEY_SS =
@@ -132,10 +123,9 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
           0b00001000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
   public static final long ZXKEY_B =
           0b00010000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
-
   public static final long ZXKEY_NONE =
           0b00011111_00011111_00011111_00011111_00011111_00011111_00011111_00011111L;
-
+  private static final Logger LOGGER = Logger.getLogger("InController");
   private static final int KEMPSTON_RIGHT = 1;
   private static final int KEMPSTON_LEFT = 2;
   private static final int KEMPSTON_DOWN = 4;
@@ -149,14 +139,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private final List<Controller> detectedControllers;
   private final List<GameControllerAdapter> activeGameControllerAdapters =
           new CopyOnWriteArrayList<>();
-  private volatile long keyboardLines = ZXKEY_NONE;
-  private volatile long bufferKeyboardLines = 0L;
-  private volatile int kempstonSignals = 0;
-  private volatile int kempstonBuffer = 0;
   private final int cursorJoystickVkLeft;
-
   private final boolean kempstonMouseAllowed;
-
   private final int kempstonVkLeft;
   private final int kempstonVkRight;
   private final int kempstonVkUp;
@@ -166,26 +150,15 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private final int cursorJoystickVkUp;
   private final int cursorJoystickVkDown;
   private final int cursorJoystickVkFire;
-  private volatile boolean onlyJoystickEvents = false;
-
   private final long cursorCsMask = AppOptions.getInstance().getAutoCsForCursorKeys() ? ZXKEY_CS : 0L;
-  private volatile boolean activatedKempstonJoystick = true;
   private final TimingProfile timingProfile;
-
   private final List<TapeStateChangeListener> tapeStateChangeListeners = new CopyOnWriteArrayList<>();
-
-  public void addTapeStateChangeListener(final TapeStateChangeListener listener) {
-    this.tapeStateChangeListeners.add(listener);
-  }
-
-  public void removeTapeStateChangeListener(final TapeStateChangeListener listener) {
-    this.tapeStateChangeListeners.remove(listener);
-  }
-
-  public void setTap(final TapeSource tap) {
-    this.tap.set(tap);
-    this.fireTapeStateChangeListeners();
-  }
+  private volatile long keyboardLines = ZXKEY_NONE;
+  private volatile long bufferKeyboardLines = 0L;
+  private volatile int kempstonSignals = 0;
+  private volatile int kempstonBuffer = 0;
+  private volatile boolean onlyJoystickEvents = false;
+  private volatile boolean activatedKempstonJoystick = true;
 
   public KeyboardKempstonAndTapeIn(final TimingProfile timingProfile, final Motherboard board, final boolean kempstonMouseAllowed) {
     this.timingProfile = timingProfile;
@@ -228,6 +201,14 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     } else {
       this.detectedControllers = null;
     }
+  }
+
+  public void addTapeStateChangeListener(final TapeStateChangeListener listener) {
+    this.tapeStateChangeListeners.add(listener);
+  }
+
+  public void removeTapeStateChangeListener(final TapeStateChangeListener listener) {
+    this.tapeStateChangeListeners.remove(listener);
   }
 
   public boolean isKempstonJoystickActivated() {
@@ -397,6 +378,11 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   public TapeSource getTap() {
     return this.tap.get();
+  }
+
+  public void setTap(final TapeSource tap) {
+    this.tap.set(tap);
+    this.fireTapeStateChangeListeners();
   }
 
   private void fireTapeStateChangeListeners() {
@@ -718,11 +704,6 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     return consumed;
   }
 
-  @FunctionalInterface
-  public interface TapeStateChangeListener {
-    void onTapeStateChanged(KeyboardKempstonAndTapeIn source);
-  }
-
   @Override
   public String toString() {
     return this.getName();
@@ -874,5 +855,10 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   public long getKeyState() {
     return this.keyboardLines;
+  }
+
+  @FunctionalInterface
+  public interface TapeStateChangeListener {
+    void onTapeStateChanged(KeyboardKempstonAndTapeIn source);
   }
 }

@@ -31,10 +31,27 @@ public class ReaderTzx implements TapeSource, ListModel<TzxWavRenderer.RenderRes
   private final InMemoryWavFile inMemoryWavFile;
   private final TzxWavRenderer.RenderResult renderedWav;
   private final AtomicInteger blockIndex = new AtomicInteger(0);
-  private volatile boolean playing;
-  private volatile float bias = 0.01f;
   private final TapeContext tapeContext;
   private final TzxWavRenderer.DataType SIGNAL_STOP_TAPE = TzxWavRenderer.DataType.STOP_TAPE;
+  private final TzxWavRenderer.DataType SIGNAL_STOP_TAPE_IF_ZX48 = TzxWavRenderer.DataType.STOP_TAPE_IF_ZX48;
+  private volatile boolean playing;
+  private volatile float bias = 0.01f;
+
+  public ReaderTzx(final TapeContext context, final TimingProfile timingProfile, final String name, final InputStream tap) throws IOException {
+    this.tapeContext = context;
+    this.timingProfile = timingProfile;
+    this.name = name;
+    this.tzxFile = new TzxFile(tap);
+
+    this.tzxFile.getBlockList()
+            .forEach(x -> LOGGER.info("Found block: " + x.getClass().getSimpleName()));
+
+    final long startTime = System.currentTimeMillis();
+    this.renderedWav = this.renderAsWav();
+
+    LOGGER.info(String.format("TZX to WAV conversion took %d ms, size %d bytes", (System.currentTimeMillis() - startTime), this.renderedWav.getWavData().length));
+    this.inMemoryWavFile = new InMemoryWavFile(new ByteArraySeekableContainer(this.renderedWav.getWavData()), timingProfile.ulaFrameTact * 50L);
+  }
 
   @Override
   public void dispose() {
@@ -89,24 +106,6 @@ public class ReaderTzx implements TapeSource, ListModel<TzxWavRenderer.RenderRes
 
   private void fireActionListeners(final int id, final String command) {
     SwingUtilities.invokeLater(() -> this.actionListeners.forEach(x -> x.actionPerformed(new ActionEvent(this, id, command))));
-  }
-
-  private final TzxWavRenderer.DataType SIGNAL_STOP_TAPE_IF_ZX48 = TzxWavRenderer.DataType.STOP_TAPE_IF_ZX48;
-
-  public ReaderTzx(final TapeContext context, final TimingProfile timingProfile, final String name, final InputStream tap) throws IOException {
-    this.tapeContext = context;
-    this.timingProfile = timingProfile;
-    this.name = name;
-    this.tzxFile = new TzxFile(tap);
-
-    this.tzxFile.getBlockList()
-            .forEach(x -> LOGGER.info("Found block: " + x.getClass().getSimpleName()));
-
-    final long startTime = System.currentTimeMillis();
-    this.renderedWav = this.renderAsWav();
-
-    LOGGER.info(String.format("TZX to WAV conversion took %d ms, size %d bytes", (System.currentTimeMillis() - startTime), this.renderedWav.getWavData().length));
-    this.inMemoryWavFile = new InMemoryWavFile(new ByteArraySeekableContainer(this.renderedWav.getWavData()), timingProfile.ulaFrameTact * 50L);
   }
 
   @Override

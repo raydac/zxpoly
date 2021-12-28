@@ -18,6 +18,7 @@
 package com.igormaznitsa.zxpoly.ui;
 
 import com.igormaznitsa.z80.Utils;
+
 import java.util.Locale;
 
 public class AddressPanel extends javax.swing.JPanel {

@@ -17,10 +17,10 @@
 
 package com.igormaznitsa.zxpoly.tracer;
 
+import javax.swing.*;
+import javax.swing.text.MaskFormatter;
 import java.text.ParseException;
 import java.util.Locale;
-import javax.swing.JFormattedTextField;
-import javax.swing.text.MaskFormatter;
 
 public class HexValue2Field extends AbstractHexValueField {
 

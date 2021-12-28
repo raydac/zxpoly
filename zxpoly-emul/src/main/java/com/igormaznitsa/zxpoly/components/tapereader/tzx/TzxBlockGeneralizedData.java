@@ -216,13 +216,12 @@ public class TzxBlockGeneralizedData extends AbstractTzxSoundDataBlock {
   }
 
   public static final class SymDefRecord {
-    private final int symbolFlags;
-    private final int[] pulseLengths;
-
     public static final int POLARITY_OPPOSITE = 0;
     public static final int POLARITY_SAME = 1;
     public static final int POLARITY_LOW = 2;
     public static final int POLARITY_HIGH = 3;
+    private final int symbolFlags;
+    private final int[] pulseLengths;
 
     private SymDefRecord(final int maxp, final JBBPBitInputStream inputStream) throws IOException {
       this.symbolFlags = inputStream.readByte();

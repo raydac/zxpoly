@@ -36,6 +36,7 @@ import static com.igormaznitsa.z80.Z80.REG_A;
 @SuppressWarnings("WeakerAccess")
 public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProvider {
 
+  private static final int GFX_PAGE_SIZE = 0x4000 * 8;
   private final Logger logger;
   private final Motherboard board;
   private final int moduleIndex;
@@ -46,37 +47,27 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   private final int PORT_REG3;
   private final AtomicIntegerArray zxPolyRegsWritten = new AtomicIntegerArray(4);
   private final AtomicInteger port7FFD = new AtomicInteger();
+  private final AtomicReference<RomData> romData = new AtomicReference<>();
+  private final byte[] gfxRam;
+  private final byte[] gfxRom;
+  private final boolean trdosEnabled;
+  private final TimingProfile timingProfile;
   private int intTiStatesCounter;
   private int nmiTiStatesCounter;
   private int lastM1Address;
   private volatile boolean gfxPtrFromMainCpu = false;
-
-  private final AtomicReference<RomData> romData = new AtomicReference<>();
   private boolean activeRegisterReading;
   private int registerReadingCounter = 0;
-
   private boolean localInt;
   private boolean localNmi;
   private boolean waitSignal;
-
   private boolean stopAddressWait;
   private int localResetCounter;
-
   private long mcyclesOfActivityBetweenInt;
-
   private volatile boolean trdosRomActive;
-
-  private final byte[] gfxRam;
-  private final byte[] gfxRom;
-
   private boolean gfxWaitSignal;
   private int gfxIntCounter;
   private int gfxNmiCounter;
-  private final boolean trdosEnabled;
-
-  private static final int GFX_PAGE_SIZE = 0x4000 * 8;
-
-  private final TimingProfile timingProfile;
 
 
   public ZxPolyModule(final TimingProfile timingProfile, final Motherboard board, final RomData romData, final int index) {
@@ -106,6 +97,19 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     logger.info("Inited");
   }
 
+  private static int calcPortForRegister(final int moduleIndex, final int registerIndex) {
+    return (moduleIndex << 12) | (registerIndex << 8) | 0xFF;
+  }
+
+  private static int packAddress(final int address) {
+    return ((address >> 1) & 0x1)
+            | ((address >> 1) & 0x2)
+            | ((address >> 5) & 0x4)
+            | ((address >> 8) & 0x8)
+            | ((address >> 10) & 0x10)
+            | ((address >> 9) & 0x20);
+  }
+
   void saveInternalCopyForGfx() {
     this.gfxWaitSignal = this.waitSignal;
     this.gfxIntCounter = this.intTiStatesCounter;
@@ -128,10 +132,6 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     this.romData.set(Objects.requireNonNull(romData));
   }
 
-  private static int calcPortForRegister(final int moduleIndex, final int registerIndex) {
-    return (moduleIndex << 12) | (registerIndex << 8) | 0xFF;
-  }
-
   public int getHeapOffset() {
     return (this.zxPolyRegsWritten.get(0) & 7) * 0x10000;
   }
@@ -142,15 +142,6 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   public Z80 getCpu() {
     return this.cpu;
-  }
-
-  private static int packAddress(final int address) {
-    return ((address >> 1) & 0x1)
-            | ((address >> 1) & 0x2)
-            | ((address >> 5) & 0x4)
-            | ((address >> 8) & 0x8)
-            | ((address >> 10) & 0x10)
-            | ((address >> 9) & 0x20);
   }
 
   public void fillArrayByPortValues(final byte[] fiveElementArray) {

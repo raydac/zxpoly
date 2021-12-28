@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,29 +16,29 @@
  */
 package com.igormaznitsa.zxpoly.formats;
 
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotNull;
 
-
-import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import org.junit.Test;
-
 public class ZXEMLSnapshotFormatTest {
 
-  private static byte [] loadResource(final String name) throws Exception {
+  private static byte[] loadResource(final String name) throws Exception {
     final InputStream ins = ZXEMLSnapshotFormatTest.class.getResourceAsStream(name);
-    assertNotNull("Can't find resource "+name,ins);
+    assertNotNull("Can't find resource " + name, ins);
     final JBBPBitInputStream in = new JBBPBitInputStream(ins);
-    final byte [] result = in.readByteArray(-1);
+    final byte[] result = in.readByteArray(-1);
     in.close();
     return result;
   }
-  
+
   @Test
   public void testSaveLoad_Snapshot() throws Exception {
-    final byte [] array = loadResource("fh.zxp");
+    final byte[] array = loadResource("fh.zxp");
 
     final ZxEmlSnapshotFormat data = new ZxEmlSnapshotFormat();
     data.read(new JBBPBitInputStream(new ByteArrayInputStream(array.clone())));

@@ -58,10 +58,10 @@ public final class TvFilterBlackWhite implements TvFilter {
 
   @Override
   public BufferedImage apply(
-      final BufferedImage srcImageArgb512x384,
-      final float zoom,
-      final int argbBorderColor,
-      final boolean firstInChain
+          final BufferedImage srcImageArgb512x384,
+          final float zoom,
+          final int argbBorderColor,
+          final boolean firstInChain
   ) {
     final int[] src = ((DataBufferInt) srcImageArgb512x384.getRaster().getDataBuffer()).getData();
     final int[] dst = SHARED_BUFFER_RASTER;
@@ -82,12 +82,12 @@ public final class TvFilterBlackWhite implements TvFilter {
 
   @Override
   public byte[] apply(
-      final boolean forceCopy,
-      final byte[] rgbArray512x384,
-      final int argbBorderColor
+          final boolean forceCopy,
+          final byte[] rgbArray512x384,
+          final int argbBorderColor
   ) {
     final byte[] result =
-        forceCopy ? Arrays.copyOf(rgbArray512x384, rgbArray512x384.length) : rgbArray512x384;
+            forceCopy ? Arrays.copyOf(rgbArray512x384, rgbArray512x384.length) : rgbArray512x384;
 
     for (int y = 0; y < RASTER_HEIGHT; y++) {
       for (int x = 0; x < RASTER_WIDTH_ARGB_INT; x++) {

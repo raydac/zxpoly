@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
 public class TvFilterGaussian implements TvFilter {
   private static final TvFilterGaussian INSTANCE = new TvFilterGaussian();
 
-  private static final int[] FILTER = new int[] {1, 2, 1, 2, 4, 2, 1, 2, 1};
+  private static final int[] FILTER = new int[]{1, 2, 1, 2, 4, 2, 1, 2, 1};
   private static final int FILTER_SUM = IntStream.of(FILTER).sum();
   private static final int FILTER_WIDTH = 3;
   private static final int CENTER_OFFSET_X = FILTER_WIDTH / 2;
@@ -27,8 +27,8 @@ public class TvFilterGaussian implements TvFilter {
   }
 
   private static void blur(
-      final int[] src,
-      final int[] out) {
+          final int[] src,
+          final int[] out) {
 
     for (int h = RASTER_HEIGHT - FILTER.length / FILTER_WIDTH + 1, w =
          RASTER_WIDTH_ARGB_INT - FILTER_WIDTH + 1, y = 0; y < h; y++) {
@@ -51,14 +51,14 @@ public class TvFilterGaussian implements TvFilter {
         g /= FILTER_SUM;
         b /= FILTER_SUM;
         out[x + CENTER_OFFSET_X + (y + CENTER_OFFSET_Y) * RASTER_WIDTH_ARGB_INT] =
-            (r << 16) | (g << 8) | b | 0xFF000000;
+                (r << 16) | (g << 8) | b | 0xFF000000;
       }
     }
   }
 
   private static void blur(
-      final byte[] rgbSrc,
-      final byte[] rgbOut) {
+          final byte[] rgbSrc,
+          final byte[] rgbOut) {
 
     for (int h = RASTER_HEIGHT - FILTER.length / FILTER_WIDTH + 1, w =
          RASTER_WIDTH_RGB_BYTE - FILTER_WIDTH * 3 + 3, y = 0;
@@ -92,12 +92,12 @@ public class TvFilterGaussian implements TvFilter {
 
   @Override
   public byte[] apply(
-      boolean forceCopy,
-      byte[] rgbArray512x384,
-      int argbBorderColor
+          boolean forceCopy,
+          byte[] rgbArray512x384,
+          int argbBorderColor
   ) {
     final byte[] result =
-        forceCopy ? Arrays.copyOf(rgbArray512x384, rgbArray512x384.length) : rgbArray512x384;
+            forceCopy ? Arrays.copyOf(rgbArray512x384, rgbArray512x384.length) : rgbArray512x384;
     System.arraycopy(result, 0, this.blurByteBuffer, 0, result.length);
     blur(result, this.blurByteBuffer);
     System.arraycopy(blurByteBuffer, 0, result, 0, blurByteBuffer.length);
@@ -106,10 +106,10 @@ public class TvFilterGaussian implements TvFilter {
 
   @Override
   public BufferedImage apply(
-      final BufferedImage srcImageArgb512x384,
-      final float zoom,
-      final int argbBorderColor,
-      final boolean firstInChain) {
+          final BufferedImage srcImageArgb512x384,
+          final float zoom,
+          final int argbBorderColor,
+          final boolean firstInChain) {
 
     final BufferedImage result;
     final int[] resultRaster;
@@ -118,7 +118,7 @@ public class TvFilterGaussian implements TvFilter {
       result = SHARED_BUFFER;
       resultRaster = SHARED_BUFFER_RASTER;
       final int[] srcRaster =
-          ((DataBufferInt) srcImageArgb512x384.getRaster().getDataBuffer()).getData();
+              ((DataBufferInt) srcImageArgb512x384.getRaster().getDataBuffer()).getData();
       System.arraycopy(srcRaster, 0, resultRaster, 0, resultRaster.length);
     } else {
       result = srcImageArgb512x384;

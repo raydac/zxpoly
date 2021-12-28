@@ -2,8 +2,10 @@ package com.igormaznitsa.zxpoly.trainers;
 
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
-import java.awt.Component;
-import java.awt.FlowLayout;
+import org.apache.commons.io.FileUtils;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -12,18 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.ListCellRenderer;
-import javax.swing.ListSelectionModel;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.UIManager;
-import org.apache.commons.io.FileUtils;
 
 public class TrainerPok extends AbstractTrainer {
   public static final Logger LOGGER = Logger.getLogger("Trainer.POK");
@@ -34,9 +24,9 @@ public class TrainerPok extends AbstractTrainer {
 
   @Override
   public void apply(
-      final Component component,
-      final File file,
-      final Motherboard motherboard
+          final Component component,
+          final File file,
+          final Motherboard motherboard
   ) {
     final String body;
     try {
@@ -99,45 +89,45 @@ public class TrainerPok extends AbstractTrainer {
     listRecordsComponent.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     if (JOptionPane
-        .showConfirmDialog(component, new JScrollPane(listRecordsComponent), "Found trainers",
-            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+            .showConfirmDialog(component, new JScrollPane(listRecordsComponent), "Found trainers",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
       records.stream().filter(PokeRecord::isSelected).flatMap(x -> x.items.stream())
-          .forEach(poke -> {
-            int data = poke.value;
-            if (data == 256) {
-              final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-              panel.add(new JLabel(String.format("Byte value (%s):", poke.parent.title)));
-              final JSpinner spinner = new JSpinner(new SpinnerNumberModel(0, 0, 255, 1));
-              panel.add(spinner);
-              if (JOptionPane
-                  .showConfirmDialog(component, panel,
-                      String.format("%s, value for addr %d", poke.parent.title, poke.address),
-                      JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE)
-                  == JOptionPane.CANCEL_OPTION) {
-                return;
-              }
-              data = (Integer) spinner.getValue();
-            }
-            for (final ZxPolyModule module : motherboard.getModules()) {
-              if ((poke.bank & 8) == 0 && poke.address >= 0xC000) {
-                if (module.getModuleIndex() == 0) {
-                  LOGGER
-                      .info(String.format("POKE %d:%d,%d", poke.bank, poke.address - 0xC000, data));
+              .forEach(poke -> {
+                int data = poke.value;
+                if (data == 256) {
+                  final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                  panel.add(new JLabel(String.format("Byte value (%s):", poke.parent.title)));
+                  final JSpinner spinner = new JSpinner(new SpinnerNumberModel(0, 0, 255, 1));
+                  panel.add(spinner);
+                  if (JOptionPane
+                          .showConfirmDialog(component, panel,
+                                  String.format("%s, value for addr %d", poke.parent.title, poke.address),
+                                  JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE)
+                          == JOptionPane.CANCEL_OPTION) {
+                    return;
+                  }
+                  data = (Integer) spinner.getValue();
                 }
-                module.poke(poke.bank, poke.address - 0xC000, data);
-              } else {
-                if (module.getModuleIndex() == 0) {
-                  LOGGER.info(String.format("POKE %d,%d", poke.address, data));
+                for (final ZxPolyModule module : motherboard.getModules()) {
+                  if ((poke.bank & 8) == 0 && poke.address >= 0xC000) {
+                    if (module.getModuleIndex() == 0) {
+                      LOGGER
+                              .info(String.format("POKE %d:%d,%d", poke.bank, poke.address - 0xC000, data));
+                    }
+                    module.poke(poke.bank, poke.address - 0xC000, data);
+                  } else {
+                    if (module.getModuleIndex() == 0) {
+                      LOGGER.info(String.format("POKE %d,%d", poke.address, data));
+                    }
+                    module.writeMemory(module.getCpu(), 0, poke.address, (byte) data);
+                  }
                 }
-                module.writeMemory(module.getCpu(), 0, poke.address, (byte) data);
-              }
-            }
-          });
+              });
     }
   }
 
   private final class CheckBoxListCellRenderer extends JCheckBox
-      implements ListCellRenderer<PokeRecord> {
+          implements ListCellRenderer<PokeRecord> {
 
     public CheckBoxListCellRenderer() {
       super();
@@ -145,11 +135,11 @@ public class TrainerPok extends AbstractTrainer {
 
     @Override
     public Component getListCellRendererComponent(
-        JList<? extends PokeRecord> list,
-        PokeRecord value,
-        int index,
-        boolean isSelected,
-        boolean cellHasFocus
+            JList<? extends PokeRecord> list,
+            PokeRecord value,
+            int index,
+            boolean isSelected,
+            boolean cellHasFocus
     ) {
       this.setComponentOrientation(list.getComponentOrientation());
       this.setEnabled(list.isEnabled());
@@ -160,7 +150,7 @@ public class TrainerPok extends AbstractTrainer {
       this.setText(value.toString());
 
       this.setBorder(hasFocus() ? UIManager.getBorder("List.focusSelectedCellHighlightBorder") :
-          UIManager.getBorder("List.cellNoFocusBorder"));
+              UIManager.getBorder("List.cellNoFocusBorder"));
 
       return this;
     }

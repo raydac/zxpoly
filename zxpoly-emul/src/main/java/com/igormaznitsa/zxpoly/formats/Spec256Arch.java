@@ -19,9 +19,8 @@ import static org.apache.commons.compress.utils.IOUtils.readFully;
 
 public class Spec256Arch {
 
-  private static final int GFX_PAGE_SIZE = 0x4000 * 8;
-
   static final Pattern GFn_PATTERN = Pattern.compile("^.*\\.gf(x|[0-7])$");
+  private static final int GFX_PAGE_SIZE = 0x4000 * 8;
   private static final Pattern ROM_ABC_PATTERN = Pattern.compile("^.*\\.gf([ab])$");
   private static final Pattern ROM_ROMNUM_PATTERN = Pattern.compile("^(?:.*/)?rom([01])\\.gfx$");
   private static final Pattern BKG_PATTERN = Pattern.compile("^.*\\.b([0-9]{2})$");

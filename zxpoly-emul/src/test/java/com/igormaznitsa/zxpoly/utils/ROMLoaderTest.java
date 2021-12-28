@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2019 Igor Maznitsa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,25 +26,25 @@ import static org.junit.Assert.assertEquals;
 
 @Ignore
 public class ROMLoaderTest {
-  
+
   @Test
   public void testLoadAndExtractROMFromArchiveVTRD() throws Exception {
     final RomData data = RomLoader.getROMFrom("http://trd.speccy.cz/emulz/UKV12F5.ZIP", Set.of(), Set.of(), Set.of());
-    assertEquals(0x4000*3,data.getAsArray().length);
-    assertEquals("48.rom",0xAF,data.getAsArray()[0x01] & 0xFF);
-    assertEquals("128tr.rom",0x01,data.getAsArray()[0x4001] & 0xFF);
-    assertEquals("trdos.rom",0x11,data.getAsArray()[0x8001] & 0xFF);
+    assertEquals(0x4000 * 3, data.getAsArray().length);
+    assertEquals("48.rom", 0xAF, data.getAsArray()[0x01] & 0xFF);
+    assertEquals("128tr.rom", 0x01, data.getAsArray()[0x4001] & 0xFF);
+    assertEquals("trdos.rom", 0x11, data.getAsArray()[0x8001] & 0xFF);
     assertEquals(0xFFFF, data.getMask());
   }
-  
+
   @Test
   public void testLoadAndExtractROMFromArchiveWOS() throws Exception {
     final RomData data = RomLoader.getROMFrom("ftp://anonymous:anonymous@ftp.worldofspectrum.org/pub/sinclair/emulators/pc/russian/ukv12f5.zip", Set.of(), Set.of(), Set.of());
-    assertEquals(0x4000*3,data.getAsArray().length);
-    assertEquals("48.rom",0xAF,data.getAsArray()[0x01] & 0xFF);
-    assertEquals("128tr.rom",0x01,data.getAsArray()[0x4001] & 0xFF);
-    assertEquals("trdos.rom",0x11,data.getAsArray()[0x8001] & 0xFF);
+    assertEquals(0x4000 * 3, data.getAsArray().length);
+    assertEquals("48.rom", 0xAF, data.getAsArray()[0x01] & 0xFF);
+    assertEquals("128tr.rom", 0x01, data.getAsArray()[0x4001] & 0xFF);
+    assertEquals("trdos.rom", 0x11, data.getAsArray()[0x8001] & 0xFF);
     assertEquals(0xFFFF, data.getMask());
   }
-  
+
 }

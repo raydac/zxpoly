@@ -23,23 +23,23 @@ public final class GameControllerPanel extends JPanel {
     this.module = module;
 
     final List<Controller> controllers = module.getDetectedControllers().stream()
-        .sorted(comparing(Controller::getName))
-        .collect(toList());
+            .sorted(comparing(Controller::getName))
+            .collect(toList());
 
     final List<GameControllerAdapter> activeGameControllerAdapters = module.getActiveGadapters();
 
     final GridBagConstraints constraints = new GridBagConstraints(
-        0,
-        GridBagConstraints.RELATIVE,
-        1,
-        1,
-        1,
-        1,
-        GridBagConstraints.NORTHWEST,
-        GridBagConstraints.HORIZONTAL,
-        new Insets(0, 0, 0, 0),
-        0,
-        0);
+            0,
+            GridBagConstraints.RELATIVE,
+            1,
+            1,
+            1,
+            1,
+            GridBagConstraints.NORTHWEST,
+            GridBagConstraints.HORIZONTAL,
+            new Insets(0, 0, 0, 0),
+            0,
+            0);
 
     for (final Controller c : controllers) {
       final GadapterRecord newRecord = new GadapterRecord(c, activeGameControllerAdapters);
@@ -56,11 +56,11 @@ public final class GameControllerPanel extends JPanel {
       if (c instanceof GadapterRecord) {
         final GadapterRecord record = (GadapterRecord) c;
         final GameControllerAdapterType gameControllerAdapterType =
-            (GameControllerAdapterType) record.type.getSelectedItem();
+                (GameControllerAdapterType) record.type.getSelectedItem();
         if (record.selected.isSelected() &&
-            gameControllerAdapterType != GameControllerAdapterType.NONE &&
-            !alreadySelected.contains(
-                gameControllerAdapterType)) {
+                gameControllerAdapterType != GameControllerAdapterType.NONE &&
+                !alreadySelected.contains(
+                        gameControllerAdapterType)) {
           result.add(module.makeGameControllerAdapter(record.controller, gameControllerAdapterType));
           alreadySelected.add(gameControllerAdapterType);
         }
@@ -84,8 +84,8 @@ public final class GameControllerPanel extends JPanel {
       this.type = new JComboBox<>(GameControllerAdapterType.values());
 
       final Optional<GameControllerAdapter> activeForController =
-          activeGameControllerAdapters.stream().filter(x -> x.getController() == controller)
-              .findFirst();
+              activeGameControllerAdapters.stream().filter(x -> x.getController() == controller)
+                      .findFirst();
 
       if (activeForController.isPresent()) {
         this.selected.setSelected(true);

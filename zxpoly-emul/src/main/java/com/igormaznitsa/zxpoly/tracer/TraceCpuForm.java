@@ -91,8 +91,8 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
     this.checkBoxZ = new JCheckBox();
     this.disasmList = new JList();
     this.disasmList.setPreferredSize(new Dimension(
-        this.disasmList.getFontMetrics(this.disasmList.getFont())
-            .stringWidth(StringUtils.repeat('@', 24)), 128));
+            this.disasmList.getFontMetrics(this.disasmList.getFont())
+                    .stringWidth(StringUtils.repeat('@', 24)), 128));
 
     this.fieldAltRegA = new HexValue2Field();
     this.fieldAltRegB = new HexValue2Field();
@@ -187,11 +187,11 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
 
     final JButton buttonMemory = new JButton("Change memory");
     buttonMemory.addActionListener(e ->
-        new MemoryDialog(this, true, this.module).setVisible(true));
+            new MemoryDialog(this, true, this.module).setVisible(true));
 
     final JButton buttonSetIFF1 = new JButton("Set IFF1");
     buttonSetIFF1.addActionListener(e ->
-        this.module.getCpu().setIFF(true, true));
+            this.module.getCpu().setIFF(true, true));
 
     final JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     buttonsPanel.add(buttonMemory);
@@ -445,9 +445,9 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
   }
 
   private String makeCodeLine(
-      final MemoryAccessProvider provider,
-      final int addr,
-      final int bytes
+          final MemoryAccessProvider provider,
+          final int addr,
+          final int bytes
   ) {
     final StringBuilder result = new StringBuilder();
     final String addrAsHex = Integer.toHexString(addr).toUpperCase(Locale.ENGLISH);
@@ -465,8 +465,8 @@ public class TraceCpuForm extends JFrame implements MemoryAccessProvider {
     result.append(addrAsHex);
     for (int i = 0; i < bytes; i++) {
       result.append(' ')
-          .append(Integer.toHexString(provider.readAddress(addr + i) & 0xFF)
-              .toUpperCase(Locale.ENGLISH));
+              .append(Integer.toHexString(provider.readAddress(addr + i) & 0xFF)
+                      .toUpperCase(Locale.ENGLISH));
     }
     return result.toString();
   }

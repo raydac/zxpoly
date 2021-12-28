@@ -17,10 +17,10 @@
 
 package com.igormaznitsa.zxpoly.animeencoders;
 
+import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import java.io.File;
 import java.util.Locale;
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
 
 public class AnimatedGifTunePanel extends javax.swing.JPanel {
 

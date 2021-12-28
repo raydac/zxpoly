@@ -83,52 +83,52 @@ public class RomLoader {
 
       @Override
       public void checkClientTrusted(final X509Certificate[] arg0, final String arg1)
-          throws CertificateException {
+              throws CertificateException {
       }
 
       @Override
       public void checkServerTrusted(final X509Certificate[] arg0, String arg1)
-          throws CertificateException {
+              throws CertificateException {
       }
     };
     try {
-      sslcontext.init(null, new TrustManager[] {tm}, null);
+      sslcontext.init(null, new TrustManager[]{tm}, null);
     } catch (KeyManagementException ex) {
       throw new IOException("Can't init ssl context: " + ex.getMessage());
     }
 
     final SSLConnectionSocketFactory sslfactory =
-        new SSLConnectionSocketFactory(sslcontext, NoopHostnameVerifier.INSTANCE);
+            new SSLConnectionSocketFactory(sslcontext, NoopHostnameVerifier.INSTANCE);
     final Registry<ConnectionSocketFactory> registry =
-        RegistryBuilder.<ConnectionSocketFactory>create()
-            .register("https", sslfactory)
-            .register("http", new PlainConnectionSocketFactory())
-            .build();
+            RegistryBuilder.<ConnectionSocketFactory>create()
+                    .register("https", sslfactory)
+                    .register("http", new PlainConnectionSocketFactory())
+                    .build();
 
     final HttpClient client = HttpClientBuilder.create()
-        .setUserAgent("zx-poly-emulator/2.0")
-        .disableCookieManagement()
-        .setConnectionManager(new BasicHttpClientConnectionManager(registry))
-        .setSSLSocketFactory(sslfactory)
-        .setSSLContext(sslcontext)
-        .build();
+            .setUserAgent("zx-poly-emulator/2.0")
+            .disableCookieManagement()
+            .setConnectionManager(new BasicHttpClientConnectionManager(registry))
+            .setSSLSocketFactory(sslfactory)
+            .setSSLContext(sslcontext)
+            .build();
 
     final HttpContext context = HttpClientContext.create();
     final HttpGet get = new HttpGet(url);
     get.setConfig(RequestConfig.copy(RequestConfig.DEFAULT)
-        .setAuthenticationEnabled(false)
-        .setRedirectsEnabled(true)
-        .setRelativeRedirectsAllowed(true)
-        .setConnectTimeout(2000)
-        .setSocketTimeout(2000)
-        .build());
+            .setAuthenticationEnabled(false)
+            .setRedirectsEnabled(true)
+            .setRelativeRedirectsAllowed(true)
+            .setConnectTimeout(2000)
+            .setSocketTimeout(2000)
+            .build());
     final HttpResponse response = client.execute(get, context);
 
     if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
       final HttpEntity entity = response.getEntity();
       try (final InputStream in = entity.getContent()) {
         return entity.getContentLength() < 0L ? IOUtils.toByteArray(in) :
-            IOUtils.toByteArray(in, entity.getContentLength());
+                IOUtils.toByteArray(in, entity.getContentLength());
       }
     } else {
       throw new IOException("Can't download from http '" + url + "' code [" + url + ']');
@@ -152,7 +152,7 @@ public class RomLoader {
           return out.toByteArray();
         } else {
           throw new IOException(
-              "Can't load file 'ftp://" + host + path + "\' status=" + client.getReplyCode());
+                  "Can't load file 'ftp://" + host + path + "\' status=" + client.getReplyCode());
         }
       } finally {
         client.disconnect();

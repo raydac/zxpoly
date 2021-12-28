@@ -66,16 +66,16 @@ public final class RomData {
     arraycopy(array, 0, this.data, 0, array.length);
   }
 
-  public boolean isTrdosPresented() {
-    return this.trdosPresented;
-  }
-
   public static RomData read(final File file) throws IOException {
     return new RomData(file.getName(), FileUtils.readFileToByteArray(file));
   }
 
   public static RomData read(final String sourceName, final InputStream in) throws IOException {
     return new RomData(sourceName, IOUtils.toByteArray(in));
+  }
+
+  public boolean isTrdosPresented() {
+    return this.trdosPresented;
   }
 
   public String getSource() {

@@ -1,6 +1,5 @@
-
-<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<assembly xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
   <id>withjre_windows</id>
 
@@ -28,7 +27,7 @@
         </exclude>
       </excludes>
       <includes>
-       <include>*/**</include>
+        <include>*/**</include>
       </includes>
       <filtered>true</filtered>
     </fileSet>
@@ -42,7 +41,9 @@
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}${file.separator}jre_macos_amd64</directory>
-      <outputDirectory>${file.separator}ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS${file.separator}jre</outputDirectory>
+      <outputDirectory>
+        ${file.separator}ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS${file.separator}jre
+      </outputDirectory>
       <includes>
         <include>*/**</include>
       </includes>
@@ -50,7 +51,9 @@
   </fileSets>
   <files>
     <file>
-      <source>${project.basedir}${file.separator}src${file.separator}assembly${file.separator}mac${file.separator}ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS${file.separator}zxpoly</source>
+      <source>
+        ${project.basedir}${file.separator}src${file.separator}assembly${file.separator}mac${file.separator}ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS${file.separator}zxpoly
+      </source>
       <destName>zxpoly</destName>
       <outputDirectory>${file.separator}ZXPolyEmul.app${file.separator}Contents${file.separator}MacOS</outputDirectory>
       <fileMode>0755</fileMode>

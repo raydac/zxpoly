@@ -87,7 +87,7 @@ public final class Utils {
         final int gg = (value >>> 8) & 0xFF;
         final int bb = value & 0xFF;
         final double cdist = Math.sqrt(Math.pow((double) rr - r, 2) + Math.pow((double) gg - g, 2)
-            + Math.pow((double) bb - b, 2));
+                + Math.pow((double) bb - b, 2));
         if (cdist < dist) {
           dist = cdist;
           result[i] = value;

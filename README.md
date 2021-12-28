@@ -7,25 +7,25 @@
 
 # Changelog
 
+__2.2.3 (SNAPSHOT)__
+
+- Fix for ZXPlus keyboard skin
+- Added Timex2048Pal keyboard skin
+- Added configurable fast buttons
+- added new ROM sources
+- Z80, refactoring of RETI instruction
+
 __2.2.2 (19-dec-2021)__
 
 - added option 'Volume profile' to select audio volume profile
 - __added support for TZX tape snapshots [#10](https://github.com/raydac/zxpoly/issues/10)__
 - added keyboard skins provided by @Alessandro1970
 - provided way to change L&F and application UI scale
-- improved Spec256 state snapshot save (works only for loaded Spec256 snapshots) [#36](https://github.com/raydac/zxpoly/issues/36)
+- improved Spec256 state snapshot save (works only for loaded Spec256
+  snapshots) [#36](https://github.com/raydac/zxpoly/issues/36)
 - decreased CPU usage
 - embedded JDK updated to Liberica OpenJDK 17+35
 - minimal required JDK level is 11+
-
-__2.2.1 (07-aug-2021)__
-
-- Old Color TV filter is ON by default (can be turned off in preferences)
-- added support for interlace TV output (__by default ON__)
-- improvement of border render
-- added stereo sound for AY-channels (ABC by default, it is possible turn on ACB)
-- embedded JDK updated to Liberica OpenJDK 16.0.2+7
-- minor refactoring and improvements
 
 full [change log](changelog.txt)
 

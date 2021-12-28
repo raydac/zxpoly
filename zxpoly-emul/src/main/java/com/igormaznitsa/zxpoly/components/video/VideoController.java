@@ -89,7 +89,6 @@ public final class VideoController extends JComponent
           VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/spec256.raw.pal"),
           true);
   private static final int PREFERRED_BORDER_WIDTH = 64;
-  private final Dimension baseSize;
   private static final int[] PALETTE_ALIGNED_ZXPOLY =
           Utils.alignPaletteColors(PALETTE_ZXPOLY, PALETTE_SPEC256);
   private static final Logger log = Logger.getLogger("VC");
@@ -105,6 +104,7 @@ public final class VideoController extends JComponent
   private static volatile int gfxUpColorsMixed = 64;
   private static volatile int gfxDownColorsMixed = 0;
   private static volatile int[] gfxPrerenderedBack = null;
+  private final Dimension baseSize;
   private final VirtualKeyboardDecoration vkbdContainer;
   private final Motherboard board;
   private final ReentrantLock bufferLocker = new ReentrantLock();
@@ -114,6 +114,7 @@ public final class VideoController extends JComponent
   private final byte[] borderLineColors;
   private final byte[] outBorderLineColors;
   private final boolean showVkbdApart;
+  private final TimingProfile timingProfile;
   private volatile int currentVideoMode = VIDEOMODE_ZXPOLY_256x192_FLASH_MASK;
   private Dimension size = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
   private volatile float zoom = 1.0f;
@@ -126,7 +127,6 @@ public final class VideoController extends JComponent
   private Window vkbdWindow = null;
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
-  private final TimingProfile timingProfile;
 
   public VideoController(final TimingProfile timingProfile, final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
     super();

@@ -19,6 +19,7 @@ package com.igormaznitsa.zxpoly.formats;
 
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -79,7 +80,7 @@ public class ZxEmlSnapshotFormat extends ZXPParser {
   }
 
   public void setModulePorts(final int cpuIndex, final int port7FFD, final int r0, final int r1, final int r2, final int r3) {
-    final byte[] data = new byte[] {(byte) port7FFD, (byte) r0, (byte) r1, (byte) r2, (byte) r3};
+    final byte[] data = new byte[]{(byte) port7FFD, (byte) r0, (byte) r1, (byte) r2, (byte) r3};
     switch (cpuIndex) {
       case INDEX_CPU0:
         this.setCPU0PORTS(data);

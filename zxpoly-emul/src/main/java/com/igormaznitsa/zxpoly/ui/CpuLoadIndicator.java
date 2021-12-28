@@ -17,18 +17,11 @@
 
 package com.igormaznitsa.zxpoly.ui;
 
-import static com.igormaznitsa.jbbp.utils.JBBPUtils.assertNotNull;
-
-
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Stroke;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
-import javax.swing.JPanel;
+
+import static com.igormaznitsa.jbbp.utils.JBBPUtils.assertNotNull;
 
 public final class CpuLoadIndicator extends JPanel {
 

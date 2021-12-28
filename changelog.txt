@@ -1,3 +1,11 @@
+__2.2.3 (SNAPSHOT)__
+
+- Fix for ZXPlus keyboard skin
+- Added Timex2048Pal keyboard skin
+- Added configurable fast buttons
+- added new ROM sources
+- Z80, refactoring of RETI instruction
+
 __2.2.2 (19-dec-2021)__
 
 - added option 'Volume profile' to select audio volume profile

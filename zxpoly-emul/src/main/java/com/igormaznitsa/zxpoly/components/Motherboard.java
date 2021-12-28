@@ -58,6 +58,9 @@ public final class Motherboard implements ZxPolyConstants {
   private final Beeper beeper;
   private final RomData romData;
   private final boolean contendedRam;
+  private final TimingProfile timingProfile;
+  private final VolumeProfile soundLevels;
+  private final int[] audioLevels;
   private volatile int port3D00 = (int) System.nanoTime() & 0xFF; // simulate noise after turning on
   private volatile boolean totalReset;
   private volatile int resetCounter;
@@ -73,9 +76,6 @@ public final class Motherboard implements ZxPolyConstants {
   private volatile boolean gfxLeveledOr = false;
   private volatile boolean gfxLeveledAnd = false;
   private int frameTiStatesCounter = 0;
-  private final TimingProfile timingProfile;
-  private final VolumeProfile soundLevels;
-  private final int[] audioLevels;
 
   public Motherboard(
           final VolumeProfile soundLevels,
@@ -151,14 +151,6 @@ public final class Motherboard implements ZxPolyConstants {
     }
   }
 
-  public boolean isBetaDiskPresented() {
-    return this.betaDisk != null;
-  }
-
-  public VolumeProfile getSoundLevels() {
-    return this.soundLevels;
-  }
-
   private static boolean isContended(final int address, final int port7FFD) {
     final int pageStart = address & 0xC000;
     return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
@@ -190,6 +182,18 @@ public final class Motherboard implements ZxPolyConstants {
       result[t] = (byte) contentions[scrPix % contentions.length];
     }
     return result;
+  }
+
+  private static boolean isUlaPort(final int port) {
+    return (port & 1) == 0;
+  }
+
+  public boolean isBetaDiskPresented() {
+    return this.betaDisk != null;
+  }
+
+  public VolumeProfile getSoundLevels() {
+    return this.soundLevels;
   }
 
   public boolean isGfxLeveledXor() {
@@ -732,10 +736,6 @@ public final class Motherboard implements ZxPolyConstants {
       }
     }
     return result;
-  }
-
-  private static boolean isUlaPort(final int port) {
-    return (port & 1) == 0;
   }
 
   int contendRam(final int port7FFD, final int address) {

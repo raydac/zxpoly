@@ -11,9 +11,8 @@ public final class TurboSoundNedoPc implements IoDevice {
 
   private final Ay8910Chip chipAy0;
   private final Ay8910Chip chipAy1;
-
-  private Ay8910Chip selectedChip;
   private final int[] audioLevels;
+  private Ay8910Chip selectedChip;
 
   public TurboSoundNedoPc(final Motherboard motherboard) {
     this.audioLevels = motherboard.getSoundLevels().getLevels();

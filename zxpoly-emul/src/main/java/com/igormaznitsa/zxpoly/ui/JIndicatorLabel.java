@@ -6,10 +6,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class JIndicatorLabel extends JLabel {
   private final Icon active;
   private final Icon inactive;
+  private final AtomicBoolean status = new AtomicBoolean(false);
   private String tooltipActive;
   private String tooltipInactive;
-
-  private final AtomicBoolean status = new AtomicBoolean(false);
 
   public JIndicatorLabel(final Icon active, final Icon inactive, final String tooltipActive,
                          final String tooltipInactive) {

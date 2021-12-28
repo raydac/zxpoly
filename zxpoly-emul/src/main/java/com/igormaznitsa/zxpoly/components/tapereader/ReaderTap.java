@@ -59,6 +59,7 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
   private final List<ActionListener> listeners = new CopyOnWriteArrayList<>();
   private final String name;
   private final List<TapBlock> tapBlockList = new ArrayList<>();
+  private final TapeContext tapeContext;
   private volatile TapBlock current;
   private volatile State state = State.STOPPED;
   private volatile boolean signalInState;
@@ -67,7 +68,6 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
   private int mask;
   private int buffered;
   private int controlChecksum;
-  private final TapeContext tapeContext;
 
   public ReaderTap(final TapeContext tapeContext, final String name, final InputStream tap) throws IOException {
     this.tapeContext = tapeContext;

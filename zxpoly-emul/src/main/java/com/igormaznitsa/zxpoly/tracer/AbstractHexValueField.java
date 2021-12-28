@@ -17,12 +17,11 @@
 
 package com.igormaznitsa.zxpoly.tracer;
 
-import java.awt.Color;
-import java.awt.Font;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
-import javax.swing.JFormattedTextField;
 
 public abstract class AbstractHexValueField extends JFormattedTextField {
 
@@ -43,7 +42,7 @@ public abstract class AbstractHexValueField extends JFormattedTextField {
       @Override
       public void keyTyped(final KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE || e.getKeyCode() == KeyEvent.VK_BACK_SPACE ||
-            ALLOWED_CHARS.indexOf(e.getKeyChar()) < 0) {
+                ALLOWED_CHARS.indexOf(e.getKeyChar()) < 0) {
           e.consume();
         }
       }

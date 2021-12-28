@@ -24,6 +24,7 @@ public final class ZxVideoStreamer {
   private final AtomicBoolean started = new AtomicBoolean();
   private final Consumer<ZxVideoStreamer> endWorkConsumer;
   private final Timer wallClock = new Timer(Duration.ofMillis(20));
+  private final byte[] rgbArray = new byte[RASTER_WIDTH_ARGB_INT * RASTER_HEIGHT * 3];
   private volatile TcpWriter videoWriter;
   private volatile TcpWriter soundWriter;
   private volatile FfmpegWrapper ffmpegWrapper;
@@ -34,8 +35,8 @@ public final class ZxVideoStreamer {
   private volatile boolean internalEntitiesStarted;
 
   public ZxVideoStreamer(
-      final VideoController videoController,
-      final Consumer<ZxVideoStreamer> endWorkConsumer) {
+          final VideoController videoController,
+          final Consumer<ZxVideoStreamer> endWorkConsumer) {
     this.endWorkConsumer = endWorkConsumer;
     this.videoController = videoController;
   }
@@ -78,12 +79,12 @@ public final class ZxVideoStreamer {
   }
 
   private synchronized void startInternalEntities(
-      final InetAddress address,
-      final int port,
-      final String ffmpegPath,
-      final int frameRate) {
+          final InetAddress address,
+          final int port,
+          final String ffmpegPath,
+          final int frameRate) {
     this.videoWriter =
-        new TcpWriter("tcp-video-writer", 2, InetAddress.getLoopbackAddress(), 0);
+            new TcpWriter("tcp-video-writer", 2, InetAddress.getLoopbackAddress(), 0);
 
     this.delayBetweenFrameGrab = Duration.ofMillis((1000L + frameRate / 2) / frameRate);
     this.wallClock.next(this.delayBetweenFrameGrab);
@@ -93,7 +94,7 @@ public final class ZxVideoStreamer {
       this.soudPort = null;
     } else {
       this.soundWriter =
-          new TcpWriter("tcp-sound-writer", 2, InetAddress.getLoopbackAddress(), 0);
+              new TcpWriter("tcp-sound-writer", 2, InetAddress.getLoopbackAddress(), 0);
       this.soudPort = new ZxStreamingSoundPort(this.soundWriter);
     }
 
@@ -101,7 +102,7 @@ public final class ZxVideoStreamer {
     final AtomicInteger errorCounter = new AtomicInteger();
 
     final AbstractTcpSingleThreadServer.TcpServerListener
-        listener = new AbstractTcpSingleThreadServer.TcpServerListener() {
+            listener = new AbstractTcpSingleThreadServer.TcpServerListener() {
 
       @Override
       public void onConnected(AbstractTcpSingleThreadServer writer, Socket socket) {
@@ -169,11 +170,11 @@ public final class ZxVideoStreamer {
     }
 
     final FfmpegWrapper ffmpeg = new FfmpegWrapper(
-        ffmpegPath,
-        frameRate,
-        "tcp://" + this.videoWriter.getServerAddress(),
-        this.soundWriter == null ? null :
-            "tcp://" + this.soundWriter.getServerAddress(),
+            ffmpegPath,
+            frameRate,
+            "tcp://" + this.videoWriter.getServerAddress(),
+            this.soundWriter == null ? null :
+                    "tcp://" + this.soundWriter.getServerAddress(),
             "tcp://" + this.httpProcessor.getTcpAddress()
     );
 
@@ -201,11 +202,11 @@ public final class ZxVideoStreamer {
   }
 
   public void start(
-      final Beeper beeper,
-      final String ffmpegPath,
-      final InetAddress address,
-      final int port,
-      final int frameRate
+          final Beeper beeper,
+          final String ffmpegPath,
+          final InetAddress address,
+          final int port,
+          final int frameRate
   ) {
     if (this.started.compareAndSet(false, true)) {
       this.beeper = beeper;
@@ -226,8 +227,6 @@ public final class ZxVideoStreamer {
       this.endWorkConsumer.accept(this);
     }
   }
-
-  private final byte[] rgbArray = new byte[RASTER_WIDTH_ARGB_INT * RASTER_HEIGHT * 3];
 
   public void onWallclockInt() {
     if (this.internalEntitiesStarted) {

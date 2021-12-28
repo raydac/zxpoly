@@ -21,9 +21,9 @@ public class ReaderWav implements TapeSource {
   private final AtomicLong tstateCounter = new AtomicLong(0L);
   private final List<ActionListener> actionListeners = new CopyOnWriteArrayList<>();
   private final TimingProfile timingProfile;
+  private final TapeContext tapeContext;
   private volatile boolean playing;
   private volatile float bias = 0.01f;
-  private final TapeContext tapeContext;
 
   public ReaderWav(final TapeContext tapeContext, final TimingProfile timingProfile, final String name, final File file) throws IOException {
     this.tapeContext = tapeContext;

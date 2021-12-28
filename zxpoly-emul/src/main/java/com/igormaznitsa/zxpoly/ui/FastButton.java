@@ -18,14 +18,6 @@ public enum FastButton {
   private final String toolTip;
   private final boolean optional;
 
-  public static FastButton findForComponentName(final String componentName) {
-    if (componentName == null) return null;
-    for (final FastButton b : values()) {
-      if (b.getComponentName().equals(componentName)) return b;
-    }
-    return null;
-  }
-
   FastButton(final boolean optional, final String title, final String toolTip, final String icon, final String iconSelected, final Class<? extends AbstractButton> buttonClass) {
     this.optional = optional;
     if (icon != null) {
@@ -43,6 +35,14 @@ public enum FastButton {
     this.toolTip = toolTip;
     this.title = title;
     this.buttonClass = buttonClass;
+  }
+
+  public static FastButton findForComponentName(final String componentName) {
+    if (componentName == null) return null;
+    for (final FastButton b : values()) {
+      if (b.getComponentName().equals(componentName)) return b;
+    }
+    return null;
   }
 
   public boolean isOptional() {

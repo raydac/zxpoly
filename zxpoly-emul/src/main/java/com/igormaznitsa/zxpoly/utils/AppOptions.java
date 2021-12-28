@@ -54,6 +54,10 @@ public final class AppOptions {
     return preferences.get(Option.ROMPATH.name(), AppOptions.TEST_ROM);
   }
 
+  public synchronized void setActiveRom(final String romPath) {
+    preferences.put(Option.ROMPATH.name(), romPath);
+  }
+
   public synchronized boolean isTestRomActive() {
     return TEST_ROM.equals(this.getActiveRom());
   }
@@ -93,6 +97,10 @@ public final class AppOptions {
     return result;
   }
 
+  public synchronized void setKeyboardLook(final VirtualKeyboardLook look) {
+    preferences.put(Option.KEYBOARD_LOOK.name(), look.name());
+  }
+
   public synchronized VolumeProfile getVolumeProfile() {
     VolumeProfile result = VolumeProfile.EXPONENTIAL;
     final String name = preferences.get(Option.VOLUME_PROFILE.name(), result.name());
@@ -102,6 +110,10 @@ public final class AppOptions {
       result = VolumeProfile.EXPONENTIAL;
     }
     return result;
+  }
+
+  public synchronized void setVolumeProfile(final VolumeProfile volumeProfile) {
+    preferences.put(Option.VOLUME_PROFILE.name(), volumeProfile.name());
   }
 
   public synchronized String getCustomRomPath() {
@@ -114,14 +126,6 @@ public final class AppOptions {
     } else {
       preferences.put(Option.CUSTOM_ROM_PATH.name(), path);
     }
-  }
-
-  public synchronized void setKeyboardLook(final VirtualKeyboardLook look) {
-    preferences.put(Option.KEYBOARD_LOOK.name(), look.name());
-  }
-
-  public synchronized void setVolumeProfile(final VolumeProfile volumeProfile) {
-    preferences.put(Option.VOLUME_PROFILE.name(), volumeProfile.name());
   }
 
   public synchronized String getAddress() {
@@ -237,6 +241,14 @@ public final class AppOptions {
     return preferences.get(Option.UI_SCALE.name(), null);
   }
 
+  public void setUiScale(final String uiScale) {
+    if (uiScale == null) {
+      this.preferences.remove(Option.UI_SCALE.name());
+    } else {
+      this.preferences.put(Option.UI_SCALE.name(), uiScale);
+    }
+  }
+
   public List<FastButton> getFastButtons() {
     final String buttons = preferences.get(Option.FAST_BUTTONS.name(), null);
     if (buttons == null) {
@@ -265,14 +277,6 @@ public final class AppOptions {
     this.preferences.put(Option.FAST_BUTTONS.name(), packetValue);
   }
 
-  public void setUiScale(final String uiScale) {
-    if (uiScale == null) {
-      this.preferences.remove(Option.UI_SCALE.name());
-    } else {
-      this.preferences.put(Option.UI_SCALE.name(), uiScale);
-    }
-  }
-
   public synchronized boolean isCovoxFb() {
     return preferences.getBoolean(Option.COVOXFB.name(), false);
   }
@@ -295,10 +299,6 @@ public final class AppOptions {
 
   public synchronized void setKempstonMouseAllowed(final boolean value) {
     preferences.putBoolean(Option.KEMPSTON_MOUSE_ALLOWED.name(), value);
-  }
-
-  public synchronized void setActiveRom(final String romPath) {
-    preferences.put(Option.ROMPATH.name(), romPath);
   }
 
   public synchronized int getIntBetweenFrames() {
@@ -410,17 +410,17 @@ public final class AppOptions {
     return configFolder;
   }
 
-    public enum Option {
-      FAST_BUTTONS,
-      VOLUME_PROFILE,
-      UI_LF_CLASS,
-      UI_SCALE,
-      OLD_COLOR_TV_ON_START,
-      CONTENDED_RAM,
-      INTERLACED_SCAN,
-      AUTOCS_FOR_CURSOR_KEYS,
-      CUSTOM_ROM_PATH,
-      STREAM_FFMPEGPATH,
+  public enum Option {
+    FAST_BUTTONS,
+    VOLUME_PROFILE,
+    UI_LF_CLASS,
+    UI_SCALE,
+    OLD_COLOR_TV_ON_START,
+    CONTENDED_RAM,
+    INTERLACED_SCAN,
+    AUTOCS_FOR_CURSOR_KEYS,
+    CUSTOM_ROM_PATH,
+    STREAM_FFMPEGPATH,
     STREAM_GRABSOUND,
     STREAM_ADDR,
     STREAM_PORT,

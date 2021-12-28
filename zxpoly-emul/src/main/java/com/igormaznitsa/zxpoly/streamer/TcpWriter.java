@@ -7,10 +7,10 @@ import java.net.Socket;
 public class TcpWriter extends AbstractTcpSingleThreadServer {
 
   public TcpWriter(
-      final String id,
-      final int bufferSize,
-      final InetAddress address,
-      final int port
+          final String id,
+          final int bufferSize,
+          final InetAddress address,
+          final int port
   ) {
     super(id, bufferSize, address, port);
   }

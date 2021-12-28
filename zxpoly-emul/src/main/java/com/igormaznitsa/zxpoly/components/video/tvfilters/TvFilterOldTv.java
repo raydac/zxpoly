@@ -37,10 +37,10 @@ public class TvFilterOldTv implements TvFilter {
 
   @Override
   public BufferedImage apply(
-      final BufferedImage srcImageArgb512x384,
-      final float zoom,
-      final int argbBorder,
-      boolean firstInChain
+          final BufferedImage srcImageArgb512x384,
+          final float zoom,
+          final int argbBorder,
+          boolean firstInChain
   ) {
     final BufferedImage image;
     final int[] argbBuffer;
@@ -48,8 +48,8 @@ public class TvFilterOldTv implements TvFilter {
       image = SHARED_BUFFER;
       argbBuffer = SHARED_BUFFER_RASTER;
       System
-          .arraycopy(((DataBufferInt) srcImageArgb512x384.getRaster().getDataBuffer()).getData(), 0,
-              argbBuffer, 0, argbBuffer.length);
+              .arraycopy(((DataBufferInt) srcImageArgb512x384.getRaster().getDataBuffer()).getData(), 0,
+                      argbBuffer, 0, argbBuffer.length);
     } else {
       image = srcImageArgb512x384;
       argbBuffer = ((DataBufferInt) srcImageArgb512x384.getRaster().getDataBuffer()).getData();
@@ -112,12 +112,12 @@ public class TvFilterOldTv implements TvFilter {
 
   @Override
   public byte[] apply(
-      boolean forceCopy,
-      byte[] rgbArray512x384,
-      int argbBorder
+          boolean forceCopy,
+          byte[] rgbArray512x384,
+          int argbBorder
   ) {
     final byte[] rgbBuffer =
-        forceCopy ? Arrays.copyOf(rgbArray512x384, rgbArray512x384.length) : rgbArray512x384;
+            forceCopy ? Arrays.copyOf(rgbArray512x384, rgbArray512x384.length) : rgbArray512x384;
 
 
     final int brdrR = (argbBorder >> 16) & 0xFF;

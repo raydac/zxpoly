@@ -11,15 +11,13 @@ import static com.igormaznitsa.zxpoly.components.snd.Beeper.AUDIO_FORMAT;
 
 public class FfmpegWrapper {
 
+  public static final Logger LOGGER = Logger.getLogger("VideoStreamer");
   private final String ffmpegPath;
   private final int frameRate;
   private final String srcVideo;
   private final String srcAudio;
   private final String dstResult;
-
   private final AtomicReference<Process> process = new AtomicReference<>();
-
-  public static final Logger LOGGER = Logger.getLogger("VideoStreamer");
 
 
   public FfmpegWrapper(

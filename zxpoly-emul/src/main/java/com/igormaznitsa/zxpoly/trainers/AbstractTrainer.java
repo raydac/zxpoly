@@ -1,10 +1,11 @@
 package com.igormaznitsa.zxpoly.trainers;
 
 import com.igormaznitsa.zxpoly.components.Motherboard;
-import java.awt.Component;
+
+import javax.swing.filechooser.FileFilter;
+import java.awt.*;
 import java.io.File;
 import java.util.Locale;
-import javax.swing.filechooser.FileFilter;
 
 public abstract class AbstractTrainer extends FileFilter {
 

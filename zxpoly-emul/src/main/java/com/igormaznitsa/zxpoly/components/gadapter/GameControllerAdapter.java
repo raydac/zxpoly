@@ -1,9 +1,10 @@
 package com.igormaznitsa.zxpoly.components.gadapter;
 
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
-import java.util.concurrent.atomic.AtomicReference;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class GameControllerAdapter implements Runnable {
   protected final KeyboardKempstonAndTapeIn parent;

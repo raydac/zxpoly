@@ -41,11 +41,6 @@ public final class K1818VG93 {
   static final int ADDR_TRACK = 1;
   static final int ADDR_SECTOR = 2;
   static final int ADDR_DATA = 3;
-  private final long tstatesDiskTurn;
-  private final long[] tstatesPerTrackChange;
-  private final long tstatesPerSector;
-  private final long tstatesPerSectorBe;
-  private final long tstatesIndexMarkLength;
   private static final long DELAY_FDD_MOTOR_ON_MS = 2000L;
   private static final int REG_COMMAND = 0x00;
   private static final int REG_STATUS = 0x01;
@@ -54,6 +49,11 @@ public final class K1818VG93 {
   private static final int REG_DATA_WR = 0x04;
   private static final int REG_DATA_RD = 0x05;
   private static final int COMMAND_FLAG_MULTIPLE_RECORDS = 0b0001_0000;
+  private final long tstatesDiskTurn;
+  private final long[] tstatesPerTrackChange;
+  private final long tstatesPerSector;
+  private final long tstatesPerSectorBe;
+  private final long tstatesIndexMarkLength;
   private final int[] registers = new int[6];
   private final AtomicReference<TrDosDisk> trdosDisk = new AtomicReference<>();
   private final Logger logger;

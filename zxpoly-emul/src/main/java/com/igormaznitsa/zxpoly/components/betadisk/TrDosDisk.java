@@ -41,14 +41,6 @@ public class TrDosDisk {
 
   private int headIndex = 0;
 
-  public int getHeadIndex() {
-    return this.headIndex;
-  }
-
-  public void setHeadIndex(final int index) {
-    this.headIndex = index & 1;
-  }
-
   public TrDosDisk() {
     this(null, SourceDataType.TRD,
             new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
@@ -64,8 +56,8 @@ public class TrDosDisk {
     switch (type) {
       case SCL: {
         if (srcData.length < 10 ||
-            !JBBPUtils.arrayStartsWith(srcData, "SINCLAIR".getBytes(StandardCharsets.US_ASCII)) ||
-            srcData.length < (9 + (0x100 + 14) * (srcData[8] & 0xFF))) {
+                !JBBPUtils.arrayStartsWith(srcData, "SINCLAIR".getBytes(StandardCharsets.US_ASCII)) ||
+                srcData.length < (9 + (0x100 + 14) * (srcData[8] & 0xFF))) {
           throw new RuntimeException("Not SCL file");
         }
         diskData = new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE];
@@ -112,16 +104,16 @@ public class TrDosDisk {
           }
 
           diskData[track00Pointer++] =
-              (byte) extractLogicalSectorIndex(diskPointer); // index of the first free sector
+                  (byte) extractLogicalSectorIndex(diskPointer); // index of the first free sector
           diskData[track00Pointer++] =
-              (byte) extractLogicalTrackIndex(diskPointer); // index of the first free track
+                  (byte) extractLogicalTrackIndex(diskPointer); // index of the first free track
 
           diskData[track00Pointer++] = 0x16; // disk type
           diskData[track00Pointer++] = (byte) items; // number of files
 
           final int freeSectors =
-              (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK - SECTORS_PER_TRACK)
-                  - totallySectors;
+                  (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK - SECTORS_PER_TRACK)
+                          - totallySectors;
           diskData[track00Pointer++] = (byte) (freeSectors & 0xFF); // number of free sectors
           diskData[track00Pointer++] = (byte) (freeSectors >> 8);
 
@@ -144,7 +136,7 @@ public class TrDosDisk {
 
           // name of disk
           final String imageName =
-              srcFile == null ? "Unknown" : FilenameUtils.getBaseName(srcFile.getName());
+                  srcFile == null ? "Unknown" : FilenameUtils.getBaseName(srcFile.getName());
           for (int i = 0; i < Math.min(8, imageName.length()); i++) {
             diskData[track00Pointer++] = (byte) imageName.charAt(i);
           }
@@ -163,9 +155,9 @@ public class TrDosDisk {
       break;
       case TRD: {
         diskData =
-            srcData.length >= (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE)
-                ? srcData :
-                copyOf(srcData, MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
+                srcData.length >= (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE)
+                        ? srcData :
+                        copyOf(srcData, MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
       }
       break;
       default:
@@ -176,9 +168,9 @@ public class TrDosDisk {
     this.data = diskData;
     for (int i = 0; i < diskData.length; i += SECTOR_SIZE) {
       this.sectors[p++] =
-          new Sector(this, extractSideNumber(i), extractPhysicalTrackIndex(i),
-              extractPhysicalSectorIndex(i),
-              i, diskData);
+              new Sector(this, extractSideNumber(i), extractPhysicalTrackIndex(i),
+                      extractPhysicalSectorIndex(i),
+                      i, diskData);
     }
   }
 
@@ -200,6 +192,14 @@ public class TrDosDisk {
 
   public static int extractLogicalSectorIndex(final int dataOffset) {
     return (dataOffset / SECTOR_SIZE) % SECTORS_PER_TRACK;
+  }
+
+  public int getHeadIndex() {
+    return this.headIndex;
+  }
+
+  public void setHeadIndex(final int index) {
+    this.headIndex = index & 1;
   }
 
   public File getSrcFile() {

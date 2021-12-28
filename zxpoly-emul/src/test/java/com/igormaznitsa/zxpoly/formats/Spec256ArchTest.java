@@ -1,16 +1,12 @@
 package com.igormaznitsa.zxpoly.formats;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-
 import com.igormaznitsa.zxpoly.components.RomData;
-import java.io.IOException;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
+
+import java.io.IOException;
+
+import static org.junit.Assert.*;
 
 public class Spec256ArchTest {
 
