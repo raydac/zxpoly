@@ -5,6 +5,7 @@ __2.2.3 (SNAPSHOT)__
 - Added configurable fast buttons
 - added new ROM sources
 - Z80, refactoring of RETI instruction
+- improved emulation of ZX128
 
 __2.2.2 (19-dec-2021)__
 
