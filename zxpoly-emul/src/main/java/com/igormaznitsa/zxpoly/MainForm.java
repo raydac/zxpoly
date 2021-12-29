@@ -322,8 +322,6 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
     this.menuBar.add(Box.createHorizontalGlue());
 
-    this.loadFastButtons();
-
     this.setTitle(title);
 
     this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
@@ -443,6 +441,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     if (AppOptions.getInstance().isSoundTurnedOn()) {
       this.activateSoundIfPossible();
     }
+
+    this.loadFastButtons();
 
     updateTapeMenu();
 
@@ -599,6 +599,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
       switch (b) {
         case SOUND_ON_OFF: {
+          abstractButton.setSelected(!this.board.getBeeper().isNullBeeper());
           abstractButton.addActionListener(e -> {
             if (((JToggleButton) e.getSource()).isSelected()) {
               if (!this.tryFastSpeakerActivation()) {
@@ -615,6 +616,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         }
         break;
         case TAPE_PLAY_STOP: {
+          abstractButton.setSelected(this.keyboardAndTapeModule.getTap().isPlaying());
           abstractButton.addActionListener(e -> {
             final JToggleButton source = (JToggleButton) e.getSource();
             if (source.isSelected()) {
@@ -628,6 +630,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         }
         break;
         case TURBO_MODE: {
+          abstractButton.setSelected(this.turboMode);
           abstractButton.addActionListener(e -> {
             final JToggleButton source = (JToggleButton) e.getSource();
             this.setTurboMode(source.isSelected());
@@ -635,6 +638,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         }
         break;
         case ZX_KEYBOARD_OFF: {
+          abstractButton.setSelected(this.keyboardAndTapeModule.isOnlyJoystickEvents());
           abstractButton.addActionListener(e -> {
             final JToggleButton source = (JToggleButton) e.getSource();
             this.setDisableZxKeyboardEvents(source.isSelected());
@@ -642,6 +646,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         }
         break;
         case START_PAUSE: {
+          abstractButton.setSelected(MainForm.this.stepSemaphor.isHeldByCurrentThread());
           abstractButton.addActionListener(e -> {
             final JToggleButton source = (JToggleButton) e.getSource();
             if (source.isSelected()) {
@@ -653,6 +658,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         }
         break;
         case VIRTUAL_KEYBOARD: {
+          abstractButton.setSelected(this.board.getVideoController().isVkbShow());
           abstractButton.addActionListener(e -> {
             final JToggleButton source = (JToggleButton) e.getSource();
             showVirtualKeyboard(source.isSelected());
@@ -2333,7 +2339,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     } else {
       this.setTurboMode(false);
       this.board.getBeeper().setSourceSoundPort(this.preTurboSourceSoundPort.orElse(null));
-      LOGGER.info("Restored sound port: " + this.preTurboSourceSoundPort);
+      LOGGER.info("Restored sound port: " + this.preTurboSourceSoundPort.map(SourceSoundPort::getName).orElse("NONE"));
       this.preTurboSourceSoundPort = Optional.empty();
     }
   }
