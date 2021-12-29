@@ -464,7 +464,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   @Override
   public byte readAddress(final int address) {
-    return memoryByteForAddress(this.port7FFD.get(), this.trdosRomActive, address);
+    return readMemoryAddress(this.port7FFD.get(), this.trdosRomActive, address);
   }
 
   @Override
@@ -516,17 +516,17 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
             this.activeRegisterReading = false;
           }
         } else {
-          result = memoryByteForAddress(valueAt7ffd, this.trdosRomActive, address);
+          result = readMemoryAddress(valueAt7ffd, this.trdosRomActive, address);
         }
       }
       break;
       case ZX128: {
-        result = memoryByteForAddress(valueAt7ffd, this.trdosRomActive, address);
+        result = readMemoryAddress(valueAt7ffd, this.trdosRomActive, address);
       }
       break;
       case SPEC256: {
         if (ctx == 0 || cmdOrPrefix) {
-          result = memoryByteForAddress(valueAt7ffd, this.trdosRomActive, address);
+          result = readMemoryAddress(valueAt7ffd, this.trdosRomActive, address);
         } else {
           result = readGfxMemory(ctx - 1, valueAt7ffd, this.trdosRomActive, address);
         }
@@ -630,7 +630,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     }
   }
 
-  private byte memoryByteForAddress(
+  private byte readMemoryAddress(
           final int valueAt7FFD,
           final boolean trDosActive,
           final int address) {

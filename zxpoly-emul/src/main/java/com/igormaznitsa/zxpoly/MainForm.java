@@ -582,7 +582,10 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
     fastButtons.forEach(b -> {
       final AbstractButton abstractButton;
-      if (b.getButtonClass().isAssignableFrom(JToggleButton.class)) {
+      if (b.getButtonClass().isAssignableFrom(JButton.class)) {
+        abstractButton = new JButton();
+        abstractButton.setRolloverEnabled(false);
+      } else if (b.getButtonClass().isAssignableFrom(JToggleButton.class)) {
         abstractButton = new JToggleButton();
         abstractButton.setRolloverEnabled(false);
       } else {
@@ -595,6 +598,22 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       abstractButton.setFocusable(false);
 
       switch (b) {
+        case SOUND_ON_OFF: {
+          abstractButton.addActionListener(e -> {
+            if (((JToggleButton) e.getSource()).isSelected()) {
+              if (!this.tryFastSpeakerActivation()) {
+                this.setSoundActivate(true);
+              }
+            } else {
+              this.setSoundActivate(false);
+            }
+          });
+        }
+        break;
+        case RESET: {
+          abstractButton.addActionListener(e -> this.makeReset());
+        }
+        break;
         case TAPE_PLAY_STOP: {
           abstractButton.addActionListener(e -> {
             final JToggleButton source = (JToggleButton) e.getSource();
@@ -1152,38 +1171,48 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     }
   }
 
-  private void activateSoundIfPossible() {
-    final Optional<SourceSoundPort> port =
-            this.findAudioLine(this.board.getBeeper().getAudioFormat(), false);
-    if (port.isPresent()) {
-      this.board.getBeeper().setSourceSoundPort(port.get());
-      this.menuOptionsEnableSpeaker.setSelected(!this.board.getBeeper().isNullBeeper());
+  private boolean tryFastSpeakerActivation() {
+    if (this.board.getBeeper().isNullBeeper()) {
+      final Optional<SourceSoundPort> port =
+              this.findAudioLine(this.board.getBeeper().getAudioFormat(), false);
+      port.ifPresent(sourceSoundPort -> this.board.getBeeper().setSourceSoundPort(sourceSoundPort));
+      return !this.board.getBeeper().isNullBeeper();
     } else {
-      this.menuOptionsEnableSpeaker.setSelected(false);
+      return true;
     }
   }
 
-  private void menuOptionsEnableSpeakerActionPerformed(final ActionEvent actionEvent) {
+  private void activateSoundIfPossible() {
+    final boolean activated = tryFastSpeakerActivation();
+    this.menuOptionsEnableSpeaker.setSelected(activated);
+    this.setFastButtonState(FastButton.SOUND_ON_OFF, activated);
+  }
+
+  private void setSoundActivate(final boolean activate) {
+    boolean activated = false;
     this.suspendSteps();
     try {
-      if (this.menuOptionsEnableSpeaker.isSelected()) {
+      if (activate) {
         final Optional<SourceSoundPort> port =
                 this.findAudioLine(this.board.getBeeper().getAudioFormat(), true);
         if (port.isPresent()) {
           this.board.getBeeper().setSourceSoundPort(port.get());
-          if (this.board.getBeeper().isNullBeeper()) {
-            this.menuOptionsEnableSpeaker.setSelected(false);
+          if (!this.board.getBeeper().isNullBeeper()) {
+            activated = true;
           }
-        } else {
-          this.menuOptionsEnableSpeaker.setSelected(false);
         }
       } else {
         this.board.getBeeper().setSourceSoundPort(null);
       }
-      AppOptions.getInstance().setSoundTurnedOn(this.menuOptionsEnableSpeaker.isSelected());
     } finally {
       this.resumeSteps();
+      this.menuOptionsEnableSpeaker.setSelected(activated);
+      this.setFastButtonState(FastButton.SOUND_ON_OFF, activated);
     }
+  }
+
+  private void menuOptionsEnableSpeakerActionPerformed(final ActionEvent actionEvent) {
+    this.setSoundActivate(this.menuOptionsEnableSpeaker.isSelected());
   }
 
   private void menuServiceGameControllerActionPerformed(final ActionEvent actionEvent) {
@@ -1214,11 +1243,15 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     }
   }
 
-  private void menuFileResetActionPerformed(ActionEvent evt) {
+  private void makeReset() {
     this.board
             .setBoardMode(this.menuOptionsZX128Mode.isSelected() ? BoardMode.ZX128 : BoardMode.ZXPOLY,
                     false);
     this.board.resetAndRestoreRom(BASE_ROM);
+  }
+
+  private void menuFileResetActionPerformed(final ActionEvent evt) {
+    this.makeReset();
   }
 
   private void menuOptionsShowIndicatorsActionPerformed(ActionEvent evt) {
@@ -2837,7 +2870,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       close = true;
     }
 
-    AppOptions.getInstance().setSoundTurnedOn(this.menuOptionsEnableSpeaker.isSelected());
+    AppOptions.getInstance().setSoundTurnedOn(!this.board.getBeeper().isNullBeeper());
 
     this.board.dispose();
 
