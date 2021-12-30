@@ -22,6 +22,7 @@ import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.zxpoly.components.TapFormatParser;
 import com.igormaznitsa.zxpoly.components.TapFormatParser.TAPBLOCK;
+import com.igormaznitsa.zxpoly.utils.SpectrumUtils;
 
 import javax.swing.*;
 import javax.swing.event.ListDataListener;
@@ -30,7 +31,6 @@ import java.awt.event.ActionListener;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -548,8 +548,6 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
 
   public static final class TapBlock {
 
-    private static final Charset USASCII = StandardCharsets.US_ASCII;
-
     byte flag;
     byte[] data;
     byte checksum;
@@ -583,7 +581,7 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
           if (this.data.length < 11) {
             this.name = "<NONSTANDARD HEADER LENGTH>";
           } else {
-            this.name = new String(this.data, 1, 10, USASCII);
+            this.name = SpectrumUtils.fromZxString(new String(this.data, 1, 10, StandardCharsets.ISO_8859_1));
           }
           final String type;
           switch (this.data[0]) {
@@ -603,9 +601,9 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
               type = "???";
               break;
           }
-          this.name = type + ": " + this.name;
+          this.name = String.format("%s: %s (flag=%d)", type, this.name, (this.flag & 0xFF));
         } else {
-          this.name = "===: ..........";
+          this.name = String.format("===: .......... (flag=%d)", (this.flag & 0xFF));
         }
       }
       return this.name;
