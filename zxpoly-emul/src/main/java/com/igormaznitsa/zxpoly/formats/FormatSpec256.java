@@ -18,6 +18,7 @@
 package com.igormaznitsa.zxpoly.formats;
 
 import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.zxpoly.MainForm;
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyConstants;
@@ -204,7 +205,7 @@ public class FormatSpec256 extends Snapshot {
   @Override
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc,
                             final byte[] array) throws IOException {
-    final Spec256Arch archive = new Spec256Arch(board.getRomData(), array);
+    final Spec256Arch archive = new Spec256Arch(MainForm.BASE_ROM, array);
     final BaseItem dbItem = APP_BASE.get(archive.getSha256().toLowerCase(Locale.ENGLISH));
     if (dbItem == null) {
       LOGGER.info("Application not found in Spec256 app base");
@@ -281,7 +282,7 @@ public class FormatSpec256 extends Snapshot {
       final int highPc;
       if (spValue < 0x4000) {
         // ROM area
-        final byte[] romData = board.getRomData().getAsArray();
+        final byte[] romData = MainForm.BASE_ROM.getAsArray();
         lowPc = romData[spValue] & 0xFF;
         spValue = (spValue + 1) & 0xFFFF;
         highPc = romData[spValue] & 0xFF;

@@ -128,22 +128,24 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       return "All supported disk images(*.scl,*.trd)";
     }
   };
-  private static final FileFilter FILTER_FORMAT_Z80 = new FormatZ80();
-  private static final FileFilter FILTER_FORMAT_SNA = new FormatSNA();
-  private static final FileFilter FILTER_FORMAT_ZXP = new FormatZXP();
-  private static final FileFilter FILTER_FORMAT_SPEC256 = new FormatSpec256();
+  private static final Snapshot SNAPSHOT_FORMAT_Z80 = new FormatZ80();
+  private static final Snapshot SNAPSHOT_FORMAT_SNA = new FormatSNA();
+  private static final Snapshot SNAPSHOT_FORMAT_ZXP = new FormatZXP();
+  private static final Snapshot SNAPSHOT_FORMAT_ROM = new FormatRom();
+  private static final Snapshot SNAPSHOT_FORMAT_SPEC256 = new FormatSpec256();
   private static final FileFilter FILTER_FORMAT_ALL_SNAPSHOTS = new FileFilter() {
     @Override
     public boolean accept(File f) {
-      return FILTER_FORMAT_Z80.accept(f)
-              || FILTER_FORMAT_SPEC256.accept(f)
-              || FILTER_FORMAT_SNA.accept(f)
-              || FILTER_FORMAT_ZXP.accept(f);
+      return SNAPSHOT_FORMAT_Z80.accept(f)
+              || SNAPSHOT_FORMAT_SPEC256.accept(f)
+              || SNAPSHOT_FORMAT_SNA.accept(f)
+              || SNAPSHOT_FORMAT_ZXP.accept(f)
+              || SNAPSHOT_FORMAT_ROM.accept(f);
     }
 
     @Override
     public String getDescription() {
-      return "All snapshots (*.z80, *.sna, *.zip, *.zxp)";
+      return "All snapshots (*.z80, *.sna, *.zip, *.zxp, *.rom)";
     }
   };
   public static RomData BASE_ROM;
@@ -490,6 +492,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
                   setTapFile(f);
                 }
                 break;
+                case "rom":
                 case "z80":
                 case "zip":
                 case "sna":
@@ -1409,7 +1412,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       final File selected =
               chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, FILTER_FORMAT_ALL_SNAPSHOTS,
-                      FILTER_FORMAT_Z80, FILTER_FORMAT_SPEC256, FILTER_FORMAT_SNA, FILTER_FORMAT_ZXP);
+                      SNAPSHOT_FORMAT_Z80, SNAPSHOT_FORMAT_SPEC256, SNAPSHOT_FORMAT_SNA, SNAPSHOT_FORMAT_ZXP, SNAPSHOT_FORMAT_ROM);
 
       if (selected != null) {
         this.setSnapshotFile(selected, theFilter.get());
@@ -1428,14 +1431,16 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       this.lastSnapshotFolder = selected.getParentFile();
       try {
         if (theFilter == FILTER_FORMAT_ALL_SNAPSHOTS) {
-          if (FILTER_FORMAT_Z80.accept(selected)) {
-            theFilter = FILTER_FORMAT_Z80;
-          } else if (FILTER_FORMAT_SNA.accept(selected)) {
-            theFilter = FILTER_FORMAT_SNA;
-          } else if (FILTER_FORMAT_ZXP.accept(selected)) {
-            theFilter = FILTER_FORMAT_ZXP;
+          if (SNAPSHOT_FORMAT_ROM.accept(selected)) {
+            theFilter = SNAPSHOT_FORMAT_ROM;
+          } else if (SNAPSHOT_FORMAT_Z80.accept(selected)) {
+            theFilter = SNAPSHOT_FORMAT_Z80;
+          } else if (SNAPSHOT_FORMAT_SNA.accept(selected)) {
+            theFilter = SNAPSHOT_FORMAT_SNA;
+          } else if (SNAPSHOT_FORMAT_ZXP.accept(selected)) {
+            theFilter = SNAPSHOT_FORMAT_ZXP;
           } else {
-            theFilter = FILTER_FORMAT_SPEC256;
+            theFilter = SNAPSHOT_FORMAT_SPEC256;
           }
         }
 
@@ -2756,7 +2761,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       File selected = chooseFileForSave("Save snapshot", this.lastSnapshotFolder, theFilter, false,
-              Stream.of(new FormatSpec256(), new FormatZXP(), new FormatZ80(), new FormatSNA()).filter(x -> x.canMakeSnapshotForBoardMode(this.board.getBoardMode()))
+              Stream.of(SNAPSHOT_FORMAT_SPEC256, SNAPSHOT_FORMAT_ZXP, SNAPSHOT_FORMAT_Z80, SNAPSHOT_FORMAT_SNA, SNAPSHOT_FORMAT_ROM).filter(x -> x.canMakeSnapshotForBoardMode(this.board.getBoardMode()))
                       .toArray(Snapshot[]::new)
       );
 

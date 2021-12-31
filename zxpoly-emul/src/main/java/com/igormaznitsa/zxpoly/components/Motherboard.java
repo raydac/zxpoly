@@ -56,7 +56,6 @@ public final class Motherboard implements ZxPolyConstants {
   private final float[] cpuLoad = new float[4];
   private final Random rnd = new Random();
   private final Beeper beeper;
-  private final RomData romData;
   private final boolean contendedRam;
   private final TimingProfile timingProfile;
   private final VolumeProfile soundLevels;
@@ -112,7 +111,6 @@ public final class Motherboard implements ZxPolyConstants {
       LOGGER.warning("TR-DOS is not presented in ROM, BetaDiskInterface disabled");
       this.betaDisk = null;
     }
-    this.romData = rom;
 
     this.keyboard = new KeyboardKempstonAndTapeIn(timingProfile, this, allowKempstonMouse);
     ioDevices.add(keyboard);
@@ -562,10 +560,6 @@ public final class Motherboard implements ZxPolyConstants {
       }
     }
     return result;
-  }
-
-  public RomData getRomData() {
-    return this.romData;
   }
 
   private void doModuleHaltNotification(final int moduleIndex) {
