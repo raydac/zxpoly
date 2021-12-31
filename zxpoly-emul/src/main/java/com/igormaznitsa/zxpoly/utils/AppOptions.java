@@ -285,6 +285,14 @@ public final class AppOptions {
     preferences.putBoolean(Option.COVOXFB.name(), value);
   }
 
+  public synchronized boolean isShowIndicatorPanel() {
+    return preferences.getBoolean(Option.SHOW_INDICATOR_PANEL.name(), true);
+  }
+
+  public synchronized void setShowIndicatorPanel(final boolean value) {
+    preferences.putBoolean(Option.SHOW_INDICATOR_PANEL.name(), value);
+  }
+
   public synchronized boolean isSoundChannelsACB() {
     return preferences.getBoolean(Option.SOUND_CHANNELS_ACB.name(), false);
   }
@@ -411,6 +419,7 @@ public final class AppOptions {
   }
 
   public enum Option {
+    SHOW_INDICATOR_PANEL,
     FAST_BUTTONS,
     VOLUME_PROFILE,
     UI_LF_CLASS,

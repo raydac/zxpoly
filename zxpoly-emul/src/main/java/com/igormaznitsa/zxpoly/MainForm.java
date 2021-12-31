@@ -318,7 +318,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       }
     }
 
-    initComponents(BASE_ROM.isTrdosPresented());
+    initComponents(BASE_ROM.isTrdosPresented(), AppOptions.getInstance().isShowIndicatorPanel());
 
     this.interlaceScan = AppOptions.getInstance().isInterlacedScan();
 
@@ -1263,12 +1263,16 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     this.makeReset();
   }
 
-  private void menuOptionsShowIndicatorsActionPerformed(ActionEvent evt) {
+  private void menuOptionsShowIndicatorsActionPerformed(final ActionEvent evt) {
+    final boolean showPanel = this.menuOptionsShowIndicators.isSelected();
+
     this.indicatorCpu0.clear();
     this.indicatorCpu1.clear();
     this.indicatorCpu2.clear();
     this.indicatorCpu3.clear();
-    this.panelIndicators.setVisible(this.menuOptionsShowIndicators.isSelected());
+
+    this.panelIndicators.setVisible(showPanel);
+    AppOptions.getInstance().setShowIndicatorPanel(showPanel);
   }
 
   private void setDisk(final int drive, File selectedFile, FileFilter filter) {
@@ -1603,7 +1607,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     this.board.getVideoController().zoomForSize(this.scrollPanel.getBounds());
   }
 
-  private void initComponents(final boolean trdosEnabled) {
+  private void initComponents(final boolean trdosEnabled, final boolean showIndicatoPanel) {
     GridBagConstraints gridBagConstraints;
 
     scrollPanel = new JScrollPane();
@@ -1780,6 +1784,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
     this.getContentPane().add(scrollPanel, BorderLayout.CENTER);
 
+    panelIndicators.setVisible(showIndicatoPanel);
     panelIndicators.setBorder(BorderFactory.createEtchedBorder());
     panelIndicators.setLayout(new GridBagLayout());
     gridBagConstraints = new GridBagConstraints();
@@ -2121,7 +2126,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     menuOptionsOnlyJoystickEvents.addActionListener(this::menuOptionsOnlyKempstonEvents);
     menuOptions.add(menuOptionsOnlyJoystickEvents);
 
-    menuOptionsShowIndicators.setSelected(true);
+    menuOptionsShowIndicators.setSelected(showIndicatoPanel);
     menuOptionsShowIndicators.setText("Indicator panel");
     menuOptionsShowIndicators.setIcon(new ImageIcon(
             Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/indicator.png")))); // NOI18N
