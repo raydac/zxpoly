@@ -76,7 +76,7 @@ public class FormatRom extends Snapshot {
 
   @Override
   public String getDescription() {
-    return "ROM (*.rom)";
+    return "ROM image (*.rom)";
   }
 
 }
