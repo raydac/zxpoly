@@ -3,8 +3,11 @@ package com.igormaznitsa.zxpoly.ui;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
 import javax.swing.filechooser.FileFilter;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Locale;
 
@@ -23,16 +26,44 @@ public class JFilePathTextField extends JPanel {
   private final JTextField textField;
 
   public JFilePathTextField() {
-    super(new BorderLayout(0, 0));
+    super(new GridBagLayout());
     this.setBorder(null);
     this.textField = new JTextField();
-    this.add(this.textField, BorderLayout.CENTER);
 
-    final JButton pathSelector = new JButton(" ... ");
-    pathSelector.setFocusable(false);
-    pathSelector.addActionListener(e -> this.selectPath());
+    final GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1000, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
 
-    this.add(pathSelector, BorderLayout.EAST);
+    this.add(this.textField, gbc);
+
+    final JLabel pathButton = new JLabel(" … ");
+    pathButton.setPreferredSize(this.textField.getPreferredSize());
+    pathButton.setFocusable(false);
+    pathButton.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+    pathButton.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        pathButton.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        pathButton.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        pathButton.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
+      }
+
+      @Override
+      public void mouseClicked(final MouseEvent e) {
+        selectPath();
+      }
+    });
+
+    gbc.gridx = 1;
+    gbc.weightx = 1;
+
+    this.add(pathButton, gbc);
   }
 
   @Override
