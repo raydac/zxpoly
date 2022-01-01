@@ -9,6 +9,7 @@
 
 __2.2.3 (SNAPSHOT)__
 
+- improved bootstrap ROM selection in Preferences
 - added support of ROM image loading as snapshots
 - Fix for ZXPlus keyboard skin
 - Added Timex2048Pal keyboard skin
