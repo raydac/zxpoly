@@ -2532,6 +2532,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     this.suspendSteps();
     try {
       final OptionsPanel optionsPanel = new OptionsPanel(null);
+      Utils.makeOwningDialogResizable(optionsPanel);
       if (showConfirmDialog(this, new JScrollPane(optionsPanel), "Preferences", JOptionPane.OK_CANCEL_OPTION,
               JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
         optionsPanel.getData().store();

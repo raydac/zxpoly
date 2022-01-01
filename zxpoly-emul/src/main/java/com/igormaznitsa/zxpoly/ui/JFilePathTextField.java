@@ -35,6 +35,10 @@ public class JFilePathTextField extends JPanel {
     this.add(this.textField, gbc);
 
     final JLabel pathButton = new JLabel(" … ");
+    pathButton.setOpaque(true);
+    pathButton.setBackground(UIManager.getColor("Button.background"));
+    pathButton.setForeground(UIManager.getColor("Button.foreground"));
+    pathButton.setFont(this.textField.getFont());
     pathButton.setPreferredSize(this.textField.getPreferredSize());
     pathButton.setFocusable(false);
     pathButton.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));

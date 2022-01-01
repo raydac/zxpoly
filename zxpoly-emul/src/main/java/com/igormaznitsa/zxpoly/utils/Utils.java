@@ -22,6 +22,8 @@ import org.apache.commons.lang3.SystemUtils;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.awt.image.BufferedImage;
 import java.io.Closeable;
 import java.io.EOFException;
@@ -35,6 +37,27 @@ public final class Utils {
   public static final Logger LOGGER = Logger.getLogger("Utils");
 
   private Utils() {
+  }
+
+  public static void makeOwningDialogResizable(final Component component, final Runnable... extraActions) {
+    final HierarchyListener listener = new HierarchyListener() {
+      @Override
+      public void hierarchyChanged(final HierarchyEvent e) {
+        final Window window = SwingUtilities.getWindowAncestor(component);
+        if (window instanceof Dialog) {
+          final Dialog dialog = (Dialog) window;
+          if (!dialog.isResizable()) {
+            dialog.setResizable(true);
+            component.removeHierarchyListener(this);
+
+            for (final Runnable r : extraActions) {
+              r.run();
+            }
+          }
+        }
+      }
+    };
+    component.addHierarchyListener(listener);
   }
 
   public static void browseLink(final URL url) {
