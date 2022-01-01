@@ -777,7 +777,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           final String cached =
                   "loadedrom_" + Integer.toHexString(romPath.hashCode()).toUpperCase(Locale.ENGLISH)
                           + ".rom";
-          final File cacheFolder = new File(AppOptions.getInstance().getAppConfigFolder(), "cache");
+          final File cacheFolder = AppOptions.getInstance().getRomCacheFolder();
           final File cachedRom = new File(cacheFolder, cached);
           RomData result = null;
           boolean load = true;

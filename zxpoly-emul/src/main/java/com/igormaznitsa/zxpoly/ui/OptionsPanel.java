@@ -81,7 +81,7 @@ public class OptionsPanel extends JPanel {
   private JSpinner spinnerIntFrame;
   private JSpinner spinnerPort;
   private JTextField textFfmpegPath;
-  private JTextField textCustomRomPath;
+  private JFilePathTextField textCustomRomPath;
 
   private KeyCodeChooser keySelectorKempstonLeft;
   private KeyCodeChooser keySelectorKempstonRight;
@@ -213,7 +213,8 @@ public class OptionsPanel extends JPanel {
     checkVkbdApart = new JCheckBox();
     comboKeyboardLook = new JComboBox<>(VirtualKeyboardLook.values());
     comboVolumeProfile = new JComboBox<>(VolumeProfile.values());
-    textCustomRomPath = new JTextField();
+    textCustomRomPath = new JFilePathTextField();
+    textCustomRomPath.setToolTipText("Provided file path overrides selected ROM, if empty then inactive");
 
     keySelectorKempstonDown = new KeyCodeChooser();
     keySelectorKempstonLeft = new KeyCodeChooser();

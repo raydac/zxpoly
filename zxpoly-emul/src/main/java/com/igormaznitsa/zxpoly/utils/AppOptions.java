@@ -418,6 +418,10 @@ public final class AppOptions {
     return configFolder;
   }
 
+  public File getRomCacheFolder() {
+    return new File(this.getAppConfigFolder(), "cache");
+  }
+
   public enum Option {
     SHOW_INDICATOR_PANEL,
     FAST_BUTTONS,
