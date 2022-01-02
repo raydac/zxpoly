@@ -39,6 +39,18 @@ public final class Utils {
   private Utils() {
   }
 
+  public static String extractMessage(final Throwable throwable) {
+    if (throwable == null) return "NONE";
+    if (throwable.getCause() != null) {
+      return extractMessage(throwable.getCause());
+    }
+    String message = throwable.getMessage();
+    if (message == null) {
+      message = throwable.getClass().getCanonicalName();
+    }
+    return message;
+  }
+
   public static void makeOwningDialogResizable(final Component component, final Runnable... extraActions) {
     final HierarchyListener listener = new HierarchyListener() {
       @Override

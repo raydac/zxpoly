@@ -299,7 +299,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       } catch (IOException ex) {
         LOGGER.log(Level.SEVERE, ex,
                 () -> "Can't load bootstrap rom: " + bootstrapRomFile.getAbsolutePath());
-        showMessageDialog(this, "Can't load bootstrap rom: " + ex.getMessage());
+        showMessageDialog(this, "Can't load bootstrap rom: " + Utils.extractMessage(ex));
         System.exit(-1);
       }
     }
@@ -2399,7 +2399,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       this.labelTapeUsage.setTooltips("Reading " + source.getName(), source.getName());
     } catch (Exception ex) {
       LOGGER.log(Level.SEVERE, "Can't read " + tapFile + ": " + ex.getMessage(), ex);
-      showMessageDialog(this, ex.getMessage(), "Error TAP loading",
+      showMessageDialog(this, ex.getMessage(), "Error TAP loading: " + Utils.extractMessage(ex),
               JOptionPane.ERROR_MESSAGE);
     } finally {
       updateTapeMenu();
