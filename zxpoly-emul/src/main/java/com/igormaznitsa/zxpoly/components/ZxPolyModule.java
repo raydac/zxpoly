@@ -226,15 +226,20 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
           if ((value & ZXPOLY_wREG0_INT) != 0) {
             prepareLocalInt();
           }
-        } else {
-          if (port == PORT_REG1) {
-            this.zxPolyRegsWritten.set(1, value);
-          } else if (port == PORT_REG2) {
-            this.zxPolyRegsWritten.set(2, value);
-          } else if (port == PORT_REG3) {
-            this.zxPolyRegsWritten.set(3, value);
-          }
+        } else if (port == PORT_REG1) {
+          this.zxPolyRegsWritten.set(1, value);
+        } else if (port == PORT_REG2) {
+          this.zxPolyRegsWritten.set(2, value);
+        } else if (port == PORT_REG3) {
+          this.zxPolyRegsWritten.set(3, value);
         }
+      }
+      if (port == PORTw_ZX128) {
+        this.write7FFD(value, false);
+      }
+    } else {
+      if (port == PORTw_ZX128) {
+        this.write7FFD(value, false);
       }
     }
   }
