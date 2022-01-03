@@ -79,7 +79,7 @@ public final class AppOptions {
   }
 
   public synchronized boolean isOldColorTvOnStart() {
-    return preferences.getBoolean(Option.OLD_COLOR_TV_ON_START.name(), true);
+    return preferences.getBoolean(Option.OLD_COLOR_TV_ON_START.name(), false);
   }
 
   public synchronized void setOldColorTvOnStart(final boolean flag) {
