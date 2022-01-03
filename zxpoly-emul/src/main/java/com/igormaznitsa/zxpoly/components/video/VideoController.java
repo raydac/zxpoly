@@ -35,6 +35,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.RenderedImage;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
@@ -115,6 +116,7 @@ public final class VideoController extends JComponent
   private final byte[] outBorderLineColors;
   private final boolean showVkbdApart;
   private final TimingProfile timingProfile;
+  private final boolean syncRepaint;
   private volatile int currentVideoMode = VIDEOMODE_ZXPOLY_256x192_FLASH_MASK;
   private Dimension size = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
   private volatile float zoom = 1.0f;
@@ -128,8 +130,10 @@ public final class VideoController extends JComponent
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
 
-  public VideoController(final TimingProfile timingProfile, final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
+  public VideoController(final TimingProfile timingProfile, final boolean syncRepaint, final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
     super();
+
+    this.syncRepaint = syncRepaint;
     this.timingProfile = timingProfile;
     this.borderLineColors = new byte[this.timingProfile.ulaTotalRows];
     this.outBorderLineColors = new byte[this.timingProfile.ulaTotalRows];
@@ -1714,8 +1718,11 @@ public final class VideoController extends JComponent
   }
 
   public void notifyRepaint() {
-    this.repaint(0L);
-    // this.doSyncRepaint();
+    if (this.syncRepaint) {
+      this.doSyncRepaint();
+    } else {
+      this.repaint(0L);
+    }
   }
 
   // can make application very slow on high resolutions screens!
@@ -1723,7 +1730,13 @@ public final class VideoController extends JComponent
     if (SwingUtilities.isEventDispatchThread()) {
       this.doImmediatePaint();
     } else {
-      SwingUtilities.invokeLater(this::doImmediatePaint);
+      try {
+        SwingUtilities.invokeAndWait(this::doImmediatePaint);
+      } catch (final InterruptedException ex) {
+        Thread.currentThread().interrupt();
+      } catch (final InvocationTargetException ex) {
+        // DO NOTHING
+      }
     }
   }
 

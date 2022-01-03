@@ -150,7 +150,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   };
   public static RomData BASE_ROM;
   private final AtomicReference<JFrame> currentFullScreen = new AtomicReference<>();
-  private final int expectedIntTicksBetweenFrames;
+  private final int intTicksBeforeFrameDraw;
   private final CpuLoadIndicator indicatorCpu0 =
           new CpuLoadIndicator(48, 14, 4, "CPU0", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final CpuLoadIndicator indicatorCpu1 =
@@ -286,9 +286,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     } catch (NumberFormatException ex) {
       LOGGER.warning("Can't parse ticks: " + ticks);
     }
-    expectedIntTicksBetweenFrames = intBetweenFrames;
+    this.intTicksBeforeFrameDraw = intBetweenFrames;
 
-    LOGGER.log(Level.INFO, "INT ticks between frames: " + expectedIntTicksBetweenFrames);
+    LOGGER.log(Level.INFO, "INT ticks between frame render: " + this.intTicksBeforeFrameDraw);
 
     byte[] bootstrapRom = null;
     final File bootstrapRomFile = new File(ROM_BOOTSTRAP_FILE_NAME);
@@ -357,6 +357,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
             this.timingProfile,
             BASE_ROM,
             AppOptions.getInstance().getDefaultBoardMode(),
+            AppOptions.getInstance().isSyncPaint(),
             AppOptions.getInstance().isContendedRam(),
             AppOptions.getInstance().isSoundChannelsACB(),
             AppOptions.getInstance().isCovoxFb(),
@@ -858,7 +859,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
   private void mainLoop() {
     this.wallClock.next();
-    int countdownToNotifyRepaint = 0;
+    int countdownToNotifyRepaint = this.intTicksBeforeFrameDraw;
     int countdownToAnimationSave = 0;
 
     final int VFLAG_BLINK_BORDER = 1;
@@ -885,7 +886,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
               doCpuIntTick = true;
               countdownToNotifyRepaint--;
               if (countdownToNotifyRepaint <= 0) {
-                countdownToNotifyRepaint = expectedIntTicksBetweenFrames;
+                countdownToNotifyRepaint = this.intTicksBeforeFrameDraw;
                 notifyRepaintScreen = true;
               }
               countdownToAnimationSave--;

@@ -46,6 +46,7 @@ public class OptionsPanel extends JPanel {
   private JCheckBox checkKempstonMouseAllowed;
   private JCheckBox checkOldTvFilter;
   private JLabel labelInterlacedScan;
+  private JLabel labelSyncPaint;
   private JLabel labelOldTvFilter;
   private JLabel labelCovoxFb;
   private JLabel labelVolumeProfile;
@@ -61,6 +62,7 @@ public class OptionsPanel extends JPanel {
   private JCheckBox checkGrabSound;
   private JCheckBox checkInterlacedScan;
   private JCheckBox checkSoundSchemeACB;
+  private JCheckBox checkSyncPaint;
   private JCheckBox checkVkbdApart;
   private JCheckBox checkContendedRam;
   private JCheckBox checkAutoiCsForCursorKeys;
@@ -137,6 +139,7 @@ public class OptionsPanel extends JPanel {
   private void fillByDataContainer(final DataContainer data) {
     this.checkContendedRam.setSelected(data.contendedRam);
     this.checkInterlacedScan.setSelected(data.interlacedScan);
+    this.checkSyncPaint.setSelected(data.syncPaint);
     this.checkOldTvFilter.setSelected(data.oldTvFilter);
     this.textCustomRomPath.setText(data.customRomPath);
     this.checkSoundSchemeACB.setSelected(data.soundSchemeAcb);
@@ -193,6 +196,7 @@ public class OptionsPanel extends JPanel {
     panelGenmeral = new JPanel();
     labelRomSource = new JLabel();
     labelIntFrame = new JLabel();
+    labelSyncPaint = new JLabel();
     comboRomSource = new JComboBox<>();
     spinnerIntFrame = new JSpinner();
     labelCovoxFb = new JLabel();
@@ -208,6 +212,7 @@ public class OptionsPanel extends JPanel {
     labelMacroCursorKeys = new JLabel();
     checkKempstonMouseAllowed = new JCheckBox();
     checkAutoiCsForCursorKeys = new JCheckBox();
+    checkSyncPaint = new JCheckBox();
     checkOldTvFilter = new JCheckBox();
     checkContendedRam = new JCheckBox();
     checkVkbdApart = new JCheckBox();
@@ -364,17 +369,31 @@ public class OptionsPanel extends JPanel {
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(spinnerIntFrame, gridBagConstraints);
 
+    labelSyncPaint.setHorizontalAlignment(RIGHT);
+    labelSyncPaint.setText("Sync.paint (can be slow):");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 3;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelSyncPaint, gridBagConstraints);
+
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 3;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(checkSyncPaint, gridBagConstraints);
+
     labelInterlacedScan.setHorizontalAlignment(RIGHT);
     labelInterlacedScan.setText("Interlaced scan:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 3;
+    gridBagConstraints.gridy = 4;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelInterlacedScan, gridBagConstraints);
 
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 3;
+    gridBagConstraints.gridy = 4;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkInterlacedScan, gridBagConstraints);
 
@@ -382,13 +401,13 @@ public class OptionsPanel extends JPanel {
     labelOldTvFilter.setText("Default Old color TV:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 4;
+    gridBagConstraints.gridy = 5;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelOldTvFilter, gridBagConstraints);
 
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 4;
+    gridBagConstraints.gridy = 5;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkOldTvFilter, gridBagConstraints);
 
@@ -396,12 +415,12 @@ public class OptionsPanel extends JPanel {
     labelTurboSound.setText("TurboSound (NedoPC):");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 5;
+    gridBagConstraints.gridy = 6;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelTurboSound, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 5;
+    gridBagConstraints.gridy = 6;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkTurboSound, gridBagConstraints);
@@ -410,12 +429,12 @@ public class OptionsPanel extends JPanel {
     labelCovoxFb.setText("Covox (#FB):");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 6;
+    gridBagConstraints.gridy = 7;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelCovoxFb, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 6;
+    gridBagConstraints.gridy = 7;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkCovoxFb, gridBagConstraints);
@@ -424,12 +443,12 @@ public class OptionsPanel extends JPanel {
     labelSoundSchemeACB.setText("Sound channels ACB:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 7;
+    gridBagConstraints.gridy = 8;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelSoundSchemeACB, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 7;
+    gridBagConstraints.gridy = 8;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkSoundSchemeACB, gridBagConstraints);
@@ -438,12 +457,12 @@ public class OptionsPanel extends JPanel {
     labelVolumeProfile.setText("Volume profile:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 8;
+    gridBagConstraints.gridy = 9;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelVolumeProfile, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 8;
+    gridBagConstraints.gridy = 9;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(comboVolumeProfile, gridBagConstraints);
@@ -452,12 +471,12 @@ public class OptionsPanel extends JPanel {
     labelZx128ByDefault.setText("Default ZX Mode:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 9;
+    gridBagConstraints.gridy = 10;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelZx128ByDefault, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 9;
+    gridBagConstraints.gridy = 10;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkZx128ByDefault, gridBagConstraints);
@@ -466,12 +485,12 @@ public class OptionsPanel extends JPanel {
     labelKempstonMouseAllowed.setText("Kempston mouse allowed:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 10;
+    gridBagConstraints.gridy = 11;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelKempstonMouseAllowed, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 10;
+    gridBagConstraints.gridy = 11;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkKempstonMouseAllowed, gridBagConstraints);
@@ -480,12 +499,12 @@ public class OptionsPanel extends JPanel {
     labelVirtualKbdApart.setText("Virtual keyboard apart:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 11;
+    gridBagConstraints.gridy = 12;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelVirtualKbdApart, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 11;
+    gridBagConstraints.gridy = 12;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkVkbdApart, gridBagConstraints);
@@ -494,12 +513,12 @@ public class OptionsPanel extends JPanel {
     labelVirtualKbdLook.setText("Keyboard decoration:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 12;
+    gridBagConstraints.gridy = 13;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelVirtualKbdLook, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 12;
+    gridBagConstraints.gridy = 13;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(comboKeyboardLook, gridBagConstraints);
@@ -508,12 +527,12 @@ public class OptionsPanel extends JPanel {
     labelMacroCursorKeys.setText("Auto-CS for cursor keys:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 13;
+    gridBagConstraints.gridy = 14;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelMacroCursorKeys, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 13;
+    gridBagConstraints.gridy = 14;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkAutoiCsForCursorKeys, gridBagConstraints);
@@ -522,12 +541,12 @@ public class OptionsPanel extends JPanel {
     labelContendedRam.setText("Contended memory (pre-alpha):");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 14;
+    gridBagConstraints.gridy = 15;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelContendedRam, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 14;
+    gridBagConstraints.gridy = 15;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkContendedRam, gridBagConstraints);
@@ -684,6 +703,7 @@ public class OptionsPanel extends JPanel {
     public final boolean vkdApart;
     public final boolean autoCsForCursorKeys;
     public final boolean interlacedScan;
+    public final boolean syncPaint;
     public final boolean oldTvFilter;
     public final boolean contendedRam;
 
@@ -703,6 +723,7 @@ public class OptionsPanel extends JPanel {
 
     public DataContainer() {
       final String customRomPath = AppOptions.getInstance().getCustomRomPath();
+      this.syncPaint = AppOptions.getInstance().isSyncPaint();
       this.contendedRam = AppOptions.getInstance().isContendedRam();
       this.customRomPath = customRomPath == null ? "" : customRomPath;
       this.interlacedScan = AppOptions.getInstance().isInterlacedScan();
@@ -747,6 +768,8 @@ public class OptionsPanel extends JPanel {
       this.interlacedScan = optionsPanel.checkInterlacedScan.isSelected();
       this.oldTvFilter = optionsPanel.checkOldTvFilter.isSelected();
 
+      this.syncPaint = optionsPanel.checkSyncPaint.isSelected();
+
       this.contendedRam = optionsPanel.checkContendedRam.isSelected();
       this.autoCsForCursorKeys = optionsPanel.checkAutoiCsForCursorKeys.isSelected();
       this.vkdApart = optionsPanel.checkVkbdApart.isSelected();
@@ -777,6 +800,7 @@ public class OptionsPanel extends JPanel {
     }
 
     public void store() {
+      AppOptions.getInstance().setSyncPaint(this.syncPaint);
       AppOptions.getInstance().setContendedRam(this.contendedRam);
       AppOptions.getInstance().setInterlacedScan(this.interlacedScan);
       AppOptions.getInstance().setOldColorTvOnStart(this.oldTvFilter);

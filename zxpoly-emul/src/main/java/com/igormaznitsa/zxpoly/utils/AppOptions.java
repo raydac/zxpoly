@@ -285,6 +285,14 @@ public final class AppOptions {
     preferences.putBoolean(Option.COVOXFB.name(), value);
   }
 
+  public synchronized boolean isSyncPaint() {
+    return preferences.getBoolean(Option.SYNC_PAINT.name(), false);
+  }
+
+  public synchronized void setSyncPaint(final boolean value) {
+    preferences.putBoolean(Option.SYNC_PAINT.name(), value);
+  }
+
   public synchronized boolean isShowIndicatorPanel() {
     return preferences.getBoolean(Option.SHOW_INDICATOR_PANEL.name(), true);
   }
@@ -310,7 +318,7 @@ public final class AppOptions {
   }
 
   public synchronized int getIntBetweenFrames() {
-    return preferences.getInt(Option.INTBETWEENFRAMES.name(), 1);
+    return preferences.getInt(Option.INTBETWEENFRAMES.name(), 2);
   }
 
   public synchronized void setIntBetweenFrames(final int value) {
@@ -423,6 +431,7 @@ public final class AppOptions {
   }
 
   public enum Option {
+    SYNC_PAINT,
     SHOW_INDICATOR_PANEL,
     FAST_BUTTONS,
     VOLUME_PROFILE,

@@ -81,6 +81,7 @@ public final class Motherboard implements ZxPolyConstants {
           final TimingProfile timingProfile,
           final RomData rom,
           final BoardMode boardMode,
+          final boolean syncRepaint,
           final boolean contendedRam,
           final boolean useAcbSoundScheme,
           final boolean enableCovoxFb,
@@ -114,7 +115,7 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.keyboard = new KeyboardKempstonAndTapeIn(timingProfile, this, allowKempstonMouse);
     ioDevices.add(keyboard);
-    this.video = new VideoController(timingProfile, this, vkbdContainer);
+    this.video = new VideoController(timingProfile, syncRepaint, this, vkbdContainer);
     ioDevices.add(video);
     ioDevices.add(new KempstonMouse(this));
 
