@@ -871,7 +871,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
     while (!Thread.currentThread().isInterrupted()) {
       final int prevViFlags = viFlags;
+
       boolean notifyRepaintScreen = false;
+
       if (stepSemaphor.tryLock()) {
         try {
           int frameTiStates = this.board.getFrameTiStates();

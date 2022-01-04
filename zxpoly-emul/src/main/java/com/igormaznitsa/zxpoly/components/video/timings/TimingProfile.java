@@ -66,10 +66,11 @@ public enum TimingProfile {
   public final int ulaTotalRows;
   public final int ulaFirstVisibleRow;
 
-  public final int tstatesInFramePaperStart;
   public final int tstatesInBottomBorderStart;
   public final int tstatesPaperLineTime;
-  public final int tstatesBorderStart;
+
+  public final int tstatesScreenStart;
+  public final int tstatesScreenEnd;
 
   TimingProfile(
           final int ulaLineTime,
@@ -99,8 +100,8 @@ public enum TimingProfile {
     this.ulaFirstVisibleRow = this.ulaTotalRows - this.ulaVisibleRows;
 
     this.tstatesPaperLineTime = 128;
-    this.tstatesBorderStart = (this.ulaFirstPaperLine - this.ulaBorderLinesTop) * ulaLineTime;
-    this.tstatesInFramePaperStart = this.ulaFirstPaperLine * this.ulaLineTime + this.ulaFirstPaperTact;
+    this.tstatesScreenStart = this.ulaLineTime * this.ulaFirstPaperLine - 3;
+    this.tstatesScreenEnd = this.tstatesScreenStart + this.ulaLineTime * 192;
     this.tstatesInBottomBorderStart = (this.ulaFirstPaperLine + 193) * this.ulaLineTime;
   }
 }

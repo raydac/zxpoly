@@ -160,11 +160,8 @@ public final class Motherboard implements ZxPolyConstants {
           final int... contentions) {
     final byte[] result = new byte[timing.ulaFrameTact];
 
-    final int startScreen = timing.ulaLineTime * timing.ulaFirstPaperLine - 3;
-    final int endScreen = startScreen + timing.ulaLineTime * 192;
-
-    for (int t = startScreen; t < endScreen; t += timing.ulaLineTime) {
-      for (int p = 0; p < 128; p++) {
+    for (int t = timing.tstatesScreenStart; t < timing.tstatesScreenEnd; t += timing.ulaLineTime) {
+      for (int p = 0; p < timing.tstatesPaperLineTime; p++) {
         final int delay = contentions[p % contentions.length];
         result[t + p] = (byte) delay;
       }
