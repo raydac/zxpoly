@@ -182,7 +182,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private final KeyboardKempstonAndTapeIn keyboardAndTapeModule;
   private final KempstonMouse kempstonMouse;
   private final boolean interlaceScan;
-  private final ReentrantLock stepSemaphor = new ReentrantLock();
+  private final ReentrantLock stepLocker = new ReentrantLock();
   private final Thread mainCpuThread;
   private final javax.swing.Timer infoBarUpdateTimer;
   private final AtomicReference<SpriteCorrectorMainFrame> spriteCorrectorMainFrame = new AtomicReference<>();
@@ -650,13 +650,13 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         }
         break;
         case START_PAUSE: {
-          abstractButton.setSelected(MainForm.this.stepSemaphor.isHeldByCurrentThread());
+          abstractButton.setSelected(MainForm.this.stepLocker.isHeldByCurrentThread());
           abstractButton.addActionListener(e -> {
             final JToggleButton source = (JToggleButton) e.getSource();
             if (source.isSelected()) {
-              MainForm.this.stepSemaphor.lock();
+              MainForm.this.stepLocker.lock();
             } else {
-              MainForm.this.stepSemaphor.unlock();
+              MainForm.this.stepLocker.unlock();
             }
           });
         }
@@ -874,7 +874,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
       boolean notifyRepaintScreen = false;
 
-      if (stepSemaphor.tryLock()) {
+      if (stepLocker.tryLock()) {
         try {
           int frameTiStates = this.board.getFrameTiStates();
           final boolean inTurboMode = this.turboMode;
@@ -950,7 +950,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
             }
           }
         } finally {
-          stepSemaphor.unlock();
+          stepLocker.unlock();
         }
 
         final int changedViFlags = prevViFlags ^ viFlags;
@@ -1084,7 +1084,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   void onTrigger(final int triggered, final int lastM1Address, final Z80[] cpuModuleStates) {
-    this.stepSemaphor.lock();
+    this.stepLocker.lock();
     try {
       logTrigger(triggered, lastM1Address, cpuModuleStates);
 
@@ -1111,7 +1111,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
                 "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
     } finally {
-      this.stepSemaphor.unlock();
+      this.stepLocker.unlock();
     }
   }
 
@@ -1279,7 +1279,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void setDisk(final int drive, File selectedFile, FileFilter filter) {
-    this.stepSemaphor.lock();
+    this.stepLocker.lock();
     try {
       this.lastFloppyFolder = selectedFile.getParentFile();
       final char diskName;
@@ -1338,7 +1338,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
                 JOptionPane.ERROR_MESSAGE);
       }
     } finally {
-      this.stepSemaphor.unlock();
+      this.stepLocker.unlock();
     }
   }
 
@@ -1381,21 +1381,21 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void formWindowLostFocus(WindowEvent evt) {
-    this.stepSemaphor.lock();
+    this.stepLocker.lock();
     try {
       this.keyboardAndTapeModule.doReset();
     } finally {
-      this.stepSemaphor.unlock();
+      this.stepLocker.unlock();
     }
   }
 
   private void formWindowGainedFocus(WindowEvent evt) {
-    this.stepSemaphor.lock();
+    this.stepLocker.lock();
     try {
       this.getInputContext().selectInputMethod(Locale.ENGLISH);
       this.keyboardAndTapeModule.doReset();
     } finally {
-      this.stepSemaphor.unlock();
+      this.stepLocker.unlock();
     }
   }
 
@@ -1430,7 +1430,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void setSnapshotFile(final File selected, FileFilter theFilter) {
-    this.stepSemaphor.lock();
+    this.stepLocker.lock();
     try {
       this.board.forceResetAllCpu();
       this.board.resetIoDevices();
@@ -1463,7 +1463,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
                 "Error", JOptionPane.ERROR_MESSAGE);
       }
     } finally {
-      stepSemaphor.unlock();
+      stepLocker.unlock();
     }
   }
 
@@ -2327,14 +2327,14 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private void menuOptionsZX128ModeActionPerformed(ActionEvent evt) {
-    this.stepSemaphor.lock();
+    this.stepLocker.lock();
     try {
       this.board.resetAndRestoreRom(BASE_ROM);
       this.board
               .setBoardMode(this.menuOptionsZX128Mode.isSelected() ? BoardMode.ZX128 : BoardMode.ZXPOLY,
                       true);
     } finally {
-      this.stepSemaphor.unlock();
+      this.stepLocker.unlock();
     }
   }
 
@@ -2389,7 +2389,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
   private void setTapFile(final File tapFile) {
     this.lastTapFolder = tapFile.getParentFile();
-    this.stepSemaphor.lock();
+    this.stepLocker.lock();
     try {
       if (this.keyboardAndTapeModule.getTap() != null) {
         this.keyboardAndTapeModule.getTap().removeActionListener(this);
@@ -2406,7 +2406,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
               JOptionPane.ERROR_MESSAGE);
     } finally {
       updateTapeMenu();
-      this.stepSemaphor.unlock();
+      this.stepLocker.unlock();
     }
   }
 
@@ -2757,12 +2757,12 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
   private void suspendSteps() {
     this.turnZxKeyboardOff();
-    this.stepSemaphor.lock();
+    this.stepLocker.lock();
   }
 
   private void resumeSteps() {
     this.turnZxKeyboardOn();
-    this.stepSemaphor.unlock();
+    this.stepLocker.unlock();
   }
 
   private void menuServiceMakeSnapshotActionPerformed(ActionEvent evt) {

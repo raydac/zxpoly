@@ -38,7 +38,6 @@ import java.awt.image.RenderedImage;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -108,7 +107,6 @@ public final class VideoController extends JComponent
   private final Dimension baseSize;
   private final VirtualKeyboardDecoration vkbdContainer;
   private final Motherboard board;
-  private final ReentrantLock bufferLocker = new ReentrantLock();
   private final BufferedImage bufferImage;
   private final int[] bufferImageRgbData;
   private final ZxPolyModule[] modules;
@@ -1300,9 +1298,8 @@ public final class VideoController extends JComponent
   }
 
   public byte[] grabRgb(final byte[] array) {
-    lockBuffer();
     byte[] result;
-    try {
+    synchronized (this.bufferImage) {
       final int[] buffer = this.bufferImageRgbData;
       final int bufferLen = buffer.length;
       result = array == null ? new byte[bufferLen * 3] : array;
@@ -1312,10 +1309,7 @@ public final class VideoController extends JComponent
         result[outIndex++] = (byte) (argb >> 8);
         result[outIndex++] = (byte) argb;
       }
-    } finally {
-      unlockBuffer();
     }
-
     if (this.tvFilterChain != null) {
       final int argbBorderColor = PALETTE_ZXPOLY[this.portFEw & 7];
       for (final TvFilter f : this.tvFilterChain.getFilterChain()) {
@@ -1333,8 +1327,7 @@ public final class VideoController extends JComponent
           final TvFilterChain filterChain
   ) {
     if (filterChain.isEmpty()) {
-      lockBuffer();
-      try {
+      synchronized (this.bufferImage) {
         final float normalZoom = Math.max(1.0f, zoom);
         if (normalZoom == 1.0f) {
           gfx.drawImage(this.bufferImage, null, x, y);
@@ -1345,19 +1338,14 @@ public final class VideoController extends JComponent
           gfx.drawImage(this.bufferImage, x, y, Math.round(SCREEN_WIDTH * normalZoom),
                   Math.round(SCREEN_HEIGHT * normalZoom), null);
         }
-      } finally {
-        unlockBuffer();
       }
     } else {
       final int borderArgbColor = PALETTE_ZXPOLY[this.borderLineColors[this.timingProfile.ulaVisibleRows - 1]];
       final Rectangle area;
       final TvFilter[] tvFilters = filterChain.getFilterChain();
       BufferedImage postProcessedImage;
-      lockBuffer();
-      try {
+      synchronized (this.bufferImage) {
         postProcessedImage = tvFilters[0].apply(this.bufferImage, zoom, borderArgbColor, true);
-      } finally {
-        unlockBuffer();
       }
       for (int i = 1; i < tvFilters.length; i++) {
         postProcessedImage = tvFilters[i].apply(postProcessedImage, zoom, borderArgbColor, false);
@@ -1412,15 +1400,12 @@ public final class VideoController extends JComponent
   }
 
   public void setVideoMode(final int newVideoMode) {
-    lockBuffer();
-    try {
+    synchronized (this.bufferImage) {
       if (this.currentVideoMode != newVideoMode) {
         this.currentVideoMode = newVideoMode;
         log.log(Level.INFO, "mode set: " + decodeVideoModeCode(newVideoMode));
         refreshBufferData(LineRenderMode.ALL, this.currentVideoMode);
       }
-    } finally {
-      unlockBuffer();
     }
   }
 
@@ -1429,26 +1414,14 @@ public final class VideoController extends JComponent
     fill(this.borderLineColors, (byte) colorIndex);
   }
 
-  public void lockBuffer() {
-    bufferLocker.lock();
-  }
-
-  public void unlockBuffer() {
-    bufferLocker.unlock();
-  }
-
   public void syncUpdateBuffer(final LineRenderMode renderLines) {
-    lockBuffer();
-    try {
+    synchronized (this.bufferImage) {
       this.refreshBufferData(renderLines, this.currentVideoMode);
-    } finally {
-      unlockBuffer();
     }
   }
 
   public RenderedImage[] renderAllModuleVideoMemoryInZx48Mode() {
-    this.lockBuffer();
-    try {
+    synchronized (this.bufferImage) {
       final java.util.List<RenderedImage> result = new ArrayList<>();
 
       BufferedImage buffImage =
@@ -1522,22 +1495,17 @@ public final class VideoController extends JComponent
       g.dispose();
       result.add(buffImage);
 
-      return result.toArray(EMPTY_ARRAY);
-    } finally {
       refreshBufferData(LineRenderMode.ALL, VIDEOMODE_ZX48_CPU0);
-      this.unlockBuffer();
+      return result.toArray(EMPTY_ARRAY);
     }
   }
 
   public int[] makeCopyOfVideoBuffer(final boolean applyFilters) {
     int[] cloneOfBuffer;
     Color borderColor;
-    this.lockBuffer();
-    try {
+    synchronized (this.bufferImage) {
       cloneOfBuffer = this.bufferImageRgbData.clone();
       borderColor = PALETTE_ZXPOLY_COLORS[this.portFEw & 7];
-    } finally {
-      this.unlockBuffer();
     }
 
     if (applyFilters) {
