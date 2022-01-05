@@ -13,6 +13,7 @@
 
   di
   xor a
+  OUT ($FE),a
   exx
   ld e,a
   ld d,a

@@ -21,6 +21,6 @@ $PWD/bin/zx0 $PWD/images/512c2.c2 $PWD/images/512C2.ZX0
 $PWD/bin/zx0 $PWD/images/512c3.c3 $PWD/images/512C3.ZX0
 
 
-TARGETROM=$PWD/../zxpoly-emul/src/main/resources/com/igormaznitsa/zxpoly/rom/zxpolytest.rom
+TARGETROM=$PWD/../zxpoly-emul/src/main/resources/com/igormaznitsa/zxpoly/rom/zxpolytest.prom
 
 $PWD/bin/zasm --z80 -l0 $PWD/zxpolytest.asm -o $TARGETROM

@@ -132,6 +132,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private static final Snapshot SNAPSHOT_FORMAT_SNA = new FormatSNA();
   private static final Snapshot SNAPSHOT_FORMAT_ZXP = new FormatZXP();
   private static final Snapshot SNAPSHOT_FORMAT_ROM = new FormatRom();
+  private static final Snapshot SNAPSHOT_FORMAT_PROM = new FormatPRom();
   private static final Snapshot SNAPSHOT_FORMAT_SPEC256 = new FormatSpec256();
   private static final FileFilter FILTER_FORMAT_ALL_SNAPSHOTS = new FileFilter() {
     @Override
@@ -140,12 +141,13 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
               || SNAPSHOT_FORMAT_SPEC256.accept(f)
               || SNAPSHOT_FORMAT_SNA.accept(f)
               || SNAPSHOT_FORMAT_ZXP.accept(f)
-              || SNAPSHOT_FORMAT_ROM.accept(f);
+              || SNAPSHOT_FORMAT_ROM.accept(f)
+              || SNAPSHOT_FORMAT_PROM.accept(f);
     }
 
     @Override
     public String getDescription() {
-      return "All snapshots (*.z80, *.sna, *.zip, *.zxp, *.rom)";
+      return "All snapshots (*.z80, *.sna, *.zip, *.zxp, *.rom, *.prom)";
     }
   };
   public static RomData BASE_ROM;
@@ -1419,7 +1421,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       final File selected =
               chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, FILTER_FORMAT_ALL_SNAPSHOTS,
-                      SNAPSHOT_FORMAT_Z80, SNAPSHOT_FORMAT_SPEC256, SNAPSHOT_FORMAT_SNA, SNAPSHOT_FORMAT_ZXP, SNAPSHOT_FORMAT_ROM);
+                      SNAPSHOT_FORMAT_Z80, SNAPSHOT_FORMAT_SPEC256, SNAPSHOT_FORMAT_SNA, SNAPSHOT_FORMAT_ZXP, SNAPSHOT_FORMAT_ROM, SNAPSHOT_FORMAT_PROM);
 
       if (selected != null) {
         this.setSnapshotFile(selected, theFilter.get());
@@ -1438,7 +1440,9 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
       this.lastSnapshotFolder = selected.getParentFile();
       try {
         if (theFilter == FILTER_FORMAT_ALL_SNAPSHOTS) {
-          if (SNAPSHOT_FORMAT_ROM.accept(selected)) {
+          if (SNAPSHOT_FORMAT_PROM.accept(selected)) {
+            theFilter = SNAPSHOT_FORMAT_PROM;
+          } else if (SNAPSHOT_FORMAT_ROM.accept(selected)) {
             theFilter = SNAPSHOT_FORMAT_ROM;
           } else if (SNAPSHOT_FORMAT_Z80.accept(selected)) {
             theFilter = SNAPSHOT_FORMAT_Z80;

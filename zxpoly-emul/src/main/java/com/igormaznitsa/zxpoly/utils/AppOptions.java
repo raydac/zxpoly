@@ -40,7 +40,7 @@ import java.util.stream.Stream;
 
 public final class AppOptions {
 
-  public static final String TEST_ROM = "zxpolytest.rom";
+  public static final String TEST_ROM = "zxpolytest.prom";
   private static final Logger LOGGER = Logger.getLogger(AppOptions.class.getName());
   private static final AppOptions INSTANCE = new AppOptions();
   private static final String APP_FOLDER_NAME = ".zxpolyemul";
