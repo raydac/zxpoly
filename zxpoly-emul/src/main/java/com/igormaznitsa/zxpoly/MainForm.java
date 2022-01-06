@@ -115,17 +115,33 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
   private static final long serialVersionUID = 7309959798344327441L;
   private static final String ROM_BOOTSTRAP_FILE_NAME = "bootstrap.rom";
+
+  private static final WavFileFilter FILTER_FORMAT_WAV = new WavFileFilter();
+  private static final TzxFileFilter FILTER_FORMAT_TZX = new TzxFileFilter();
+  private static final TapFileFilter FILTER_FORMAT_TAP = new TapFileFilter();
+  private static final FileFilter FILTER_FORMAT_ALL_TAPE = new FileFilter() {
+    @Override
+    public boolean accept(final File f) {
+      return FILTER_FORMAT_WAV.accept(f) || FILTER_FORMAT_TAP.accept(f) || FILTER_FORMAT_TZX.accept(f);
+    }
+
+    @Override
+    public String getDescription() {
+      return "All supported tape snapshots (*.wav,*.tzx,*.tap)";
+    }
+  };
+
   private static final SclFileFilter FILTER_FORMAT_SCL = new SclFileFilter();
   private static final TrdFileFilter FILTER_FORMAT_TRD = new TrdFileFilter();
   private static final FileFilter FILTER_FORMAT_ALL_DISK = new FileFilter() {
     @Override
-    public boolean accept(File f) {
+    public boolean accept(final File f) {
       return FILTER_FORMAT_SCL.accept(f) || FILTER_FORMAT_TRD.accept(f);
     }
 
     @Override
     public String getDescription() {
-      return "All supported disk images(*.scl,*.trd)";
+      return "All supported disk images (*.scl,*.trd)";
     }
   };
   private static final Snapshot SNAPSHOT_FORMAT_Z80 = new FormatZ80();
@@ -2419,9 +2435,10 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     try {
       final File selectedTapFile =
               chooseFileForOpen("Load Tape", this.lastTapFolder, null,
-                      new TzxFileFilter(),
-                      new TapFileFilter(),
-                      new WavFileFilter());
+                      FILTER_FORMAT_ALL_TAPE,
+                      FILTER_FORMAT_TZX,
+                      FILTER_FORMAT_TAP,
+                      FILTER_FORMAT_WAV);
       if (selectedTapFile != null) {
         this.setTapFile(selectedTapFile);
       }
@@ -2975,7 +2992,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   }
 
   private File chooseFileForOpen(final String title, final File initial,
-                                 final AtomicReference<FileFilter> selectedFilter,
+                                 final AtomicReference<FileFilter> returnSelectedFilter,
                                  final FileFilter... filter) {
     final JFileChooser chooser = new JFileChooser(initial);
     for (final FileFilter f : filter) {
@@ -2990,8 +3007,8 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     final File result;
     if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
       result = chooser.getSelectedFile();
-      if (selectedFilter != null) {
-        selectedFilter.set(chooser.getFileFilter());
+      if (returnSelectedFilter != null) {
+        returnSelectedFilter.set(chooser.getFileFilter());
       }
     } else {
       result = null;
