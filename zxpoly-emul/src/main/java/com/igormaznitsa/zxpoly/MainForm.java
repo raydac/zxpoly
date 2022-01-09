@@ -624,8 +624,12 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
           abstractButton.setSelected(!this.board.getBeeper().isNullBeeper());
           abstractButton.addActionListener(e -> {
             if (((JToggleButton) e.getSource()).isSelected()) {
-              if (!this.tryFastSpeakerActivation()) {
-                this.setSoundActivate(true);
+              if (this.isTurboMode()) {
+                ((JToggleButton) e.getSource()).setSelected(false);
+              } else {
+                if (!this.tryFastSpeakerActivation()) {
+                  this.setSoundActivate(true);
+                }
               }
             } else {
               this.setSoundActivate(false);
