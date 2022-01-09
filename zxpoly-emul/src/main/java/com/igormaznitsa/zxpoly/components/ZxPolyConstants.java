@@ -20,6 +20,7 @@ package com.igormaznitsa.zxpoly.components;
 public interface ZxPolyConstants {
 
   int PORTw_ZX128 = 0x7FFD;
+  int PORTw_ZX128_ZXMODE_ADDRESS_MASK = 0x8002; // only A15 and A1 in use to detect #7FFD in non-ZX-Poly modes
   int PORTw_ZX128_INTCPU0 = 0x80;
   int PORTw_ZX128_ROMRAM = 0x40;
   int PORTw_ZX128_LOCK = 0x20;

@@ -1218,15 +1218,22 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     this.setFastButtonState(FastButton.SOUND_ON_OFF, activated);
   }
 
-  private void setSoundActivate(final boolean activate) {
+  private void setSoundActivate(final boolean activate, final SourceSoundPort... port) {
     boolean activated = false;
     this.suspendSteps();
     try {
       if (activate) {
-        final Optional<SourceSoundPort> port =
-                this.findAudioLine(this.board.getBeeper().getAudioFormat(), true);
-        if (port.isPresent()) {
-          this.board.getBeeper().setSourceSoundPort(port.get());
+        if (port.length == 0) {
+          final Optional<SourceSoundPort> optionalPort =
+                  this.findAudioLine(this.board.getBeeper().getAudioFormat(), true);
+          if (optionalPort.isPresent()) {
+            this.board.getBeeper().setSourceSoundPort(optionalPort.get());
+            if (!this.board.getBeeper().isNullBeeper()) {
+              activated = true;
+            }
+          }
+        } else {
+          this.board.getBeeper().setSourceSoundPort(port[0]);
           if (!this.board.getBeeper().isNullBeeper()) {
             activated = true;
           }
@@ -2368,10 +2375,11 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
     if (turboActivated) {
       this.preTurboSourceSoundPort = this.board.getBeeper().setSourceSoundPort(null);
       LOGGER.info("Saved sound port: " + this.preTurboSourceSoundPort);
+      this.setSoundActivate(false);
       this.setTurboMode(true);
     } else {
       this.setTurboMode(false);
-      this.board.getBeeper().setSourceSoundPort(this.preTurboSourceSoundPort.orElse(null));
+      this.preTurboSourceSoundPort.ifPresentOrElse(savedPort -> this.setSoundActivate(true, savedPort), () -> this.setSoundActivate(true));
       LOGGER.info("Restored sound port: " + this.preTurboSourceSoundPort.map(SourceSoundPort::getName).orElse("NONE"));
       this.preTurboSourceSoundPort = Optional.empty();
     }
@@ -2581,7 +2589,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private void menuTraceCpu0ActionPerformed(ActionEvent evt) {
     if (this.menuTraceCpu0.isSelected()) {
       activateTracerForCPUModule(0);
-      this.board.getBeeper().setSourceSoundPort(null);
+      this.setSoundActivate(false);
     } else {
       deactivateTracerForCPUModule(0);
     }
@@ -2590,7 +2598,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private void menuTraceCpu1ActionPerformed(ActionEvent evt) {
     if (this.menuTraceCpu1.isSelected()) {
       activateTracerForCPUModule(1);
-      this.board.getBeeper().setSourceSoundPort(null);
+      this.setSoundActivate(false);
     } else {
       deactivateTracerForCPUModule(1);
     }
@@ -2599,7 +2607,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private void menuTraceCpu2ActionPerformed(ActionEvent evt) {
     if (this.menuTraceCpu2.isSelected()) {
       activateTracerForCPUModule(2);
-      this.board.getBeeper().setSourceSoundPort(null);
+      this.setSoundActivate(false);
     } else {
       deactivateTracerForCPUModule(2);
     }
@@ -2608,7 +2616,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
   private void menuTraceCpu3ActionPerformed(ActionEvent evt) {
     if (this.menuTraceCpu3.isSelected()) {
       activateTracerForCPUModule(3);
-      this.board.getBeeper().setSourceSoundPort(null);
+      this.setSoundActivate(false);
     } else {
       deactivateTracerForCPUModule(3);
     }
