@@ -71,6 +71,8 @@ public enum TimingProfile {
 
   public final int tstatesScreenStart;
   public final int tstatesScreenEnd;
+  public final int tstatesPerAttrBlock;
+  public final int tstatesScreen;
 
   TimingProfile(
           final int ulaLineTime,
@@ -102,6 +104,10 @@ public enum TimingProfile {
     this.tstatesPaperLineTime = 128;
     this.tstatesScreenStart = this.ulaLineTime * this.ulaFirstPaperLine - 3;
     this.tstatesScreenEnd = this.tstatesScreenStart + this.ulaLineTime * 192;
+
     this.tstatesInBottomBorderStart = (this.ulaFirstPaperLine + 193) * this.ulaLineTime;
+
+    this.tstatesScreen = this.tstatesScreenEnd - this.tstatesScreenStart;
+    this.tstatesPerAttrBlock = this.tstatesScreen / 0x300;
   }
 }

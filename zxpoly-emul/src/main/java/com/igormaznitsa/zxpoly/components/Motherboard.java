@@ -713,9 +713,9 @@ public final class Motherboard implements ZxPolyConstants {
 
       if (result < 0 && (port & 0xFF) == 0xFF) {
         // all IO devices in Z state, some simulation of "port FF"
-        final int tick = this.getFrameTiStates();
-        if (tick >= this.timingProfile.tstatesScreenStart && tick >= this.timingProfile.tstatesScreenEnd) {
-          result = this.modules[0].readVideo(0x1800 + rnd.nextInt(0x300));
+        final int screenTick = this.getFrameTiStates() - this.timingProfile.tstatesScreenStart;
+        if (screenTick >= 0 && screenTick < this.timingProfile.tstatesScreen) {
+          result = this.modules[0].readVideo(0x1800 + screenTick / this.timingProfile.tstatesPerAttrBlock);
         }
       }
     }
