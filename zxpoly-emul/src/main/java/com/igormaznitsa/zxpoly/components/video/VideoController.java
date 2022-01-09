@@ -172,6 +172,8 @@ public final class VideoController extends JComponent
         }
       }
     });
+
+    this.setDoubleBuffered(false);
   }
 
   public static void setGfxBack(final Spec256Arch.Spec256Bkg bkg) {
@@ -1674,11 +1676,6 @@ public final class VideoController extends JComponent
   @Override
   public boolean isOpaque() {
     return true;
-  }
-
-  @Override
-  public boolean isDoubleBuffered() {
-    return false;
   }
 
   private void doImmediatePaint() {
