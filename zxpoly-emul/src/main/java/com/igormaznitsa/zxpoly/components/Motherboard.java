@@ -43,7 +43,7 @@ public final class Motherboard implements ZxPolyConstants {
   private static final Logger LOGGER = Logger.getLogger("MB");
 
   private static final int SPEC256_GFX_CORES = 8;
-  private final byte[] contendDelay;
+  private static final int TIMINGSTATE_MASK_TYPE = 0xFF_0000_00;
   private final ZxPolyModule[] modules;
   private final Z80[] spec256GfxCores;
   private final IoDevice[] ioDevices;
@@ -75,6 +75,18 @@ public final class Motherboard implements ZxPolyConstants {
   private volatile boolean gfxLeveledOr = false;
   private volatile boolean gfxLeveledAnd = false;
   private int frameTiStatesCounter = 0;
+  private static final int TIMINGSTATE_MASK_ATTR = 0x00_FFFF_00;
+  private static final int TIMINGSTATE_MASK_TIME = 0x00_0000_FF;
+
+  private static boolean isContended(final int address, final int port7FFD) {
+    final int pageStart = address & 0xC000;
+    return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
+  }
+
+  private static final int TIMINGSTATE_BORDER = 0x00_0000_00;
+  private static final int TIMINGSTATE_PAPER = 0x01_0000_00;
+  private final int[] etimings;
+  private final boolean attributePortFf;
 
   public Motherboard(
           final VolumeProfile soundLevels,
@@ -87,8 +99,10 @@ public final class Motherboard implements ZxPolyConstants {
           final boolean enableCovoxFb,
           final boolean useTurboSound,
           final boolean allowKempstonMouse,
+          final boolean attributePortFf,
           final VirtualKeyboardDecoration vkbdContainer
   ) {
+    this.attributePortFf = attributePortFf;
     this.soundLevels = soundLevels;
     this.audioLevels = this.soundLevels.getLevels();
     this.timingProfile = timingProfile;
@@ -99,7 +113,7 @@ public final class Motherboard implements ZxPolyConstants {
       ioDevices.add(this.modules[i]);
     }
 
-    this.contendDelay = generateFrameContendDelays(timingProfile, 6, 5, 4, 3, 2, 1, 0, 0);
+    this.etimings = generateTimings(timingProfile, 6, 5, 4, 3, 2, 1, 0, 0);
 
     this.contendedRam = contendedRam;
     this.boardMode = boardMode;
@@ -150,20 +164,47 @@ public final class Motherboard implements ZxPolyConstants {
     }
   }
 
-  private static boolean isContended(final int address, final int port7FFD) {
-    final int pageStart = address & 0xC000;
-    return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
-  }
-
-  private static byte[] generateFrameContendDelays(
+  /**
+   * Generates timing info for frame ticks
+   * <p>
+   * TTTTTTTT_AAAAAAAAAAAAAAAA_CCCCCCCC
+   * \------/ \--------------/ \------/
+   * type    attribute addr   contend
+   *
+   * @param timing
+   * @param contentions
+   * @return
+   */
+  private static int[] generateTimings(
           final TimingProfile timing,
           final int... contentions) {
-    final byte[] result = new byte[timing.ulaFrameTact];
 
-    for (int t = timing.tstatesScreenStart; t < timing.tstatesScreenEnd; t += timing.ulaLineTime) {
-      for (int p = 0; p < timing.tstatesPaperLineTime; p++) {
-        final int delay = contentions[p % contentions.length];
-        result[t + p] = (byte) delay;
+    final int[] lineAttrOffset = new int[256];
+    int i = 0;
+    for (int p = 0; p < 4; p++) {
+      for (int y = 0; y < 8; y++) {
+        for (int o = 0; o < 8; o++, i++) {
+          lineAttrOffset[i] = 0x1800 + (p * 8 + y) * 32;
+        }
+      }
+    }
+
+    final int[] result = new int[timing.ulaFrameTiStates];
+
+    for (int t = 0; t < timing.ulaFrameTiStates; t++) {
+      if (t < timing.ulaTiStatesFirstByteOnScreen) {
+        result[t] = TIMINGSTATE_BORDER;
+      } else {
+        final int displayOffset = t - timing.ulaTiStatesFirstByteOnScreen;
+        final int line = displayOffset / timing.ulaScanLineTacts;
+        final int pixel = displayOffset % timing.ulaScanLineTacts;
+        if (line < TimingProfile.ZX_SCREEN_LINES && pixel < timing.ulaTiStatesVideo) {
+          final int delay = contentions[pixel % contentions.length];
+          final int attribute = lineAttrOffset[line] + pixel / 4;
+          result[t] = TIMINGSTATE_PAPER | (attribute << 8) | delay;
+        } else {
+          result[t] = TIMINGSTATE_BORDER;
+        }
       }
     }
 
@@ -370,7 +411,7 @@ public final class Motherboard implements ZxPolyConstants {
       if (this.statisticCounter <= 0) {
         for (int i = 0; i < 4; i++) {
           this.cpuLoad[i] = min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweenInt()
-                  / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (this.timingProfile.ulaFrameTact));
+                  / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (this.timingProfile.ulaFrameTiStates));
         }
         this.statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
         resetStatisticsAtModules = true;
@@ -711,51 +752,26 @@ public final class Motherboard implements ZxPolyConstants {
         }
       }
 
-      if (result < 0 && (port & 0xFF) == 0xFF) {
-        // all IO devices in Z state, some simulation of "port FF"
-        final int screenTick = this.getFrameTiStates() - this.timingProfile.tstatesScreenStart;
-        if (screenTick >= 0 && screenTick < this.timingProfile.tstatesScreen) {
-          result = this.modules[0].readVideo(0x1800 + screenTick / this.timingProfile.tstatesPerAttrBlock);
+      if (result < 0) {
+        if (this.attributePortFf && (port & 1) != 0) {
+          // all IO devices in Z state, some simulation of "port FF"
+          if (this.frameTiStatesCounter < this.timingProfile.ulaFrameTiStates) {
+            final int ramState = this.etimings[this.frameTiStatesCounter];
+            if ((ramState & TIMINGSTATE_MASK_TYPE) == TIMINGSTATE_PAPER) {
+              final int attrOffset = (ramState & TIMINGSTATE_MASK_ATTR) >> 8;
+              result = this.modules[0].readVideo(attrOffset);
+            }
+          }
         }
       }
     }
     return result;
   }
 
-  int contendRam(final int port7FFD, final int address) {
+  int getContendedDelay(final int port7FFD, final int address) {
     int result = 0;
     if (this.contendedRam && isContended(address, port7FFD)) {
-      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTact ? this.contendDelay[this.frameTiStatesCounter] & 0xFF : 0;
-    }
-    return result;
-  }
-
-  int contendPortEarly(final int port, final int port7FFD) {
-    int result = 0;
-    if (this.contendedRam && isContended(port, port7FFD)) {
-      result = this.contendDelay[this.frameTiStatesCounter % this.timingProfile.ulaFrameTact] & 0xFF;
-    }
-    return result;
-  }
-
-  int contendPortLate(final int port, final int port7FFD) {
-    int result = 0;
-    if (this.contendedRam) {
-      final int shift = 1;
-      int frameTact = (this.frameTiStatesCounter + shift) % this.timingProfile.ulaFrameTact;
-      if (isUlaPort(port)) {
-        result = this.contendDelay[frameTact];
-      } else if (isContended(port, port7FFD)) {
-        result = this.contendDelay[frameTact];
-        frameTact += this.contendDelay[frameTact];
-        frameTact++;
-        frameTact %= this.timingProfile.ulaFrameTact;
-        result += this.contendDelay[frameTact];
-        frameTact += this.contendDelay[frameTact];
-        frameTact++;
-        frameTact %= this.timingProfile.ulaFrameTact;
-        result += this.contendDelay[frameTact];
-      }
+      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTiStates ? this.etimings[this.frameTiStatesCounter] & 0xFF : 0;
     }
     return result;
   }

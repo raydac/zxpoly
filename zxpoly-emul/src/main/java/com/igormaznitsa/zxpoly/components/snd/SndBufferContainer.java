@@ -61,8 +61,8 @@ final class SndBufferContainer {
   }
 
   public int calculatePosition(final int tstatesIntCounter) {
-    return ((tstatesIntCounter * SAMPLES_PER_INT + this.timingProfile.ulaFrameTact / 2)
-            / this.timingProfile.ulaFrameTact);
+    return ((tstatesIntCounter * SAMPLES_PER_INT + this.timingProfile.ulaFrameTiStates / 2)
+            / this.timingProfile.ulaFrameTiStates);
   }
 
   public void setValue(final int deltaTstates, final int levelLeft, final int levelRight) {

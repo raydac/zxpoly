@@ -30,7 +30,7 @@ public class ReaderWav implements TapeSource {
     this.timingProfile = timingProfile;
     this.name = name;
     try (final FileSeekableContainer container = new FileSeekableContainer(new RandomAccessFile(file, "r"))) {
-      this.wavFile = new InMemoryWavFile(container, timingProfile.ulaFrameTact * 50L);
+      this.wavFile = new InMemoryWavFile(container, timingProfile.ulaFrameTiStates * 50L);
     }
   }
 

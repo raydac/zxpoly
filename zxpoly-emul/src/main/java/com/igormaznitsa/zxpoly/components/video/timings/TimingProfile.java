@@ -1,113 +1,75 @@
 package com.igormaznitsa.zxpoly.components.video.timings;
 
 public enum TimingProfile {
-  SCORPION(
-          224,
-          64,
-          61,
-          70784,
-          48,
-          48,
-          16,
-          16,
-          61,
-          32
-  ),
-  PENTAGON(
-          224,
-          80,
-          65,
-          71680,
-          48,
-          48,
-          16,
-          16,
-          0,
-          32
-  ),
   SPEC48(
-          224,
-          64,
-          64,
-          69888,
-          48,
-          48,
           16,
+          3_500_000,
+          128,
+          32,
           16,
-          64,
-          32
+          32,
+          16,
+          8,
+          56,
+          56
   ),
   SPEC128(
-
-          228,
-          63,
-          64,
-          70908,
-          48,
-          48,
           16,
+          3_546_900,
+          128,
+          34,
           16,
-          64 + 2,
-          36
-  );
+          32,
+          18,
+          8,
+          55,
+        56
+);
 
-  public final int ulaLineTime;
-  public final int ulaFirstPaperLine;
-  public final int ulaFirstPaperTact;
-  public final int ulaFrameTact;
-  public final int ulaBorderLinesTop;
-  public final int ulaBorderLinesBottom;
-  public final int ulaBorderTiLeft;
-  public final int ulaBorderTiRight;
-  public final int ulaIntBegin;
-  public final int ulaIntLength;
-
-  public final int ulaVisibleRows;
-  public final int ulaTotalRows;
-  public final int ulaFirstVisibleRow;
-
-  public final int tstatesInBottomBorderStart;
-  public final int tstatesPaperLineTime;
-
-  public final int tstatesScreenStart;
-  public final int tstatesScreenEnd;
-  public final int tstatesPerAttrBlock;
-  public final int tstatesScreen;
+  public static final int ZX_SCREEN_LINES = 192;
+  public final int cpuFreq;
+  public final int vsyncLines;
+  public final int topBorderVisibleScanlines;
+  public final int bottomBorderVisibleScanlines;
+  public final int ulaTiStatesVideo;
+  public final int ulaTiStatesRightBorder;
+  public final int ulaTiStatesHSync;
+  public final int ulaTiStatesBlank;
+  public final int ulaTiStatesLeftBorder;
+  public final int frameScanlines;
+  public final int ulaScanLineTacts;
+  public final int ulaFrameTiStates;
+  public final int ulaInterruptTiStates;
+  public final int ulaTiStatesFirstByteOnScreen;
 
   TimingProfile(
-          final int ulaLineTime,
-          final int ulaFirstPaperLine,
-          final int ulaFirstPaperTact,
-          final int ulaFrameTact,
-          final int ulaBorderLinesTop,
-          final int ulaBorderLinesBottom,
-          final int ulaBorderTiLeft,
-          final int ulaBorderTiRight,
-          final int ulaIntBegin,
-          final int ulaIntLength
+          final int ulaInterruptTiStates,
+          final int cpuFreq,
+          final int ulaTiStatesVideo,
+          final int ulaTiStatesRightBorder,
+          final int ulaTiStatesHSync,
+          final int ulaTiStatesBlank,
+          final int ulaTiStatesLeftBorder,
+          final int vsyncLines,
+          final int topBorderVisibleScanlines,
+          final int bottomBorderVisibleScanlines
   ) {
-    this.ulaLineTime = ulaLineTime;
-    this.ulaFirstPaperLine = ulaFirstPaperLine;
-    this.ulaFirstPaperTact = ulaFirstPaperTact;
-    this.ulaFrameTact = ulaFrameTact;
-    this.ulaBorderLinesTop = ulaBorderLinesTop;
-    this.ulaBorderLinesBottom = ulaBorderLinesBottom;
-    this.ulaBorderTiLeft = ulaBorderTiLeft;
-    this.ulaBorderTiRight = ulaBorderTiRight;
-    this.ulaIntBegin = ulaIntBegin;
-    this.ulaIntLength = ulaIntLength;
+    this.ulaInterruptTiStates = ulaInterruptTiStates;
+    this.cpuFreq = cpuFreq;
+    this.vsyncLines = vsyncLines;
+    this.topBorderVisibleScanlines = topBorderVisibleScanlines;
+    this.bottomBorderVisibleScanlines = bottomBorderVisibleScanlines;
+    this.ulaTiStatesVideo = ulaTiStatesVideo;
+    this.ulaTiStatesRightBorder = ulaTiStatesRightBorder;
+    this.ulaTiStatesHSync = ulaTiStatesHSync;
+    this.ulaTiStatesBlank = ulaTiStatesBlank;
+    this.ulaTiStatesLeftBorder = ulaTiStatesLeftBorder;
 
-    this.ulaVisibleRows = ulaBorderLinesTop + ulaBorderLinesBottom + 192;
-    this.ulaTotalRows = ulaFrameTact / ulaLineTime;
-    this.ulaFirstVisibleRow = this.ulaTotalRows - this.ulaVisibleRows;
+    this.frameScanlines = this.vsyncLines + this.topBorderVisibleScanlines + this.bottomBorderVisibleScanlines + ZX_SCREEN_LINES;
 
-    this.tstatesPaperLineTime = 128;
-    this.tstatesScreenStart = this.ulaLineTime * this.ulaFirstPaperLine - 3;
-    this.tstatesScreenEnd = this.tstatesScreenStart + this.ulaLineTime * 192;
+    this.ulaScanLineTacts = this.ulaTiStatesVideo + this.ulaTiStatesRightBorder + this.ulaTiStatesHSync + this.ulaTiStatesBlank + this.ulaTiStatesLeftBorder;
+    this.ulaFrameTiStates = this.ulaScanLineTacts * this.frameScanlines;
 
-    this.tstatesInBottomBorderStart = (this.ulaFirstPaperLine + 193) * this.ulaLineTime;
-
-    this.tstatesScreen = this.tstatesScreenEnd - this.tstatesScreenStart;
-    this.tstatesPerAttrBlock = this.tstatesScreen / 0x300;
+    this.ulaTiStatesFirstByteOnScreen = (this.vsyncLines + this.topBorderVisibleScanlines) * this.ulaScanLineTacts;
   }
 }

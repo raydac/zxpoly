@@ -225,6 +225,14 @@ public final class AppOptions {
     preferences.putBoolean(Option.VKBD_APART.name(), value);
   }
 
+  public synchronized boolean isAttributePortFf() {
+    return preferences.getBoolean(Option.ATTRIBUTE_PORT_FF.name(), true);
+  }
+
+  public synchronized void setAttributePortFf(final boolean value) {
+    preferences.putBoolean(Option.ATTRIBUTE_PORT_FF.name(), value);
+  }
+
   public String getUiLfClass() {
     return preferences.get(Option.UI_LF_CLASS.name(), UIManager.getSystemLookAndFeelClassName());
   }
@@ -467,7 +475,8 @@ public final class AppOptions {
     PROTEK_JOYSTICK_VK_RIGHT,
     PROTEK_JOYSTICK_VK_UP,
     PROTEK_JOYSTICK_VK_DOWN,
-    PROTEK_JOYSTICK_VK_FIRE
+    PROTEK_JOYSTICK_VK_FIRE,
+    ATTRIBUTE_PORT_FF,
   }
 
 }

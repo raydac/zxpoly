@@ -128,16 +128,20 @@ public final class VideoController extends JComponent
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
 
+  private final int ulaVisibleRows;
+
   public VideoController(final TimingProfile timingProfile, final boolean syncRepaint, final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
     super();
 
+    this.ulaVisibleRows = timingProfile.topBorderVisibleScanlines + timingProfile.bottomBorderVisibleScanlines + TimingProfile.ZX_SCREEN_LINES;
+
     this.syncRepaint = syncRepaint;
     this.timingProfile = timingProfile;
-    this.borderLineColors = new byte[this.timingProfile.ulaTotalRows];
-    this.outBorderLineColors = new byte[this.timingProfile.ulaTotalRows];
+    this.borderLineColors = new byte[this.timingProfile.frameScanlines];
+    this.outBorderLineColors = new byte[this.timingProfile.frameScanlines];
 
     this.baseSize = new Dimension(SCREEN_WIDTH + (PREFERRED_BORDER_WIDTH << 1),
-            SCREEN_HEIGHT + timingProfile.ulaBorderLinesTop + timingProfile.ulaBorderLinesBottom);
+            SCREEN_HEIGHT + timingProfile.topBorderVisibleScanlines + timingProfile.bottomBorderVisibleScanlines);
 
     this.setFocusTraversalKeysEnabled(false);
 
@@ -1179,20 +1183,20 @@ public final class VideoController extends JComponent
   private void updateZoom(final float value) {
     this.zoom = value;
     this.size = new Dimension(Math.round(SCREEN_WIDTH * value),
-            Math.round((this.timingProfile.ulaBorderLinesTop + this.timingProfile.ulaBorderLinesBottom + SCREEN_HEIGHT) * value));
+            Math.round((this.timingProfile.topBorderVisibleScanlines + this.timingProfile.bottomBorderVisibleScanlines + SCREEN_HEIGHT) * value));
     this.repaint();
     this.getParent().revalidate();
     this.getParent().repaint();
   }
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
-    final float lineHeight = Math.max(1, (float) height / this.timingProfile.ulaVisibleRows) + 1.7f;
+    final float lineHeight = Math.max(1, (float) height / this.ulaVisibleRows) + 1.7f;
     float y = 0.0f;
     final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
 
     synchronized (this.outBorderLineColors) {
       boolean first = true;
-      for (int i = this.timingProfile.ulaFirstVisibleRow; i < this.timingProfile.ulaTotalRows; i++) {
+      for (int i = this.timingProfile.vsyncLines; i < this.timingProfile.frameScanlines; i++) {
         final int colorIndex = this.outBorderLineColors[i];
         g.setColor(this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[colorIndex]));
         rectangle.y = y;
@@ -1225,7 +1229,7 @@ public final class VideoController extends JComponent
 
     final int screenOffsetX = (visibleWidth - this.size.width) / 2;
 
-    final int screenOffsetY = Math.round(this.zoom * this.timingProfile.ulaBorderLinesTop);
+    final int screenOffsetY = Math.round(this.zoom * this.timingProfile.topBorderVisibleScanlines);
 
     if (screenOffsetX > 0 || screenOffsetY > 0) {
       drawBorder(g2, visibleWidth, visibleHeight);
@@ -1342,7 +1346,7 @@ public final class VideoController extends JComponent
         }
       }
     } else {
-      final int borderArgbColor = PALETTE_ZXPOLY[this.borderLineColors[this.timingProfile.ulaVisibleRows - 1]];
+      final int borderArgbColor = PALETTE_ZXPOLY[this.borderLineColors[this.ulaVisibleRows - 1]];
       final Rectangle area;
       final TvFilter[] tvFilters = filterChain.getFilterChain();
       BufferedImage postProcessedImage;
@@ -1597,9 +1601,9 @@ public final class VideoController extends JComponent
 
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
 
-    final int borderLineIndex = frameTiStates / this.timingProfile.ulaLineTime - 28; // 28 is heuristic value found by test aquaplane game
+    final int borderLineIndex = frameTiStates / this.timingProfile.ulaScanLineTacts; // 28 is heuristic value found by test aquaplane game
 
-    if (borderLineIndex >= 0 && borderLineIndex < this.timingProfile.ulaTotalRows) {
+    if (borderLineIndex >= this.timingProfile.vsyncLines && borderLineIndex < TimingProfile.ZX_SCREEN_LINES) {
       this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
     }
   }
@@ -1653,7 +1657,7 @@ public final class VideoController extends JComponent
   public void zoomForSize(final Rectangle rectangle) {
     final float width = (float) rectangle.width - (rectangle.width * SCALE_STEP);
     final float height = (float) rectangle.height;
-    final int totalRows = SCREEN_HEIGHT + this.timingProfile.ulaBorderLinesBottom + this.timingProfile.ulaBorderLinesTop;
+    final int totalRows = SCREEN_HEIGHT + this.timingProfile.bottomBorderVisibleScanlines + this.timingProfile.topBorderVisibleScanlines;
     final float maxZoomW = (int) ((width / SCREEN_WIDTH) / SCALE_STEP) * SCALE_STEP;
     final float maxZoomH = (int) ((height / totalRows) / SCALE_STEP) * SCALE_STEP;
 

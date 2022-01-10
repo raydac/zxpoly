@@ -307,8 +307,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     this.intTiStatesCounter =
             doInt && this.intTiStatesCounter == 0 ?
-                    this.timingProfile.ulaIntLength + this.timingProfile.ulaIntBegin : this.intTiStatesCounter;
-    this.nmiTiStatesCounter = doNmi && this.nmiTiStatesCounter == 0 ? this.timingProfile.ulaIntLength : this.nmiTiStatesCounter;
+                    this.timingProfile.ulaInterruptTiStates : this.intTiStatesCounter;
+    this.nmiTiStatesCounter = doNmi && this.nmiTiStatesCounter == 0 ? this.timingProfile.ulaInterruptTiStates : this.nmiTiStatesCounter;
 
     sigReset = signalReset || (this.localResetCounter > 0) ? 0 : Z80.SIGNAL_IN_nRESET;
     if (this.localResetCounter > 0) {
@@ -319,7 +319,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     final int oldCpuState = this.cpu.getState();
     this.cpu.step(this.moduleIndex,
-            sigReset | (this.intTiStatesCounter != 0 && this.intTiStatesCounter <= this.timingProfile.ulaIntLength ? 0 : Z80.SIGNAL_IN_nINT)
+            sigReset | (this.intTiStatesCounter != 0 && this.intTiStatesCounter <= this.timingProfile.ulaInterruptTiStates ? 0 : Z80.SIGNAL_IN_nINT)
                     | sigWait | (this.nmiTiStatesCounter != 0 ? 0 : Z80.SIGNAL_IN_nNMI));
     final int spentTiStates = this.cpu.getStepTstates();
 
@@ -541,7 +541,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         throw new Error("Unexpected mode");
     }
 
-    this.cpu.addTstates(this.board.contendRam(this.port7FFD.get(), address));
+    this.cpu.addTstates(this.board.getContendedDelay(this.port7FFD.get(), address));
 
     return result;
   }
@@ -779,7 +779,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       default:
         throw new Error("Unexpected mode");
     }
-    this.cpu.addTstates(this.board.contendRam(this.port7FFD.get(), address));
+    this.cpu.addTstates(this.board.getContendedDelay(this.port7FFD.get(), address));
   }
 
   @Override
@@ -843,8 +843,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   @Override
   public byte readPort(final Z80 cpu, final int ctx, final int port) {
     final int value7ffd = this.port7FFD.get();
-    cpu.addTstates(this.board.contendPortEarly(port, value7ffd));
-    cpu.addTstates(this.board.contendPortLate(port, value7ffd));
+    cpu.addTstates(this.board.getContendedDelay(port, value7ffd));
 
     byte result = 0;
     boolean readFromBus = true;
@@ -926,8 +925,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   @Override
   public void writePort(final Z80 cpu, final int ctx, final int port, final byte data) {
     final int value7ffd = this.port7FFD.get();
-    cpu.addTstates(this.board.contendPortEarly(port, value7ffd));
-    cpu.addTstates(this.board.contendPortLate(port, value7ffd));
+    cpu.addTstates(this.board.getContendedDelay(port, value7ffd));
 
     final int val = data & 0xFF;
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {

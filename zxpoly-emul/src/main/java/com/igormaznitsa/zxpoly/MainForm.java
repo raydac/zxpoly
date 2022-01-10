@@ -88,7 +88,7 @@ import static javax.swing.JOptionPane.showMessageDialog;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static org.apache.commons.lang3.StringUtils.repeat;
 
-public final class MainForm extends javax.swing.JFrame implements ActionListener, TapeContext {
+public final class MainForm extends JFrame implements ActionListener, TapeContext {
 
   public static final Logger LOGGER = Logger.getLogger("UI");
   public static final Duration TIMER_INT_DELAY_MILLISECONDS = Duration.ofMillis(20);
@@ -381,6 +381,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
             AppOptions.getInstance().isCovoxFb(),
             AppOptions.getInstance().isTurboSound(),
             allowKempstonMouse,
+            AppOptions.getInstance().isAttributePortFf(),
             vkbdContainer
     );
     this.board.reset();
@@ -900,7 +901,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         try {
           int frameTiStates = this.board.getFrameTiStates();
           final boolean inTurboMode = this.turboMode;
-          final boolean tiStatesForIntExhausted = frameTiStates >= this.timingProfile.ulaFrameTact;
+          final boolean tiStatesForIntExhausted = frameTiStates >= this.timingProfile.ulaFrameTiStates;
           final boolean intTickForWallClockReached = this.wallClock.completed();
 
           final boolean doCpuIntTick;
@@ -919,7 +920,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
             }
             this.wallClock.next();
             if (!tiStatesForIntExhausted) {
-              this.onSlownessDetected(this.timingProfile.ulaFrameTact - frameTiStates);
+              this.onSlownessDetected(this.timingProfile.ulaFrameTiStates - frameTiStates);
             }
             viFlags = 0;
           } else {
@@ -936,11 +937,11 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
           frameTiStates = this.board.getFrameTiStates();
 
-          if (frameTiStates >= this.timingProfile.tstatesInBottomBorderStart) {
+          if (frameTiStates >= (this.timingProfile.ulaTiStatesFirstByteOnScreen + TimingProfile.ZX_SCREEN_LINES * this.timingProfile.ulaScanLineTacts)) {
             viFlags |= VFLAG_BLINK_SCREEN;
           }
 
-          if (frameTiStates >= this.timingProfile.ulaFrameTact) {
+          if (frameTiStates >= this.timingProfile.ulaFrameTiStates) {
             viFlags |= VFLAG_BLINK_BORDER;
           }
 
@@ -993,13 +994,13 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
         if (this.wallClock.completed()) {
           this.wallClock.next();
           this.videoStreamer.onWallclockInt();
-          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.ulaFrameTact, true, frameTiStates);
+          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.ulaFrameTiStates, true, frameTiStates);
           this.board.startNewFrame();
         } else {
-          if (frameTiStates < this.timingProfile.ulaFrameTact) {
+          if (frameTiStates < this.timingProfile.ulaFrameTiStates) {
             this.board.doNop();
           }
-          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.ulaFrameTact, true, frameTiStates);
+          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.ulaFrameTiStates, true, frameTiStates);
         }
       }
       if (this.activeTracerWindowCounter.get() > 0) {
@@ -1011,7 +1012,7 @@ public final class MainForm extends javax.swing.JFrame implements ActionListener
 
   private void onSlownessDetected(final long remainTstates) {
     LOGGER.warning(String.format("Slowness detected: %.02f%%",
-            (float) remainTstates / (float) this.timingProfile.ulaFrameTact * 100.0f));
+            (float) remainTstates / (float) this.timingProfile.ulaFrameTiStates * 100.0f));
   }
 
   private void updateTracerWindowsForStep() {
