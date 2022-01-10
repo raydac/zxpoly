@@ -137,8 +137,8 @@ public final class VideoController extends JComponent
 
     this.syncRepaint = syncRepaint;
     this.timingProfile = timingProfile;
-    this.borderLineColors = new byte[this.timingProfile.frameScanlines];
-    this.outBorderLineColors = new byte[this.timingProfile.frameScanlines];
+    this.borderLineColors = new byte[this.ulaVisibleRows];
+    this.outBorderLineColors = new byte[this.ulaVisibleRows];
 
     this.baseSize = new Dimension(SCREEN_WIDTH + (PREFERRED_BORDER_WIDTH << 1),
             SCREEN_HEIGHT + timingProfile.topBorderVisibleScanlines + timingProfile.bottomBorderVisibleScanlines);
@@ -1196,7 +1196,7 @@ public final class VideoController extends JComponent
 
     synchronized (this.outBorderLineColors) {
       boolean first = true;
-      for (int i = this.timingProfile.vsyncLines; i < this.timingProfile.frameScanlines; i++) {
+      for (int i = 0; i < this.ulaVisibleRows; i++) {
         final int colorIndex = this.outBorderLineColors[i];
         g.setColor(this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[colorIndex]));
         rectangle.y = y;
@@ -1601,10 +1601,10 @@ public final class VideoController extends JComponent
 
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
 
-    final int borderLineIndex = frameTiStates / this.timingProfile.ulaScanLineTacts; // 28 is heuristic value found by test aquaplane game
+    final int screenRow = (frameTiStates / this.timingProfile.ulaScanLineTacts) - this.timingProfile.vsyncLines; // 28 is heuristic value found by test aquaplane game
 
-    if (borderLineIndex >= this.timingProfile.vsyncLines && borderLineIndex < TimingProfile.ZX_SCREEN_LINES) {
-      this.borderLineColors[borderLineIndex] = (byte) (this.portFEw & 0x7);
+    if (screenRow >= 0 && screenRow < this.borderLineColors.length) {
+      this.borderLineColors[screenRow] = (byte) (this.portFEw & 7);
     }
   }
 

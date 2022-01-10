@@ -171,9 +171,9 @@ public final class Motherboard implements ZxPolyConstants {
    * \------/ \--------------/ \------/
    * type    attribute addr   contend
    *
-   * @param timing
-   * @param contentions
-   * @return
+   * @param timing      timing profile
+   * @param contentions contended ram delays
+   * @return generated int array in format
    */
   private static int[] generateTimings(
           final TimingProfile timing,
