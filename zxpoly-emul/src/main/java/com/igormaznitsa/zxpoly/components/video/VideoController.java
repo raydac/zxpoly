@@ -1190,9 +1190,10 @@ public final class VideoController extends JComponent
   }
 
   private void drawBorder(final Graphics2D g, final int width, final int height) {
-    final float lineHeight = Math.max(1, (float) height / this.ulaVisibleRows) + 1.7f;
+    final float yDelta = (float) height / this.ulaVisibleRows;
+    final float rowHeight = Math.max(1, yDelta) + 1.7f;
     float y = 0.0f;
-    final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, lineHeight);
+    final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, rowHeight);
 
     synchronized (this.outBorderLineColors) {
       boolean first = true;
@@ -1206,7 +1207,7 @@ public final class VideoController extends JComponent
         } else {
           g.fill(rectangle);
         }
-        y += lineHeight;
+        y += yDelta;
       }
     }
   }
