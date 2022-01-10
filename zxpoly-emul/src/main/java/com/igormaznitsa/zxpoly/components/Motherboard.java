@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
+import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.*;
 import static java.lang.Math.min;
 
 @SuppressWarnings({"unused", "NonAtomicOperationOnVolatileField"})
@@ -43,7 +44,7 @@ public final class Motherboard implements ZxPolyConstants {
   private static final Logger LOGGER = Logger.getLogger("MB");
 
   private static final int SPEC256_GFX_CORES = 8;
-  private static final int TIMINGSTATE_MASK_TYPE = 0xFF_0000_00;
+
   private final ZxPolyModule[] modules;
   private final Z80[] spec256GfxCores;
   private final IoDevice[] ioDevices;
@@ -54,7 +55,6 @@ public final class Motherboard implements ZxPolyConstants {
   private final KeyboardKempstonAndTapeIn keyboard;
   private final BetaDiscInterface betaDisk;
   private final float[] cpuLoad = new float[4];
-  private final Random rnd = new Random();
   private final Beeper beeper;
   private final boolean contendedRam;
   private final TimingProfile timingProfile;
@@ -75,16 +75,12 @@ public final class Motherboard implements ZxPolyConstants {
   private volatile boolean gfxLeveledOr = false;
   private volatile boolean gfxLeveledAnd = false;
   private int frameTiStatesCounter = 0;
-  private static final int TIMINGSTATE_MASK_ATTR = 0x00_FFFF_00;
-  private static final int TIMINGSTATE_MASK_TIME = 0x00_0000_FF;
 
   private static boolean isContended(final int address, final int port7FFD) {
     final int pageStart = address & 0xC000;
     return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
   }
 
-  private static final int TIMINGSTATE_BORDER = 0x00_0000_00;
-  private static final int TIMINGSTATE_PAPER = 0x01_0000_00;
   private final int[] memoryTimings;
   private final boolean attributePortFf;
 
@@ -113,7 +109,7 @@ public final class Motherboard implements ZxPolyConstants {
       ioDevices.add(this.modules[i]);
     }
 
-    this.memoryTimings = generateTimings(timingProfile, 6, 5, 4, 3, 2, 1, 0, 0);
+    this.memoryTimings = timingProfile.makeTimeFrameDelays();
 
     this.contendedRam = contendedRam;
     this.boardMode = boardMode;
@@ -155,6 +151,7 @@ public final class Motherboard implements ZxPolyConstants {
 
     // simulation of garbage in memory after power on
     for (int i = 0; i < this.ram.length; i++) {
+      Random rnd = new Random();
       this._writeRam(i, rnd.nextInt());
     }
 
@@ -162,53 +159,6 @@ public final class Motherboard implements ZxPolyConstants {
     for (int i = 0; i < SPEC256_GFX_CORES; i++) {
       this.spec256GfxCores[i] = new Z80(this.modules[0].getCpu());
     }
-  }
-
-  /**
-   * Generates timing info for frame ticks
-   * <p>
-   * TTTTTTTT_AAAAAAAAAAAAAAAA_CCCCCCCC
-   * \------/ \--------------/ \------/
-   * type    attribute addr   contend
-   *
-   * @param timing      timing profile
-   * @param contentions contended ram delays
-   * @return generated int array in format
-   */
-  private static int[] generateTimings(
-          final TimingProfile timing,
-          final int... contentions) {
-
-    final int[] lineAttrOffset = new int[256];
-    int i = 0;
-    for (int p = 0; p < 4; p++) {
-      for (int y = 0; y < 8; y++) {
-        for (int o = 0; o < 8; o++, i++) {
-          lineAttrOffset[i] = 0x1800 + (p * 8 + y) * 32;
-        }
-      }
-    }
-
-    final int[] result = new int[timing.ulaFrameTiStates];
-
-    for (int t = 0; t < timing.ulaFrameTiStates; t++) {
-      if (t < timing.ulaTiStatesFirstByteOnScreen) {
-        result[t] = TIMINGSTATE_BORDER;
-      } else {
-        final int displayOffset = t - timing.ulaTiStatesFirstByteOnScreen;
-        final int line = displayOffset / timing.ulaScanLineTacts;
-        final int pixel = displayOffset % timing.ulaScanLineTacts;
-        if (line < TimingProfile.ZX_SCREEN_LINES && pixel < timing.ulaTiStatesVideo) {
-          final int delay = contentions[pixel % contentions.length];
-          final int attribute = lineAttrOffset[line] + pixel / 4;
-          result[t] = TIMINGSTATE_PAPER | (attribute << 8) | delay;
-        } else {
-          result[t] = TIMINGSTATE_BORDER;
-        }
-      }
-    }
-
-    return result;
   }
 
   private static boolean isUlaPort(final int port) {
