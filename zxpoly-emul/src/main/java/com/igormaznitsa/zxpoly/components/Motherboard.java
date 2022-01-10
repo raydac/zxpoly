@@ -85,7 +85,7 @@ public final class Motherboard implements ZxPolyConstants {
 
   private static final int TIMINGSTATE_BORDER = 0x00_0000_00;
   private static final int TIMINGSTATE_PAPER = 0x01_0000_00;
-  private final int[] etimings;
+  private final int[] memoryTimings;
   private final boolean attributePortFf;
 
   public Motherboard(
@@ -113,7 +113,7 @@ public final class Motherboard implements ZxPolyConstants {
       ioDevices.add(this.modules[i]);
     }
 
-    this.etimings = generateTimings(timingProfile, 6, 5, 4, 3, 2, 1, 0, 0);
+    this.memoryTimings = generateTimings(timingProfile, 6, 5, 4, 3, 2, 1, 0, 0);
 
     this.contendedRam = contendedRam;
     this.boardMode = boardMode;
@@ -756,7 +756,7 @@ public final class Motherboard implements ZxPolyConstants {
         if (this.attributePortFf && (port & 1) != 0) {
           // all IO devices in Z state, some simulation of "port FF"
           if (this.frameTiStatesCounter < this.timingProfile.ulaFrameTiStates) {
-            final int ramState = this.etimings[this.frameTiStatesCounter];
+            final int ramState = this.memoryTimings[this.frameTiStatesCounter];
             if ((ramState & TIMINGSTATE_MASK_TYPE) == TIMINGSTATE_PAPER) {
               final int attrOffset = (ramState & TIMINGSTATE_MASK_ATTR) >> 8;
               result = this.modules[0].readVideo(attrOffset);
@@ -771,7 +771,7 @@ public final class Motherboard implements ZxPolyConstants {
   int getContendedDelay(final int port7FFD, final int address) {
     int result = 0;
     if (this.contendedRam && isContended(address, port7FFD)) {
-      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTiStates ? this.etimings[this.frameTiStatesCounter] & 0xFF : 0;
+      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTiStates ? this.memoryTimings[this.frameTiStatesCounter] & 0xFF : 0;
     }
     return result;
   }
