@@ -271,6 +271,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
           final BoardMode boardMode,
           final boolean signalReset,
           final boolean commonInt,
+          final boolean commonNmi,
           final boolean resetStatistic
   ) {
     final boolean doInt;
@@ -296,19 +297,20 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       }
       this.localInt = false;
 
-      doNmi = (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_DISABLE_NMI) == 0 && this.localNmi;
+      doNmi = commonNmi || ((this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_DISABLE_NMI) == 0 && this.localNmi);
       this.localNmi = false;
     } else {
       this.localInt = false;
       this.localNmi = false;
       doInt = commonInt;
-      doNmi = false;
+      doNmi = commonNmi;
     }
 
     this.intTiStatesCounter =
             doInt && this.intTiStatesCounter == 0 ?
                     this.timingProfile.ulaInterruptTiStates : this.intTiStatesCounter;
-    this.nmiTiStatesCounter = doNmi && this.nmiTiStatesCounter == 0 ? this.timingProfile.ulaInterruptTiStates : this.nmiTiStatesCounter;
+    this.nmiTiStatesCounter = doNmi && this.nmiTiStatesCounter == 0 ?
+            this.timingProfile.ulaInterruptTiStates : this.nmiTiStatesCounter;
 
     sigReset = signalReset || (this.localResetCounter > 0) ? 0 : Z80.SIGNAL_IN_nRESET;
     if (this.localResetCounter > 0) {
@@ -320,7 +322,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     final int oldCpuState = this.cpu.getState();
     this.cpu.step(this.moduleIndex,
             sigReset | (this.intTiStatesCounter != 0 && this.intTiStatesCounter <= this.timingProfile.ulaInterruptTiStates ? 0 : Z80.SIGNAL_IN_nINT)
-                    | sigWait | (this.nmiTiStatesCounter != 0 ? 0 : Z80.SIGNAL_IN_nNMI));
+                    | sigWait | (this.nmiTiStatesCounter != 0 && this.nmiTiStatesCounter <= this.timingProfile.ulaInterruptTiStates ? 0 : Z80.SIGNAL_IN_nNMI));
     final int spentTiStates = this.cpu.getStepTstates();
 
     if (this.nmiTiStatesCounter > 0) {

@@ -340,6 +340,7 @@ public final class Motherboard implements ZxPolyConstants {
 
   public int step(final boolean tstatesIntReached,
                   final boolean wallclockInt,
+                  final boolean commonNmi,
                   final boolean startNewFrame,
                   final boolean executionEnabled) {
     this.localResetForAllModules = false;
@@ -349,6 +350,10 @@ public final class Motherboard implements ZxPolyConstants {
     final boolean resetStatisticsAtModules;
 
     int result = TRIGGER_NONE;
+
+    if (commonNmi) {
+      LOGGER.info("Incoming common NNI signal");
+    }
 
     if (startNewFrame) {
       this.startNewFrame();
@@ -406,40 +411,40 @@ public final class Motherboard implements ZxPolyConstants {
 
           switch ((int) System.nanoTime() & 0x3) {
             case 0: {
-              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
               if (localResetForAllModules) {
                 return result;
               }
-              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
-              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
-              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
             }
             break;
             case 1: {
-              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
-              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
-              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
-              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
             }
             break;
             case 2: {
-              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
-              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
-              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
-              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
             }
             break;
             case 3: {
-              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
-              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
-              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
-              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
@@ -467,7 +472,7 @@ public final class Motherboard implements ZxPolyConstants {
         }
         break;
         case ZX128: {
-          modules[0].step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+          modules[0].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
         }
         break;
         case SPEC256: {
@@ -480,7 +485,7 @@ public final class Motherboard implements ZxPolyConstants {
             gfxCore.alignRegisterValuesWith(mainCpu, syncRegRecord);
             masterModule.gfxGpuStep(i + 1, gfxCore);
           }
-          masterModule.step(currentMode, signalReset, startNewFrame, resetStatisticsAtModules);
+          masterModule.step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
         }
         break;
         default:
@@ -721,7 +726,7 @@ public final class Motherboard implements ZxPolyConstants {
   int getContendedDelay(final int port7FFD, final int address) {
     int result = 0;
     if (this.contendedRam && isContended(address, port7FFD)) {
-      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTiStates ? this.memoryTimings[this.frameTiStatesCounter] & 0xFF : 0;
+      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTiStates ? this.memoryTimings[this.frameTiStatesCounter] & TIMINGSTATE_MASK_TIME : 0;
     }
     return result;
   }

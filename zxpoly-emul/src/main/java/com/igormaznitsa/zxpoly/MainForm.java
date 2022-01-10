@@ -71,6 +71,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -241,6 +242,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private JMenuItem menuFileLoadTap;
   private JMenuItem menuFileOptions;
   private JMenuItem menuFileReset;
+  private final AtomicBoolean magicButtonTrigger = new AtomicBoolean();
   private JMenuItem menuFileSelectDiskA;
   private JMenuItem menuFileSelectDiskB;
   private JMenuItem menuFileSelectDiskC;
@@ -575,133 +577,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     );
   }
 
-  private void formFastButtons(final JMenuBar menuBar, final List<FastButton> fastButtons) {
-    Arrays.stream(menuBar.getComponents())
-            .filter(c -> FastButton.findForComponentName(c.getName()) != null)
-            .collect(Collectors.toList()).forEach(menuBar::remove);
-
-    final JPopupMenu popupMenu = new JPopupMenu("Fast buttons");
-
-    for (final FastButton fb : FastButton.values()) {
-      final boolean selected = fastButtons.contains(fb) || !fb.isOptional();
-      final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(fb.getTitle(), selected);
-      menuItem.setEnabled(fb.isOptional());
-
-      if (fb.isOptional()) {
-        menuItem.addActionListener(e -> {
-          final List<FastButton> newList = new ArrayList<>(fastButtons);
-          newList.remove(fb);
-          if (((JCheckBoxMenuItem) e.getSource()).isSelected()) {
-            newList.add(fb);
-          }
-          AppOptions.getInstance().setFastButtons(newList);
-          loadFastButtons();
-        });
-      }
-      popupMenu.add(menuItem);
-    }
-
-    menuBar.setComponentPopupMenu(popupMenu);
-
-    fastButtons.forEach(b -> {
-      final AbstractButton abstractButton;
-      if (b.getButtonClass().isAssignableFrom(JButton.class)) {
-        abstractButton = new JButton();
-        abstractButton.setRolloverEnabled(false);
-      } else if (b.getButtonClass().isAssignableFrom(JToggleButton.class)) {
-        abstractButton = new JToggleButton();
-        abstractButton.setRolloverEnabled(false);
-      } else {
-        throw new Error("Unexpected button class: " + b.getButtonClass());
-      }
-      abstractButton.setName(b.getComponentName());
-      abstractButton.setIcon(b.getIcon());
-      abstractButton.setSelectedIcon(b.getIconSelected());
-      abstractButton.setToolTipText(b.getToolTip());
-      abstractButton.setFocusable(false);
-
-      switch (b) {
-        case SOUND_ON_OFF: {
-          abstractButton.setSelected(!this.board.getBeeper().isNullBeeper());
-          abstractButton.addActionListener(e -> {
-            if (((JToggleButton) e.getSource()).isSelected()) {
-              if (this.isTurboMode()) {
-                ((JToggleButton) e.getSource()).setSelected(false);
-              } else {
-                if (!this.tryFastSpeakerActivation()) {
-                  this.setSoundActivate(true);
-                }
-              }
-            } else {
-              this.setSoundActivate(false);
-            }
-          });
-        }
-        break;
-        case RESET: {
-          abstractButton.addActionListener(e -> this.makeReset());
-        }
-        break;
-        case TAPE_PLAY_STOP: {
-          abstractButton.setSelected(this.keyboardAndTapeModule.getTap().isPlaying());
-          abstractButton.addActionListener(e -> {
-            final JToggleButton source = (JToggleButton) e.getSource();
-            if (source.isSelected()) {
-              if (!this.setTapePlay(true)) {
-                source.setSelected(false);
-              }
-            } else {
-              this.setTapePlay(false);
-            }
-          });
-        }
-        break;
-        case TURBO_MODE: {
-          abstractButton.setSelected(this.turboMode);
-          abstractButton.addActionListener(e -> {
-            final JToggleButton source = (JToggleButton) e.getSource();
-            this.setTurboMode(source.isSelected());
-          });
-        }
-        break;
-        case ZX_KEYBOARD_OFF: {
-          abstractButton.setSelected(this.keyboardAndTapeModule.isOnlyJoystickEvents());
-          abstractButton.addActionListener(e -> {
-            final JToggleButton source = (JToggleButton) e.getSource();
-            this.setDisableZxKeyboardEvents(source.isSelected());
-          });
-        }
-        break;
-        case START_PAUSE: {
-          abstractButton.setSelected(MainForm.this.stepLocker.isHeldByCurrentThread());
-          abstractButton.addActionListener(e -> {
-            final JToggleButton source = (JToggleButton) e.getSource();
-            if (source.isSelected()) {
-              MainForm.this.stepLocker.lock();
-            } else {
-              MainForm.this.stepLocker.unlock();
-            }
-          });
-        }
-        break;
-        case VIRTUAL_KEYBOARD: {
-          abstractButton.setSelected(this.board.getVideoController().isVkbShow());
-          abstractButton.addActionListener(e -> {
-            final JToggleButton source = (JToggleButton) e.getSource();
-            showVirtualKeyboard(source.isSelected());
-          });
-        }
-        break;
-        default: {
-          throw new Error("Unexpected fast button: " + b);
-        }
-      }
-      menuBar.add(abstractButton);
-    });
-
-    menuBar.revalidate();
-    menuBar.repaint();
-  }
+  private JMenuItem menuFileMagic;
 
   private void doOnShutdown() {
     this.videoStreamer.stop();
@@ -880,6 +756,138 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.menuTapThreshold.setEnabled(sensitivity);
   }
 
+  private void formFastButtons(final JMenuBar menuBar, final List<FastButton> fastButtons) {
+    Arrays.stream(menuBar.getComponents())
+            .filter(c -> FastButton.findForComponentName(c.getName()) != null)
+            .collect(Collectors.toList()).forEach(menuBar::remove);
+
+    final JPopupMenu popupMenu = new JPopupMenu("Fast buttons");
+
+    for (final FastButton fb : FastButton.values()) {
+      final boolean selected = fastButtons.contains(fb) || !fb.isOptional();
+      final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(fb.getTitle(), selected);
+      menuItem.setEnabled(fb.isOptional());
+
+      if (fb.isOptional()) {
+        menuItem.addActionListener(e -> {
+          final List<FastButton> newList = new ArrayList<>(fastButtons);
+          newList.remove(fb);
+          if (((JCheckBoxMenuItem) e.getSource()).isSelected()) {
+            newList.add(fb);
+          }
+          AppOptions.getInstance().setFastButtons(newList);
+          loadFastButtons();
+        });
+      }
+      popupMenu.add(menuItem);
+    }
+
+    menuBar.setComponentPopupMenu(popupMenu);
+
+    fastButtons.forEach(b -> {
+      final AbstractButton abstractButton;
+      if (b.getButtonClass().isAssignableFrom(JButton.class)) {
+        abstractButton = new JButton();
+        abstractButton.setRolloverEnabled(false);
+      } else if (b.getButtonClass().isAssignableFrom(JToggleButton.class)) {
+        abstractButton = new JToggleButton();
+        abstractButton.setRolloverEnabled(false);
+      } else {
+        throw new Error("Unexpected button class: " + b.getButtonClass());
+      }
+      abstractButton.setName(b.getComponentName());
+      abstractButton.setIcon(b.getIcon());
+      abstractButton.setSelectedIcon(b.getIconSelected());
+      abstractButton.setToolTipText(b.getToolTip());
+      abstractButton.setFocusable(false);
+
+      switch (b) {
+        case SOUND_ON_OFF: {
+          abstractButton.setSelected(!this.board.getBeeper().isNullBeeper());
+          abstractButton.addActionListener(e -> {
+            if (((JToggleButton) e.getSource()).isSelected()) {
+              if (this.isTurboMode()) {
+                ((JToggleButton) e.getSource()).setSelected(false);
+              } else {
+                if (!this.tryFastSpeakerActivation()) {
+                  this.setSoundActivate(true);
+                }
+              }
+            } else {
+              this.setSoundActivate(false);
+            }
+          });
+        }
+        break;
+        case RESET: {
+          abstractButton.addActionListener(e -> this.makeReset());
+        }
+        break;
+        case MAGIC: {
+          abstractButton.addActionListener(e -> this.makeMagic());
+        }
+        break;
+        case TAPE_PLAY_STOP: {
+          abstractButton.setSelected(this.keyboardAndTapeModule.getTap().isPlaying());
+          abstractButton.addActionListener(e -> {
+            final JToggleButton source = (JToggleButton) e.getSource();
+            if (source.isSelected()) {
+              if (!this.setTapePlay(true)) {
+                source.setSelected(false);
+              }
+            } else {
+              this.setTapePlay(false);
+            }
+          });
+        }
+        break;
+        case TURBO_MODE: {
+          abstractButton.setSelected(this.turboMode);
+          abstractButton.addActionListener(e -> {
+            final JToggleButton source = (JToggleButton) e.getSource();
+            this.setTurboMode(source.isSelected());
+          });
+        }
+        break;
+        case ZX_KEYBOARD_OFF: {
+          abstractButton.setSelected(this.keyboardAndTapeModule.isOnlyJoystickEvents());
+          abstractButton.addActionListener(e -> {
+            final JToggleButton source = (JToggleButton) e.getSource();
+            this.setDisableZxKeyboardEvents(source.isSelected());
+          });
+        }
+        break;
+        case START_PAUSE: {
+          abstractButton.setSelected(MainForm.this.stepLocker.isHeldByCurrentThread());
+          abstractButton.addActionListener(e -> {
+            final JToggleButton source = (JToggleButton) e.getSource();
+            if (source.isSelected()) {
+              MainForm.this.stepLocker.lock();
+            } else {
+              MainForm.this.stepLocker.unlock();
+            }
+          });
+        }
+        break;
+        case VIRTUAL_KEYBOARD: {
+          abstractButton.setSelected(this.board.getVideoController().isVkbShow());
+          abstractButton.addActionListener(e -> {
+            final JToggleButton source = (JToggleButton) e.getSource();
+            showVirtualKeyboard(source.isSelected());
+          });
+        }
+        break;
+        default: {
+          throw new Error("Unexpected fast button: " + b);
+        }
+      }
+      menuBar.add(abstractButton);
+    });
+
+    menuBar.revalidate();
+    menuBar.repaint();
+  }
+
   private void mainLoop() {
     this.wallClock.next();
     int countdownToNotifyRepaint = this.intTicksBeforeFrameDraw;
@@ -932,6 +940,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           final int detectedTriggers = this.board.step(
                   tiStatesForIntExhausted,
                   intTickForWallClockReached,
+                  this.magicButtonTrigger.compareAndSet(true, false),
                   doCpuIntTick,
                   executionEnabled);
 
@@ -1292,8 +1301,17 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.board.resetAndRestoreRom(BASE_ROM);
   }
 
+  private void makeMagic() {
+    LOGGER.info("Pressed magic button");
+    this.magicButtonTrigger.set(true);
+  }
+
   private void menuFileResetActionPerformed(final ActionEvent evt) {
     this.makeReset();
+  }
+
+  private void menuFileMagicActionPerformed(final ActionEvent evt) {
+    this.makeMagic();
   }
 
   private void menuOptionsShowIndicatorsActionPerformed(final ActionEvent evt) {
@@ -1689,6 +1707,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuTapGotoBlock = new JMenuItem();
     menuService = new JMenu();
     menuFileReset = new JMenuItem();
+    menuFileMagic = new JMenuItem();
     menuServiceSaveScreen = new JMenuItem();
     menuServiceGameControllers = new JMenuItem();
     menuServiceSaveScreenAllVRAM = new JMenuItem();
@@ -2048,6 +2067,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuFileReset.setText("Reset");
     menuFileReset.addActionListener(this::menuFileResetActionPerformed);
     menuService.add(menuFileReset);
+
+    menuFileMagic.setAccelerator(getKeyStroke(KeyEvent.VK_F2, 0));
+    menuFileMagic.setIcon(new ImageIcon(
+            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/magic.png")))); // NOI18N
+    menuFileMagic.setText("Magic");
+    menuFileMagic.addActionListener(this::menuFileMagicActionPerformed);
+    menuService.add(menuFileMagic);
 
     menuServiceSaveScreen.setAccelerator(getKeyStroke(KeyEvent.VK_F8, 0));
     menuServiceSaveScreen.setIcon(new ImageIcon(

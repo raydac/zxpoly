@@ -988,9 +988,9 @@ public final class Z80 {
     return this.lastInstructionByte;
   }
 
-  private boolean isHiLoFront(final int signal, final int signals) {
-    return (((this.prevInSignals & signal) ^ (signals & signal)) & (signal & this.prevInSignals)) !=
-            0;
+  private static boolean isLoHiFront(final int oldValue, final int newValue, final int mask) {
+    final int xored = oldValue ^ newValue;
+    return (xored & mask) == mask && (newValue & mask) == mask;
   }
 
   /**
