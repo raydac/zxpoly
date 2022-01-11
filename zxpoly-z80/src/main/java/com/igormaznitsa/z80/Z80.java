@@ -129,8 +129,7 @@ public final class Z80 {
   private int outSignals = 0xFFFFFFFF;
   private int prevInSignals = 0xFFFFFFFF;
   private boolean stepAllowsInterruption;
-  private boolean detectedNMI;
-  private boolean detectedINT;
+  private boolean nmiTrigger;
   private int resetCycle = 0;
 
   private int internalRegQ;
@@ -176,8 +175,7 @@ public final class Z80 {
     this.outSignals = cpu.outSignals;
     this.prevInSignals = cpu.prevInSignals;
     this.stepAllowsInterruption = cpu.stepAllowsInterruption;
-    this.detectedINT = cpu.detectedINT;
-    this.detectedNMI = cpu.detectedNMI;
+    this.nmiTrigger = cpu.nmiTrigger;
     this.bus = cpu.bus;
   }
 
@@ -254,8 +252,7 @@ public final class Z80 {
     this.outSignals = sourceCpu.outSignals;
     this.prevInSignals = sourceCpu.prevInSignals;
     this.stepAllowsInterruption = sourceCpu.stepAllowsInterruption;
-    this.detectedINT = sourceCpu.detectedINT;
-    this.detectedNMI = sourceCpu.detectedNMI;
+    this.nmiTrigger = sourceCpu.nmiTrigger;
     return this;
   }
 
@@ -459,17 +456,15 @@ public final class Z80 {
     this.iff1 = false;
     this.iff2 = false;
 
-    this.detectedINT = false;
-
     this.bus.onInterrupt(this, ctx, false);
 
     switch (this.im) {
       case 0: {
-        _step(ctx, this.bus.onCPURequestDataLines(this, ctx) & 0xFF);
+        _step(ctx, this.bus.onCPURequestDataLines(this, ctx) & 0xFF, true);
       }
       break;
       case 1: {
-        _step(ctx, 0xFF);
+        _step(ctx, 0xFF, true);
       }
       break;
       case 2: {
@@ -502,8 +497,7 @@ public final class Z80 {
 
     _resetHalt();
     this.iff1 = false;
-    this.detectedNMI = false;
-    this.detectedINT = false;
+    this.nmiTrigger = false;
     _call(ctx, 0x66);
     this.tiStates += 5;
   }
@@ -662,8 +656,7 @@ public final class Z80 {
     this.lastM1InstructionByte = src.lastM1InstructionByte;
     this.prevInSignals = src.prevInSignals;
     this.stepAllowsInterruption = src.stepAllowsInterruption;
-    this.detectedINT = src.detectedINT;
-    this.detectedNMI = src.detectedNMI;
+    this.nmiTrigger = src.nmiTrigger;
 
     if (packedRegisterFlags == 0) {
       this.regPC = src.regPC;
@@ -1026,6 +1019,8 @@ public final class Z80 {
    * otherwise
    */
   public boolean step(final int ctx, final int incomingSignals) {
+    this.nmiTrigger = this.nmiTrigger || (incomingSignals & SIGNAL_IN_nNMI) == 0;
+
     this.tiStates = 0;
     try {
       final boolean result;
@@ -1043,15 +1038,16 @@ public final class Z80 {
         // Process command
         this.internalRegLastQ = this.internalRegQ;
         this.internalRegQ = 0;
-        if (_step(ctx, readInstrOrPrefix(ctx, true))) {
+        if (_step(ctx, readInstrOrPrefix(ctx, true), (incomingSignals & SIGNAL_IN_nINT) == 0)) {
           // Command completed
           this.prefix = 0;
           result = false;
 
           if (this.stepAllowsInterruption) {
             // Check interruptions
-            if ((incomingSignals & SIGNAL_IN_nNMI) == 0) {
+            if (this.nmiTrigger) {
               // NMI
+              this.nmiTrigger = false;
               _nmi(ctx);
             } else if (this.iff1 && (incomingSignals & SIGNAL_IN_nINT) == 0) {
               // INT
@@ -1069,7 +1065,7 @@ public final class Z80 {
     }
   }
 
-  private boolean _step(final int ctx, final int commandByte) {
+  private boolean _step(final int ctx, final int commandByte, final boolean signalIntActive) {
     this.lastInstructionByte = commandByte;
 
     boolean commandCompleted = true;
@@ -1452,10 +1448,10 @@ public final class Z80 {
                       doLD_R_A();
                       break;
                     case 2:
-                      doLD_A_I();
+                      doLD_A_I(signalIntActive);
                       break;
                     case 3:
-                      doLD_A_R();
+                      doLD_A_R(signalIntActive);
                       break;
                     case 4:
                       doRRD(ctx);
@@ -2063,14 +2059,12 @@ public final class Z80 {
     this.iff1 = false;
     this.iff2 = false;
     this.stepAllowsInterruption = false;
-    this.detectedINT = false;
   }
 
   private void doEI() {
     this.iff1 = true;
     this.iff2 = true;
     this.stepAllowsInterruption = false;
-    this.detectedINT = false;
   }
 
   private void doCALL(final int ctx, final int y) {
@@ -2369,15 +2363,13 @@ public final class Z80 {
   }
 
   private void doRETI(final int ctx) {
-    this.detectedINT = false;
     doRET(ctx);
     this.bus.onRETI(this, ctx);
   }
 
   private void doRETN(final int ctx) {
     this.iff1 = this.iff2;
-    this.detectedINT = false;
-    this.detectedNMI = false;
+    this.nmiTrigger = false;
     doRET(ctx);
   }
 
@@ -2411,12 +2403,12 @@ public final class Z80 {
     this.tiStates++;
   }
 
-  private void doLD_A_I() {
+  private void doLD_A_I(final boolean signalIntActive) {
     final int value = getRegister(REG_I);
     setRegister(REG_A, value);
 
     final int f = (FTABLE_SZYX[value]
-            | (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0)
+            | (this.iff2 && !(signalIntActive || this.nmiTrigger) ? FLAG_PV : 0)
             | (this.regSet[REG_F] & FLAG_C));
     this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
@@ -2424,12 +2416,12 @@ public final class Z80 {
     this.tiStates++;
   }
 
-  private void doLD_A_R() {
+  private void doLD_A_R(final boolean signalIntActive) {
     final int value = getRegister(REG_R);
     setRegister(REG_A, value);
 
     final int f = (FTABLE_SZYX[value]
-            | (this.iff2 && !(this.detectedINT || this.detectedNMI) ? FLAG_PV : 0)
+            | (this.iff2 && !(signalIntActive || this.nmiTrigger) ? FLAG_PV : 0)
             | (this.regSet[REG_F] & FLAG_C));
     this.internalRegQ = f;
     this.regSet[REG_F] = (byte) f;
