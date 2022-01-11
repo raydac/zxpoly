@@ -59,6 +59,7 @@ public class OptionsPanel extends JPanel {
   private JLabel labelCustomRomPath;
   private JLabel labelMacroCursorKeys;
   private JLabel labelContendedRam;
+  private JLabel labelEmulateFFport;
   private JCheckBox checkGrabSound;
   private JCheckBox checkInterlacedScan;
   private JCheckBox checkSoundSchemeACB;
@@ -66,6 +67,7 @@ public class OptionsPanel extends JPanel {
   private JCheckBox checkVkbdApart;
   private JCheckBox checkContendedRam;
   private JCheckBox checkAutoiCsForCursorKeys;
+  private JCheckBox checkEmulateFFport;
   private JComboBox<String> comboNetAdddr;
   private JComboBox<String> comboRomSource;
   private JComboBox<VirtualKeyboardLook> comboKeyboardLook;
@@ -138,6 +140,7 @@ public class OptionsPanel extends JPanel {
 
   private void fillByDataContainer(final DataContainer data) {
     this.checkContendedRam.setSelected(data.contendedRam);
+    this.checkEmulateFFport.setSelected(data.emulateFFport);
     this.checkInterlacedScan.setSelected(data.interlacedScan);
     this.checkSyncPaint.setSelected(data.syncPaint);
     this.checkOldTvFilter.setSelected(data.oldTvFilter);
@@ -220,6 +223,8 @@ public class OptionsPanel extends JPanel {
     comboVolumeProfile = new JComboBox<>(VolumeProfile.values());
     textCustomRomPath = new JFilePathTextField();
     textCustomRomPath.setToolTipText("Provided file path overrides selected ROM, if empty then inactive");
+    labelEmulateFFport = new JLabel();
+    checkEmulateFFport = new JCheckBox();
 
     keySelectorKempstonDown = new KeyCodeChooser();
     keySelectorKempstonLeft = new KeyCodeChooser();
@@ -557,6 +562,26 @@ public class OptionsPanel extends JPanel {
     gridBagConstraints.fill = GridBagConstraints.BOTH;
     add(panelGenmeral, gridBagConstraints);
 
+    labelEmulateFFport.setHorizontalAlignment(RIGHT);
+    labelEmulateFFport.setText("Port FF emulation:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 16;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelEmulateFFport, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 16;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(checkEmulateFFport, gridBagConstraints);
+
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 1;
+    gridBagConstraints.fill = GridBagConstraints.BOTH;
+    add(panelGenmeral, gridBagConstraints);
+
     final JPanel panelKempston = new JPanel(new GridBagLayout());
     panelKempston.setBorder(createTitledBorder("Kempston joystick"));
 
@@ -706,6 +731,7 @@ public class OptionsPanel extends JPanel {
     public final boolean syncPaint;
     public final boolean oldTvFilter;
     public final boolean contendedRam;
+    public final boolean emulateFFport;
 
     public final int kempstonKeyUp;
     public final int kempstonKeyDown;
@@ -724,6 +750,7 @@ public class OptionsPanel extends JPanel {
     public DataContainer() {
       final String customRomPath = AppOptions.getInstance().getCustomRomPath();
       this.syncPaint = AppOptions.getInstance().isSyncPaint();
+      this.emulateFFport = AppOptions.getInstance().isAttributePortFf();
       this.contendedRam = AppOptions.getInstance().isContendedRam();
       this.customRomPath = customRomPath == null ? "" : customRomPath;
       this.interlacedScan = AppOptions.getInstance().isInterlacedScan();
@@ -770,6 +797,7 @@ public class OptionsPanel extends JPanel {
 
       this.syncPaint = optionsPanel.checkSyncPaint.isSelected();
 
+      this.emulateFFport = optionsPanel.checkEmulateFFport.isSelected();
       this.contendedRam = optionsPanel.checkContendedRam.isSelected();
       this.autoCsForCursorKeys = optionsPanel.checkAutoiCsForCursorKeys.isSelected();
       this.vkdApart = optionsPanel.checkVkbdApart.isSelected();
@@ -818,6 +846,7 @@ public class OptionsPanel extends JPanel {
       AppOptions.getInstance().setAddress(this.inetAddress);
       AppOptions.getInstance().setFrameRate(this.frameRate);
       AppOptions.getInstance().setTurboSound(this.turboSound);
+      AppOptions.getInstance().setAttributePortFf(this.emulateFFport);
       AppOptions.getInstance().setKempstonMouseAllowed(this.kempstonMouseAllowed);
       AppOptions.getInstance()
               .setDefaultBoardMode(this.zx128byDefault ? BoardMode.ZX128 : BoardMode.ZXPOLY);
