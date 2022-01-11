@@ -6,7 +6,7 @@ import javax.swing.*;
 
 public enum FastButton {
   RESET(true, "Reset", "Reset device", "fb_reset.png", null, JButton.class),
-  MAGIC(true, "Magic", "Make NMI signal for CPU", "fb_magic.png", null, JButton.class),
+  MAGIC(true, "Magic button", "Force NMI signal", "fb_magic.png", null, JButton.class),
   SOUND_ON_OFF(true, "Sound On/Off", "Activate/mute sound engine", "fb_sound_off.png", "fb_sound_on.png", JToggleButton.class),
   TAPE_PLAY_STOP(true, "Tape PLAY/STOP", "Tape Play/Stop", "fb_tape.png", null, JToggleButton.class),
   TURBO_MODE(true, "Turbo mode", "Stop delay emulation for CPU", "fb_turbomode.png", null, JToggleButton.class),

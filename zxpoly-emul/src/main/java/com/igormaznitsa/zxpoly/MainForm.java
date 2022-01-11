@@ -937,10 +937,17 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
           final boolean executionEnabled = inTurboMode || !tiStatesForIntExhausted || doCpuIntTick;
 
+          final boolean triggeredNmi;
+          if (executionEnabled) {
+            triggeredNmi = this.magicButtonTrigger.compareAndSet(true, false);
+          } else {
+            triggeredNmi = false;
+          }
+
           final int detectedTriggers = this.board.step(
                   tiStatesForIntExhausted,
                   intTickForWallClockReached,
-                  this.magicButtonTrigger.compareAndSet(true, false),
+                  triggeredNmi,
                   doCpuIntTick,
                   executionEnabled);
 
@@ -2071,7 +2078,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuFileMagic.setAccelerator(getKeyStroke(KeyEvent.VK_F2, 0));
     menuFileMagic.setIcon(new ImageIcon(
             Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/magic.png")))); // NOI18N
-    menuFileMagic.setText("Magic");
+    menuFileMagic.setText("Magic button");
     menuFileMagic.addActionListener(this::menuFileMagicActionPerformed);
     menuService.add(menuFileMagic);
 
