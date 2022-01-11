@@ -320,9 +320,11 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     sigWait = this.waitSignal ? 0 : Z80.SIGNAL_IN_nWAIT;
 
     final int oldCpuState = this.cpu.getState();
-    this.cpu.step(this.moduleIndex,
+    final int cpuBusSignals =
             sigReset | (this.intTiStatesCounter != 0 && this.intTiStatesCounter <= this.timingProfile.ulaInterruptTiStates ? 0 : Z80.SIGNAL_IN_nINT)
-                    | sigWait | (this.nmiTiStatesCounter != 0 && this.nmiTiStatesCounter <= this.timingProfile.ulaInterruptTiStates ? 0 : Z80.SIGNAL_IN_nNMI));
+                    | sigWait | (this.nmiTiStatesCounter != 0 && this.nmiTiStatesCounter <= this.timingProfile.ulaInterruptTiStates ? 0 : Z80.SIGNAL_IN_nNMI);
+
+    this.cpu.step(this.moduleIndex, cpuBusSignals);
     final int spentTiStates = this.cpu.getStepTstates();
 
     if (this.nmiTiStatesCounter > 0) {
