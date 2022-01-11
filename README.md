@@ -9,6 +9,7 @@
 
 __2.2.3 (SNAPSHOT)__
 
+- added emulation of MAGIC button [#56](https://github.com/raydac/zxpoly/issues/56)
 - improved bootstrap ROM selection in Preferences
 - added support of ROM image loading as snapshots
 - Fix for ZXPlus keyboard skin
