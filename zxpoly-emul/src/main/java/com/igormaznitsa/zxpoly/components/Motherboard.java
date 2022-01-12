@@ -338,6 +338,8 @@ public final class Motherboard implements ZxPolyConstants {
     }
   }
 
+  private boolean frameIntTriggered;
+
   public int step(final boolean tstatesIntReached,
                   final boolean wallclockInt,
                   final boolean commonNmi,
@@ -359,7 +361,15 @@ public final class Motherboard implements ZxPolyConstants {
       this.startNewFrame();
     }
 
-    final int prevFrameInt = this.frameTiStatesCounter;
+    final int prevFrameTiStatesCounter = this.frameTiStatesCounter;
+
+    final boolean intTriggered;
+    if (this.frameIntTriggered) {
+      intTriggered = false;
+    } else {
+      intTriggered = prevFrameTiStatesCounter >= this.timingProfile.ulaTiStatesIntOffset;
+      this.frameIntTriggered = intTriggered;
+    }
 
     if (wallclockInt) {
       this.statisticCounter--;
@@ -411,40 +421,40 @@ public final class Motherboard implements ZxPolyConstants {
 
           switch ((int) System.nanoTime() & 0x3) {
             case 0: {
-              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx0halt = modules[0].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
               if (localResetForAllModules) {
                 return result;
               }
-              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
-              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
-              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx3halt = modules[3].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
+              zx2halt = modules[2].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
+              zx1halt = modules[1].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
             }
             break;
             case 1: {
-              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
-              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
-              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx1halt = modules[1].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
+              zx2halt = modules[2].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
+              zx0halt = modules[0].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
-              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx3halt = modules[3].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
             }
             break;
             case 2: {
-              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
-              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx3halt = modules[3].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
+              zx0halt = modules[0].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
-              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
-              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx1halt = modules[1].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
+              zx2halt = modules[2].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
             }
             break;
             case 3: {
-              zx2halt = modules[2].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
-              zx3halt = modules[3].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
-              zx1halt = modules[1].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
-              zx0halt = modules[0].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+              zx2halt = modules[2].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
+              zx3halt = modules[3].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
+              zx1halt = modules[1].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
+              zx0halt = modules[0].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
               if (this.localResetForAllModules) {
                 return result;
               }
@@ -472,7 +482,7 @@ public final class Motherboard implements ZxPolyConstants {
         }
         break;
         case ZX128: {
-          modules[0].step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+          modules[0].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
         }
         break;
         case SPEC256: {
@@ -485,7 +495,7 @@ public final class Motherboard implements ZxPolyConstants {
             gfxCore.alignRegisterValuesWith(mainCpu, syncRegRecord);
             masterModule.gfxGpuStep(i + 1, gfxCore);
           }
-          masterModule.step(currentMode, signalReset, startNewFrame, commonNmi, resetStatisticsAtModules);
+          masterModule.step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
         }
         break;
         default:
@@ -493,7 +503,7 @@ public final class Motherboard implements ZxPolyConstants {
       }
 
       this.frameTiStatesCounter += this.modules[0].getCpu().getStepTstates();
-      final int spentTstates = this.frameTiStatesCounter - prevFrameInt;
+      final int spentTstates = this.frameTiStatesCounter - prevFrameTiStatesCounter;
 
       final int feValue = this.video.getPortFE();
       final int levelTapeOut = this.audioLevels[((feValue >> 3) & 1) == 0 ? 0 : 14];
@@ -751,6 +761,7 @@ public final class Motherboard implements ZxPolyConstants {
 
   public void startNewFrame() {
     this.frameTiStatesCounter = 0;
+    this.frameIntTriggered = false;
   }
 
   public void doNop() {

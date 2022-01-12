@@ -2,6 +2,8 @@ package com.igormaznitsa.zxpoly.components.video.timings;
 
 public enum TimingProfile {
   SPEC48(
+          0,
+          32,
           16,
           3_500_000,
           128,
@@ -15,6 +17,8 @@ public enum TimingProfile {
           new int[]{6, 5, 4, 3, 2, 1, 0, 0}
   ),
   SPEC128(
+          0,
+          32,
           16,
           3_546_900,
           128,
@@ -48,12 +52,16 @@ public enum TimingProfile {
   public final int frameScanlines;
   public final int ulaScanLineTacts;
   public final int ulaFrameTiStates;
-  public final int ulaInterruptTiStates;
+  public final int ulaTiStatesInt;
+  public final int ulaTiStatesNmi;
+  public final int ulaTiStatesIntOffset;
   public final int ulaTiStatesFirstByteOnScreen;
   private final int[] contention;
 
   TimingProfile(
-          final int ulaInterruptTiStates,
+          final int ulaTiStatesIntOffset,
+          final int ulaTiStatesInt,
+          final int ulaTiStatesNmi,
           final int cpuFreq,
           final int ulaTiStatesVideo,
           final int ulaTiStatesRightBorder,
@@ -65,8 +73,10 @@ public enum TimingProfile {
           final int bottomBorderVisibleScanlines,
           final int[] contention
   ) {
+    this.ulaTiStatesIntOffset = ulaTiStatesIntOffset;
     this.contention = contention;
-    this.ulaInterruptTiStates = ulaInterruptTiStates;
+    this.ulaTiStatesInt = ulaTiStatesInt;
+    this.ulaTiStatesNmi = ulaTiStatesNmi;
     this.cpuFreq = cpuFreq;
     this.vsyncLines = vsyncLines;
     this.topBorderVisibleScanlines = topBorderVisibleScanlines;

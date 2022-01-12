@@ -986,6 +986,11 @@ public final class Z80 {
     return (xored & mask) == mask && (newValue & mask) == mask;
   }
 
+  private static boolean isHiLoFront(final int oldValue, final int newValue, final int mask) {
+    final int xored = oldValue ^ newValue;
+    return (xored & mask) == mask && (oldValue & mask) == mask;
+  }
+
   /**
    * Process whole instruction or send signals but only step of a block
    * instruction will be processed.
@@ -1019,7 +1024,7 @@ public final class Z80 {
    * otherwise
    */
   public boolean step(final int ctx, final int incomingSignals) {
-    this.nmiTrigger = this.nmiTrigger || (incomingSignals & SIGNAL_IN_nNMI) == 0;
+    this.nmiTrigger = this.nmiTrigger || isHiLoFront(this.prevInSignals, incomingSignals, SIGNAL_IN_nNMI);
 
     this.tiStates = 0;
     try {
