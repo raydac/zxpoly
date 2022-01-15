@@ -7,7 +7,7 @@
 
 # Changelog
 
-__2.2.3 (SNAPSHOT)__
+__2.2.3 (15-jan-2022)__
 
 - added virtual keyboard skin [#57](https://github.com/raydac/zxpoly/issues/57)
 - added emulation of MAGIC button [#56](https://github.com/raydac/zxpoly/issues/56)
@@ -19,18 +19,6 @@ __2.2.3 (SNAPSHOT)__
 - added new ROM sources
 - Z80, refactoring of RETI instruction
 - improved emulation of ZX128
-
-__2.2.2 (19-dec-2021)__
-
-- added option 'Volume profile' to select audio volume profile
-- __added support for TZX tape snapshots [#10](https://github.com/raydac/zxpoly/issues/10)__
-- added keyboard skins provided by @Alessandro1970
-- provided way to change L&F and application UI scale
-- improved Spec256 state snapshot save (works only for loaded Spec256
-  snapshots) [#36](https://github.com/raydac/zxpoly/issues/36)
-- decreased CPU usage
-- embedded JDK updated to Liberica OpenJDK 17+35
-- minimal required JDK level is 11+
 
 full [change log](changelog.txt)
 
@@ -58,15 +46,15 @@ under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 
 # Pre-built versions
 
-![The Main Window of the Emulator](docs/screenshots/zxpoly222_kividemaa.png)
+![The Main Window of the Emulator](docs/screenshots/zxpoly223_chessrom.png)
 
 | OS                                           | Download link                                                                                                                          | 
 | -------------------------------------------- |----------------------------------------------------------------------------------------------------------------------------------------|
-| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.2/zxpoly-emul-2.2.2-windows-amd64-jdk.zip)__ |
-| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.2/zxpoly-emul-2.2.2-macos-amd64-jdk.zip)__       |
-| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.2/zxpoly-emul-2.2.2-macos-aarch64-jdk.zip)__   |
-| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.2/zxpoly-emul-2.2.2-linux-amd64-jdk.tar.gz)__  |
-| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.2.2/zxpoly-emul-2.2.2.jar)__                          | 
+| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.3/zxpoly-emul-2.2.3-windows-amd64-jdk.zip)__ |
+| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.3/zxpoly-emul-2.2.3-macos-amd64-jdk.zip)__       |
+| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.3/zxpoly-emul-2.2.3-macos-aarch64-jdk.zip)__   |
+| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.3/zxpoly-emul-2.2.3-linux-amd64-jdk.tar.gz)__  |
+| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.2.3/zxpoly-emul-2.2.3.jar)__                          | 
 
 Because the emulator is written in Java, its JAR file can be started just through command
 line `java -jar zxpoly-emul-2.2.2.jar`   
@@ -76,7 +64,8 @@ ROM__, the ROM will be downloaded from one of remote network resources.
 
 # Supported snapshot formats
 
-- Snapshots: .Z80, .SNA, .ZXP (ZX-Poly snapshot format), ZIP (Spec256 with SNA inside)
+- Snapshots: .Z80, .SNA, .ZXP (ZX-Poly snapshot format), ZIP (Spec256 with SNA inside), .ROM (ROM images), .PROM (ZXPoly
+  ROM images)
 - Tape: .TZX (allows export as WAV), .TAP (allows export as WAV), .WAV
 - Disks: .TRD, .SCL
 
