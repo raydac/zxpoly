@@ -7,6 +7,10 @@
 
 # Changelog
 
+__2.2.4 (SNAPSHOT)__
+
+- embedded JDK updated to Liberica OpenJDK 17.0.2+9
+
 __2.2.3 (15-jan-2022)__
 
 - added virtual keyboard skin [#57](https://github.com/raydac/zxpoly/issues/57)
