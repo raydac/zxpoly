@@ -207,6 +207,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private final AtomicReference<SpriteCorrectorMainFrame> spriteCorrectorMainFrame = new AtomicReference<>();
   private final ImageIcon sysIcon;
   private final TimingProfile timingProfile;
+  private final int screenBlinkFrameTact;
   private volatile long lastFullScreenEventTime = 0L;
   private volatile boolean turboMode = false;
   private volatile boolean zxKeyboardProcessingAllowed = true;
@@ -294,6 +295,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
+
+    this.screenBlinkFrameTact = AppOptions.getInstance().getScreenBlinkFrameTact();
 
     this.sysIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/sys.png")));
 
@@ -953,7 +956,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
           frameTiStates = this.board.getFrameTiStates();
 
-          if (frameTiStates >= (this.timingProfile.ulaTiStatesFirstByteOnScreen + TimingProfile.ZX_SCREEN_LINES * this.timingProfile.ulaScanLineTacts)) {
+          if (frameTiStates >= this.screenBlinkFrameTact) {
             viFlags |= VFLAG_BLINK_SCREEN;
           }
 

@@ -20,6 +20,7 @@ package com.igormaznitsa.zxpoly.ui;
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.RomSource;
 
@@ -78,10 +79,12 @@ public class OptionsPanel extends JPanel {
   private JLabel labelSound;
   private JLabel labelRomSource;
   private JLabel labelIntFrame;
+  private JLabel labelScreenBlinkFrameTact;
   private JLabel labelFrameRate;
   private JPanel panelStreaming;
   private JPanel panelGenmeral;
   private JSpinner spinnerFramesPerSec;
+  private JSpinner spinnerScreenBlinkFrameTact;
   private JSpinner spinnerIntFrame;
   private JSpinner spinnerPort;
   private JTextField textFfmpegPath;
@@ -139,6 +142,7 @@ public class OptionsPanel extends JPanel {
   }
 
   private void fillByDataContainer(final DataContainer data) {
+    this.spinnerScreenBlinkFrameTact.setValue(data.screenBlinkFrameTact);
     this.checkContendedRam.setSelected(data.contendedRam);
     this.checkEmulateFFport.setSelected(data.emulateFFport);
     this.checkInterlacedScan.setSelected(data.interlacedScan);
@@ -191,11 +195,13 @@ public class OptionsPanel extends JPanel {
     spinnerPort = new JSpinner();
     labelSound = new JLabel();
     labelVolumeProfile = new JLabel();
+    labelScreenBlinkFrameTact = new JLabel();
     checkGrabSound = new JCheckBox();
     labelSoundSchemeACB = new JLabel();
     checkSoundSchemeACB = new JCheckBox();
     labelFrameRate = new JLabel();
     spinnerFramesPerSec = new JSpinner();
+    spinnerScreenBlinkFrameTact = new JSpinner();
     panelGenmeral = new JPanel();
     labelRomSource = new JLabel();
     labelIntFrame = new JLabel();
@@ -374,17 +380,32 @@ public class OptionsPanel extends JPanel {
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(spinnerIntFrame, gridBagConstraints);
 
+    labelScreenBlinkFrameTact.setHorizontalAlignment(RIGHT);
+    labelScreenBlinkFrameTact.setText("Blink screen frame tact:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 3;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelScreenBlinkFrameTact, gridBagConstraints);
+
+    spinnerScreenBlinkFrameTact.setModel(new javax.swing.SpinnerNumberModel(1, 1, TimingProfile.SPEC128.ulaFrameTiStates - 1, 1));
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 3;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(spinnerScreenBlinkFrameTact, gridBagConstraints);
+
     labelSyncPaint.setHorizontalAlignment(RIGHT);
     labelSyncPaint.setText("Sync.paint (can be slow):");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 3;
+    gridBagConstraints.gridy = 4;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelSyncPaint, gridBagConstraints);
 
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 3;
+    gridBagConstraints.gridy = 4;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkSyncPaint, gridBagConstraints);
 
@@ -392,13 +413,13 @@ public class OptionsPanel extends JPanel {
     labelInterlacedScan.setText("Interlaced scan:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 4;
+    gridBagConstraints.gridy = 5;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelInterlacedScan, gridBagConstraints);
 
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 4;
+    gridBagConstraints.gridy = 5;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkInterlacedScan, gridBagConstraints);
 
@@ -406,13 +427,13 @@ public class OptionsPanel extends JPanel {
     labelOldTvFilter.setText("Default Old color TV:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 5;
+    gridBagConstraints.gridy = 6;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelOldTvFilter, gridBagConstraints);
 
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 5;
+    gridBagConstraints.gridy = 6;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkOldTvFilter, gridBagConstraints);
 
@@ -420,12 +441,12 @@ public class OptionsPanel extends JPanel {
     labelTurboSound.setText("TurboSound (NedoPC):");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 6;
+    gridBagConstraints.gridy = 7;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelTurboSound, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 6;
+    gridBagConstraints.gridy = 7;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkTurboSound, gridBagConstraints);
@@ -434,12 +455,12 @@ public class OptionsPanel extends JPanel {
     labelCovoxFb.setText("Covox (#FB):");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 7;
+    gridBagConstraints.gridy = 8;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelCovoxFb, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 7;
+    gridBagConstraints.gridy = 8;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkCovoxFb, gridBagConstraints);
@@ -448,12 +469,12 @@ public class OptionsPanel extends JPanel {
     labelSoundSchemeACB.setText("Sound channels ACB:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 8;
+    gridBagConstraints.gridy = 9;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelSoundSchemeACB, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 8;
+    gridBagConstraints.gridy = 9;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkSoundSchemeACB, gridBagConstraints);
@@ -462,12 +483,12 @@ public class OptionsPanel extends JPanel {
     labelVolumeProfile.setText("Volume profile:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 9;
+    gridBagConstraints.gridy = 10;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelVolumeProfile, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 9;
+    gridBagConstraints.gridy = 10;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(comboVolumeProfile, gridBagConstraints);
@@ -476,12 +497,12 @@ public class OptionsPanel extends JPanel {
     labelZx128ByDefault.setText("Default ZX Mode:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 10;
+    gridBagConstraints.gridy = 11;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelZx128ByDefault, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 10;
+    gridBagConstraints.gridy = 11;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkZx128ByDefault, gridBagConstraints);
@@ -490,12 +511,12 @@ public class OptionsPanel extends JPanel {
     labelKempstonMouseAllowed.setText("Kempston mouse allowed:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 11;
+    gridBagConstraints.gridy = 12;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelKempstonMouseAllowed, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 11;
+    gridBagConstraints.gridy = 12;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkKempstonMouseAllowed, gridBagConstraints);
@@ -504,12 +525,12 @@ public class OptionsPanel extends JPanel {
     labelVirtualKbdApart.setText("Virtual keyboard apart:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 12;
+    gridBagConstraints.gridy = 13;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelVirtualKbdApart, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 12;
+    gridBagConstraints.gridy = 13;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkVkbdApart, gridBagConstraints);
@@ -518,12 +539,12 @@ public class OptionsPanel extends JPanel {
     labelVirtualKbdLook.setText("Keyboard decoration:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 13;
+    gridBagConstraints.gridy = 14;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelVirtualKbdLook, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 13;
+    gridBagConstraints.gridy = 14;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(comboKeyboardLook, gridBagConstraints);
@@ -532,12 +553,12 @@ public class OptionsPanel extends JPanel {
     labelMacroCursorKeys.setText("Auto-CS for cursor keys:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 14;
+    gridBagConstraints.gridy = 15;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelMacroCursorKeys, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 14;
+    gridBagConstraints.gridy = 15;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkAutoiCsForCursorKeys, gridBagConstraints);
@@ -546,12 +567,12 @@ public class OptionsPanel extends JPanel {
     labelContendedRam.setText("Contended memory (pre-alpha):");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 15;
+    gridBagConstraints.gridy = 16;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelContendedRam, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 15;
+    gridBagConstraints.gridy = 16;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkContendedRam, gridBagConstraints);
@@ -566,12 +587,12 @@ public class OptionsPanel extends JPanel {
     labelEmulateFFport.setText("Port FF emulation:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 16;
+    gridBagConstraints.gridy = 17;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelEmulateFFport, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 16;
+    gridBagConstraints.gridy = 17;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkEmulateFFport, gridBagConstraints);
@@ -717,6 +738,7 @@ public class OptionsPanel extends JPanel {
     public final VirtualKeyboardLook keyboardLook;
     public final VolumeProfile volumeProfile;
     public final int port;
+    public final int screenBlinkFrameTact;
     public final boolean grabSound;
     public final String activeRom;
     public final int intPerFrame;
@@ -749,6 +771,7 @@ public class OptionsPanel extends JPanel {
 
     public DataContainer() {
       final String customRomPath = AppOptions.getInstance().getCustomRomPath();
+      this.screenBlinkFrameTact = AppOptions.getInstance().getScreenBlinkFrameTact();
       this.syncPaint = AppOptions.getInstance().isSyncPaint();
       this.emulateFFport = AppOptions.getInstance().isAttributePortFf();
       this.contendedRam = AppOptions.getInstance().isContendedRam();
@@ -792,6 +815,8 @@ public class OptionsPanel extends JPanel {
       this.volumeProfile = (VolumeProfile) optionsPanel.comboVolumeProfile.getSelectedItem();
       this.customRomPath = optionsPanel.textCustomRomPath.getText();
 
+      this.screenBlinkFrameTact = (int) optionsPanel.spinnerScreenBlinkFrameTact.getValue();
+
       this.interlacedScan = optionsPanel.checkInterlacedScan.isSelected();
       this.oldTvFilter = optionsPanel.checkOldTvFilter.isSelected();
 
@@ -828,6 +853,7 @@ public class OptionsPanel extends JPanel {
     }
 
     public void store() {
+      AppOptions.getInstance().setScreenBlinkFrameTact(this.screenBlinkFrameTact);
       AppOptions.getInstance().setSyncPaint(this.syncPaint);
       AppOptions.getInstance().setContendedRam(this.contendedRam);
       AppOptions.getInstance().setInterlacedScan(this.interlacedScan);

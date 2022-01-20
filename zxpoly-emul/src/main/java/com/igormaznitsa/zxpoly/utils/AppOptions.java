@@ -20,6 +20,7 @@ package com.igormaznitsa.zxpoly.utils;
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.ui.FastButton;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -56,6 +57,14 @@ public final class AppOptions {
 
   public synchronized void setActiveRom(final String romPath) {
     preferences.put(Option.ROMPATH.name(), romPath);
+  }
+
+  public synchronized int getScreenBlinkFrameTact() {
+    return Math.max(0, Math.min(TimingProfile.SPEC128.ulaFrameTiStates - 1, preferences.getInt(Option.SCREEN_BLINK_FRAME_TACT.name(), 43676)));
+  }
+
+  public synchronized void setScreenBlinkFrameTact(final int tact) {
+    preferences.putInt(Option.SCREEN_BLINK_FRAME_TACT.name(), Math.max(0, Math.min(tact, TimingProfile.SPEC128.ulaFrameTiStates - 1)));
   }
 
   public synchronized boolean isTestRomActive() {
@@ -439,6 +448,7 @@ public final class AppOptions {
   }
 
   public enum Option {
+    SCREEN_BLINK_FRAME_TACT,
     SYNC_PAINT,
     SHOW_INDICATOR_PANEL,
     FAST_BUTTONS,
