@@ -60,7 +60,9 @@ public final class AppOptions {
   }
 
   public synchronized int getScreenBlinkFrameTact() {
-    return Math.max(0, Math.min(TimingProfile.SPEC128.ulaFrameTiStates - 1, preferences.getInt(Option.SCREEN_BLINK_FRAME_TACT.name(), 43676)));
+    return Math.max(0, Math.min(TimingProfile.SPEC128.ulaFrameTiStates - 1,
+            preferences.getInt(Option.SCREEN_BLINK_FRAME_TACT.name(), TimingProfile.SPEC128.ulaTiStatesFirstByteOnScreen
+                    + TimingProfile.ZX_SCREEN_LINES * TimingProfile.SPEC128.ulaScanLineTacts)));
   }
 
   public synchronized void setScreenBlinkFrameTact(final int tact) {
