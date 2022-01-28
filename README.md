@@ -9,6 +9,8 @@
 
 __2.2.4 (SNAPSHOT)__
 
+- added configuration property to define screen blink tact
+- improved Z80 emulation, [improved undocumented flags if interruption during block operations](https://github.com/MrKWatkins/ZXSpectrumNextTests/tree/develop/Tests/ZX48_ZX128/Z80BlockInstructionFlags)
 - embedded JDK updated to Liberica OpenJDK 17.0.2+9
 
 __2.2.3 (15-jan-2022)__

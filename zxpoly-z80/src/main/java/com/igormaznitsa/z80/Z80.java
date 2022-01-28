@@ -1043,7 +1043,11 @@ public final class Z80 {
         // Process command
         this.internalRegLastQ = this.internalRegQ;
         this.internalRegQ = 0;
-        if (_step(ctx, readInstrOrPrefix(ctx, true), (incomingSignals & SIGNAL_IN_nINT) == 0)) {
+
+
+        final boolean incomingInterrupt = this.nmiTrigger || (this.iff1 && (incomingSignals & SIGNAL_IN_nINT) == 0);
+
+        if (_step(ctx, readInstrOrPrefix(ctx, true), incomingInterrupt)) {
           // Command completed
           this.prefix = 0;
           result = false;
@@ -1070,7 +1074,7 @@ public final class Z80 {
     }
   }
 
-  private boolean _step(final int ctx, final int commandByte, final boolean signalIntActive) {
+  private boolean _step(final int ctx, final int commandByte, final boolean incommingInterrupt) {
     this.lastInstructionByte = commandByte;
 
     boolean commandCompleted = true;
@@ -1453,10 +1457,10 @@ public final class Z80 {
                       doLD_R_A();
                       break;
                     case 2:
-                      doLD_A_I(signalIntActive);
+                      doLD_A_I(incommingInterrupt);
                       break;
                     case 3:
-                      doLD_A_R(signalIntActive);
+                      doLD_A_R(incommingInterrupt);
                       break;
                     case 4:
                       doRRD(ctx);
@@ -1479,7 +1483,7 @@ public final class Z80 {
               final int z = extractZ(commandByte);
               final int y = extractY(commandByte);
               if (z <= 3 && y >= 4) {
-                doBLI(ctx, y, z);
+                doBLI(ctx, y, z, incommingInterrupt);
               } else {
                 doNONI();
               }
@@ -2470,7 +2474,7 @@ public final class Z80 {
     this.tiStates += 4;
   }
 
-  private boolean doBLI(final int ctx, final int y, final int z) {
+  private boolean doBLI(final int ctx, final int y, final int z, final boolean incomingInterrupt) {
     boolean insideLoop = false;
     switch (y) {
       case 4: {
@@ -2514,16 +2518,16 @@ public final class Z80 {
       case 6: {
         switch (z) {
           case 0:
-            insideLoop = doLDIR(ctx);
+            insideLoop = doLDIR(ctx, incomingInterrupt);
             break;
           case 1:
-            insideLoop = doCPIR(ctx);
+            insideLoop = doCPIR(ctx, incomingInterrupt);
             break;
           case 2:
-            insideLoop = doINIR(ctx);
+            insideLoop = doINIR(ctx, incomingInterrupt);
             break;
           case 3:
-            insideLoop = doOTIR(ctx);
+            insideLoop = doOTIR(ctx, incomingInterrupt);
             break;
           default:
             throw new Error("Unexpected Z index [" + z + ']');
@@ -2533,16 +2537,16 @@ public final class Z80 {
       case 7: {
         switch (z) {
           case 0:
-            insideLoop = doLDDR(ctx);
+            insideLoop = doLDDR(ctx, incomingInterrupt);
             break;
           case 1:
-            insideLoop = doCPDR(ctx);
+            insideLoop = doCPDR(ctx, incomingInterrupt);
             break;
           case 2:
-            insideLoop = doINDR(ctx);
+            insideLoop = doINDR(ctx, incomingInterrupt);
             break;
           case 3:
-            insideLoop = doOTDR(ctx);
+            insideLoop = doOTDR(ctx, incomingInterrupt);
             break;
           default:
             throw new Error("Unexpected Z index [" + z + ']');
@@ -2560,7 +2564,7 @@ public final class Z80 {
     this.setMemPtr(regValue + 1);
   }
 
-  private boolean doLDIR(final int ctx) {
+  private boolean doLDIR(final int ctx, final boolean incomingInterrupt) {
     doLDI(ctx);
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_PV) != 0) {
@@ -2568,10 +2572,16 @@ public final class Z80 {
       this.setMemPtr(address + 1);
       this.regPC = address;
       this.tiStates += 5;
+
+      if (incomingInterrupt) updateFlagsForBlockInterruption();
     } else {
       loopNonCompleted = false;
     }
     return loopNonCompleted;
+  }
+
+  private void updateFlagsForBlockInterruption() {
+    this.regSet[REG_F] = (byte) ((this.regSet[REG_F] & ~FLAG_XY) | ((this.regPC >> 8) & FLAG_XY));
   }
 
   private void doLD_A_mDE(final int ctx) {
@@ -2581,7 +2591,7 @@ public final class Z80 {
     this.setMemPtr(regValue + 1);
   }
 
-  private boolean doCPIR(final int ctx) {
+  private boolean doCPIR(final int ctx, final boolean incomingInterrupt) {
     doCPI(ctx);
     boolean loopNonCompleted = true;
     final int flags = this.regSet[REG_F];
@@ -2593,27 +2603,29 @@ public final class Z80 {
       this.setMemPtr(address + 1);
       this.regPC = address;
       this.tiStates += 5;
+
+      if (incomingInterrupt) updateFlagsForBlockInterruption();
     } else {
       loopNonCompleted = false;
     }
     return loopNonCompleted;
   }
 
-  private void doINI_IND(final int ctx, final boolean ini) {
+  private int doINI_IND(final int ctx, final boolean ini) {
     final int delta = ini ? 1 : -1;
 
     int hl = _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL));
     final int bc = _portAddrFromReg(ctx, REGPAIR_BC, getRegisterPair(REGPAIR_BC));
-    final int initemp = _readport(ctx, bc);
-    _writemem8(ctx, hl, (byte) initemp);
+    final int data = _readport(ctx, bc);
+    _writemem8(ctx, hl, (byte) data);
     hl += delta;
     final int b = ((bc >>> 8) - 1) & 0xFF;
     this.regSet[REG_B] = (byte) b;
     setRegisterPair(REGPAIR_HL, hl);
 
-    final int initemp2 = (initemp + (bc & 0xFF) + delta) & 0xff;
-    final int f = ((initemp & 0x80) == 0 ? 0 : FLAG_N)
-            | (initemp2 < initemp ? FLAG_HC : 0)
+    final int initemp2 = (data + (bc & 0xFF) + delta) & 0xff;
+    final int f = ((data & 0x80) == 0 ? 0 : FLAG_N)
+            | (initemp2 < data ? FLAG_HC : 0)
             | (FTABLE_SZYXP[(initemp2 & 0x07) ^ b] & FLAG_PV)
             | FTABLE_SZYX[b];
     this.regSet[REG_F] = (byte) f;
@@ -2622,26 +2634,60 @@ public final class Z80 {
     this.setMemPtr(bc + delta);
 
     this.tiStates++;
+
+    return data;
   }
 
-  private boolean doINIR(final int ctx) {
-    doINI_IND(ctx, true);
+  private void updateFlags_INxR_OTxR_interruption(final int data) {
+    final int regB = this.regSet[REG_B] & 0xFF;
+    int flagP = this.regSet[REG_F] & FLAG_PV;
+    int flagH = this.regSet[REG_F] & FLAG_H;
+
+    final int regF = this.regSet[REG_F] & 0xFF;
+
+    if ((regF & FLAG_C) == 0) {
+      flagP = flagP ^ (FTABLE_SZYXP[regB & 0x07] & FLAG_PV) ^ FLAG_PV;
+    } else {
+      if ((data & 0x80) == 0) {
+        flagP = flagP ^ (FTABLE_SZYXP[(regB + 1) & 0x07] & FLAG_PV) ^ FLAG_PV;
+        flagH = (regB & 0x0F) == 0x0F ? FLAG_H : 0;
+      } else {
+        flagP = flagP ^ (FTABLE_SZYXP[(regB - 1) & 0x07] & FLAG_PV) ^ FLAG_PV;
+        flagH = (regB & 0x0F) == 0x00 ? FLAG_H : 0;
+      }
+    }
+
+    this.regSet[REG_F] = (byte) ((regF & ~(FLAG_PV | FLAG_H)) | flagP | flagH);
+  }
+
+  private boolean doINIR(final int ctx, final boolean incomingInterrupt) {
+    final int data = doINI_IND(ctx, true);
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tiStates += 5;
+
+      if (incomingInterrupt) {
+        updateFlagsForBlockInterruption();
+        updateFlags_INxR_OTxR_interruption(data);
+      }
     } else {
       loopNonCompleted = false;
     }
     return loopNonCompleted;
   }
 
-  private boolean doINDR(final int ctx) {
-    doINI_IND(ctx, false);
+  private boolean doINDR(final int ctx, final boolean incomingInterrupt) {
+    final int data = doINI_IND(ctx, false);
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tiStates += 5;
+
+      if (incomingInterrupt) {
+        updateFlagsForBlockInterruption();
+        updateFlags_INxR_OTxR_interruption(data);
+      }
     } else {
       loopNonCompleted = false;
     }
@@ -2673,12 +2719,17 @@ public final class Z80 {
     this.tiStates += 2;
   }
 
-  private boolean doOTIR(final int ctx) {
-    doOUTI_OUTD(ctx, true);
+  private boolean doOTIR(final int ctx, final boolean incomingInterrupt) {
+    final int data = doOUTI_OUTD(ctx, true);
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tiStates += 5;
+
+      if (incomingInterrupt) {
+        updateFlagsForBlockInterruption();
+        updateFlags_INxR_OTxR_interruption(data);
+      }
     } else {
       loopNonCompleted = false;
     }
@@ -2711,19 +2762,25 @@ public final class Z80 {
     this.tiStates += 5;
   }
 
-  private boolean doOTDR(final int ctx) {
-    doOUTI_OUTD(ctx, false);
+  private boolean doOTDR(final int ctx, final boolean incomingInterrupt) {
+    final int data = doOUTI_OUTD(ctx, false);
+
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tiStates += 5;
+
+      if (incomingInterrupt) {
+        updateFlagsForBlockInterruption();
+        updateFlags_INxR_OTxR_interruption(data);
+      }
     } else {
       loopNonCompleted = false;
     }
     return loopNonCompleted;
   }
 
-  private boolean doLDDR(final int ctx) {
+  private boolean doLDDR(final int ctx, final boolean incomingInterrupt) {
     doLDD(ctx);
     boolean loopNonCompleted = true;
     if (this.getRegisterPair(REGPAIR_BC) != 0) {
@@ -2731,28 +2788,30 @@ public final class Z80 {
       this.regPC = address;
       this.setMemPtr(address + 1);
       this.tiStates += 5;
+
+      if (incomingInterrupt) updateFlagsForBlockInterruption();
     } else {
       loopNonCompleted = false;
     }
     return loopNonCompleted;
   }
 
-  private void doOUTI_OUTD(final int ctx, final boolean inc) {
+  private int doOUTI_OUTD(final int ctx, final boolean inc) {
     final int delta = inc ? 1 : -1;
 
     final int bc = _portAddrFromReg(ctx, REGPAIR_BC, this.getRegisterPair(REGPAIR_BC));
     int hl = _readPtr(ctx, REGPAIR_HL, this.getRegisterPair(REGPAIR_HL));
-    final int outitemp = _readmem8(ctx, hl);
+    final int data = _readmem8(ctx, hl);
     final int b = ((bc >>> 8) - 1) & 0xFF;
-    _writeport(ctx, (b << 8) | (bc & 0xFF), outitemp);
+    _writeport(ctx, (b << 8) | (bc & 0xFF), data);
     this.regSet[REG_B] = (byte) b;
 
     hl += delta;
     setRegisterPair(REGPAIR_HL, hl);
 
-    final int outitemp2 = (outitemp + (hl & 0xFF)) & 0xFF;
-    final int f = ((outitemp & 0x80) == 0 ? 0 : FLAG_N)
-            | (outitemp2 < outitemp ? FLAG_HC : 0)
+    final int outitemp2 = (data + (hl & 0xFF)) & 0xFF;
+    final int f = ((data & 0x80) == 0 ? 0 : FLAG_N)
+            | (outitemp2 < data ? FLAG_HC : 0)
             | (FTABLE_SZYXP[(outitemp2 & 0x07) ^ b] & FLAG_PV)
             | FTABLE_SZYX[b];
     this.internalRegQ = f;
@@ -2761,9 +2820,11 @@ public final class Z80 {
     this.setMemPtr(((b << 8) | (bc & 0xFF)) + delta);
 
     this.tiStates++;
+
+    return data;
   }
 
-  private boolean doCPDR(final int ctx) {
+  private boolean doCPDR(final int ctx, final boolean incomingInterrupt) {
     doCPD(ctx);
     boolean loopNonCompleted = true;
     final int flags = this.regSet[REG_F];
@@ -2775,6 +2836,8 @@ public final class Z80 {
       this.regPC = address;
       this.setMemPtr(address + 1);
       this.tiStates += 5;
+
+      if (incomingInterrupt) updateFlagsForBlockInterruption();
     } else {
       loopNonCompleted = false;
     }
