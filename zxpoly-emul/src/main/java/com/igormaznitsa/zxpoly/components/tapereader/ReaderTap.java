@@ -20,8 +20,6 @@ package com.igormaznitsa.zxpoly.components.tapereader;
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
-import com.igormaznitsa.zxpoly.components.TapFormatParser;
-import com.igormaznitsa.zxpoly.components.TapFormatParser.TAPBLOCK;
 import com.igormaznitsa.zxpoly.utils.SpectrumUtils;
 
 import javax.swing.*;
@@ -73,21 +71,21 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
     this.tapeContext = tapeContext;
     this.name = name;
     final TapFormatParser tapParser = new TapFormatParser().read(new JBBPBitInputStream(tap));
-    if (tapParser.getTAPBLOCK().length == 0) {
+    if (tapParser.getTapBlocks().length == 0) {
       this.current = null;
       LOGGER.warning("Can't find blocks in TAP file");
     } else {
-      this.current = new TapBlock(tapParser.getTAPBLOCK()[0]);
+      this.current = new TapBlock(tapParser.getTapBlocks()[0]);
       this.current.index = 0;
       this.tapBlockList.add(current);
       this.current.prev = null;
       TapBlock item = this.current;
-      for (int i = 1; i < tapParser.getTAPBLOCK().length; i++) {
-        final TapBlock newitem = new TapBlock(tapParser.getTAPBLOCK()[i]);
-        newitem.index = i;
-        newitem.prev = item;
-        item.next = newitem;
-        item = newitem;
+      for (int i = 1; i < tapParser.getTapBlocks().length; i++) {
+        final TapBlock newItem = new TapBlock(tapParser.getTapBlocks()[i]);
+        newItem.index = i;
+        newItem.prev = item;
+        item.next = newItem;
+        item = newItem;
 
         this.tapBlockList.add(item);
       }
@@ -512,7 +510,7 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
 
   @Override
   public int size() {
-    return this.tapBlockList.stream().mapToInt(TapBlock::size).sum();
+    return this.tapBlockList.stream().mapToInt(ReaderTap.TapBlock::size).sum();
   }
 
   @Override
@@ -557,10 +555,10 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
     transient int index;
     transient String name;
 
-    public TapBlock(TAPBLOCK block) {
-      this.flag = block.getFLAG();
-      this.checksum = block.getCHECKSUM();
-      this.data = block.getDATA().clone();
+    public TapBlock(TapFormatParser.TapBlock block) {
+      this.flag = block.getFlag();
+      this.checksum = block.getChecksum();
+      this.data = block.getData().clone();
     }
 
     public boolean isFirst() {
