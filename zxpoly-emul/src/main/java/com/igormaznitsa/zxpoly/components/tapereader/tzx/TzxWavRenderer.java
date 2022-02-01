@@ -157,64 +157,71 @@ public class TzxWavRenderer {
         } else if (block instanceof TzxBlockStandardSpeedData) {
           final TzxBlockStandardSpeedData dataBlock = (TzxBlockStandardSpeedData) block;
 
-          final byte[] tapData = dataBlock.extractData();
-          final int flag = tapData[0] & 0xFF;
-
-          if (flag < 128) {
-            namedOffsets.add(new RenderResult.NamedOffsets(extractNameFromTapHeader(false, tapData), WAV_HEADER_LENGTH + dataStream.getCounter()));
+          if (dataBlock.getDataLength() == 0) {
+            this.logger.warning("Detected zero-length standard speed data block");
           } else {
-            namedOffsets.add(new RenderResult.NamedOffsets("...std.data...", WAV_HEADER_LENGTH + dataStream.getCounter()));
-          }
+            final byte[] tapData = dataBlock.extractData();
+            final int flag = tapData[0] & 0xFF;
 
-          nextLevel = this.writeTapData(
-                  namedOffsets,
-                  nextLevel,
-                  dataStream,
-                  flag < 128 ? IMPULSNUMBER_PILOT_HEADER : IMPULSNUMBER_PILOT_DATA,
-                  PULSELEN_PILOT,
-                  PULSELEN_SYNC1,
-                  PULSELEN_SYNC2,
-                  PULSELEN_ZERO,
-                  PULSELEN_ONE,
-                  8,
-                  Duration.ofMillis(dataBlock.getPauseAfterBlockMs()),
-                  tapData,
-                  DataType.STD_PILOT,
-                  DataType.STD_SYNC1,
-                  DataType.STD_SYNC2,
-                  DataType.STD_DATA);
+            if (flag < 128) {
+              namedOffsets.add(new RenderResult.NamedOffsets(extractNameFromTapHeader(false, tapData), WAV_HEADER_LENGTH + dataStream.getCounter()));
+            } else {
+              namedOffsets.add(new RenderResult.NamedOffsets("...std.data...", WAV_HEADER_LENGTH + dataStream.getCounter()));
+            }
+
+            nextLevel = this.writeTapData(
+                    namedOffsets,
+                    nextLevel,
+                    dataStream,
+                    flag < 128 ? IMPULSNUMBER_PILOT_HEADER : IMPULSNUMBER_PILOT_DATA,
+                    PULSELEN_PILOT,
+                    PULSELEN_SYNC1,
+                    PULSELEN_SYNC2,
+                    PULSELEN_ZERO,
+                    PULSELEN_ONE,
+                    8,
+                    Duration.ofMillis(dataBlock.getPauseAfterBlockMs()),
+                    tapData,
+                    DataType.STD_PILOT,
+                    DataType.STD_SYNC1,
+                    DataType.STD_SYNC2,
+                    DataType.STD_DATA);
+          }
 
           blockPointer++;
         } else if (block instanceof TzxBlockTurboSpeedData) {
           final TzxBlockTurboSpeedData dataBlock = (TzxBlockTurboSpeedData) block;
 
-          final byte[] tapData = dataBlock.extractData();
-          final int flag = tapData[0] & 0xFF;
-
-          if (flag < 128) {
-            namedOffsets.add(new RenderResult.NamedOffsets(extractNameFromTapHeader(true, tapData) + " {turbo}", WAV_HEADER_LENGTH + dataStream.getCounter()));
+          if (dataBlock.getDataLength() == 0) {
+            this.logger.warning("Detected zero-length turbo speed data block");
           } else {
-            namedOffsets.add(new RenderResult.NamedOffsets("...turbo.data...", WAV_HEADER_LENGTH + dataStream.getCounter()));
+            final byte[] tapData = dataBlock.extractData();
+            final int flag = tapData[0] & 0xFF;
+
+            if (flag < 128) {
+              namedOffsets.add(new RenderResult.NamedOffsets(extractNameFromTapHeader(true, tapData) + " {turbo}", WAV_HEADER_LENGTH + dataStream.getCounter()));
+            } else {
+              namedOffsets.add(new RenderResult.NamedOffsets("...turbo.data...", WAV_HEADER_LENGTH + dataStream.getCounter()));
+            }
+
+            nextLevel = this.writeTapData(
+                    namedOffsets,
+                    nextLevel,
+                    dataStream,
+                    dataBlock.getLengthPilotTone(),
+                    dataBlock.getLengthPilotPulse(),
+                    dataBlock.getLengthSyncFirstPulse(),
+                    dataBlock.getLengthSyncSecondPulse(),
+                    dataBlock.getLengthZeroBitPulse(),
+                    dataBlock.getLengthOneBitPulse(),
+                    dataBlock.getUsedBitsInLastByte(),
+                    Duration.ofMillis(dataBlock.getPauseAfterBlockMs()),
+                    tapData,
+                    DataType.TURBO_PILOT,
+                    DataType.TURBO_SYNC1,
+                    DataType.TURBO_SYNC2,
+                    DataType.TURBO_DATA);
           }
-
-          nextLevel = this.writeTapData(
-                  namedOffsets,
-                  nextLevel,
-                  dataStream,
-                  dataBlock.getLengthPilotTone(),
-                  dataBlock.getLengthPilotPulse(),
-                  dataBlock.getLengthSyncFirstPulse(),
-                  dataBlock.getLengthSyncSecondPulse(),
-                  dataBlock.getLengthZeroBitPulse(),
-                  dataBlock.getLengthOneBitPulse(),
-                  dataBlock.getUsedBitsInLastByte(),
-                  Duration.ofMillis(dataBlock.getPauseAfterBlockMs()),
-                  tapData,
-                  DataType.TURBO_PILOT,
-                  DataType.TURBO_SYNC1,
-                  DataType.TURBO_SYNC2,
-                  DataType.TURBO_DATA);
-
           blockPointer++;
         } else if (block instanceof TzxBlockCSWRecording) {
           //TODO
