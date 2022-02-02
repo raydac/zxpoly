@@ -42,7 +42,7 @@ public class TapFormatParser {
     final List<TapBlock> blocks = new ArrayList<>();
     while (stream.hasAvailableData()) {
       final TapBlock next = new TapBlock(stream);
-      if (next.getData() != null) {
+      if (next.data != null) {
         blocks.add(next);
       }
     }
