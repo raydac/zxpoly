@@ -41,9 +41,8 @@ public class TrDosDisk {
 
   private int headIndex = 0;
 
-  public TrDosDisk() {
-    this(null, SourceDataType.TRD,
-            new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE], false);
+  public TrDosDisk(final String diskName) {
+    this(null, SourceDataType.TRD, makeEmptyTrDosDisk(diskName), false);
   }
 
   public TrDosDisk(final File srcFile, final SourceDataType type, final byte[] srcData,
@@ -172,6 +171,58 @@ public class TrDosDisk {
                       extractPhysicalSectorIndex(i),
                       i, diskData);
     }
+  }
+
+  private static byte[] makeEmptyTrDosDisk(final String diskName) {
+    final byte[] data = new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE];
+
+    int offset = SECTOR_SIZE * 8 + 225;
+
+    data[offset++] = 0; // FR_S_NEXT (0x8E1)
+    data[offset++] = 1; // FR_T_NEXT (0x8E2)
+    data[offset++] = 0x16; // TYPE DISC (0x8E3)
+    data[offset++] = 0; // N_FILES (0x8E4)
+
+    data[offset++] = (byte) 0xF0; // N_FRE_SEC (0x8E5)
+    data[offset++] = (byte) 0x09; // (0x8E6)
+
+    data[offset++] = 0x10; // MAIN_BYTE // (0x8E7)
+
+    data[offset++] = 0; // ZERO (0x8E8)
+    data[offset++] = 0; // ZERO (0x8E9)
+
+    data[offset++] = 0x20; // BLANK9 (0x8EA)
+    data[offset++] = 0x20; // (0x8EB)
+    data[offset++] = 0x20; // (0x8EC)
+    data[offset++] = 0x20; // (0x8ED)
+    data[offset++] = 0x20; // (0x8EE)
+    data[offset++] = 0x20; // (0x8EF)
+    data[offset++] = 0x20; // (0x8F0)
+    data[offset++] = 0x20; // (0x8F1)
+    data[offset++] = 0x20; // (0x8F2)
+
+    data[offset++] = 0x0; // ZERO (0x8F3)
+
+    data[offset++] = 0x0; // N_DEL_FIL (0x8F4)
+
+    for (int i = 0; i < 9; i++) { // DISC TITL (0x8F5)
+      if (i < diskName.length()) {
+        final char chr = diskName.charAt(i);
+        if (chr < 127 && (Character.isAlphabetic(chr) || Character.isDigit(chr))) {
+          data[offset++] = (byte) chr;
+        } else {
+          data[offset++] = '_';
+        }
+      } else {
+        data[offset++] = 0x20;
+      }
+    }
+
+    data[offset++] = 0x0; // ZERO
+    data[offset++] = 0x0; // ZERO
+    data[offset] = 0x0; // ZERO
+
+    return data;
   }
 
   public static int extractPhysicalTrackIndex(final int dataOffset) {

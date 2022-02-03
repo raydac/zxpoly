@@ -1377,7 +1377,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             if (showConfirmDialog(this, "Create TRD file: " + selectedFile.getName() + "?",
                     "Create TRD file", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
               LOGGER.log(Level.INFO, "Creating TRD disk: " + selectedFile.getAbsolutePath());
-              FileUtils.writeByteArrayToFile(selectedFile, new TrDosDisk().getDiskData());
+              FileUtils.writeByteArrayToFile(selectedFile, new TrDosDisk(FilenameUtils.getBaseName(selectedFile.getName())).getDiskData());
             } else {
               return;
             }
