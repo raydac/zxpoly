@@ -525,10 +525,6 @@ public final class K1818VG93 {
       setInternalFlag(STATUS_NOT_READY);
     } else {
       if (start) {
-        // turn sector
-        if (this.sector != null) {
-          this.sector = currentDisk.findNextSector(this.sector);
-        }
         if (this.sector == null) {
           this.sector = currentDisk.findFirstSector(this.registers[REG_TRACK]);
         }
@@ -622,7 +618,7 @@ public final class K1818VG93 {
                   final int track = (this.extraCounter >> 16) & 0xFF;
                   final int side = (this.extraCounter >> 8) & 0xFF;
                   final int sector = this.extraCounter & 0xFF;
-                  logger.info("FOUND.ADDR " + track + ':' + side + ':' + sector);
+                  logger.info("FOUND.ADDR t=" + track + ";h=" + side + ":s=" + sector);
                 }
               }
             } else {
