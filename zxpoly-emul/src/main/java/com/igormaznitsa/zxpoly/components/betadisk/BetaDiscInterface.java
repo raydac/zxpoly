@@ -50,10 +50,10 @@ public class BetaDiscInterface implements IoDevice {
 
   public void insertDiskIntoDrive(final int driveIndex, final TrDosDisk disk) {
     this.diskDrives.set(driveIndex, disk);
-    tuneControllerToDisk();
+    updateDiskState();
   }
 
-  private void tuneControllerToDisk() {
+  private void updateDiskState() {
     final int driveIndex = this.ffPort & 0x3;
     final TrDosDisk disk = this.diskDrives.get(driveIndex);
     if (disk != null) {
@@ -121,7 +121,7 @@ public class BetaDiscInterface implements IoDevice {
     this.ffPort = value;
     this.vg93.setResetIn((this.ffPort & 0b0000_0100) != 0);
     this.vg93.setMFMModulation((this.ffPort & 0b0100_0000) == 0);
-    tuneControllerToDisk();
+    updateDiskState();
   }
 
   public boolean isActive() {

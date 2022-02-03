@@ -35,11 +35,11 @@ public class TrDosDisk {
   private static final Random RND = new Random();
   private final byte[] data;
   private final Sector[] sectors;
-  private boolean writeProtect;
-  private File srcFile;
-  private SourceDataType type;
+  private volatile boolean writeProtect;
+  private volatile File srcFile;
+  private volatile SourceDataType type;
 
-  private int headIndex = 0;
+  private volatile int headIndex = 0;
 
   public TrDosDisk(final String diskName) {
     this(null, SourceDataType.TRD, makeEmptyTrDosDisk(diskName), false);
@@ -300,7 +300,7 @@ public class TrDosDisk {
       int toskip = RND.nextInt(SECTORS_PER_TRACK);
       Sector found = sector;
       while (toskip-- > 0) {
-        found = findSectorAfter(found);
+        found = findNextSector(found);
       }
       if (found != null) {
         sector = found;
@@ -322,15 +322,14 @@ public class TrDosDisk {
     return result;
   }
 
-  public Sector findSectorAfter(final Sector sector) {
-    boolean next = false;
+  public Sector findNextSector(final Sector sector) {
+    final int head = this.headIndex;
+    final int track = sector.track;
+    final int sectorIndex = (sector.getPhysicalIndex() + 1) % SECTORS_PER_TRACK;
+
     for (final Sector s : this.sectors) {
-      if (next) {
+      if (s.getSide() == head && s.getTrackNumber() == track && s.getPhysicalIndex() == sectorIndex)
         return s;
-      }
-      if (s == sector) {
-        next = true;
-      }
     }
     return null;
   }

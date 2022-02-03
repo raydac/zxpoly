@@ -274,7 +274,12 @@ public final class K1818VG93 {
 
     final TrDosDisk disk = this.trdosDisk.get();
 
-    final String address = String.format("current(track=%d, head=%d, sector=%d, dataReg=%d)", addressTrack, (disk == null ? -1 : disk.getHeadIndex()), addressSector, this.registers[REG_DATA_WR]);
+    final String address = String.format("current(track=%d, head=%d, sector=%d, dataReg=%d)",
+            addressTrack,
+            (disk == null ? -1 : disk.getHeadIndex()),
+            addressSector,
+            this.registers[REG_DATA_WR]
+    );
 
     final int high = command >>> 4;
     switch (high) {
@@ -522,7 +527,7 @@ public final class K1818VG93 {
       if (start) {
         // turn sector
         if (this.sector != null) {
-          this.sector = currentDisk.findSectorAfter(this.sector);
+          this.sector = currentDisk.findNextSector(this.sector);
         }
         if (this.sector == null) {
           this.sector = currentDisk.findFirstSector(this.registers[REG_TRACK]);
@@ -1122,7 +1127,7 @@ public final class K1818VG93 {
           buffer.write(0xFF);
         }
 
-        sector = disk.findSectorAfter(sector);
+        sector = disk.findNextSector(sector);
       }
 
       for (int i = 0; i < 247; i++) {
@@ -1201,7 +1206,7 @@ public final class K1818VG93 {
           buffer.write(0x4E);
         }
 
-        sector = disk.findSectorAfter(sector);
+        sector = disk.findNextSector(sector);
       }
 
       for (int i = 0; i < 598; i++) {
