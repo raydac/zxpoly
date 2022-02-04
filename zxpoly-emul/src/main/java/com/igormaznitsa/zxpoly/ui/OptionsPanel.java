@@ -381,7 +381,7 @@ public class OptionsPanel extends JPanel {
     panelGenmeral.add(spinnerIntFrame, gridBagConstraints);
 
     labelScreenBlinkFrameTact.setHorizontalAlignment(RIGHT);
-    labelScreenBlinkFrameTact.setText("Blink screen frame tact:");
+    labelScreenBlinkFrameTact.setText(String.format("Blink frame tact (default %d):", TimingProfile.SPEC128.ulaFrameTiStates - 1));
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 3;
