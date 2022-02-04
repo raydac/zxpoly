@@ -3,7 +3,7 @@ package com.igormaznitsa.zxpoly.components.video.timings;
 public enum TimingProfile {
   SPEC48(
           0,
-          32,
+          36,
           16,
           3_500_000,
           128,
@@ -18,7 +18,7 @@ public enum TimingProfile {
   ),
   SPEC128(
           0,
-          32,
+          36,
           16,
           3_546_900,
           128,

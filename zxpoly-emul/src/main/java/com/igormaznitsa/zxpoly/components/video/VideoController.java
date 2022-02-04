@@ -1602,7 +1602,7 @@ public final class VideoController extends JComponent
 
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
 
-    final int screenRow = (frameTiStates / this.timingProfile.ulaScanLineTacts) - this.timingProfile.vsyncLines; // 28 is heuristic value found by test aquaplane game
+    final int screenRow = (frameTiStates / this.timingProfile.ulaScanLineTacts) - 3;
 
     if (screenRow >= 0 && screenRow < this.borderLineColors.length) {
       this.borderLineColors[screenRow] = (byte) (this.portFEw & 7);
