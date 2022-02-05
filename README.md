@@ -9,6 +9,7 @@
 
 __2.2.4 (SNAPSHOT)__
 
+- added file menu item "Create empty disk"
 - added formatting for new created TRD disks
 - improved TAP format reader to read zero length blocks [#60](https://github.com/raydac/zxpoly/issues/60)
 - added configuration property to define screen blink tact
