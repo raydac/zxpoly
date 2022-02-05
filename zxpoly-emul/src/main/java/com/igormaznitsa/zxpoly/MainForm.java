@@ -241,6 +241,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private JMenuItem menuFileLoadSnapshot;
   private JMenuItem menuFileLoadPoke;
   private JMenuItem menuFileLoadTap;
+  private JMenuItem menuFileCreateEmptyDisk;
   private JMenuItem menuFileOptions;
   private JMenuItem menuFileReset;
   private final AtomicBoolean magicButtonTrigger = new AtomicBoolean();
@@ -1692,6 +1693,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuFileLoadSnapshot = new JMenuItem();
     menuFileLoadPoke = new JMenuItem();
     menuFileLoadTap = new JMenuItem();
+    menuFileCreateEmptyDisk = new JMenuItem();
     menuView = new JMenu();
     menuViewZoom = new JMenu();
     menuViewVideoFilter = new JMenu();
@@ -2003,6 +2005,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
               Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/diskflush.png")))); // NOI18N
       menuFileFlushDiskChanges.setText("Flush disk changes");
       menuFileFlushDiskChanges.addActionListener(this::menuFileFlushDiskChangesActionPerformed);
+
+      menuFileCreateEmptyDisk.setIcon(new ImageIcon(
+              Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/disk_new.png")))); // NOI18N
+      menuFileCreateEmptyDisk.setText("Create empty disk");
+      menuFileCreateEmptyDisk.addActionListener(this::menuFileCreateEmptyDiskFileActionPerformed);
+      menuFile.add(menuFileCreateEmptyDisk);
+
       menuFile.add(menuFileFlushDiskChanges);
     }
 
@@ -2282,6 +2291,27 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     setJMenuBar(menuBar);
 
     pack();
+  }
+
+  private void menuFileCreateEmptyDiskFileActionPerformed(final ActionEvent actionEvent) {
+    File file = chooseFileForSave("Create empty TRD disk file", this.lastFloppyFolder, null, false, FILTER_FORMAT_TRD);
+    if (file != null) {
+      if (!file.getName().contains(".")) {
+        file = new File(file.getParentFile(), file.getName() + ".trd");
+      }
+      this.lastFloppyFolder = file.getParentFile();
+      if (file.isFile()
+              && JOptionPane.showConfirmDialog(this, "File " + file.getName() + " exists! Do you want overwrite it?", "File exists", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.CANCEL_OPTION) {
+        return;
+      }
+      LOGGER.info("Creating empty TRD disk as file: " + file);
+      try {
+        FileUtils.writeByteArrayToFile(file, new TrDosDisk(FilenameUtils.getBaseName(file.getName())).getDiskData());
+      } catch (Exception ex) {
+        LOGGER.log(Level.SEVERE, "Can't create empty disk file: " + file, ex);
+        JOptionPane.showMessageDialog(this, "Can't save disk file: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+      }
+    }
   }
 
   private void fillUiScale(final JMenu menu) {
