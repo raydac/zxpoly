@@ -1,6 +1,6 @@
 __2.2.4 (SNAPSHOT)__
 
-- added virtual keyboard skin [#57](https://github.com/raydac/zxpoly/issues/66)
+- added virtual keyboard skin [#66](https://github.com/raydac/zxpoly/issues/66)
 - added file menu item "Create empty disk"
 - added formatting for new created TRD disks
 - improved TAP format reader to read zero length blocks [#60](https://github.com/raydac/zxpoly/issues/60)
