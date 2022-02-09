@@ -8,7 +8,8 @@ public enum VirtualKeyboardLook {
   AMBRO_CLEAN("ambroclean"),
   AMBRO_ZXPLUS("ambrozxplus"),
   AMBRO_TIMEX("ambrotimex"),
-  AMBRO_TIMEX2048PAL("ambrotimex2048pal");
+  AMBRO_TIMEX2048PAL("ambrotimex2048pal"),
+  AMBRO_ZX81("ambrozx81");
 
   private final String baseName;
 
