@@ -77,16 +77,16 @@ public final class K1818VG93 {
   public K1818VG93(final TimingProfile profile, final Logger logger) {
     this.logger = logger;
 
-    this.tstatesDiskTurn = profile.ulaFrameTiStates * 4L;
+    this.tstatesDiskTurn = profile.tstatesFrame * 4L;
     this.tstatesPerTrackChange = new long[]{
-            profile.ulaFrameTiStates / 4,
-            profile.ulaFrameTiStates / 2,
-            profile.ulaFrameTiStates,
-            profile.ulaFrameTiStates + profile.ulaFrameTiStates / 3,
+            profile.tstatesFrame / 4,
+            profile.tstatesFrame / 2,
+            profile.tstatesFrame,
+            profile.tstatesFrame + profile.tstatesFrame / 3,
     };
     this.tstatesPerSector = tstatesDiskTurn / TrDosDisk.SECTORS_PER_TRACK;
-    this.tstatesPerSectorBe = profile.ulaFrameTiStates / 640;
-    this.tstatesIndexMarkLength = (profile.ulaFrameTiStates * 80L) / 1000L; // 4 ms
+    this.tstatesPerSectorBe = profile.tstatesFrame / 640;
+    this.tstatesIndexMarkLength = (profile.tstatesFrame * 80L) / 1000L; // 4 ms
 
     reset();
   }

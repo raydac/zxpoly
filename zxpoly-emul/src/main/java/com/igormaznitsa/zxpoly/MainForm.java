@@ -897,7 +897,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     int countdownToNotifyRepaint = this.intTicksBeforeFrameDraw;
     int countdownToAnimationSave = 0;
 
-    final int VFLAG_BLINK_BORDER = 1;
     final int VFLAG_BLINK_SCREEN = 2;
 
     int viFlags = 0;
@@ -913,7 +912,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         try {
           int frameTiStates = this.board.getFrameTiStates();
           final boolean inTurboMode = this.turboMode;
-          final boolean tiStatesForIntExhausted = frameTiStates >= this.timingProfile.ulaFrameTiStates;
+          final boolean tiStatesForIntExhausted = frameTiStates >= this.timingProfile.tstatesFrame;
           final boolean intTickForWallClockReached = this.wallClock.completed();
 
           final boolean doCpuIntTick;
@@ -932,7 +931,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             }
             this.wallClock.next();
             if (!tiStatesForIntExhausted) {
-              this.onSlownessDetected(this.timingProfile.ulaFrameTiStates - frameTiStates);
+              this.onSlownessDetected(this.timingProfile.tstatesFrame - frameTiStates);
             }
             viFlags = 0;
           } else {
@@ -959,10 +958,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
           if (frameTiStates >= this.screenBlinkFrameTact) {
             viFlags |= VFLAG_BLINK_SCREEN;
-          }
-
-          if (frameTiStates >= this.timingProfile.ulaFrameTiStates) {
-            viFlags |= VFLAG_BLINK_BORDER;
           }
 
           if (intTickForWallClockReached) {
@@ -1002,10 +997,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           this.blinkScreen(sessionIntCounter);
         }
 
-        if ((changedViFlags & VFLAG_BLINK_BORDER) != 0 && (viFlags & VFLAG_BLINK_BORDER) != 0) {
-          this.blinkBorder();
-        }
-
         if (notifyRepaintScreen) {
           this.repaintScreen();
         }
@@ -1014,13 +1005,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         if (this.wallClock.completed()) {
           this.wallClock.next();
           this.videoStreamer.onWallclockInt();
-          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.ulaFrameTiStates, true, frameTiStates);
+          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.tstatesFrame, true, frameTiStates);
           this.board.startNewFrame();
         } else {
-          if (frameTiStates < this.timingProfile.ulaFrameTiStates) {
+          if (frameTiStates < this.timingProfile.tstatesFrame) {
             this.board.doNop();
           }
-          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.ulaFrameTiStates, true, frameTiStates);
+          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.tstatesFrame, true, frameTiStates);
         }
       }
       if (this.activeTracerWindowCounter.get() > 0) {
@@ -1032,7 +1023,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   private void onSlownessDetected(final long remainTstates) {
     LOGGER.warning(String.format("Slowness detected: %.02f%%",
-            (float) remainTstates / (float) this.timingProfile.ulaFrameTiStates * 100.0f));
+            (float) remainTstates / (float) this.timingProfile.tstatesFrame * 100.0f));
   }
 
   private void updateTracerWindowsForStep() {
@@ -1174,10 +1165,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     } else {
       this.board.getVideoController().syncUpdateBuffer(VideoController.LineRenderMode.ALL);
     }
-  }
-
-  private void blinkBorder() {
-    this.board.getVideoController().blinkBorder();
   }
 
   private void repaintScreen() {

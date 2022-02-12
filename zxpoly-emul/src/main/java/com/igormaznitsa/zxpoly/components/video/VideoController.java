@@ -31,7 +31,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.RenderedImage;
@@ -40,8 +39,6 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static java.util.Arrays.fill;
 
 public final class VideoController extends JComponent
         implements ZxPolyConstants, MouseWheelListener, IoDevice {
@@ -88,7 +85,6 @@ public final class VideoController extends JComponent
   public static final int[] PALETTE_SPEC256 = Utils.readRawPalette(
           VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/spec256.raw.pal"),
           true);
-  private static final int PREFERRED_BORDER_WIDTH = 64;
   private static final int[] PALETTE_ALIGNED_ZXPOLY =
           Utils.alignPaletteColors(PALETTE_ZXPOLY, PALETTE_SPEC256);
   private static final Logger log = Logger.getLogger("VC");
@@ -104,14 +100,14 @@ public final class VideoController extends JComponent
   private static volatile int gfxUpColorsMixed = 64;
   private static volatile int gfxDownColorsMixed = 0;
   private static volatile int[] gfxPrerenderedBack = null;
-  private final Dimension baseSize;
+  private static final int BORDER_WIDTH_LEFT = 32;
   private final VirtualKeyboardDecoration vkbdContainer;
   private final Motherboard board;
+  private static final int BORDER_WIDTH_RIGHT = 32;
   private final BufferedImage bufferImage;
   private final int[] bufferImageRgbData;
+  private static final int BORDER_HEIGHT_TOP = 32;
   private final ZxPolyModule[] modules;
-  private final byte[] borderLineColors;
-  private final byte[] outBorderLineColors;
   private final boolean showVkbdApart;
   private final TimingProfile timingProfile;
   private final boolean syncRepaint;
@@ -127,58 +123,12 @@ public final class VideoController extends JComponent
   private Window vkbdWindow = null;
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
-
-  private final int ulaVisibleRows;
-
-  public VideoController(final TimingProfile timingProfile, final boolean syncRepaint, final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
-    super();
-
-    this.ulaVisibleRows = timingProfile.topBorderVisibleScanlines + timingProfile.bottomBorderVisibleScanlines + TimingProfile.ZX_SCREEN_LINES;
-
-    this.syncRepaint = syncRepaint;
-    this.timingProfile = timingProfile;
-    this.borderLineColors = new byte[this.ulaVisibleRows];
-    this.outBorderLineColors = new byte[this.ulaVisibleRows];
-
-    this.baseSize = new Dimension(SCREEN_WIDTH + (PREFERRED_BORDER_WIDTH << 1),
-            SCREEN_HEIGHT + timingProfile.topBorderVisibleScanlines + timingProfile.bottomBorderVisibleScanlines);
-
-    this.setFocusTraversalKeysEnabled(false);
-
-    this.vkbdContainer = Objects.requireNonNull(vkbdContainer);
-
-    this.showVkbdApart = AppOptions.getInstance().isVkbdApart();
-
-    this.board = board;
-    this.modules = board.getModules();
-
-    this.bufferImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
-    this.bufferImage.setAccelerationPriority(1.0f);
-    this.bufferImageRgbData =
-            ((DataBufferInt) this.bufferImage.getRaster().getDataBuffer()).getData();
-
-    this.addMouseWheelListener(this);
-    this.addMouseListener(new MouseAdapter() {
-
-      @Override
-      public void mousePressed(final MouseEvent e) {
-        if (!e.isConsumed() && vkbdWindow == null && !mouseTrapActive && showVkb) {
-          vkbdRender.setLastMouseEvent(e);
-          e.consume();
-        }
-      }
-
-      @Override
-      public void mouseReleased(final MouseEvent e) {
-        if (!e.isConsumed() && vkbdWindow == null && !mouseTrapActive && showVkb) {
-          vkbdRender.setLastMouseEvent(e);
-          e.consume();
-        }
-      }
-    });
-
-    this.setDoubleBuffered(false);
-  }
+  private static final int BORDER_HEIGHT_BOTTOM = 32;
+  private static final int VISIBLE_ROWS_X2 = (BORDER_HEIGHT_TOP + TimingProfile.ZX_SCREEN_LINES + BORDER_HEIGHT_BOTTOM) << 1;
+  private final Dimension baseComponentSize;
+  private final BufferedImage borderImage;
+  private final int[] borderImageRgbData;
+  private int stepStartTStates = 0;
 
   public static void setGfxBack(final Spec256Arch.Spec256Bkg bkg) {
     if (bkg == null) {
@@ -1169,106 +1119,74 @@ public final class VideoController extends JComponent
     }
   }
 
+  public VideoController(final TimingProfile timingProfile, final boolean syncRepaint, final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
+    super();
+
+    this.syncRepaint = syncRepaint;
+    this.timingProfile = timingProfile;
+
+    this.baseComponentSize = new Dimension(SCREEN_WIDTH + ((BORDER_WIDTH_LEFT + BORDER_WIDTH_RIGHT) << 1), VISIBLE_ROWS_X2);
+
+    this.setFocusTraversalKeysEnabled(false);
+
+    this.vkbdContainer = Objects.requireNonNull(vkbdContainer);
+
+    this.showVkbdApart = AppOptions.getInstance().isVkbdApart();
+
+    this.board = board;
+    this.modules = board.getModules();
+
+    this.bufferImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
+    this.bufferImage.setAccelerationPriority(1.0f);
+    this.bufferImageRgbData =
+            ((DataBufferInt) this.bufferImage.getRaster().getDataBuffer()).getData();
+
+    this.borderImage = new BufferedImage(this.timingProfile.tstatesLine, this.timingProfile.scanLines, BufferedImage.TYPE_INT_RGB);
+    this.borderImage.setAccelerationPriority(1.0f);
+    this.borderImageRgbData =
+            ((DataBufferInt) this.borderImage.getRaster().getDataBuffer()).getData();
+
+    this.addMouseWheelListener(this);
+    this.addMouseListener(new MouseAdapter() {
+
+      @Override
+      public void mousePressed(final MouseEvent e) {
+        if (!e.isConsumed() && vkbdWindow == null && !mouseTrapActive && showVkb) {
+          vkbdRender.setLastMouseEvent(e);
+          e.consume();
+        }
+      }
+
+      @Override
+      public void mouseReleased(final MouseEvent e) {
+        if (!e.isConsumed() && vkbdWindow == null && !mouseTrapActive && showVkb) {
+          vkbdRender.setLastMouseEvent(e);
+          e.consume();
+        }
+      }
+    });
+
+    this.setDoubleBuffered(false);
+  }
+
   @Override
   public Dimension getPreferredSize() {
-    return new Dimension(Math.max(this.size.width, baseSize.width),
-            Math.max(this.size.height, baseSize.height));
+    return new Dimension(Math.max(this.size.width, baseComponentSize.width),
+            Math.max(this.size.height, baseComponentSize.height));
   }
 
   @Override
   public Dimension getMinimumSize() {
-    return baseSize;
+    return baseComponentSize;
   }
 
   private void updateZoom(final float value) {
     this.zoom = value;
     this.size = new Dimension(Math.round(SCREEN_WIDTH * value),
-            Math.round((this.timingProfile.topBorderVisibleScanlines + this.timingProfile.bottomBorderVisibleScanlines + SCREEN_HEIGHT) * value));
+            Math.round(VISIBLE_ROWS_X2 * value));
     this.repaint();
     this.getParent().revalidate();
     this.getParent().repaint();
-  }
-
-  private void drawBorder(final Graphics2D g, final int width, final int height) {
-    final float yDelta = (float) height / this.ulaVisibleRows;
-    final float rowHeight = Math.max(1, yDelta) + 1.7f;
-    float y = 0.0f;
-    final Rectangle2D.Float rectangle = new Rectangle2D.Float(0.0f, y, width, rowHeight);
-
-    synchronized (this.outBorderLineColors) {
-      boolean first = true;
-      for (int i = 0; i < this.ulaVisibleRows; i++) {
-        final int colorIndex = this.outBorderLineColors[i];
-        g.setColor(this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[colorIndex]));
-        rectangle.y = y;
-        if (first) {
-          g.fill(g.getClipBounds());
-          first = false;
-        } else {
-          g.fill(rectangle);
-        }
-        y += yDelta;
-      }
-    }
-  }
-
-  public void blinkBorder() {
-    synchronized (this.outBorderLineColors) {
-      System.arraycopy(this.borderLineColors, 0, this.outBorderLineColors, 0, this.borderLineColors.length);
-      fill(this.borderLineColors, (byte) (this.portFEw & 7));
-    }
-  }
-
-  @Override
-  public void paintComponent(final Graphics g) {
-    final Graphics2D g2 = (Graphics2D) g;
-
-    final Rectangle bounds = this.getBounds();
-
-    final int visibleWidth = bounds.width;
-    final int visibleHeight = bounds.height;
-
-    final int screenOffsetX = (visibleWidth - this.size.width) / 2;
-
-    final int screenOffsetY = Math.round(this.zoom * this.timingProfile.topBorderVisibleScanlines);
-
-    if (screenOffsetX > 0 || screenOffsetY > 0) {
-      drawBorder(g2, visibleWidth, visibleHeight);
-    }
-    this.drawBuffer(g2, screenOffsetX, screenOffsetY, this.zoom, this.tvFilterChain);
-
-    if (this.mouseTrapActive && this.enableMouseTrapIndicator) {
-      g2.drawImage(MOUSE_TRAPPED, 2, 2, null);
-    }
-
-    if (this.showVkb) {
-      final int imgWidth = this.vkbdRender.getImageWidth();
-      final int imgHeight = this.vkbdRender.getImageHeight();
-
-      final Rectangle renderRectangle;
-
-      if (bounds.width >= imgWidth) {
-        if (bounds.width >= imgWidth * 3) {
-          final double scale = ((double) bounds.width / 3) / (double) imgWidth;
-          final int newWidth = (int) Math.round(scale * imgWidth);
-          final int newHeight = (int) Math.round(scale * imgHeight);
-          renderRectangle = new Rectangle((bounds.width - newWidth) / 2, bounds.height - newHeight, newWidth, newHeight);
-        } else {
-          renderRectangle = new Rectangle((bounds.width - imgWidth) / 2, bounds.height - imgHeight, imgWidth, imgHeight);
-        }
-      } else {
-        final double scale = (double) bounds.width / (double) imgWidth;
-        final int newWidth = (int) Math.round(scale * imgWidth);
-        final int newHeight = (int) Math.round(scale * imgHeight);
-        renderRectangle = new Rectangle(0, bounds.height - newHeight, newWidth, newHeight);
-      }
-
-      if (!this.showVkbdApart || this.fullScreenMode) {
-        this.vkbdRender.render(this, g2, renderRectangle, true);
-      } else if (this.vkbdWindow != null) {
-        this.vkbdWindow.repaint();
-      }
-    }
   }
 
   private void refreshBufferData(final LineRenderMode renderLines, final int videoMode) {
@@ -1326,62 +1244,63 @@ public final class VideoController extends JComponent
     return result;
   }
 
-  public void drawBuffer(
-          final Graphics2D gfx,
-          final int x,
-          final int y,
-          final float zoom,
-          final TvFilterChain filterChain
-  ) {
-    if (filterChain.isEmpty()) {
-      synchronized (this.bufferImage) {
-        final float normalZoom = Math.max(1.0f, zoom);
-        if (normalZoom == 1.0f) {
-          gfx.drawImage(this.bufferImage, null, x, y);
-        } else {
-          gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-          gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+  @Override
+  public void paintComponent(final Graphics g) {
+    final Graphics2D g2 = (Graphics2D) g;
 
-          gfx.drawImage(this.bufferImage, x, y, Math.round(SCREEN_WIDTH * normalZoom),
-                  Math.round(SCREEN_HEIGHT * normalZoom), null);
+    final Rectangle bounds = this.getBounds();
+
+    final int visibleWidth = bounds.width;
+    final int visibleHeight = bounds.height;
+
+    final int screenOffsetX = (visibleWidth - this.size.width) / 2;
+
+    final int screenOffsetY = Math.round(this.zoom * (BORDER_HEIGHT_TOP << 1));
+
+    if (screenOffsetX > 0 || screenOffsetY > 0) {
+      final float coeffX = (float) visibleWidth / (this.borderImage.getWidth() - this.timingProfile.tstatesLeftBorderStart);
+      final float coeffY = (float) visibleHeight / (this.borderImage.getHeight() - this.timingProfile.borderTopHiddenLines);
+
+      final int scaledWidth = Math.round(coeffX * this.borderImage.getWidth());
+      final int scaledHeight = Math.round(coeffY * this.borderImage.getHeight());
+
+      final int offsetX = -Math.round(this.timingProfile.tstatesLeftBorderStart * coeffX);
+      final int offsetY = -Math.round(this.timingProfile.borderTopHiddenLines * coeffY);
+
+      g2.drawImage(this.borderImage, offsetX, offsetY, scaledWidth, scaledHeight, null);
+    }
+    this.drawBuffer(g2, screenOffsetX, screenOffsetY, this.zoom, this.tvFilterChain);
+
+    if (this.mouseTrapActive && this.enableMouseTrapIndicator) {
+      g2.drawImage(MOUSE_TRAPPED, 2, 2, null);
+    }
+
+    if (this.showVkb) {
+      final int imgWidth = this.vkbdRender.getImageWidth();
+      final int imgHeight = this.vkbdRender.getImageHeight();
+
+      final Rectangle renderRectangle;
+
+      if (bounds.width >= imgWidth) {
+        if (bounds.width >= imgWidth * 3) {
+          final double scale = ((double) bounds.width / 3) / (double) imgWidth;
+          final int newWidth = (int) Math.round(scale * imgWidth);
+          final int newHeight = (int) Math.round(scale * imgHeight);
+          renderRectangle = new Rectangle((bounds.width - newWidth) / 2, bounds.height - newHeight, newWidth, newHeight);
+        } else {
+          renderRectangle = new Rectangle((bounds.width - imgWidth) / 2, bounds.height - imgHeight, imgWidth, imgHeight);
         }
-      }
-    } else {
-      final int borderArgbColor = PALETTE_ZXPOLY[this.borderLineColors[this.ulaVisibleRows - 1]];
-      final Rectangle area;
-      final TvFilter[] tvFilters = filterChain.getFilterChain();
-      BufferedImage postProcessedImage;
-      synchronized (this.bufferImage) {
-        postProcessedImage = tvFilters[0].apply(this.bufferImage, zoom, borderArgbColor, true);
-      }
-      for (int i = 1; i < tvFilters.length; i++) {
-        postProcessedImage = tvFilters[i].apply(postProcessedImage, zoom, borderArgbColor, false);
-      }
-      if (zoom == 1.0f) {
-        area = new Rectangle(x, y, 512, 384);
-        gfx.drawImage(postProcessedImage, null, x, y);
       } else {
-        final boolean sizeChangedDuringPostprocessing =
-                postProcessedImage.getWidth() != this.bufferImage.getWidth();
-
-        if (sizeChangedDuringPostprocessing) {
-          gfx.drawImage(postProcessedImage, null, x, y);
-          area = new Rectangle(x, y, 512, 384);
-        } else {
-          final float normalizedZoom = Math.max(1.0f, zoom);
-          gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-          gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-
-          area = new Rectangle(x, y, Math.round(SCREEN_WIDTH * normalizedZoom),
-                  Math.round(SCREEN_HEIGHT * normalizedZoom));
-
-          gfx.drawImage(postProcessedImage, x, y, area.width,
-                  area.height, null);
-        }
+        final double scale = (double) bounds.width / (double) imgWidth;
+        final int newWidth = (int) Math.round(scale * imgWidth);
+        final int newHeight = (int) Math.round(scale * imgHeight);
+        renderRectangle = new Rectangle(0, bounds.height - newHeight, newWidth, newHeight);
       }
 
-      for (final TvFilter filter : tvFilters) {
-        filter.apply(gfx, area, zoom);
+      if (!this.showVkbdApart || this.fullScreenMode) {
+        this.vkbdRender.render(this, g2, renderRectangle, true);
+      } else if (this.vkbdWindow != null) {
+        this.vkbdWindow.repaint();
       }
     }
   }
@@ -1418,7 +1337,6 @@ public final class VideoController extends JComponent
 
   public void setBorderColor(final int colorIndex) {
     this.portFEw = (this.portFEw & 0xFFFFFFF8) | (colorIndex & 0x07);
-    fill(this.borderLineColors, (byte) colorIndex);
   }
 
   public void syncUpdateBuffer(final LineRenderMode renderLines) {
@@ -1593,20 +1511,78 @@ public final class VideoController extends JComponent
     return NOTIFICATION_PRESTEP | NOTIFICATION_POSTSTEP;
   }
 
+  public void drawBuffer(
+          final Graphics2D gfx,
+          final int x,
+          final int y,
+          final float zoom,
+          final TvFilterChain filterChain
+  ) {
+    if (filterChain.isEmpty()) {
+      synchronized (this.bufferImage) {
+        final float normalZoom = Math.max(1.0f, zoom);
+        if (normalZoom == 1.0f) {
+          gfx.drawImage(this.bufferImage, null, x, y);
+        } else {
+          gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+          gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+
+          gfx.drawImage(this.bufferImage, x, y, Math.round(SCREEN_WIDTH * normalZoom),
+                  Math.round(SCREEN_HEIGHT * normalZoom), null);
+        }
+      }
+    } else {
+      final int borderArgbColor = this.borderImageRgbData[this.borderImageRgbData.length / 2];
+      final Rectangle area;
+      final TvFilter[] tvFilters = filterChain.getFilterChain();
+      BufferedImage postProcessedImage;
+      synchronized (this.bufferImage) {
+        postProcessedImage = tvFilters[0].apply(this.bufferImage, zoom, borderArgbColor, true);
+      }
+      for (int i = 1; i < tvFilters.length; i++) {
+        postProcessedImage = tvFilters[i].apply(postProcessedImage, zoom, borderArgbColor, false);
+      }
+      if (zoom == 1.0f) {
+        area = new Rectangle(x, y, 512, 384);
+        gfx.drawImage(postProcessedImage, null, x, y);
+      } else {
+        final boolean sizeChangedDuringPostprocessing =
+                postProcessedImage.getWidth() != this.bufferImage.getWidth();
+
+        if (sizeChangedDuringPostprocessing) {
+          gfx.drawImage(postProcessedImage, null, x, y);
+          area = new Rectangle(x, y, 512, 384);
+        } else {
+          final float normalizedZoom = Math.max(1.0f, zoom);
+          gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+          gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+
+          area = new Rectangle(x, y, Math.round(SCREEN_WIDTH * normalizedZoom),
+                  Math.round(SCREEN_HEIGHT * normalizedZoom));
+
+          gfx.drawImage(postProcessedImage, x, y, area.width,
+                  area.height, null);
+        }
+      }
+
+      for (final TvFilter filter : tvFilters) {
+        filter.apply(gfx, area, zoom);
+      }
+    }
+  }
+
   @Override
-  public void preStep(final int frameTiStates, final boolean signalReset, final boolean tstatesIntReached,
-                      boolean wallClockInt) {
+  public void preStep(
+          final int frameTiStates,
+          final boolean signalReset,
+          final boolean tstatesIntReached,
+          boolean wallClockInt
+  ) {
     if (signalReset) {
       this.portFEw = 0x00;
     }
-
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
-
-    final int screenRow = (frameTiStates / this.timingProfile.ulaScanLineTacts) - 3;
-
-    if (screenRow >= 0 && screenRow < this.borderLineColors.length) {
-      this.borderLineColors[screenRow] = (byte) (this.portFEw & 7);
-    }
+    this.stepStartTStates = frameTiStates;
   }
 
   @Override
@@ -1615,7 +1591,13 @@ public final class VideoController extends JComponent
   }
 
   @Override
-  public void postStep(final int spentTstates) {
+  public void postStep(int spentTstates) {
+    final int borderColor = PALETTE_ZXPOLY[this.portFEw & 7];
+    int offset = this.stepStartTStates;
+    while (spentTstates > 0 && offset < this.borderImageRgbData.length) {
+      this.borderImageRgbData[offset++] = borderColor;
+      spentTstates--;
+    }
   }
 
   public float getZoom() {
@@ -1658,9 +1640,8 @@ public final class VideoController extends JComponent
   public void zoomForSize(final Rectangle rectangle) {
     final float width = (float) rectangle.width - (rectangle.width * SCALE_STEP);
     final float height = (float) rectangle.height;
-    final int totalRows = SCREEN_HEIGHT + this.timingProfile.bottomBorderVisibleScanlines + this.timingProfile.topBorderVisibleScanlines;
     final float maxZoomW = (int) ((width / SCREEN_WIDTH) / SCALE_STEP) * SCALE_STEP;
-    final float maxZoomH = (int) ((height / totalRows) / SCALE_STEP) * SCALE_STEP;
+    final float maxZoomH = (int) ((height / VISIBLE_ROWS_X2) / SCALE_STEP) * SCALE_STEP;
 
     updateZoom(Math.max(SCALE_MIN, Math.min(SCALE_MAX, Math.min(maxZoomH, maxZoomW))));
   }

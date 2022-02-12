@@ -60,13 +60,12 @@ public final class AppOptions {
   }
 
   public synchronized int getScreenBlinkFrameTact() {
-    return Math.max(0, Math.min(TimingProfile.SPEC128.ulaFrameTiStates - 1,
-            preferences.getInt(Option.SCREEN_BLINK_FRAME_TACT.name(), TimingProfile.SPEC128.ulaTiStatesFirstByteOnScreen
-                    + TimingProfile.ZX_SCREEN_LINES * TimingProfile.SPEC128.ulaScanLineTacts)));
+    return Math.max(0, Math.min(TimingProfile.SPEC128.tstatesFrame - 1,
+            preferences.getInt(Option.SCREEN_BLINK_FRAME_TACT.name(), TimingProfile.SPEC128.lastScrUpdate)));
   }
 
   public synchronized void setScreenBlinkFrameTact(final int tact) {
-    preferences.putInt(Option.SCREEN_BLINK_FRAME_TACT.name(), Math.max(0, Math.min(tact, TimingProfile.SPEC128.ulaFrameTiStates - 1)));
+    preferences.putInt(Option.SCREEN_BLINK_FRAME_TACT.name(), Math.max(0, Math.min(tact, TimingProfile.SPEC128.tstatesFrame - 1)));
   }
 
   public synchronized boolean isTestRomActive() {

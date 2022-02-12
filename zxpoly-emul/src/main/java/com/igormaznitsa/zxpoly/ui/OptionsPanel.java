@@ -381,14 +381,14 @@ public class OptionsPanel extends JPanel {
     panelGenmeral.add(spinnerIntFrame, gridBagConstraints);
 
     labelScreenBlinkFrameTact.setHorizontalAlignment(RIGHT);
-    labelScreenBlinkFrameTact.setText(String.format("Blink frame tact (default %d):", TimingProfile.SPEC128.ulaFrameTiStates - 1));
+    labelScreenBlinkFrameTact.setText(String.format("Blink frame tact (default %d):", TimingProfile.SPEC128.lastScrUpdate));
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 3;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGenmeral.add(labelScreenBlinkFrameTact, gridBagConstraints);
 
-    spinnerScreenBlinkFrameTact.setModel(new javax.swing.SpinnerNumberModel(1, 1, TimingProfile.SPEC128.ulaFrameTiStates - 1, 1));
+    spinnerScreenBlinkFrameTact.setModel(new javax.swing.SpinnerNumberModel(1, 1, TimingProfile.SPEC128.tstatesFrame - 1, 1));
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 3;

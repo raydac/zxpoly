@@ -367,8 +367,8 @@ public final class Motherboard implements ZxPolyConstants {
     if (this.frameIntTriggered) {
       intTriggered = false;
     } else {
-      intTriggered = prevFrameTiStatesCounter >= this.timingProfile.ulaTiStatesIntOffset;
-      this.frameIntTriggered = intTriggered;
+      intTriggered = true;
+      this.frameIntTriggered = true;
     }
 
     if (wallclockInt) {
@@ -376,7 +376,7 @@ public final class Motherboard implements ZxPolyConstants {
       if (this.statisticCounter <= 0) {
         for (int i = 0; i < 4; i++) {
           this.cpuLoad[i] = min(1.0f, (float) (this.modules[i].getActiveMCyclesBetweenInt()
-                  / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (this.timingProfile.ulaFrameTiStates));
+                  / NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE) / (float) (this.timingProfile.tstatesFrame));
         }
         this.statisticCounter = NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE;
         resetStatisticsAtModules = true;
@@ -720,7 +720,7 @@ public final class Motherboard implements ZxPolyConstants {
       if (result < 0) {
         if (this.attributePortFf && (port & 1) != 0) {
           // all IO devices in Z state, some simulation of "port FF"
-          if (this.frameTiStatesCounter < this.timingProfile.ulaFrameTiStates) {
+          if (this.frameTiStatesCounter < this.timingProfile.tstatesFrame) {
             final int ramState = this.memoryTimings[this.frameTiStatesCounter];
             if ((ramState & TIMINGSTATE_MASK_TYPE) == TIMINGSTATE_PAPER) {
               final int attrOffset = (ramState & TIMINGSTATE_MASK_ATTR) >> 8;
@@ -736,7 +736,7 @@ public final class Motherboard implements ZxPolyConstants {
   int getContendedDelay(final int port7FFD, final int address) {
     int result = 0;
     if (this.contendedRam && isContended(address, port7FFD)) {
-      result = this.frameTiStatesCounter < this.timingProfile.ulaFrameTiStates ? this.memoryTimings[this.frameTiStatesCounter] & TIMINGSTATE_MASK_TIME : 0;
+      result = this.frameTiStatesCounter < this.timingProfile.tstatesFrame ? this.memoryTimings[this.frameTiStatesCounter] & TIMINGSTATE_MASK_TIME : 0;
     }
     return result;
   }
