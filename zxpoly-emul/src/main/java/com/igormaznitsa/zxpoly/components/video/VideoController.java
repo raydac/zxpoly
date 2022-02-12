@@ -31,6 +31,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.RenderedImage;
@@ -1258,16 +1259,12 @@ public final class VideoController extends JComponent
     final int screenOffsetY = Math.round(this.zoom * (BORDER_HEIGHT_TOP << 1));
 
     if (screenOffsetX > 0 || screenOffsetY > 0) {
-      final float coeffX = (float) visibleWidth / (this.borderImage.getWidth() - this.timingProfile.tstatesLeftBorderStart);
-      final float coeffY = (float) visibleHeight / (this.borderImage.getHeight() - this.timingProfile.borderTopHiddenLines);
+      final double sx = (double) visibleWidth / (this.timingProfile.tstatesLine - this.timingProfile.tstatesLeftBorderStart);
+      final double sy = (double) visibleHeight / (this.timingProfile.scanLines - (this.timingProfile.borderTopHiddenLines << 1));
 
-      final int scaledWidth = Math.round(coeffX * this.borderImage.getWidth());
-      final int scaledHeight = Math.round(coeffY * this.borderImage.getHeight());
+      final AffineTransform aff = new AffineTransform(sx, 0, 0, sy, 0, -(this.timingProfile.borderTopHiddenLines << 1) * sy);
 
-      final int offsetX = -Math.round(this.timingProfile.tstatesLeftBorderStart * coeffX);
-      final int offsetY = -Math.round(this.timingProfile.borderTopHiddenLines * coeffY);
-
-      g2.drawImage(this.borderImage, offsetX, offsetY, scaledWidth, scaledHeight, null);
+      g2.drawImage(this.borderImage, aff, null);
     }
     this.drawBuffer(g2, screenOffsetX, screenOffsetY, this.zoom, this.tvFilterChain);
 
