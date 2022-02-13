@@ -31,7 +31,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.RenderedImage;
@@ -101,13 +100,10 @@ public final class VideoController extends JComponent
   private static volatile int gfxUpColorsMixed = 64;
   private static volatile int gfxDownColorsMixed = 0;
   private static volatile int[] gfxPrerenderedBack = null;
-  private static final int BORDER_WIDTH_LEFT = 32;
   private final VirtualKeyboardDecoration vkbdContainer;
   private final Motherboard board;
-  private static final int BORDER_WIDTH_RIGHT = 32;
   private final BufferedImage bufferImage;
   private final int[] bufferImageRgbData;
-  private static final int BORDER_HEIGHT_TOP = 32;
   private final ZxPolyModule[] modules;
   private final boolean showVkbdApart;
   private final TimingProfile timingProfile;
@@ -124,8 +120,14 @@ public final class VideoController extends JComponent
   private Window vkbdWindow = null;
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
-  private static final int BORDER_HEIGHT_BOTTOM = 32;
-  private static final int VISIBLE_ROWS_X2 = (BORDER_HEIGHT_TOP + TimingProfile.ZX_SCREEN_LINES + BORDER_HEIGHT_BOTTOM) << 1;
+
+  private static final int VISIBLE_BORDER_HEIGHT_TOP = 24;
+  private static final int VISIBLE_BORDER_HEIGHT_BOTTOM = 24;
+  private static final int VISIBLE_BORDER_WIDTH_LEFT = 24;
+  private static final int VISIBLE_BORDER_WIDTH_RIGHT = 24;
+  private static final int VISIBLE_ROWS = VISIBLE_BORDER_HEIGHT_TOP + TimingProfile.ZX_SCREEN_LINES + VISIBLE_BORDER_HEIGHT_BOTTOM;
+  private static final int VISIBLE_ROWS_X2 = VISIBLE_ROWS << 1;
+
   private final Dimension baseComponentSize;
   private final BufferedImage borderImage;
   private final int[] borderImageRgbData;
@@ -1126,7 +1128,7 @@ public final class VideoController extends JComponent
     this.syncRepaint = syncRepaint;
     this.timingProfile = timingProfile;
 
-    this.baseComponentSize = new Dimension(SCREEN_WIDTH + ((BORDER_WIDTH_LEFT + BORDER_WIDTH_RIGHT) << 1), VISIBLE_ROWS_X2);
+    this.baseComponentSize = new Dimension(SCREEN_WIDTH + ((VISIBLE_BORDER_WIDTH_LEFT + VISIBLE_BORDER_WIDTH_RIGHT) << 1), VISIBLE_ROWS_X2);
 
     this.setFocusTraversalKeysEnabled(false);
 
@@ -1245,6 +1247,18 @@ public final class VideoController extends JComponent
     return result;
   }
 
+  private void drawBorder(final Graphics2D g2, final int visibleWidth, final int visibleHeight) {
+    final double sx = (double) visibleWidth / (this.borderImage.getWidth() - (timingProfile.tstatesLeftBorderStart << 1));
+    final double sy = (double) visibleHeight / (this.borderImage.getHeight() - (timingProfile.linesBeforePicture << 1));
+
+    g2.drawImage(this.borderImage,
+            (int) (-(timingProfile.tstatesLeftBorderStart << 1) * sx),
+            (int) (-(timingProfile.linesBeforePicture << 1) * sy),
+            (int) (sx * this.borderImage.getWidth()),
+            (int) (sy * this.borderImage.getHeight()),
+            null);
+  }
+
   @Override
   public void paintComponent(final Graphics g) {
     final Graphics2D g2 = (Graphics2D) g;
@@ -1255,17 +1269,9 @@ public final class VideoController extends JComponent
     final int visibleHeight = bounds.height;
 
     final int screenOffsetX = (visibleWidth - this.size.width) / 2;
+    final int screenOffsetY = Math.round(this.zoom * (VISIBLE_BORDER_HEIGHT_TOP << 1));
 
-    final int screenOffsetY = Math.round(this.zoom * (BORDER_HEIGHT_TOP << 1));
-
-    if (screenOffsetX > 0 || screenOffsetY > 0) {
-      final double sx = (double) visibleWidth / (this.timingProfile.tstatesLine - this.timingProfile.tstatesLeftBorderStart);
-      final double sy = (double) visibleHeight / (this.timingProfile.scanLines - (this.timingProfile.borderTopHiddenLines << 1));
-
-      final AffineTransform aff = new AffineTransform(sx, 0, 0, sy, 0, -(this.timingProfile.borderTopHiddenLines << 1) * sy);
-
-      g2.drawImage(this.borderImage, aff, null);
-    }
+    if (screenOffsetX > 0 || screenOffsetY > 0) this.drawBorder(g2, visibleWidth, visibleHeight);
     this.drawBuffer(g2, screenOffsetX, screenOffsetY, this.zoom, this.tvFilterChain);
 
     if (this.mouseTrapActive && this.enableMouseTrapIndicator) {
@@ -1589,7 +1595,7 @@ public final class VideoController extends JComponent
 
   @Override
   public void postStep(int spentTstates) {
-    final int borderColor = PALETTE_ZXPOLY[this.portFEw & 7];
+    final int borderColor = this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
     int offset = this.stepStartTStates;
     while (spentTstates > 0 && offset < this.borderImageRgbData.length) {
       this.borderImageRgbData[offset++] = borderColor;
