@@ -1585,7 +1585,7 @@ public final class VideoController extends JComponent
       this.portFEw = 0x00;
     }
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
-    this.stepStartTStates = frameTiStates;
+    this.stepStartTStates = tstatesIntReached ? -1 : frameTiStates;
   }
 
   @Override
@@ -1597,9 +1597,11 @@ public final class VideoController extends JComponent
   public void postStep(int spentTstates) {
     final int borderColor = this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
     int offset = this.stepStartTStates;
-    while (spentTstates > 0 && offset < this.borderImageRgbData.length) {
-      this.borderImageRgbData[offset++] = borderColor;
-      spentTstates--;
+    if (offset >= 0) {
+      while (spentTstates > 0 && offset < this.borderImageRgbData.length) {
+        this.borderImageRgbData[offset++] = borderColor;
+        spentTstates--;
+      }
     }
   }
 
