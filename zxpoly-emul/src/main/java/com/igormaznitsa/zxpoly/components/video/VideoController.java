@@ -43,6 +43,9 @@ import java.util.logging.Logger;
 public final class VideoController extends JComponent
         implements ZxPolyConstants, MouseWheelListener, IoDevice {
 
+  public static final int ZXSCREEN_ROWS = 192;
+  public static final int ZXSCREEN_COLS = 256;
+
   public static final int SCREEN_WIDTH = 512;
   public static final int SCREEN_HEIGHT = 384;
   public static final int[] PALETTE_ZXPOLY = new int[]{
@@ -125,7 +128,7 @@ public final class VideoController extends JComponent
   private static final int VISIBLE_BORDER_HEIGHT_BOTTOM = 24;
   private static final int VISIBLE_BORDER_WIDTH_LEFT = 24;
   private static final int VISIBLE_BORDER_WIDTH_RIGHT = 24;
-  private static final int VISIBLE_ROWS = VISIBLE_BORDER_HEIGHT_TOP + TimingProfile.ZX_SCREEN_LINES + VISIBLE_BORDER_HEIGHT_BOTTOM;
+  private static final int VISIBLE_ROWS = VISIBLE_BORDER_HEIGHT_TOP + ZXSCREEN_ROWS + VISIBLE_BORDER_HEIGHT_BOTTOM;
   private static final int VISIBLE_ROWS_X2 = VISIBLE_ROWS << 1;
 
   private final Dimension baseComponentSize;
@@ -133,16 +136,26 @@ public final class VideoController extends JComponent
   private final int[] borderImageRgbData;
   private int stepStartTStates = 0;
 
+  private static final int[] ZX_SCREEN_ROW_OFFSETS = generateZxScreenRowStartOffsets();
+
+  private static int[] generateZxScreenRowStartOffsets() {
+    final int[] result = new int[ZXSCREEN_ROWS + 1];
+    for (int y = 0; y < ZXSCREEN_ROWS + 1; y++) {
+      result[y] = ((y & 0b1100_0000) << 5) | ((y & 0b0000_0111) << 8) | ((y & 0b0011_1000) << 2);
+    }
+    return result;
+  }
+
   public static void setGfxBack(final Spec256Arch.Spec256Bkg bkg) {
     if (bkg == null) {
       gfxPrerenderedBack = null;
     } else {
-      final int yoffset = (bkg.getHeight() - 192) / 2;
-      final int xoffset = (bkg.getWidth() - 256) / 2;
+      final int yoffset = (bkg.getHeight() - ZXSCREEN_ROWS) / 2;
+      final int xoffset = (bkg.getWidth() - ZXSCREEN_COLS) / 2;
       final int[] prerendered = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
       final byte[] imgData = bkg.getData();
-      for (int y = 0; y < 192; y++) {
-        for (int x = 0; x < 256; x++) {
+      for (int y = 0; y < ZXSCREEN_ROWS; y++) {
+        for (int x = 0; x < ZXSCREEN_COLS; x++) {
           final int color =
                   PALETTE_SPEC256[imgData[(y + yoffset) * bkg.getWidth() + x + xoffset] & 0xFF];
           int zxoffset = y * 512 * 2 + x * 2;
@@ -198,8 +211,8 @@ public final class VideoController extends JComponent
           final LineRenderMode renderLines,
           final ZxPolyModule[] modules,
           final int[] pixelRgbBuffer,
-          final boolean flashActive
-  ) {
+          final boolean flashActive,
+          int lineFrom, int lineTo) {
     final int[] preRenderedBack = gfxPrerenderedBack;
     final boolean bkOverFF = gfxBackOverFF;
     final boolean paper00inkFF = gfxPaper00InkFF;
@@ -212,7 +225,11 @@ public final class VideoController extends JComponent
     int offset = 0;
     int aoffset = 0;
     int coordY;
-    for (int i = 0; i < 0x1800; i++) {
+
+    final int addressFrom = ZX_SCREEN_ROW_OFFSETS[lineFrom];
+    final int addressTo = ZX_SCREEN_ROW_OFFSETS[lineTo];
+
+    for (int i = addressFrom; i < addressTo; i++) {
       if ((i & 0x1F) == 0) {
         // the first byte in the line
         coordY = extractYFromAddress(i);
@@ -307,8 +324,9 @@ public final class VideoController extends JComponent
           final LineRenderMode renderLines,
           final ZxPolyModule[] modules,
           final int[] pixelRgbBuffer,
-          final boolean flashActive
-  ) {
+          final boolean flashActive,
+          final int lineFrom,
+          final int lineTo) {
     final ZxPolyModule mainModule = modules[0];
     final byte[] heap = mainModule.getMotherboard().getHeapRam();
 
@@ -324,7 +342,10 @@ public final class VideoController extends JComponent
     int offset = 0;
     int attributeOffset = 0;
 
-    for (int i = 0; i < 0x1800; i++) {
+    final int addressFrom = ZX_SCREEN_ROW_OFFSETS[lineFrom];
+    final int addressTo = ZX_SCREEN_ROW_OFFSETS[lineTo];
+
+    for (int i = addressFrom; i < addressTo; i++) {
       if ((i & 0x1F) == 0) {
         // the first byte in the line
         final int y = extractYFromAddress(i);
@@ -384,8 +405,13 @@ public final class VideoController extends JComponent
           final int zxPolyVideoMode,
           final ZxPolyModule[] modules,
           final int[] pixelRgbBuffer,
-          final boolean flashActive
+          final boolean flashActive,
+          final int lineFrom,
+          final int lineTo
   ) {
+    final int addressFrom = ZX_SCREEN_ROW_OFFSETS[lineFrom];
+    final int addressTo = ZX_SCREEN_ROW_OFFSETS[lineTo];
+
     switch (zxPolyVideoMode) {
       case VIDEOMODE_ZX48_CPU0:
       case VIDEOMODE_ZX48_CPU1:
@@ -396,7 +422,7 @@ public final class VideoController extends JComponent
         int offset = 0;
         int attributeOffset = 0;
 
-        for (int i = 0; i < 0x1800; i++) {
+        for (int i = addressFrom; i < addressTo; i++) {
           if ((i & 0x1F) == 0) {
             // the first byte in the line
             final int y = extractYFromAddress(i);
@@ -461,7 +487,7 @@ public final class VideoController extends JComponent
         final ZxPolyModule module2 = modules[2];
         final ZxPolyModule module3 = modules[3];
 
-        for (int i = 0; i < 0x1800; i++) {
+        for (int i = addressFrom; i < addressTo; i++) {
           if ((i & 0x1F) == 0) {
             // the first byte in the line
             final int y = extractYFromAddress(i);
@@ -725,7 +751,7 @@ public final class VideoController extends JComponent
         final ZxPolyModule module2 = modules[2];
         final ZxPolyModule module3 = modules[3];
 
-        for (int i = 0; i < 0x1800; i++) {
+        for (int i = addressFrom; i < addressTo; i++) {
           if ((i & 0x1F) == 0) {
             // the first byte in the line
             final int y = extractYFromAddress(i);
@@ -1192,14 +1218,16 @@ public final class VideoController extends JComponent
     this.getParent().repaint();
   }
 
-  private void refreshBufferData(final LineRenderMode renderLines, final int videoMode) {
+  private void refreshBufferData(final LineRenderMode renderLines, final int lineFrom, final int lineTo, final int videoMode) {
     switch (videoMode) {
       case VIDEOMODE_ZX48_CPU0: {
         fillDataBufferForZxSpectrum128Mode(
                 renderLines,
                 this.modules,
                 this.bufferImageRgbData,
-                this.board.isFlashActive()
+                this.board.isFlashActive(),
+                lineFrom,
+                lineTo
         );
       }
       break;
@@ -1208,7 +1236,9 @@ public final class VideoController extends JComponent
                 renderLines,
                 this.modules,
                 this.bufferImageRgbData,
-                this.board.isFlashActive()
+                this.board.isFlashActive(),
+                lineFrom,
+                lineTo
         );
       }
       break;
@@ -1218,7 +1248,9 @@ public final class VideoController extends JComponent
                 this.currentVideoMode,
                 this.modules,
                 this.bufferImageRgbData,
-                this.board.isFlashActive()
+                this.board.isFlashActive(),
+                lineFrom,
+                lineTo
         );
       }
       break;
@@ -1333,7 +1365,7 @@ public final class VideoController extends JComponent
       if (this.currentVideoMode != newVideoMode) {
         this.currentVideoMode = newVideoMode;
         log.log(Level.INFO, "mode set: " + decodeVideoModeCode(newVideoMode));
-        refreshBufferData(LineRenderMode.ALL, this.currentVideoMode);
+        refreshBufferData(LineRenderMode.ALL, 0, ZXSCREEN_ROWS, this.currentVideoMode);
       }
     }
   }
@@ -1342,9 +1374,9 @@ public final class VideoController extends JComponent
     this.portFEw = (this.portFEw & 0xFFFFFFF8) | (colorIndex & 0x07);
   }
 
-  public void syncUpdateBuffer(final LineRenderMode renderLines) {
+  public void syncUpdateBuffer(final int lineFrom, final int lineTo, final LineRenderMode renderLines) {
     synchronized (this.bufferImage) {
-      this.refreshBufferData(renderLines, this.currentVideoMode);
+      this.refreshBufferData(renderLines, lineFrom, lineTo, this.currentVideoMode);
     }
   }
 
@@ -1361,7 +1393,8 @@ public final class VideoController extends JComponent
               this.currentVideoMode,
               this.modules,
               this.bufferImageRgbData,
-              this.board.isFlashActive()
+              this.board.isFlashActive(),
+              0, ZXSCREEN_ROWS
       );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
@@ -1375,7 +1408,8 @@ public final class VideoController extends JComponent
               VIDEOMODE_ZX48_CPU0,
               this.modules,
               this.bufferImageRgbData,
-              this.board.isFlashActive()
+              this.board.isFlashActive(),
+              0, ZXSCREEN_ROWS
       );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
@@ -1389,7 +1423,8 @@ public final class VideoController extends JComponent
               VIDEOMODE_ZX48_CPU1,
               this.modules,
               this.bufferImageRgbData,
-              this.board.isFlashActive()
+              this.board.isFlashActive(),
+              0, ZXSCREEN_ROWS
       );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
@@ -1403,7 +1438,7 @@ public final class VideoController extends JComponent
               VIDEOMODE_ZX48_CPU2,
               this.modules,
               this.bufferImageRgbData,
-              this.board.isFlashActive()
+              this.board.isFlashActive(), 0, ZXSCREEN_ROWS
       );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
@@ -1417,13 +1452,13 @@ public final class VideoController extends JComponent
               VIDEOMODE_ZX48_CPU3,
               this.modules,
               this.bufferImageRgbData,
-              this.board.isFlashActive()
+              this.board.isFlashActive(), 0, ZXSCREEN_ROWS
       );
       g.drawImage(this.bufferImage, 0, 0, this);
       g.dispose();
       result.add(buffImage);
 
-      refreshBufferData(LineRenderMode.ALL, VIDEOMODE_ZX48_CPU0);
+      refreshBufferData(LineRenderMode.ALL, 0, ZXSCREEN_ROWS, VIDEOMODE_ZX48_CPU0);
       return result.toArray(EMPTY_ARRAY);
     }
   }
@@ -1607,34 +1642,6 @@ public final class VideoController extends JComponent
 
   public float getZoom() {
     return this.zoom;
-  }
-
-  public int getScrYForZxScr(final int zxY) {
-    final int height = getHeight();
-    final int yoff = (height - this.size.height) / 2;
-    return (zxY * Math.round(this.zoom * 2)) + yoff;
-  }
-
-  public int getZxScrY(final int compoY) {
-    final int height = getHeight();
-    final int yoff = (height - this.size.height) / 2;
-
-    final int result = (compoY - yoff) / Math.round(this.zoom * 2);
-    return Math.max(0x00, Math.min(191, result));
-  }
-
-  public int getZxScrX(final int compoX) {
-    final int width = getWidth();
-    final int xoff = (width - this.size.width) / 2;
-
-    final int result = (compoX - xoff) / Math.round(this.zoom * 2);
-    return Math.max(0x00, Math.min(0xFF, result));
-  }
-
-  public int getScrXForZxScr(final int zxX) {
-    final int width = getWidth();
-    final int xoff = (width - this.size.width) / 2;
-    return (zxX * Math.round(this.zoom * 2)) + xoff;
   }
 
   @Override

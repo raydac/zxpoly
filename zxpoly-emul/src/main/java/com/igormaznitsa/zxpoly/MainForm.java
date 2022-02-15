@@ -207,7 +207,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private final AtomicReference<SpriteCorrectorMainFrame> spriteCorrectorMainFrame = new AtomicReference<>();
   private final ImageIcon sysIcon;
   private final TimingProfile timingProfile;
-  private final int screenBlinkFrameTact;
   private volatile long lastFullScreenEventTime = 0L;
   private volatile boolean turboMode = false;
   private volatile boolean zxKeyboardProcessingAllowed = true;
@@ -296,8 +295,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
-
-    this.screenBlinkFrameTact = AppOptions.getInstance().getScreenBlinkFrameTact();
 
     this.sysIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/sys.png")));
 
@@ -903,6 +900,16 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     long sessionIntCounter = 0;
 
+    final int tstatesPictureStart = this.timingProfile.linesBeforePicture * this.timingProfile.tstatesLine;
+    final int tstatesPictureEnd = tstatesPictureStart + VideoController.ZXSCREEN_ROWS * this.timingProfile.tstatesLine;
+
+    final int tstatesBlink1 = tstatesPictureStart + (64 * this.timingProfile.tstatesLine);
+    final int tstatesBlink2 = tstatesPictureStart + (128 * this.timingProfile.tstatesLine);
+    final int tstatesBlink3 = tstatesPictureEnd;
+
+    int nextBlinkTstates = tstatesBlink1;
+    int blinkIndex = 0;
+
     while (!Thread.currentThread().isInterrupted()) {
       final int prevViFlags = viFlags;
 
@@ -933,6 +940,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             if (!tiStatesForIntExhausted) {
               this.onSlownessDetected(this.timingProfile.tstatesFrame - frameTiStates);
             }
+            nextBlinkTstates = tstatesBlink1;
+            blinkIndex = 0;
             viFlags = 0;
           } else {
             doCpuIntTick = false;
@@ -956,8 +965,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
           frameTiStates = this.board.getFrameTiStates();
 
-          if (frameTiStates >= this.screenBlinkFrameTact) {
+          if (frameTiStates >= nextBlinkTstates) {
             viFlags |= VFLAG_BLINK_SCREEN;
+            if (nextBlinkTstates == 0) {
+              nextBlinkTstates = tstatesBlink2;
+            } else {
+              nextBlinkTstates = tstatesBlink3;
+            }
           }
 
           if (intTickForWallClockReached) {
@@ -994,7 +1008,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         final int changedViFlags = prevViFlags ^ viFlags;
 
         if ((changedViFlags & VFLAG_BLINK_SCREEN) != 0 && (viFlags & VFLAG_BLINK_SCREEN) != 0) {
-          this.blinkScreen(sessionIntCounter);
+          this.blinkScreen(sessionIntCounter, blinkIndex++);
+          if (blinkIndex < 3) {
+            viFlags = 0;
+          }
         }
 
         if (notifyRepaintScreen) {
@@ -1159,11 +1176,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     LOGGER.info("Turbo-mode: " + value);
   }
 
-  private void blinkScreen(final long sessionIntCounter) {
+  private void blinkScreen(final long sessionIntCounter, final int partIndex) {
+    final int start = 64 * partIndex;
+    final int end = start + 64;
     if (this.interlaceScan) {
-      this.board.getVideoController().syncUpdateBuffer((sessionIntCounter & 1) == 0 ? VideoController.LineRenderMode.EVEN : VideoController.LineRenderMode.ODD);
+      this.board.getVideoController().syncUpdateBuffer(start, end, (sessionIntCounter & 1) == 0 ? VideoController.LineRenderMode.EVEN : VideoController.LineRenderMode.ODD);
     } else {
-      this.board.getVideoController().syncUpdateBuffer(VideoController.LineRenderMode.ALL);
+      this.board.getVideoController().syncUpdateBuffer(start, end, VideoController.LineRenderMode.ALL);
     }
   }
 

@@ -1,5 +1,7 @@
 package com.igormaznitsa.zxpoly.components.video.timings;
 
+import com.igormaznitsa.zxpoly.components.video.VideoController;
+
 public enum TimingProfile {
   SPEC128(
           3_546_900,
@@ -22,7 +24,6 @@ public enum TimingProfile {
   public static final int TIMINGSTATE_BORDER = 0x00_0000_00;
   public static final int TIMINGSTATE_PAPER = 0x01_0000_00;
 
-  public static final int ZX_SCREEN_LINES = 192;
   public final int lengthInt;
   public final int lengthNmi;
   public final int clockFreq;
@@ -93,7 +94,7 @@ public enum TimingProfile {
         final int displayOffset = t - this.firstScrByte;
         final int line = displayOffset / this.tstatesLine;
         final int pixel = displayOffset % this.tstatesLine;
-        if (line < TimingProfile.ZX_SCREEN_LINES && pixel < this.tstatesLine) {
+        if (line < VideoController.ZXSCREEN_ROWS && pixel < this.tstatesLine) {
           final int delay = this.contention[pixel % this.contention.length];
           final int attribute = lineAttrOffset[line] + pixel / 4;
           result[t] = TIMINGSTATE_PAPER | (attribute << 8) | delay;
