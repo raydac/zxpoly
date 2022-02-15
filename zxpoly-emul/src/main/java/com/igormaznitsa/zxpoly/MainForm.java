@@ -903,11 +903,11 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     final int tstatesPictureStart = this.timingProfile.linesBeforePicture * this.timingProfile.tstatesLine;
     final int tstatesPictureEnd = tstatesPictureStart + VideoController.ZXSCREEN_ROWS * this.timingProfile.tstatesLine;
 
-    final int tstatesBlink1 = tstatesPictureStart + (64 * this.timingProfile.tstatesLine);
-    final int tstatesBlink2 = tstatesPictureStart + (128 * this.timingProfile.tstatesLine);
-    final int tstatesBlink3 = tstatesPictureEnd;
+    final int tstatesBlinkTop = tstatesPictureStart + (64 * this.timingProfile.tstatesLine);
+    final int tstatesBlinkMiddle = tstatesPictureStart + (128 * this.timingProfile.tstatesLine);
+    final int tstatesBlinkBottom = tstatesPictureEnd;
 
-    int nextBlinkTstates = tstatesBlink1;
+    int nextBlinkTstates = tstatesBlinkTop;
     int blinkIndex = 0;
 
     while (!Thread.currentThread().isInterrupted()) {
@@ -940,7 +940,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             if (!tiStatesForIntExhausted) {
               this.onSlownessDetected(this.timingProfile.tstatesFrame - frameTiStates);
             }
-            nextBlinkTstates = tstatesBlink1;
+            nextBlinkTstates = tstatesBlinkTop;
             blinkIndex = 0;
             viFlags = 0;
           } else {
@@ -968,9 +968,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           if (frameTiStates >= nextBlinkTstates) {
             viFlags |= VFLAG_BLINK_SCREEN;
             if (nextBlinkTstates == 0) {
-              nextBlinkTstates = tstatesBlink2;
+              nextBlinkTstates = tstatesBlinkMiddle;
             } else {
-              nextBlinkTstates = tstatesBlink3;
+              nextBlinkTstates = tstatesBlinkBottom;
             }
           }
 
