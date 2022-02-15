@@ -1280,11 +1280,11 @@ public final class VideoController extends JComponent
   }
 
   private void drawBorder(final Graphics2D g2, final int visibleWidth, final int visibleHeight) {
-    final double sx = (double) visibleWidth / (this.borderImage.getWidth() - (timingProfile.tstatesLeftBorderStart << 1));
+    final double sx = (double) visibleWidth / (this.borderImage.getWidth() - (timingProfile.tstatesBeforeBorderRowStart << 1));
     final double sy = (double) visibleHeight / (this.borderImage.getHeight() - (timingProfile.linesBeforePicture << 1));
 
     g2.drawImage(this.borderImage,
-            (int) (-(timingProfile.tstatesLeftBorderStart << 1) * sx),
+            (int) (-(timingProfile.tstatesBeforeBorderRowStart << 1) * sx),
             (int) (-(timingProfile.linesBeforePicture << 1) * sy),
             (int) (sx * this.borderImage.getWidth()),
             (int) (sy * this.borderImage.getHeight()),

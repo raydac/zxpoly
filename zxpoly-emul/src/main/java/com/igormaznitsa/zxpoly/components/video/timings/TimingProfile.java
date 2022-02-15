@@ -15,6 +15,7 @@ public enum TimingProfile {
           58040,
           16,
           48,
+          26,
           new int[]{6, 5, 4, 3, 2, 1, 0, 0}
   );
 
@@ -35,7 +36,8 @@ public enum TimingProfile {
   public final int lastScrUpdate;
   private final int[] contention;
   public final int linesBeforePicture;
-  public final int tstatesLeftBorderStart;
+  public final int tstatesBeforeBorderRowStart;
+  public final int tstatesBorderWidth;
 
   TimingProfile(
           final int clockFreq,
@@ -48,11 +50,13 @@ public enum TimingProfile {
           final int firstScrByte,
           final int lastScrUpdate,
           final int linesBeforePicture,
-          final int tstatesLeftBorderStart,
+          final int tstatesBeforeBorderRowStart,
+          final int tstatesBorderWidth,
           final int[] contention
   ) {
+    this.tstatesBorderWidth = tstatesBorderWidth;
     this.linesBeforePicture = linesBeforePicture;
-    this.tstatesLeftBorderStart = tstatesLeftBorderStart;
+    this.tstatesBeforeBorderRowStart = tstatesBeforeBorderRowStart;
     this.lengthNmi = lengthNmi;
     this.lengthInt = lengthInt;
     this.tstatesLine = tstatesLine;
