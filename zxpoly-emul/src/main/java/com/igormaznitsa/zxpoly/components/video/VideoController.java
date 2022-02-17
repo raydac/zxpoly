@@ -97,6 +97,13 @@ public final class VideoController extends JComponent
   private static final float SCALE_STEP = 0.025f;
   private static final float SCALE_MIN = 1.0f;
   private static final float SCALE_MAX = 6.0f;
+  private static final int VISIBLE_BORDER_HEIGHT_TOP = 24;
+  private static final int VISIBLE_BORDER_HEIGHT_BOTTOM = 24;
+  private static final int VISIBLE_BORDER_WIDTH_LEFT = 24;
+  private static final int VISIBLE_BORDER_WIDTH_RIGHT = 24;
+  private static final int VISIBLE_ROWS = VISIBLE_BORDER_HEIGHT_TOP + ZXSCREEN_ROWS + VISIBLE_BORDER_HEIGHT_BOTTOM;
+  private static final int VISIBLE_ROWS_X2 = VISIBLE_ROWS << 1;
+  private static final int[] ZX_SCREEN_ROW_OFFSETS = generateZxScreenRowStartOffsets();
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;
   private static volatile boolean gfxHideSameInkPaper = true;
@@ -111,6 +118,9 @@ public final class VideoController extends JComponent
   private final boolean showVkbdApart;
   private final TimingProfile timingProfile;
   private final boolean syncRepaint;
+  private final Dimension baseComponentSize;
+  private final BufferedImage borderImage;
+  private final int[] borderImageRgbData;
   private volatile int currentVideoMode = VIDEOMODE_ZXPOLY_256x192_FLASH_MASK;
   private Dimension size = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
   private volatile float zoom = 1.0f;
@@ -123,20 +133,58 @@ public final class VideoController extends JComponent
   private Window vkbdWindow = null;
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
-
-  private static final int VISIBLE_BORDER_HEIGHT_TOP = 24;
-  private static final int VISIBLE_BORDER_HEIGHT_BOTTOM = 24;
-  private static final int VISIBLE_BORDER_WIDTH_LEFT = 24;
-  private static final int VISIBLE_BORDER_WIDTH_RIGHT = 24;
-  private static final int VISIBLE_ROWS = VISIBLE_BORDER_HEIGHT_TOP + ZXSCREEN_ROWS + VISIBLE_BORDER_HEIGHT_BOTTOM;
-  private static final int VISIBLE_ROWS_X2 = VISIBLE_ROWS << 1;
-
-  private final Dimension baseComponentSize;
-  private final BufferedImage borderImage;
-  private final int[] borderImageRgbData;
   private int stepStartTStates = 0;
+  private int preStepBorderColor;
 
-  private static final int[] ZX_SCREEN_ROW_OFFSETS = generateZxScreenRowStartOffsets();
+  public VideoController(final TimingProfile timingProfile, final boolean syncRepaint, final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
+    super();
+
+    this.syncRepaint = syncRepaint;
+    this.timingProfile = timingProfile;
+
+    this.baseComponentSize = new Dimension(SCREEN_WIDTH + ((VISIBLE_BORDER_WIDTH_LEFT + VISIBLE_BORDER_WIDTH_RIGHT) << 1), VISIBLE_ROWS_X2);
+
+    this.setFocusTraversalKeysEnabled(false);
+
+    this.vkbdContainer = Objects.requireNonNull(vkbdContainer);
+
+    this.showVkbdApart = AppOptions.getInstance().isVkbdApart();
+
+    this.board = board;
+    this.modules = board.getModules();
+
+    this.bufferImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
+    this.bufferImage.setAccelerationPriority(1.0f);
+    this.bufferImageRgbData =
+            ((DataBufferInt) this.bufferImage.getRaster().getDataBuffer()).getData();
+
+    this.borderImage = new BufferedImage(this.timingProfile.tstatesLine, this.timingProfile.scanLines, BufferedImage.TYPE_INT_RGB);
+    this.borderImage.setAccelerationPriority(1.0f);
+    this.borderImageRgbData =
+            ((DataBufferInt) this.borderImage.getRaster().getDataBuffer()).getData();
+
+    this.addMouseWheelListener(this);
+    this.addMouseListener(new MouseAdapter() {
+
+      @Override
+      public void mousePressed(final MouseEvent e) {
+        if (!e.isConsumed() && vkbdWindow == null && !mouseTrapActive && showVkb) {
+          vkbdRender.setLastMouseEvent(e);
+          e.consume();
+        }
+      }
+
+      @Override
+      public void mouseReleased(final MouseEvent e) {
+        if (!e.isConsumed() && vkbdWindow == null && !mouseTrapActive && showVkb) {
+          vkbdRender.setLastMouseEvent(e);
+          e.consume();
+        }
+      }
+    });
+
+    this.setDoubleBuffered(false);
+  }
 
   private static int[] generateZxScreenRowStartOffsets() {
     final int[] result = new int[ZXSCREEN_ROWS + 1];
@@ -989,7 +1037,6 @@ public final class VideoController extends JComponent
     }
   }
 
-
   @Override
   public void init() {
     this.vkbdRender = new VirtualKeyboardRender(this.board, this.vkbdContainer);
@@ -1146,56 +1193,6 @@ public final class VideoController extends JComponent
         this.updateZoom(newZoom);
       }
     }
-  }
-
-  public VideoController(final TimingProfile timingProfile, final boolean syncRepaint, final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
-    super();
-
-    this.syncRepaint = syncRepaint;
-    this.timingProfile = timingProfile;
-
-    this.baseComponentSize = new Dimension(SCREEN_WIDTH + ((VISIBLE_BORDER_WIDTH_LEFT + VISIBLE_BORDER_WIDTH_RIGHT) << 1), VISIBLE_ROWS_X2);
-
-    this.setFocusTraversalKeysEnabled(false);
-
-    this.vkbdContainer = Objects.requireNonNull(vkbdContainer);
-
-    this.showVkbdApart = AppOptions.getInstance().isVkbdApart();
-
-    this.board = board;
-    this.modules = board.getModules();
-
-    this.bufferImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
-    this.bufferImage.setAccelerationPriority(1.0f);
-    this.bufferImageRgbData =
-            ((DataBufferInt) this.bufferImage.getRaster().getDataBuffer()).getData();
-
-    this.borderImage = new BufferedImage(this.timingProfile.tstatesLine, this.timingProfile.scanLines, BufferedImage.TYPE_INT_RGB);
-    this.borderImage.setAccelerationPriority(1.0f);
-    this.borderImageRgbData =
-            ((DataBufferInt) this.borderImage.getRaster().getDataBuffer()).getData();
-
-    this.addMouseWheelListener(this);
-    this.addMouseListener(new MouseAdapter() {
-
-      @Override
-      public void mousePressed(final MouseEvent e) {
-        if (!e.isConsumed() && vkbdWindow == null && !mouseTrapActive && showVkb) {
-          vkbdRender.setLastMouseEvent(e);
-          e.consume();
-        }
-      }
-
-      @Override
-      public void mouseReleased(final MouseEvent e) {
-        if (!e.isConsumed() && vkbdWindow == null && !mouseTrapActive && showVkb) {
-          vkbdRender.setLastMouseEvent(e);
-          e.consume();
-        }
-      }
-    });
-
-    this.setDoubleBuffered(false);
   }
 
   @Override
@@ -1621,6 +1618,7 @@ public final class VideoController extends JComponent
     }
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
     this.stepStartTStates = tstatesIntReached ? -1 : frameTiStates;
+    this.preStepBorderColor = this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
   }
 
   @Override
@@ -1630,7 +1628,7 @@ public final class VideoController extends JComponent
 
   @Override
   public void postStep(int spentTstates) {
-    final int borderColor = this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
+    final int borderColor = this.preStepBorderColor;
     int offset = this.stepStartTStates;
     if (offset >= 0) {
       while (spentTstates > 0 && offset < this.borderImageRgbData.length) {
