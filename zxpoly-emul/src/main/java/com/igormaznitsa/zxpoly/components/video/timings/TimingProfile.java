@@ -7,14 +7,13 @@ public enum TimingProfile {
           3_546_900,
           36,
           16,
-          70908,
-          228,
-          48,
-          311,
-          14362,
-          58040,
-          16,
-          48,
+          8,
+          55,
+          56,
+          128,
+          26,
+          24,
+          24,
           26,
           new int[]{6, 5, 4, 3, 2, 1, 0, 0}
   );
@@ -29,44 +28,55 @@ public enum TimingProfile {
   public final int lengthNmi;
   public final int clockFreq;
   public final int tstatesFrame;
-  public final int tstatesLine;
-  public final int upBorderWidth;
+  private static final int ZX_SCREEN_LINES = 192;
   public final int scanLines;
-  public final int firstScrByte;
-  public final int lastScrUpdate;
+  public final int tstatesPerLine;
+  public final int tstatesStartScreen;
+
   private final int[] contention;
-  public final int linesBeforePicture;
-  public final int tstatesBeforeBorderRowStart;
-  public final int tstatesBorderWidth;
+  public final int tstatesFirstAfterScreen;
+  public final int tstatesVideo;
+  public final int tstatesBorderLeft;
+  public final int tstatesBorderRight;
+  public final int tstatesHSync;
+  public final int tstatesBlank;
+  public final int linesBorderTop;
+  public final int linesBorderBottom;
+  public final int linesVSync;
 
   TimingProfile(
           final int clockFreq,
           final int lengthInt,
           final int lengthNmi,
-          final int tstatesFrame,
-          final int tstatesLine,
-          final int upBorderWidth,
-          final int scanLines,
-          final int firstScrByte,
-          final int lastScrUpdate,
-          final int linesBeforePicture,
-          final int tstatesBeforeBorderRowStart,
-          final int tstatesBorderWidth,
+          final int linesVsync,
+          final int linesBorderTop,
+          final int linesBorderBottom,
+          final int tstatesVideo,
+          final int tstatesBorderLeft,
+          final int tstatesHSync,
+          final int tstatesBlank,
+          final int tstatesBorderRight,
           final int[] contention
   ) {
-    this.tstatesBorderWidth = tstatesBorderWidth;
-    this.linesBeforePicture = linesBeforePicture;
-    this.tstatesBeforeBorderRowStart = tstatesBeforeBorderRowStart;
     this.lengthNmi = lengthNmi;
     this.lengthInt = lengthInt;
-    this.tstatesLine = tstatesLine;
-    this.tstatesFrame = tstatesFrame;
-    this.upBorderWidth = upBorderWidth;
-    this.scanLines = scanLines;
-    this.firstScrByte = firstScrByte;
-    this.lastScrUpdate = lastScrUpdate;
     this.clockFreq = clockFreq;
     this.contention = contention;
+
+    this.linesVSync = linesVsync;
+    this.scanLines = linesVsync + linesBorderTop + ZX_SCREEN_LINES + linesBorderBottom;
+    this.tstatesPerLine = tstatesVideo + tstatesBorderLeft + tstatesHSync + tstatesBlank + tstatesBorderRight;
+    this.tstatesFrame = this.tstatesPerLine * this.scanLines;
+    this.tstatesStartScreen = this.tstatesPerLine * (linesVsync + linesBorderTop);
+    this.tstatesFirstAfterScreen = this.tstatesStartScreen + ((ZX_SCREEN_LINES - 1) * this.tstatesPerLine) + tstatesVideo;
+
+    this.tstatesVideo = tstatesVideo;
+    this.tstatesHSync = tstatesHSync;
+    this.tstatesBlank = tstatesBlank;
+    this.tstatesBorderLeft = tstatesBorderLeft;
+    this.tstatesBorderRight = tstatesBorderRight;
+    this.linesBorderBottom = linesBorderBottom;
+    this.linesBorderTop = linesBorderTop;
   }
 
   /**
@@ -92,13 +102,13 @@ public enum TimingProfile {
     final int[] result = new int[this.tstatesFrame];
 
     for (int t = 0; t < this.tstatesFrame; t++) {
-      if (t < this.firstScrByte) {
+      if (t < this.tstatesStartScreen) {
         result[t] = TIMINGSTATE_BORDER;
       } else {
-        final int displayOffset = t - this.firstScrByte;
-        final int line = displayOffset / this.tstatesLine;
-        final int pixel = displayOffset % this.tstatesLine;
-        if (line < VideoController.ZXSCREEN_ROWS && pixel < this.tstatesLine) {
+        final int displayOffset = t - this.tstatesStartScreen;
+        final int line = displayOffset / this.tstatesPerLine;
+        final int pixel = displayOffset % this.tstatesPerLine;
+        if (line < VideoController.ZXSCREEN_ROWS && pixel < this.tstatesPerLine) {
           final int delay = this.contention[pixel % this.contention.length];
           final int attribute = lineAttrOffset[line] + pixel / 4;
           result[t] = TIMINGSTATE_PAPER | (attribute << 8) | delay;

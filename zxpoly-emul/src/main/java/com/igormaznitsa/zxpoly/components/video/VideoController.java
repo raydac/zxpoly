@@ -97,10 +97,10 @@ public final class VideoController extends JComponent
   private static final float SCALE_STEP = 0.025f;
   private static final float SCALE_MIN = 1.0f;
   private static final float SCALE_MAX = 6.0f;
-  private static final int VISIBLE_BORDER_HEIGHT_TOP = 24;
-  private static final int VISIBLE_BORDER_HEIGHT_BOTTOM = 24;
-  private static final int VISIBLE_BORDER_WIDTH_LEFT = 24;
-  private static final int VISIBLE_BORDER_WIDTH_RIGHT = 24;
+  private static final int VISIBLE_BORDER_HEIGHT_TOP = 55;
+  private static final int VISIBLE_BORDER_HEIGHT_BOTTOM = 56;
+  private static final int VISIBLE_BORDER_WIDTH_LEFT = 26 << 1;
+  private static final int VISIBLE_BORDER_WIDTH_RIGHT = 26 << 1;
   private static final int VISIBLE_ROWS = VISIBLE_BORDER_HEIGHT_TOP + ZXSCREEN_ROWS + VISIBLE_BORDER_HEIGHT_BOTTOM;
   private static final int VISIBLE_ROWS_X2 = VISIBLE_ROWS << 1;
   private static final int[] ZX_SCREEN_ROW_OFFSETS = generateZxScreenRowStartOffsets();
@@ -158,7 +158,10 @@ public final class VideoController extends JComponent
     this.bufferImageRgbData =
             ((DataBufferInt) this.bufferImage.getRaster().getDataBuffer()).getData();
 
-    this.borderImage = new BufferedImage(this.timingProfile.tstatesLine, this.timingProfile.scanLines, BufferedImage.TYPE_INT_RGB);
+    this.borderImage = new BufferedImage(
+            this.timingProfile.tstatesBorderLeft + this.timingProfile.tstatesVideo + this.timingProfile.tstatesBorderRight,
+            this.timingProfile.linesBorderTop + ZXSCREEN_ROWS + this.timingProfile.linesBorderBottom,
+            BufferedImage.TYPE_INT_RGB);
     this.borderImage.setAccelerationPriority(1.0f);
     this.borderImageRgbData =
             ((DataBufferInt) this.borderImage.getRaster().getDataBuffer()).getData();
@@ -1277,12 +1280,12 @@ public final class VideoController extends JComponent
   }
 
   private void drawBorder(final Graphics2D g2, final int visibleWidth, final int visibleHeight) {
-    final double sx = (double) visibleWidth / (this.borderImage.getWidth() - (timingProfile.tstatesBeforeBorderRowStart << 1));
-    final double sy = (double) visibleHeight / (this.borderImage.getHeight() - (timingProfile.linesBeforePicture << 1));
+    final double sx = (double) visibleWidth / this.borderImage.getWidth();
+    final double sy = (double) visibleHeight / this.borderImage.getHeight();
 
     g2.drawImage(this.borderImage,
-            (int) (-(timingProfile.tstatesBeforeBorderRowStart << 1) * sx),
-            (int) (-(timingProfile.linesBeforePicture << 1) * sy),
+            0,
+            0,
             (int) (sx * this.borderImage.getWidth()),
             (int) (sy * this.borderImage.getHeight()),
             null);
@@ -1630,9 +1633,29 @@ public final class VideoController extends JComponent
   public void postStep(int spentTstates) {
     final int borderColor = this.preStepBorderColor;
     int offset = this.stepStartTStates;
+
+    final int leftBorderTact = this.timingProfile.tstatesVideo + this.timingProfile.tstatesBorderRight + this.timingProfile.tstatesHSync + this.timingProfile.tstatesBlank;
+
     if (offset >= 0) {
-      while (spentTstates > 0 && offset < this.borderImageRgbData.length) {
-        this.borderImageRgbData[offset++] = borderColor;
+      while (spentTstates > 0 && offset < this.timingProfile.tstatesFrame) {
+        final int line = offset / this.timingProfile.tstatesPerLine - this.timingProfile.linesVSync;
+        final int lineTact = offset % this.timingProfile.tstatesPerLine;
+
+        if (line >= 0) {
+          final int rowStart = line * this.borderImage.getWidth();
+          if (lineTact < this.timingProfile.tstatesVideo) {
+            // screen
+            this.borderImageRgbData[rowStart + this.timingProfile.tstatesBorderLeft + lineTact] = borderColor;
+          } else if (lineTact < this.timingProfile.tstatesVideo + this.timingProfile.tstatesBorderRight) {
+            // border right
+            this.borderImageRgbData[rowStart + this.timingProfile.tstatesBorderLeft + lineTact] = borderColor;
+          } else if (lineTact >= leftBorderTact) {
+            // border left
+            this.borderImageRgbData[rowStart + (lineTact - leftBorderTact)] = borderColor;
+          }
+        }
+
+        offset++;
         spentTstates--;
       }
     }
