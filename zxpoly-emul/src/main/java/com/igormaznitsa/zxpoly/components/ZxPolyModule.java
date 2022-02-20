@@ -52,8 +52,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   private final byte[] gfxRom;
   private final boolean trdosEnabled;
   private final TimingProfile timingProfile;
-  private int intTiStatesCounter;
-  private int nmiTiStatesCounter;
+  private int intTiStatesCounter = -1;
+  private int nmiTiStatesCounter = -1;
   private int lastM1Address;
   private volatile boolean gfxPtrFromMainCpu = false;
   private boolean activeRegisterReading;
@@ -307,9 +307,9 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     }
 
     this.intTiStatesCounter =
-            doInt && this.intTiStatesCounter == 0 ?
+            doInt && this.intTiStatesCounter < 0 ?
                     this.timingProfile.lengthInt : this.intTiStatesCounter;
-    this.nmiTiStatesCounter = doNmi && this.nmiTiStatesCounter == 0 ?
+    this.nmiTiStatesCounter = doNmi && this.nmiTiStatesCounter < 0 ?
             this.timingProfile.lengthNmi : this.nmiTiStatesCounter;
 
     sigReset = signalReset || (this.localResetCounter > 0) ? 0 : Z80.SIGNAL_IN_nRESET;
@@ -321,24 +321,19 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     final int oldCpuState = this.cpu.getState();
     final int cpuBusSignals =
-            sigReset | (this.intTiStatesCounter != 0 && this.intTiStatesCounter <= this.timingProfile.lengthInt ? 0 : Z80.SIGNAL_IN_nINT)
-                    | sigWait | (this.nmiTiStatesCounter != 0 && this.nmiTiStatesCounter <= this.timingProfile.lengthNmi ? 0 : Z80.SIGNAL_IN_nNMI);
+            sigReset | sigWait
+                    | (this.intTiStatesCounter >= 0 && this.intTiStatesCounter <= this.timingProfile.lengthInt ? 0 : Z80.SIGNAL_IN_nINT)
+                    | (this.nmiTiStatesCounter >= 0 && this.nmiTiStatesCounter <= this.timingProfile.lengthNmi ? 0 : Z80.SIGNAL_IN_nNMI);
 
     this.cpu.step(this.moduleIndex, cpuBusSignals);
     final int spentTiStates = this.cpu.getStepTstates();
 
-    if (this.nmiTiStatesCounter > 0) {
+    if (this.nmiTiStatesCounter >= 0) {
       this.nmiTiStatesCounter -= spentTiStates;
-      if (this.nmiTiStatesCounter == 0) this.nmiTiStatesCounter = -1;
-    } else if (this.nmiTiStatesCounter < 0) {
-      this.nmiTiStatesCounter = 0;
     }
 
-    if (this.intTiStatesCounter > 0) {
+    if (this.intTiStatesCounter >= 0) {
       this.intTiStatesCounter -= spentTiStates;
-      if (this.intTiStatesCounter == 0) this.intTiStatesCounter = -1;
-    } else if (this.intTiStatesCounter < 0) {
-      this.intTiStatesCounter = 0;
     }
 
     final int newCpuState = this.cpu.getState();
@@ -1008,8 +1003,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   private void setStateForSystemReset() {
     logger.info("Reset");
-    this.intTiStatesCounter = 0;
-    this.nmiTiStatesCounter = 0;
+    this.intTiStatesCounter = -1;
+    this.nmiTiStatesCounter = -1;
     this.port7FFD.set(0);
     this.trdosRomActive = false;
     this.registerReadingCounter = 0;

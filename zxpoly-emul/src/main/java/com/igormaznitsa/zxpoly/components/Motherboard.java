@@ -21,6 +21,7 @@ import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.snd.*;
+import com.igormaznitsa.zxpoly.components.video.BorderSize;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardDecoration;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
@@ -30,7 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
-import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.*;
+import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.UlaTact.*;
 import static java.lang.Math.min;
 
 @SuppressWarnings({"unused", "NonAtomicOperationOnVolatileField"})
@@ -81,7 +82,7 @@ public final class Motherboard implements ZxPolyConstants {
     return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
   }
 
-  private final int[] memoryTimings;
+  private final TimingProfile.UlaTact[] memoryTimings;
   private final boolean attributePortFf;
 
   public Motherboard(
@@ -109,7 +110,7 @@ public final class Motherboard implements ZxPolyConstants {
       ioDevices.add(this.modules[i]);
     }
 
-    this.memoryTimings = timingProfile.makeTimeFrameDelays();
+    this.memoryTimings = timingProfile.makeUlaFrame();
 
     this.contendedRam = contendedRam;
     this.boardMode = boardMode;
@@ -125,7 +126,7 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.keyboard = new KeyboardKempstonAndTapeIn(timingProfile, this, allowKempstonMouse);
     ioDevices.add(keyboard);
-    this.video = new VideoController(timingProfile, syncRepaint, this, vkbdContainer);
+    this.video = new VideoController(BorderSize.FULL, timingProfile, syncRepaint, this, vkbdContainer);
     ioDevices.add(video);
     ioDevices.add(new KempstonMouse(this));
 
@@ -719,12 +720,21 @@ public final class Motherboard implements ZxPolyConstants {
 
       if (result < 0) {
         if (this.attributePortFf && (port & 1) != 0) {
-          // all IO devices in Z state, some simulation of "port FF"
           if (this.frameTiStatesCounter < this.timingProfile.tstatesFrame) {
-            final int ramState = this.memoryTimings[this.frameTiStatesCounter];
-            if ((ramState & TIMINGSTATE_MASK_TYPE) == TIMINGSTATE_PAPER) {
-              final int attrOffset = (ramState & TIMINGSTATE_MASK_ATTR) >> 8;
-              result = this.modules[0].readVideo(attrOffset);
+            final TimingProfile.UlaTact ramState = this.memoryTimings[this.frameTiStatesCounter];
+            switch (ramState.type) {
+              case TYPE_BORDER_FETCH_B1:
+              case TYPE_SHIFT1_AND_FETCH_B2:
+              case TYPE_SHIFT2_AND_FETCH_B1: {
+                result = this.modules[0].readAddress(ramState.addressPixel);
+              }
+              break;
+              case TYPE_BORDER_FETCH_A1:
+              case TYPE_SHIFT1_AND_FETCH_A2:
+              case TYPE_SHIFT2_AND_FETCH_A1: {
+                result = this.modules[0].readAddress(ramState.addressAttribute);
+              }
+              break;
             }
           }
         }
@@ -736,7 +746,7 @@ public final class Motherboard implements ZxPolyConstants {
   int getContendedDelay(final int port7FFD, final int address) {
     int result = 0;
     if (this.contendedRam && isContended(address, port7FFD)) {
-      result = this.frameTiStatesCounter < this.timingProfile.tstatesFrame ? this.memoryTimings[this.frameTiStatesCounter] & TIMINGSTATE_MASK_TIME : 0;
+      result = this.frameTiStatesCounter < this.timingProfile.tstatesFrame ? this.memoryTimings[this.frameTiStatesCounter].contention : 0;
     }
     return result;
   }

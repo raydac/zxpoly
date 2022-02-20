@@ -97,12 +97,6 @@ public final class VideoController extends JComponent
   private static final float SCALE_STEP = 0.025f;
   private static final float SCALE_MIN = 1.0f;
   private static final float SCALE_MAX = 6.0f;
-  private static final int VISIBLE_BORDER_HEIGHT_TOP = 55;
-  private static final int VISIBLE_BORDER_HEIGHT_BOTTOM = 56;
-  private static final int VISIBLE_BORDER_WIDTH_LEFT = 26 << 1;
-  private static final int VISIBLE_BORDER_WIDTH_RIGHT = 26 << 1;
-  private static final int VISIBLE_ROWS = VISIBLE_BORDER_HEIGHT_TOP + ZXSCREEN_ROWS + VISIBLE_BORDER_HEIGHT_BOTTOM;
-  private static final int VISIBLE_ROWS_X2 = VISIBLE_ROWS << 1;
   private static final int[] ZX_SCREEN_ROW_OFFSETS = generateZxScreenRowStartOffsets();
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;
@@ -110,6 +104,7 @@ public final class VideoController extends JComponent
   private static volatile int gfxUpColorsMixed = 64;
   private static volatile int gfxDownColorsMixed = 0;
   private static volatile int[] gfxPrerenderedBack = null;
+  private final BorderSize borderSize;
   private final VirtualKeyboardDecoration vkbdContainer;
   private final Motherboard board;
   private final BufferedImage bufferImage;
@@ -136,18 +131,29 @@ public final class VideoController extends JComponent
   private int stepStartTStates = 0;
   private int preStepBorderColor;
 
-  public VideoController(final TimingProfile timingProfile, final boolean syncRepaint, final Motherboard board, final VirtualKeyboardDecoration vkbdContainer) {
+  public VideoController(
+          final BorderSize borderSize,
+          final TimingProfile timingProfile,
+          final boolean syncRepaint,
+          final Motherboard board,
+          final VirtualKeyboardDecoration vkbdContainer) {
     super();
+
+    this.borderSize = borderSize;
 
     this.syncRepaint = syncRepaint;
     this.timingProfile = timingProfile;
 
-    this.baseComponentSize = new Dimension(SCREEN_WIDTH + ((VISIBLE_BORDER_WIDTH_LEFT + VISIBLE_BORDER_WIDTH_RIGHT) << 1), VISIBLE_ROWS_X2);
+    this.baseComponentSize = new Dimension(
+            SCREEN_WIDTH + (this.borderSize.leftPixels < 0 ? this.timingProfile.tstatesPerBorderLeft << 2 : this.borderSize.leftPixels)
+                    + (this.borderSize.rightPixels < 0 ? this.timingProfile.tstatesPerBorderRight << 2 : this.borderSize.rightPixels),
+            SCREEN_HEIGHT +
+                    (this.borderSize.topPixels < 0 ? this.timingProfile.linesBorderTop << 1 : this.borderSize.topPixels)
+                    + (this.borderSize.bottomPixels < 0 ? this.timingProfile.linesBorderBottom << 1 : this.borderSize.bottomPixels));
 
     this.setFocusTraversalKeysEnabled(false);
 
     this.vkbdContainer = Objects.requireNonNull(vkbdContainer);
-
     this.showVkbdApart = AppOptions.getInstance().isVkbdApart();
 
     this.board = board;
@@ -159,7 +165,7 @@ public final class VideoController extends JComponent
             ((DataBufferInt) this.bufferImage.getRaster().getDataBuffer()).getData();
 
     this.borderImage = new BufferedImage(
-            this.timingProfile.tstatesBorderLeft + this.timingProfile.tstatesVideo + this.timingProfile.tstatesBorderRight,
+            this.timingProfile.tstatesPerBorderLeft + this.timingProfile.tstatesPerVideo + this.timingProfile.tstatesPerBorderRight,
             this.timingProfile.linesBorderTop + ZXSCREEN_ROWS + this.timingProfile.linesBorderBottom,
             BufferedImage.TYPE_INT_RGB);
     this.borderImage.setAccelerationPriority(1.0f);
@@ -1212,7 +1218,7 @@ public final class VideoController extends JComponent
   private void updateZoom(final float value) {
     this.zoom = value;
     this.size = new Dimension(Math.round(SCREEN_WIDTH * value),
-            Math.round(VISIBLE_ROWS_X2 * value));
+            Math.round(SCREEN_HEIGHT * value));
     this.repaint();
     this.getParent().revalidate();
     this.getParent().repaint();
@@ -1280,15 +1286,47 @@ public final class VideoController extends JComponent
   }
 
   private void drawBorder(final Graphics2D g2, final int visibleWidth, final int visibleHeight) {
-    final double sx = (double) visibleWidth / this.borderImage.getWidth();
-    final double sy = (double) visibleHeight / this.borderImage.getHeight();
+    switch (this.borderSize) {
+      case NONE: {
+        g2.setColor(this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]));
+        g2.fillRect(0, 0, visibleWidth, visibleHeight);
+      }
+      break;
+      case FULL: {
+        final int dx = this.borderImage.getWidth();
+        final int dy = this.borderImage.getHeight();
 
-    g2.drawImage(this.borderImage,
-            0,
-            0,
-            (int) (sx * this.borderImage.getWidth()),
-            (int) (sy * this.borderImage.getHeight()),
-            null);
+        final double sx = (double) visibleWidth / dx;
+        final double sy = (double) visibleHeight / dy;
+
+        synchronized (this.borderImageRgbData) {
+          g2.drawImage(this.borderImage,
+                  0,
+                  0,
+                  (int) (sx * this.borderImage.getWidth()),
+                  (int) (sy * this.borderImage.getHeight()),
+                  null);
+        }
+      }
+      break;
+      default: {
+        final int dx = this.timingProfile.tstatesPerVideo + this.borderSize.leftPixels + this.borderSize.rightPixels;
+        final int dy = ZXSCREEN_ROWS + this.borderSize.topPixels + this.borderSize.bottomPixels;
+
+        final double sx = (double) visibleWidth / dx;
+        final double sy = (double) visibleHeight / dy;
+
+        synchronized (this.borderImageRgbData) {
+          g2.drawImage(this.borderImage,
+                  -(int) ((this.borderImage.getWidth() - dx) * sx),
+                  -(int) ((this.borderImage.getHeight() - dy) * sy),
+                  (int) (sx * this.borderImage.getWidth()),
+                  (int) (sy * this.borderImage.getHeight()),
+                  null);
+        }
+      }
+      break;
+    }
   }
 
   @Override
@@ -1301,7 +1339,7 @@ public final class VideoController extends JComponent
     final int visibleHeight = bounds.height;
 
     final int screenOffsetX = (visibleWidth - this.size.width) / 2;
-    final int screenOffsetY = Math.round(this.zoom * (VISIBLE_BORDER_HEIGHT_TOP << 1));
+    final int screenOffsetY = (visibleHeight - this.size.height) / 2;
 
     if (screenOffsetX > 0 || screenOffsetY > 0) this.drawBorder(g2, visibleWidth, visibleHeight);
     this.drawBuffer(g2, screenOffsetX, screenOffsetY, this.zoom, this.tvFilterChain);
@@ -1632,31 +1670,23 @@ public final class VideoController extends JComponent
   @Override
   public void postStep(int spentTstates) {
     final int borderColor = this.preStepBorderColor;
-    int offset = this.stepStartTStates;
 
-    final int leftBorderTact = this.timingProfile.tstatesVideo + this.timingProfile.tstatesBorderRight + this.timingProfile.tstatesHSync + this.timingProfile.tstatesBlank;
+    synchronized (this.borderImageRgbData) {
+      int offset = this.stepStartTStates;
+      if (offset >= 0) {
+        while (spentTstates > 0 && offset < this.timingProfile.tstatesFrame) {
+          final int borderLine = offset / this.timingProfile.tstatesPerLine - this.timingProfile.linesPerVSync;
+          final int inLineTact = offset % this.timingProfile.tstatesPerLine;
 
-    if (offset >= 0) {
-      while (spentTstates > 0 && offset < this.timingProfile.tstatesFrame) {
-        final int line = offset / this.timingProfile.tstatesPerLine - this.timingProfile.linesVSync;
-        final int lineTact = offset % this.timingProfile.tstatesPerLine;
-
-        if (line >= 0) {
-          final int rowStart = line * this.borderImage.getWidth();
-          if (lineTact < this.timingProfile.tstatesVideo) {
-            // screen
-            this.borderImageRgbData[rowStart + this.timingProfile.tstatesBorderLeft + lineTact] = borderColor;
-          } else if (lineTact < this.timingProfile.tstatesVideo + this.timingProfile.tstatesBorderRight) {
-            // border right
-            this.borderImageRgbData[rowStart + this.timingProfile.tstatesBorderLeft + lineTact] = borderColor;
-          } else if (lineTact >= leftBorderTact) {
-            // border left
-            this.borderImageRgbData[rowStart + (lineTact - leftBorderTact)] = borderColor;
+          if (borderLine >= 0) {
+            final int borderRowOffset = borderLine * this.borderImage.getWidth();
+            if (inLineTact >= this.timingProfile.tstatesPerHBlank + this.timingProfile.tstatesPerHSync)
+              this.borderImageRgbData[borderRowOffset + inLineTact - this.timingProfile.tstatesPerHBlank - this.timingProfile.tstatesPerHSync] = borderColor;
           }
-        }
 
-        offset++;
-        spentTstates--;
+          offset++;
+          spentTstates--;
+        }
       }
     }
   }
@@ -1673,8 +1703,8 @@ public final class VideoController extends JComponent
   public void zoomForSize(final Rectangle rectangle) {
     final float width = (float) rectangle.width - (rectangle.width * SCALE_STEP);
     final float height = (float) rectangle.height;
-    final float maxZoomW = (int) ((width / SCREEN_WIDTH) / SCALE_STEP) * SCALE_STEP;
-    final float maxZoomH = (int) ((height / VISIBLE_ROWS_X2) / SCALE_STEP) * SCALE_STEP;
+    final float maxZoomW = (int) ((width / baseComponentSize.width) / SCALE_STEP) * SCALE_STEP;
+    final float maxZoomH = (int) ((height / baseComponentSize.height) / SCALE_STEP) * SCALE_STEP;
 
     updateZoom(Math.max(SCALE_MIN, Math.min(SCALE_MAX, Math.min(maxZoomH, maxZoomW))));
   }
