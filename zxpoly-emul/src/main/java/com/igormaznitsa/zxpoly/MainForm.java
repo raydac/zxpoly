@@ -62,7 +62,6 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -267,7 +266,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private JMenu menuService;
   private JMenuItem menuServiceGameControllers;
   private JMenuItem menuServiceSaveScreen;
-  private JMenuItem menuServiceSaveScreenAllVRAM;
   private JMenuItem menuServiceMakeSnapshot;
   private JMenuItem menuServiceStartEditor;
   private JMenu menuTap;
@@ -1730,7 +1728,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuFileMagic = new JMenuItem();
     menuServiceSaveScreen = new JMenuItem();
     menuServiceGameControllers = new JMenuItem();
-    menuServiceSaveScreenAllVRAM = new JMenuItem();
     menuActionAnimatedGIF = new JMenuItem();
     menuServiceMakeSnapshot = new JMenuItem();
     menuTapExportAs = new JMenu();
@@ -2108,13 +2105,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuServiceSaveScreen.setText("Make Screenshot");
     menuServiceSaveScreen.addActionListener(this::menuServiceSaveScreenActionPerformed);
     menuService.add(menuServiceSaveScreen);
-
-    menuServiceSaveScreenAllVRAM.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/photom.png")))); // NOI18N
-    menuServiceSaveScreenAllVRAM.setText("Make Screenshot of all VRAM");
-    menuServiceSaveScreenAllVRAM
-            .addActionListener(this::menuServiceSaveScreenAllVRAMActionPerformed);
-    menuService.add(menuServiceSaveScreenAllVRAM);
 
     menuActionAnimatedGIF.setIcon(new ImageIcon(
             Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_gif.png")))); // NOI18N
@@ -2698,42 +2688,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       this.setSoundActivate(false);
     } else {
       deactivateTracerForCPUModule(3);
-    }
-  }
-
-  private void menuServiceSaveScreenAllVRAMActionPerformed(ActionEvent evt) {
-    this.suspendSteps();
-    try {
-      final RenderedImage[] images =
-              this.board.getVideoController().renderAllModuleVideoMemoryInZx48Mode();
-
-      final BufferedImage result =
-              new BufferedImage(images[0].getWidth() * images.length, images[0].getHeight(),
-                      BufferedImage.TYPE_INT_RGB);
-      final Graphics g = result.getGraphics();
-      for (int i = 0; i < images.length; i++) {
-        g.drawImage((Image) images[i], i * images[0].getWidth(), 0, null);
-      }
-      g.dispose();
-
-      final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-      ImageIO.write(result, "png", buffer);
-      File pngFile = chooseFileForSave("Save screenshot", lastScreenshotFolder, null, true,
-              new PngFileFilter());
-      if (pngFile != null) {
-        final String fileName = pngFile.getName();
-        if (!fileName.contains(".")) {
-          pngFile = new File(pngFile.getParentFile(), fileName + ".png");
-        }
-        this.lastScreenshotFolder = pngFile.getParentFile();
-        FileUtils.writeByteArrayToFile(pngFile, buffer.toByteArray());
-      }
-    } catch (IOException ex) {
-      showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error",
-              JOptionPane.ERROR_MESSAGE);
-      LOGGER.log(Level.SEVERE, "Can't make screenshot", ex);
-    } finally {
-      this.resumeSteps();
     }
   }
 

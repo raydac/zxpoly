@@ -35,7 +35,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.RenderedImage;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -1415,89 +1414,6 @@ public final class VideoController extends JComponent
   public void syncUpdateBuffer(final int lineFrom, final int lineTo, final LineRenderMode renderLines) {
     synchronized (this.bufferImage) {
       this.refreshBufferData(renderLines, lineFrom, lineTo, this.currentVideoMode);
-    }
-  }
-
-  public RenderedImage[] renderAllModuleVideoMemoryInZx48Mode() {
-    synchronized (this.bufferImage) {
-      final java.util.List<RenderedImage> result = new ArrayList<>();
-
-      BufferedImage buffImage =
-              new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(),
-                      BufferedImage.TYPE_INT_ARGB);
-      Graphics g = buffImage.getGraphics();
-      fillDataBufferForZxPolyVideoMode(
-              LineRenderMode.ALL,
-              this.currentVideoMode,
-              this.modules,
-              this.bufferImageRgbData,
-              this.board.isFlashActive(),
-              0, ZXSCREEN_ROWS
-      );
-      g.drawImage(this.bufferImage, 0, 0, this);
-      g.dispose();
-      result.add(buffImage);
-
-      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(),
-              BufferedImage.TYPE_INT_ARGB);
-      g = buffImage.getGraphics();
-      fillDataBufferForZxPolyVideoMode(
-              LineRenderMode.ALL,
-              VIDEOMODE_ZX48_CPU0,
-              this.modules,
-              this.bufferImageRgbData,
-              this.board.isFlashActive(),
-              0, ZXSCREEN_ROWS
-      );
-      g.drawImage(this.bufferImage, 0, 0, this);
-      g.dispose();
-      result.add(buffImage);
-
-      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(),
-              BufferedImage.TYPE_INT_ARGB);
-      g = buffImage.getGraphics();
-      fillDataBufferForZxPolyVideoMode(
-              LineRenderMode.ALL,
-              VIDEOMODE_ZX48_CPU1,
-              this.modules,
-              this.bufferImageRgbData,
-              this.board.isFlashActive(),
-              0, ZXSCREEN_ROWS
-      );
-      g.drawImage(this.bufferImage, 0, 0, this);
-      g.dispose();
-      result.add(buffImage);
-
-      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(),
-              BufferedImage.TYPE_INT_ARGB);
-      g = buffImage.getGraphics();
-      fillDataBufferForZxPolyVideoMode(
-              LineRenderMode.ALL,
-              VIDEOMODE_ZX48_CPU2,
-              this.modules,
-              this.bufferImageRgbData,
-              this.board.isFlashActive(), 0, ZXSCREEN_ROWS
-      );
-      g.drawImage(this.bufferImage, 0, 0, this);
-      g.dispose();
-      result.add(buffImage);
-
-      buffImage = new BufferedImage(this.bufferImage.getWidth(), this.bufferImage.getHeight(),
-              BufferedImage.TYPE_INT_ARGB);
-      g = buffImage.getGraphics();
-      fillDataBufferForZxPolyVideoMode(
-              LineRenderMode.ALL,
-              VIDEOMODE_ZX48_CPU3,
-              this.modules,
-              this.bufferImageRgbData,
-              this.board.isFlashActive(), 0, ZXSCREEN_ROWS
-      );
-      g.drawImage(this.bufferImage, 0, 0, this);
-      g.dispose();
-      result.add(buffImage);
-
-      refreshBufferData(LineRenderMode.ALL, 0, ZXSCREEN_ROWS, VIDEOMODE_ZX48_CPU0);
-      return result.toArray(EMPTY_ARRAY);
     }
   }
 
