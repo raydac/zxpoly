@@ -298,7 +298,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.sysIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/sys.png")));
 
-    this.timingProfile = TimingProfile.SPEC128;
+    this.timingProfile = TimingProfile.SPECTRUM128;
 
     final String ticks = System.getProperty("zxpoly.int.ticks", "");
     int intBetweenFrames = AppOptions.getInstance().getIntBetweenFrames();

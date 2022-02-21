@@ -743,9 +743,35 @@ public final class Motherboard implements ZxPolyConstants {
     return result;
   }
 
+  int contendPort(final int port7FFD, final int port) {
+    int cpuTact = this.frameTiStatesCounter;
+    int result = 0;
+    if (isContended(port, port7FFD)) {
+      cpuTact += this.frameTiStatesCounter < this.timingProfile.tstatesFrame ? this.memoryTimings[this.frameTiStatesCounter].contention : 0;
+    }
+
+    int shift = 1;
+    int ft = (cpuTact + shift) % this.timingProfile.tstatesFrame;
+
+    if (isUlaPort(port)) {
+      cpuTact += this.memoryTimings[ft].contention;
+    } else if (isContended(port, port7FFD)) {
+      cpuTact += this.memoryTimings[ft].contention;
+      ft += this.memoryTimings[ft].contention;
+      ft++;
+      ft %= this.timingProfile.tstatesFrame;
+      cpuTact += this.memoryTimings[ft].contention;
+      ft += this.memoryTimings[ft].contention;
+      ft++;
+      ft %= this.timingProfile.tstatesFrame;
+      cpuTact += this.memoryTimings[ft].contention;
+    }
+    return cpuTact - this.frameTiStatesCounter;
+  }
+
   int getContendedDelay(final int port7FFD, final int address) {
     int result = 0;
-    if (this.contendedRam && isContended(address, port7FFD)) {
+    if (isContended(address, port7FFD)) {
       result = this.frameTiStatesCounter < this.timingProfile.tstatesFrame ? this.memoryTimings[this.frameTiStatesCounter].contention : 0;
     }
     return result;

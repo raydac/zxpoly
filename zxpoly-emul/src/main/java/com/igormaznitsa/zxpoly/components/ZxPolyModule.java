@@ -163,6 +163,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
+    this.cpu.addTstates(this.board.contendPort(this.port7FFD.get(), port));
+
     final int result;
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       final int mappedModuleIndex = this.board.getMappedCpuIndex();

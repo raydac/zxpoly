@@ -1,7 +1,22 @@
 package com.igormaznitsa.zxpoly.components.video.timings;
 
 public enum TimingProfile {
-  SPEC128(
+  PENTAGON128(
+          3_500_000,
+          0,
+          32,
+          16,
+          16,
+          48,
+          64,
+          128,
+          32,
+          16,
+          16,
+          32,
+          new int[]{0, 0, 0, 0, 0, 0, 0, 0}
+  ),
+  SPECTRUM128(
           3_546_900,
           64 + 2,
           36,
@@ -95,16 +110,6 @@ public enum TimingProfile {
   }
 
   public UlaTact[] makeUlaFrame() {
-    final int[] lineAttrOffset = new int[256];
-    int i = 0;
-    for (int p = 0; p < 4; p++) {
-      for (int y = 0; y < 8; y++) {
-        for (int o = 0; o < 8; o++, i++) {
-          lineAttrOffset[i] = 0x1800 + (p * 8 + y) * 32;
-        }
-      }
-    }
-
     final UlaTact[] result = new UlaTact[this.tstatesFrame];
 
     for (int t = 0; t < this.tstatesFrame; t++) {
@@ -227,16 +232,16 @@ public enum TimingProfile {
 
   public static class UlaTact {
     public static final int TYPE_NONE = 0;
-    public static final int TYPE_BORDER = 0x01_0000_00;
-    public static final int TYPE_BORDER_FETCH_B1 = 0x02_0000_00;
-    public static final int TYPE_BORDER_FETCH_A1 = 0x03_0000_00;
-    public static final int TYPE_SHIFT1 = 0x04_0000_00;
-    public static final int TYPE_SHIFT1_AND_FETCH_B2 = 0x05_0000_00;
-    public static final int TYPE_SHIFT1_AND_FETCH_A2 = 0x06_0000_00;
-    public static final int TYPE_SHIFT1_LAST = 0x07_0000_00;
-    public static final int TYPE_SHIFT2 = 0x08_0000_00;
-    public static final int TYPE_SHIFT2_AND_FETCH_B1 = 0x09_0000_00;
-    public static final int TYPE_SHIFT2_AND_FETCH_A1 = 0x0A_0000_00;
+    public static final int TYPE_BORDER = 1;
+    public static final int TYPE_BORDER_FETCH_B1 = 2;
+    public static final int TYPE_BORDER_FETCH_A1 = 3;
+    public static final int TYPE_SHIFT1 = 4;
+    public static final int TYPE_SHIFT1_AND_FETCH_B2 = 5;
+    public static final int TYPE_SHIFT1_AND_FETCH_A2 = 6;
+    public static final int TYPE_SHIFT1_LAST = 7;
+    public static final int TYPE_SHIFT2 = 8;
+    public static final int TYPE_SHIFT2_AND_FETCH_B1 = 9;
+    public static final int TYPE_SHIFT2_AND_FETCH_A1 = 10;
 
     public final int type;
     public final int lineOffset;
