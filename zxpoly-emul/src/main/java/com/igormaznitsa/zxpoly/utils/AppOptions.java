@@ -19,7 +19,9 @@ package com.igormaznitsa.zxpoly.utils;
 
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
+import com.igormaznitsa.zxpoly.components.video.BorderSize;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.ui.FastButton;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -162,14 +164,6 @@ public final class AppOptions {
     preferences.putBoolean(Option.SOUND_TURNED_ON.name(), value);
   }
 
-  public synchronized boolean isContendedRam() {
-    return preferences.getBoolean(Option.CONTENDED_RAM.name(), false);
-  }
-
-  public synchronized void setContendedRam(final boolean value) {
-    preferences.putBoolean(Option.CONTENDED_RAM.name(), value);
-  }
-
   public synchronized boolean isInterlacedScan() {
     return preferences.getBoolean(Option.INTERLACED_SCAN.name(), true);
   }
@@ -203,6 +197,33 @@ public final class AppOptions {
   public synchronized void setGrabSound(final boolean value) {
     preferences.putBoolean(Option.STREAM_GRABSOUND.name(), value);
   }
+
+  public synchronized BorderSize getBorderSize() {
+    final String size = preferences.get(Option.BORDER_SIZE.name(), BorderSize.SMALL.name());
+    try {
+      return BorderSize.valueOf(size);
+    } catch (NoSuchElementException ex) {
+      return BorderSize.SMALL;
+    }
+  }
+
+  public synchronized void setBorderSize(final BorderSize value) {
+    preferences.put(Option.BORDER_SIZE.name(), value.name());
+  }
+
+  public synchronized TimingProfile getTimingProfile() {
+    final String size = preferences.get(Option.TIMING_PROFILE.name(), TimingProfile.SPECTRUM128.name());
+    try {
+      return TimingProfile.valueOf(size);
+    } catch (NoSuchElementException ex) {
+      return TimingProfile.SPECTRUM128;
+    }
+  }
+
+  public synchronized void setTimingProfile(final TimingProfile value) {
+    preferences.put(Option.TIMING_PROFILE.name(), value.name());
+  }
+
 
   public synchronized BoardMode getDefaultBoardMode() {
     final String mode = preferences.get(Option.DEFAULT_MODE.name(), BoardMode.ZXPOLY.name());
@@ -439,6 +460,8 @@ public final class AppOptions {
   }
 
   public enum Option {
+    BORDER_SIZE,
+    TIMING_PROFILE,
     SYNC_PAINT,
     SHOW_INDICATOR_PANEL,
     FAST_BUTTONS,
@@ -446,7 +469,6 @@ public final class AppOptions {
     UI_LF_CLASS,
     UI_SCALE,
     OLD_COLOR_TV_ON_START,
-    CONTENDED_RAM,
     INTERLACED_SCAN,
     AUTOCS_FOR_CURSOR_KEYS,
     CUSTOM_ROM_PATH,

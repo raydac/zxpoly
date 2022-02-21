@@ -298,7 +298,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.sysIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/sys.png")));
 
-    this.timingProfile = TimingProfile.SPECTRUM128;
+    this.timingProfile = AppOptions.getInstance().getTimingProfile();
+
+    LOGGER.info("Timing profile: " + this.timingProfile.name());
 
     final String ticks = System.getProperty("zxpoly.int.ticks", "");
     int intBetweenFrames = AppOptions.getInstance().getIntBetweenFrames();
@@ -376,10 +378,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.board = new Motherboard(
             volumeProfile,
             this.timingProfile,
+            AppOptions.getInstance().getBorderSize(),
             BASE_ROM,
             AppOptions.getInstance().getDefaultBoardMode(),
             AppOptions.getInstance().isSyncPaint(),
-            AppOptions.getInstance().isContendedRam(),
             AppOptions.getInstance().isSoundChannelsACB(),
             AppOptions.getInstance().isCovoxFb(),
             AppOptions.getInstance().isTurboSound(),

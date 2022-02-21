@@ -1,21 +1,6 @@
 package com.igormaznitsa.zxpoly.components.video.timings;
 
 public enum TimingProfile {
-  PENTAGON128(
-          3_500_000,
-          0,
-          32,
-          16,
-          16,
-          48,
-          64,
-          128,
-          32,
-          16,
-          16,
-          32,
-          new int[]{0, 0, 0, 0, 0, 0, 0, 0}
-  ),
   SPECTRUM128(
           3_546_900,
           64 + 2,
@@ -30,7 +15,23 @@ public enum TimingProfile {
           34,
           26,
           new int[]{6, 5, 4, 3, 2, 1, 0, 0}
+  ),
+  PENTAGON128(
+          3_500_000,
+          0,
+          32,
+          16,
+          16,
+          48,
+          64,
+          128,
+          32,
+          16,
+          16,
+          32,
+          new int[]{0, 0, 0, 0, 0, 0, 0, 0}
   );
+
 
   private static final int ZX_SCREEN_LINES = 192;
   public final int ulaIntBegin;

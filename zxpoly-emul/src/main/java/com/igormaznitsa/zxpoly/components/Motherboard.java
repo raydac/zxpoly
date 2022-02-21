@@ -57,7 +57,6 @@ public final class Motherboard implements ZxPolyConstants {
   private final BetaDiscInterface betaDisk;
   private final float[] cpuLoad = new float[4];
   private final Beeper beeper;
-  private final boolean contendedRam;
   private final TimingProfile timingProfile;
   private final VolumeProfile soundLevels;
   private final int[] audioLevels;
@@ -88,10 +87,10 @@ public final class Motherboard implements ZxPolyConstants {
   public Motherboard(
           final VolumeProfile soundLevels,
           final TimingProfile timingProfile,
+          final BorderSize borderSize,
           final RomData rom,
           final BoardMode boardMode,
           final boolean syncRepaint,
-          final boolean contendedRam,
           final boolean useAcbSoundScheme,
           final boolean enableCovoxFb,
           final boolean useTurboSound,
@@ -112,7 +111,6 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.memoryTimings = timingProfile.makeUlaFrame();
 
-    this.contendedRam = contendedRam;
     this.boardMode = boardMode;
     this.beeper = new Beeper(timingProfile, useAcbSoundScheme, enableCovoxFb, useTurboSound);
     if (rom.isTrdosPresented()) {
@@ -126,7 +124,7 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.keyboard = new KeyboardKempstonAndTapeIn(timingProfile, this, allowKempstonMouse);
     ioDevices.add(keyboard);
-    this.video = new VideoController(BorderSize.FULL, timingProfile, syncRepaint, this, vkbdContainer);
+    this.video = new VideoController(borderSize, timingProfile, syncRepaint, this, vkbdContainer);
     ioDevices.add(video);
     ioDevices.add(new KempstonMouse(this));
 
