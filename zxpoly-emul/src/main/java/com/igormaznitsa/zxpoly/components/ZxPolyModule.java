@@ -355,8 +355,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   public void gfxGpuStep(final int ctx, final Z80 gfxCpu) {
     int sigWait = this.gfxWaitSignal ? 0 : Z80.SIGNAL_IN_nWAIT;
     gfxCpu.step(ctx,
-            Z80.SIGNAL_IN_nRESET | (this.gfxIntCounter != 0 ? 0 : Z80.SIGNAL_IN_nINT)
-                    | sigWait | (this.gfxNmiCounter != 0 ? 0 : Z80.SIGNAL_IN_nNMI));
+            Z80.SIGNAL_IN_nRESET | (this.gfxIntCounter >= 0 ? 0 : Z80.SIGNAL_IN_nINT)
+                    | sigWait | (this.gfxNmiCounter >= 0 ? 0 : Z80.SIGNAL_IN_nNMI));
   }
 
   public boolean is7FFDLocked() {
