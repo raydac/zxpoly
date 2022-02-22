@@ -312,9 +312,9 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     this.intTiStatesCounter =
             doInt && this.intTiStatesCounter < 0 ?
-                    this.timingProfile.lengthInt : this.intTiStatesCounter;
+                    this.timingProfile.tstatesInt : this.intTiStatesCounter;
     this.nmiTiStatesCounter = doNmi && this.nmiTiStatesCounter < 0 ?
-            this.timingProfile.lengthNmi : this.nmiTiStatesCounter;
+            this.timingProfile.tstatesNmi : this.nmiTiStatesCounter;
 
     sigReset = signalReset || (this.localResetCounter > 0) ? 0 : Z80.SIGNAL_IN_nRESET;
     if (this.localResetCounter > 0) {
@@ -326,8 +326,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     final int oldCpuState = this.cpu.getState();
     final int cpuBusSignals =
             sigReset | sigWait
-                    | (this.intTiStatesCounter >= 0 && this.intTiStatesCounter <= this.timingProfile.lengthInt ? 0 : Z80.SIGNAL_IN_nINT)
-                    | (this.nmiTiStatesCounter >= 0 && this.nmiTiStatesCounter <= this.timingProfile.lengthNmi ? 0 : Z80.SIGNAL_IN_nNMI);
+                    | (this.intTiStatesCounter >= 0 && this.intTiStatesCounter <= this.timingProfile.tstatesInt ? 0 : Z80.SIGNAL_IN_nINT)
+                    | (this.nmiTiStatesCounter >= 0 && this.nmiTiStatesCounter <= this.timingProfile.tstatesNmi ? 0 : Z80.SIGNAL_IN_nNMI);
 
     this.cpu.step(this.moduleIndex, cpuBusSignals);
     final int spentTiStates = this.cpu.getStepTstates();

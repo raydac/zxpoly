@@ -1,34 +1,19 @@
 package com.igormaznitsa.zxpoly.components.video.timings;
 
 public enum TimingProfile {
-  SPECTRUM48(
-          3_500_000,
-          16 * 224,
-          36,
-          16,
-          16,
-          48,
-          56,
-          128,
-          24,
-          24,
-          24,
-          24,
-          new int[]{6, 5, 4, 3, 2, 1, 0, 0}
-  ),
   SPECTRUM128(
           3_546_900,
-          16 * 228,
+          16,
           36,
           16,
           16,
           48,
           55,
           128,
-          28,
-          24,
-          24,
-          28,
+          16,
+          16,
+          48,
+          32,
           new int[]{6, 5, 4, 3, 2, 1, 0, 0}
   ),
   PENTAGON128(
@@ -48,9 +33,9 @@ public enum TimingProfile {
   );
 
   private static final int ZX_SCREEN_LINES = 192;
-  public final int ulaIntBegin;
-  public final int lengthInt;
-  public final int lengthNmi;
+  public final int tstatesIntStart;
+  public final int tstatesInt;
+  public final int tstatesNmi;
   public final int clockFreq;
   public final int tstatesFrame;
   public final int scanLines;
@@ -64,17 +49,17 @@ public enum TimingProfile {
   public final int linesBorderTop;
   public final int linesBorderBottom;
   public final int linesPerVSync;
-  public final int ulaTstatesScreenWidth;
-  public final int ulaFirstPaperTact;
-  public final int ulaFirstPaperLine;
+  public final int doubleTstatesScreenWidth;
+  public final int tstatesFirstPaperTact;
+  public final int tstatesFirstPaperLine;
   public final int displayRows;
   private final int[] contention;
 
   TimingProfile(
           final int clockFreq,
-          final int ulaIntBegin,
-          final int lengthInt,
-          final int lengthNmi,
+          final int tstatesIntStart,
+          final int tstatesInt,
+          final int tstatesNmi,
           final int linesVsync,
           final int linesBorderTop,
           final int linesBorderBottom,
@@ -85,9 +70,9 @@ public enum TimingProfile {
           final int tstatesPerBorderRight,
           final int[] contention
   ) {
-    this.ulaIntBegin = ulaIntBegin;
-    this.lengthNmi = lengthNmi;
-    this.lengthInt = lengthInt;
+    this.tstatesIntStart = tstatesIntStart;
+    this.tstatesNmi = tstatesNmi;
+    this.tstatesInt = tstatesInt;
     this.clockFreq = clockFreq;
     this.contention = contention;
 
@@ -104,12 +89,12 @@ public enum TimingProfile {
     this.linesBorderBottom = linesBorderBottom;
     this.linesBorderTop = linesBorderTop;
 
-    this.ulaTstatesScreenWidth = (this.tstatesPerBorderLeft + this.tstatesPerVideo + this.tstatesPerBorderRight) << 1;
+    this.doubleTstatesScreenWidth = (this.tstatesPerBorderLeft + this.tstatesPerVideo + this.tstatesPerBorderRight) << 1;
     this.displayRows = this.linesBorderTop + ZX_SCREEN_LINES + this.linesBorderBottom;
-    this.ulaFirstPaperTact = this.tstatesPerHBlank + this.tstatesPerHSync + this.tstatesPerBorderLeft;
-    this.ulaFirstPaperLine = this.linesPerVSync + this.linesBorderTop;
+    this.tstatesFirstPaperTact = this.tstatesPerHBlank + this.tstatesPerHSync + this.tstatesPerBorderLeft;
+    this.tstatesFirstPaperLine = this.linesPerVSync + this.linesBorderTop;
 
-    this.tstatesStartScreen = this.tstatesPerLine * (linesVsync + linesBorderTop) + this.ulaFirstPaperTact;
+    this.tstatesStartScreen = this.tstatesPerLine * (linesVsync + linesBorderTop) + this.tstatesFirstPaperTact;
   }
 
   private static int calcAddressAttribute(int sx, int sy) {
@@ -138,7 +123,7 @@ public enum TimingProfile {
   }
 
   private int makeContention(final int t) {
-    int shifted = (t + 1) + this.ulaIntBegin;
+    int shifted = (t + 1) + this.tstatesIntStart;
     // check overflow
     if (shifted < 0) {
       shifted += this.tstatesFrame;
@@ -147,10 +132,10 @@ public enum TimingProfile {
 
     int line = shifted / this.tstatesPerLine;
     int pix = shifted % this.tstatesPerLine;
-    if (line < this.ulaFirstPaperLine || line >= (this.ulaFirstPaperLine + ZX_SCREEN_LINES)) {
+    if (line < this.tstatesFirstPaperLine || line >= (this.tstatesFirstPaperLine + ZX_SCREEN_LINES)) {
       return 0;
     }
-    int scrPix = pix - this.ulaFirstPaperTact;
+    int scrPix = pix - this.tstatesFirstPaperTact;
     if (scrPix < 0 || scrPix >= this.tstatesPerVideo) {
       return 0;
     }
@@ -158,21 +143,21 @@ public enum TimingProfile {
   }
 
   private UlaTact makeTact(int item, int line, int pix) {
-    int pitchWidth = this.ulaTstatesScreenWidth;
+    int pitchWidth = this.doubleTstatesScreenWidth;
 
-    int scrPix = pix - this.ulaFirstPaperTact;
-    int scrLin = line - this.ulaFirstPaperLine;
+    int scrPix = pix - this.tstatesFirstPaperTact;
+    int scrLin = line - this.tstatesFirstPaperLine;
 
     int resultUlaAction = UlaTact.TYPE_NONE;
     int resultUlaAddressAttribute = 0;
     int resultUlaAddressPixel = 0;
     int resultLineOffset = 0;
 
-    if ((line >= (this.ulaFirstPaperLine - this.linesBorderTop)) && (line < (this.ulaFirstPaperLine + ZX_SCREEN_LINES + this.linesBorderBottom)) &&
-            (pix >= (this.ulaFirstPaperTact - this.tstatesPerBorderLeft)) && (pix < (this.ulaFirstPaperTact + this.tstatesPerVideo + this.tstatesPerBorderRight))) {
+    if ((line >= (this.tstatesFirstPaperLine - this.linesBorderTop)) && (line < (this.tstatesFirstPaperLine + ZX_SCREEN_LINES + this.linesBorderBottom)) &&
+            (pix >= (this.tstatesFirstPaperTact - this.tstatesPerBorderLeft)) && (pix < (this.tstatesFirstPaperTact + this.tstatesPerVideo + this.tstatesPerBorderRight))) {
       // visibleArea (vertical)
-      if ((line >= this.ulaFirstPaperLine) && (line < (this.ulaFirstPaperLine + ZX_SCREEN_LINES)) &&
-              (pix >= this.ulaFirstPaperTact) && (pix < (this.ulaFirstPaperTact + this.tstatesPerVideo))) {
+      if ((line >= this.tstatesFirstPaperLine) && (line < (this.tstatesFirstPaperLine + ZX_SCREEN_LINES)) &&
+              (pix >= this.tstatesFirstPaperTact) && (pix < (this.tstatesFirstPaperTact + this.tstatesPerVideo))) {
         // pixel area
         switch (scrPix & 7) {
           case 0:
@@ -196,7 +181,7 @@ public enum TimingProfile {
             resultUlaAction = UlaTact.TYPE_SHIFT2;   // shift 2
             break;
           case 6:
-            if (pix < (this.ulaFirstPaperTact + this.tstatesPerVideo - 2)) {
+            if (pix < (this.tstatesFirstPaperTact + this.tstatesPerVideo - 2)) {
               resultUlaAction = UlaTact.TYPE_SHIFT2_AND_FETCH_B1;   // shift 2 + fetch B2
             } else {
               resultUlaAction = UlaTact.TYPE_SHIFT2;             // shift 2
@@ -206,7 +191,7 @@ public enum TimingProfile {
             resultUlaAddressPixel = calcAddressPixelSource(scrPix + 2, scrLin);
             break;
           case 7:
-            if (pix < (this.ulaFirstPaperTact + this.tstatesPerVideo - 2)) {
+            if (pix < (this.tstatesFirstPaperTact + this.tstatesPerVideo - 2)) {
               //???
               resultUlaAction = UlaTact.TYPE_SHIFT2_AND_FETCH_A1;   // shift 2 + fetch A2
             } else {
@@ -217,14 +202,14 @@ public enum TimingProfile {
             resultUlaAddressAttribute = calcAddressAttribute(scrPix + 1, scrLin);
             break;
         }
-      } else if ((line >= this.ulaFirstPaperLine) && (line < (this.ulaFirstPaperLine + ZX_SCREEN_LINES)) &&
-              (pix == (this.ulaFirstPaperTact - 2)))  // border & fetch B1
+      } else if ((line >= this.tstatesFirstPaperLine) && (line < (this.tstatesFirstPaperLine + ZX_SCREEN_LINES)) &&
+              (pix == (this.tstatesFirstPaperTact - 2)))  // border & fetch B1
       {
         resultUlaAction = UlaTact.TYPE_BORDER_FETCH_B1; // border & fetch B1
         // +2 = prefetch!
         resultUlaAddressPixel = calcAddressPixelSource(scrPix + 2, scrLin);
-      } else if ((line >= this.ulaFirstPaperLine) && (line < (this.ulaFirstPaperLine + ZX_SCREEN_LINES)) &&
-              (pix == (this.ulaFirstPaperTact - 1)))  // border & fetch A1
+      } else if ((line >= this.tstatesFirstPaperLine) && (line < (this.tstatesFirstPaperLine + ZX_SCREEN_LINES)) &&
+              (pix == (this.tstatesFirstPaperTact - 1)))  // border & fetch A1
       {
         resultUlaAction = UlaTact.TYPE_BORDER_FETCH_A1; // border & fetch A1
         // +1 = prefetch!
@@ -233,8 +218,8 @@ public enum TimingProfile {
         resultUlaAction = UlaTact.TYPE_BORDER; // border
       }
 
-      int wy = line - (this.ulaFirstPaperLine - this.linesBorderTop);
-      int wx = (pix - (this.ulaFirstPaperTact - this.tstatesPerBorderLeft)) * 2;
+      int wy = line - (this.tstatesFirstPaperLine - this.linesBorderTop);
+      int wx = (pix - (this.tstatesFirstPaperTact - this.tstatesPerBorderLeft)) * 2;
       resultLineOffset = wy * pitchWidth + wx;
     }
     return new UlaTact(
