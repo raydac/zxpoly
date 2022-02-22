@@ -901,11 +901,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     long sessionIntCounter = 0;
 
     final int tstatesPictureStart = this.timingProfile.tstatesStartScreen;
-    final int tstatesPictureEnd = tstatesPictureStart + VideoController.ZXSCREEN_ROWS * this.timingProfile.tstatesPerVideo;
-
-    final int tstatesBlinkTop = tstatesPictureStart + (64 * this.timingProfile.tstatesPerLine);
-    final int tstatesBlinkMiddle = tstatesPictureStart + (128 * this.timingProfile.tstatesPerLine);
-    final int tstatesBlinkBottom = tstatesPictureEnd;
+    final int tstatesBlinkTop = tstatesPictureStart + (63 * this.timingProfile.tstatesPerLine) + this.timingProfile.tstatesPerVideo;
+    final int tstatesBlinkMiddle = tstatesPictureStart + (127 * this.timingProfile.tstatesPerLine) + this.timingProfile.tstatesPerVideo;
+    final int tstatesBlinkBottom = tstatesPictureStart + (191 * this.timingProfile.tstatesPerLine) + this.timingProfile.tstatesPerVideo;
 
     int nextBlinkTstates = tstatesBlinkTop;
     int blinkIndex = 0;

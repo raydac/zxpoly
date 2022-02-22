@@ -1291,7 +1291,7 @@ public final class VideoController extends JComponent
         g2.fillRect(0, 0, visibleWidth, visibleHeight);
       }
       break;
-      case FULL: {
+      default: {
         final int dx = this.borderImage.getWidth();
         final int dy = this.borderImage.getHeight();
 
@@ -1302,23 +1302,6 @@ public final class VideoController extends JComponent
           g2.drawImage(this.borderImage,
                   0,
                   0,
-                  (int) (sx * this.borderImage.getWidth()),
-                  (int) (sy * this.borderImage.getHeight()),
-                  null);
-        }
-      }
-      break;
-      default: {
-        final int dx = this.timingProfile.tstatesPerVideo + this.borderSize.leftPixels + this.borderSize.rightPixels;
-        final int dy = ZXSCREEN_ROWS + this.borderSize.topPixels + this.borderSize.bottomPixels;
-
-        final double sx = (double) visibleWidth / dx;
-        final double sy = (double) visibleHeight / dy;
-
-        synchronized (this.borderImageRgbData) {
-          g2.drawImage(this.borderImage,
-                  -(int) ((this.borderImage.getWidth() - dx) * sx),
-                  -(int) ((this.borderImage.getHeight() - dy) * sy),
                   (int) (sx * this.borderImage.getWidth()),
                   (int) (sy * this.borderImage.getHeight()),
                   null);
@@ -1587,7 +1570,6 @@ public final class VideoController extends JComponent
   public void postStep(int spentTstates) {
     final int borderColor = this.preStepBorderColor;
 
-    synchronized (this.borderImageRgbData) {
       int offset = this.stepStartTStates;
       if (offset >= 0) {
         while (spentTstates > 0 && offset < this.timingProfile.tstatesFrame) {
@@ -1604,7 +1586,6 @@ public final class VideoController extends JComponent
           spentTstates--;
         }
       }
-    }
   }
 
   public float getZoom() {

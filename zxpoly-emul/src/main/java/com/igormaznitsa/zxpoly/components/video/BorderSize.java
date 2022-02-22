@@ -2,7 +2,7 @@ package com.igormaznitsa.zxpoly.components.video;
 
 public enum BorderSize {
   NONE(0, 0, 0, 0),
-  SMALL(20, 20, 40, 40),
+  SMALL(48, 48, 48, 48),
   FULL(-1,
           -1,
           -1,
