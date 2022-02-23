@@ -894,24 +894,31 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     int countdownToNotifyRepaint = this.intTicksBeforeFrameDraw;
     int countdownToAnimationSave = 0;
 
-    final int VFLAG_BLINK_SCREEN = 2;
-
-    int viFlags = 0;
-
     long sessionIntCounter = 0;
 
-    final int tstatesPictureStart = this.timingProfile.tstatesStartScreen;
-    final int tstatesBlinkTop = tstatesPictureStart + (63 * this.timingProfile.tstatesPerLine) + this.timingProfile.tstatesPerVideo;
-    final int tstatesBlinkMiddle = tstatesPictureStart + (127 * this.timingProfile.tstatesPerLine) + this.timingProfile.tstatesPerVideo;
-    final int tstatesBlinkBottom = tstatesPictureStart + (191 * this.timingProfile.tstatesPerLine) + this.timingProfile.tstatesPerVideo;
+    class BlinkRecord {
+      final int ticks;
+      final int lineFrom;
+      final int lineTo;
 
-    int nextBlinkTstates = tstatesBlinkTop;
-    int blinkIndex = 0;
+      BlinkRecord(final int ticks, final int lineFrom, final int lineTo) {
+        this.ticks = ticks;
+        this.lineFrom = lineFrom;
+        this.lineTo = lineTo;
+      }
+    }
+
+    final BlinkRecord[] blinkStates = new BlinkRecord[]{
+            new BlinkRecord(this.timingProfile.tstatesStartScreen + (64 * this.timingProfile.tstatesPerLine), 0, 64),
+            new BlinkRecord(this.timingProfile.tstatesStartScreen + (128 * this.timingProfile.tstatesPerLine), 64, 128),
+            new BlinkRecord(this.timingProfile.tstatesStartScreen + (192 * this.timingProfile.tstatesPerLine), 128, 192),
+            new BlinkRecord(this.timingProfile.tstatesFrame << 1, 0, 0)
+    };
+    int currentBlinkIndex = 0;
 
     while (!Thread.currentThread().isInterrupted()) {
-      final int prevViFlags = viFlags;
-
       boolean notifyRepaintScreen = false;
+      boolean doBlink = false;
 
       if (stepLocker.tryLock()) {
         try {
@@ -931,6 +938,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
                 notifyRepaintScreen = true;
               }
               countdownToAnimationSave--;
+              currentBlinkIndex = 0;
             } else {
               doCpuIntTick = false;
             }
@@ -938,9 +946,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             if (!tiStatesForIntExhausted) {
               this.onSlownessDetected(this.timingProfile.tstatesFrame - frameTiStates);
             }
-            nextBlinkTstates = tstatesBlinkTop;
-            blinkIndex = 0;
-            viFlags = 0;
           } else {
             doCpuIntTick = false;
           }
@@ -963,13 +968,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
           frameTiStates = this.board.getFrameTiStates();
 
-          if (frameTiStates >= nextBlinkTstates) {
-            viFlags |= VFLAG_BLINK_SCREEN;
-            if (nextBlinkTstates == 0) {
-              nextBlinkTstates = tstatesBlinkMiddle;
-            } else {
-              nextBlinkTstates = tstatesBlinkBottom;
-            }
+          if (!tiStatesForIntExhausted && frameTiStates >= blinkStates[currentBlinkIndex].ticks) {
+            doBlink = true;
           }
 
           if (intTickForWallClockReached) {
@@ -1003,13 +1003,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           stepLocker.unlock();
         }
 
-        final int changedViFlags = prevViFlags ^ viFlags;
-
-        if ((changedViFlags & VFLAG_BLINK_SCREEN) != 0 && (viFlags & VFLAG_BLINK_SCREEN) != 0) {
-          this.blinkScreen(sessionIntCounter, blinkIndex++);
-          if (blinkIndex < 3) {
-            viFlags = 0;
-          }
+        if (doBlink) {
+          this.blinkScreen(sessionIntCounter, blinkStates[currentBlinkIndex].lineFrom, blinkStates[currentBlinkIndex].lineTo);
+          currentBlinkIndex = (currentBlinkIndex + 1) % blinkStates.length;
         }
 
         if (notifyRepaintScreen) {
@@ -1174,13 +1170,11 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     LOGGER.info("Turbo-mode: " + value);
   }
 
-  private void blinkScreen(final long sessionIntCounter, final int partIndex) {
-    final int start = 64 * partIndex;
-    final int end = start + 64;
+  private void blinkScreen(final long sessionIntCounter, final int lineFrom, final int lineTo) {
     if (this.interlaceScan) {
-      this.board.getVideoController().syncUpdateBuffer(start, end, (sessionIntCounter & 1) == 0 ? VideoController.LineRenderMode.EVEN : VideoController.LineRenderMode.ODD);
+      this.board.getVideoController().syncUpdateBuffer(lineFrom, lineTo, (sessionIntCounter & 1) == 0 ? VideoController.LineRenderMode.EVEN : VideoController.LineRenderMode.ODD);
     } else {
-      this.board.getVideoController().syncUpdateBuffer(start, end, VideoController.LineRenderMode.ALL);
+      this.board.getVideoController().syncUpdateBuffer(lineFrom, lineTo, VideoController.LineRenderMode.ALL);
     }
   }
 
