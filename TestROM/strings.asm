@@ -1,6 +1,6 @@
 STR_HEADER:
   DEFB 21
-  DEFM "-= TEST ROM v 1.04 =-"
+  DEFM "-= TEST ROM v 1.05 =-"
 
 STR_COPY:
   DEFB 32
