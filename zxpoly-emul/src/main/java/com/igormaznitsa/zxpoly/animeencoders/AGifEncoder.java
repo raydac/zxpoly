@@ -58,7 +58,7 @@ public final class AGifEncoder implements AnimationEncoder {
   @Override
   public void close() throws IOException {
     try {
-      this.gifEncoder.finish();
+      this.gifEncoder.cleanUp();
     } finally {
       IOUtils.closeQuietly(this.outputStream);
     }

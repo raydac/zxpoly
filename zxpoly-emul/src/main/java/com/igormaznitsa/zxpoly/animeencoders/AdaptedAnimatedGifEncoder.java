@@ -21,7 +21,7 @@ import java.util.OptionalInt;
  *     e.setDelay(Duration.ofSeconds(1));   // 1 frame per sec
  *     e.addFrame(image1);
  *     e.addFrame(image2);
- *     e.finish();
+ *     e.cleanUp();
  * </pre>
  * <p>
  * No copyright asserted on the source code of this class. May be used for any
@@ -90,7 +90,7 @@ final class AdaptedAnimatedGifEncoder {
   /**
    * Adds next GIF frame. The frame is not written immediately, but is actually
    * deferred until the next frame is received so that timing data can be
-   * inserted. Invoking <code>finish()</code> flushes all frames. If
+   * inserted. Invoking <code>cleanUp()</code> flushes all frames. If
    * <code>setSize</code> was not invoked, the size of the first image is used
    * for all subsequent frames.
    *
@@ -173,7 +173,7 @@ final class AdaptedAnimatedGifEncoder {
    * Flushes any pending data and closes output file. If writing to an
    * OutputStream, the stream is not closed.
    */
-  public void finish() throws IOException {
+  public void cleanUp() throws IOException {
     if (!this.started) throw new IllegalStateException("Not started yet");
     this.started = false;
 
