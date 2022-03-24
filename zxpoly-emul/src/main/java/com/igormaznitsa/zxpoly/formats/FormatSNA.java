@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.stream.IntStream;
 
-public class FormatSNA extends Snapshot {
+public class FormatSNA extends ArraySaveable {
 
   public FormatSNA() {
   }

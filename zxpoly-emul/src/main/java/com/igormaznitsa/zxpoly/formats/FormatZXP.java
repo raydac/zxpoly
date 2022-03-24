@@ -29,7 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
-public class FormatZXP extends Snapshot {
+public class FormatZXP extends ArraySaveable {
 
   @Override
   public String getExtension() {

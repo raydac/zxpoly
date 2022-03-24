@@ -43,7 +43,7 @@ import static com.igormaznitsa.zxpoly.formats.Spec256Arch.GFn_PATTERN;
 import static com.igormaznitsa.zxpoly.formats.Spec256Arch.readData;
 import static java.util.Objects.requireNonNull;
 
-public class FormatSpec256 extends Snapshot {
+public class FormatSpec256 extends ArraySaveable {
 
   private static final Map<String, BaseItem> APP_BASE = new HashMap<>();
 

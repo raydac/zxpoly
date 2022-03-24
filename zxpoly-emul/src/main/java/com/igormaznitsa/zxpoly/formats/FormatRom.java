@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
 
-public class FormatRom extends Snapshot {
+public class FormatRom extends ArrayUnsaveable {
 
   @Override
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc,
@@ -58,10 +58,10 @@ public class FormatRom extends Snapshot {
     return "rom";
   }
 
-  @Override
-  public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
-    throw new IOException("Unsupported board mode: " + board.getBoardMode());
-  }
+//  @Override
+//  public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
+//    throw new IOException("Unsupported board mode: " + board.getBoardMode());
+//  }
 
   @Override
   public String getName() {

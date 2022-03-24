@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class FormatZ80 extends Snapshot {
+public class FormatZ80 extends ArraySaveable {
 
   private static final int PAGE_SIZE = 0x4000;
 

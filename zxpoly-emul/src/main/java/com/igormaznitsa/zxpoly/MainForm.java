@@ -148,7 +148,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private static final Snapshot SNAPSHOT_FORMAT_SNA = new FormatSNA();
   private static final Snapshot SNAPSHOT_FORMAT_ZXP = new FormatZXP();
   private static final Snapshot SNAPSHOT_FORMAT_ROM = new FormatRom();
-  private static final Snapshot SNAPSHOT_FORMAT_PROM = new FormatPRom();
+  private static final ArrayUnsaveable ARRAY_UNSAVEABLE = new FormatPRom();
+
+  private static final Snapshot SNAPSHOT_FORMAT_PROM = (Snapshot) ARRAY_UNSAVEABLE;
   private static final Snapshot SNAPSHOT_FORMAT_SPEC256 = new FormatSpec256();
   private static final FileFilter FILTER_FORMAT_ALL_SNAPSHOTS = new FileFilter() {
     @Override
@@ -2831,7 +2833,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       if (selected != null) {
         this.lastSnapshotFolder = selected.getParentFile();
         try {
-          final Snapshot selectedFilter = (Snapshot) theFilter.get();
+          final ArraySaveable selectedFilter = (ArraySaveable) theFilter.get();
           if (!selectedFilter.getExtension()
                   .equals(FilenameUtils.getExtension(selected.getName()).toLowerCase(Locale.ENGLISH))) {
             selected = new File(selected.getParentFile(),

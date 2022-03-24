@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class FormatPRom extends Snapshot {
+public class FormatPRom extends ArrayUnsaveable {
 
   @Override
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc,
@@ -72,10 +72,10 @@ public class FormatPRom extends Snapshot {
     return "prom";
   }
 
-  @Override
-  public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
-    throw new IOException("Unsupported board mode: " + board.getBoardMode());
-  }
+//  @Override
+//  public byte[] saveToArray(Motherboard board, VideoController vc) throws IOException {
+//    throw new IOException("Unsupported board mode: " + board.getBoardMode());
+//  }
 
   @Override
   public String getName() {
