@@ -556,71 +556,7 @@ public final class K1818VG93 {
           } else {
             if (!this.flagWaitDataRd) {
               this.operationTimeOutCycles = Math.abs(tstatesCounter + tstatesPerSectorBe);
-              if (this.counter > 0) {
-                switch (this.counter) {
-                  case 6: {// track
-                    final int trackNum = this.sector.getTrackNumber();
-                    provideReadData(trackNum);
-                    setInternalFlag(STATUS_INDEXMARK_DRQ);
-                    this.extraCounter |= (trackNum << 16);
-                  }
-                  break;
-                  case 5: {// side
-                    final int side = this.sector.getSide();
-                    provideReadData(side);
-                    setInternalFlag(STATUS_INDEXMARK_DRQ);
-                    this.extraCounter |= (side << 8);
-                  }
-                  break;
-                  case 4: {// sector
-                    final int sectorId = this.sector.getPhysicalIndex();
-                    provideReadData(sectorId);
-                    setInternalFlag(STATUS_INDEXMARK_DRQ);
-                    this.extraCounter |= sectorId;
-                  }
-                  break;
-                  case 3: {// length
-                    final int type;
-                    final int sectorLen = this.sector.size();
-                    if (sectorLen <= 128) {
-                      type = 0;
-                    } else if (sectorLen <= 256) {
-                      type = 1;
-                    } else if (sectorLen <= 512) {
-                      type = 2;
-                    } else {
-                      type = 3;
-                    }
-
-                    provideReadData(type);
-                    setInternalFlag(STATUS_INDEXMARK_DRQ);
-                  }
-                  break;
-                  case 2: {// crc1
-                    final int crc = this.sector.getCrc() >>> 8;
-                    provideReadData(crc);
-                    setInternalFlag(STATUS_INDEXMARK_DRQ);
-                  }
-                  break;
-                  case 1: {// crc2
-                    final int crc = this.sector.getCrc() & 0xFF;
-                    provideReadData(crc);
-                    setInternalFlag(STATUS_INDEXMARK_DRQ);
-                  }
-                  break;
-                  default:
-                    throw new Error("Unexpected counter state");
-                }
-                this.counter--;
-                if (this.counter > 0) {
-                  setInternalFlag(STATUS_BUSY);
-                } else {
-                  final int track = (this.extraCounter >> 16) & 0xFF;
-                  final int side = (this.extraCounter >> 8) & 0xFF;
-                  final int sector = this.extraCounter & 0xFF;
-                  logger.info("FOUND.ADDR t=" + track + ";h=" + side + ":s=" + sector);
-                }
-              }
+              cmdReadAddressCond();
             } else {
               if (tstatesCounter > this.operationTimeOutCycles) {
                 setInternalFlag(STATUS_TR00_DATALOST);
@@ -630,6 +566,74 @@ public final class K1818VG93 {
             }
           }
         }
+      }
+    }
+  }
+
+  private void cmdReadAddressCond() {
+    if (this.counter > 0) {
+      switch (this.counter) {
+        case 6: {// track
+          final int trackNum = this.sector.getTrackNumber();
+          provideReadData(trackNum);
+          setInternalFlag(STATUS_INDEXMARK_DRQ);
+          this.extraCounter |= (trackNum << 16);
+        }
+        break;
+        case 5: {// side
+          final int side = this.sector.getSide();
+          provideReadData(side);
+          setInternalFlag(STATUS_INDEXMARK_DRQ);
+          this.extraCounter |= (side << 8);
+        }
+        break;
+        case 4: {// sector
+          final int sectorId = this.sector.getPhysicalIndex();
+          provideReadData(sectorId);
+          setInternalFlag(STATUS_INDEXMARK_DRQ);
+          this.extraCounter |= sectorId;
+        }
+        break;
+        case 3: {// length
+          final int type;
+          final int sectorLen = this.sector.size();
+          if (sectorLen <= 128) {
+            type = 0;
+          } else if (sectorLen <= 256) {
+            type = 1;
+          } else if (sectorLen <= 512) {
+            type = 2;
+          } else {
+            type = 3;
+          }
+
+          provideReadData(type);
+          setInternalFlag(STATUS_INDEXMARK_DRQ);
+        }
+        break;
+        case 2: {// crc1
+          final int crc = this.sector.getCrc() >>> 8;
+          provideReadData(crc);
+          setInternalFlag(STATUS_INDEXMARK_DRQ);
+        }
+        break;
+        case 1: {// crc2
+          final int crc = this.sector.getCrc() & 0xFF;
+          provideReadData(crc);
+          setInternalFlag(STATUS_INDEXMARK_DRQ);
+        }
+        break;
+        default:
+          throw new Error("Unexpected counter state");
+      }
+      this.counter--;
+      if (this.counter > 0) {
+        setInternalFlag(STATUS_BUSY);
+      } else {
+        final int track = (this.extraCounter >> 16) & 0xFF;
+        final int side = (this.extraCounter >> 8) & 0xFF;
+        final int sector = this.extraCounter & 0xFF;
+        logger.info("FOUND.ADDR t=" + track + ";h=" + side + ":s=" + sector);
       }
     }
   }
