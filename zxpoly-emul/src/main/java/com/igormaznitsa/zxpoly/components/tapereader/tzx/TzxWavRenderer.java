@@ -73,17 +73,11 @@ public class TzxWavRenderer {
 
       if (block instanceof AbstractTzxSystemBlock) {
         blockPointer++;
-      } else if (block instanceof AbstractTzxInformationBlock) {
-        if (block instanceof TzxBlockGroupStart) {
-          final TzxBlockGroupStart groupStart = (TzxBlockGroupStart) block;
-          namedOffsets.add(new RenderResult.NamedOffsets("GROUP>> " + groupStart.getGroupName(), WAV_HEADER_LENGTH + dataStream.getCounter()));
-        } else if (block instanceof TzxBlockMessage) {
-          final TzxBlockMessage message = (TzxBlockMessage) block;
-          if (this.logger != null) {
-            final String messageText = message.getText().replace('\r', ' ').replace('\t', ' ').replace('\n', ' ');
-            this.logger.info("TzxMessage: " + messageText);
-            namedOffsets.add(new RenderResult.NamedOffsets("MESSAGE: " + messageText, WAV_HEADER_LENGTH + dataStream.getCounter()));
-          }
+      } else if (block instanceof ITzxBlock) {
+        final ITzxBlock interfaceBlock = (ITzxBlock) block;
+        RenderResult.NamedOffsets namedOffset = interfaceBlock.renderBlockProcess(this.logger, dataStream.getCounter());
+        if (namedOffset!=null){
+          namedOffsets.add(namedOffset);
         }
         blockPointer++;
       } else if (block instanceof AbstractTzxFlowManagementBlock) {

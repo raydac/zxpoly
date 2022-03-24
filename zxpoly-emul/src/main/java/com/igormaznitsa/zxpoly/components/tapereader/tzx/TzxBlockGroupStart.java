@@ -5,8 +5,11 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Logger;
 
-public class TzxBlockGroupStart extends AbstractTzxInformationBlock {
+import static com.igormaznitsa.zxpoly.components.tapereader.tzx.TzxWavRenderer.WAV_HEADER_LENGTH;
+
+public class TzxBlockGroupStart extends AbstractTzxInformationBlock implements ITzxBlock {
 
   private final String groupName;
 
@@ -26,5 +29,10 @@ public class TzxBlockGroupStart extends AbstractTzxInformationBlock {
     final byte[] chars = this.groupName.getBytes(StandardCharsets.ISO_8859_1);
     outputStream.write(chars.length);
     outputStream.write(chars);
+  }
+
+  @Override
+  public TzxWavRenderer.RenderResult.NamedOffsets renderBlockProcess(Logger logger, Long dataStreamCounter) {
+    return new TzxWavRenderer.RenderResult.NamedOffsets("GROUP>> " + this.getGroupName(), WAV_HEADER_LENGTH + dataStreamCounter);
   }
 }
