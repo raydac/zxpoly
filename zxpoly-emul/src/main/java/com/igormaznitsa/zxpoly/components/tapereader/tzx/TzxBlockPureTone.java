@@ -6,17 +6,17 @@ import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import java.io.IOException;
 
 public class TzxBlockPureTone extends AbstractTzxSoundDataBlock {
-  private final int lengthOnePluseTstates;
+  private final int lengthOnePlusTstates;
   private final int numberOfPulses;
 
   public TzxBlockPureTone(final JBBPBitInputStream inputStream) throws IOException {
     super(TzxBlockId.PURE_TONE.getId());
-    this.lengthOnePluseTstates = readWord(inputStream);
+    this.lengthOnePlusTstates = readWord(inputStream);
     this.numberOfPulses = readWord(inputStream);
   }
 
   public int getLengthOfPulseInTstates() {
-    return this.lengthOnePluseTstates;
+    return this.lengthOnePlusTstates;
   }
 
   public int getNumberOfPulses() {
@@ -36,7 +36,7 @@ public class TzxBlockPureTone extends AbstractTzxSoundDataBlock {
   @Override
   public void write(final JBBPBitOutputStream outputStream) throws IOException {
     super.write(outputStream);
-    writeWord(outputStream, this.lengthOnePluseTstates);
+    writeWord(outputStream, this.lengthOnePlusTstates);
     writeWord(outputStream, this.numberOfPulses);
   }
 }
