@@ -14,10 +14,6 @@ public class TzxBlockPauseOrStop extends TzxBlockZeroDataLength {
     this.pauseDurationMs = readWord(inputStream);
   }
 
-//  @Override
-//  public int getDataLength() {
-//    return 0;
-//  }
 
   @Override
   public byte[] extractData() throws IOException {

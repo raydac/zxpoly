@@ -12,10 +12,6 @@ public class TzxBlockStopTapeIf48k extends TzxBlockZeroDataLength {
     if (readDWord(inputStream) != 0L) throw new IOException("Unexpected length of stop tape block");
   }
 
-//  @Override
-//  public int getDataLength() {
-//    return 0;
-//  }
 
   @Override
   public byte[] extractData() throws IOException {
