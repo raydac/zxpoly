@@ -215,7 +215,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     this.cpu.addTstates(this.board.contendPort(this.port7FFD.get(), port));
 
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
-      if (this.board.is3D00NotLocked()
+      if (this.board.isNotLockedPort3D00()
               && module.moduleIndex <= this.moduleIndex
               && !module.isTrdosActive()
       ) {
@@ -290,14 +290,14 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     if (boardMode == BoardMode.ZXPOLY) {
       if (this.moduleIndex == 0) {
-        if (this.board.is3D00NotLocked() && !is7FFDLocked()) {
+        if (this.board.isNotLockedPort3D00() && !is7FFDLocked()) {
           doInt = (this.port7FFD.get() & PORTw_ZX128_INTCPU0) == 0 && (commonInt || this.localInt);
         } else {
           doInt = commonInt || this.localInt;
         }
       } else {
         doInt = (!this.activeRegisterReading && this.registerReadingCounter <= 0) &&
-                ((!this.board.is3D00NotLocked() && commonInt) || this.localInt);
+                ((!this.board.isNotLockedPort3D00() && commonInt) || this.localInt);
       }
       this.localInt = false;
 
@@ -503,7 +503,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     switch (this.board.getBoardMode()) {
       case ZXPOLY: {
-        if (m1 && this.board.is3D00NotLocked() && this.registerReadingCounter == 0) {
+        if (m1 && this.board.isNotLockedPort3D00() && this.registerReadingCounter == 0) {
           final int moduleStopAddress =
                   this.zxPolyRegsWritten.get(2) | (this.zxPolyRegsWritten.get(3) << 8);
           this.stopAddressWait = address != 0 && address == moduleStopAddress;
@@ -750,7 +750,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
           final int ramOffsetInHeap = ramOffset2HeapAddress(value7FFD, address);
 
           if (address < 0x4000) {
-            if (this.board.is3D00NotLocked() && (this.port7FFD.get() & PORTw_ZX128_ROMRAM) != 0) {
+            if (this.board.isNotLockedPort3D00() && (this.port7FFD.get() & PORTw_ZX128_ROMRAM) != 0) {
               //RAM0
               this.board.writeRam(this, ramOffsetInHeap, val);
             }
@@ -936,7 +936,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       if ((reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 || port == PORTw_ZX128) {
         if (port == PORTw_ZX128) { // full port decode
           if (this.moduleIndex == 0
-                  && this.board.getMappedCpuIndex() > 0
+                  && this.board.getMappedCpuIndex() != 0
                   && (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_WRITE_MAPPED_IO_7FFD) != 0) {
             this.board.writeBusIo(this, port, val);
           } else {
@@ -976,7 +976,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   @Override
   public void preStep(final int frameTiStates, final boolean signalReset, final boolean tstatesIntReached,
-                      boolean wallclockInt) {
+                      boolean wallClockInt) {
     if (signalReset) {
       setStateForSystemReset();
     }
@@ -990,7 +990,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   private void prepareWaitSignal() {
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       this.waitSignal =
-              this.stopAddressWait || (this.moduleIndex > 0 && this.board.isSlaveModulesInWaitMode());
+              this.stopAddressWait || (this.moduleIndex != 0 && this.board.isSlaveModulesInWaitMode());
     } else {
       this.waitSignal = false;
     }
@@ -1006,7 +1006,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   private void setStateForSystemReset() {
-    logger.info("Reset");
+    logger.info("Reset state module: " + this.moduleIndex);
     this.intTiStatesCounter = -1;
     this.nmiTiStatesCounter = -1;
     this.port7FFD.set(0);
@@ -1019,11 +1019,8 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     this.localNmi = false;
 
     for (int i = 0; i < this.zxPolyRegsWritten.length(); i++) {
-      this.zxPolyRegsWritten.set(i, 0);
+      this.zxPolyRegsWritten.set(i, i == 0 ? this.moduleIndex << 1 : 0);
     }
-
-    // set the intitial module memory offset in the heap
-    this.zxPolyRegsWritten.set(0, this.moduleIndex << 1);
   }
 
   public int getLastM1Address() {

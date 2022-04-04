@@ -5,6 +5,9 @@ echo it needs ZASM 4.0.11 from http://k1.spdns.de/Develop/Projects/zasm-4.0/Dist
 
 JAVA_EXE=/home/igorm/SDK/jdk-11/bin/java
 
+rm -f $PWD/images/*.ZX*
+rm -f $PWD/images/*.c*
+
 $JAVA_EXE -jar $PWD/bin/zxsc.jar sliceImage $PWD/images/256.png
 $JAVA_EXE -jar $PWD/bin/zxsc.jar sliceImage $PWD/images/512.png
 
@@ -24,3 +27,6 @@ $PWD/bin/zx0 $PWD/images/512c3.c3 $PWD/images/512C3.ZX0
 TARGETROM=$PWD/../zxpoly-emul/src/main/resources/com/igormaznitsa/zxpoly/rom/zxpolytest.prom
 
 $PWD/bin/zasm --z80 -l0 $PWD/zxpolytest.asm -o $TARGETROM
+
+rm -f $PWD/images/*.ZX*
+rm -f $PWD/images/*.c*

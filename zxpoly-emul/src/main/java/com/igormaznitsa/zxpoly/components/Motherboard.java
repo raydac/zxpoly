@@ -45,7 +45,7 @@ public final class Motherboard implements ZxPolyConstants {
   private static final Logger LOGGER = Logger.getLogger("MB");
 
   private static final int SPEC256_GFX_CORES = 8;
-
+  private static final int NUMBER_OF_MODULES = 4;
   private final ZxPolyModule[] modules;
   private final Z80[] spec256GfxCores;
   private final IoDevice[] ioDevices;
@@ -60,6 +60,8 @@ public final class Motherboard implements ZxPolyConstants {
   private final TimingProfile timingProfile;
   private final VolumeProfile soundLevels;
   private final int[] audioLevels;
+  private final TimingProfile.UlaTact[] memoryTimings;
+  private final boolean attributePortFf;
   private volatile int port3D00 = (int) System.nanoTime() & 0xFF; // simulate noise after turning on
   private volatile boolean totalReset;
   private volatile int resetCounter;
@@ -75,14 +77,7 @@ public final class Motherboard implements ZxPolyConstants {
   private volatile boolean gfxLeveledOr = false;
   private volatile boolean gfxLeveledAnd = false;
   private int frameTiStatesCounter = 0;
-
-  private static boolean isContended(final int address, final int port7FFD) {
-    final int pageStart = address & 0xC000;
-    return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
-  }
-
-  private final TimingProfile.UlaTact[] memoryTimings;
-  private final boolean attributePortFf;
+  private boolean frameIntTriggered;
 
   public Motherboard(
           final VolumeProfile soundLevels,
@@ -102,9 +97,9 @@ public final class Motherboard implements ZxPolyConstants {
     this.soundLevels = soundLevels;
     this.audioLevels = this.soundLevels.getLevels();
     this.timingProfile = timingProfile;
-    this.modules = new ZxPolyModule[4];
+    this.modules = new ZxPolyModule[NUMBER_OF_MODULES];
     final List<IoDevice> ioDevices = new ArrayList<>();
-    for (int i = 0; i < this.modules.length; i++) {
+    for (int i = 0; i < NUMBER_OF_MODULES; i++) {
       this.modules[i] = new ZxPolyModule(timingProfile, this, Objects.requireNonNull(rom, "ROM must not be null"), i);
       ioDevices.add(this.modules[i]);
     }
@@ -158,6 +153,11 @@ public final class Motherboard implements ZxPolyConstants {
     for (int i = 0; i < SPEC256_GFX_CORES; i++) {
       this.spec256GfxCores[i] = new Z80(this.modules[0].getCpu());
     }
+  }
+
+  private static boolean isContended(final int address, final int port7FFD) {
+    final int pageStart = address & 0xC000;
+    return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
   }
 
   private static boolean isUlaPort(final int port) {
@@ -228,7 +228,7 @@ public final class Motherboard implements ZxPolyConstants {
   }
 
   public void set3D00(final int value, final boolean force) {
-    if (is3D00NotLocked() || force) {
+    if (isNotLockedPort3D00() || force) {
       this.port3D00 = value;
       LOGGER.log(Level.INFO, "set #3D00 to " + Utils.toHex(value));
 
@@ -278,7 +278,7 @@ public final class Motherboard implements ZxPolyConstants {
     return (this.port3D00 >>> 5) & 3;
   }
 
-  public boolean is3D00NotLocked() {
+  public boolean isNotLockedPort3D00() {
     return (this.port3D00 & PORTw_ZXPOLY_BLOCK) == 0;
   }
 
@@ -336,8 +336,6 @@ public final class Motherboard implements ZxPolyConstants {
       spec256GfxCore.fillByState(sourceCpu);
     }
   }
-
-  private boolean frameIntTriggered;
 
   public int step(final boolean tstatesIntReached,
                   final boolean wallclockInt,
@@ -463,7 +461,7 @@ public final class Motherboard implements ZxPolyConstants {
               throw new Error("Unexpected value");
           }
 
-          if (is3D00NotLocked() && (zx0halt || zx1halt || zx2halt || zx3halt)) {
+          if (isNotLockedPort3D00() && (zx0halt || zx1halt || zx2halt || zx3halt)) {
             // a cpu has met halt and we need process notification
             if (zx0halt) {
               doModuleHaltNotification(0);
@@ -644,21 +642,20 @@ public final class Motherboard implements ZxPolyConstants {
 
   public void writeBusIo(final ZxPolyModule module, final int port, final int value) {
     final int mappedCpu = getMappedCpuIndex();
-    final int moduleIndex = module.getModuleIndex();
 
     if (this.getBoardMode() == BoardMode.ZXPOLY) {
-      if (moduleIndex == 0) {
+      if (module.isMaster()) {
         if (port == PORTrw_ZXPOLY) {
           set3D00(value, false);
         } else {
-          if (mappedCpu > 0) {
-            final ZxPolyModule destmodule = this.modules[mappedCpu];
-            this._writeRam(destmodule.ramOffset2HeapAddress(destmodule.read7FFD(), port), value);
-            destmodule.prepareLocalNmi();
-          } else {
+          if (mappedCpu == 0) {
             for (final IoDevice d : this.ioDevices) {
               d.writeIo(module, port, value);
             }
+          } else {
+            final ZxPolyModule targetModule = this.modules[mappedCpu];
+            this._writeRam(targetModule.ramOffset2HeapAddress(targetModule.read7FFD(), port), value);
+            targetModule.prepareLocalNmi();
           }
         }
       } else {
@@ -688,11 +685,10 @@ public final class Motherboard implements ZxPolyConstants {
     final int mappedCPU = getMappedCpuIndex();
     int result = -1;
 
-    if (this.getBoardMode() == BoardMode.ZXPOLY &&
-            (module.getModuleIndex() == 0 && mappedCPU > 0)) {
-      final ZxPolyModule destmodule = modules[mappedCPU];
-      result = this._readRam(destmodule.ramOffset2HeapAddress(destmodule.read7FFD(), port));
-      destmodule.prepareLocalInt();
+    if (this.getBoardMode() == BoardMode.ZXPOLY && module.isMaster() && mappedCPU != 0 ) {
+      final ZxPolyModule destinationModule = this.modules[mappedCPU];
+      result = this._readRam(destinationModule.ramOffset2HeapAddress(destinationModule.read7FFD(), port));
+      destinationModule.prepareLocalInt();
     } else {
       IoDevice firstDetectedActiveDevice = null;
       for (final IoDevice device : this.ioDevices) {
