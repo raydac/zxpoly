@@ -94,7 +94,7 @@ public final class AppOptions {
     try {
       result = VirtualKeyboardLook.valueOf(name);
     } catch (IllegalArgumentException ex) {
-      result = VirtualKeyboardLook.DEFAULT;
+      // do nothing
     }
     return result;
   }
@@ -109,7 +109,7 @@ public final class AppOptions {
     try {
       result = VolumeProfile.valueOf(name);
     } catch (IllegalArgumentException ex) {
-      result = VolumeProfile.EXPONENTIAL;
+      // do noting
     }
     return result;
   }
@@ -212,11 +212,11 @@ public final class AppOptions {
   }
 
   public synchronized TimingProfile getTimingProfile() {
-    final String size = preferences.get(Option.TIMING_PROFILE.name(), TimingProfile.SPECTRUM128.name());
+    final String size = preferences.get(Option.TIMING_PROFILE.name(), TimingProfile.PENTAGON128.name());
     try {
       return TimingProfile.valueOf(size);
     } catch (NoSuchElementException ex) {
-      return TimingProfile.SPECTRUM128;
+      return TimingProfile.PENTAGON128;
     }
   }
 

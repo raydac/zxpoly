@@ -878,7 +878,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   }
 
   public void write7FFD(final int value, final boolean writeEvenIfLocked) {
-    if (((this.port7FFD.get() & PORTw_ZX128_LOCK) == 0) || writeEvenIfLocked) {
+    if (writeEvenIfLocked || ((this.port7FFD.get() & PORTw_ZX128_LOCK) == 0)) {
       this.port7FFD.set(value);
     }
   }
@@ -935,7 +935,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       final int reg0 = this.zxPolyRegsWritten.get(0);
       if ((reg0 & ZXPOLY_wREG0_OUT_DISABLED) == 0 || port == PORTw_ZX128) {
         if (port == PORTw_ZX128) { // full port decode
-          if (this.moduleIndex == 0
+          if (this.isMaster()
                   && this.board.getMappedCpuIndex() != 0
                   && (this.zxPolyRegsWritten.get(1) & ZXPOLY_wREG1_WRITE_MAPPED_IO_7FFD) != 0) {
             this.board.writeBusIo(this, port, val);
@@ -1009,7 +1009,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     logger.info("Reset state module: " + this.moduleIndex);
     this.intTiStatesCounter = -1;
     this.nmiTiStatesCounter = -1;
-    this.port7FFD.set(0);
+    this.write7FFD(0, true);
     this.trdosRomActive = false;
     this.registerReadingCounter = 0;
     this.activeRegisterReading = false;
