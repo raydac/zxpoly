@@ -656,8 +656,12 @@ CHKROMEND:
 
 CPUTSTPROC:
   di
+
+  xor a ; init 7FFD to 0
+  ld bc,ZX_128
+  out (c),a
+
   ld sp,STACKSTART
-  xor a
   ld (CPUTESTRSLT),a ; write flag "working" in result byte
   ld bc,ZX_POLY ; analyze the index of the processor
   in a,(c)
