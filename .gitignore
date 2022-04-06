@@ -22,3 +22,4 @@
 bin/
 *.syso
 versioninfo.go
+/adapted/ZxWord/target/lst.lst

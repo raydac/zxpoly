@@ -365,17 +365,18 @@ COPY_CPU3_R3 DEFB 0
 ; addr - the start address of the memorey block
 ; length - the length of the memory block
 	MACRO COPY2CPU cpu, addr, length
-		; set disNMI for the ZX-Poly R1 of target CPU
-		LD IX,COPY_CPU0_R1
-		LD A,(IX+0)
-		OR #30
-		LD BC,CPU0_R1
-		OUT (C),A
-		LD (IX+0),A
+		; disable NMI for target CPU because it will be mass generated during write
+        LD A,[COPY_CPU0_R1 + (cpu << 2)]
+        OR #30
+        LD BC, CPU0_R1 | (cpu << 12)
+        OUT (C),A
+        LD [COPY_CPU0_R1 + (cpu * 4)], A
 
-		LD BC,CPU0_R1+cpu
-		OUT (C),A
-		LD (IX+cpu),A
+        LD A,[COPY_CPU0_R1]
+        OR #30
+        LD BC, CPU0_R1
+        OUT (C),A
+        LD [COPY_CPU0_R1], A
 
 		LD A,(COPY_3D00)
 		AND ~#60
@@ -406,10 +407,10 @@ COPY_CPU3_R3 DEFB 0
 		LD BC,ZXPOLY_MAIN
 		OUT (C),A
 
-		LD A,(IX+0)
+		LD A,(COPY_CPU0_R1)
 		RES 5,A
 		RES 4,A
-		LD (IX+0),A
+		LD (COPY_CPU0_R1),A
 		LD BC,CPU0_R1
 		OUT (C),A
 	ENDM

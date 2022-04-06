@@ -1,7 +1,7 @@
 ; Macroses for ZX-Poly platform
 ;
 ; Format: Sjasmplus
-; Version: 1.01
+; Version: 1.02
 ; Author: Igor Maznitsa
 
 
@@ -355,17 +355,18 @@ CPU3_R3 EQU $33FF
 ; addr - the start address of the memorey block
 ; length - the length of the memory block
 	MACRO COPY2CPU cpu, addr, length
-		; set disNMI for the ZX-Poly R1 of target CPU
-		LD IX,COPY_CPU0_R1
-		LD A,(IX+0)
-		OR $30
-		LD BC,CPU0_R1
-		OUT (C),A
-		LD (IX+0),A
+		; disable NMI for target CPU because it will be mass generated during write
+        LD A,[COPY_CPU0_R1 + (cpu << 2)]
+        OR #30
+        LD BC, CPU0_R1 | (cpu << 12)
+        OUT (C),A
+        LD [COPY_CPU0_R1 + (cpu * 4)], A
 
-		LD BC,CPU0_R1+cpu
-		OUT (C),A
-		LD (IX+cpu),A
+        LD A,[COPY_CPU0_R1]
+        OR #30
+        LD BC, CPU0_R1
+        OUT (C),A
+        LD [COPY_CPU0_R1], A
 
 		LD A,(COPY_3D00)
 		AND ~$60
