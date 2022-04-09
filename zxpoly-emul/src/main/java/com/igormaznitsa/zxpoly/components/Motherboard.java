@@ -342,6 +342,11 @@ public final class Motherboard implements ZxPolyConstants {
                   final boolean commonNmi,
                   final boolean startNewFrame,
                   final boolean executionEnabled) {
+
+    if (startNewFrame) {
+      this.startNewFrame();
+    }
+
     this.localResetForAllModules = false;
 
     final BoardMode currentMode = this.boardMode;
@@ -353,12 +358,6 @@ public final class Motherboard implements ZxPolyConstants {
     if (commonNmi) {
       LOGGER.info("Incoming common NNI signal");
     }
-
-    if (startNewFrame) {
-      this.startNewFrame();
-    }
-
-    final int prevFrameTiStatesCounter = this.frameTiStatesCounter;
 
     final boolean intTriggered;
     if (this.frameIntTriggered) {
@@ -499,8 +498,8 @@ public final class Motherboard implements ZxPolyConstants {
           throw new Error("Unexpected board mode: " + this.boardMode);
       }
 
-      this.frameTiStatesCounter += this.modules[0].getCpu().getStepTstates();
-      final int spentTstates = this.frameTiStatesCounter - prevFrameTiStatesCounter;
+      final int spentTiStates = this.modules[0].getCpu().getStepTstates();
+      this.frameTiStatesCounter += spentTiStates;
 
       final int feValue = this.video.getPortFE();
       final int levelTapeOut = this.audioLevels[((feValue >> 3) & 1) == 0 ? 0 : 14];
@@ -512,10 +511,10 @@ public final class Motherboard implements ZxPolyConstants {
       this.beeper.setChannelValue(CHANNEL_BEEPER, mixedLevels);
 
       for (final IoDevice device : this.ioDevicesPostStep) {
-        device.postStep(spentTstates);
+        device.postStep(spentTiStates);
       }
 
-      this.beeper.updateState(tstatesIntReached, wallclockInt, spentTstates);
+      this.beeper.updateState(tstatesIntReached, wallclockInt, spentTiStates);
 
       final int curTriggers = this.triggers;
 
