@@ -909,9 +909,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     }
 
     final BlinkRecord[] blinkStates = new BlinkRecord[]{
-            new BlinkRecord(this.timingProfile.tstatesStartScreen + (64 * this.timingProfile.tstatesPerLine), 128, 192),
+            new BlinkRecord(this.timingProfile.tstatesStartScreen + (64 * this.timingProfile.tstatesPerLine), 0, 64),
             new BlinkRecord(this.timingProfile.tstatesStartScreen + (128 * this.timingProfile.tstatesPerLine), 64, 128),
-            new BlinkRecord(this.timingProfile.tstatesStartScreen + (192 * this.timingProfile.tstatesPerLine), 0, 64),
+            new BlinkRecord(this.timingProfile.tstatesStartScreen + (192 * this.timingProfile.tstatesPerLine), 128, 192),
             new BlinkRecord(this.timingProfile.tstatesFrame << 1, 0, 0)
     };
     int currentBlinkIndex = 0;
