@@ -199,10 +199,10 @@ public final class AppOptions {
   }
 
   public synchronized BorderSize getBorderSize() {
-    final String size = preferences.get(Option.BORDER_SIZE.name(), BorderSize.SMALL.name());
+    final String borderSizeName = preferences.get(Option.BORDER_SIZE.name(), BorderSize.SMALL.name());
     try {
-      return BorderSize.valueOf(size);
-    } catch (NoSuchElementException ex) {
+      return BorderSize.valueOf(borderSizeName);
+    } catch (IllegalArgumentException ex) {
       return BorderSize.SMALL;
     }
   }
@@ -212,10 +212,10 @@ public final class AppOptions {
   }
 
   public synchronized TimingProfile getTimingProfile() {
-    final String size = preferences.get(Option.TIMING_PROFILE.name(), TimingProfile.PENTAGON128.name());
+    final String timing = preferences.get(Option.TIMING_PROFILE.name(), TimingProfile.PENTAGON128.name());
     try {
-      return TimingProfile.valueOf(size);
-    } catch (NoSuchElementException ex) {
+      return TimingProfile.valueOf(timing);
+    } catch (IllegalArgumentException ex) {
       return TimingProfile.PENTAGON128;
     }
   }
@@ -229,7 +229,7 @@ public final class AppOptions {
     final String mode = preferences.get(Option.DEFAULT_MODE.name(), BoardMode.ZXPOLY.name());
     try {
       return BoardMode.valueOf(mode);
-    } catch (NoSuchElementException ex) {
+    } catch (IllegalArgumentException ex) {
       return BoardMode.ZXPOLY;
     }
   }
