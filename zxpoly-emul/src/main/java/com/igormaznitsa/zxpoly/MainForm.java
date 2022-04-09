@@ -1176,6 +1176,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     } else {
       this.board.getVideoController().syncUpdateBuffer(lineFrom, lineTo, VideoController.LineRenderMode.ALL);
     }
+    this.board.getVideoController().copyWorkScreenToOutputScreen(0, lineFrom, 256, lineTo);
   }
 
   private void repaintScreen() {
