@@ -7,7 +7,7 @@
 
 # Changelog
 
-__2.2.4 (SNAPSHOT)__
+__2.3.0 (SNAPSHOT)__
 
 - improved screen render
 - added virtual keyboard skin [#66](https://github.com/raydac/zxpoly/issues/66)
