@@ -828,7 +828,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         }
         break;
         case TAPE_PLAY_STOP: {
-          abstractButton.setSelected(this.keyboardAndTapeModule.getTap().isPlaying());
+          abstractButton.setSelected(this.keyboardAndTapeModule.getTap() != null && this.keyboardAndTapeModule.getTap().isPlaying());
           abstractButton.addActionListener(e -> {
             final JToggleButton source = (JToggleButton) e.getSource();
             if (source.isSelected()) {
