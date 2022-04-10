@@ -23,6 +23,7 @@ public abstract class AbstractTcpSingleThreadServer {
   private final AtomicReference<Socket> currentSocket = new AtomicReference<>();
   private final List<TcpServerListener> listeners = new CopyOnWriteArrayList<>();
   private volatile boolean stopped;
+
   public AbstractTcpSingleThreadServer(
           final String id,
           final int bufferSize,

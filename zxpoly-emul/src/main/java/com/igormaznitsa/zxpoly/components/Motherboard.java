@@ -684,7 +684,7 @@ public final class Motherboard implements ZxPolyConstants {
     final int mappedCPU = getMappedCpuIndex();
     int result = -1;
 
-    if (this.getBoardMode() == BoardMode.ZXPOLY && module.isMaster() && mappedCPU != 0 ) {
+    if (this.getBoardMode() == BoardMode.ZXPOLY && module.isMaster() && mappedCPU != 0) {
       final ZxPolyModule destinationModule = this.modules[mappedCPU];
       result = this._readRam(destinationModule.ramOffset2HeapAddress(destinationModule.read7FFD(), port));
       destinationModule.prepareLocalInt();

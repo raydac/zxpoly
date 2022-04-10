@@ -206,6 +206,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private final AtomicReference<SpriteCorrectorMainFrame> spriteCorrectorMainFrame = new AtomicReference<>();
   private final ImageIcon sysIcon;
   private final TimingProfile timingProfile;
+  private final AtomicBoolean magicButtonTrigger = new AtomicBoolean();
   private volatile long lastFullScreenEventTime = 0L;
   private volatile boolean turboMode = false;
   private volatile boolean zxKeyboardProcessingAllowed = true;
@@ -242,7 +243,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private JMenuItem menuFileCreateEmptyDisk;
   private JMenuItem menuFileOptions;
   private JMenuItem menuFileReset;
-  private final AtomicBoolean magicButtonTrigger = new AtomicBoolean();
   private JMenuItem menuFileSelectDiskA;
   private JMenuItem menuFileSelectDiskB;
   private JMenuItem menuFileSelectDiskC;
@@ -290,6 +290,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private File lastPokeFileFolder = null;
   private Optional<SourceSoundPort> preTurboSourceSoundPort = Optional.empty();
   private JMenu menuOptionsScaleUi;
+  private JMenuItem menuFileMagic;
 
   public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
@@ -577,8 +578,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
                     .collect(Collectors.toList())
     );
   }
-
-  private JMenuItem menuFileMagic;
 
   private void doOnShutdown() {
     this.videoStreamer.stop();

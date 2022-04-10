@@ -33,7 +33,6 @@ import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
