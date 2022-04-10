@@ -1,5 +1,6 @@
 __2.2.4 (SNAPSHOT)__
 
+- improved screen render
 - added virtual keyboard skin [#66](https://github.com/raydac/zxpoly/issues/66)
 - added file menu item "Create empty disk"
 - added formatting for new created TRD disks
