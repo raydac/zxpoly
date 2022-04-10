@@ -896,25 +896,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     long sessionIntCounter = 0;
 
-    class BlinkRecord {
-      final int ticks;
-      final int lineFrom;
-      final int lineTo;
-
-      BlinkRecord(final int ticks, final int lineFrom, final int lineTo) {
-        this.ticks = ticks;
-        this.lineFrom = lineFrom;
-        this.lineTo = lineTo;
-      }
-    }
-
-    final BlinkRecord[] blinkStates = new BlinkRecord[]{
-            new BlinkRecord(this.timingProfile.tstatesStartScreen + (64 * this.timingProfile.tstatesPerLine), 0, 64),
-            new BlinkRecord(this.timingProfile.tstatesStartScreen + (128 * this.timingProfile.tstatesPerLine), 64, 128),
-            new BlinkRecord(this.timingProfile.tstatesStartScreen + (192 * this.timingProfile.tstatesPerLine), 128, 192),
-            new BlinkRecord(this.timingProfile.tstatesFrame << 1, 0, 0)
-    };
-    int currentBlinkIndex = 0;
+    int nextBlinkLineTiStates = this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
+    int blinkLineY = 0;
 
     while (!Thread.currentThread().isInterrupted()) {
       boolean notifyRepaintScreen = false;
@@ -938,7 +921,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
                 notifyRepaintScreen = true;
               }
               countdownToAnimationSave--;
-              currentBlinkIndex = 0;
+              nextBlinkLineTiStates = this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
+              blinkLineY = 0;
             } else {
               doCpuIntTick = false;
             }
@@ -968,7 +952,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
           frameTiStates = this.board.getFrameTiStates();
 
-          if (!tiStatesForIntExhausted && frameTiStates >= blinkStates[currentBlinkIndex].ticks) {
+          if (!tiStatesForIntExhausted && frameTiStates >= nextBlinkLineTiStates) {
             doBlink = true;
           }
 
@@ -1004,8 +988,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         }
 
         if (doBlink) {
-          this.blinkScreen(sessionIntCounter, blinkStates[currentBlinkIndex].lineFrom, blinkStates[currentBlinkIndex].lineTo);
-          currentBlinkIndex = (currentBlinkIndex + 1) % blinkStates.length;
+          if (blinkLineY < 192) {
+            this.blinkScreen(sessionIntCounter, blinkLineY, blinkLineY + 1);
+            nextBlinkLineTiStates += this.timingProfile.tstatesPerLine;
+            blinkLineY++;
+          } else {
+            nextBlinkLineTiStates = this.timingProfile.tstatesFrame;
+          }
         }
 
         if (notifyRepaintScreen) {
