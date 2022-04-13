@@ -128,7 +128,7 @@ public final class VideoController extends JComponent
   private Window vkbdWindow = null;
   private boolean fullScreenMode;
   private VirtualKeyboardRender vkbdRender;
-  private int stepStartTStates = 0;
+  private int stepStartTiStates = 0;
   private int preStepBorderColor;
 
   public VideoController(
@@ -167,8 +167,8 @@ public final class VideoController extends JComponent
             ((DataBufferInt) this.workZxScreenImage.getRaster().getDataBuffer()).getData();
 
     this.borderImage = new BufferedImage(
-            this.timingProfile.tstatesPerBorderLeft + this.timingProfile.tstatesPerVideo + this.timingProfile.tstatesPerBorderRight,
-            this.timingProfile.linesBorderTop + ZXSCREEN_ROWS + this.timingProfile.linesBorderBottom,
+            this.timingProfile.tstatesPerLine,
+            this.timingProfile.scanLines,
             BufferedImage.TYPE_INT_RGB);
     this.borderImage.setAccelerationPriority(1.0f);
     this.borderImageRgbData =
@@ -1322,16 +1322,18 @@ public final class VideoController extends JComponent
       }
       break;
       default: {
-        final int dx = this.borderImage.getWidth();
-        final int dy = this.borderImage.getHeight();
+        final int invisibleWidth = this.timingProfile.tstatesPerHBlank + this.timingProfile.tstatesPerHSync;
+        final int invisibleHeight = this.timingProfile.linesPerVSync;
+        final int visibleBorderAreaWidth = this.borderImage.getWidth() - invisibleWidth;
+        final int visibleBorderAreaHeight = this.borderImage.getHeight() - invisibleHeight;
 
-        final double sx = (double) visibleWidth / dx;
-        final double sy = (double) visibleHeight / dy;
+        final double sx = (double) visibleWidth / visibleBorderAreaWidth;
+        final double sy = (double) visibleHeight / visibleBorderAreaHeight;
 
         synchronized (this.borderImageRgbData) {
           g2.drawImage(this.borderImage,
-                  0,
-                  0,
+                  (int) (-invisibleWidth * sx),
+                  (int) (-invisibleHeight * sy),
                   (int) (sx * this.borderImage.getWidth()),
                   (int) (sy * this.borderImage.getHeight()),
                   null);
@@ -1583,11 +1585,11 @@ public final class VideoController extends JComponent
           final boolean tstatesIntReached,
           boolean wallClockInt
   ) {
+    this.stepStartTiStates = tstatesIntReached ? -1 : frameTiStates;
     if (signalReset) {
       this.portFEw = 0x00;
     }
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
-    this.stepStartTStates = tstatesIntReached ? -1 : frameTiStates;
     this.preStepBorderColor = this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
   }
 
@@ -1600,19 +1602,10 @@ public final class VideoController extends JComponent
   public void postStep(int spentTstates) {
     final int borderColor = this.preStepBorderColor;
 
-    int offset = this.stepStartTStates;
+    int offset = this.stepStartTiStates;
     if (offset >= 0) {
       while (spentTstates > 0 && offset < this.timingProfile.tstatesFrame) {
-        final int borderLine = offset / this.timingProfile.tstatesPerLine - this.timingProfile.linesPerVSync;
-        final int inLineTact = offset % this.timingProfile.tstatesPerLine;
-
-        if (borderLine >= 0) {
-          final int borderRowOffset = borderLine * this.borderImage.getWidth();
-          if (inLineTact >= this.timingProfile.tstatesPerHBlank + this.timingProfile.tstatesPerHSync)
-            this.borderImageRgbData[borderRowOffset + inLineTact - this.timingProfile.tstatesPerHBlank - this.timingProfile.tstatesPerHSync] = borderColor;
-        }
-
-        offset++;
+        this.borderImageRgbData[offset++] = borderColor;
         spentTstates--;
       }
     }
