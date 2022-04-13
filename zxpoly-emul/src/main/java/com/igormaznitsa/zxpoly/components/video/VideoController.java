@@ -103,7 +103,6 @@ public final class VideoController extends JComponent
   private static volatile int gfxUpColorsMixed = 64;
   private static volatile int gfxDownColorsMixed = 0;
   private static volatile int[] gfxPrerenderedBack = null;
-  private final BorderSize borderSize;
   private final VirtualKeyboardDecoration vkbdContainer;
   private final Motherboard board;
   private final BufferedImage workZxScreenImage;
@@ -132,24 +131,20 @@ public final class VideoController extends JComponent
   private int preStepBorderColor;
 
   public VideoController(
-          final BorderSize borderSize,
           final TimingProfile timingProfile,
           final boolean syncRepaint,
           final Motherboard board,
           final VirtualKeyboardDecoration vkbdContainer) {
     super();
 
-    this.borderSize = borderSize;
-
     this.syncRepaint = syncRepaint;
     this.timingProfile = timingProfile;
 
     this.baseComponentSize = new Dimension(
-            SCREEN_WIDTH + (this.borderSize.leftPixels < 0 ? this.timingProfile.tstatesPerBorderLeft << 2 : this.borderSize.leftPixels)
-                    + (this.borderSize.rightPixels < 0 ? this.timingProfile.tstatesPerBorderRight << 2 : this.borderSize.rightPixels),
-            SCREEN_HEIGHT +
-                    (this.borderSize.topPixels < 0 ? this.timingProfile.linesBorderTop << 1 : this.borderSize.topPixels)
-                    + (this.borderSize.bottomPixels < 0 ? this.timingProfile.linesBorderBottom << 1 : this.borderSize.bottomPixels));
+            SCREEN_WIDTH + (this.timingProfile.tstatesPerBorderLeft << 2)
+                    + (this.timingProfile.tstatesPerBorderRight << 2),
+            SCREEN_HEIGHT + (this.timingProfile.linesBorderTop)
+                    + (this.timingProfile.linesBorderBottom));
 
     this.setFocusTraversalKeysEnabled(false);
 
@@ -1315,13 +1310,6 @@ public final class VideoController extends JComponent
   }
 
   private void drawBorder(final Graphics2D g2, final int visibleWidth, final int visibleHeight) {
-    switch (this.borderSize) {
-      case NONE: {
-        g2.setColor(this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]));
-        g2.fillRect(0, 0, visibleWidth, visibleHeight);
-      }
-      break;
-      default: {
         final int invisibleWidth = this.timingProfile.tstatesPerHBlank + this.timingProfile.tstatesPerHSync;
         final int invisibleHeight = this.timingProfile.linesPerVSync;
         final int visibleBorderAreaWidth = this.borderImage.getWidth() - invisibleWidth;
@@ -1338,9 +1326,6 @@ public final class VideoController extends JComponent
                   (int) (sy * this.borderImage.getHeight()),
                   null);
         }
-      }
-      break;
-    }
   }
 
   @Override

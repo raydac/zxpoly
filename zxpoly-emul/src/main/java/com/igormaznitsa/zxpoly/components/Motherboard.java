@@ -21,7 +21,6 @@ import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.snd.*;
-import com.igormaznitsa.zxpoly.components.video.BorderSize;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardDecoration;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
@@ -82,7 +81,6 @@ public final class Motherboard implements ZxPolyConstants {
   public Motherboard(
           final VolumeProfile soundLevels,
           final TimingProfile timingProfile,
-          final BorderSize borderSize,
           final RomData rom,
           final BoardMode boardMode,
           final boolean syncRepaint,
@@ -119,7 +117,7 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.keyboard = new KeyboardKempstonAndTapeIn(timingProfile, this, allowKempstonMouse);
     ioDevices.add(keyboard);
-    this.video = new VideoController(borderSize, timingProfile, syncRepaint, this, vkbdContainer);
+    this.video = new VideoController(timingProfile, syncRepaint, this, vkbdContainer);
     ioDevices.add(video);
     ioDevices.add(new KempstonMouse(this));
 

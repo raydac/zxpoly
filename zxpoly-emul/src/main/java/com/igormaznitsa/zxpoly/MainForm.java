@@ -377,7 +377,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.board = new Motherboard(
             volumeProfile,
             this.timingProfile,
-            AppOptions.getInstance().getBorderSize(),
             BASE_ROM,
             AppOptions.getInstance().getDefaultBoardMode(),
             AppOptions.getInstance().isSyncPaint(),

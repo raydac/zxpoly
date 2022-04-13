@@ -19,7 +19,6 @@ package com.igormaznitsa.zxpoly.utils;
 
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
-import com.igormaznitsa.zxpoly.components.video.BorderSize;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.ui.FastButton;
@@ -195,19 +194,6 @@ public final class AppOptions {
 
   public synchronized void setGrabSound(final boolean value) {
     preferences.putBoolean(Option.STREAM_GRABSOUND.name(), value);
-  }
-
-  public synchronized BorderSize getBorderSize() {
-    final String borderSizeName = preferences.get(Option.BORDER_SIZE.name(), BorderSize.SMALL.name());
-    try {
-      return BorderSize.valueOf(borderSizeName);
-    } catch (IllegalArgumentException ex) {
-      return BorderSize.SMALL;
-    }
-  }
-
-  public synchronized void setBorderSize(final BorderSize value) {
-    preferences.put(Option.BORDER_SIZE.name(), value.name());
   }
 
   public synchronized TimingProfile getTimingProfile() {
