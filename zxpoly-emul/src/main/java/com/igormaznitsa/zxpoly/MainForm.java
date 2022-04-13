@@ -989,8 +989,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         if (doBlink) {
           if (blinkLineY < 192) {
             this.blinkScreen(sessionIntCounter, blinkLineY, blinkLineY + 1);
-            nextBlinkLineTiStates += this.timingProfile.tstatesPerLine;
             blinkLineY++;
+            nextBlinkLineTiStates = blinkLineY * this.timingProfile.tstatesPerLine + this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
           } else {
             nextBlinkLineTiStates = this.timingProfile.tstatesFrame;
           }
