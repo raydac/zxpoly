@@ -1,6 +1,21 @@
 package com.igormaznitsa.zxpoly.components.video.timings;
 
 public enum TimingProfile {
+  SPECTRUM48(
+          3_500_000,
+          16,
+          36,
+          16,
+          8,
+          56,
+          56,
+          128,
+          24,
+          24,
+          24,
+          24,
+          new int[]{6, 5, 4, 3, 2, 1, 0, 0}
+  ),
   SPECTRUM128(
           3_546_900,
           16,
