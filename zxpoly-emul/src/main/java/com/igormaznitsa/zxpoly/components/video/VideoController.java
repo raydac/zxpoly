@@ -1310,22 +1310,23 @@ public final class VideoController extends JComponent
   }
 
   private void drawBorder(final Graphics2D g2, final int visibleWidth, final int visibleHeight) {
-        final int invisibleWidth = this.timingProfile.tstatesPerHBlank + this.timingProfile.tstatesPerHSync;
-        final int invisibleHeight = this.timingProfile.linesPerVSync;
-        final int visibleBorderAreaWidth = this.borderImage.getWidth() - invisibleWidth;
-        final int visibleBorderAreaHeight = this.borderImage.getHeight() - invisibleHeight;
+    final int invisibleWidth = this.timingProfile.tstatesPerHBlank + this.timingProfile.tstatesPerHSync;
+    final int invisibleHeight = this.timingProfile.linesPerVSync;
+    final int visibleBorderAreaWidth = this.borderImage.getWidth() - invisibleWidth;
+    final int visibleBorderAreaHeight = this.borderImage.getHeight() - invisibleHeight;
 
-        final double sx = (double) visibleWidth / visibleBorderAreaWidth;
-        final double sy = (double) visibleHeight / visibleBorderAreaHeight;
+    final double sx = (double) visibleWidth / visibleBorderAreaWidth;
+    final double sy = (double) visibleHeight / visibleBorderAreaHeight;
 
-        synchronized (this.borderImageRgbData) {
-          g2.drawImage(this.borderImage,
-                  (int) (-invisibleWidth * sx),
-                  (int) (-invisibleHeight * sy),
-                  (int) (sx * this.borderImage.getWidth()),
-                  (int) (sy * this.borderImage.getHeight()),
-                  null);
-        }
+    final int offsetX = (int) (-invisibleWidth * sx);
+    final int offsetY = (int) (-invisibleHeight * sy);
+
+    g2.drawImage(this.borderImage,
+            offsetX,
+            offsetY,
+            (int) (sx * this.borderImage.getWidth()),
+            (int) (sy * this.borderImage.getHeight()),
+            null);
   }
 
   @Override
@@ -1340,7 +1341,9 @@ public final class VideoController extends JComponent
     final int screenOffsetX = (visibleWidth - this.size.width) / 2;
     final int screenOffsetY = (visibleHeight - this.size.height) / 2;
 
-    if (screenOffsetX > 0 || screenOffsetY > 0) this.drawBorder(g2, visibleWidth, visibleHeight);
+    if (screenOffsetX > 0 || screenOffsetY > 0) {
+      this.drawBorder(g2, visibleWidth, visibleHeight);
+    }
     this.drawBuffer(g2, screenOffsetX, screenOffsetY, this.zoom, this.tvFilterChain);
 
     if (this.mouseTrapActive && this.enableMouseTrapIndicator) {
