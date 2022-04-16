@@ -335,8 +335,8 @@ public final class Motherboard implements ZxPolyConstants {
     }
   }
 
-  public int step(final boolean tstatesIntReached,
-                  final boolean wallclockInt,
+  public int step(final boolean tiStatesIntReached,
+                  final boolean wallClockIntReached,
                   final boolean commonNmi,
                   final boolean startNewFrame,
                   final boolean executionEnabled) {
@@ -361,11 +361,11 @@ public final class Motherboard implements ZxPolyConstants {
     if (this.frameIntTriggered) {
       intTriggered = false;
     } else {
-      intTriggered = true;
-      this.frameIntTriggered = true;
+      intTriggered = tiStatesIntReached && wallClockIntReached;
+      this.frameIntTriggered = intTriggered;
     }
 
-    if (wallclockInt) {
+    if (wallClockIntReached) {
       this.statisticCounter--;
       if (this.statisticCounter <= 0) {
         for (int i = 0; i < 4; i++) {
@@ -401,7 +401,7 @@ public final class Motherboard implements ZxPolyConstants {
       }
 
       for (final IoDevice device : this.ioDevicesPreStep) {
-        device.preStep(this.frameTiStatesCounter, signalReset, tstatesIntReached, wallclockInt);
+        device.preStep(this.frameTiStatesCounter, signalReset, tiStatesIntReached, wallClockIntReached);
       }
 
       final BoardMode mode = this.getBoardMode();
@@ -512,7 +512,7 @@ public final class Motherboard implements ZxPolyConstants {
         device.postStep(spentTiStates);
       }
 
-      this.beeper.updateState(tstatesIntReached, wallclockInt, spentTiStates);
+      this.beeper.updateState(tiStatesIntReached, wallClockIntReached, spentTiStates);
 
       final int curTriggers = this.triggers;
 
