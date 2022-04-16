@@ -1584,14 +1584,14 @@ public final class VideoController extends JComponent
   }
 
   @Override
-  public void postStep(int spentTstates) {
+  public void postStep(int spentTiStates) {
     final int borderColor = this.preStepBorderColor;
 
     int offset = this.stepStartTiStates;
     if (offset >= 0) {
-      while (spentTstates > 0 && offset < this.timingProfile.tstatesFrame) {
+      while (spentTiStates > 0 && offset < this.timingProfile.tstatesFrame) {
         this.borderImageRgbData[offset++] = borderColor;
-        spentTstates--;
+        spentTiStates--;
       }
     }
   }
