@@ -53,8 +53,8 @@ final class InfoIn {
       throw new IOException("Can't find register line");
     }
     final int[] registers = Arrays.stream(line.split("\\s+"))
-        .mapToInt(x -> Integer.parseUnsignedInt(x.trim(), 16))
-        .toArray();
+            .mapToInt(x -> Integer.parseUnsignedInt(x.trim(), 16))
+            .toArray();
     assertEquals(13, registers.length);
 
     this.af = registers[0];

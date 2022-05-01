@@ -1,16 +1,11 @@
 package com.igormaznitsa.z80.fuse;
 
-import static org.junit.Assert.assertEquals;
-
-
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
+
+import static org.junit.Assert.assertEquals;
 
 final class InfoExpected {
   final String name;
@@ -71,9 +66,9 @@ final class InfoExpected {
     this.actions = Collections.unmodifiableList(actions);
 
     final int[] registers = Arrays.stream(line.split("\\s+"))
-        .filter(x -> !x.trim().isEmpty())
-        .mapToInt(x -> Integer.parseUnsignedInt(x.trim(), 16))
-        .toArray();
+            .filter(x -> !x.trim().isEmpty())
+            .mapToInt(x -> Integer.parseUnsignedInt(x.trim(), 16))
+            .toArray();
     assertEquals(13, registers.length);
 
     this.af = registers[0];
@@ -117,10 +112,10 @@ final class InfoExpected {
       }
 
       final int[] parsed = Arrays.stream(line.split("\\s"))
-          .map(String::trim)
-          .filter(x -> !x.equals("-1"))
-          .mapToInt(x -> Integer.parseInt(x, 16))
-          .toArray();
+              .map(String::trim)
+              .filter(x -> !x.equals("-1"))
+              .mapToInt(x -> Integer.parseInt(x, 16))
+              .toArray();
 
       lines.add(parsed);
     }

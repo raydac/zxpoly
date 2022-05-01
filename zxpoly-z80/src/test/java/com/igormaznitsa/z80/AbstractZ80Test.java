@@ -17,12 +17,12 @@
 
 package com.igormaznitsa.z80;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
+import org.junit.Before;
 
 import java.util.Arrays;
-import org.junit.Before;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public abstract class AbstractZ80Test {
 
@@ -55,7 +55,7 @@ public abstract class AbstractZ80Test {
 
   public void assertMemory(final int address, final int value) {
     assertEquals("The Memory value at " + address + " must be " + value, value,
-        this.memory[address] & 0xFF);
+            this.memory[address] & 0xFF);
   }
 
   public void assertMemory(final int address, final int... value) {

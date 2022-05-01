@@ -17,12 +17,12 @@
 
 package com.igormaznitsa.z80;
 
-import static org.junit.Assert.assertEquals;
-
-
-import java.util.Random;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.Random;
+
+import static org.junit.Assert.assertEquals;
 
 @Ignore
 public class Z80RandomCodeBlockTest {
@@ -49,7 +49,7 @@ public class Z80RandomCodeBlockTest {
     final long milliseconds = System.currentTimeMillis() - starttime;
     final long tactsWouldBeAtStandard = 4000 * milliseconds;
     final long speed =
-        Math.round(((double) cpu.getStepTstates() / (double) tactsWouldBeAtStandard) * 100d);
+            Math.round(((double) cpu.getStepTstates() / (double) tactsWouldBeAtStandard) * 100d);
 
     assertEquals(Z80.SIGNAL_OUT_ALL_INACTIVE, cpu.getState() & 0xFFFF);
   }

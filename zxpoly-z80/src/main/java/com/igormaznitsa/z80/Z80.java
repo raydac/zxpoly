@@ -63,27 +63,27 @@ public final class Z80 {
   public static final int FLAG_S = 1 << FLAG_S_SHIFT;
   private static final int FLAG_Z_SHIFT = 6;
   public static final int FLAG_Z = 1 << FLAG_Z_SHIFT;
+  private static final int FLAG_SZ = FLAG_S | FLAG_Z;
   private static final int FLAG_Y_SHIFT = 5;
   public static final int FLAG_Y = 1 << FLAG_Y_SHIFT;
   private static final int FLAG_H_SHIFT = 4;
   public static final int FLAG_H = 1 << FLAG_H_SHIFT;
   private static final int FLAG_X_SHIFT = 3;
   public static final int FLAG_X = 1 << FLAG_X_SHIFT;
+  private static final int FLAG_XY = FLAG_X | FLAG_Y;
+  private static final int FLAG_SYX = FLAG_S | FLAG_X | FLAG_Y;
   private static final int FLAG_PV_SHIFT = 2;
   public static final int FLAG_PV = 1 << FLAG_PV_SHIFT;
+  private static final int FLAG_SZPV = FLAG_S | FLAG_Z | FLAG_PV;
+  private static final byte[] FTABLE_OVERFLOW = new byte[]{
+          0, (byte) FLAG_PV, (byte) FLAG_PV, 0
+  };
   private static final int FLAG_N_SHIFT = 1;
   public static final int FLAG_N = 1 << FLAG_N_SHIFT;
   private static final int FLAG_C_SHIFT = 0;
   public static final int FLAG_C = 1 << FLAG_C_SHIFT;
-  private static final int FLAG_XY = FLAG_X | FLAG_Y;
-  private static final int FLAG_SZPV = FLAG_S | FLAG_Z | FLAG_PV;
-  private static final int FLAG_SYX = FLAG_S | FLAG_X | FLAG_Y;
-  private static final int FLAG_SZ = FLAG_S | FLAG_Z;
   private static final int FLAG_SZC = FLAG_SZ | FLAG_C;
   private static final int FLAG_HC = FLAG_H | FLAG_C;
-  private static final byte[] FTABLE_OVERFLOW = new byte[]{
-          0, (byte) FLAG_PV, (byte) FLAG_PV, 0
-  };
 
   static {
     // fill tables SZYX and SZYXP
@@ -107,11 +107,10 @@ public final class Z80 {
     FTABLE_SZYXP[0] |= FLAG_Z;
   }
 
-  private int memptr;
-
   private final Z80CPUBus bus;
   private final byte[] regSet = new byte[8];
   private final byte[] altRegSet = new byte[8];
+  private int memptr;
   private boolean iff1;
   private boolean iff2;
   private int im;
@@ -229,6 +228,16 @@ public final class Z80 {
       }
     }
     return result;
+  }
+
+  private static boolean isLoHiFront(final int oldValue, final int newValue, final int mask) {
+    final int xored = oldValue ^ newValue;
+    return (xored & mask) == mask && (newValue & mask) == mask;
+  }
+
+  private static boolean isHiLoFront(final int oldValue, final int newValue, final int mask) {
+    final int xored = oldValue ^ newValue;
+    return (xored & mask) == mask && (oldValue & mask) == mask;
   }
 
   public Z80 fillByState(final Z80 sourceCpu) {
@@ -979,16 +988,6 @@ public final class Z80 {
 
   public int getLastInstructionByte() {
     return this.lastInstructionByte;
-  }
-
-  private static boolean isLoHiFront(final int oldValue, final int newValue, final int mask) {
-    final int xored = oldValue ^ newValue;
-    return (xored & mask) == mask && (newValue & mask) == mask;
-  }
-
-  private static boolean isHiLoFront(final int oldValue, final int newValue, final int mask) {
-    final int xored = oldValue ^ newValue;
-    return (xored & mask) == mask && (oldValue & mask) == mask;
   }
 
   /**

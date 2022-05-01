@@ -33,14 +33,14 @@ public final class Z80Instruction {
   public static final int SPEC_UNSIGNED_BYTE = 0x102;
   public static final int SPEC_UNSIGNED_WORD = 0x103;
   private static final Pattern CODE_PART_CHECKING =
-      Pattern.compile("([0-9A-F]{2})+(\\s+(d|e|nn|n))*(\\s*[0-9A-F]{2}+)?");
+          Pattern.compile("([0-9A-F]{2})+(\\s+(d|e|nn|n))*(\\s*[0-9A-F]{2}+)?");
   private static final Pattern CODE_PART_PARSING = Pattern.compile("[0-9A-F]{2}|\\s+(?:d|e|nn|n)");
   private final static List<Z80Instruction> INSTRUCTIONS;
 
   static {
     final List<Z80Instruction> list = new ArrayList<>(1500);
     final InputStream in =
-        Z80Instruction.class.getClassLoader().getResourceAsStream("z80opcodes.lst");
+            Z80Instruction.class.getClassLoader().getResourceAsStream("z80opcodes.lst");
     try (final BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
       while (true) {
         final String line = reader.readLine();
@@ -120,7 +120,7 @@ public final class Z80Instruction {
     this.has_word = hasWord;
 
     final String preprocessed =
-        asmPart.replace("+d", "<").replace("e", ">").replace("nn", "%").replace("n", "&");
+            asmPart.replace("+d", "<").replace("e", ">").replace("nn", "%").replace("n", "&");
     final StringBuilder builder = new StringBuilder();
 
     int asmGroupIndex = 0;
@@ -234,7 +234,7 @@ public final class Z80Instruction {
       return Arrays.copyOf(lst, index);
     } else {
       throw new IllegalArgumentException(
-          "Can't recognize byte command description [" + codePart + ']');
+              "Can't recognize byte command description [" + codePart + ']');
     }
   }
 
@@ -269,7 +269,7 @@ public final class Z80Instruction {
       final int address = programCounter + offset + fixPartLenghtOfCommand + 1;
       String addressAsHex = Integer.toHexString(Math.abs(address)).toUpperCase(Locale.ENGLISH);
       return '#' + (addressAsHex.length() < 4 ?
-          "0000".substring(0, 4 - addressAsHex.length()) + addressAsHex : addressAsHex);
+              "0000".substring(0, 4 - addressAsHex.length()) + addressAsHex : addressAsHex);
     }
   }
 
@@ -411,14 +411,14 @@ public final class Z80Instruction {
 
   private String checkAsmPart(final String asmPart) {
     final String replace =
-        asmPart.replace("+d", "%").replace("e", "%").replace("nn", "%").replace("n", "%");
+            asmPart.replace("+d", "%").replace("e", "%").replace("nn", "%").replace("n", "%");
     for (final char c : replace.toCharArray()) {
       switch (c) {
         case 'd':
         case 'e':
         case 'n':
           throw new IllegalArgumentException(
-              "Wrong pattern format detected [" + c + "] in '" + asmPart + '\'');
+                  "Wrong pattern format detected [" + c + "] in '" + asmPart + '\'');
       }
     }
     return asmPart;

@@ -2304,7 +2304,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     pack();
   }
 
-  private void refreshServiceMenuState(){
+  private void refreshServiceMenuState() {
     if (this.board.getBeeper().hasActiveWaFile()) {
       this.menuActionRecordWav.setIcon(ICO_WAV_STOP);
       this.menuActionRecordWav.setText(TEXT_STOP_WAV);
