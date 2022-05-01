@@ -2371,7 +2371,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   }
 
   private void menuActionRecordWavActionPerformed(final ActionEvent actionEvent) {
-    this.setWavRecordForSound(this.menuActionRecordWav.isSelected());
+    this.setWavRecordForSound(!this.board.getBeeper().hasActiveWaFile());
   }
 
   private void menuFileCreateEmptyDiskFileActionPerformed(final ActionEvent actionEvent) {
