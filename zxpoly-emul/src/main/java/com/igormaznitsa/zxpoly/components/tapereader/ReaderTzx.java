@@ -159,6 +159,7 @@ public class ReaderTzx implements TapeSource, ListModel<TzxWavRenderer.RenderRes
     if (this.playing) {
       try {
         final float value = this.inMemoryWavFile.readAtPosition(this.tStateCounter.get());
+        System.out.println("VA " + value);
         return value > this.bias;
       } catch (final ArrayIndexOutOfBoundsException ex) {
         this.stopPlay();

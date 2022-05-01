@@ -90,8 +90,8 @@ public final class WriterWav {
   private WriterWav ensureDataHeader() throws IOException {
     if (this.dataHeaderExpected) {
       this.dataHeaderExpected = false;
-      this.write("data ")
-              .write(0xFFFFFFFF);
+      this.write("data")
+              .writeInt(0xFF_FF_FF_FF);
       this.offsetDataLength = (int) (this.counter - 4L);
     }
     return this;

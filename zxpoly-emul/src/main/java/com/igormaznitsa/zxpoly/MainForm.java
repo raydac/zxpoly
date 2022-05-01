@@ -83,8 +83,7 @@ import java.util.stream.Stream;
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
 import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
-import static javax.swing.JOptionPane.showConfirmDialog;
-import static javax.swing.JOptionPane.showMessageDialog;
+import static javax.swing.JOptionPane.*;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static org.apache.commons.lang3.StringUtils.repeat;
 
@@ -99,8 +98,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private static final Icon ICO_DISK_DIS =
           UIManager.getLookAndFeel().getDisabledIcon(null, ICO_DISK);
   private static final Icon ICO_AGIF_RECORD = new ImageIcon(Utils.loadIcon("record.png"));
-  private static final Icon ICO_WAV_RECORD = new ImageIcon(Utils.loadIcon("file_extension_wav.png"));
-  private static final Icon ICO_WAV_STOP = new ImageIcon(Utils.loadIcon("tape_stop.png"));
+  private static final Icon ICO_WAV_START = new ImageIcon(Utils.loadIcon("wav_start.png"));
+  private static final Icon ICO_WAV_STOP = new ImageIcon(Utils.loadIcon("wav_stop.png"));
   private static final Icon ICO_AGIF_STOP = new ImageIcon(Utils.loadIcon("tape_stop.png"));
   private static final Icon ICO_TAPE = new ImageIcon(Utils.loadIcon("cassette.png"));
   private static final Icon ICO_MDISK = new ImageIcon(Utils.loadIcon("mdisk.png"));
@@ -358,7 +357,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
 
     this.menuActionRecordWav.setText(TEXT_START_WAV);
-    this.menuActionRecordWav.setIcon(ICO_WAV_RECORD);
+    this.menuActionRecordWav.setIcon(ICO_WAV_START);
 
     this.getInputContext().selectInputMethod(Locale.ENGLISH);
 
@@ -874,6 +873,14 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             } else {
               MainForm.this.stepLocker.unlock();
             }
+          });
+        }
+        break;
+        case WRITE_WAV: {
+          abstractButton.setSelected(this.board.getBeeper().hasActiveWaFile());
+          abstractButton.addActionListener(e -> {
+            final JToggleButton source = (JToggleButton) e.getSource();
+            this.setWavRecordForSound(source.isSelected());
           });
         }
         break;
@@ -2120,7 +2127,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuService.add(menuActionAnimatedGIF);
 
     menuActionRecordWav.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_extension_wav.png")))); // NOI18N
+            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/wav_start.png")))); // NOI18N
     menuActionRecordWav.setText(TEXT_START_ANIM_GIF);
     menuActionRecordWav.addActionListener(this::menuActionRecordWavActionPerformed);
     menuService.add(menuActionRecordWav);
@@ -2308,9 +2315,11 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     if (this.board.getBeeper().hasActiveWaFile()) {
       this.menuActionRecordWav.setIcon(ICO_WAV_STOP);
       this.menuActionRecordWav.setText(TEXT_STOP_WAV);
+      this.setFastButtonState(FastButton.WRITE_WAV, true);
     } else {
-      this.menuActionRecordWav.setIcon(ICO_WAV_RECORD);
+      this.menuActionRecordWav.setIcon(ICO_WAV_START);
       this.menuActionRecordWav.setText(TEXT_START_WAV);
+      this.setFastButtonState(FastButton.WRITE_WAV, false);
     }
 
     if (this.currentAnimationEncoder.get() == null) {
@@ -2323,14 +2332,14 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   }
 
-  private void menuActionRecordWavActionPerformed(final ActionEvent actionEvent) {
+  private void setWavRecordForSound(final boolean enable) {
     this.suspendSteps();
+
     try {
-      if (this.board.getBeeper().hasActiveWaFile()) {
-        this.board.getBeeper().setSilentlyTargetWav(null);
-      } else {
+      this.board.getBeeper().setSilentlyTargetWav(null);
+      if (enable) {
         final JFileChooser selectFileDialog = new JFileChooser(lastWrittenWavFile);
-        selectFileDialog.setDialogTitle("Record beeper into WAV file");
+        selectFileDialog.setDialogTitle("Record beeper as WAV");
         selectFileDialog.addChoosableFileFilter(FILTER_FORMAT_WAV);
         selectFileDialog.setMultiSelectionEnabled(false);
         selectFileDialog.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -2340,7 +2349,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           if (!selectedWavFile.getName().contains(".")) {
             selectedWavFile = new File(selectedWavFile.getParentFile(), selectedWavFile.getName() + ".wav");
           }
+
           this.lastWrittenWavFile = selectedWavFile;
+
+          if (selectedWavFile.isFile() && JOptionPane.showConfirmDialog(this, "Do you want override file " + selectedWavFile.getName() + "?", "File exists", JOptionPane.OK_CANCEL_OPTION) == CANCEL_OPTION) {
+            return;
+          }
+
           try {
             this.board.getBeeper().setTargetWav(selectedWavFile);
           } catch (IOException ex) {
@@ -2353,6 +2368,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       this.refreshServiceMenuState();
       this.resumeSteps();
     }
+  }
+
+  private void menuActionRecordWavActionPerformed(final ActionEvent actionEvent) {
+    this.setWavRecordForSound(this.menuActionRecordWav.isSelected());
   }
 
   private void menuFileCreateEmptyDiskFileActionPerformed(final ActionEvent actionEvent) {
@@ -2452,7 +2471,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
       if (showConfirmDialog(this, slider, "Tape signal threshold", JOptionPane.OK_CANCEL_OPTION,
               JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
-        source.setThreshold((float) slider.getValue() / 1000);
+        int threshold = slider.getValue();
+        LOGGER.info("Selected TAP threshold: " + threshold);
+        source.setThreshold((float) threshold / 1000.0f);
       }
     }
   }

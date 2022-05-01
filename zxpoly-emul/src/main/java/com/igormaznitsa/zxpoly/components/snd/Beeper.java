@@ -154,7 +154,7 @@ public final class Beeper {
     if (file == null) {
       newWavWriter = NULL_WAV;
     } else {
-      newWavWriter = new WavWriterImpl(file);
+      newWavWriter = new WavWriterImpl(this.timingProfile, file);
     }
 
     if (!this.activeWavWriter.compareAndSet(NULL_WAV, newWavWriter)) {
@@ -187,12 +187,23 @@ public final class Beeper {
 
   public void updateState(final boolean tstatesInt, final boolean wallclockInt,
                           final int spentTstates) {
+    final int leftChannel = this.mixerLeft.mix(this.channels, this.soundChannelFilters, spentTstates);
+    final int rightChannel = this.mixerRight.mix(this.channels, this.soundChannelFilters, spentTstates);
+
     this.activeInternalBeeper.get()
             .updateState(tstatesInt,
                     wallclockInt,
                     spentTstates,
-                    this.mixerLeft.mix(this.channels, this.soundChannelFilters, spentTstates),
-                    this.mixerRight.mix(this.channels, this.soundChannelFilters, spentTstates)
+                    leftChannel,
+                    rightChannel
+            );
+
+    this.activeWavWriter.get()
+            .updateState(tstatesInt,
+                    wallclockInt,
+                    spentTstates,
+                    leftChannel,
+                    rightChannel
             );
   }
 
@@ -247,9 +258,36 @@ public final class Beeper {
 
     private final WriterWav.WavFile targetFile;
 
-    private WavWriterImpl(final File wavFile) throws IOException {
+    private final double framesPerTick;
+    private int lastLeftChannel = 0;
+    private int lastRightChannel = 0;
+    private double frameCounter = 0.0d;
+
+    private WavWriterImpl(final TimingProfile timingProfile, final File wavFile) throws IOException {
       LOGGER.info("Creating WAV file: " + wavFile);
       this.targetFile = new WriterWav.WavFile(wavFile);
+
+      this.framesPerTick = 44100.0d / timingProfile.clockFreq;
+
+      final int encoding;
+      if (AUDIO_FORMAT.getEncoding() == AudioFormat.Encoding.PCM_SIGNED || AUDIO_FORMAT.getEncoding() == AudioFormat.Encoding.PCM_UNSIGNED) {
+        encoding = 1;
+      } else if (AUDIO_FORMAT.getEncoding() == AudioFormat.Encoding.ALAW) {
+        encoding = 6;
+      } else if (AUDIO_FORMAT.getEncoding() == AudioFormat.Encoding.ULAW) {
+        encoding = 7;
+      } else {
+        throw new IllegalArgumentException("Unsupported WAV encode: " + AUDIO_FORMAT.getEncoding());
+      }
+
+      this.targetFile.header(
+              encoding,
+              AUDIO_FORMAT.getChannels(),
+              44100,
+              176400,
+              4,
+              16
+      );
     }
 
     @Override
@@ -260,7 +298,28 @@ public final class Beeper {
             final int levelLeft,
             final int levelRight
     ) {
+      final double frameOffset = spentTstates * this.framesPerTick;
 
+      long currentFrame = (long) this.frameCounter;
+      this.frameCounter += frameOffset;
+      long endFrame = (long) this.frameCounter;
+
+      final byte leftHigh = (byte) (this.lastLeftChannel >> 8);
+      final byte leftLow = (byte) this.lastLeftChannel;
+
+      final byte rightHigh = (byte) (this.lastRightChannel >> 8);
+      final byte rightLow = (byte) this.lastRightChannel;
+
+      try {
+        for (; currentFrame < endFrame; currentFrame++) {
+          this.targetFile.data(leftLow, leftHigh, rightLow, rightHigh);
+        }
+      } catch (final IOException ex) {
+        LOGGER.log(Level.SEVERE, "Can;t write WAV data into file", ex);
+      } finally {
+        this.lastRightChannel = levelRight;
+        this.lastLeftChannel = levelLeft;
+      }
     }
 
     @Override
