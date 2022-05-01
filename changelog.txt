@@ -4,9 +4,10 @@ __2.3.0 (SNAPSHOT)__
 - added virtual keyboard skin [#66](https://github.com/raydac/zxpoly/issues/66)
 - added file menu item "Create empty disk"
 - added formatting for new created TRD disks
+- added sound WAV writer [#62](https://github.com/raydac/zxpoly/issues/62)
 - improved TAP format reader to read zero length blocks [#60](https://github.com/raydac/zxpoly/issues/60)
 - improved Z80 emulation, [improved undocumented flags if interruption during block operations](https://github.com/MrKWatkins/ZXSpectrumNextTests/tree/develop/Tests/ZX48_ZX128/Z80BlockInstructionFlags)
-- embedded JDK updated to Liberica OpenJDK 17.0.2+9
+- embedded JDK updated to Liberica OpenJDK 17.0.3+7
 
 __2.2.3 (15-jan-2022)__
 
