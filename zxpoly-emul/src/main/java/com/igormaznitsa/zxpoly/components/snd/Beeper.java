@@ -17,11 +17,14 @@
 
 package com.igormaznitsa.zxpoly.components.snd;
 
+import com.igormaznitsa.zxpoly.components.tapereader.WriterWav;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.SourceDataLine;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -47,6 +50,19 @@ public final class Beeper {
   public static final int CHANNEL_TS_C = 7;
   public static final AudioFormat AUDIO_FORMAT = SndBufferContainer.AUDIO_FORMAT;
   private static final Logger LOGGER = Logger.getLogger("Beeper");
+
+  private static final IWavWriter NULL_WAV = new IWavWriter() {
+    @Override
+    public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft, int levelRight) {
+
+    }
+
+    @Override
+    public void dispose() {
+
+    }
+  };
+
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
     public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft, int levelRight) {
@@ -77,6 +93,7 @@ public final class Beeper {
   private final MixerFunction mixerLeft;
   private final MixerFunction mixerRight;
   private final TimingProfile timingProfile;
+  private final AtomicReference<IWavWriter> activeWavWriter = new AtomicReference<>(NULL_WAV);
 
   public Beeper(final TimingProfile timingProfile, final boolean useAcbSoundScheme, final boolean covoxPresented, final boolean turboSoundPresented) {
     this.timingProfile = timingProfile;
@@ -113,6 +130,37 @@ public final class Beeper {
 
   public void setChannelValue(final int channel, final int level256) {
     this.channels[channel] = level256 & 0xFF;
+  }
+
+  public boolean hasActiveWaFile() {
+    return this.activeWavWriter.get() != NULL_WAV;
+  }
+
+  public void setSilentlyTargetWav(final File file) {
+    try {
+      this.setTargetWav(file);
+    } catch (IOException ex) {
+      LOGGER.log(Level.SEVERE, "Error during set WAV file", ex);
+    }
+  }
+
+  public void setTargetWav(final File file) throws IOException {
+    final IWavWriter prev = this.activeWavWriter.getAndSet(NULL_WAV);
+    if (prev != null) {
+      prev.dispose();
+    }
+
+    final IWavWriter newWavWriter;
+    if (file == null) {
+      newWavWriter = NULL_WAV;
+    } else {
+      newWavWriter = new WavWriterImpl(file);
+    }
+
+    if (!this.activeWavWriter.compareAndSet(NULL_WAV, newWavWriter)) {
+      newWavWriter.dispose();
+      LOGGER.warning("Detected concurrent change of WAV file writer!");
+    }
   }
 
   public Optional<SourceSoundPort> setSourceSoundPort(final SourceSoundPort soundPort) {
@@ -163,7 +211,8 @@ public final class Beeper {
   }
 
   public void dispose() {
-    this.activeInternalBeeper.get().dispose();
+    this.activeInternalBeeper.getAndSet(NULL_BEEPER).dispose();
+    this.activeWavWriter.getAndSet(NULL_WAV).dispose();
   }
 
   public AudioFormat getAudioFormat() {
@@ -173,6 +222,12 @@ public final class Beeper {
   @FunctionalInterface
   private interface MixerFunction {
     int mix(int[] values, SoundChannelValueFilter[] filters, int spentTstates);
+  }
+
+  private interface IWavWriter {
+    void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft, int levelRight);
+
+    void dispose();
   }
 
   private interface IBeeper {
@@ -186,6 +241,37 @@ public final class Beeper {
     void dispose();
 
     void reset();
+  }
+
+  private static final class WavWriterImpl implements IWavWriter {
+
+    private final WriterWav.WavFile targetFile;
+
+    private WavWriterImpl(final File wavFile) throws IOException {
+      LOGGER.info("Creating WAV file: " + wavFile);
+      this.targetFile = new WriterWav.WavFile(wavFile);
+    }
+
+    @Override
+    public void updateState(
+            final boolean tstatesInt,
+            final boolean wallclockInt,
+            final int spentTstates,
+            final int levelLeft,
+            final int levelRight
+    ) {
+
+    }
+
+    @Override
+    public void dispose() {
+      try {
+        LOGGER.info("Closing wav file");
+        this.targetFile.close();
+      } catch (IOException ex) {
+        LOGGER.log(Level.SEVERE, "Error during WAV file close", ex);
+      }
+    }
   }
 
   private static final class InternalBeeper implements IBeeper {

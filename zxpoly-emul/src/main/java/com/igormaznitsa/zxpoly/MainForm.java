@@ -99,6 +99,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private static final Icon ICO_DISK_DIS =
           UIManager.getLookAndFeel().getDisabledIcon(null, ICO_DISK);
   private static final Icon ICO_AGIF_RECORD = new ImageIcon(Utils.loadIcon("record.png"));
+  private static final Icon ICO_WAV_RECORD = new ImageIcon(Utils.loadIcon("file_extension_wav.png"));
+  private static final Icon ICO_WAV_STOP = new ImageIcon(Utils.loadIcon("tape_stop.png"));
   private static final Icon ICO_AGIF_STOP = new ImageIcon(Utils.loadIcon("tape_stop.png"));
   private static final Icon ICO_TAPE = new ImageIcon(Utils.loadIcon("cassette.png"));
   private static final Icon ICO_MDISK = new ImageIcon(Utils.loadIcon("mdisk.png"));
@@ -112,7 +114,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           UIManager.getLookAndFeel().getDisabledIcon(null, ICO_ZX128);
   private static final Icon ICO_SPRITECORRECTOR = new ImageIcon(Utils.loadIcon("spritecorrector.png"));
   private static final String TEXT_START_ANIM_GIF = "Record AGIF";
+  private static final String TEXT_START_WAV = "Record WAV";
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
+  private static final String TEXT_STOP_WAV = "Stop WAV";
   private static final long serialVersionUID = 7309959798344327441L;
   private static final String ROM_BOOTSTRAP_FILE_NAME = "bootstrap.rom";
 
@@ -226,6 +230,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private JIndicatorLabel labelTurbo;
   private JIndicatorLabel labelZX128;
   private JMenuItem menuActionAnimatedGIF;
+  private JMenuItem menuActionRecordWav;
   private JMenuBar menuBar;
   private JMenu menuCatcher;
   private JMenu menuFile;
@@ -291,6 +296,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private Optional<SourceSoundPort> preTurboSourceSoundPort = Optional.empty();
   private JMenu menuOptionsScaleUi;
   private JMenuItem menuFileMagic;
+  private File lastWrittenWavFile = null;
 
   public MainForm(final String title, final String romPath) {
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
@@ -350,6 +356,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
     this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
+
+    this.menuActionRecordWav.setText(TEXT_START_WAV);
+    this.menuActionRecordWav.setIcon(ICO_WAV_RECORD);
 
     this.getInputContext().selectInputMethod(Locale.ENGLISH);
 
@@ -1709,6 +1718,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuServiceSaveScreen = new JMenuItem();
     menuServiceGameControllers = new JMenuItem();
     menuActionAnimatedGIF = new JMenuItem();
+    menuActionRecordWav = new JMenuItem();
     menuServiceMakeSnapshot = new JMenuItem();
     menuTapExportAs = new JMenu();
     menuTapExportAsWav = new JMenuItem();
@@ -1882,6 +1892,23 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
       public void menuSelected(MenuEvent evt) {
         menuFileMenuSelected(evt);
+      }
+    });
+
+    menuService.addMenuListener(new MenuListener() {
+      @Override
+      public void menuSelected(MenuEvent e) {
+        refreshServiceMenuState();
+      }
+
+      @Override
+      public void menuDeselected(MenuEvent e) {
+
+      }
+
+      @Override
+      public void menuCanceled(MenuEvent e) {
+
       }
     });
 
@@ -2088,9 +2115,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     menuActionAnimatedGIF.setIcon(new ImageIcon(
             Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_gif.png")))); // NOI18N
-    menuActionAnimatedGIF.setText("Make Animated GIF");
+    menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
     menuActionAnimatedGIF.addActionListener(this::menuActionAnimatedGIFActionPerformed);
     menuService.add(menuActionAnimatedGIF);
+
+    menuActionRecordWav.setIcon(new ImageIcon(
+            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_extension_wav.png")))); // NOI18N
+    menuActionRecordWav.setText(TEXT_START_ANIM_GIF);
+    menuActionRecordWav.addActionListener(this::menuActionRecordWavActionPerformed);
+    menuService.add(menuActionRecordWav);
 
     menuServiceMakeSnapshot.setIcon(new ImageIcon(
             Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/save_snapshot.png")))); // NOI18N
@@ -2269,6 +2302,57 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     setJMenuBar(menuBar);
 
     pack();
+  }
+
+  private void refreshServiceMenuState(){
+    if (this.board.getBeeper().hasActiveWaFile()) {
+      this.menuActionRecordWav.setIcon(ICO_WAV_STOP);
+      this.menuActionRecordWav.setText(TEXT_STOP_WAV);
+    } else {
+      this.menuActionRecordWav.setIcon(ICO_WAV_RECORD);
+      this.menuActionRecordWav.setText(TEXT_START_WAV);
+    }
+
+    if (this.currentAnimationEncoder.get() == null) {
+      this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
+      this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
+    } else {
+      this.menuActionAnimatedGIF.setIcon(ICO_AGIF_STOP);
+      this.menuActionAnimatedGIF.setText(TEXT_STOP_ANIM_GIF);
+    }
+
+  }
+
+  private void menuActionRecordWavActionPerformed(final ActionEvent actionEvent) {
+    this.suspendSteps();
+    try {
+      if (this.board.getBeeper().hasActiveWaFile()) {
+        this.board.getBeeper().setSilentlyTargetWav(null);
+      } else {
+        final JFileChooser selectFileDialog = new JFileChooser(lastWrittenWavFile);
+        selectFileDialog.setDialogTitle("Record beeper into WAV file");
+        selectFileDialog.addChoosableFileFilter(FILTER_FORMAT_WAV);
+        selectFileDialog.setMultiSelectionEnabled(false);
+        selectFileDialog.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        if (selectFileDialog.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+          File selectedWavFile = selectFileDialog.getSelectedFile();
+          if (!selectedWavFile.getName().contains(".")) {
+            selectedWavFile = new File(selectedWavFile.getParentFile(), selectedWavFile.getName() + ".wav");
+          }
+          this.lastWrittenWavFile = selectedWavFile;
+          try {
+            this.board.getBeeper().setTargetWav(selectedWavFile);
+          } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Can't start WAV recording", ex);
+            JOptionPane.showMessageDialog(this, "Can't start write WAV file", "Error", JOptionPane.ERROR_MESSAGE);
+          }
+        }
+      }
+    } finally {
+      this.refreshServiceMenuState();
+      this.resumeSteps();
+    }
   }
 
   private void menuFileCreateEmptyDiskFileActionPerformed(final ActionEvent actionEvent) {
@@ -2708,20 +2792,17 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         }
 
         if (this.currentAnimationEncoder.compareAndSet(null, encoder)) {
-          this.menuActionAnimatedGIF.setIcon(ICO_AGIF_STOP);
-          this.menuActionAnimatedGIF.setText(TEXT_STOP_ANIM_GIF);
           LOGGER.info("Animated GIF recording has been started");
         }
       } else {
         this.menuViewVideoFilter.setEnabled(true);
         closeAnimationSave();
         if (this.currentAnimationEncoder.compareAndSet(encoder, null)) {
-          this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
-          this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
           LOGGER.info("Animated GIF recording has been stopped");
         }
       }
     } finally {
+      this.refreshServiceMenuState();
       this.resumeSteps();
     }
   }
