@@ -15,7 +15,7 @@
 
     <properties>
         <jinput.version>2.0.9</jinput.version>
-        <openjdk.version>17.0.2+9</openjdk.version>
+        <openjdk.version>17.0.3+7</openjdk.version>
     </properties>
 
     <dependencies>
