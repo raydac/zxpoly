@@ -1,4 +1,4 @@
-__2.3.0 (SNAPSHOT)__
+__2.3.0 (02-may-2022)__
 
 - improved screen render
 - added virtual keyboard skin [#66](https://github.com/raydac/zxpoly/issues/66)

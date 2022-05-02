@@ -7,7 +7,7 @@
 
 # Changelog
 
-__2.3.0 (SNAPSHOT)__
+__2.3.0 (02-may-2022)__
 
 - improved screen render
 - added virtual keyboard skin [#66](https://github.com/raydac/zxpoly/issues/66)
@@ -18,19 +18,6 @@ __2.3.0 (SNAPSHOT)__
 - improved Z80
   emulation, [improved undocumented flags if interruption during block operations](https://github.com/MrKWatkins/ZXSpectrumNextTests/tree/develop/Tests/ZX48_ZX128/Z80BlockInstructionFlags)
 - embedded JDK updated to Liberica OpenJDK 17.0.3+7
-
-__2.2.3 (15-jan-2022)__
-
-- added virtual keyboard skin [#57](https://github.com/raydac/zxpoly/issues/57)
-- added emulation of MAGIC button [#56](https://github.com/raydac/zxpoly/issues/56)
-- improved bootstrap ROM selection in Preferences
-- added support of ROM image loading as snapshots
-- Fix for ZXPlus keyboard skin
-- Added Timex2048Pal keyboard skin
-- Added configurable fast buttons
-- added new ROM sources
-- Z80, refactoring of RETI instruction
-- improved emulation of ZX128
 
 full [change log](changelog.txt)
 
@@ -58,18 +45,18 @@ under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 
 # Pre-built versions
 
-![The Main Window of the Emulator](docs/screenshots/zxpoly223_chessrom.png)
+![The Main Window of the Emulator](docs/screenshots/zxpoly230_heartmd.png)
 
 | OS                                           | Download link                                                                                                                          | 
 | -------------------------------------------- |----------------------------------------------------------------------------------------------------------------------------------------|
-| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.3/zxpoly-emul-2.2.3-windows-amd64-jdk.zip)__ |
-| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.3/zxpoly-emul-2.2.3-macos-amd64-jdk.zip)__       |
-| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.3/zxpoly-emul-2.2.3-macos-aarch64-jdk.zip)__   |
-| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.2.3/zxpoly-emul-2.2.3-linux-amd64-jdk.tar.gz)__  |
-| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.2.3/zxpoly-emul-2.2.3.jar)__                          | 
+| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.0/zxpoly-emul-2.3.0-windows-amd64-jdk.zip)__ |
+| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.0/zxpoly-emul-2.3.0-macos-amd64-jdk.zip)__       |
+| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.0/zxpoly-emul-2.3.0-macos-aarch64-jdk.zip)__   |
+| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.0/zxpoly-emul-2.3.0-linux-amd64-jdk.tar.gz)__  |
+| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.3.0/zxpoly-emul-2.3.0.jar)__                          | 
 
 Because the emulator is written in Java, its JAR file can be started just through command
-line `java -jar zxpoly-emul-2.2.2.jar`   
+line `java -jar zxpoly-emul-2.3.0.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in __File->Options->Active
 ROM__, the ROM will be downloaded from one of remote network resources.   
 ![Test-ROM](docs/screenshots/testromscr1.png)
@@ -133,7 +120,7 @@ To adapt old games, I have developed special utility called ZX-Poly Sprite corre
 is a very easy editor which shows images in data blocks and allows to redraw them. It supports import from Z80 and SNA
 snapshots and as the result it generates ZXP snapshots.   
 ![ZXPoly Sprite Corrector screenshot](docs/zxpoly_sprite_editor.png)   
-Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.2.2).
+Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.3.0).
 
 ## "Official Father Christmas" (1989)
 Original look of the game   
