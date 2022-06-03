@@ -444,6 +444,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
               menuOptionsEnableSpeaker
                       .setEnabled(!turboMode && !menuOptionsEnableVideoStream.isSelected());
               menuOptionsEnableSpeaker.setState(board.getBeeper().isActive());
+              menuOptionsTurbo.setState(isTurboMode());
             }
             menuServiceGameControllers
                     .setEnabled(keyboardAndTapeModule.isControllerEngineAllowed());
