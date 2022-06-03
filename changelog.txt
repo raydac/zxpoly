@@ -1,3 +1,9 @@
+__2.3.1 (SNAPSHOT)__
+
+- fixed keyboard layout [#66](https://github.com/raydac/zxpoly/issues/66)
+- fixed turbo menu item sync with fast button [#70](https://github.com/raydac/zxpoly/issues/70)
+- updated embedded JDK to 17.0.3.1+2
+
 __2.3.0 (02-may-2022)__
 
 - improved screen render
