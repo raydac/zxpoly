@@ -19,6 +19,7 @@ package com.igormaznitsa.zxpoly.utils;
 
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
+import com.igormaznitsa.zxpoly.components.video.BorderWidth;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.ui.FastButton;
@@ -114,6 +115,21 @@ public final class AppOptions {
 
   public synchronized void setVolumeProfile(final VolumeProfile volumeProfile) {
     preferences.put(Option.VOLUME_PROFILE.name(), volumeProfile.name());
+  }
+
+  public synchronized BorderWidth getBorderWidth() {
+    BorderWidth result = BorderWidth.FULL;
+    final String name = preferences.get(Option.BORDER_WIDTH.name(), result.name());
+    try {
+      result = BorderWidth.valueOf(name);
+    } catch (IllegalArgumentException ex) {
+      // do noting
+    }
+    return result;
+  }
+
+  public synchronized void setBorderWidth(final BorderWidth value) {
+    preferences.put(Option.BORDER_WIDTH.name(), value.name());
   }
 
   public synchronized String getCustomRomPath() {
@@ -445,7 +461,7 @@ public final class AppOptions {
   }
 
   public enum Option {
-    BORDER_SIZE,
+    BORDER_WIDTH,
     TIMING_PROFILE,
     SYNC_PAINT,
     SHOW_INDICATOR_PANEL,

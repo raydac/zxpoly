@@ -383,6 +383,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     LOGGER.info("Selected volume profile: " + volumeProfile.name());
 
     this.board = new Motherboard(
+            AppOptions.getInstance().getBorderWidth(),
             volumeProfile,
             this.timingProfile,
             BASE_ROM,

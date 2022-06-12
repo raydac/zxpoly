@@ -115,6 +115,7 @@ public final class VideoController extends JComponent
   private final Dimension baseComponentSize;
   private final BufferedImage borderImage;
   private final int[] borderImageRgbData;
+  private final BorderWidth borderWidth;
   private volatile int currentVideoMode = VIDEOMODE_ZXPOLY_256x192_FLASH_MASK;
   private Dimension size = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
   private volatile float zoom = 1.0f;
@@ -130,21 +131,41 @@ public final class VideoController extends JComponent
   private int stepStartTiStates = 0;
   private int preStepBorderColor;
 
+  private static final int BORDER_SHORT = 16;
+
   public VideoController(
+          final BorderWidth borderWidth,
           final TimingProfile timingProfile,
           final boolean syncRepaint,
           final Motherboard board,
           final VirtualKeyboardDecoration vkbdContainer) {
     super();
 
+    this.borderWidth = borderWidth;
+
     this.syncRepaint = syncRepaint;
     this.timingProfile = timingProfile;
 
-    this.baseComponentSize = new Dimension(
-            SCREEN_WIDTH + (this.timingProfile.tstatesPerBorderLeft << 2)
-                    + (this.timingProfile.tstatesPerBorderRight << 2),
-            SCREEN_HEIGHT + (this.timingProfile.linesBorderTop)
-                    + (this.timingProfile.linesBorderBottom));
+    switch (this.borderWidth) {
+      case FULL: {
+        this.baseComponentSize = new Dimension(
+                SCREEN_WIDTH + (this.timingProfile.tstatesPerBorderLeft << 2)
+                        + (this.timingProfile.tstatesPerBorderRight << 2),
+                SCREEN_HEIGHT + (this.timingProfile.linesBorderTop)
+                        + (this.timingProfile.linesBorderBottom));
+      }
+      break;
+      case SHORT: {
+        this.baseComponentSize = new Dimension(SCREEN_WIDTH + (BORDER_SHORT << 1), SCREEN_HEIGHT + (BORDER_SHORT << 1));
+      }
+      break;
+      case NONE: {
+        this.baseComponentSize = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
+      }
+      break;
+      default:
+        throw new Error("Unsupported border width: " + this.borderWidth);
+    }
 
     this.setFocusTraversalKeysEnabled(false);
 

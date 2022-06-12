@@ -19,6 +19,7 @@ package com.igormaznitsa.zxpoly.ui;
 
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
+import com.igormaznitsa.zxpoly.components.video.BorderWidth;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
@@ -60,6 +61,7 @@ public class OptionsPanel extends JPanel {
   private JLabel labelCustomRomPath;
   private JLabel labelMacroCursorKeys;
   private JLabel labelTimingProfile;
+  private JLabel labelBorderWidth;
   private JLabel labelEmulateFFport;
   private JCheckBox checkGrabSound;
   private JCheckBox checkInterlacedScan;
@@ -73,6 +75,7 @@ public class OptionsPanel extends JPanel {
   private JComboBox<VirtualKeyboardLook> comboKeyboardLook;
   private JComboBox<VolumeProfile> comboVolumeProfile;
   private JComboBox<TimingProfile> comboTimingProfile;
+  private JComboBox<BorderWidth> comboBorderWidth;
   private JLabel labelFfMpegPath;
   private JLabel labelNetInterface;
   private JLabel labelPort;
@@ -161,6 +164,7 @@ public class OptionsPanel extends JPanel {
     this.comboRomSource.setSelectedItem(RomSource.findForLink(data.activeRom, RomSource.TEST).getTitle());
     this.comboKeyboardLook.setSelectedItem(data.keyboardLook);
     this.comboVolumeProfile.setSelectedItem(data.volumeProfile);
+    this.comboBorderWidth.setSelectedItem(data.borderWidth);
     this.checkAutoiCsForCursorKeys.setSelected(data.autoCsForCursorKeys);
 
     this.keySelectorKempstonFire.setKey(data.kempstonKeyFire);
@@ -183,6 +187,7 @@ public class OptionsPanel extends JPanel {
     labelInterlacedScan = new JLabel();
     labelOldTvFilter = new JLabel();
     labelTimingProfile = new JLabel();
+    labelBorderWidth = new JLabel();
     checkInterlacedScan = new JCheckBox();
     labelFfMpegPath = new JLabel();
     labelNetInterface = new JLabel();
@@ -222,6 +227,7 @@ public class OptionsPanel extends JPanel {
     comboKeyboardLook = new JComboBox<>(VirtualKeyboardLook.values());
     comboVolumeProfile = new JComboBox<>(VolumeProfile.values());
     comboTimingProfile = new JComboBox<>(TimingProfile.values());
+    comboBorderWidth = new JComboBox<>(BorderWidth.values());
     textCustomRomPath = new JFilePathTextField();
     textCustomRomPath.setToolTipText("Provided file path overrides selected ROM, if empty then inactive");
     labelEmulateFFport = new JLabel();
@@ -557,16 +563,30 @@ public class OptionsPanel extends JPanel {
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(comboTimingProfile, gridBagConstraints);
 
-    labelEmulateFFport.setHorizontalAlignment(RIGHT);
-    labelEmulateFFport.setText("Port FF emulation:");
+    labelBorderWidth.setHorizontalAlignment(RIGHT);
+    labelBorderWidth.setText("Border width:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 16;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGenmeral.add(labelEmulateFFport, gridBagConstraints);
+    panelGenmeral.add(labelBorderWidth, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
     gridBagConstraints.gridy = 16;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGenmeral.add(comboBorderWidth, gridBagConstraints);
+
+    labelEmulateFFport.setHorizontalAlignment(RIGHT);
+    labelEmulateFFport.setText("Port FF emulation:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 17;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGenmeral.add(labelEmulateFFport, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 17;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGenmeral.add(checkEmulateFFport, gridBagConstraints);
@@ -690,6 +710,7 @@ public class OptionsPanel extends JPanel {
     public final String ffmpegPath;
     public final String inetAddress;
     public final TimingProfile timingProfile;
+    public final BorderWidth borderWidth;
     public final VirtualKeyboardLook keyboardLook;
     public final VolumeProfile volumeProfile;
     public final int port;
@@ -724,6 +745,7 @@ public class OptionsPanel extends JPanel {
 
     public DataContainer() {
       final String customRomPath = AppOptions.getInstance().getCustomRomPath();
+      this.borderWidth = AppOptions.getInstance().getBorderWidth();
       this.syncPaint = AppOptions.getInstance().isSyncPaint();
       this.emulateFFport = AppOptions.getInstance().isAttributePortFf();
       this.timingProfile = AppOptions.getInstance().getTimingProfile();
@@ -765,6 +787,7 @@ public class OptionsPanel extends JPanel {
 
       this.keyboardLook = (VirtualKeyboardLook) optionsPanel.comboKeyboardLook.getSelectedItem();
       this.volumeProfile = (VolumeProfile) optionsPanel.comboVolumeProfile.getSelectedItem();
+      this.borderWidth = (BorderWidth) optionsPanel.comboBorderWidth.getSelectedItem();
       this.customRomPath = optionsPanel.textCustomRomPath.getText();
 
       this.interlacedScan = optionsPanel.checkInterlacedScan.isSelected();
@@ -805,6 +828,7 @@ public class OptionsPanel extends JPanel {
     public void store() {
       AppOptions.getInstance().setSyncPaint(this.syncPaint);
       AppOptions.getInstance().setTimingProfile(this.timingProfile);
+      AppOptions.getInstance().setBorderWidth(this.borderWidth);
       AppOptions.getInstance().setInterlacedScan(this.interlacedScan);
       AppOptions.getInstance().setOldColorTvOnStart(this.oldTvFilter);
       AppOptions.getInstance().setAutoCsForCursorKeys(this.autoCsForCursorKeys);
