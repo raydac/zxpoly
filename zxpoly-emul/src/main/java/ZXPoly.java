@@ -17,30 +17,81 @@
 
 import com.igormaznitsa.zxpoly.MainForm;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
-import org.apache.commons.lang3.SystemUtils;
+import picocli.CommandLine;
 
 import javax.swing.*;
-import java.awt.*;
-import java.lang.reflect.Field;
+import java.util.Objects;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-public class ZXPoly {
+import static java.util.Objects.requireNonNullElse;
+
+@CommandLine.Command(name = "ячзщдн", mixinStandardHelpOptions = true,
+        version = ZXPoly.APP_VERSION,
+        description = "Emulator of ZXPoly platform (a multi-CPU ZX-Spectrum 128 clone)")
+public class ZXPoly implements Runnable {
 
   public static final String APP_TITLE = "ZX-Poly emulator";
   public static final String APP_VERSION = "v 2.3.1";
+  @CommandLine.Option(
+          names = {"-r", "--rom"},
+          description = "bootstrap ROM as a single file"
+  )
+  private String romFile = null;
 
-  private static void setGnomeAppTitle() {
-    try {
-      final Toolkit toolkit = Toolkit.getDefaultToolkit();
-      final Field awtAppClassNameField = toolkit.getClass().getDeclaredField("awtAppClassName");
-      awtAppClassNameField.setAccessible(true);
-      awtAppClassNameField.set(toolkit, ZXPoly.APP_TITLE);
-    } catch (Exception ex) {
-      //Do nothing
-    }
+  @CommandLine.Option(
+          names = {"-i", "--icon"},
+          description = "application icon file"
+  )
+  private String applicationIconFilePath = null;
+
+  @CommandLine.Option(
+          names = {"-l", "--lookandfeel"},
+          description = "look and feel class canonical name"
+  )
+  private String lookAndFeelClass = null;
+
+  @CommandLine.Option(
+          names = {"-t", "--title"},
+          description = "application title"
+  )
+  private String title = null;
+
+  public ZXPoly() {
+  }
+
+  @Override
+  public void run() {
+    SwingUtilities.invokeLater(() -> {
+      final MainForm form;
+
+      final String uiLfClass = Objects.requireNonNullElse(this.lookAndFeelClass, AppOptions.getInstance().getUiLfClass());
+      try {
+        UIManager.setLookAndFeel(uiLfClass);
+      } catch (Exception ex) {
+        System.err.println("Can't select L&F: " + uiLfClass);
+      }
+
+      try {
+        String romPath = this.romFile;
+        if (romPath == null) {
+          romPath = AppOptions.getInstance().getCustomRomPath();
+          if (romPath == null) {
+            romPath = System.getProperty("zxpoly.rom.path", AppOptions.getInstance().getActiveRom());
+          } else {
+            System.out.println("Custom ROM path in use: " + romPath);
+          }
+        }
+        form = new MainForm(requireNonNullElse(this.title, APP_TITLE + ' ' + APP_VERSION), applicationIconFilePath, romPath);
+      } catch (Exception ex) {
+        ex.printStackTrace();
+        System.exit(1);
+        return;
+      }
+      form.setVisible(true);
+    });
   }
 
   public static void main(final String... args) {
@@ -65,34 +116,9 @@ public class ZXPoly {
       });
     }
 
-    if (SystemUtils.IS_OS_LINUX) {
-      setGnomeAppTitle();
+    final int result = new CommandLine(new ZXPoly()).execute(args);
+    if (result != 0) {
+      System.exit(result);
     }
-
-    SwingUtilities.invokeLater(() -> {
-      final MainForm form;
-
-      final String uiLfClass = AppOptions.getInstance().getUiLfClass();
-      try {
-        UIManager.setLookAndFeel(uiLfClass);
-      } catch (Exception ex) {
-        System.err.println("Can't select L&F: " + uiLfClass);
-      }
-
-      try {
-        String romPath = AppOptions.getInstance().getCustomRomPath();
-        if (romPath == null) {
-          romPath = System.getProperty("zxpoly.rom.path", AppOptions.getInstance().getActiveRom());
-        } else {
-          System.out.println("Custom ROM path in use: " + romPath);
-        }
-        form = new MainForm(APP_TITLE + ' ' + APP_VERSION, romPath);
-      } catch (Exception ex) {
-        ex.printStackTrace();
-        System.exit(1);
-        return;
-      }
-      form.setVisible(true);
-    });
   }
 }

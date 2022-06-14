@@ -297,7 +297,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private JMenuItem menuFileMagic;
   private File lastWrittenWavFile = null;
 
-  public MainForm(final String title, final String romPath) {
+  public MainForm(final String title, final String appIconPath, final String romPath) {
+    super(title);
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
 
     this.sysIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/sys.png")));
@@ -361,7 +362,16 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.getInputContext().selectInputMethod(Locale.ENGLISH);
 
-    this.setIconImage(Utils.loadIcon("appico.png"));
+    if (appIconPath == null) {
+      this.setIconImage(Utils.loadIcon("appico.png"));
+    } else {
+      try {
+        this.setIconImage(ImageIO.read(new File(appIconPath)));
+      } catch (Exception ex) {
+        LOGGER.log(Level.SEVERE, "Can't load application icon: " + appIconPath, ex);
+        System.exit(34);
+      }
+    }
 
     final boolean allowKempstonMouse = AppOptions.getInstance().isKempstonMouseAllowed();
 
