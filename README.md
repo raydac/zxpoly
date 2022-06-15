@@ -9,6 +9,7 @@
 
 __2.3.1 (SNAPSHOT)__
 
+- added CLI support to define emulator start parameters through command line
 - added Virtual keyboard skin Spectrum+2 Style [#75](https://github.com/raydac/zxpoly/issues/75)
 - fixed turbo menu item sync with fast button [#70](https://github.com/raydac/zxpoly/issues/70) 
 - updated embedded JDK to 17.0.3.1+2

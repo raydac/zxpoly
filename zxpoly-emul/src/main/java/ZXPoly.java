@@ -16,10 +16,15 @@
  */
 
 import com.igormaznitsa.zxpoly.MainForm;
+import com.igormaznitsa.zxpoly.MainFormParameters;
+import com.igormaznitsa.zxpoly.components.video.BorderWidth;
+import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import picocli.CommandLine;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.Objects;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
@@ -27,6 +32,7 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import static java.util.Objects.requireNonNullElse;
+import static java.util.Objects.requireNonNullElseGet;
 
 @CommandLine.Command(name = "ячзщдн", mixinStandardHelpOptions = true,
         version = ZXPoly.APP_VERSION,
@@ -54,10 +60,34 @@ public class ZXPoly implements Runnable {
   private String lookAndFeelClass = null;
 
   @CommandLine.Option(
-          names = {"-t", "--title"},
+          names = {"-q", "--apptitle"},
           description = "application title"
   )
   private String title = null;
+
+  @CommandLine.Option(
+          names = {"-b", "--border"},
+          description = "border width, Valid values: ${COMPLETION-CANDIDATES}"
+  )
+  private BorderWidth borderWidth = null;
+
+  @CommandLine.Option(
+          names = {"-t", "--timing"},
+          description = "timing profile, Valid values: ${COMPLETION-CANDIDATES}"
+  )
+  private TimingProfile timingProfile = null;
+
+  @CommandLine.Option(
+          names = {"-k", "--keyboard"},
+          description = "virtual keyboard look, Valid values: ${COMPLETION-CANDIDATES}"
+  )
+  private VirtualKeyboardLook virtualKeyboardLook = null;
+
+  @CommandLine.Option(
+          names = {"-s", "--snapshot"},
+          description = "open snapshot file, type will be recognized by file extension"
+  )
+  private File snapshotFile = null;
 
   public ZXPoly() {
   }
@@ -84,7 +114,19 @@ public class ZXPoly implements Runnable {
             System.out.println("Custom ROM path in use: " + romPath);
           }
         }
-        form = new MainForm(requireNonNullElse(this.title, APP_TITLE + ' ' + APP_VERSION), applicationIconFilePath, romPath);
+
+        final MainFormParameters parameters = new MainFormParameters();
+
+        parameters.setTitle(requireNonNullElse(this.title, APP_TITLE + ' ' + APP_VERSION))
+                .setAppIconPath(this.applicationIconFilePath)
+                .setRomPath(romPath)
+                .setVirtualKeyboardLook(requireNonNullElseGet(this.virtualKeyboardLook, () -> AppOptions.getInstance().getKeyboardLook()))
+                .setOpenSnapshot(this.snapshotFile)
+                .setBorderWidth(requireNonNullElseGet(this.borderWidth, () -> AppOptions.getInstance().getBorderWidth()))
+                .setTimingProfile(requireNonNullElseGet(this.timingProfile, () -> AppOptions.getInstance().getTimingProfile()))
+        ;
+
+        form = new MainForm(parameters);
       } catch (Exception ex) {
         ex.printStackTrace();
         System.exit(1);

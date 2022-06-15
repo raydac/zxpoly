@@ -297,13 +297,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private JMenuItem menuFileMagic;
   private File lastWrittenWavFile = null;
 
-  public MainForm(final String title, final String appIconPath, final String romPath) {
-    super(title);
+  public MainForm(final MainFormParameters parameters) {
+    super(parameters.getTitle());
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
 
     this.sysIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/sys.png")));
 
-    this.timingProfile = AppOptions.getInstance().getTimingProfile();
+    this.timingProfile = parameters.getTimingProfile();
 
     LOGGER.info("Timing profile: " + this.timingProfile.name());
 
@@ -332,9 +332,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       }
     }
 
-    final RomSource rom = RomSource.findForLink(romPath, RomSource.UNKNOWN);
+    final RomSource rom = RomSource.findForLink(parameters.getRomPath(), RomSource.UNKNOWN);
     try {
-      BASE_ROM = loadRom(romPath, rom.getRom48names(), rom.getRom128names(), rom.getTrDosNames(), bootstrapRom);
+      BASE_ROM = loadRom(parameters.getRomPath(), rom.getRom48names(), rom.getRom128names(), rom.getTrDosNames(), bootstrapRom);
     } catch (Exception ex) {
       showMessageDialog(this, "Can't load Spec128 ROM for error: " + ex.getMessage());
       try {
@@ -352,8 +352,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.menuBar.add(Box.createHorizontalGlue());
 
-    this.setTitle(title);
-
     this.menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
     this.menuActionAnimatedGIF.setIcon(ICO_AGIF_RECORD);
 
@@ -362,13 +360,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.getInputContext().selectInputMethod(Locale.ENGLISH);
 
-    if (appIconPath == null) {
+    if (parameters.getAppIconPath() == null) {
       this.setIconImage(Utils.loadIcon("appico.png"));
     } else {
       try {
-        this.setIconImage(ImageIO.read(new File(appIconPath)));
+        this.setIconImage(ImageIO.read(new File(parameters.getAppIconPath())));
       } catch (Exception ex) {
-        LOGGER.log(Level.SEVERE, "Can't load application icon: " + appIconPath, ex);
+        LOGGER.log(Level.SEVERE, "Can't load application icon: " + parameters.getAppIconPath(), ex);
         System.exit(34);
       }
     }
@@ -382,7 +380,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     final VirtualKeyboardDecoration vkbdContainer;
     try {
-      vkbdContainer = AppOptions.getInstance().getKeyboardLook().load();
+      vkbdContainer = parameters.getVirtualKeyboardLook().load();
       LOGGER.info("Virtual keyboard profile: " + vkbdContainer.getId());
     } catch (Exception ex) {
       LOGGER.log(Level.SEVERE, "Can't load virtual keyboard: " + ex.getMessage(), ex);
@@ -393,7 +391,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     LOGGER.info("Selected volume profile: " + volumeProfile.name());
 
     this.board = new Motherboard(
-            AppOptions.getInstance().getBorderWidth(),
+            parameters.getBorderWidth(),
             volumeProfile,
             this.timingProfile,
             BASE_ROM,
@@ -573,6 +571,12 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.keyboardAndTapeModule.addTapeStateChangeListener(e -> {
       this.setFastButtonState(FastButton.TAPE_PLAY_STOP, e.getTap() != null && e.getTap().isPlaying());
     });
+
+    if (parameters.getOpenSnapshot() != null) {
+      SwingUtilities.invokeLater(() -> {
+        this.setSnapshotFile(parameters.getOpenSnapshot(), FILTER_FORMAT_ALL_SNAPSHOTS);
+      });
+    }
   }
 
   private static void setMenuEnable(final JMenuItem item, final boolean enable) {
@@ -1533,7 +1537,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         this.menuOptionsZX128Mode.setState(this.board.getBoardMode() != BoardMode.ZXPOLY);
       } catch (Exception ex) {
         ex.printStackTrace();
-        LOGGER.log(Level.WARNING, "Can't read snapshot file [" + ex.getMessage() + ']', ex);
+        LOGGER.log(Level.WARNING, "Can't read snapshot file " + selected.getAbsolutePath() + " [" + ex.getMessage() + ']', ex);
         showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']',
                 "Error", JOptionPane.ERROR_MESSAGE);
       }
