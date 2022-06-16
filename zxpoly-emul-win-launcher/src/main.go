@@ -72,11 +72,17 @@ func main() {
 			"-Djava.library.path="+base_folder,
 			"-jar", base_folder+JAR_FILE)
 		fmt.Printf("Application starting...\n")
+
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
 		err = cmd.Start()
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		fmt.Printf("Waiting application completion...\n")
+
 		err = cmd.Wait()
 		if err != nil {
 			fmt.Printf("Application completed with status: %v", err)
