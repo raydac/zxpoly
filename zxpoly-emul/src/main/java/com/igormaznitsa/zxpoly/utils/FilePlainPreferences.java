@@ -71,7 +71,7 @@ public final class FilePlainPreferences extends Preferences {
 
   @Override
   public synchronized void put(final String key, final String value) {
-    this.properties.put(requireNonNull(key), requireNonNull(value));
+    this.properties.setProperty(key, value);
     this.changed = true;
     this.firePreferenceChange(key, value);
   }
