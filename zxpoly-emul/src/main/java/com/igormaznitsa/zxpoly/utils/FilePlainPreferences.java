@@ -1,5 +1,7 @@
 package com.igormaznitsa.zxpoly.utils;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -12,33 +14,37 @@ import java.text.ParseException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.NodeChangeListener;
+import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
+import java.util.stream.Stream;
 
-public class FilePlainPreferences extends Preferences {
+public final class FilePlainPreferences extends Preferences {
   private static final Logger LOGGER = Logger.getLogger(FilePlainPreferences.class.getName());
   private static final NumberFormat formatter = NumberFormat.getInstance(Locale.US);
   private final File file;
   private final Properties properties;
 
   private final String name;
-  private final List<PreferenceChangeListener> listeners = new CopyOnWriteArrayList<>();
+  private final List<PreferenceChangeListener> preferenceChangeListeners =
+      new CopyOnWriteArrayList<>();
   private final List<NodeChangeListener> nodeChangeListeners = new CopyOnWriteArrayList<>();
+
+  private volatile boolean changed;
 
   public FilePlainPreferences(final String name, final File file, final boolean create)
       throws IOException {
     LOGGER.info(
         "Creating file preferences " + name + " in file " + file + ", create flag is " + create);
-    this.name = Objects.requireNonNull(name);
+    this.name = requireNonNull(name);
     this.properties = new Properties();
-    this.file = Objects.requireNonNull(file);
+    this.file = requireNonNull(file);
     if (file.isFile()) {
       try (var reader = new FileReader(file, StandardCharsets.UTF_8)) {
         this.properties.load(reader);
@@ -58,13 +64,16 @@ public class FilePlainPreferences extends Preferences {
     }
   }
 
+  private void firePreferenceChange(final String key, final String newValue) {
+    var event = new PreferenceChangeEvent(this, key, newValue);
+    this.preferenceChangeListeners.forEach(x -> x.preferenceChange(event));
+  }
+
   @Override
   public synchronized void put(final String key, final String value) {
-    if (value == null) {
-      this.properties.remove(key);
-    } else {
-      this.properties.put(key, value);
-    }
+    this.properties.put(requireNonNull(key), requireNonNull(value));
+    this.changed = true;
+    this.firePreferenceChange(key, value);
   }
 
   @Override
@@ -74,17 +83,25 @@ public class FilePlainPreferences extends Preferences {
 
   @Override
   public synchronized void remove(final String key) {
-    this.properties.remove(key);
+    if (this.properties.remove(key) != null) {
+      this.changed = true;
+      this.firePreferenceChange(key, null);
+    }
   }
 
   @Override
   public synchronized void clear() throws BackingStoreException {
+    var keys = this.keys();
     this.properties.clear();
+    Stream.of(keys).forEach(k -> firePreferenceChange(k, null));
+    if (keys.length != 0) {
+      this.changed = true;
+    }
   }
 
   @Override
   public synchronized void putInt(final String key, final int value) {
-    this.properties.put(key, formatter.format(value));
+    this.put(key, formatter.format(value));
   }
 
   @Override
@@ -100,7 +117,7 @@ public class FilePlainPreferences extends Preferences {
 
   @Override
   public synchronized void putLong(final String key, final long value) {
-    this.properties.put(key, formatter.format(value));
+    this.put(key, formatter.format(value));
   }
 
   @Override
@@ -116,7 +133,7 @@ public class FilePlainPreferences extends Preferences {
 
   @Override
   public synchronized void putBoolean(final String key, final boolean value) {
-    this.properties.put(key, Boolean.toString(value));
+    this.put(key, Boolean.toString(value));
   }
 
   @Override
@@ -127,7 +144,7 @@ public class FilePlainPreferences extends Preferences {
 
   @Override
   public synchronized void putFloat(String key, float value) {
-    this.properties.put(key, formatter.format(value));
+    this.put(key, formatter.format(value));
   }
 
   @Override
@@ -143,7 +160,7 @@ public class FilePlainPreferences extends Preferences {
 
   @Override
   public synchronized void putDouble(final String key, final double value) {
-    this.properties.put(key, formatter.format(value));
+    this.put(key, formatter.format(value));
   }
 
   @Override
@@ -159,7 +176,7 @@ public class FilePlainPreferences extends Preferences {
 
   @Override
   public synchronized void putByteArray(final String key, final byte[] value) {
-    this.properties.put(key, Base64.getEncoder().encodeToString(value));
+    this.put(key, Base64.getEncoder().encodeToString(value));
   }
 
   @Override
@@ -228,11 +245,14 @@ public class FilePlainPreferences extends Preferences {
 
   @Override
   public synchronized void flush() throws BackingStoreException {
-    try (var writer = new FileWriter(this.file, StandardCharsets.UTF_8)) {
-      this.properties.store(writer, String.format("Properties file for '%s'", this.name));
-    } catch (IOException ex) {
-      LOGGER.log(Level.SEVERE, "Can't save properties", ex);
-      throw new BackingStoreException(ex);
+    if (this.changed) {
+      try (var writer = new FileWriter(this.file, StandardCharsets.UTF_8)) {
+        this.properties.store(writer, String.format("Properties file for '%s'", this.name));
+        this.changed = false;
+      } catch (IOException ex) {
+        LOGGER.log(Level.SEVERE, "Can't save properties", ex);
+        throw new BackingStoreException(ex);
+      }
     }
   }
 
@@ -241,6 +261,7 @@ public class FilePlainPreferences extends Preferences {
     try (var reader = new FileReader(this.file, StandardCharsets.UTF_8)) {
       this.properties.clear();
       this.properties.load(reader);
+      this.changed = false;
     } catch (IOException ex) {
       LOGGER.log(Level.SEVERE, "Can't load properties", ex);
       throw new BackingStoreException(ex);
@@ -249,12 +270,12 @@ public class FilePlainPreferences extends Preferences {
 
   @Override
   public void addPreferenceChangeListener(PreferenceChangeListener pcl) {
-    this.listeners.add(pcl);
+    this.preferenceChangeListeners.add(pcl);
   }
 
   @Override
   public void removePreferenceChangeListener(final PreferenceChangeListener pcl) {
-    this.listeners.remove(pcl);
+    this.preferenceChangeListeners.remove(pcl);
   }
 
   @Override
