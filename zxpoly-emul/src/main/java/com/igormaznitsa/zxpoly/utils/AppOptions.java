@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -51,11 +52,11 @@ public final class AppOptions {
 
   private AppOptions(final File forceFile) {
     if (forceFile == null) {
-      LOGGER.info("Creating options for system provided store");
+      LOGGER.log(Level.CONFIG, "Creating options for system provided store");
       this.preferences = Preferences.userNodeForPackage(AppOptions.class);
     } else {
       try {
-        LOGGER.info("Creating options for force file: " + forceFile);
+        LOGGER.log(Level.CONFIG, "Creating options for force file: " + forceFile);
         this.preferences = new FilePlainPreferences("zxpoly-emulator", forceFile, true);
       } catch (IOException ex) {
         throw new Error("Can't create file preferences", ex);

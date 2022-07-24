@@ -34,9 +34,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "ячзщдн", mixinStandardHelpOptions = true,
+@CommandLine.Command(name = "zxpoly-emulator", mixinStandardHelpOptions = true,
     version = ZXPoly.APP_VERSION,
-    description = "Emulator of ZXPoly platform (a multi-CPU ZX-Spectrum 128 clone)")
+    description = "Emulator of ZXPoly platform (a multi-CPU ZX-Spectrum 128 clone)",
+    showAtFileInUsageHelp = true
+)
 public class ZXPoly implements Runnable {
 
   public static final String APP_TITLE = "ZX-Poly emulator";
@@ -136,7 +138,9 @@ public class ZXPoly implements Runnable {
       });
     }
 
-    final int result = new CommandLine(new ZXPoly()).execute(args);
+    final int result = new CommandLine(new ZXPoly())
+        .setExpandAtFiles(true)
+        .execute(args);
     if (result != 0) {
       System.exit(result);
     }
