@@ -23,32 +23,59 @@ import com.igormaznitsa.zxpoly.components.video.BorderWidth;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.ui.FastButton;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.SystemUtils;
-
-import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.UIManager;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 public final class AppOptions {
 
   public static final String TEST_ROM = "zxpolytest.prom";
   private static final Logger LOGGER = Logger.getLogger(AppOptions.class.getName());
-  private static final AppOptions INSTANCE = new AppOptions();
+  private static final AtomicReference<AppOptions> INSTANCE = new AtomicReference<>();
   private static final String APP_FOLDER_NAME = ".zxpolyemul";
-  private final Preferences preferences = Preferences.userNodeForPackage(AppOptions.class);
+  private volatile static File forceFile;
+  private final Preferences preferences;
+
+  private AppOptions(final File forceFile) {
+    if (forceFile == null) {
+      LOGGER.info("Creating options for system provided store");
+      this.preferences = Preferences.userNodeForPackage(AppOptions.class);
+    } else {
+      try {
+        LOGGER.info("Creating options for force file: " + forceFile);
+        this.preferences = new FilePlainPreferences("zxpoly-emulator", forceFile, true);
+      } catch (IOException ex) {
+        throw new Error("Can't create file preferences", ex);
+      }
+    }
+  }
+
+  public static void setForceFile(final File file) {
+    forceFile = file;
+  }
 
   public static AppOptions getInstance() {
-    return INSTANCE;
+    AppOptions result = INSTANCE.get();
+    if (result == null) {
+      AppOptions newInstance = new AppOptions(forceFile);
+      if (INSTANCE.compareAndSet(null, newInstance)) {
+        result = newInstance;
+      }
+    }
+    return result;
   }
 
   public synchronized String getActiveRom() {
@@ -146,12 +173,12 @@ public final class AppOptions {
 
   public synchronized String getAddress() {
     return preferences
-            .get(Option.STREAM_ADDR.name(), InetAddress.getLoopbackAddress().getHostAddress());
+        .get(Option.STREAM_ADDR.name(), InetAddress.getLoopbackAddress().getHostAddress());
   }
 
   public synchronized void setAddress(final String address) {
     preferences.put(Option.STREAM_ADDR.name(),
-            address == null ? InetAddress.getLoopbackAddress().getHostAddress() : address);
+        address == null ? InetAddress.getLoopbackAddress().getHostAddress() : address);
   }
 
   public synchronized int getPort() {
@@ -196,12 +223,12 @@ public final class AppOptions {
 
   public synchronized String getFfmpegPath() {
     return preferences
-            .get(Option.STREAM_FFMPEGPATH.name(), SystemUtils.IS_OS_WINDOWS ? "ffmpeg.exe" : "ffmpeg");
+        .get(Option.STREAM_FFMPEGPATH.name(), SystemUtils.IS_OS_WINDOWS ? "ffmpeg.exe" : "ffmpeg");
   }
 
   public synchronized void setFfmpegPath(final String path) {
     preferences.put(Option.STREAM_FFMPEGPATH.name(),
-            path == null ? (SystemUtils.IS_OS_WINDOWS ? "ffmpeg.exe" : "ffmpeg") : path);
+        path == null ? (SystemUtils.IS_OS_WINDOWS ? "ffmpeg.exe" : "ffmpeg") : path);
   }
 
   public synchronized boolean isGrabSound() {
@@ -213,7 +240,8 @@ public final class AppOptions {
   }
 
   public synchronized TimingProfile getTimingProfile() {
-    final String timing = preferences.get(Option.TIMING_PROFILE.name(), TimingProfile.PENTAGON128.name());
+    final String timing =
+        preferences.get(Option.TIMING_PROFILE.name(), TimingProfile.PENTAGON128.name());
     try {
       return TimingProfile.valueOf(timing);
     } catch (IllegalArgumentException ex) {
@@ -285,25 +313,25 @@ public final class AppOptions {
       return List.of();
     } else {
       return Arrays.stream(buttons.split(","))
-              .flatMap(x -> {
-                try {
-                  return Stream.of(FastButton.valueOf(x.trim().toUpperCase(Locale.ENGLISH)));
-                } catch (IllegalArgumentException ex) {
-                  return Stream.empty();
-                }
-              })
-              .filter(FastButton::isOptional)
-              .distinct()
-              .collect(Collectors.toList());
+          .flatMap(x -> {
+            try {
+              return Stream.of(FastButton.valueOf(x.trim().toUpperCase(Locale.ENGLISH)));
+            } catch (IllegalArgumentException ex) {
+              return Stream.empty();
+            }
+          })
+          .filter(FastButton::isOptional)
+          .distinct()
+          .collect(Collectors.toList());
     }
   }
 
   public void setFastButtons(final List<FastButton> fastButtons) {
     final String packetValue = fastButtons.stream()
-            .filter(FastButton::isOptional)
-            .distinct()
-            .map(FastButton::name)
-            .collect(Collectors.joining(","));
+        .filter(FastButton::isOptional)
+        .distinct()
+        .map(FastButton::name)
+        .collect(Collectors.joining(","));
     this.preferences.put(Option.FAST_BUTTONS.name(), packetValue);
   }
 
