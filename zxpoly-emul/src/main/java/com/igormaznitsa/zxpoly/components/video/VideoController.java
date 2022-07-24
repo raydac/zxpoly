@@ -17,78 +17,99 @@
 
 package com.igormaznitsa.zxpoly.components.video;
 
-import com.igormaznitsa.zxpoly.components.*;
+import com.igormaznitsa.zxpoly.MainForm;
+import com.igormaznitsa.zxpoly.components.BoardMode;
+import com.igormaznitsa.zxpoly.components.IoDevice;
+import com.igormaznitsa.zxpoly.components.Motherboard;
+import com.igormaznitsa.zxpoly.components.ZxPolyConstants;
+import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter;
 import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilterChain;
 import com.igormaznitsa.zxpoly.formats.Spec256Arch;
+import com.igormaznitsa.zxpoly.ui.FastButton;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.Utils;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.RenderedImage;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.SwingUtilities;
 
 public final class VideoController extends JComponent
-        implements ZxPolyConstants, MouseWheelListener, IoDevice {
+    implements ZxPolyConstants, MouseWheelListener, IoDevice {
 
   public static final int ZXSCREEN_ROWS = 192;
   public static final int ZXSCREEN_COLS = 256;
 
   public static final int SCREEN_WIDTH = 512;
   public static final int SCREEN_HEIGHT = 384;
-  public static final int[] PALETTE_ZXPOLY = new int[]{
-          0xFF000000,
-          0xFF0000BE,
-          0xFFBE0000,
-          0xFFBE00BE,
-          0xFF00BE00,
-          0xFF00BEBE,
-          0xFFBEBE00,
-          0xFFBEBEBE,
-          0xFF000000,
-          0xFF0000FF,
-          0xFFFF0000,
-          0xFFFF00FF,
-          0xFF00FF00,
-          0xFF00FFFF,
-          0xFFFFFF00,
-          0xFFFFFFFF};
-  public static final Color[] PALETTE_ZXPOLY_COLORS = new Color[]{
-          // normal bright
-          new Color(0, 0, 0), // Black
-          new Color(0, 0, 190), // Blue
-          new Color(190, 0, 0), // Red
-          new Color(190, 0, 190),
-          new Color(0, 190, 0), // Green
-          new Color(0, 190, 190),
-          new Color(190, 190, 0),
-          new Color(190, 190, 190),
-          // high bright
-          new Color(0, 0, 0),
-          new Color(0, 0, 255),
-          new Color(255, 0, 0),
-          new Color(255, 0, 255),
-          new Color(0, 255, 0),
-          new Color(0, 255, 255),
-          new Color(255, 255, 0),
-          new Color(255, 255, 255)
+  public static final int[] PALETTE_ZXPOLY = new int[] {
+      0xFF000000,
+      0xFF0000BE,
+      0xFFBE0000,
+      0xFFBE00BE,
+      0xFF00BE00,
+      0xFF00BEBE,
+      0xFFBEBE00,
+      0xFFBEBEBE,
+      0xFF000000,
+      0xFF0000FF,
+      0xFFFF0000,
+      0xFFFF00FF,
+      0xFF00FF00,
+      0xFF00FFFF,
+      0xFFFFFF00,
+      0xFFFFFFFF};
+  public static final Color[] PALETTE_ZXPOLY_COLORS = new Color[] {
+      // normal bright
+      new Color(0, 0, 0), // Black
+      new Color(0, 0, 190), // Blue
+      new Color(190, 0, 0), // Red
+      new Color(190, 0, 190),
+      new Color(0, 190, 0), // Green
+      new Color(0, 190, 190),
+      new Color(190, 190, 0),
+      new Color(190, 190, 190),
+      // high bright
+      new Color(0, 0, 0),
+      new Color(0, 0, 255),
+      new Color(255, 0, 0),
+      new Color(255, 0, 255),
+      new Color(0, 255, 0),
+      new Color(0, 255, 255),
+      new Color(255, 255, 0),
+      new Color(255, 255, 255)
   };
   public static final int[] PALETTE_SPEC256 = Utils.readRawPalette(
-          VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/spec256.raw.pal"),
-          true);
+      VideoController.class.getResourceAsStream("/com/igormaznitsa/zxpoly/pal/spec256.raw.pal"),
+      true);
   private static final int[] PALETTE_ALIGNED_ZXPOLY =
-          Utils.alignPaletteColors(PALETTE_ZXPOLY, PALETTE_SPEC256);
+      Utils.alignPaletteColors(PALETTE_ZXPOLY, PALETTE_SPEC256);
   private static final Logger log = Logger.getLogger("VC");
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
@@ -97,6 +118,7 @@ public final class VideoController extends JComponent
   private static final float SCALE_MIN = 1.0f;
   private static final float SCALE_MAX = 6.0f;
   private static final int[] ZX_SCREEN_ROW_OFFSETS = generateZxScreenRowStartOffsets();
+  private static final int BORDER_SHORT = 16;
   private static volatile boolean gfxBackOverFF = false;
   private static volatile boolean gfxPaper00InkFF = false;
   private static volatile boolean gfxHideSameInkPaper = true;
@@ -130,15 +152,14 @@ public final class VideoController extends JComponent
   private VirtualKeyboardRender vkbdRender;
   private int stepStartTiStates = 0;
   private int preStepBorderColor;
-
-  private static final int BORDER_SHORT = 16;
+  private Rectangle lastVirtualKeyboardWindowPosition = null;
 
   public VideoController(
-          final BorderWidth borderWidth,
-          final TimingProfile timingProfile,
-          final boolean syncRepaint,
-          final Motherboard board,
-          final VirtualKeyboardDecoration vkbdContainer) {
+      final BorderWidth borderWidth,
+      final TimingProfile timingProfile,
+      final boolean syncRepaint,
+      final Motherboard board,
+      final VirtualKeyboardDecoration vkbdContainer) {
     super();
 
     this.borderWidth = borderWidth;
@@ -149,14 +170,15 @@ public final class VideoController extends JComponent
     switch (this.borderWidth) {
       case FULL: {
         this.baseComponentSize = new Dimension(
-                SCREEN_WIDTH + (this.timingProfile.tstatesPerBorderLeft << 2)
-                        + (this.timingProfile.tstatesPerBorderRight << 2),
-                SCREEN_HEIGHT + (this.timingProfile.linesBorderTop)
-                        + (this.timingProfile.linesBorderBottom));
+            SCREEN_WIDTH + (this.timingProfile.tstatesPerBorderLeft << 2)
+                + (this.timingProfile.tstatesPerBorderRight << 2),
+            SCREEN_HEIGHT + (this.timingProfile.linesBorderTop)
+                + (this.timingProfile.linesBorderBottom));
       }
       break;
       case SHORT: {
-        this.baseComponentSize = new Dimension(SCREEN_WIDTH + (BORDER_SHORT << 1), SCREEN_HEIGHT + (BORDER_SHORT << 1));
+        this.baseComponentSize =
+            new Dimension(SCREEN_WIDTH + (BORDER_SHORT << 1), SCREEN_HEIGHT + (BORDER_SHORT << 1));
       }
       break;
       case NONE: {
@@ -175,20 +197,22 @@ public final class VideoController extends JComponent
     this.board = board;
     this.modules = board.getModules();
 
-    this.workZxScreenImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
-    this.outputZxScreenImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
+    this.workZxScreenImage =
+        new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
+    this.outputZxScreenImage =
+        new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
     this.outputZxScreenImage.setAccelerationPriority(1.0f);
     this.workZxScreenImage.setAccelerationPriority(1.0f);
     this.workZxScreenImageRgbData =
-            ((DataBufferInt) this.workZxScreenImage.getRaster().getDataBuffer()).getData();
+        ((DataBufferInt) this.workZxScreenImage.getRaster().getDataBuffer()).getData();
 
     this.borderImage = new BufferedImage(
-            this.timingProfile.tstatesPerLine,
-            this.timingProfile.scanLines,
-            BufferedImage.TYPE_INT_RGB);
+        this.timingProfile.tstatesPerLine,
+        this.timingProfile.scanLines,
+        BufferedImage.TYPE_INT_RGB);
     this.borderImage.setAccelerationPriority(1.0f);
     this.borderImageRgbData =
-            ((DataBufferInt) this.borderImage.getRaster().getDataBuffer()).getData();
+        ((DataBufferInt) this.borderImage.getRaster().getDataBuffer()).getData();
 
     this.addMouseWheelListener(this);
     this.addMouseListener(new MouseAdapter() {
@@ -232,7 +256,7 @@ public final class VideoController extends JComponent
       for (int y = 0; y < ZXSCREEN_ROWS; y++) {
         for (int x = 0; x < ZXSCREEN_COLS; x++) {
           final int color =
-                  PALETTE_SPEC256[imgData[(y + yoffset) * bkg.getWidth() + x + xoffset] & 0xFF];
+              PALETTE_SPEC256[imgData[(y + yoffset) * bkg.getWidth() + x + xoffset] & 0xFF];
           int zxoffset = y * 512 * 2 + x * 2;
           prerendered[zxoffset] = color;
           prerendered[zxoffset++ + SCREEN_WIDTH] = color;
@@ -283,11 +307,11 @@ public final class VideoController extends JComponent
   }
 
   private static void fillDataBufferForSpec256VideoMode(
-          final LineRenderMode renderLines,
-          final ZxPolyModule[] modules,
-          final int[] pixelRgbBuffer,
-          final boolean flashActive,
-          int lineFrom, int lineTo) {
+      final LineRenderMode renderLines,
+      final ZxPolyModule[] modules,
+      final int[] pixelRgbBuffer,
+      final boolean flashActive,
+      int lineFrom, int lineTo) {
     final int[] preRenderedBack = gfxPrerenderedBack;
     final boolean bkOverFF = gfxBackOverFF;
     final boolean paper00inkFF = gfxPaper00InkFF;
@@ -329,7 +353,7 @@ public final class VideoController extends JComponent
           boolean draw = true;
 
           final boolean mixWithAttributes =
-                  colorIndex < downAttrMixedIndex || colorIndex > upAttrMixedIndex;
+              colorIndex < downAttrMixedIndex || colorIndex > upAttrMixedIndex;
 
           if (preRenderedBack == null) {
             // No GFX Background
@@ -345,7 +369,7 @@ public final class VideoController extends JComponent
           } else {
             // GFX Background is presented
             final boolean backShouldBeShown = ((attrData & 0x80) != 0 && flashActive)
-                    || (hideSameInkPaper && inkColor == paperColor);
+                || (hideSameInkPaper && inkColor == paperColor);
 
             if (paper00inkFF) {
               if (colorIndex == 0) {
@@ -397,12 +421,12 @@ public final class VideoController extends JComponent
   }
 
   private static void fillDataBufferForZxSpectrum128Mode(
-          final LineRenderMode renderLines,
-          final ZxPolyModule[] modules,
-          final int[] pixelRgbBuffer,
-          final boolean flashActive,
-          final int lineFrom,
-          final int lineTo) {
+      final LineRenderMode renderLines,
+      final ZxPolyModule[] modules,
+      final int[] pixelRgbBuffer,
+      final boolean flashActive,
+      final int lineFrom,
+      final int lineTo) {
     final ZxPolyModule mainModule = modules[0];
     final byte[] heap = mainModule.getMotherboard().getHeapRam();
 
@@ -433,9 +457,9 @@ public final class VideoController extends JComponent
 
         int effectiveAttribute = heap[videoRamHeapOffset + attrOffset];
         effectiveAttribute =
-                flashActive && ((effectiveAttribute & 0x80) != 0) ? (effectiveAttribute & 0b01_000_000)
-                        | ((effectiveAttribute >> 3) & 7)
-                        | ((effectiveAttribute & 7) << 3) : effectiveAttribute;
+            flashActive && ((effectiveAttribute & 0x80) != 0) ? (effectiveAttribute & 0b01_000_000)
+                | ((effectiveAttribute >> 3) & 7)
+                | ((effectiveAttribute & 7) << 3) : effectiveAttribute;
 
         int currentPixels = heap[videoRamHeapOffset + i] & 0xFF;
 
@@ -478,13 +502,13 @@ public final class VideoController extends JComponent
   }
 
   private static void fillDataBufferForZxPolyVideoMode(
-          final LineRenderMode renderLines,
-          final int zxPolyVideoMode,
-          final ZxPolyModule[] modules,
-          final int[] pixelRgbBuffer,
-          final boolean flashActive,
-          final int lineFrom,
-          final int lineTo
+      final LineRenderMode renderLines,
+      final int zxPolyVideoMode,
+      final ZxPolyModule[] modules,
+      final int[] pixelRgbBuffer,
+      final boolean flashActive,
+      final int lineFrom,
+      final int lineTo
   ) {
     switch (zxPolyVideoMode) {
       case VIDEOMODE_ZX48_CPU0:
@@ -511,9 +535,9 @@ public final class VideoController extends JComponent
 
             int effectiveAttribute = sourceModule.readVideo(attrOffset);
             effectiveAttribute = flashActive && ((effectiveAttribute & 0x80) != 0)
-                    ? (effectiveAttribute & 0b01_000_000)
-                    | ((effectiveAttribute >> 3) & 7)
-                    | ((effectiveAttribute & 7) << 3) : effectiveAttribute;
+                ? (effectiveAttribute & 0b01_000_000)
+                | ((effectiveAttribute >> 3) & 7)
+                | ((effectiveAttribute & 7) << 3) : effectiveAttribute;
 
             int videoPixels = sourceModule.readVideo(i);
 
@@ -621,9 +645,9 @@ public final class VideoController extends JComponent
                 } else {
                   while (x-- > 0) {
                     final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
-                            | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
-                            | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
-                            | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
+                        | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
+                        | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
+                        | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
 
                     videoValue0 <<= 1;
                     videoValue1 <<= 1;
@@ -672,31 +696,31 @@ public final class VideoController extends JComponent
                     switch (renderLines) {
                       case ALL: {
                         pixelRgbBuffer[offset] =
-                                (videoValue0 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                            (videoValue0 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
 
                         pixelRgbBuffer[offset + SCREEN_WIDTH] =
-                                (videoValue2 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                            (videoValue2 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
 
                         pixelRgbBuffer[++offset] =
-                                (videoValue1 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                            (videoValue1 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
 
                         pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
-                                (videoValue3 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                            (videoValue3 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
 
                       }
                       break;
                       case EVEN: {
                         pixelRgbBuffer[offset++] =
-                                (videoValue0 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                            (videoValue0 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
                         pixelRgbBuffer[offset++] =
-                                (videoValue1 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                            (videoValue1 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
                       }
                       break;
                       case ODD: {
                         pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
-                                (videoValue2 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                            (videoValue2 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
                         pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
-                                (videoValue3 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
+                            (videoValue3 & 0x80) == 0 ? paperColorMod0 : inkColorMod0;
                       }
                       break;
                       default:
@@ -738,9 +762,9 @@ public final class VideoController extends JComponent
                   } else {
                     while (x-- > 0) {
                       final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
-                              | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
-                              | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
-                              | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
+                          | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
+                          | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
+                          | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
 
                       videoValue0 <<= 1;
                       videoValue1 <<= 1;
@@ -782,9 +806,9 @@ public final class VideoController extends JComponent
                 int x = 8;
                 while (x-- > 0) {
                   final int value = ((videoValue3 & 0x80) == 0 ? 0 : 0x08)
-                          | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
-                          | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
-                          | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
+                      | ((videoValue0 & 0x80) == 0 ? 0 : 0x04)
+                      | ((videoValue1 & 0x80) == 0 ? 0 : 0x02)
+                      | ((videoValue2 & 0x80) == 0 ? 0 : 0x01);
 
                   videoValue0 <<= 1;
                   videoValue1 <<= 1;
@@ -863,37 +887,37 @@ public final class VideoController extends JComponent
               switch (renderLines) {
                 case ALL: {
                   pixelRgbBuffer[offset] =
-                          (videoValue0 & 0x80) == 0 ? extractPaperColor(attribute0, flashActive) :
-                                  extractInkColor(attribute0, flashActive);
+                      (videoValue0 & 0x80) == 0 ? extractPaperColor(attribute0, flashActive) :
+                          extractInkColor(attribute0, flashActive);
 
                   pixelRgbBuffer[offset + SCREEN_WIDTH] =
-                          (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) :
-                                  extractInkColor(attribute2, flashActive);
+                      (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) :
+                          extractInkColor(attribute2, flashActive);
                   pixelRgbBuffer[++offset] =
-                          (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, flashActive) :
-                                  extractInkColor(attribute1, flashActive);
+                      (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, flashActive) :
+                          extractInkColor(attribute1, flashActive);
 
                   pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
-                          (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) :
-                                  extractInkColor(attribute3, flashActive);
+                      (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) :
+                          extractInkColor(attribute3, flashActive);
                 }
                 break;
                 case EVEN: {
                   pixelRgbBuffer[offset++] =
-                          (videoValue0 & 0x80) == 0 ? extractPaperColor(attribute0, flashActive) :
-                                  extractInkColor(attribute0, flashActive);
+                      (videoValue0 & 0x80) == 0 ? extractPaperColor(attribute0, flashActive) :
+                          extractInkColor(attribute0, flashActive);
                   pixelRgbBuffer[offset++] =
-                          (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, flashActive) :
-                                  extractInkColor(attribute1, flashActive);
+                      (videoValue1 & 0x80) == 0 ? extractPaperColor(attribute1, flashActive) :
+                          extractInkColor(attribute1, flashActive);
                 }
                 break;
                 case ODD: {
                   pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
-                          (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) :
-                                  extractInkColor(attribute2, flashActive);
+                      (videoValue2 & 0x80) == 0 ? extractPaperColor(attribute2, flashActive) :
+                          extractInkColor(attribute2, flashActive);
                   pixelRgbBuffer[offset++ + SCREEN_WIDTH] =
-                          (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) :
-                                  extractInkColor(attribute3, flashActive);
+                      (videoValue3 & 0x80) == 0 ? extractPaperColor(attribute3, flashActive) :
+                          extractInkColor(attribute3, flashActive);
                 }
                 break;
                 default:
@@ -1105,10 +1129,21 @@ public final class VideoController extends JComponent
           }
           final Window mainFrame = SwingUtilities.windowForComponent(this);
 
-          this.vkbdWindow = new JDialog(mainFrame, "ZX-Poly virtual keyboard", Dialog.ModalityType.MODELESS, this.getGraphicsConfiguration());
+          this.vkbdWindow =
+              new JDialog(mainFrame, "ZX-Poly virtual keyboard", Dialog.ModalityType.MODELESS,
+                  this.getGraphicsConfiguration());
+          this.vkbdWindow.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(final WindowEvent e) {
+              lastVirtualKeyboardWindowPosition = vkbdWindow.getBounds();
+              showVkb = false;
+              ((MainForm) mainFrame).setFastButtonState(FastButton.VIRTUAL_KEYBOARD, false);
+            }
+          });
 
           final JComponent keyboardPanel = new JComponent() {
-            private final Dimension size = new Dimension(vkbdRender.getImageWidth(), vkbdRender.getImageHeight());
+            private final Dimension size =
+                new Dimension(vkbdRender.getImageWidth(), vkbdRender.getImageHeight());
 
             @Override
             public Dimension getPreferredSize() {
@@ -1140,7 +1175,8 @@ public final class VideoController extends JComponent
               final Graphics2D g2d = (Graphics2D) g;
               g2d.setColor(Color.GRAY);
               g2d.fillRect(this.getX(), this.getY(), this.size.width, this.size.height);
-              VideoController.this.vkbdRender.render(this, g2d, new Rectangle(0, 0, this.getWidth(), this.getHeight()), false);
+              VideoController.this.vkbdRender.render(this, g2d,
+                  new Rectangle(0, 0, this.getWidth(), this.getHeight()), false);
             }
           };
 
@@ -1168,19 +1204,52 @@ public final class VideoController extends JComponent
           this.vkbdWindow.setLocation(mainFrame.getLocation());
           this.vkbdWindow.setVisible(true);
           this.vkbdWindow.pack();
+
+          if (this.lastVirtualKeyboardWindowPosition != null) {
+            this.vkbdWindow.setBounds(this.lastVirtualKeyboardWindowPosition);
+          }
         }
       } else {
         if (this.vkbdWindow != null) {
+          this.lastVirtualKeyboardWindowPosition = vkbdWindow.getBounds();
           this.vkbdWindow.dispose();
         }
       }
     }
   }
 
+  public Optional<Rectangle> getVirtualKeyboardWindowPosition() {
+    final Window window = this.vkbdWindow;
+    Rectangle result = null;
+    if (window == null) {
+      result = this.lastVirtualKeyboardWindowPosition;
+    } else {
+      result = window.getBounds();
+    }
+    return Optional.ofNullable(result);
+  }
+
+  public void setVirtualKeyboardWindowPosition(final Rectangle position) {
+    this.lastVirtualKeyboardWindowPosition = position;
+    if (position != null) {
+      final Runnable call = () -> {
+        final Window window = this.vkbdWindow;
+        if (window != null) {
+          window.setBounds(position);
+        }
+      };
+      if (SwingUtilities.isEventDispatchThread()) {
+        call.run();
+      } else {
+        SwingUtilities.invokeLater(call);
+      }
+    }
+  }
+
   public void setEnableTrapMouse(
-          final boolean flag,
-          final boolean enableMouseTrapIndicator,
-          final boolean activateMouseTrap) {
+      final boolean flag,
+      final boolean enableMouseTrapIndicator,
+      final boolean activateMouseTrap) {
     this.enableMouseTrapIndicator = enableMouseTrapIndicator;
     this.mouseTrapEnabled = flag;
     this.setTrapMouseActive(flag);
@@ -1203,8 +1272,8 @@ public final class VideoController extends JComponent
     final Runnable runnable = () -> {
       if (doHide) {
         setCursor(Toolkit.getDefaultToolkit()
-                .createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT), new Point(0, 0),
-                        "InvisibleCursor"));
+            .createCustomCursor(new BufferedImage(1, 1, BufferedImage.TRANSLUCENT), new Point(0, 0),
+                "InvisibleCursor"));
       } else {
         setCursor(Cursor.getDefaultCursor());
       }
@@ -1238,7 +1307,7 @@ public final class VideoController extends JComponent
   @Override
   public Dimension getPreferredSize() {
     return new Dimension(Math.max(this.size.width, baseComponentSize.width),
-            Math.max(this.size.height, baseComponentSize.height));
+        Math.max(this.size.height, baseComponentSize.height));
   }
 
   @Override
@@ -1249,13 +1318,14 @@ public final class VideoController extends JComponent
   private void updateZoom(final float value) {
     this.zoom = value;
     this.size = new Dimension(Math.round(SCREEN_WIDTH * value),
-            Math.round(SCREEN_HEIGHT * value));
+        Math.round(SCREEN_HEIGHT * value));
     this.repaint();
     this.getParent().revalidate();
     this.getParent().repaint();
   }
 
-  public void copyWorkScreenToOutputScreen(final int x, final int y, final int width, final int height) {
+  public void copyWorkScreenToOutputScreen(final int x, final int y, final int width,
+                                           final int height) {
     synchronized (this.workZxScreenImage) {
       synchronized (this.outputZxScreenImage) {
         final Graphics2D g = this.outputZxScreenImage.createGraphics();
@@ -1269,39 +1339,40 @@ public final class VideoController extends JComponent
     }
   }
 
-  private void refreshBufferData(final LineRenderMode renderLines, final int lineFrom, final int lineTo, final int videoMode) {
+  private void refreshBufferData(final LineRenderMode renderLines, final int lineFrom,
+                                 final int lineTo, final int videoMode) {
     switch (videoMode) {
       case VIDEOMODE_ZX48_CPU0: {
         fillDataBufferForZxSpectrum128Mode(
-                renderLines,
-                this.modules,
-                this.workZxScreenImageRgbData,
-                this.board.isFlashActive(),
-                lineFrom,
-                lineTo
+            renderLines,
+            this.modules,
+            this.workZxScreenImageRgbData,
+            this.board.isFlashActive(),
+            lineFrom,
+            lineTo
         );
       }
       break;
       case VIDEOMODE_SPEC256: {
         fillDataBufferForSpec256VideoMode(
-                renderLines,
-                this.modules,
-                this.workZxScreenImageRgbData,
-                this.board.isFlashActive(),
-                lineFrom,
-                lineTo
+            renderLines,
+            this.modules,
+            this.workZxScreenImageRgbData,
+            this.board.isFlashActive(),
+            lineFrom,
+            lineTo
         );
       }
       break;
       default: {
         fillDataBufferForZxPolyVideoMode(
-                renderLines,
-                this.currentVideoMode,
-                this.modules,
-                this.workZxScreenImageRgbData,
-                this.board.isFlashActive(),
-                lineFrom,
-                lineTo
+            renderLines,
+            this.currentVideoMode,
+            this.modules,
+            this.workZxScreenImageRgbData,
+            this.board.isFlashActive(),
+            lineFrom,
+            lineTo
         );
       }
       break;
@@ -1331,7 +1402,8 @@ public final class VideoController extends JComponent
   }
 
   private void drawBorder(final Graphics2D g2, final int visibleWidth, final int visibleHeight) {
-    final int invisibleWidth = this.timingProfile.tstatesPerHBlank + this.timingProfile.tstatesPerHSync;
+    final int invisibleWidth =
+        this.timingProfile.tstatesPerHBlank + this.timingProfile.tstatesPerHSync;
     final int invisibleHeight = this.timingProfile.linesPerVSync;
     final int visibleBorderAreaWidth = this.borderImage.getWidth() - invisibleWidth;
     final int visibleBorderAreaHeight = this.borderImage.getHeight() - invisibleHeight;
@@ -1343,11 +1415,11 @@ public final class VideoController extends JComponent
     final int offsetY = (int) (-invisibleHeight * sy);
 
     g2.drawImage(this.borderImage,
-            offsetX,
-            offsetY,
-            (int) (sx * this.borderImage.getWidth()),
-            (int) (sy * this.borderImage.getHeight()),
-            null);
+        offsetX,
+        offsetY,
+        (int) (sx * this.borderImage.getWidth()),
+        (int) (sy * this.borderImage.getHeight()),
+        null);
   }
 
   @Override
@@ -1382,9 +1454,13 @@ public final class VideoController extends JComponent
           final double scale = ((double) bounds.width / 3) / (double) imgWidth;
           final int newWidth = (int) Math.round(scale * imgWidth);
           final int newHeight = (int) Math.round(scale * imgHeight);
-          renderRectangle = new Rectangle((bounds.width - newWidth) / 2, bounds.height - newHeight, newWidth, newHeight);
+          renderRectangle =
+              new Rectangle((bounds.width - newWidth) / 2, bounds.height - newHeight, newWidth,
+                  newHeight);
         } else {
-          renderRectangle = new Rectangle((bounds.width - imgWidth) / 2, bounds.height - imgHeight, imgWidth, imgHeight);
+          renderRectangle =
+              new Rectangle((bounds.width - imgWidth) / 2, bounds.height - imgHeight, imgWidth,
+                  imgHeight);
         }
       } else {
         final double scale = (double) bounds.width / (double) imgWidth;
@@ -1435,7 +1511,8 @@ public final class VideoController extends JComponent
     this.portFEw = (this.portFEw & 0xFFFFFFF8) | (colorIndex & 0x07);
   }
 
-  public void syncUpdateBuffer(final int lineFrom, final int lineTo, final LineRenderMode renderLines) {
+  public void syncUpdateBuffer(final int lineFrom, final int lineTo,
+                               final LineRenderMode renderLines) {
     synchronized (this.workZxScreenImage) {
       this.refreshBufferData(renderLines, lineFrom, lineTo, this.currentVideoMode);
     }
@@ -1487,8 +1564,8 @@ public final class VideoController extends JComponent
 
   public RenderedImage makeCopyOfCurrentPicture() {
     final BufferedImage result =
-            new BufferedImage(this.workZxScreenImage.getWidth(), this.workZxScreenImage.getHeight(),
-                    BufferedImage.TYPE_INT_RGB);
+        new BufferedImage(this.workZxScreenImage.getWidth(), this.workZxScreenImage.getHeight(),
+            BufferedImage.TYPE_INT_RGB);
     final Graphics2D gfx = result.createGraphics();
     try {
       drawBuffer(gfx, 0, 0, 1.0f, this.tvFilterChain);
@@ -1528,11 +1605,11 @@ public final class VideoController extends JComponent
   }
 
   public void drawBuffer(
-          final Graphics2D gfx,
-          final int x,
-          final int y,
-          final float zoom,
-          final TvFilterChain filterChain
+      final Graphics2D gfx,
+      final int x,
+      final int y,
+      final float zoom,
+      final TvFilterChain filterChain
   ) {
     if (filterChain.isEmpty()) {
       synchronized (this.outputZxScreenImage) {
@@ -1544,7 +1621,7 @@ public final class VideoController extends JComponent
           gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 
           gfx.drawImage(this.outputZxScreenImage, x, y, Math.round(SCREEN_WIDTH * normalZoom),
-                  Math.round(SCREEN_HEIGHT * normalZoom), null);
+              Math.round(SCREEN_HEIGHT * normalZoom), null);
         }
       }
     } else {
@@ -1553,7 +1630,8 @@ public final class VideoController extends JComponent
       final TvFilter[] tvFilters = filterChain.getFilterChain();
       BufferedImage postProcessedImage;
       synchronized (this.outputZxScreenImage) {
-        postProcessedImage = tvFilters[0].apply(this.outputZxScreenImage, zoom, borderArgbColor, true);
+        postProcessedImage =
+            tvFilters[0].apply(this.outputZxScreenImage, zoom, borderArgbColor, true);
       }
       for (int i = 1; i < tvFilters.length; i++) {
         postProcessedImage = tvFilters[i].apply(postProcessedImage, zoom, borderArgbColor, false);
@@ -1563,7 +1641,7 @@ public final class VideoController extends JComponent
         gfx.drawImage(postProcessedImage, null, x, y);
       } else {
         final boolean sizeChangedDuringPostprocessing =
-                postProcessedImage.getWidth() != this.outputZxScreenImage.getWidth();
+            postProcessedImage.getWidth() != this.outputZxScreenImage.getWidth();
 
         if (sizeChangedDuringPostprocessing) {
           gfx.drawImage(postProcessedImage, null, x, y);
@@ -1574,10 +1652,10 @@ public final class VideoController extends JComponent
           gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 
           area = new Rectangle(x, y, Math.round(SCREEN_WIDTH * normalizedZoom),
-                  Math.round(SCREEN_HEIGHT * normalizedZoom));
+              Math.round(SCREEN_HEIGHT * normalizedZoom));
 
           gfx.drawImage(postProcessedImage, x, y, area.width,
-                  area.height, null);
+              area.height, null);
         }
       }
 
@@ -1589,17 +1667,18 @@ public final class VideoController extends JComponent
 
   @Override
   public void preStep(
-          final int frameTiStates,
-          final boolean signalReset,
-          final boolean tstatesIntReached,
-          boolean wallClockInt
+      final int frameTiStates,
+      final boolean signalReset,
+      final boolean tstatesIntReached,
+      boolean wallClockInt
   ) {
     this.stepStartTiStates = tstatesIntReached ? -1 : frameTiStates;
     if (signalReset) {
       this.portFEw = 0x00;
     }
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
-    this.preStepBorderColor = this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
+    this.preStepBorderColor =
+        this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
   }
 
   @Override
