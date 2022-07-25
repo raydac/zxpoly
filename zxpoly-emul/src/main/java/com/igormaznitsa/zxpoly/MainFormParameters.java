@@ -1,12 +1,11 @@
 package com.igormaznitsa.zxpoly;
 
+import static java.util.Objects.requireNonNull;
+
 import com.igormaznitsa.zxpoly.components.video.BorderWidth;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
-
 import java.io.File;
-
-import static java.util.Objects.requireNonNull;
 
 public final class MainFormParameters {
   private String title;
@@ -21,7 +20,33 @@ public final class MainFormParameters {
 
   private BorderWidth borderWidth;
 
+  private boolean showMainMenu;
+
+  private boolean undecorated;
+
+  private boolean showIndicatorPanel;
+
+  private Bounds bounds;
+
+  public Bounds getBounds() {
+    return this.bounds;
+  }
+
+  public MainFormParameters setBounds(final Bounds bounds) {
+    this.bounds = bounds;
+    return this;
+  }
+
   public MainFormParameters() {
+  }
+
+  public boolean isUndecorated() {
+    return this.undecorated;
+  }
+
+  public MainFormParameters setUndecorated(final boolean undecorated) {
+    this.undecorated = undecorated;
+    return this;
   }
 
   public File getOpenSnapshot() {
@@ -30,6 +55,24 @@ public final class MainFormParameters {
 
   public MainFormParameters setOpenSnapshot(final File file) {
     this.openSnapshot = file;
+    return this;
+  }
+
+  public boolean isShowMainMenu() {
+    return this.showMainMenu;
+  }
+
+  public MainFormParameters setShowMainMenu(final boolean showMainMenu) {
+    this.showMainMenu = showMainMenu;
+    return this;
+  }
+
+  public boolean isShowIndicatorPanel() {
+    return this.showIndicatorPanel;
+  }
+
+  public MainFormParameters setShowIndicatorPanel(final boolean showIndicatorPanel) {
+    this.showIndicatorPanel = showIndicatorPanel;
     return this;
   }
 

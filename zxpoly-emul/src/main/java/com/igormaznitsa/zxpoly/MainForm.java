@@ -380,6 +380,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   public MainForm(final MainFormParameters parameters) {
     super(parameters.getTitle());
+    this.setUndecorated(parameters.isUndecorated());
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
 
     this.sysIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/sys.png")));
@@ -650,12 +651,28 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     }
 
     this.keyboardAndTapeModule.addTapeStateChangeListener(e -> {
-      this.setFastButtonState(FastButton.TAPE_PLAY_STOP, e.getTap() != null && e.getTap().isPlaying());
+      this.setFastButtonState(FastButton.TAPE_PLAY_STOP,
+          e.getTap() != null && e.getTap().isPlaying());
     });
 
     if (parameters.getOpenSnapshot() != null) {
       SwingUtilities.invokeLater(() -> {
         this.setSnapshotFile(parameters.getOpenSnapshot(), FILTER_FORMAT_ALL_SNAPSHOTS);
+      });
+    }
+
+    this.menuBar.setVisible(parameters.isShowMainMenu());
+    this.panelIndicators.setVisible(parameters.isShowIndicatorPanel());
+
+    if (parameters.getBounds() != null) {
+      SwingUtilities.invokeLater(() -> {
+        var bounds = parameters.getBounds();
+        if (bounds.hasCoordinates()) {
+          this.setBounds(
+              new Rectangle(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight()));
+        } else {
+          this.setSize(bounds.getWidth(), bounds.getHeight());
+        }
       });
     }
   }

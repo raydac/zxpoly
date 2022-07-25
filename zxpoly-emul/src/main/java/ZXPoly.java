@@ -18,6 +18,7 @@
 import static java.util.Objects.requireNonNullElse;
 import static java.util.Objects.requireNonNullElseGet;
 
+import com.igormaznitsa.zxpoly.Bounds;
 import com.igormaznitsa.zxpoly.MainForm;
 import com.igormaznitsa.zxpoly.MainFormParameters;
 import com.igormaznitsa.zxpoly.components.video.BorderWidth;
@@ -54,6 +55,35 @@ public class ZXPoly implements Runnable {
       description = "file to keep preferences"
   )
   private File preferencesFile = null;
+
+  @CommandLine.Option(
+      names = {"--undecorated"},
+      description = "make main window undecorated"
+  )
+  private boolean undecorated = false;
+
+  @CommandLine.Option(
+      names = {"--bounds"},
+      description = "define main frame bounds as X,Y,W,H or W,H",
+      converter = Bounds.class
+  )
+  private Bounds bounds = null;
+
+  @CommandLine.Option(
+      names = {"--indicators"},
+      description = "show indicator panel",
+      defaultValue = "true",
+      arity = "1"
+  )
+  private boolean showIndicators;
+
+  @CommandLine.Option(
+      names = {"--mainmenu"},
+      description = "show main menu",
+      defaultValue = "true",
+      arity = "1"
+  )
+  private boolean showMainMenu;
 
   @CommandLine.Option(
       names = {"-i", "--icon"},
@@ -176,6 +206,10 @@ public class ZXPoly implements Runnable {
         parameters.setTitle(requireNonNullElse(this.title, APP_TITLE + ' ' + APP_VERSION))
             .setAppIconPath(this.applicationIconFilePath)
             .setRomPath(romPath)
+            .setBounds(this.bounds)
+            .setShowMainMenu(this.showMainMenu)
+            .setUndecorated(this.undecorated)
+            .setShowIndicatorPanel(this.showIndicators)
             .setVirtualKeyboardLook(requireNonNullElseGet(this.virtualKeyboardLook,
                 () -> AppOptions.getInstance().getKeyboardLook()))
             .setOpenSnapshot(this.snapshotFile)
