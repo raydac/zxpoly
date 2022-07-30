@@ -17,22 +17,36 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
+import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.UlaTact.TYPE_BORDER_FETCH_A1;
+import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.UlaTact.TYPE_BORDER_FETCH_B1;
+import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.UlaTact.TYPE_SHIFT1_AND_FETCH_A2;
+import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.UlaTact.TYPE_SHIFT1_AND_FETCH_B2;
+import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.UlaTact.TYPE_SHIFT2_AND_FETCH_A1;
+import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.UlaTact.TYPE_SHIFT2_AND_FETCH_B1;
+import static java.lang.Math.min;
+
 import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.zxpoly.Bounds;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
-import com.igormaznitsa.zxpoly.components.snd.*;
+import com.igormaznitsa.zxpoly.components.snd.Beeper;
+import com.igormaznitsa.zxpoly.components.snd.CovoxFb;
+import com.igormaznitsa.zxpoly.components.snd.TurboSoundNedoPc;
+import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
+import com.igormaznitsa.zxpoly.components.snd.Zx128Ay8910;
 import com.igormaznitsa.zxpoly.components.video.BorderWidth;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardDecoration;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
-import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.UlaTact.*;
-import static java.lang.Math.min;
 
 @SuppressWarnings({"unused", "NonAtomicOperationOnVolatileField"})
 public final class Motherboard implements ZxPolyConstants {
@@ -80,18 +94,19 @@ public final class Motherboard implements ZxPolyConstants {
   private boolean frameIntTriggered;
 
   public Motherboard(
-          final BorderWidth borderWidth,
-          final VolumeProfile soundLevels,
-          final TimingProfile timingProfile,
-          final RomData rom,
-          final BoardMode boardMode,
-          final boolean syncRepaint,
-          final boolean useAcbSoundScheme,
-          final boolean enableCovoxFb,
-          final boolean useTurboSound,
-          final boolean allowKempstonMouse,
-          final boolean attributePortFf,
-          final VirtualKeyboardDecoration vkbdContainer
+      final BorderWidth borderWidth,
+      final VolumeProfile soundLevels,
+      final TimingProfile timingProfile,
+      final RomData rom,
+      final Bounds virtualKeyboardBounds,
+      final BoardMode boardMode,
+      final boolean syncRepaint,
+      final boolean useAcbSoundScheme,
+      final boolean enableCovoxFb,
+      final boolean useTurboSound,
+      final boolean allowKempstonMouse,
+      final boolean attributePortFf,
+      final VirtualKeyboardDecoration vkbdContainer
   ) {
     this.attributePortFf = attributePortFf;
     this.soundLevels = soundLevels;
@@ -119,7 +134,9 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.keyboard = new KeyboardKempstonAndTapeIn(timingProfile, this, allowKempstonMouse);
     ioDevices.add(keyboard);
-    this.video = new VideoController(borderWidth, timingProfile, syncRepaint, this, vkbdContainer);
+    this.video =
+        new VideoController(borderWidth, timingProfile, syncRepaint, virtualKeyboardBounds, this,
+            vkbdContainer);
     ioDevices.add(video);
     ioDevices.add(new KempstonMouse(this));
 

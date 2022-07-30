@@ -28,6 +28,20 @@ public final class MainFormParameters {
 
   private Bounds bounds;
 
+  private Bounds keyboardBounds;
+
+  public MainFormParameters() {
+  }
+
+  public Bounds getKeyboardBounds() {
+    return this.keyboardBounds;
+  }
+
+  public MainFormParameters setKeyboardBounds(final Bounds bounds) {
+    this.keyboardBounds = bounds;
+    return this;
+  }
+
   public Bounds getBounds() {
     return this.bounds;
   }
@@ -35,9 +49,6 @@ public final class MainFormParameters {
   public MainFormParameters setBounds(final Bounds bounds) {
     this.bounds = bounds;
     return this;
-  }
-
-  public MainFormParameters() {
   }
 
   public boolean isUndecorated() {

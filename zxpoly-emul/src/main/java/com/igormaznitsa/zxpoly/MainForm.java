@@ -473,18 +473,20 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     LOGGER.info("Selected volume profile: " + volumeProfile.name());
 
     this.board = new Motherboard(
-            parameters.getBorderWidth(),
-            volumeProfile,
-            this.timingProfile,
-            BASE_ROM,
-            AppOptions.getInstance().getDefaultBoardMode(),
-            AppOptions.getInstance().isSyncPaint(),
-            AppOptions.getInstance().isSoundChannelsACB(),
-            AppOptions.getInstance().isCovoxFb(),
-            AppOptions.getInstance().isTurboSound(),
-            allowKempstonMouse,
-            AppOptions.getInstance().isAttributePortFf(),
-            vkbdContainer
+        parameters.getBorderWidth(),
+        volumeProfile,
+        this.timingProfile,
+        BASE_ROM,
+        parameters.getKeyboardBounds() == null ? null :
+            parameters.getKeyboardBounds().withPositionIfNot(this.getX(), this.getY()),
+        AppOptions.getInstance().getDefaultBoardMode(),
+        AppOptions.getInstance().isSyncPaint(),
+        AppOptions.getInstance().isSoundChannelsACB(),
+        AppOptions.getInstance().isCovoxFb(),
+        AppOptions.getInstance().isTurboSound(),
+        allowKempstonMouse,
+        AppOptions.getInstance().isAttributePortFf(),
+        vkbdContainer
     );
     this.board.reset();
     this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() != BoardMode.ZXPOLY);
@@ -674,6 +676,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           this.setSize(bounds.getWidth(), bounds.getHeight());
         }
       });
+    }
+
+    if (parameters.getKeyboardBounds() != null) {
+      SwingUtilities.invokeLater(() -> this.showVirtualKeyboard(true));
     }
   }
 
@@ -1183,7 +1189,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     buffer.append("TRIGGER: ");
 
     if ((triggered & Motherboard.TRIGGER_DIFF_MODULESTATES) != 0) {
-      buffer.append("MODULE CPU DESYNCHRONIZATION");
+      buffer.append("MODULE CPU DE-SYNCHRONIZATION");
     }
 
     if ((triggered & Motherboard.TRIGGER_DIFF_MEM_ADDR) != 0) {
@@ -3386,40 +3392,42 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
       boolean consumed = false;
-      if (!e.isConsumed() && MainForm.this.zxKeyboardProcessingAllowed) {
-        if (e.getKeyCode() == KeyEvent.VK_F5) {
-          if (e.getID() == KeyEvent.KEY_PRESSED) {
-            this.mainForm.showVirtualKeyboard(!this.videoController.isVkbShow());
+      if (this.mainForm.menuBar.isVisible()) {
+        if (!e.isConsumed() && MainForm.this.zxKeyboardProcessingAllowed) {
+          if (e.getKeyCode() == KeyEvent.VK_F5) {
+            if (e.getID() == KeyEvent.KEY_PRESSED) {
+              this.mainForm.showVirtualKeyboard(!this.videoController.isVkbShow());
+            }
+            e.consume();
+            consumed = true;
           }
-          e.consume();
-          consumed = true;
-        }
 
-        if (MainForm.this.currentFullScreen.get() != null) {
-          // Full screen mode
-          if (e.getID() == KeyEvent.KEY_RELEASED) {
-            switch (e.getKeyCode()) {
-              case KeyEvent.VK_F11:
-              case KeyEvent.VK_ESCAPE: {
-                e.consume();
-                consumed = true;
-                MainForm.this.doFullScreen();
+          if (MainForm.this.currentFullScreen.get() != null) {
+            // Full screen mode
+            if (e.getID() == KeyEvent.KEY_RELEASED) {
+              switch (e.getKeyCode()) {
+                case KeyEvent.VK_F11:
+                case KeyEvent.VK_ESCAPE: {
+                  e.consume();
+                  consumed = true;
+                  MainForm.this.doFullScreen();
+                }
+                break;
+                case KeyEvent.VK_F12: {
+                  e.consume();
+                  consumed = true;
+                  MainForm.this.menuFileResetActionPerformed(new ActionEvent(this, 0, "reset"));
+                }
+                break;
               }
-              break;
-              case KeyEvent.VK_F12: {
-                e.consume();
-                consumed = true;
-                MainForm.this.menuFileResetActionPerformed(new ActionEvent(this, 0, "reset"));
-              }
-              break;
             }
           }
-        }
 
-        if (!consumed) {
-          consumed = this.keyboard.onKeyEvent(e);
-          if (consumed) {
-            e.consume();
+          if (!consumed) {
+            consumed = this.keyboard.onKeyEvent(e);
+            if (consumed) {
+              e.consume();
+            }
           }
         }
       }

@@ -70,6 +70,13 @@ public class ZXPoly implements Runnable {
   private Bounds bounds = null;
 
   @CommandLine.Option(
+      names = {"--keyboard-bounds"},
+      description = "define keyboard bounds as X,Y,W,H or W,H",
+      converter = Bounds.class
+  )
+  private Bounds keyboardBounds = null;
+
+  @CommandLine.Option(
       names = {"--indicators"},
       description = "show indicator panel",
       defaultValue = "true",
@@ -207,6 +214,7 @@ public class ZXPoly implements Runnable {
             .setAppIconPath(this.applicationIconFilePath)
             .setRomPath(romPath)
             .setBounds(this.bounds)
+            .setKeyboardBounds(this.keyboardBounds)
             .setShowMainMenu(this.showMainMenu)
             .setUndecorated(this.undecorated)
             .setShowIndicatorPanel(this.showIndicators)

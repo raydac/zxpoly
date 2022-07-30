@@ -2,6 +2,7 @@ package com.igormaznitsa.zxpoly;
 
 import static java.lang.Integer.parseInt;
 
+import java.awt.Rectangle;
 import picocli.CommandLine;
 
 public class Bounds implements CommandLine.ITypeConverter<Bounds> {
@@ -75,5 +76,18 @@ public class Bounds implements CommandLine.ITypeConverter<Bounds> {
     }
 
     return new Bounds(x, y, width, height);
+  }
+
+  public Bounds withPositionIfNot(final int x, final int y) {
+    if (this.x == null || this.y == null) {
+      return new Bounds(x, y, this.width, this.height);
+    } else {
+      return this;
+    }
+  }
+
+  public Rectangle asRectangle() {
+    return new Rectangle(this.x == null ? 0 : this.x, this.y == null ? 0 : this.y, this.width,
+        this.height);
   }
 }

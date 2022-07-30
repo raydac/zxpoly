@@ -17,6 +17,7 @@
 
 package com.igormaznitsa.zxpoly.components.video;
 
+import com.igormaznitsa.zxpoly.Bounds;
 import com.igormaznitsa.zxpoly.MainForm;
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.IoDevice;
@@ -154,10 +155,13 @@ public final class VideoController extends JComponent
   private int preStepBorderColor;
   private Rectangle lastVirtualKeyboardWindowPosition = null;
 
+  private final boolean virtualKeyboardUndecorated;
+
   public VideoController(
       final BorderWidth borderWidth,
       final TimingProfile timingProfile,
       final boolean syncRepaint,
+      final Bounds virtualKeyboardPosition,
       final Motherboard board,
       final VirtualKeyboardDecoration vkbdContainer) {
     super();
@@ -192,7 +196,14 @@ public final class VideoController extends JComponent
     this.setFocusTraversalKeysEnabled(false);
 
     this.vkbdContainer = Objects.requireNonNull(vkbdContainer);
-    this.showVkbdApart = AppOptions.getInstance().isVkbdApart();
+    if (virtualKeyboardPosition == null) {
+      this.showVkbdApart = AppOptions.getInstance().isVkbdApart();
+      this.virtualKeyboardUndecorated = false;
+    } else {
+      this.showVkbdApart = true;
+      this.virtualKeyboardUndecorated = true;
+      this.lastVirtualKeyboardWindowPosition = virtualKeyboardPosition.asRectangle();
+    }
 
     this.board = board;
     this.modules = board.getModules();
@@ -1128,10 +1139,13 @@ public final class VideoController extends JComponent
             this.vkbdWindow.dispose();
           }
           final Window mainFrame = SwingUtilities.windowForComponent(this);
-
           this.vkbdWindow =
               new JDialog(mainFrame, "ZX-Poly virtual keyboard", Dialog.ModalityType.MODELESS,
                   this.getGraphicsConfiguration());
+          if (this.virtualKeyboardUndecorated) {
+            ((JDialog) this.vkbdWindow).setUndecorated(true);
+          }
+
           this.vkbdWindow.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(final WindowEvent e) {
