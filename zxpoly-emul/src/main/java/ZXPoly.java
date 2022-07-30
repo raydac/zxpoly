@@ -63,6 +63,18 @@ public class ZXPoly implements Runnable {
   private boolean undecorated = false;
 
   @CommandLine.Option(
+      names = {"--sound"},
+      description = "activate sound"
+  )
+  private boolean activateSound = false;
+
+  @CommandLine.Option(
+      names = {"--sound-acb"},
+      description = "use ACB channel order sound"
+  )
+  private boolean forceAcbSound = false;
+
+  @CommandLine.Option(
       names = {"--bounds"},
       description = "define main frame bounds as X,Y,W,H or W,H",
       converter = Bounds.class
@@ -217,6 +229,8 @@ public class ZXPoly implements Runnable {
             .setKeyboardBounds(this.keyboardBounds)
             .setShowMainMenu(this.showMainMenu)
             .setUndecorated(this.undecorated)
+            .setForceAcbChannelSound(this.forceAcbSound)
+            .setActivateSound(this.activateSound)
             .setShowIndicatorPanel(this.showIndicators)
             .setVirtualKeyboardLook(requireNonNullElseGet(this.virtualKeyboardLook,
                 () -> AppOptions.getInstance().getKeyboardLook()))

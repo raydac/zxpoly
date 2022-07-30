@@ -174,10 +174,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   public static final Duration TIMER_INT_DELAY_MILLISECONDS = Duration.ofMillis(20);
   private static final Icon ICO_MOUSE = new ImageIcon(Utils.loadIcon("mouse.png"));
   private static final Icon ICO_MOUSE_DIS =
-          UIManager.getLookAndFeel().getDisabledIcon(null, ICO_MOUSE);
+      UIManager.getLookAndFeel().getDisabledIcon(null, ICO_MOUSE);
   private static final Icon ICO_DISK = new ImageIcon(Utils.loadIcon("disk.png"));
   private static final Icon ICO_DISK_DIS =
-          UIManager.getLookAndFeel().getDisabledIcon(null, ICO_DISK);
+      UIManager.getLookAndFeel().getDisabledIcon(null, ICO_DISK);
   private static final Icon ICO_AGIF_RECORD = new ImageIcon(Utils.loadIcon("record.png"));
   private static final Icon ICO_WAV_START = new ImageIcon(Utils.loadIcon("wav_start.png"));
   private static final Icon ICO_WAV_STOP = new ImageIcon(Utils.loadIcon("wav_stop.png"));
@@ -185,14 +185,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private static final Icon ICO_TAPE = new ImageIcon(Utils.loadIcon("cassette.png"));
   private static final Icon ICO_MDISK = new ImageIcon(Utils.loadIcon("mdisk.png"));
   private static final Icon ICO_TAPE_DIS =
-          UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TAPE);
+      UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TAPE);
   private static final Icon ICO_TURBO = new ImageIcon(Utils.loadIcon("turbo.png"));
   private static final Icon ICO_TURBO_DIS =
-          UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TURBO);
+      UIManager.getLookAndFeel().getDisabledIcon(null, ICO_TURBO);
   private static final Icon ICO_ZX128 = new ImageIcon(Utils.loadIcon("zx128.png"));
   private static final Icon ICO_ZX128_DIS =
-          UIManager.getLookAndFeel().getDisabledIcon(null, ICO_ZX128);
-  private static final Icon ICO_SPRITECORRECTOR = new ImageIcon(Utils.loadIcon("spritecorrector.png"));
+      UIManager.getLookAndFeel().getDisabledIcon(null, ICO_ZX128);
+  private static final Icon ICO_SPRITECORRECTOR =
+      new ImageIcon(Utils.loadIcon("spritecorrector.png"));
   private static final String TEXT_START_ANIM_GIF = "Record AGIF";
   private static final String TEXT_START_WAV = "Record WAV";
   private static final String TEXT_STOP_ANIM_GIF = "Stop AGIF";
@@ -206,7 +207,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private static final FileFilter FILTER_FORMAT_ALL_TAPE = new FileFilter() {
     @Override
     public boolean accept(final File f) {
-      return FILTER_FORMAT_WAV.accept(f) || FILTER_FORMAT_TAP.accept(f) || FILTER_FORMAT_TZX.accept(f);
+      return FILTER_FORMAT_WAV.accept(f) || FILTER_FORMAT_TAP.accept(f) ||
+          FILTER_FORMAT_TZX.accept(f);
     }
 
     @Override
@@ -238,11 +240,11 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     @Override
     public boolean accept(File f) {
       return SNAPSHOT_FORMAT_Z80.accept(f)
-              || SNAPSHOT_FORMAT_SPEC256.accept(f)
-              || SNAPSHOT_FORMAT_SNA.accept(f)
-              || SNAPSHOT_FORMAT_ZXP.accept(f)
-              || SNAPSHOT_FORMAT_ROM.accept(f)
-              || SNAPSHOT_FORMAT_PROM.accept(f);
+          || SNAPSHOT_FORMAT_SPEC256.accept(f)
+          || SNAPSHOT_FORMAT_SNA.accept(f)
+          || SNAPSHOT_FORMAT_ZXP.accept(f)
+          || SNAPSHOT_FORMAT_ROM.accept(f)
+          || SNAPSHOT_FORMAT_PROM.accept(f);
     }
 
     @Override
@@ -254,13 +256,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private final AtomicReference<JFrame> currentFullScreen = new AtomicReference<>();
   private final int intTicksBeforeFrameDraw;
   private final CpuLoadIndicator indicatorCpu0 =
-          new CpuLoadIndicator(48, 14, 4, "CPU0", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+      new CpuLoadIndicator(48, 14, 4, "CPU0", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final CpuLoadIndicator indicatorCpu1 =
-          new CpuLoadIndicator(48, 14, 4, "CPU1", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+      new CpuLoadIndicator(48, 14, 4, "CPU1", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final CpuLoadIndicator indicatorCpu2 =
-          new CpuLoadIndicator(48, 14, 4, "CPU2", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+      new CpuLoadIndicator(48, 14, 4, "CPU2", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final CpuLoadIndicator indicatorCpu3 =
-          new CpuLoadIndicator(48, 14, 4, "CPU3", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
+      new CpuLoadIndicator(48, 14, 4, "CPU3", Color.GREEN, Color.DARK_GRAY, Color.WHITE);
   private final TraceCpuForm[] cpuTracers = new TraceCpuForm[4];
   private final AtomicInteger activeTracerWindowCounter = new AtomicInteger();
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
@@ -287,7 +289,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private final ReentrantLock stepLocker = new ReentrantLock();
   private final Thread mainCpuThread;
   private final javax.swing.Timer infoBarUpdateTimer;
-  private final AtomicReference<SpriteCorrectorMainFrame> spriteCorrectorMainFrame = new AtomicReference<>();
+  private final AtomicReference<SpriteCorrectorMainFrame> spriteCorrectorMainFrame =
+      new AtomicReference<>();
   private final ImageIcon sysIcon;
   private final TimingProfile timingProfile;
   private final AtomicBoolean magicButtonTrigger = new AtomicBoolean();
@@ -295,7 +298,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private volatile boolean turboMode = false;
   private volatile boolean zxKeyboardProcessingAllowed = true;
   private AnimatedGifTunePanel.AnimGifOptions lastAnimGifOptions =
-          new AnimatedGifTunePanel.AnimGifOptions("./zxpoly.gif", 10, false);
+      new AnimatedGifTunePanel.AnimGifOptions("./zxpoly.gif", 10, false);
   private File lastTapFolder;
   private File lastFloppyFolder;
   private File lastSnapshotFolder;
@@ -383,7 +386,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.setUndecorated(parameters.isUndecorated());
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
 
-    this.sysIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/sys.png")));
+    this.sysIcon = new ImageIcon(
+        Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/sys.png")));
 
     this.timingProfile = parameters.getTimingProfile();
 
@@ -408,7 +412,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         bootstrapRom = FileUtils.readFileToByteArray(bootstrapRomFile);
       } catch (IOException ex) {
         LOGGER.log(Level.SEVERE, ex,
-                () -> "Can't load bootstrap rom: " + bootstrapRomFile.getAbsolutePath());
+            () -> "Can't load bootstrap rom: " + bootstrapRomFile.getAbsolutePath());
         showMessageDialog(this, "Can't load bootstrap rom: " + Utils.extractMessage(ex));
         System.exit(-1);
       }
@@ -416,11 +420,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     final RomSource rom = RomSource.findForLink(parameters.getRomPath(), RomSource.UNKNOWN);
     try {
-      BASE_ROM = loadRom(parameters.getRomPath(), rom.getRom48names(), rom.getRom128names(), rom.getTrDosNames(), bootstrapRom);
+      BASE_ROM = loadRom(parameters.getRomPath(), rom.getRom48names(), rom.getRom128names(),
+          rom.getTrDosNames(), bootstrapRom);
     } catch (Exception ex) {
       showMessageDialog(this, "Can't load Spec128 ROM for error: " + ex.getMessage());
       try {
-        BASE_ROM = loadRom(null, rom.getRom48names(), rom.getRom128names(), rom.getTrDosNames(), bootstrapRom);
+        BASE_ROM = loadRom(null, rom.getRom48names(), rom.getRom128names(), rom.getTrDosNames(),
+            bootstrapRom);
       } catch (Exception exx) {
         ex.printStackTrace();
         showMessageDialog(this, "Can't load TEST ROM: " + ex.getMessage());
@@ -481,7 +487,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             parameters.getKeyboardBounds().withPositionIfNot(this.getX(), this.getY()),
         AppOptions.getInstance().getDefaultBoardMode(),
         AppOptions.getInstance().isSyncPaint(),
-        AppOptions.getInstance().isSoundChannelsACB(),
+        AppOptions.getInstance().isSoundChannelsACB() || parameters.isForceAcbChannelSound(),
         AppOptions.getInstance().isCovoxFb(),
         AppOptions.getInstance().isTurboSound(),
         allowKempstonMouse,
@@ -499,16 +505,21 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.keyboardAndTapeModule = this.board.findIoDevice(KeyboardKempstonAndTapeIn.class);
     this.kempstonMouse = this.board.findIoDevice(KempstonMouse.class);
 
-    this.menuOptionsOnlyJoystickEvents.setSelected(this.keyboardAndTapeModule.isOnlyJoystickEvents());
+    this.menuOptionsOnlyJoystickEvents.setSelected(
+        this.keyboardAndTapeModule.isOnlyJoystickEvents());
     if (this.keyboardAndTapeModule.isKempstonJoystickActivated()) {
       this.menuOptionsJoystickKempston.setSelected(true);
     } else {
       this.menuOptionsJoystickProtek.setSelected(true);
     }
 
-    this.menuOptionsJoystickKempston.addActionListener(e -> keyboardAndTapeModule.setKempstonJoystickActivated(menuOptionsJoystickKempston.isSelected()));
+    this.menuOptionsJoystickKempston.addActionListener(
+        e -> keyboardAndTapeModule.setKempstonJoystickActivated(
+            menuOptionsJoystickKempston.isSelected()));
 
-    this.menuOptionsJoystickProtek.addActionListener(e -> keyboardAndTapeModule.setKempstonJoystickActivated(menuOptionsJoystickKempston.isSelected()));
+    this.menuOptionsJoystickProtek.addActionListener(
+        e -> keyboardAndTapeModule.setKempstonJoystickActivated(
+            menuOptionsJoystickKempston.isSelected()));
 
     final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     manager.addKeyEventDispatcher(new KeyboardDispatcher(this));
@@ -522,7 +533,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.panelIndicators.add(this.indicatorCpu3, cpuIndicatorConstraint, 3);
 
     this.menuOptionsEnableTrapMouse
-            .setSelected(this.board.getVideoController().isMouseTrapEnabled());
+        .setSelected(this.board.getVideoController().isMouseTrapEnabled());
 
     for (final Component item : this.menuBar.getComponents()) {
       if (item instanceof JMenu) {
@@ -535,12 +546,12 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             if (e.getSource() == menuOptions) {
               menuOptionsOnlyJoystickEvents.setState(keyboardAndTapeModule.isOnlyJoystickEvents());
               menuOptionsEnableSpeaker
-                      .setEnabled(!turboMode && !menuOptionsEnableVideoStream.isSelected());
+                  .setEnabled(!turboMode && !menuOptionsEnableVideoStream.isSelected());
               menuOptionsEnableSpeaker.setState(board.getBeeper().isActive());
               menuOptionsTurbo.setState(isTurboMode());
             }
             menuServiceGameControllers
-                    .setEnabled(keyboardAndTapeModule.isControllerEngineAllowed());
+                .setEnabled(keyboardAndTapeModule.isControllerEngineAllowed());
           }
 
           @Override
@@ -557,15 +568,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     }
 
     this.videoStreamer = new ZxVideoStreamer(
-            this.board.getVideoController(),
-            streamer -> {
-              streamer.stop();
-              SwingUtilities
-                      .invokeLater(() -> this.menuOptionsEnableVideoStream.setSelected(false));
-            }
+        this.board.getVideoController(),
+        streamer -> {
+          streamer.stop();
+          SwingUtilities
+              .invokeLater(() -> this.menuOptionsEnableVideoStream.setSelected(false));
+        }
     );
 
-    if (AppOptions.getInstance().isSoundTurnedOn()) {
+    if (AppOptions.getInstance().isSoundTurnedOn() || parameters.isActivateSound()) {
       this.activateSoundIfPossible();
     }
 
@@ -587,7 +598,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     });
 
     this.infoBarUpdateTimer =
-            new javax.swing.Timer(1000, action -> updateInfoBar());
+        new javax.swing.Timer(1000, action -> updateInfoBar());
     this.infoBarUpdateTimer.setRepeats(true);
     this.infoBarUpdateTimer.setInitialDelay(1000);
 
@@ -603,12 +614,14 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       public void drop(final DropTargetDropEvent e) {
         try {
           e.acceptDrop(DnDConstants.ACTION_COPY | DnDConstants.ACTION_LINK);
-          final java.util.List<File> files = (java.util.List<File>) e.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+          final java.util.List<File> files = (java.util.List<File>) e.getTransferable()
+              .getTransferData(DataFlavor.javaFileListFlavor);
           e.dropComplete(true);
           LOGGER.info("Got drop for file list: " + files);
           for (final File f : files) {
             if (f.isFile() && f.canRead()) {
-              final String extension = FilenameUtils.getExtension(f.getName()).toLowerCase(Locale.ENGLISH);
+              final String extension =
+                  FilenameUtils.getExtension(f.getName()).toLowerCase(Locale.ENGLISH);
               switch (extension) {
                 case "wav":
                 case "tzx":
@@ -700,9 +713,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private void loadFastButtons() {
     final List<FastButton> fastButtonsInOptions = AppOptions.getInstance().getFastButtons();
     formFastButtons(this.menuBar,
-            Arrays.stream(FastButton.values())
-                    .filter(x -> !x.isOptional() || fastButtonsInOptions.contains(x))
-                    .collect(Collectors.toList())
+        Arrays.stream(FastButton.values())
+            .filter(x -> !x.isOptional() || fastButtonsInOptions.contains(x))
+            .collect(Collectors.toList())
     );
   }
 
@@ -711,13 +724,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   }
 
   private Optional<SourceSoundPort> showSelectSoundLineDialog(
-          final List<SourceSoundPort> variants, final String previouslySelected,
-          final boolean showDialog) {
+      final List<SourceSoundPort> variants, final String previouslySelected,
+      final boolean showDialog) {
     assertUiThread();
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.TRAILING));
 
     final JComboBox<SourceSoundPort> comboBox =
-            new JComboBox<>(variants.toArray(new SourceSoundPort[0]));
+        new JComboBox<>(variants.toArray(new SourceSoundPort[0]));
     comboBox.addActionListener(x -> comboBox.setToolTipText(comboBox.getSelectedItem().toString()));
     comboBox.setToolTipText(comboBox.getSelectedItem().toString());
 
@@ -734,18 +747,18 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     if (showDialog) {
 
       comboBox.setPrototypeDisplayValue(
-              new SourceSoundPort(null, repeat('#', Math.min(40, maxStringLen)), null));
+          new SourceSoundPort(null, repeat('#', Math.min(40, maxStringLen)), null));
 
       comboBox.setSelectedIndex(Math.max(0, index));
 
       panel.add(new JLabel("Sound device:"));
       panel.add(comboBox);
       if (showConfirmDialog(
-              this,
-              panel,
-              "Select sound device",
-              JOptionPane.OK_CANCEL_OPTION,
-              JOptionPane.PLAIN_MESSAGE
+          this,
+          panel,
+          "Select sound device",
+          JOptionPane.OK_CANCEL_OPTION,
+          JOptionPane.PLAIN_MESSAGE
       ) == JOptionPane.OK_OPTION) {
         final SourceSoundPort selected = (SourceSoundPort) comboBox.getSelectedItem();
         return Optional.of(selected);
@@ -754,7 +767,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       }
     } else {
       return index < 0 ? Optional.empty() :
-              Optional.of(comboBox.getItemAt(index));
+          Optional.of(comboBox.getItemAt(index));
     }
   }
 
@@ -765,8 +778,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     if (foundPorts.isEmpty()) {
       if (interactive) {
         showMessageDialog(this, "There is no detected audio devices!",
-                "Can't find audio device",
-                JOptionPane.WARNING_MESSAGE);
+            "Can't find audio device",
+            JOptionPane.WARNING_MESSAGE);
       }
       return Optional.empty();
     } else {
@@ -774,17 +787,19 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         return Optional.of(foundPorts.get(0));
       } else {
         final Optional<SourceSoundPort> result = this.showSelectSoundLineDialog(foundPorts,
-                AppOptions.getInstance().getLastSelectedAudioDevice(), interactive);
+            AppOptions.getInstance().getLastSelectedAudioDevice(), interactive);
         if (interactive) {
           result.ifPresent(sourceSoundPort -> AppOptions.getInstance()
-                  .setLastSelectedAudioDevice(sourceSoundPort.toString()));
+              .setLastSelectedAudioDevice(sourceSoundPort.toString()));
         }
         return result;
       }
     }
   }
 
-  private RomData loadRom(final String romPath, final Set<String> rom48names, final Set<String> rom128names, final Set<String> trdosNames, final byte[] predefinedRomData) throws Exception {
+  private RomData loadRom(final String romPath, final Set<String> rom48names,
+                          final Set<String> rom128names, final Set<String> trdosNames,
+                          final byte[] predefinedRomData) throws Exception {
     if (predefinedRomData != null) {
       LOGGER.warning("Provided predefined ROM data, length " + predefinedRomData.length + " bytes");
       final byte[] normalized;
@@ -802,15 +817,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       if (romPath.contains("://")) {
         try {
           final String cached =
-                  "loadedrom_" + Integer.toHexString(romPath.hashCode()).toUpperCase(Locale.ENGLISH)
-                          + ".rom";
+              "loadedrom_" + Integer.toHexString(romPath.hashCode()).toUpperCase(Locale.ENGLISH)
+                  + ".rom";
           final File cacheFolder = AppOptions.getInstance().getRomCacheFolder();
           final File cachedRom = new File(cacheFolder, cached);
           RomData result = null;
           boolean load = true;
           if (cachedRom.isFile()) {
             LOGGER.log(Level.INFO,
-                    "Load cached ROM downloaded from '" + romPath + "' : " + cachedRom);
+                "Load cached ROM downloaded from '" + romPath + "' : " + cachedRom);
             result = new RomData(cachedRom.getName(), FileUtils.readFileToByteArray(cachedRom));
             load = false;
           }
@@ -826,13 +841,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           return result;
         } catch (Exception ex) {
           LOGGER
-                  .log(Level.WARNING, "Can't load ROM from '" + romPath + "': " + ex.getMessage(), ex);
+              .log(Level.WARNING, "Can't load ROM from '" + romPath + "': " + ex.getMessage(), ex);
           throw ex;
         }
       } else {
         LOGGER.log(Level.INFO, "Load ROM from embedded resource '" + romPath + "'");
         try (final InputStream in = Utils
-                .findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romPath)) {
+            .findResourceOrError("com/igormaznitsa/zxpoly/rom/" + romPath)) {
           return RomData.read(romPath, in);
         } catch (IllegalArgumentException ex) {
           final File file = new File(romPath);
@@ -850,7 +865,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     final String testRom = AppOptions.TEST_ROM;
     LOGGER.info("Load ROM from embedded resource '" + testRom + "'");
     try (final InputStream in = Utils
-            .findResourceOrError("com/igormaznitsa/zxpoly/rom/" + testRom)) {
+        .findResourceOrError("com/igormaznitsa/zxpoly/rom/" + testRom)) {
       return RomData.read(testRom, in);
     }
   }
@@ -885,8 +900,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   private void formFastButtons(final JMenuBar menuBar, final List<FastButton> fastButtons) {
     Arrays.stream(menuBar.getComponents())
-            .filter(c -> FastButton.findForComponentName(c.getName()) != null)
-            .collect(Collectors.toList()).forEach(menuBar::remove);
+        .filter(c -> FastButton.findForComponentName(c.getName()) != null)
+        .collect(Collectors.toList()).forEach(menuBar::remove);
 
     final JPopupMenu popupMenu = new JPopupMenu("Fast buttons");
 
@@ -955,7 +970,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         }
         break;
         case TAPE_PLAY_STOP: {
-          abstractButton.setSelected(this.keyboardAndTapeModule.getTap() != null && this.keyboardAndTapeModule.getTap().isPlaying());
+          abstractButton.setSelected(this.keyboardAndTapeModule.getTap() != null &&
+              this.keyboardAndTapeModule.getTap().isPlaying());
           abstractButton.addActionListener(e -> {
             final JToggleButton source = (JToggleButton) e.getSource();
             if (source.isSelected()) {
@@ -1030,7 +1046,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     long sessionIntCounter = 0;
 
-    int nextBlinkLineTiStates = this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
+    int nextBlinkLineTiStates =
+        this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
     int blinkLineY = 0;
 
     while (!Thread.currentThread().isInterrupted()) {
@@ -1055,7 +1072,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
                 notifyRepaintScreen = true;
               }
               countdownToAnimationSave--;
-              nextBlinkLineTiStates = this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
+              nextBlinkLineTiStates =
+                  this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
               blinkLineY = 0;
             } else {
               doCpuIntTick = false;
@@ -1078,11 +1096,11 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           }
 
           final int detectedTriggers = this.board.step(
-                  tiStatesForIntExhausted,
-                  intTickForWallClockReached,
-                  triggeredNmi,
-                  doCpuIntTick,
-                  executionEnabled);
+              tiStatesForIntExhausted,
+              intTickForWallClockReached,
+              triggeredNmi,
+              doCpuIntTick,
+              executionEnabled);
 
           frameTiStates = this.board.getFrameTiStates();
 
@@ -1111,7 +1129,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
               countdownToAnimationSave = theAnimationEncoder.getIntsBetweenFrames();
               try {
                 theAnimationEncoder
-                        .saveFrame(board.getVideoController().makeCopyOfVideoBuffer(true));
+                    .saveFrame(board.getVideoController().makeCopyOfVideoBuffer(true));
               } catch (IOException ex) {
                 LOGGER.warning("Can't write animation frame: " + ex.getMessage());
               }
@@ -1125,7 +1143,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           if (blinkLineY < 192) {
             this.blinkScreen(sessionIntCounter, blinkLineY, blinkLineY + 1);
             blinkLineY++;
-            nextBlinkLineTiStates = blinkLineY * this.timingProfile.tstatesPerLine + this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
+            nextBlinkLineTiStates = blinkLineY * this.timingProfile.tstatesPerLine +
+                this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
           } else {
             nextBlinkLineTiStates = this.timingProfile.tstatesFrame;
           }
@@ -1139,13 +1158,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         if (this.wallClock.completed()) {
           this.wallClock.next();
           this.videoStreamer.onWallclockInt();
-          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.tstatesFrame, true, frameTiStates);
+          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.tstatesFrame,
+              true, frameTiStates);
           this.board.startNewFrame();
         } else {
           if (frameTiStates < this.timingProfile.tstatesFrame) {
             this.board.doNop();
           }
-          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.tstatesFrame, true, frameTiStates);
+          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.tstatesFrame,
+              true, frameTiStates);
         }
       }
       if (this.activeTracerWindowCounter.get() > 0) {
@@ -1157,7 +1178,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   private void onSlownessDetected(final long remainTstates) {
     LOGGER.warning(String.format("Slowness detected: %.02f%%",
-            (float) remainTstates / (float) this.timingProfile.tstatesFrame * 100.0f));
+        (float) remainTstates / (float) this.timingProfile.tstatesFrame * 100.0f));
   }
 
   private void updateTracerWindowsForStep() {
@@ -1202,13 +1223,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     }
 
     buffer.append("\n\nDisasm since last executed address in CPU0 memory: ")
-            .append(toHex(lastAddress)).append('\n');
+        .append(toHex(lastAddress)).append('\n');
 
     buffer.append(this.board.getModules()[0].toHexStringSinceAddress(lastAddress - 8, 8))
-            .append("\n\n");
+        .append("\n\n");
 
     this.board.getModules()[0].disasmSinceAddress(lastAddress, 5)
-            .forEach((l) -> buffer.append(l.toString()).append('\n'));
+        .forEach((l) -> buffer.append(l.toString()).append('\n'));
 
     buffer.append('\n');
 
@@ -1237,16 +1258,16 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         result.append(", ");
       }
       result.append("CPU#").append(i).append('=')
-              .append(toHex(cpuModuleStates[i].getRegister(register, alt)));
+          .append(toHex(cpuModuleStates[i].getRegister(register, alt)));
     }
 
     result.append("\n\nLast executed address : ").append(toHex(lastAddress))
-            .append("\n--------------\n\n");
+        .append("\n--------------\n\n");
     result.append(this.board.getModules()[0].toHexStringSinceAddress(lastAddress - 8, 8))
-            .append("\n\n");
+        .append("\n\n");
 
     this.board.getModules()[0].disasmSinceAddress(lastAddress, 5)
-            .forEach((l) -> result.append(l.toString()).append('\n'));
+        .forEach((l) -> result.append(l.toString()).append('\n'));
 
     return result.toString();
   }
@@ -1259,24 +1280,24 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       if ((triggered & Motherboard.TRIGGER_DIFF_MODULESTATES) != 0) {
         this.menuTriggerModuleCPUDesync.setSelected(false);
         showMessageDialog(MainForm.this, "Detected desync of module CPUs\n"
-                        + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false),
-                "Triggered", JOptionPane.INFORMATION_MESSAGE);
+                + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false),
+            "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
 
       if ((triggered & Motherboard.TRIGGER_DIFF_MEM_ADDR) != 0) {
         this.menuTriggerDiffMem.setSelected(false);
         showMessageDialog(MainForm.this,
-                "Detected memory cell difference " + toHex(this.board.getMemTriggerAddress()) + "\n"
-                        + makeInfoStringForRegister(cpuModuleStates, lastM1Address,
-                        getCellContentForAddress(this.board.getMemTriggerAddress()), Z80.REG_PC, false),
-                "Triggered", JOptionPane.INFORMATION_MESSAGE);
+            "Detected memory cell difference " + toHex(this.board.getMemTriggerAddress()) + "\n"
+                + makeInfoStringForRegister(cpuModuleStates, lastM1Address,
+                getCellContentForAddress(this.board.getMemTriggerAddress()), Z80.REG_PC, false),
+            "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
 
       if ((triggered & Motherboard.TRIGGER_DIFF_EXE_CODE) != 0) {
         this.menuTriggerExeCodeDiff.setSelected(false);
         showMessageDialog(MainForm.this, "Detected EXE code difference\n"
-                        + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false),
-                "Triggered", JOptionPane.INFORMATION_MESSAGE);
+                + makeInfoStringForRegister(cpuModuleStates, lastM1Address, null, Z80.REG_PC, false),
+            "Triggered", JOptionPane.INFORMATION_MESSAGE);
       }
     } finally {
       this.stepLocker.unlock();
@@ -1295,9 +1316,12 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   private void blinkScreen(final long sessionIntCounter, final int lineFrom, final int lineTo) {
     if (this.interlaceScan) {
-      this.board.getVideoController().syncUpdateBuffer(lineFrom, lineTo, (sessionIntCounter & 1) == 0 ? VideoController.LineRenderMode.EVEN : VideoController.LineRenderMode.ODD);
+      this.board.getVideoController().syncUpdateBuffer(lineFrom, lineTo,
+          (sessionIntCounter & 1) == 0 ? VideoController.LineRenderMode.EVEN :
+              VideoController.LineRenderMode.ODD);
     } else {
-      this.board.getVideoController().syncUpdateBuffer(lineFrom, lineTo, VideoController.LineRenderMode.ALL);
+      this.board.getVideoController()
+          .syncUpdateBuffer(lineFrom, lineTo, VideoController.LineRenderMode.ALL);
     }
     this.board.getVideoController().copyWorkScreenToOutputScreen(0, lineFrom, 256, lineTo);
   }
@@ -1311,11 +1335,11 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     try {
       if (this.menuOptionsEnableVideoStream.isSelected()) {
         if (AppOptions.getInstance().isGrabSound()
-                && !this.board.getBeeper().isNullBeeper()
-                && showConfirmDialog(this,
-                "Beeper should be turned off for video sound. Ok?",
-                "Beeper deactivation", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE)
-                != JOptionPane.OK_OPTION) {
+            && !this.board.getBeeper().isNullBeeper()
+            && showConfirmDialog(this,
+            "Beeper should be turned off for video sound. Ok?",
+            "Beeper deactivation", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE)
+            != JOptionPane.OK_OPTION) {
           this.menuOptionsEnableVideoStream.setSelected(false);
           return;
         } else {
@@ -1323,21 +1347,21 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         }
 
         final Beeper beeper = this.board.getBeeper().isNullBeeper()
-                && AppOptions.getInstance().isGrabSound() ? this.board.getBeeper() : null;
+            && AppOptions.getInstance().isGrabSound() ? this.board.getBeeper() : null;
 
         try {
           final InetAddress interfaceAddress =
-                  InetAddress.getByName(AppOptions.getInstance().getAddress());
+              InetAddress.getByName(AppOptions.getInstance().getAddress());
           this.videoStreamer.start(
-                  beeper,
-                  AppOptions.getInstance().getFfmpegPath(),
-                  interfaceAddress,
-                  AppOptions.getInstance().getPort(),
-                  AppOptions.getInstance().getFrameRate()
+              beeper,
+              AppOptions.getInstance().getFfmpegPath(),
+              interfaceAddress,
+              AppOptions.getInstance().getPort(),
+              AppOptions.getInstance().getFrameRate()
           );
         } catch (Exception ex) {
           showMessageDialog(this, ex.getMessage(), "Error",
-                  JOptionPane.ERROR_MESSAGE);
+              JOptionPane.ERROR_MESSAGE);
           this.menuOptionsEnableVideoStream.setSelected(false);
         }
       } else {
@@ -1351,7 +1375,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private boolean tryFastSpeakerActivation() {
     if (this.board.getBeeper().isNullBeeper()) {
       final Optional<SourceSoundPort> port =
-              this.findAudioLine(this.board.getBeeper().getAudioFormat(), false);
+          this.findAudioLine(this.board.getBeeper().getAudioFormat(), false);
       port.ifPresent(sourceSoundPort -> this.board.getBeeper().setSourceSoundPort(sourceSoundPort));
       return !this.board.getBeeper().isNullBeeper();
     } else {
@@ -1372,7 +1396,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       if (activate) {
         if (port.length == 0) {
           final Optional<SourceSoundPort> optionalPort =
-                  this.findAudioLine(this.board.getBeeper().getAudioFormat(), true);
+              this.findAudioLine(this.board.getBeeper().getAudioFormat(), true);
           if (optionalPort.isPresent()) {
             this.board.getBeeper().setSourceSoundPort(optionalPort.get());
             if (!this.board.getBeeper().isNullBeeper()) {
@@ -1404,22 +1428,23 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     try {
       if (!this.keyboardAndTapeModule.isControllerEngineAllowed()) {
         showMessageDialog(this, "Can't init game controller engine!", "Error",
-                JOptionPane.ERROR_MESSAGE);
+            JOptionPane.ERROR_MESSAGE);
       } else if (this.keyboardAndTapeModule.getDetectedControllers().isEmpty()) {
         showMessageDialog(this,
-                "Can't find any game controller. Try restart the emulator if controller already connected.",
-                "Can't find game controllers", JOptionPane.WARNING_MESSAGE);
+            "Can't find any game controller. Try restart the emulator if controller already connected.",
+            "Can't find game controllers", JOptionPane.WARNING_MESSAGE);
       } else {
         final GameControllerPanel gameControllerPanel =
-                new GameControllerPanel(this.keyboardAndTapeModule);
+            new GameControllerPanel(this.keyboardAndTapeModule);
         if (showConfirmDialog(
-                this,
-                gameControllerPanel,
-                "Detected game controllers",
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE
+            this,
+            gameControllerPanel,
+            "Detected game controllers",
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.PLAIN_MESSAGE
         ) == JOptionPane.OK_OPTION) {
-          this.keyboardAndTapeModule.setActiveGameControllerAdapters(gameControllerPanel.getSelected());
+          this.keyboardAndTapeModule.setActiveGameControllerAdapters(
+              gameControllerPanel.getSelected());
         }
       }
     } finally {
@@ -1429,8 +1454,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   private void makeReset() {
     this.board
-            .setBoardMode(this.menuOptionsZX128Mode.isSelected() ? BoardMode.ZX128 : BoardMode.ZXPOLY,
-                    false);
+        .setBoardMode(this.menuOptionsZX128Mode.isSelected() ? BoardMode.ZX128 : BoardMode.ZXPOLY,
+            false);
     this.board.resetAndRestoreRom(BASE_ROM);
   }
 
@@ -1498,9 +1523,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           selectedFile = new File(selectedFile.getParentFile(), name);
           if (!selectedFile.isFile()) {
             if (showConfirmDialog(this, "Create TRD file: " + selectedFile.getName() + "?",
-                    "Create TRD file", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                "Create TRD file", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
               LOGGER.log(Level.INFO, "Creating TRD disk: " + selectedFile.getAbsolutePath());
-              FileUtils.writeByteArrayToFile(selectedFile, new TrDosDisk(FilenameUtils.getBaseName(selectedFile.getName())).getDiskData());
+              FileUtils.writeByteArrayToFile(selectedFile,
+                  new TrDosDisk(FilenameUtils.getBaseName(selectedFile.getName())).getDiskData());
             } else {
               return;
             }
@@ -1508,15 +1534,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         }
 
         final TrDosDisk floppy = new TrDosDisk(selectedFile,
-                filter.getClass() == SclFileFilter.class ? TrDosDisk.SourceDataType.SCL :
-                        TrDosDisk.SourceDataType.TRD, FileUtils.readFileToByteArray(selectedFile), false);
+            filter.getClass() == SclFileFilter.class ? TrDosDisk.SourceDataType.SCL :
+                TrDosDisk.SourceDataType.TRD, FileUtils.readFileToByteArray(selectedFile), false);
         this.board.getBetaDiskInterface().insertDiskIntoDrive(drive, floppy);
         LOGGER.log(Level.INFO,
-                "Loaded drive " + diskName + " by floppy image file " + selectedFile);
+            "Loaded drive " + diskName + " by floppy image file " + selectedFile);
       } catch (IOException ex) {
         LOGGER.log(Level.WARNING, "Can't read Floppy image file [" + selectedFile + ']', ex);
         showMessageDialog(this, "Can't read Floppy image file", "Error",
-                JOptionPane.ERROR_MESSAGE);
+            JOptionPane.ERROR_MESSAGE);
       }
     } finally {
       this.stepLocker.unlock();
@@ -1546,8 +1572,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       final AtomicReference<FileFilter> filter = new AtomicReference<>();
 
       File selectedFile =
-              chooseFileForOpen("Select Disk " + diskName, this.lastFloppyFolder, filter,
-                      FILTER_FORMAT_ALL_DISK, FILTER_FORMAT_SCL, FILTER_FORMAT_TRD);
+          chooseFileForOpen("Select Disk " + diskName, this.lastFloppyFolder, filter,
+              FILTER_FORMAT_ALL_DISK, FILTER_FORMAT_SCL, FILTER_FORMAT_TRD);
 
       if (selectedFile != null) {
         this.setDisk(drive, selectedFile, filter.get());
@@ -1585,7 +1611,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     try {
       if (AppOptions.getInstance().isTestRomActive()) {
         final JHtmlLabel label = new JHtmlLabel(
-                "<html><body>ZX-Spectrum 128 ROM is required to load snapshots.<br>Go to menu <b><i><a href=\"rom\">File->Options</i></b></i> and choose ROM 128.</body></html>");
+            "<html><body>ZX-Spectrum 128 ROM is required to load snapshots.<br>Go to menu <b><i><a href=\"rom\">File->Options</i></b></i> and choose ROM 128.</body></html>");
         label.addLinkListener((source, link) -> {
           if ("rom".equals(link)) {
             SwingUtilities.windowForComponent(source).setVisible(false);
@@ -1593,14 +1619,16 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           }
         });
         showMessageDialog(MainForm.this, label, "ZX-Spectrum ROM 128 image is required",
-                JOptionPane.WARNING_MESSAGE);
+            JOptionPane.WARNING_MESSAGE);
         return;
       }
 
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       final File selected =
-              chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter, FILTER_FORMAT_ALL_SNAPSHOTS,
-                      SNAPSHOT_FORMAT_Z80, SNAPSHOT_FORMAT_SPEC256, SNAPSHOT_FORMAT_SNA, SNAPSHOT_FORMAT_ZXP, SNAPSHOT_FORMAT_ROM, SNAPSHOT_FORMAT_PROM);
+          chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter,
+              FILTER_FORMAT_ALL_SNAPSHOTS,
+              SNAPSHOT_FORMAT_Z80, SNAPSHOT_FORMAT_SPEC256, SNAPSHOT_FORMAT_SNA,
+              SNAPSHOT_FORMAT_ZXP, SNAPSHOT_FORMAT_ROM, SNAPSHOT_FORMAT_PROM);
 
       if (selected != null) {
         this.setSnapshotFile(selected, theFilter.get());
@@ -1637,13 +1665,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         final Snapshot selectedFilter = (Snapshot) theFilter;
         LOGGER.log(Level.INFO, "Loading snapshot " + selectedFilter.getName());
         selectedFilter.loadFromArray(selected, this.board, this.board.getVideoController(),
-                FileUtils.readFileToByteArray(selected));
+            FileUtils.readFileToByteArray(selected));
         this.menuOptionsZX128Mode.setState(this.board.getBoardMode() != BoardMode.ZXPOLY);
       } catch (Exception ex) {
         ex.printStackTrace();
-        LOGGER.log(Level.WARNING, "Can't read snapshot file " + selected.getAbsolutePath() + " [" + ex.getMessage() + ']', ex);
+        LOGGER.log(Level.WARNING,
+            "Can't read snapshot file " + selected.getAbsolutePath() + " [" + ex.getMessage() + ']',
+            ex);
         showMessageDialog(this, "Can't read snapshot file [" + ex.getMessage() + ']',
-                "Error", JOptionPane.ERROR_MESSAGE);
+            "Error", JOptionPane.ERROR_MESSAGE);
       }
     } finally {
       stepLocker.unlock();
@@ -1658,7 +1688,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       final TapeSource tapeFileReader = keyboardAndTapeModule.getTap();
       labelTapeUsage.setStatus(tapeFileReader != null && tapeFileReader.isPlaying());
       labelMouseUsage.setStatus(board.getVideoController().isMouseTrapActive());
-      labelDiskUsage.setStatus(board.isBetaDiskPresented() && board.getBetaDiskInterface().isActive());
+      labelDiskUsage.setStatus(
+          board.isBetaDiskPresented() && board.getBetaDiskInterface().isActive());
       labelZX128.setStatus(board.getBoardMode() != BoardMode.ZXPOLY);
 
       indicatorCpu0.updateForState(board.getCpuActivity(0));
@@ -1698,7 +1729,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       if (System.currentTimeMillis() - this.lastFullScreenEventTime > 1000L) {
         final GraphicsDevice gDevice = this.getGraphicsConfiguration().getDevice();
         LOGGER.info("FULL SCREEN called, device=" + gDevice.getIDstring() + " displayMode="
-                + gDevice.getDisplayMode());
+            + gDevice.getDisplayMode());
 
         JFrame lastFullScreen = this.currentFullScreen.getAndSet(null);
 
@@ -1800,16 +1831,16 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     jSeparator2 = new JSeparator();
     panelIndicators = new javax.swing.JPanel();
     filler1 = new Filler(new Dimension(0, 0), new Dimension(0, 0),
-            new Dimension(32767, 0));
+        new Dimension(32767, 0));
     labelTurbo =
-            new JIndicatorLabel(ICO_TURBO, ICO_TURBO_DIS, "Turbo-mode is ON", "Turbo-mode is OFF");
+        new JIndicatorLabel(ICO_TURBO, ICO_TURBO_DIS, "Turbo-mode is ON", "Turbo-mode is OFF");
     labelMouseUsage =
-            new JIndicatorLabel(ICO_MOUSE, ICO_MOUSE_DIS, "Mouse is caught", "Mouse is not active");
+        new JIndicatorLabel(ICO_MOUSE, ICO_MOUSE_DIS, "Mouse is caught", "Mouse is not active");
     labelZX128 = new JIndicatorLabel(ICO_ZX128, ICO_ZX128_DIS, "ZX mode is ON", "ZX mode is OFF");
     labelTapeUsage =
-            new JIndicatorLabel(ICO_TAPE, ICO_TAPE_DIS, "Reading", "None");
+        new JIndicatorLabel(ICO_TAPE, ICO_TAPE_DIS, "Reading", "None");
     labelDiskUsage = new JIndicatorLabel(ICO_DISK, ICO_DISK_DIS, "Some disk operation is active",
-            "No IO disk operations");
+        "No IO disk operations");
     menuBar = new JMenuBar();
     menuFile = new JMenu();
     menuFileLoadSnapshot = new JMenuItem();
@@ -1900,7 +1931,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       public void componentMoved(ComponentEvent e) {
         if (MainForm.this.currentFullScreen.get() == null) {
           menuViewFullScreen.setEnabled(
-                  MainForm.this.getGraphicsConfiguration().getDevice().isFullScreenSupported());
+              MainForm.this.getGraphicsConfiguration().getDevice().isFullScreenSupported());
         }
       }
     });
@@ -1955,7 +1986,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           this.spriteCorrectorMainFrame.set(spriteCorrector);
 
           try {
-            final byte[] data = new FormatZ80().saveToArray(this.board, this.board.getVideoController());
+            final byte[] data =
+                new FormatZ80().saveToArray(this.board, this.board.getVideoController());
             final Optional<AbstractFilePlugin> plugin = spriteCorrector.findImportFilePlugin("z80");
             if (data != null && plugin.isPresent()) {
               spriteCorrector.loadFileWithPlugin(plugin.get(), null, "emulator-data", data, -1);
@@ -2044,8 +2076,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuViewFullScreen.setText("Full Screen");
     menuViewFullScreen.addActionListener(e -> this.doFullScreen());
     menuViewFullScreen
-            .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, SystemUtils.IS_OS_MAC ?
-                    InputEvent.CTRL_DOWN_MASK | Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() : 0));
+        .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, SystemUtils.IS_OS_MAC ?
+            InputEvent.CTRL_DOWN_MASK | Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() : 0));
 
 
     menuView.add(menuViewFullScreen);
@@ -2053,13 +2085,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuViewZoomIn.setText("Zoom In");
     menuViewZoomIn.addActionListener(e -> this.board.getVideoController().zoomIn());
     menuViewZoomIn
-            .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS,
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS,
+            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
     menuViewZoomOut.setText("Zoom Out");
     menuViewZoomOut.addActionListener(e -> this.board.getVideoController().zoomOut());
     menuViewZoomOut
-            .setAccelerator(KeyStroke
-                    .getKeyStroke(KeyEvent.VK_MINUS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        .setAccelerator(KeyStroke
+            .getKeyStroke(KeyEvent.VK_MINUS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
     menuViewZoom.setText("Zoom");
 
@@ -2075,7 +2107,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     for (final TvFilterChain chain : TvFilterChain.values()) {
       final JRadioButtonMenuItem tvFilterMenuItem =
-              new JRadioButtonMenuItem(chain.getText(), oldTvFilterActivating ? chain == TvFilterChain.OLDTV : chain == TvFilterChain.NONE);
+          new JRadioButtonMenuItem(chain.getText(),
+              oldTvFilterActivating ? chain == TvFilterChain.OLDTV : chain == TvFilterChain.NONE);
       tvFilterGroup.add(tvFilterMenuItem);
       tvFilterMenuItem.addActionListener(e -> {
         this.menuActionAnimatedGIF.setEnabled(chain.isGifCompatible());
@@ -2089,25 +2122,29 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuView.add(menuViewVideoFilter);
 
     menuFileLoadSnapshot.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/snapshot.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/snapshot.png")))); // NOI18N
     menuFileLoadSnapshot.setText("Load Snapshot");
     menuFileLoadSnapshot.addActionListener(this::menuFileLoadSnapshotActionPerformed);
     menuFile.add(menuFileLoadSnapshot);
 
     menuFileLoadPoke.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/poke.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/poke.png")))); // NOI18N
     menuFileLoadPoke.setText("Load Poke");
     menuFileLoadPoke.addActionListener(this::menuFileLoadPokeActionPerformed);
     menuFile.add(menuFileLoadPoke);
 
     menuFileLoadTap.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/cassette.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/cassette.png")))); // NOI18N
     menuFileLoadTap.setText("Load TAPE");
     menuFileLoadTap.addActionListener(this::menuFileLoadTapActionPerformed);
     menuFile.add(menuFileLoadTap);
 
     menuLoadDrive.setIcon(
-            new ImageIcon(Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/disk.png")))); // NOI18N
+        new ImageIcon(Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/disk.png")))); // NOI18N
     menuLoadDrive.setText("Load Disk..");
     menuLoadDrive.addMenuListener(new MenuListener() {
       public void menuCanceled(MenuEvent evt) {
@@ -2141,12 +2178,14 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       menuFile.add(menuLoadDrive);
 
       menuFileFlushDiskChanges.setIcon(new ImageIcon(
-              Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/diskflush.png")))); // NOI18N
+          Objects.requireNonNull(
+              getClass().getResource("/com/igormaznitsa/zxpoly/icons/diskflush.png")))); // NOI18N
       menuFileFlushDiskChanges.setText("Flush disk changes");
       menuFileFlushDiskChanges.addActionListener(this::menuFileFlushDiskChangesActionPerformed);
 
       menuFileCreateEmptyDisk.setIcon(new ImageIcon(
-              Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/disk_new.png")))); // NOI18N
+          Objects.requireNonNull(
+              getClass().getResource("/com/igormaznitsa/zxpoly/icons/disk_new.png")))); // NOI18N
       menuFileCreateEmptyDisk.setText("Create empty disk");
       menuFileCreateEmptyDisk.addActionListener(this::menuFileCreateEmptyDiskFileActionPerformed);
       menuFile.add(menuFileCreateEmptyDisk);
@@ -2157,16 +2196,18 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuFile.add(jSeparator1);
 
     menuFileOptions.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/settings.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/settings.png")))); // NOI18N
     menuFileOptions.setText("Preferences");
     menuFileOptions.addActionListener(this::menuFileOptionsActionPerformed);
     menuFile.add(menuFileOptions);
     menuFile.add(jSeparator3);
 
     menuFileExit.setAccelerator(
-            getKeyStroke(KeyEvent.VK_F4, InputEvent.ALT_MASK));
+        getKeyStroke(KeyEvent.VK_F4, InputEvent.ALT_MASK));
     menuFileExit.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset.png")))); // NOI18N
     menuFileExit.setText("Exit");
     menuFileExit.addActionListener(this::menuFileExitActionPerformed);
     menuFile.add(menuFileExit);
@@ -2177,13 +2218,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuTap.setText("Tape");
 
     menuTapeRewindToStart.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_previous.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_previous.png")))); // NOI18N
     menuTapeRewindToStart.setText("Rewind to start");
     menuTapeRewindToStart.addActionListener(this::menuTapeRewindToStartActionPerformed);
     menuTap.add(menuTapeRewindToStart);
 
     menuTapPrevBlock.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_backward.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_backward.png")))); // NOI18N
     menuTapPrevBlock.setText("Prev block");
     menuTapPrevBlock.addActionListener(this::menuTapPrevBlockActionPerformed);
     menuTap.add(menuTapPrevBlock);
@@ -2191,25 +2234,29 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuTapPlay.setAccelerator(getKeyStroke(KeyEvent.VK_F4, 0));
     menuTapPlay.setText("Play");
     menuTapPlay.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_play.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_play.png")))); // NOI18N
     menuTapPlay.setInheritsPopupMenu(true);
     menuTapPlay.addActionListener(this::menuTapPlayActionPerformed);
     menuTap.add(menuTapPlay);
 
     menuTapNextBlock.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_forward.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_forward.png")))); // NOI18N
     menuTapNextBlock.setText("Next block");
     menuTapNextBlock.addActionListener(this::menuTapNextBlockActionPerformed);
     menuTap.add(menuTapNextBlock);
 
     menuTapGotoBlock.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_pos.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_pos.png")))); // NOI18N
     menuTapGotoBlock.setText("Go to block");
     menuTapGotoBlock.addActionListener(this::menuTapGotoBlockActionPerformed);
     menuTap.add(menuTapGotoBlock);
 
     menuTapThreshold.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_sens.png"))));
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_sens.png"))));
     menuTapThreshold.setText("Signal threshold");
     menuTapThreshold.addActionListener(this::menuTapThresholdActionPerformed);
     menuTap.add(menuTapThreshold);
@@ -2221,49 +2268,57 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     menuFileReset.setAccelerator(getKeyStroke(KeyEvent.VK_F12, 0));
     menuFileReset.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset2.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/reset2.png")))); // NOI18N
     menuFileReset.setText("Reset");
     menuFileReset.addActionListener(this::menuFileResetActionPerformed);
     menuService.add(menuFileReset);
 
     menuFileMagic.setAccelerator(getKeyStroke(KeyEvent.VK_F2, 0));
     menuFileMagic.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/magic.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/magic.png")))); // NOI18N
     menuFileMagic.setText("Magic button");
     menuFileMagic.addActionListener(this::menuFileMagicActionPerformed);
     menuService.add(menuFileMagic);
 
     menuServiceSaveScreen.setAccelerator(getKeyStroke(KeyEvent.VK_F8, 0));
     menuServiceSaveScreen.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/photo.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/photo.png")))); // NOI18N
     menuServiceSaveScreen.setText("Make Screenshot");
     menuServiceSaveScreen.addActionListener(this::menuServiceSaveScreenActionPerformed);
     menuService.add(menuServiceSaveScreen);
 
     menuActionAnimatedGIF.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_gif.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_gif.png")))); // NOI18N
     menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
     menuActionAnimatedGIF.addActionListener(this::menuActionAnimatedGIFActionPerformed);
     menuService.add(menuActionAnimatedGIF);
 
     menuActionRecordWav.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/wav_start.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/wav_start.png")))); // NOI18N
     menuActionRecordWav.setText(TEXT_START_ANIM_GIF);
     menuActionRecordWav.addActionListener(this::menuActionRecordWavActionPerformed);
     menuService.add(menuActionRecordWav);
 
     menuServiceMakeSnapshot.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/save_snapshot.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/save_snapshot.png")))); // NOI18N
     menuServiceMakeSnapshot.setText("Save snapshot");
     menuServiceMakeSnapshot.addActionListener(this::menuServiceMakeSnapshotActionPerformed);
     menuService.add(menuServiceMakeSnapshot);
 
     menuTapExportAs.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/tape_record.png")))); // NOI18N
     menuTapExportAs.setText("Export TAPE as..");
 
     menuTapExportAsWav.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_wav.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_wav.png")))); // NOI18N
     menuTapExportAsWav.setText("WAV file");
     menuTapExportAsWav.addActionListener(this::menuTapExportAsWavActionPerformed);
     menuTapExportAs.add(menuTapExportAsWav);
@@ -2273,7 +2328,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuServiceGameControllers.setText("Game controllers");
     menuServiceGameControllers.setToolTipText("Turn on game controller");
     menuServiceGameControllers.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/gcontroller.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/gcontroller.png")))); // NOI18N
     menuServiceGameControllers.addActionListener(this::menuServiceGameControllerActionPerformed);
 
     menuService.add(menuServiceGameControllers);
@@ -2321,7 +2377,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     menuOptionsJoystickSelect.setText("Joystick");
     menuOptionsJoystickSelect.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/protek.png")))); // NOI18N);
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/protek.png")))); // NOI18N);
 
     menuOptionsJoystickSelect.setToolTipText("Select active joystick type");
     menuOptionsJoystickKempston.setText("Kempston");
@@ -2338,53 +2395,61 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     menuOptionsOnlyJoystickEvents.setAccelerator(getKeyStroke(KeyEvent.VK_F6, 0));
     menuOptionsOnlyJoystickEvents.setText("ZX-Keyboard Off");
-    menuOptionsOnlyJoystickEvents.setToolTipText("Disable events from keyboard and allow events only from joystick");
+    menuOptionsOnlyJoystickEvents.setToolTipText(
+        "Disable events from keyboard and allow events only from joystick");
     menuOptionsOnlyJoystickEvents.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/onlykempston.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/onlykempston.png")))); // NOI18N
     menuOptionsOnlyJoystickEvents.addActionListener(this::menuOptionsOnlyKempstonEvents);
     menuOptions.add(menuOptionsOnlyJoystickEvents);
 
     menuOptionsShowIndicators.setSelected(showIndicatoPanel);
     menuOptionsShowIndicators.setText("Indicator panel");
     menuOptionsShowIndicators.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/indicator.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/indicator.png")))); // NOI18N
     menuOptionsShowIndicators.addActionListener(this::menuOptionsShowIndicatorsActionPerformed);
     menuOptions.add(menuOptionsShowIndicators);
 
     menuOptionsZX128Mode.setSelected(true);
     menuOptionsZX128Mode.setText("ZX Mode");
     menuOptionsZX128Mode.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/zx128.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/zx128.png")))); // NOI18N
     menuOptionsZX128Mode.addActionListener(this::menuOptionsZX128ModeActionPerformed);
     menuOptions.add(menuOptionsZX128Mode);
 
     menuOptionsTurbo.setAccelerator(getKeyStroke(KeyEvent.VK_F3, 0));
     menuOptionsTurbo.setText("Turbo");
     menuOptionsTurbo.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/turbo.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/turbo.png")))); // NOI18N
     menuOptionsTurbo.addActionListener(this::menuOptionsTurboActionPerformed);
     menuOptions.add(menuOptionsTurbo);
 
     menuOptionsEnableTrapMouse.setText("Trap mouse");
     menuOptionsEnableTrapMouse.setToolTipText("Trap mouse as Kempston-mouse");
     menuOptionsEnableTrapMouse.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/pointer.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/pointer.png")))); // NOI18N
     menuOptionsEnableTrapMouse.addActionListener(this::menuOptionsEnableTrapMouseActionPerformed);
     menuOptions.add(menuOptionsEnableTrapMouse);
 
     menuOptionsEnableSpeaker.setText("Sound");
     menuOptionsEnableSpeaker.setToolTipText("Turn on beeper sound");
     menuOptionsEnableSpeaker.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/speaker.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/speaker.png")))); // NOI18N
     menuOptionsEnableSpeaker.addActionListener(this::menuOptionsEnableSpeakerActionPerformed);
     menuOptions.add(menuOptionsEnableSpeaker);
 
     menuOptionsEnableVideoStream.setText("Video stream (beta)");
     menuOptionsEnableVideoStream.setToolTipText("Turn on video streaming");
     menuOptionsEnableVideoStream.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/streaming.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/streaming.png")))); // NOI18N
     menuOptionsEnableVideoStream
-            .addActionListener(this::menuOptionsEnableVideoStreamActionPerformed);
+        .addActionListener(this::menuOptionsEnableVideoStreamActionPerformed);
     menuOptions.add(menuOptionsEnableVideoStream);
 
     menuOptionsLookAndFeel.setText("Look & Feel");
@@ -2405,7 +2470,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     menuHelpAbout.setAccelerator(getKeyStroke(KeyEvent.VK_F1, 0));
     menuHelpAbout.setIcon(
-            new ImageIcon(Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/info.png")))); // NOI18N
+        new ImageIcon(Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/info.png")))); // NOI18N
     menuHelpAbout.setText("Help");
     menuHelpAbout.addActionListener(this::menuHelpAboutActionPerformed);
     menuHelp.add(menuHelpAbout);
@@ -2415,14 +2481,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
         try {
           Desktop.getDesktop().browse(new URI(
-                  "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AHWJHJFBAWGL2"));
+              "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AHWJHJFBAWGL2"));
         } catch (Exception ex) {
           LOGGER.warning("Can't open link: " + ex.getMessage());
         }
       }
     });
     menuHelpDonation.setIcon(new ImageIcon(
-            Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/donate.png")))); // NOI18N
+        Objects.requireNonNull(
+            getClass().getResource("/com/igormaznitsa/zxpoly/icons/donate.png")))); // NOI18N
 
     menuHelp.add(menuHelpDonation);
     menuBar.add(menuHelp);
@@ -2467,12 +2534,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         if (selectFileDialog.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
           File selectedWavFile = selectFileDialog.getSelectedFile();
           if (!selectedWavFile.getName().contains(".")) {
-            selectedWavFile = new File(selectedWavFile.getParentFile(), selectedWavFile.getName() + ".wav");
+            selectedWavFile =
+                new File(selectedWavFile.getParentFile(), selectedWavFile.getName() + ".wav");
           }
 
           this.lastWrittenWavFile = selectedWavFile;
 
-          if (selectedWavFile.isFile() && JOptionPane.showConfirmDialog(this, "Do you want override file " + selectedWavFile.getName() + "?", "File exists", JOptionPane.OK_CANCEL_OPTION) == CANCEL_OPTION) {
+          if (selectedWavFile.isFile() && JOptionPane.showConfirmDialog(this,
+              "Do you want override file " + selectedWavFile.getName() + "?", "File exists",
+              JOptionPane.OK_CANCEL_OPTION) == CANCEL_OPTION) {
             return;
           }
 
@@ -2480,7 +2550,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             this.board.getBeeper().setTargetWav(selectedWavFile);
           } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Can't start WAV recording", ex);
-            JOptionPane.showMessageDialog(this, "Can't start write WAV file", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Can't start write WAV file", "Error",
+                JOptionPane.ERROR_MESSAGE);
           }
         }
       }
@@ -2495,22 +2566,27 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   }
 
   private void menuFileCreateEmptyDiskFileActionPerformed(final ActionEvent actionEvent) {
-    File file = chooseFileForSave("Create empty TRD disk file", this.lastFloppyFolder, null, false, FILTER_FORMAT_TRD);
+    File file = chooseFileForSave("Create empty TRD disk file", this.lastFloppyFolder, null, false,
+        FILTER_FORMAT_TRD);
     if (file != null) {
       if (!file.getName().contains(".")) {
         file = new File(file.getParentFile(), file.getName() + ".trd");
       }
       this.lastFloppyFolder = file.getParentFile();
       if (file.isFile()
-              && JOptionPane.showConfirmDialog(this, "File " + file.getName() + " exists! Do you want overwrite it?", "File exists", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.CANCEL_OPTION) {
+          && JOptionPane.showConfirmDialog(this,
+          "File " + file.getName() + " exists! Do you want overwrite it?", "File exists",
+          JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.CANCEL_OPTION) {
         return;
       }
       LOGGER.info("Creating empty TRD disk as file: " + file);
       try {
-        FileUtils.writeByteArrayToFile(file, new TrDosDisk(FilenameUtils.getBaseName(file.getName())).getDiskData());
+        FileUtils.writeByteArrayToFile(file,
+            new TrDosDisk(FilenameUtils.getBaseName(file.getName())).getDiskData());
       } catch (Exception ex) {
         LOGGER.log(Level.SEVERE, "Can't create empty disk file: " + file, ex);
-        JOptionPane.showMessageDialog(this, "Can't save disk file: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Can't save disk file: " + ex.getMessage(), "Error",
+            JOptionPane.ERROR_MESSAGE);
       }
     }
   }
@@ -2520,33 +2596,37 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     final ButtonGroup buttonGroup = new ButtonGroup();
     Stream.of("None", "1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5")
-            .forEach(scale -> {
-              final boolean none = scale.equalsIgnoreCase("none");
-              final JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(none ? scale : "x" + scale, (selectedScale == null && none) || scale.equalsIgnoreCase(selectedScale));
-              menuItem.addItemListener(e -> {
-                LOGGER.info("Select UI scale: " + scale);
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                  if (none) {
-                    AppOptions.getInstance().setUiScale(null);
-                  } else {
-                    AppOptions.getInstance().setUiScale(scale);
-                  }
-                  JOptionPane.showMessageDialog(MainForm.this, "Application restart required!", "Restart required", JOptionPane.WARNING_MESSAGE);
-                }
-              });
-              buttonGroup.add(menuItem);
-              menu.add(menuItem);
-            });
+        .forEach(scale -> {
+          final boolean none = scale.equalsIgnoreCase("none");
+          final JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(none ? scale : "x" + scale,
+              (selectedScale == null && none) || scale.equalsIgnoreCase(selectedScale));
+          menuItem.addItemListener(e -> {
+            LOGGER.info("Select UI scale: " + scale);
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+              if (none) {
+                AppOptions.getInstance().setUiScale(null);
+              } else {
+                AppOptions.getInstance().setUiScale(scale);
+              }
+              JOptionPane.showMessageDialog(MainForm.this, "Application restart required!",
+                  "Restart required", JOptionPane.WARNING_MESSAGE);
+            }
+          });
+          buttonGroup.add(menuItem);
+          menu.add(menuItem);
+        });
   }
 
   private void fillLookAndFeelMenu(final JMenu menu) {
     final String selectedClass = AppOptions.getInstance().getUiLfClass();
     final ButtonGroup buttonGroup = new ButtonGroup();
-    final List<UIManager.LookAndFeelInfo> installedLookAndFeels = new ArrayList<>(List.of(UIManager.getInstalledLookAndFeels()));
+    final List<UIManager.LookAndFeelInfo> installedLookAndFeels =
+        new ArrayList<>(List.of(UIManager.getInstalledLookAndFeels()));
     installedLookAndFeels.sort(Comparator.comparing(UIManager.LookAndFeelInfo::getName));
 
     installedLookAndFeels.forEach(lf -> {
-      final JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(lf.getName(), lf.getClassName().equals(selectedClass));
+      final JRadioButtonMenuItem menuItem =
+          new JRadioButtonMenuItem(lf.getName(), lf.getClassName().equals(selectedClass));
       menuItem.addItemListener(e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           try {
@@ -2587,10 +2667,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       slider.setSnapToTicks(true);
       slider.setPaintTicks(true);
       slider
-              .setModel(new DefaultBoundedRangeModel((int) (source.getThreshold() * 1000), 0, 0, 1000));
+          .setModel(new DefaultBoundedRangeModel((int) (source.getThreshold() * 1000), 0, 0, 1000));
 
       if (showConfirmDialog(this, slider, "Tape signal threshold", JOptionPane.OK_CANCEL_OPTION,
-              JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+          JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
         int threshold = slider.getValue();
         LOGGER.info("Selected TAP threshold: " + threshold);
         source.setThreshold((float) threshold / 1000.0f);
@@ -2611,7 +2691,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
       if (trainerFileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
         final AbstractTrainer selectedTrainer =
-                (AbstractTrainer) trainerFileChooser.getFileFilter();
+            (AbstractTrainer) trainerFileChooser.getFileFilter();
         final File selectedFile = trainerFileChooser.getSelectedFile();
         this.lastPokeFileFolder = selectedFile.getParentFile();
         try {
@@ -2619,7 +2699,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         } catch (Exception ex) {
           LOGGER.log(Level.WARNING, "Error during trainer processing: " + ex.getMessage(), ex);
           showMessageDialog(this, ex.getMessage(), "Can't read or parse file",
-                  JOptionPane.ERROR_MESSAGE);
+              JOptionPane.ERROR_MESSAGE);
         }
       }
     } finally {
@@ -2632,8 +2712,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     try {
       this.board.resetAndRestoreRom(BASE_ROM);
       this.board
-              .setBoardMode(this.menuOptionsZX128Mode.isSelected() ? BoardMode.ZX128 : BoardMode.ZXPOLY,
-                      true);
+          .setBoardMode(this.menuOptionsZX128Mode.isSelected() ? BoardMode.ZX128 : BoardMode.ZXPOLY,
+              true);
     } finally {
       this.stepLocker.unlock();
     }
@@ -2653,8 +2733,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       this.setTurboMode(true);
     } else {
       this.setTurboMode(false);
-      this.preTurboSourceSoundPort.ifPresentOrElse(savedPort -> this.setSoundActivate(true, savedPort), () -> this.setSoundActivate(true));
-      LOGGER.info("Restored sound port: " + this.preTurboSourceSoundPort.map(SourceSoundPort::getName).orElse("NONE"));
+      this.preTurboSourceSoundPort.ifPresentOrElse(
+          savedPort -> this.setSoundActivate(true, savedPort), () -> this.setSoundActivate(true));
+      LOGGER.info("Restored sound port: " +
+          this.preTurboSourceSoundPort.map(SourceSoundPort::getName).orElse("NONE"));
       this.preTurboSourceSoundPort = Optional.empty();
     }
   }
@@ -2705,7 +2787,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     } catch (Exception ex) {
       LOGGER.log(Level.SEVERE, "Can't read " + tapFile + ": " + ex.getMessage(), ex);
       showMessageDialog(this, Utils.extractMessage(ex), "Error TAP loading",
-              JOptionPane.ERROR_MESSAGE);
+          JOptionPane.ERROR_MESSAGE);
     } finally {
       updateTapeMenu();
       this.stepLocker.unlock();
@@ -2716,11 +2798,11 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.suspendSteps();
     try {
       final File selectedTapFile =
-              chooseFileForOpen("Load Tape", this.lastTapFolder, null,
-                      FILTER_FORMAT_ALL_TAPE,
-                      FILTER_FORMAT_TZX,
-                      FILTER_FORMAT_TAP,
-                      FILTER_FORMAT_WAV);
+          chooseFileForOpen("Load Tape", this.lastTapFolder, null,
+              FILTER_FORMAT_ALL_TAPE,
+              FILTER_FORMAT_TZX,
+              FILTER_FORMAT_TAP,
+              FILTER_FORMAT_WAV);
       if (selectedTapFile != null) {
         this.setTapFile(selectedTapFile);
       }
@@ -2741,13 +2823,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         }
         FileUtils.writeByteArrayToFile(fileToSave, wav);
         LOGGER.log(Level.INFO,
-                "Exported current TAP file as WAV file " + fileToSave + " size " + wav.length
-                        + " bytes");
+            "Exported current TAP file as WAV file " + fileToSave + " size " + wav.length
+                + " bytes");
       }
     } catch (Exception ex) {
       LOGGER.log(Level.WARNING, "Can't export as WAV", ex);
       showMessageDialog(this, "Can't export as WAV", ex.getMessage(),
-              JOptionPane.ERROR_MESSAGE);
+          JOptionPane.ERROR_MESSAGE);
     } finally {
       this.resumeSteps();
     }
@@ -2769,8 +2851,12 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   }
 
   private boolean setTapePlay(final boolean play) {
-    if (this.keyboardAndTapeModule.getTap() == null) return false;
-    if (play && this.keyboardAndTapeModule.getTap().isPlaying()) return true;
+    if (this.keyboardAndTapeModule.getTap() == null) {
+      return false;
+    }
+    if (play && this.keyboardAndTapeModule.getTap().isPlaying()) {
+      return true;
+    }
     if (play) {
       this.keyboardAndTapeModule.getTap().startPlay();
     } else {
@@ -2815,7 +2901,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       ImageIO.write(img, "png", buffer);
       File pngFile = chooseFileForSave("Save screenshot", lastScreenshotFolder, null, true,
-              new PngFileFilter());
+          new PngFileFilter());
       if (pngFile != null) {
         final String fileName = pngFile.getName();
         if (!fileName.contains(".")) {
@@ -2826,7 +2912,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       }
     } catch (IOException ex) {
       showMessageDialog(this, "Can't save screenshot for error, see the log!", "Error",
-              JOptionPane.ERROR_MESSAGE);
+          JOptionPane.ERROR_MESSAGE);
       LOGGER.log(Level.SEVERE, "Can't make screenshot", ex);
     } finally {
       this.resumeSteps();
@@ -2839,12 +2925,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     try {
       final OptionsPanel optionsPanel = new OptionsPanel(null);
       Utils.makeOwningDialogResizable(optionsPanel);
-      if (showConfirmDialog(this, new JScrollPane(optionsPanel), "Preferences", JOptionPane.OK_CANCEL_OPTION,
-              JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+      if (showConfirmDialog(this, new JScrollPane(optionsPanel), "Preferences",
+          JOptionPane.OK_CANCEL_OPTION,
+          JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
         optionsPanel.getData().store();
         showMessageDialog(this, "Restart the emulator for new options!",
-                "Restart may required!",
-                JOptionPane.WARNING_MESSAGE);
+            "Restart may required!",
+            JOptionPane.WARNING_MESSAGE);
       }
     } finally {
       this.resumeSteps();
@@ -2912,7 +2999,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       if (encoder == null) {
         final AnimatedGifTunePanel panel = new AnimatedGifTunePanel(this.lastAnimGifOptions);
         final int result = showConfirmDialog(this, panel, "Options for Animated GIF",
-                JOptionPane.OK_CANCEL_OPTION);
+            JOptionPane.OK_CANCEL_OPTION);
         if (result != JOptionPane.OK_OPTION) {
           return;
         }
@@ -2920,15 +3007,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         this.lastAnimGifOptions = panel.getValue();
         try {
           encoder = new AGifEncoder(
-                  new File(this.lastAnimGifOptions.filePath),
-                  this.board.getVideoController().findCurrentPalette(),
-                  this.lastAnimGifOptions.frameRate,
-                  this.lastAnimGifOptions.repeat);
+              new File(this.lastAnimGifOptions.filePath),
+              this.board.getVideoController().findCurrentPalette(),
+              this.lastAnimGifOptions.frameRate,
+              this.lastAnimGifOptions.repeat);
         } catch (IOException ex) {
           this.menuViewVideoFilter.setEnabled(true);
           LOGGER.log(Level.SEVERE, "Can't create GIF encoder: " + ex.getMessage(), ex);
           showMessageDialog(this, "Can't make GIF encoder: " + ex.getMessage(), "Error!",
-                  JOptionPane.ERROR_MESSAGE);
+              JOptionPane.ERROR_MESSAGE);
           return;
         }
 
@@ -2982,20 +3069,20 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       if (this.menuTriggerDiffMem.isSelected()) {
         final AddressPanel panel = new AddressPanel(this.board.getMemTriggerAddress());
         if (showConfirmDialog(MainForm.this, panel, "Triggering address",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
           try {
             final int address = panel.extractAddressFromText();
             if (address < 0 || address > 0xFFFF) {
               showMessageDialog(MainForm.this, "Error address must be in #0000...#FFFF",
-                      "Error address", JOptionPane.ERROR_MESSAGE);
+                  "Error address", JOptionPane.ERROR_MESSAGE);
             } else {
               this.board.setMemTriggerAddress(address);
               this.board.setTrigger(Motherboard.TRIGGER_DIFF_MEM_ADDR);
             }
           } catch (NumberFormatException ex) {
             showMessageDialog(MainForm.this,
-                    "Error address format, use # for hexadecimal address (example #AA00)",
-                    "Error address", JOptionPane.ERROR_MESSAGE);
+                "Error address format, use # for hexadecimal address (example #AA00)",
+                "Error address", JOptionPane.ERROR_MESSAGE);
           }
         }
       } else {
@@ -3034,8 +3121,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       File selected = chooseFileForSave("Save snapshot", this.lastSnapshotFolder, theFilter, false,
-              Stream.of(SNAPSHOT_FORMAT_SPEC256, SNAPSHOT_FORMAT_ZXP, SNAPSHOT_FORMAT_Z80, SNAPSHOT_FORMAT_SNA, SNAPSHOT_FORMAT_ROM).filter(x -> x.canMakeSnapshotForBoardMode(this.board.getBoardMode()))
-                      .toArray(Snapshot[]::new)
+          Stream.of(SNAPSHOT_FORMAT_SPEC256, SNAPSHOT_FORMAT_ZXP, SNAPSHOT_FORMAT_Z80,
+                  SNAPSHOT_FORMAT_SNA, SNAPSHOT_FORMAT_ROM)
+              .filter(x -> x.canMakeSnapshotForBoardMode(this.board.getBoardMode()))
+              .toArray(Snapshot[]::new)
       );
 
       if (selected != null) {
@@ -3043,30 +3132,30 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
           if (!selectedFilter.getExtension()
-                  .equals(FilenameUtils.getExtension(selected.getName()).toLowerCase(Locale.ENGLISH))) {
+              .equals(FilenameUtils.getExtension(selected.getName()).toLowerCase(Locale.ENGLISH))) {
             selected = new File(selected.getParentFile(),
-                    selected.getName() + '.' + selectedFilter.getExtension());
+                selected.getName() + '.' + selectedFilter.getExtension());
           }
 
           if (selected.isFile() && showConfirmDialog(
-                  this,
-                  String.format("Do you want override file '%s'?", selected.getName()),
-                  "Found existing file",
-                  JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+              this,
+              String.format("Do you want override file '%s'?", selected.getName()),
+              "Found existing file",
+              JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
             return;
           }
 
           LOGGER.info(
-                  "Saving snapshot " + selectedFilter.getName() + " as file " + selected.getName());
+              "Saving snapshot " + selectedFilter.getName() + " as file " + selected.getName());
           final byte[] preparedSnapshotData =
-                  selectedFilter.saveToArray(this.board, this.board.getVideoController());
+              selectedFilter.saveToArray(this.board, this.board.getVideoController());
           LOGGER.info("Prepared snapshot data, size " + preparedSnapshotData.length + " bytes");
           FileUtils.writeByteArrayToFile(selected, preparedSnapshotData);
         } catch (Exception ex) {
           ex.printStackTrace();
           LOGGER.log(Level.WARNING, "Can't save snapshot file [" + ex.getMessage() + ']', ex);
           showMessageDialog(this, "Can't save snapshot file [" + ex.getMessage() + ']',
-                  "Error", JOptionPane.ERROR_MESSAGE);
+              "Error", JOptionPane.ERROR_MESSAGE);
         }
       }
     } finally {
@@ -3090,8 +3179,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       final TrDosDisk disk = this.board.getBetaDiskInterface().getDiskInDrive(i);
       if (disk != null && disk.isChanged()) {
         final int result = showConfirmDialog(this,
-                "Do you want flush disk data '" + disk.getSrcFile().getName() + "' ?", "Disk changed",
-                JOptionPane.YES_NO_CANCEL_OPTION);
+            "Do you want flush disk data '" + disk.getSrcFile().getName() + "' ?", "Disk changed",
+            JOptionPane.YES_NO_CANCEL_OPTION);
         if (result == JOptionPane.CANCEL_OPTION) {
           break;
         }
@@ -3104,7 +3193,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             fileChooser.setDialogTitle("Save disk as TRD file");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setSelectedFile(new File(disk.getSrcFile().getParentFile(),
-                    FilenameUtils.getBaseName(disk.getSrcFile().getName()) + ".trd"));
+                FilenameUtils.getBaseName(disk.getSrcFile().getName()) + ".trd"));
             if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
               destFile = fileChooser.getSelectedFile();
             } else {
@@ -3118,11 +3207,11 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
               FileUtils.writeByteArrayToFile(destFile, disk.getDiskData());
               disk.replaceSrcFile(destFile, TrDosDisk.SourceDataType.TRD, true);
               LOGGER.info("Changes for disk " + ('A' + i) + " is saved as file: "
-                      + destFile.getAbsolutePath());
+                  + destFile.getAbsolutePath());
             } catch (IOException ex) {
               LOGGER.warning("Can't write disk for error: " + ex.getMessage());
               showMessageDialog(this, "Can't save disk for IO error: " + ex.getMessage(),
-                      "Error", JOptionPane.ERROR_MESSAGE);
+                  "Error", JOptionPane.ERROR_MESSAGE);
             }
           }
         }
@@ -3147,7 +3236,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     if (hasChangedDisk) {
       if (showConfirmDialog(this, "Emulator has unsaved disks, do you realy want to close it?",
-              "Detected unsaved data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+          "Detected unsaved data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
         close = true;
       }
     } else {
@@ -3175,9 +3264,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   }
 
   private void menuLoadDriveMenuSelected(MenuEvent evt) {
-    final JMenuItem[] menuItems = new JMenuItem[]{
-            this.menuFileSelectDiskA, this.menuFileSelectDiskB,
-            this.menuFileSelectDiskC, this.menuFileSelectDiskD
+    final JMenuItem[] menuItems = new JMenuItem[] {
+        this.menuFileSelectDiskA, this.menuFileSelectDiskB,
+        this.menuFileSelectDiskC, this.menuFileSelectDiskD
     };
     IntStream.range(0, 4).forEach(index -> {
       final TrDosDisk diskInDrive = this.board.getBetaDiskInterface().getDiskInDrive(index);
@@ -3187,14 +3276,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         diskMenuItem.setToolTipText(null);
       } else {
         diskMenuItem.setIcon(ICO_MDISK);
-        diskMenuItem.setToolTipText(diskInDrive.getSrcFile() == null ? null : diskInDrive.getSrcFile().getAbsolutePath());
+        diskMenuItem.setToolTipText(
+            diskInDrive.getSrcFile() == null ? null : diskInDrive.getSrcFile().getAbsolutePath());
       }
     });
   }
 
   private void menuOptionsEnableTrapMouseActionPerformed(ActionEvent evt) {
     this.board.getVideoController()
-            .setEnableTrapMouse(this.menuOptionsEnableTrapMouse.isSelected(), true, false);
+        .setEnableTrapMouse(this.menuOptionsEnableTrapMouse.isSelected(), true, false);
   }
 
   private void activateTracerForCPUModule(final int index) {
@@ -3209,8 +3299,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   private void deactivateTracerForCPUModule(final int index) {
     Arrays.stream(this.cpuTracers)
-            .filter(Objects::nonNull)
-            .forEach(Window::dispose);
+        .filter(Objects::nonNull)
+        .forEach(Window::dispose);
   }
 
   private void updateTracerCheckBoxes() {

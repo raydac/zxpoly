@@ -30,7 +30,29 @@ public final class MainFormParameters {
 
   private Bounds keyboardBounds;
 
+  private boolean activateSound;
+
+  private boolean forceAcbChannelSound;
+
   public MainFormParameters() {
+  }
+
+  public boolean isForceAcbChannelSound() {
+    return this.forceAcbChannelSound;
+  }
+
+  public MainFormParameters setForceAcbChannelSound(final boolean forceAcbChannelSound) {
+    this.forceAcbChannelSound = forceAcbChannelSound;
+    return this;
+  }
+
+  public boolean isActivateSound() {
+    return this.activateSound;
+  }
+
+  public MainFormParameters setActivateSound(final boolean activateSound) {
+    this.activateSound = activateSound;
+    return this;
   }
 
   public Bounds getKeyboardBounds() {
