@@ -13,7 +13,7 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <netbeans.hint.license>gpl30</netbeans.hint.license>
-    <jbbp.version>2.0.3</jbbp.version>
+    <jbbp.version>2.0.4</jbbp.version>
   </properties>
 
   <issueManagement>
