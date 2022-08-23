@@ -51,6 +51,7 @@ import com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilterChain;
 import com.igormaznitsa.zxpoly.formats.FormatPRom;
 import com.igormaznitsa.zxpoly.formats.FormatRom;
 import com.igormaznitsa.zxpoly.formats.FormatSNA;
+import com.igormaznitsa.zxpoly.formats.FormatSZX;
 import com.igormaznitsa.zxpoly.formats.FormatSpec256;
 import com.igormaznitsa.zxpoly.formats.FormatZ80;
 import com.igormaznitsa.zxpoly.formats.FormatZXP;
@@ -231,6 +232,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     }
   };
   private static final Snapshot SNAPSHOT_FORMAT_Z80 = new FormatZ80();
+  private static final Snapshot SNAPSHOT_FORMAT_SZX = new FormatSZX();
   private static final Snapshot SNAPSHOT_FORMAT_SNA = new FormatSNA();
   private static final Snapshot SNAPSHOT_FORMAT_ZXP = new FormatZXP();
   private static final Snapshot SNAPSHOT_FORMAT_ROM = new FormatRom();
@@ -240,6 +242,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     @Override
     public boolean accept(File f) {
       return SNAPSHOT_FORMAT_Z80.accept(f)
+          || SNAPSHOT_FORMAT_SZX.accept(f)
           || SNAPSHOT_FORMAT_SPEC256.accept(f)
           || SNAPSHOT_FORMAT_SNA.accept(f)
           || SNAPSHOT_FORMAT_ZXP.accept(f)
@@ -249,7 +252,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     @Override
     public String getDescription() {
-      return "All snapshots (*.z80, *.sna, *.zip, *.zxp, *.rom, *.prom)";
+      return "All snapshots (*.z80, *.sna, *.szx, *.zip, *.zxp, *.rom, *.prom)";
     }
   };
   public static RomData BASE_ROM;
@@ -1627,8 +1630,14 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       final File selected =
           chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter,
               FILTER_FORMAT_ALL_SNAPSHOTS,
-              SNAPSHOT_FORMAT_Z80, SNAPSHOT_FORMAT_SPEC256, SNAPSHOT_FORMAT_SNA,
-              SNAPSHOT_FORMAT_ZXP, SNAPSHOT_FORMAT_ROM, SNAPSHOT_FORMAT_PROM);
+              SNAPSHOT_FORMAT_Z80,
+              SNAPSHOT_FORMAT_SPEC256,
+              SNAPSHOT_FORMAT_SNA,
+              SNAPSHOT_FORMAT_ZXP,
+              SNAPSHOT_FORMAT_SZX,
+              SNAPSHOT_FORMAT_ROM,
+              SNAPSHOT_FORMAT_PROM
+          );
 
       if (selected != null) {
         this.setSnapshotFile(selected, theFilter.get());
@@ -1653,6 +1662,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             theFilter = SNAPSHOT_FORMAT_ROM;
           } else if (SNAPSHOT_FORMAT_Z80.accept(selected)) {
             theFilter = SNAPSHOT_FORMAT_Z80;
+          } else if (SNAPSHOT_FORMAT_SZX.accept(selected)) {
+            theFilter = SNAPSHOT_FORMAT_SZX;
           } else if (SNAPSHOT_FORMAT_SNA.accept(selected)) {
             theFilter = SNAPSHOT_FORMAT_SNA;
           } else if (SNAPSHOT_FORMAT_ZXP.accept(selected)) {
@@ -3121,8 +3132,12 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       File selected = chooseFileForSave("Save snapshot", this.lastSnapshotFolder, theFilter, false,
-          Stream.of(SNAPSHOT_FORMAT_SPEC256, SNAPSHOT_FORMAT_ZXP, SNAPSHOT_FORMAT_Z80,
-                  SNAPSHOT_FORMAT_SNA, SNAPSHOT_FORMAT_ROM)
+          Stream.of(SNAPSHOT_FORMAT_SPEC256,
+                  SNAPSHOT_FORMAT_ZXP,
+                  SNAPSHOT_FORMAT_Z80,
+                  SNAPSHOT_FORMAT_SNA,
+                  SNAPSHOT_FORMAT_ROM,
+                  SNAPSHOT_FORMAT_SZX)
               .filter(x -> x.canMakeSnapshotForBoardMode(this.board.getBoardMode()))
               .toArray(Snapshot[]::new)
       );

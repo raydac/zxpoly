@@ -17,10 +17,10 @@
 
 package com.igormaznitsa.z80;
 
+import static java.lang.System.arraycopy;
+
 import java.util.Arrays;
 import java.util.Locale;
-
-import static java.lang.System.arraycopy;
 
 /**
  * Tables and some flag set algorithms were copied and adapted from
@@ -402,6 +402,10 @@ public final class Z80 {
 
   public Z80CPUBus getBus() {
     return this.bus;
+  }
+
+  public void setTstates(final int tiStates) {
+    this.tiStates = Math.max(0, tiStates);
   }
 
   public void addTstates(final int tiStates) {
