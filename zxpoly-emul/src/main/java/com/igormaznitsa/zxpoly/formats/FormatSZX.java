@@ -3,6 +3,7 @@ package com.igormaznitsa.zxpoly.formats;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
+import com.igormaznitsa.zxpoly.components.snd.AyBasedSoundDevice;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -94,6 +95,22 @@ public class FormatSZX extends Snapshot {
             in.assertNoMoreData();
           });
         });
+
+    container.getBlocks().stream()
+        .filter(x -> x.getId() == SzxContainer.SzxBlock.ID_ZXSTAYBLOCK)
+        .forEach(x -> x.consume((block, in) -> {
+          var flags = in.readByte();
+          var currentRegister = in.readByte();
+          var registerData = in.readFully(16);
+          in.assertNoMoreData();
+          var foundAyDevice = board.findIoDevice(AyBasedSoundDevice.class);
+          if (foundAyDevice != null) {
+            foundAyDevice.setAyAddress(currentRegister);
+            for (int i = 0; i < registerData.length; i++) {
+              foundAyDevice.setAyRegister(i, registerData[i] & 0xFF);
+            }
+          }
+        }));
 
     container.getBlocks().stream()
         .filter(x -> x.getId() == SzxContainer.SzxBlock.ID_ZXSTSPECREGS)

@@ -4,7 +4,7 @@ import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 
-public final class Zx128Ay8910 implements IoDevice {
+public final class Zx128Ay8910 implements IoDevice, AyBasedSoundDevice {
 
   private final Motherboard motherboard;
   private final Ay8910Chip ay8910;
@@ -16,6 +16,16 @@ public final class Zx128Ay8910 implements IoDevice {
     this.motherboard = motherboard;
     this.ay8910 = new Ay8910Chip(this::onAyLevels);
     this.beeper = this.motherboard.getBeeper();
+  }
+
+  @Override
+  public void setAyAddress(final int address) {
+    this.ay8910.writeAddress(address);
+  }
+
+  @Override
+  public void setAyRegister(final int address, final int value) {
+    this.ay8910.writeData(address, value);
   }
 
   private void onAyLevels(final Ay8910Chip ay, final int levelA, final int levelB,
@@ -50,7 +60,8 @@ public final class Zx128Ay8910 implements IoDevice {
   }
 
   @Override
-  public void preStep(int frameTiStates, boolean signalReset, boolean tstatesIntReached, boolean wallClockInt) {
+  public void preStep(int frameTiStates, boolean signalReset, boolean tstatesIntReached,
+                      boolean wallClockInt) {
     if (signalReset) {
       this.doReset();
     }

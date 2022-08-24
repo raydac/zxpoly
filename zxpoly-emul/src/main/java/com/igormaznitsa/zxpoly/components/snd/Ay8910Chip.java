@@ -35,9 +35,9 @@ public final class Ay8910Chip {
   private static final int ENV_FLAG_ALTR = 0b0010;
   private static final int ENV_FLAG_ATTACK = 0b0100;
   private static final int ENV_FLAG_CONT = 0b1000;
-  private static final int[] REG_DATA_MASK = new int[]{
-          0xFF, 0x0F, 0xFF, 0x0F, 0xFF, 0x0F, 0x1F, 0xFF,
-          0x1F, 0x1F, 0x1F, 0xFF, 0xFF, 0x0F, 0xFF, 0xFF
+  private static final int[] REG_DATA_MASK = new int[] {
+      0xFF, 0x0F, 0xFF, 0x0F, 0xFF, 0x0F, 0x1F, 0xFF,
+      0x1F, 0x1F, 0x1F, 0xFF, 0xFF, 0x0F, 0xFF, 0xFF
   };
   private final Ay8910SignalConsumer signalConsumer;
   private boolean enfAttack = false;
@@ -136,10 +136,14 @@ public final class Ay8910Chip {
     }
   }
 
-  public void writeData(int value) {
-    value &= REG_DATA_MASK[this.addressLatch];
+  public void writeData(final int value) {
+    this.writeData(this.addressLatch, value);
+  }
 
-    switch (this.addressLatch) {
+  public void writeData(final int address, int value) {
+    value &= REG_DATA_MASK[address & 0xF];
+
+    switch (address) {
       case REG_TONE_PERIOD_A_FINE: {
         this.tonePeriodA = (this.tonePeriodA & 0xF00) | value;
       }
@@ -221,7 +225,7 @@ public final class Ay8910Chip {
     rngReg ^= (((rngReg & 1) ^ ((rngReg >> 3) & 1)) << 17);
     rngReg >>= 1;
     this.signalNcba =
-            (rngReg & 1) == 0 ? this.signalNcba & ~SIGNAL_N : this.signalNcba | SIGNAL_N;
+        (rngReg & 1) == 0 ? this.signalNcba & ~SIGNAL_N : this.signalNcba | SIGNAL_N;
   }
 
   private void processNoiseGen(final int audioTicks) {
@@ -300,11 +304,11 @@ public final class Ay8910Chip {
     final int c = (mixedCba >> 2) & (n | (nmask >> 2)) & 1;
 
     final int va = a == 0 ? 0 :
-            (this.amplitudeA & 0x10) == 0 ? this.amplitudeA : this.envelopeVolume;
+        (this.amplitudeA & 0x10) == 0 ? this.amplitudeA : this.envelopeVolume;
     final int vb = b == 0 ? 0 :
-            (this.amplitudeB & 0x10) == 0 ? this.amplitudeB : this.envelopeVolume;
+        (this.amplitudeB & 0x10) == 0 ? this.amplitudeB : this.envelopeVolume;
     final int vc = c == 0 ? 0 :
-            (this.amplitudeC & 0x10) == 0 ? this.amplitudeC : this.envelopeVolume;
+        (this.amplitudeC & 0x10) == 0 ? this.amplitudeC : this.envelopeVolume;
 
     this.signalConsumer.onAy8910Levels(this, va, vb, vc);
   }

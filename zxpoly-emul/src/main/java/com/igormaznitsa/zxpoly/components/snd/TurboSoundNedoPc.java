@@ -4,7 +4,7 @@ import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 
-public final class TurboSoundNedoPc implements IoDevice {
+public final class TurboSoundNedoPc implements IoDevice, AyBasedSoundDevice {
 
   private final Motherboard motherboard;
   private final Beeper beeper;
@@ -22,6 +22,16 @@ public final class TurboSoundNedoPc implements IoDevice {
     this.chipAy1 = new Ay8910Chip(this::onLevels1);
 
     this.doReset();
+  }
+
+  @Override
+  public void setAyAddress(final int address) {
+    this.chipAy0.writeAddress(address);
+  }
+
+  @Override
+  public void setAyRegister(final int address, final int value) {
+    this.chipAy0.writeData(address, value);
   }
 
   private void onLevels0(final Ay8910Chip ay, final int levelA, final int levelB,
