@@ -89,19 +89,19 @@ public class FormatSZX extends Snapshot {
             final int chFlags = in.readByte();
             final int wMemPtr = in.readWord();
 
-            if (in.available() > 0) {
-              throw new RuntimeException("Unexpectedly presented data in REGs");
-            }
-
             cpu.setTstates(dwCyclesStart);
+
+            in.assertNoMoreData();
           });
         });
 
     container.getBlocks().stream()
-        .filter(x -> x.getId() == SzxContainer.SzxBlock.ID_ZXSTZ80REGS)
+        .filter(x -> x.getId() == SzxContainer.SzxBlock.ID_ZXSTSPECREGS)
         .forEach(x -> x.consume((block, in) -> {
           final int border = in.readByte();
           final int port7FFD = in.readByte();
+
+          final int port1FFDorEFF7 = in.readByte();
           final int portFE = in.readByte();
           final int reserved = in.readDWord();
 
@@ -109,6 +109,8 @@ public class FormatSZX extends Snapshot {
             module.write7FFD(port7FFD, true);
           }
           board.getVideoController().setBorderColor(border & 7);
+
+          in.assertNoMoreData();
         }));
 
     container.getBlocks().stream()
@@ -122,6 +124,8 @@ public class FormatSZX extends Snapshot {
             data = SzxContainer.SzxBlock.decompress(data);
           }
           module.syncWriteHeapPage(pageNum, data);
+
+          in.assertNoMoreData();
         }));
   }
 
@@ -341,6 +345,12 @@ public class FormatSZX extends Snapshot {
           throw new RuntimeException(ex);
         }
         return baos.toByteArray();
+      }
+
+      public void assertNoMoreData() {
+        if (this.available() > 0) {
+          throw new RuntimeException("Detected unexpected data");
+        }
       }
 
       public int readByte() {
