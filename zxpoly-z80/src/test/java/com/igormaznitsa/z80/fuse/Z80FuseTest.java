@@ -1,12 +1,18 @@
 package com.igormaznitsa.z80.fuse;
 
+import static com.igormaznitsa.z80.Pair.pairOf;
+import static java.lang.ClassLoader.getSystemResourceAsStream;
+import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.unmodifiableList;
+import static java.util.Objects.requireNonNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 import com.igormaznitsa.z80.Pair;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.z80.Z80CPUBus;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
@@ -17,16 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import static com.igormaznitsa.z80.Pair.pairOf;
-import static java.lang.ClassLoader.getSystemResourceAsStream;
-import static java.lang.String.format;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Collections.unmodifiableList;
-import static java.util.Objects.requireNonNull;
-import static org.junit.Assert.*;
-
-@Ignore("Fixed undocumented flags for block operations, FUSE still has error")
 public class Z80FuseTest {
 
   private static List<Pair<InfoIn, InfoExpected>> testList;
