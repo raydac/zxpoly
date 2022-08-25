@@ -2,14 +2,19 @@ package com.igormaznitsa.zxpoly.components.video;
 
 import java.awt.Color;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public final class UlaPlusContainer {
+
+  public static final int PORT_REGISTER = 0xBF3B;
+  public static final int PORT_DATA = 0xFF3B;
+
   private final byte[] palette = new byte[64];
-  private final int[] paletteRgb = new int[64];
+  private final AtomicIntegerArray paletteRgb = new AtomicIntegerArray(64);
   private final Color[] paletteColor = new Color[64];
   private final boolean enabled;
-  private int register;
-  private int mode;
+  private volatile int register;
+  private volatile int mode;
 
   public UlaPlusContainer(final boolean enabled) {
     this.enabled = enabled;
@@ -17,24 +22,18 @@ public final class UlaPlusContainer {
   }
 
   private static int extendColorTo8bits(final int triple) {
-    switch (triple) {
-      case 0:
-        return 0x00;
-      case 1:
-        return 0x24;
-      case 2:
-        return 0x48;
-      case 3:
-        return 0x6C;
-      case 4:
-        return 0x90;
-      case 5:
-        return 0xB4;
-      case 6:
-        return 0xD8;
-      default:
-        return 0xFF;
-    }
+    final int h = (triple >> 2) & 1;
+    final int m = (triple >> 1) & 1;
+    final int l = triple & 1;
+
+    return (h << 7)
+        | (m << 6)
+        | (l << 5)
+        | (h << 4)
+        | (m << 3)
+        | (l << 2)
+        | (h << 1)
+        | m;
   }
 
   private static int grbToRgb(final int grb) {
@@ -58,7 +57,9 @@ public final class UlaPlusContainer {
     this.mode = 0;
     this.register = 0;
 
-    Arrays.fill(this.paletteRgb, 0xFF000000);
+    for (int i = 0; i < this.paletteRgb.length(); i++) {
+      this.paletteRgb.set(i, 0xFF000000);
+    }
     Arrays.fill(this.palette, (byte) 0);
     Arrays.fill(this.paletteColor, new Color(0xFF000000, true));
 
@@ -116,18 +117,19 @@ public final class UlaPlusContainer {
     this.mode = flag ? 1 : 0;
   }
 
-  public int findInkRgbForAttribute(final int attribute) {
-    final int index = (attribute & 7) | (attribute >> 3);
-    return this.paletteRgb[index];
-  }
 
   public Color findColorForIndex(final int index) {
     return this.paletteColor[index & 63];
   }
 
+  public int findInkRgbForAttribute(final int attribute) {
+    final int index = ((attribute >> 2) & 0b11_0000) | (attribute & 7);
+    return this.paletteRgb.get(index);
+  }
+
   public int findPaperRgbForAttribute(final int attribute) {
-    final int index = (attribute >> 3) & 0b11_111;
-    return this.paletteRgb[index];
+    final int index = ((attribute >> 2) & 0b11_0000) | ((attribute >> 3) & 7);
+    return this.paletteRgb.get(index);
   }
 
   public int getData() {
@@ -163,8 +165,9 @@ public final class UlaPlusContainer {
         case 0: {
           // palette
           this.palette[subgroup] = (byte) value;
-          this.paletteRgb[subgroup] = grbToRgb(value);
-          this.paletteColor[subgroup] = new Color(this.paletteRgb[subgroup], true);
+          final int rgb = grbToRgb(value);
+          this.paletteRgb.set(subgroup, rgb);
+          this.paletteColor[subgroup] = new Color(rgb, true);
         }
         break;
         case 1: {
@@ -179,8 +182,9 @@ public final class UlaPlusContainer {
   public void loadPalette(final byte[] palette) {
     for (int i = 0; i < (palette.length & 63); i++) {
       this.palette[i] = palette[i];
-      this.paletteRgb[i] = grbToRgb(palette[i] & 0xFF);
-      this.paletteColor[i] = new Color(this.paletteRgb[i], true);
+      final int rgb = grbToRgb(palette[i] & 0xFF);
+      this.paletteRgb.set(i, grbToRgb(rgb));
+      this.paletteColor[i] = new Color(rgb, true);
     }
   }
 }

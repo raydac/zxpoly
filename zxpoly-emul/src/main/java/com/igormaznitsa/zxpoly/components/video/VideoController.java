@@ -1627,7 +1627,7 @@ public final class VideoController extends JComponent
   public int readIo(final ZxPolyModule module, final int port) {
     int result = -1;
     if (this.ulaPlus.isEnabled()) {
-      if (port == 0xFF3B) {
+      if (port == UlaPlusContainer.PORT_DATA) {
         // data port
         result = this.ulaPlus.getData();
       }
@@ -1654,10 +1654,10 @@ public final class VideoController extends JComponent
       }
 
       if (this.ulaPlus.isEnabled()) {
-        if (port == 0xFF3B) {
+        if (port == UlaPlusContainer.PORT_DATA) {
           // data port
           this.ulaPlus.setData(value);
-        } else if (port == 0xBF3B) {
+        } else if (port == UlaPlusContainer.PORT_REGISTER) {
           // register port
           this.ulaPlus.setRegister(value);
         }
