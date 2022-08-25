@@ -1749,7 +1749,8 @@ public final class VideoController extends JComponent
 
     if (this.ulaPlus.isActive()) {
       this.preStepBorderColor =
-          this.tvFilterChain.applyBorderColor(this.ulaPlus.findColorForIndex(this.portFEw & 7))
+          this.tvFilterChain.applyBorderColor(
+                  this.ulaPlus.findColorForIndex((this.portFEw & 7) | 8))
               .getRGB();
     } else {
       this.preStepBorderColor =

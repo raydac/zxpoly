@@ -22,18 +22,7 @@ public final class UlaPlusContainer {
   }
 
   private static int extendColorTo8bits(final int triple) {
-    final int h = (triple >> 2) & 1;
-    final int m = (triple >> 1) & 1;
-    final int l = triple & 1;
-
-    return (h << 7)
-        | (m << 6)
-        | (l << 5)
-        | (h << 4)
-        | (m << 3)
-        | (l << 2)
-        | (h << 1)
-        | m;
+    return (triple << 5) | (triple << 2) | (triple >> 1);
   }
 
   private static int grbToRgb(final int grb) {
@@ -128,7 +117,7 @@ public final class UlaPlusContainer {
   }
 
   public int findPaperRgbForAttribute(final int attribute) {
-    final int index = ((attribute >> 2) & 0b11_0000) | ((attribute >> 3) & 7);
+    final int index = ((attribute >> 2) & 0b11_0000) | ((attribute >> 3) & 7) | 8;
     return this.paletteRgb.get(index);
   }
 
