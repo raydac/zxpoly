@@ -94,8 +94,6 @@ public class OptionsPanel extends JTabbedPane {
   private JLabel labelRomSource;
   private JLabel labelIntFrame;
   private JLabel labelFrameRate;
-  private JPanel panelStreaming;
-  private JPanel panelGeneral;
   private JSpinner spinnerFramesPerSec;
   private JSpinner spinnerIntFrame;
   private JSpinner spinnerPort;
@@ -197,7 +195,6 @@ public class OptionsPanel extends JTabbedPane {
   private void initComponents() {
     GridBagConstraints gridBagConstraints;
 
-    panelStreaming = new JPanel();
     labelInterlacedScan = new JLabel();
     labelOldTvFilter = new JLabel();
     labelTimingProfile = new JLabel();
@@ -216,7 +213,6 @@ public class OptionsPanel extends JTabbedPane {
     checkSoundSchemeACB = new JCheckBox();
     labelFrameRate = new JLabel();
     spinnerFramesPerSec = new JSpinner();
-    panelGeneral = new JPanel();
     labelRomSource = new JLabel();
     labelIntFrame = new JLabel();
     labelSyncPaint = new JLabel();
@@ -261,7 +257,120 @@ public class OptionsPanel extends JTabbedPane {
     keySelectorProtekJoystickFire = new KeyCodeChooser();
     keySelectorProtekJoystickUp = new KeyCodeChooser();
 
-    panelStreaming.setBorder(createTitledBorder("Streaming"));
+    final JPanel panelGeneral = new JPanel();
+    final JPanel panelStreaming = new JPanel();
+    final JPanel panelScreen = new JPanel();
+
+    panelScreen.setLayout(new GridBagLayout());
+
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 0;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.EAST;
+
+    labelIntFrame.setHorizontalAlignment(RIGHT);
+    labelIntFrame.setText("INT/Frame:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 0;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelScreen.add(labelIntFrame, gridBagConstraints);
+
+    spinnerIntFrame.setModel(new javax.swing.SpinnerNumberModel(1, 1, 100, 1));
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 0;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelScreen.add(spinnerIntFrame, gridBagConstraints);
+
+    labelSyncPaint.setHorizontalAlignment(RIGHT);
+    labelSyncPaint.setText("Sync.paint (can be slow):");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 1;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelScreen.add(labelSyncPaint, gridBagConstraints);
+
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 1;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelScreen.add(checkSyncPaint, gridBagConstraints);
+
+    labelInterlacedScan.setHorizontalAlignment(RIGHT);
+    labelInterlacedScan.setText("Interlaced scan:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 2;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelScreen.add(labelInterlacedScan, gridBagConstraints);
+
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 2;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelScreen.add(checkInterlacedScan, gridBagConstraints);
+
+    labelOldTvFilter.setHorizontalAlignment(RIGHT);
+    labelOldTvFilter.setText("Default Old color TV:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 3;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelScreen.add(labelOldTvFilter, gridBagConstraints);
+
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 3;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelScreen.add(checkOldTvFilter, gridBagConstraints);
+
+    labelBorderWidth.setHorizontalAlignment(RIGHT);
+    labelBorderWidth.setText("Border width:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 4;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelScreen.add(labelBorderWidth, gridBagConstraints);
+
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 4;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelScreen.add(comboBorderWidth, gridBagConstraints);
+
+    labelEmulateFFport.setHorizontalAlignment(RIGHT);
+    labelEmulateFFport.setText("Port FF emulation:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 5;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelScreen.add(labelEmulateFFport, gridBagConstraints);
+
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 5;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelScreen.add(checkEmulateFFport, gridBagConstraints);
+
+    labelUlaPlus.setHorizontalAlignment(RIGHT);
+    labelUlaPlus.setText("Ula Plus:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 6;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelScreen.add(labelUlaPlus, gridBagConstraints);
+
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 6;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelScreen.add(checkUlaPlus, gridBagConstraints);
+
     panelStreaming.setLayout(new GridBagLayout());
 
     labelFfMpegPath.setHorizontalAlignment(RIGHT);
@@ -273,6 +382,13 @@ public class OptionsPanel extends JTabbedPane {
     gridBagConstraints.anchor = GridBagConstraints.EAST;
     panelStreaming.add(labelFfMpegPath, gridBagConstraints);
 
+    textFfmpegPath.setColumns(24);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 0;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelStreaming.add(textFfmpegPath, gridBagConstraints);
+
     labelNetInterface.setHorizontalAlignment(RIGHT);
     labelNetInterface.setText("Net.interface:");
     gridBagConstraints = new GridBagConstraints();
@@ -281,13 +397,6 @@ public class OptionsPanel extends JTabbedPane {
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.EAST;
     panelStreaming.add(labelNetInterface, gridBagConstraints);
-
-    textFfmpegPath.setColumns(24);
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 0;
-    gridBagConstraints.anchor = GridBagConstraints.WEST;
-    panelStreaming.add(textFfmpegPath, gridBagConstraints);
 
     comboNetAdddr.setModel(new javax.swing.DefaultComboBoxModel<>());
     gridBagConstraints = new GridBagConstraints();
@@ -316,13 +425,14 @@ public class OptionsPanel extends JTabbedPane {
     labelSound.setText("Sound:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 4;
+    gridBagConstraints.gridy = 3;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.EAST;
     panelStreaming.add(labelSound, gridBagConstraints);
+
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 4;
+    gridBagConstraints.gridy = 3;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelStreaming.add(checkGrabSound, gridBagConstraints);
 
@@ -330,18 +440,17 @@ public class OptionsPanel extends JTabbedPane {
     labelFrameRate.setText("Frame rate:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 3;
+    gridBagConstraints.gridy = 4;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelStreaming.add(labelFrameRate, gridBagConstraints);
 
     spinnerFramesPerSec.setModel(new javax.swing.SpinnerNumberModel(25, 1, 50, 1));
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 3;
+    gridBagConstraints.gridy = 4;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelStreaming.add(spinnerFramesPerSec, gridBagConstraints);
 
-    panelGeneral.setBorder(createTitledBorder("General"));
     panelGeneral.setLayout(new GridBagLayout());
 
     labelRomSource.setHorizontalAlignment(RIGHT);
@@ -374,73 +483,16 @@ public class OptionsPanel extends JTabbedPane {
     textCustomRomPath.setColumns(24);
     panelGeneral.add(textCustomRomPath, gridBagConstraints);
 
-    labelIntFrame.setHorizontalAlignment(RIGHT);
-    labelIntFrame.setText("INT/Frame:");
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 2;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGeneral.add(labelIntFrame, gridBagConstraints);
-
-    spinnerIntFrame.setModel(new javax.swing.SpinnerNumberModel(1, 1, 100, 1));
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 2;
-    gridBagConstraints.anchor = GridBagConstraints.WEST;
-    panelGeneral.add(spinnerIntFrame, gridBagConstraints);
-
-    labelSyncPaint.setHorizontalAlignment(RIGHT);
-    labelSyncPaint.setText("Sync.paint (can be slow):");
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 3;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGeneral.add(labelSyncPaint, gridBagConstraints);
-
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 3;
-    gridBagConstraints.anchor = GridBagConstraints.WEST;
-    panelGeneral.add(checkSyncPaint, gridBagConstraints);
-
-    labelInterlacedScan.setHorizontalAlignment(RIGHT);
-    labelInterlacedScan.setText("Interlaced scan:");
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 4;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGeneral.add(labelInterlacedScan, gridBagConstraints);
-
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 4;
-    gridBagConstraints.anchor = GridBagConstraints.WEST;
-    panelGeneral.add(checkInterlacedScan, gridBagConstraints);
-
-    labelOldTvFilter.setHorizontalAlignment(RIGHT);
-    labelOldTvFilter.setText("Default Old color TV:");
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 5;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGeneral.add(labelOldTvFilter, gridBagConstraints);
-
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 5;
-    gridBagConstraints.anchor = GridBagConstraints.WEST;
-    panelGeneral.add(checkOldTvFilter, gridBagConstraints);
-
     labelTurboSound.setHorizontalAlignment(RIGHT);
     labelTurboSound.setText("TurboSound (NedoPC):");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 6;
+    gridBagConstraints.gridy = 2;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelTurboSound, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 6;
+    gridBagConstraints.gridy = 2;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkTurboSound, gridBagConstraints);
@@ -449,12 +501,12 @@ public class OptionsPanel extends JTabbedPane {
     labelCovoxFb.setText("Covox (#FB):");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 7;
+    gridBagConstraints.gridy = 3;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelCovoxFb, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 7;
+    gridBagConstraints.gridy = 3;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkCovoxFb, gridBagConstraints);
@@ -463,12 +515,12 @@ public class OptionsPanel extends JTabbedPane {
     labelSoundSchemeACB.setText("Sound channels ACB:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 8;
+    gridBagConstraints.gridy = 4;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelSoundSchemeACB, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 8;
+    gridBagConstraints.gridy = 4;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkSoundSchemeACB, gridBagConstraints);
@@ -477,12 +529,12 @@ public class OptionsPanel extends JTabbedPane {
     labelVolumeProfile.setText("Volume profile:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 9;
+    gridBagConstraints.gridy = 5;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelVolumeProfile, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 9;
+    gridBagConstraints.gridy = 5;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(comboVolumeProfile, gridBagConstraints);
@@ -491,12 +543,12 @@ public class OptionsPanel extends JTabbedPane {
     labelZx128ByDefault.setText("Default ZX Mode:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 10;
+    gridBagConstraints.gridy = 6;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelZx128ByDefault, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 10;
+    gridBagConstraints.gridy = 6;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkZx128ByDefault, gridBagConstraints);
@@ -505,12 +557,12 @@ public class OptionsPanel extends JTabbedPane {
     labelKempstonMouseAllowed.setText("Kempston mouse allowed:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 11;
+    gridBagConstraints.gridy = 7;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelKempstonMouseAllowed, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 11;
+    gridBagConstraints.gridy = 7;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkKempstonMouseAllowed, gridBagConstraints);
@@ -519,12 +571,12 @@ public class OptionsPanel extends JTabbedPane {
     labelVirtualKbdApart.setText("Virtual keyboard apart:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 12;
+    gridBagConstraints.gridy = 8;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelVirtualKbdApart, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 12;
+    gridBagConstraints.gridy = 8;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkVkbdApart, gridBagConstraints);
@@ -533,12 +585,12 @@ public class OptionsPanel extends JTabbedPane {
     labelVirtualKbdLook.setText("Keyboard decoration:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 13;
+    gridBagConstraints.gridy = 9;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelVirtualKbdLook, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 13;
+    gridBagConstraints.gridy = 9;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(comboKeyboardLook, gridBagConstraints);
@@ -547,12 +599,12 @@ public class OptionsPanel extends JTabbedPane {
     labelMacroCursorKeys.setText("Auto-CS for cursor keys:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 14;
+    gridBagConstraints.gridy = 10;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelMacroCursorKeys, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 14;
+    gridBagConstraints.gridy = 10;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkAutoiCsForCursorKeys, gridBagConstraints);
@@ -561,57 +613,15 @@ public class OptionsPanel extends JTabbedPane {
     labelTimingProfile.setText("Timing:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 15;
+    gridBagConstraints.gridy = 11;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelTimingProfile, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 15;
+    gridBagConstraints.gridy = 11;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(comboTimingProfile, gridBagConstraints);
-
-    labelBorderWidth.setHorizontalAlignment(RIGHT);
-    labelBorderWidth.setText("Border width:");
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 16;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGeneral.add(labelBorderWidth, gridBagConstraints);
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 16;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = GridBagConstraints.WEST;
-    panelGeneral.add(comboBorderWidth, gridBagConstraints);
-
-    labelEmulateFFport.setHorizontalAlignment(RIGHT);
-    labelEmulateFFport.setText("Port FF emulation:");
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 17;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGeneral.add(labelEmulateFFport, gridBagConstraints);
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 17;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = GridBagConstraints.WEST;
-    panelGeneral.add(checkEmulateFFport, gridBagConstraints);
-
-    labelUlaPlus.setHorizontalAlignment(RIGHT);
-    labelUlaPlus.setText("Ula Plus:");
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 18;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGeneral.add(labelUlaPlus, gridBagConstraints);
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 18;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = GridBagConstraints.WEST;
-    panelGeneral.add(checkUlaPlus, gridBagConstraints);
 
     final JPanel panelKempston = new JPanel(new GridBagLayout());
     panelKempston.setBorder(createTitledBorder("Kempston joystick"));
@@ -712,6 +722,7 @@ public class OptionsPanel extends JTabbedPane {
     joysticksPanel.add(panelCursor);
 
     this.addTab("General", panelGeneral);
+    this.addTab("Screen", panelScreen);
     this.addTab("Joystick", joysticksPanel);
     this.addTab("Streaming", panelStreaming);
   }
