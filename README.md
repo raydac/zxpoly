@@ -9,12 +9,13 @@
 
 __2.3.1 (SNAPSHOT)__
 
+- added support for ULA Plus palette [#72](https://github.com/raydac/zxpoly/issues/72)
 - added support for SZX snapshot load
 - fix for Virtual keyboard button [#83](https://github.com/raydac/zxpoly/issues/83)
 - added CLI support to define emulator start parameters through command line
 - added Virtual keyboard skin Spectrum+2 Style [#75](https://github.com/raydac/zxpoly/issues/75)
-- fixed turbo menu item sync with fast button [#70](https://github.com/raydac/zxpoly/issues/70) 
-- updated embedded JDK to 17.0.4+8
+- fixed turbo menu item sync with fast button [#70](https://github.com/raydac/zxpoly/issues/70)
+- updated embedded JDK to 17.0.4.1+1
 - fixed keyboard layout [#66](https://github.com/raydac/zxpoly/issues/66)
 
 __2.3.0 (02-may-2022)__
