@@ -107,6 +107,14 @@ public final class AppOptions {
     preferences.putBoolean(Option.AUTOCS_FOR_CURSOR_KEYS.name(), flag);
   }
 
+  public synchronized boolean isUlaPlus() {
+    return preferences.getBoolean(Option.ULAPLUS.name(), false);
+  }
+
+  public synchronized void setUlaPlus(final boolean flag) {
+    preferences.putBoolean(Option.ULAPLUS.name(), flag);
+  }
+
   public synchronized boolean isOldColorTvOnStart() {
     return preferences.getBoolean(Option.OLD_COLOR_TV_ON_START.name(), false);
   }
@@ -529,6 +537,7 @@ public final class AppOptions {
     PROTEK_JOYSTICK_VK_DOWN,
     PROTEK_JOYSTICK_VK_FIRE,
     ATTRIBUTE_PORT_FF,
+    ULAPLUS
   }
 
 }

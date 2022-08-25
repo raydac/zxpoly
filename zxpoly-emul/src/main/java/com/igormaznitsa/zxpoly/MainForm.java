@@ -495,7 +495,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         AppOptions.getInstance().isTurboSound(),
         allowKempstonMouse,
         AppOptions.getInstance().isAttributePortFf(),
-        vkbdContainer
+        vkbdContainer,
+        AppOptions.getInstance().isUlaPlus()
     );
     this.board.reset();
     this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() != BoardMode.ZXPOLY);

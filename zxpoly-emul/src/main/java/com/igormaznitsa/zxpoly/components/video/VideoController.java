@@ -139,6 +139,7 @@ public final class VideoController extends JComponent
   private final BufferedImage borderImage;
   private final int[] borderImageRgbData;
   private final BorderWidth borderWidth;
+  private final boolean virtualKeyboardUndecorated;
   private volatile int currentVideoMode = VIDEOMODE_ZXPOLY_256x192_FLASH_MASK;
   private Dimension size = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
   private volatile float zoom = 1.0f;
@@ -155,7 +156,7 @@ public final class VideoController extends JComponent
   private int preStepBorderColor;
   private Rectangle lastVirtualKeyboardWindowPosition = null;
 
-  private final boolean virtualKeyboardUndecorated;
+  private final UlaPlusContainer ulaPlus;
 
   public VideoController(
       final BorderWidth borderWidth,
@@ -163,11 +164,17 @@ public final class VideoController extends JComponent
       final boolean syncRepaint,
       final Bounds virtualKeyboardPosition,
       final Motherboard board,
-      final VirtualKeyboardDecoration vkbdContainer) {
+      final VirtualKeyboardDecoration vkbdContainer,
+      final boolean ulaPlus) {
     super();
 
-    this.borderWidth = borderWidth;
+    this.ulaPlus = new UlaPlusContainer(ulaPlus);
 
+    if (this.ulaPlus.isEnabled()) {
+      log.info("ULA PLUS is enabled");
+    }
+
+    this.borderWidth = borderWidth;
     this.syncRepaint = syncRepaint;
     this.timingProfile = timingProfile;
 
@@ -246,6 +253,100 @@ public final class VideoController extends JComponent
     });
 
     this.setDoubleBuffered(false);
+  }
+
+  private static void fillDataBufferForZxSpectrum128Mode(
+      final LineRenderMode renderLines,
+      final ZxPolyModule[] modules,
+      final int[] pixelRgbBuffer,
+      final boolean flashActive,
+      final int lineFrom,
+      final int lineTo,
+      final UlaPlusContainer ulaPlus
+  ) {
+    final ZxPolyModule mainModule = modules[0];
+    final byte[] heap = mainModule.getMotherboard().getHeapRam();
+
+    final int videoRamHeapOffset;
+    if ((mainModule.read7FFD() & PORTw_ZX128_SCREEN) == 0) {
+      // RAM 5
+      videoRamHeapOffset = mainModule.getHeapOffset() + 0x14000;
+    } else {
+      // RAM 7
+      videoRamHeapOffset = mainModule.getHeapOffset() + 0x1C000;
+    }
+
+    final boolean useUlaPlus = ulaPlus.isActive();
+
+    int offset = 0;
+    int attributeOffset = 0;
+
+    for (int yy = lineFrom; yy < lineTo; yy++) {
+      final int addressFrom = ZX_SCREEN_ROW_OFFSETS[yy];
+      final int addressTo = addressFrom + 32;
+      for (int i = addressFrom; i < addressTo; i++) {
+        if ((i & 0x1F) == 0) {
+          // the first byte in the line
+          final int y = extractYFromAddress(i);
+          offset = y << 10;
+          attributeOffset = calcAttributeAddressZxMode(i);
+        }
+
+        int currentPixels = heap[videoRamHeapOffset + i] & 0xFF;
+
+        final int attrOffset = attributeOffset++;
+
+        final int argbInkColor;
+        final int argbPaperColor;
+
+        if (useUlaPlus) {
+          final int attribute = heap[videoRamHeapOffset + attrOffset] & 0xFF;
+          argbInkColor = ulaPlus.findInkRgbForAttribute(attribute);
+          argbPaperColor = ulaPlus.findPaperRgbForAttribute(attribute);
+        } else {
+          int effectiveAttribute = heap[videoRamHeapOffset + attrOffset];
+          effectiveAttribute =
+              flashActive && ((effectiveAttribute & 0x80) != 0) ?
+                  (effectiveAttribute & 0b01_000_000)
+                      | ((effectiveAttribute >> 3) & 7)
+                      | ((effectiveAttribute & 7) << 3) : effectiveAttribute;
+          argbInkColor = extractInkPaletteColor(effectiveAttribute);
+          argbPaperColor = extractPaperPaletteColor(effectiveAttribute);
+        }
+
+        int x = 8;
+
+        while (x-- > 0) {
+          final int color = (currentPixels & 0x80) == 0 ? argbPaperColor : argbInkColor;
+          currentPixels <<= 1;
+
+          switch (renderLines) {
+            case ALL: {
+              pixelRgbBuffer[offset++] = color;
+              pixelRgbBuffer[offset] = color;
+              offset += SCREEN_WIDTH;
+
+              pixelRgbBuffer[offset--] = color;
+              pixelRgbBuffer[offset] = color;
+              offset -= SCREEN_WIDTH - 2;
+            }
+            break;
+            case EVEN: {
+              pixelRgbBuffer[offset++] = color;
+              pixelRgbBuffer[offset++] = color;
+            }
+            break;
+            case ODD: {
+              pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
+              pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
+            }
+            break;
+            default:
+              throw new Error("Unexpected mode");
+          }
+        }
+      }
+    }
   }
 
   private static int[] generateZxScreenRowStartOffsets() {
@@ -431,85 +532,8 @@ public final class VideoController extends JComponent
     }
   }
 
-  private static void fillDataBufferForZxSpectrum128Mode(
-      final LineRenderMode renderLines,
-      final ZxPolyModule[] modules,
-      final int[] pixelRgbBuffer,
-      final boolean flashActive,
-      final int lineFrom,
-      final int lineTo) {
-    final ZxPolyModule mainModule = modules[0];
-    final byte[] heap = mainModule.getMotherboard().getHeapRam();
-
-    final int videoRamHeapOffset;
-    if ((mainModule.read7FFD() & PORTw_ZX128_SCREEN) == 0) {
-      // RAM 5
-      videoRamHeapOffset = mainModule.getHeapOffset() + 0x14000;
-    } else {
-      // RAM 7
-      videoRamHeapOffset = mainModule.getHeapOffset() + 0x1C000;
-    }
-
-    int offset = 0;
-    int attributeOffset = 0;
-
-    for (int yy = lineFrom; yy < lineTo; yy++) {
-      final int addressFrom = ZX_SCREEN_ROW_OFFSETS[yy];
-      final int addressTo = addressFrom + 32;
-      for (int i = addressFrom; i < addressTo; i++) {
-        if ((i & 0x1F) == 0) {
-          // the first byte in the line
-          final int y = extractYFromAddress(i);
-          offset = y << 10;
-          attributeOffset = calcAttributeAddressZxMode(i);
-        }
-
-        final int attrOffset = attributeOffset++;
-
-        int effectiveAttribute = heap[videoRamHeapOffset + attrOffset];
-        effectiveAttribute =
-            flashActive && ((effectiveAttribute & 0x80) != 0) ? (effectiveAttribute & 0b01_000_000)
-                | ((effectiveAttribute >> 3) & 7)
-                | ((effectiveAttribute & 7) << 3) : effectiveAttribute;
-
-        int currentPixels = heap[videoRamHeapOffset + i] & 0xFF;
-
-        final int inkColor = extractInkPaletteColor(effectiveAttribute);
-        final int paperColor = extractPaperPaletteColor(effectiveAttribute);
-
-        int x = 8;
-
-        while (x-- > 0) {
-          final int color = (currentPixels & 0x80) == 0 ? paperColor : inkColor;
-          currentPixels <<= 1;
-
-          switch (renderLines) {
-            case ALL: {
-              pixelRgbBuffer[offset++] = color;
-              pixelRgbBuffer[offset] = color;
-              offset += SCREEN_WIDTH;
-
-              pixelRgbBuffer[offset--] = color;
-              pixelRgbBuffer[offset] = color;
-              offset -= SCREEN_WIDTH - 2;
-            }
-            break;
-            case EVEN: {
-              pixelRgbBuffer[offset++] = color;
-              pixelRgbBuffer[offset++] = color;
-            }
-            break;
-            case ODD: {
-              pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
-              pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
-            }
-            break;
-            default:
-              throw new Error("Unexpected mode");
-          }
-        }
-      }
-    }
+  public UlaPlusContainer getUlaPlus() {
+    return this.ulaPlus;
   }
 
   private static void fillDataBufferForZxPolyVideoMode(
@@ -1353,8 +1377,12 @@ public final class VideoController extends JComponent
     }
   }
 
-  private void refreshBufferData(final LineRenderMode renderLines, final int lineFrom,
-                                 final int lineTo, final int videoMode) {
+  private void refreshBufferData(
+      final LineRenderMode renderLines,
+      final int lineFrom,
+      final int lineTo,
+      final int videoMode
+  ) {
     switch (videoMode) {
       case VIDEOMODE_ZX48_CPU0: {
         fillDataBufferForZxSpectrum128Mode(
@@ -1363,7 +1391,8 @@ public final class VideoController extends JComponent
             this.workZxScreenImageRgbData,
             this.board.isFlashActive(),
             lineFrom,
-            lineTo
+            lineTo,
+            this.ulaPlus
         );
       }
       break;
@@ -1596,7 +1625,14 @@ public final class VideoController extends JComponent
 
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
-    return -1;
+    int result = -1;
+    if (this.ulaPlus.isEnabled()) {
+      if (port == 0xFF3B) {
+        // data port
+        result = this.ulaPlus.getData();
+      }
+    }
+    return result;
   }
 
   public int getPortFE() {
@@ -1607,8 +1643,24 @@ public final class VideoController extends JComponent
   public void writeIo(final ZxPolyModule module, final int port, final int value) {
     if (!module.isTrdosActive()) {
       final boolean zxPolyMode = module.getMotherboard().getBoardMode() == BoardMode.ZXPOLY;
-      if ((zxPolyMode && (port & 0xFF) == 0xFE) || (!zxPolyMode && (port & 1) == 0)) {
-        this.portFEw = value & 0xFF;
+      if (zxPolyMode) {
+        if ((port & 0xFF) == 0xFE) {
+          this.portFEw = value & 0xFF;
+        }
+      } else {
+        if ((port & 1) == 0) {
+          this.portFEw = value & 0xFF;
+        }
+      }
+
+      if (this.ulaPlus.isEnabled()) {
+        if (port == 0xFF3B) {
+          // data port
+          this.ulaPlus.setData(value);
+        } else if (port == 0xBF3B) {
+          // register port
+          this.ulaPlus.setRegister(value);
+        }
       }
     }
   }
@@ -1689,10 +1741,20 @@ public final class VideoController extends JComponent
     this.stepStartTiStates = tstatesIntReached ? -1 : frameTiStates;
     if (signalReset) {
       this.portFEw = 0x00;
+      if (this.ulaPlus != null) {
+        this.ulaPlus.reset();
+      }
     }
     this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
-    this.preStepBorderColor =
-        this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
+
+    if (this.ulaPlus.isActive()) {
+      this.preStepBorderColor =
+          this.tvFilterChain.applyBorderColor(this.ulaPlus.findColorForIndex(this.portFEw & 7))
+              .getRGB();
+    } else {
+      this.preStepBorderColor =
+          this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
+    }
   }
 
   @Override

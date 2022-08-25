@@ -4,6 +4,7 @@ import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.snd.AyBasedSoundDevice;
+import com.igormaznitsa.zxpoly.components.video.UlaPlusContainer;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -143,6 +144,24 @@ public class FormatSZX extends Snapshot {
           module.syncWriteHeapPage(pageNum, data);
 
           in.assertNoMoreData();
+        }));
+
+    container.getBlocks().stream()
+        .filter(x -> x.getId() == SzxContainer.SzxBlock.ID_ZXSTPALETTE)
+        .forEach(x -> x.consume((block, in) -> {
+          final int flags = in.readByte();
+          final int register = in.readByte();
+          final byte[] palette = in.readFully(64);
+          final int portFF = in.readByte();
+
+          in.assertNoMoreData();
+
+          final UlaPlusContainer ulaPlusContainer = board.getVideoController().getUlaPlus();
+          if (ulaPlusContainer.isEnabled()) {
+            ulaPlusContainer.loadPalette(palette);
+            ulaPlusContainer.setRegister(register);
+            ulaPlusContainer.setActive((flags & 1) != 0);
+          }
         }));
   }
 
@@ -301,6 +320,7 @@ public class FormatSZX extends Snapshot {
       public static final int ID_ZXSTUSPEECH = makeDword('U', 'S', 'P', 'E');
       public static final int ID_ZXSTZXPRINTER = makeDword('Z', 'X', 'P', 'R');
       public static final int ID_ZXSTZ80REGS = makeDword('Z', '8', '0', 'R');
+      public static final int ID_ZXSTPALETTE = makeDword('P', 'L', 'T', 'T');
 
       private final int id;
       private final byte[] data;

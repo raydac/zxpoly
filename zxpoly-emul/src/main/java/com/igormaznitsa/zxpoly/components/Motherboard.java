@@ -106,7 +106,8 @@ public final class Motherboard implements ZxPolyConstants {
       final boolean useTurboSound,
       final boolean allowKempstonMouse,
       final boolean attributePortFf,
-      final VirtualKeyboardDecoration vkbdContainer
+      final VirtualKeyboardDecoration vkbdContainer,
+      final boolean ulaPlus
   ) {
     this.attributePortFf = attributePortFf;
     this.soundLevels = soundLevels;
@@ -114,6 +115,7 @@ public final class Motherboard implements ZxPolyConstants {
     this.timingProfile = timingProfile;
     this.modules = new ZxPolyModule[NUMBER_OF_MODULES];
     final List<IoDevice> ioDevices = new ArrayList<>();
+
     for (int i = 0; i < NUMBER_OF_MODULES; i++) {
       this.modules[i] = new ZxPolyModule(timingProfile, this, Objects.requireNonNull(rom, "ROM must not be null"), i);
       ioDevices.add(this.modules[i]);
@@ -135,8 +137,13 @@ public final class Motherboard implements ZxPolyConstants {
     this.keyboard = new KeyboardKempstonAndTapeIn(timingProfile, this, allowKempstonMouse);
     ioDevices.add(keyboard);
     this.video =
-        new VideoController(borderWidth, timingProfile, syncRepaint, virtualKeyboardBounds, this,
-            vkbdContainer);
+        new VideoController(borderWidth,
+            timingProfile,
+            syncRepaint,
+            virtualKeyboardBounds,
+            this,
+            vkbdContainer,
+            ulaPlus);
     ioDevices.add(video);
     ioDevices.add(new KempstonMouse(this));
 

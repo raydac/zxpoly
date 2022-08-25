@@ -17,6 +17,9 @@
 
 package com.igormaznitsa.zxpoly.ui;
 
+import static java.util.Objects.requireNonNull;
+import static javax.swing.BorderFactory.createTitledBorder;
+
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.video.BorderWidth;
@@ -24,24 +27,32 @@ import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.RomSource;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
-import java.util.*;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
-
-import static java.util.Objects.requireNonNull;
-import static javax.swing.BorderFactory.createTitledBorder;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 
 public class OptionsPanel extends JTabbedPane {
 
   private static final Logger LOGGER = Logger.getLogger("Options");
 
   private JCheckBox checkCovoxFb;
+  private JCheckBox checkUlaPlus;
   private JCheckBox checkTurboSound;
   private JCheckBox checkZx128ByDefault;
   private JCheckBox checkKempstonMouseAllowed;
@@ -50,6 +61,7 @@ public class OptionsPanel extends JTabbedPane {
   private JLabel labelSyncPaint;
   private JLabel labelOldTvFilter;
   private JLabel labelCovoxFb;
+  private JLabel labelUlaPlus;
   private JLabel labelVolumeProfile;
   private JLabel labelSoundSchemeACB;
   private JLabel labelTurboSound;
@@ -154,6 +166,7 @@ public class OptionsPanel extends JTabbedPane {
     this.checkGrabSound.setSelected(data.grabSound);
     this.checkVkbdApart.setSelected(data.vkdApart);
     this.checkCovoxFb.setSelected(data.covoxFb);
+    this.checkUlaPlus.setSelected(data.ulaPlus);
     this.checkZx128ByDefault.setSelected(data.zx128byDefault);
     this.checkTurboSound.setSelected(data.turboSound);
     this.checkKempstonMouseAllowed.setSelected(data.kempstonMouseAllowed);
@@ -211,6 +224,8 @@ public class OptionsPanel extends JTabbedPane {
     spinnerIntFrame = new JSpinner();
     labelCovoxFb = new JLabel();
     checkCovoxFb = new JCheckBox();
+    labelUlaPlus = new JLabel();
+    checkUlaPlus = new JCheckBox();
     labelTurboSound = new JLabel();
     checkTurboSound = new JCheckBox();
     labelZx128ByDefault = new JLabel();
@@ -584,6 +599,20 @@ public class OptionsPanel extends JTabbedPane {
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkEmulateFFport, gridBagConstraints);
 
+    labelUlaPlus.setHorizontalAlignment(RIGHT);
+    labelUlaPlus.setText("Ula Plus:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 18;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGeneral.add(labelUlaPlus, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 18;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGeneral.add(checkUlaPlus, gridBagConstraints);
+
     final JPanel panelKempston = new JPanel(new GridBagLayout());
     panelKempston.setBorder(createTitledBorder("Kempston joystick"));
 
@@ -706,6 +735,7 @@ public class OptionsPanel extends JTabbedPane {
     public final int intPerFrame;
     public final int frameRate;
     public final boolean covoxFb;
+    public final boolean ulaPlus;
     public final boolean turboSound;
     public final boolean kempstonMouseAllowed;
     public final boolean zx128byDefault;
@@ -752,6 +782,7 @@ public class OptionsPanel extends JTabbedPane {
       this.ffmpegPath = AppOptions.getInstance().getFfmpegPath();
       this.frameRate = AppOptions.getInstance().getFrameRate();
       this.covoxFb = AppOptions.getInstance().isCovoxFb();
+      this.ulaPlus = AppOptions.getInstance().isUlaPlus();
       this.turboSound = AppOptions.getInstance().isTurboSound();
       this.kempstonMouseAllowed = AppOptions.getInstance().isKempstonMouseAllowed();
       this.zx128byDefault = AppOptions.getInstance().getDefaultBoardMode() != BoardMode.ZXPOLY;
@@ -795,6 +826,7 @@ public class OptionsPanel extends JTabbedPane {
       this.inetAddress = requireNonNull(optionsPanel.comboNetAdddr.getSelectedItem()).toString();
       this.frameRate = (Integer) optionsPanel.spinnerFramesPerSec.getValue();
       this.covoxFb = optionsPanel.checkCovoxFb.isSelected();
+      this.ulaPlus = optionsPanel.checkUlaPlus.isSelected();
       this.turboSound = optionsPanel.checkTurboSound.isSelected();
       this.kempstonMouseAllowed = optionsPanel.checkKempstonMouseAllowed.isSelected();
       this.zx128byDefault = rom != RomSource.TEST && optionsPanel.checkZx128ByDefault.isSelected();
@@ -827,6 +859,7 @@ public class OptionsPanel extends JTabbedPane {
       AppOptions.getInstance().setFfmpegPath(this.ffmpegPath);
       AppOptions.getInstance().setGrabSound(this.grabSound);
       AppOptions.getInstance().setCovoxFb(this.covoxFb);
+      AppOptions.getInstance().setUlaPlus(this.ulaPlus);
       AppOptions.getInstance().setIntBetweenFrames(this.intPerFrame);
       AppOptions.getInstance().setPort(this.port);
       AppOptions.getInstance().setAddress(this.inetAddress);
