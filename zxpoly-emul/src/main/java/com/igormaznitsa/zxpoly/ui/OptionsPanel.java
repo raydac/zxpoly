@@ -357,7 +357,7 @@ public class OptionsPanel extends JTabbedPane {
     panelScreen.add(checkEmulateFFport, gridBagConstraints);
 
     labelUlaPlus.setHorizontalAlignment(RIGHT);
-    labelUlaPlus.setText("Ula Plus:");
+    labelUlaPlus.setText("ULA Plus emulation:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridy = 6;
