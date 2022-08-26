@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNullElseGet;
 import com.igormaznitsa.zxpoly.Bounds;
 import com.igormaznitsa.zxpoly.MainForm;
 import com.igormaznitsa.zxpoly.MainFormParameters;
+import com.igormaznitsa.zxpoly.Version;
 import com.igormaznitsa.zxpoly.components.video.BorderWidth;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
@@ -36,14 +37,16 @@ import javax.swing.UIManager;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "zxpoly-emulator", mixinStandardHelpOptions = true,
-    version = ZXPoly.APP_VERSION,
+    version = Version.VERSION_MAJOR + "." + Version.VERSION_MINOR + "." + Version.VERSION_BUILD,
     description = "Emulator of ZXPoly platform (a multi-CPU ZX-Spectrum 128 clone)",
     showAtFileInUsageHelp = true
 )
-public class ZXPoly implements Runnable {
+public class ZXPoly implements Runnable, Version {
 
   public static final String APP_TITLE = "ZX-Poly emulator";
-  public static final String APP_VERSION = "v 2.3.1";
+
+  public static final String APP_VERSION =
+      String.format("v %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD);
   @CommandLine.Option(
       names = {"-r", "--rom"},
       description = "bootstrap ROM as a single file"

@@ -30,6 +30,16 @@ public final class TurboSoundNedoPc implements IoDevice, AyBasedSoundDevice {
   }
 
   @Override
+  public int getAyAddress() {
+    return this.chipAy0.readAddress();
+  }
+
+  @Override
+  public int getAyRegister(final int address) {
+    return this.chipAy0.readData(address);
+  }
+
+  @Override
   public void setAyRegister(final int address, final int value) {
     this.chipAy0.writeData(address, value);
   }
@@ -92,7 +102,6 @@ public final class TurboSoundNedoPc implements IoDevice, AyBasedSoundDevice {
   @Override
   public void postStep(final int spentTstates) {
     this.chipAy0.step(spentTstates);
-    this.chipAy1.step(spentTstates);
   }
 
   @Override

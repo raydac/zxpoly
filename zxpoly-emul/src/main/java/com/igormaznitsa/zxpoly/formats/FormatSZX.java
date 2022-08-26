@@ -1,17 +1,28 @@
 package com.igormaznitsa.zxpoly.formats;
 
+import static com.igormaznitsa.zxpoly.formats.FormatSZX.SzxContainer.SzxBlock.FAKE;
+import static com.igormaznitsa.zxpoly.formats.FormatSZX.SzxContainer.SzxBlock.compress;
+import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.util.Arrays.copyOf;
+import static java.util.Objects.requireNonNull;
+
 import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.zxpoly.Version;
+import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.snd.AyBasedSoundDevice;
 import com.igormaznitsa.zxpoly.components.video.UlaPlusContainer;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
+import com.igormaznitsa.zxpoly.formats.FormatSZX.SzxContainer.SzxBlock;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,6 +31,8 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
 import org.apache.commons.compress.compressors.deflate.DeflateCompressorInputStream;
 import org.apache.commons.io.IOUtils;
 
@@ -61,7 +74,7 @@ public class FormatSZX extends Snapshot {
     }
 
     container.getBlocks().stream()
-        .filter(x -> x.getId() == SzxContainer.SzxBlock.ID_ZXSTZ80REGS)
+        .filter(x -> x.getId() == SzxBlock.ID_ZXSTZ80REGS)
         .forEach(x -> {
           x.consume((block, in) -> {
             cpu.setRegisterPair(Z80.REGPAIR_AF, in.readWord());
@@ -98,7 +111,7 @@ public class FormatSZX extends Snapshot {
         });
 
     container.getBlocks().stream()
-        .filter(x -> x.getId() == SzxContainer.SzxBlock.ID_ZXSTAYBLOCK)
+        .filter(x -> x.getId() == SzxBlock.ID_ZXSTAYBLOCK)
         .forEach(x -> x.consume((block, in) -> {
           var flags = in.readByte();
           var currentRegister = in.readByte();
@@ -114,7 +127,7 @@ public class FormatSZX extends Snapshot {
         }));
 
     container.getBlocks().stream()
-        .filter(x -> x.getId() == SzxContainer.SzxBlock.ID_ZXSTSPECREGS)
+        .filter(x -> x.getId() == SzxBlock.ID_ZXSTSPECREGS)
         .forEach(x -> x.consume((block, in) -> {
           final int border = in.readByte();
           final int port7FFD = in.readByte();
@@ -132,14 +145,14 @@ public class FormatSZX extends Snapshot {
         }));
 
     container.getBlocks().stream()
-        .filter(x -> x.getId() == SzxContainer.SzxBlock.ID_ZXSTRAMPAGE)
+        .filter(x -> x.getId() == SzxBlock.ID_ZXSTRAMPAGE)
         .forEach(x -> x.consume((block, in) -> {
           final int flags = in.readWord();
           final int pageNum = in.readByte();
           byte[] data = in.rest();
 
           if ((flags & 1) != 0) {
-            data = SzxContainer.SzxBlock.decompress(data);
+            data = SzxBlock.decompress(data);
           }
           module.syncWriteHeapPage(pageNum, data);
 
@@ -147,7 +160,7 @@ public class FormatSZX extends Snapshot {
         }));
 
     container.getBlocks().stream()
-        .filter(x -> x.getId() == SzxContainer.SzxBlock.ID_ZXSTPALETTE)
+        .filter(x -> x.getId() == SzxBlock.ID_ZXSTPALETTE)
         .forEach(x -> x.consume((block, in) -> {
           final int flags = in.readByte();
           final int register = in.readByte();
@@ -166,8 +179,132 @@ public class FormatSZX extends Snapshot {
   }
 
   @Override
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
+    return mode == BoardMode.ZX128;
+  }
+
+  @Override
   public byte[] saveToArray(final Motherboard board, final VideoController vc) throws IOException {
-    throw new IOException("Not-implemented");
+    final int machineId =
+        board.getTimingProfile() == TimingProfile.PENTAGON128 ? SzxContainer.ZXSTMID_PENTAGON128 :
+            SzxContainer.ZXSTMID_128K;
+
+    var module = board.getModules()[0];
+    var ayDevice = board.findIoDevice(AyBasedSoundDevice.class);
+
+    final SzxContainer container = new SzxContainer(machineId, 0, List.of(
+        new SzxBlock(SzxBlock.ID_ZXSTCREATOR, (block, out) -> {
+          out.writeFully(copyOf("ZX-Poly emulator                       ".getBytes(US_ASCII), 32));
+          out.writeWord(Version.VERSION_MAJOR);
+          out.writeWord(Version.VERSION_MINOR);
+        }),
+        new SzxBlock(SzxBlock.ID_ZXSTZ80REGS, (block, out) -> {
+          var cpu = module.getCpu();
+
+          out.writeWord(cpu.getRegisterPair(Z80.REGPAIR_AF));
+          out.writeWord(cpu.getRegisterPair(Z80.REGPAIR_BC));
+          out.writeWord(cpu.getRegisterPair(Z80.REGPAIR_DE));
+          out.writeWord(cpu.getRegisterPair(Z80.REGPAIR_HL));
+
+          out.writeWord(cpu.getRegisterPair(Z80.REGPAIR_AF, true));
+          out.writeWord(cpu.getRegisterPair(Z80.REGPAIR_BC, true));
+          out.writeWord(cpu.getRegisterPair(Z80.REGPAIR_DE, true));
+          out.writeWord(cpu.getRegisterPair(Z80.REGPAIR_HL, true));
+
+          out.writeWord(cpu.getRegister(Z80.REG_IX));
+          out.writeWord(cpu.getRegister(Z80.REG_IY));
+          out.writeWord(cpu.getRegister(Z80.REG_SP));
+          out.writeWord(cpu.getRegister(Z80.REG_PC));
+
+          out.write(cpu.getRegister(Z80.REG_I));
+          out.write(cpu.getRegister(Z80.REG_R));
+
+          out.write(cpu.isIFF1() ? 1 : 0);
+          out.write(cpu.isIFF2() ? 1 : 0);
+
+          out.write(cpu.getIM());
+
+          out.writeDWord(0); // dwCyclesStart
+          out.write(0); // chHoldIntReqCycles
+          out.write(0); // chFlags
+          out.writeWord(0); // wMemPtr
+        }),
+        new SzxBlock(SzxBlock.ID_ZXSTSPECREGS, (block, out) -> {
+          final int portFE = board.getVideoController().getPortFE();
+
+          out.write(portFE & 7);
+          out.write(module.read7FFD());
+          out.write(0);
+          out.write(portFE);
+          out.writeDWord(0);
+        }),
+        new SzxBlock(SzxBlock.ID_ZXSTPALETTE, (block, out) -> {
+          var ulaPlus = board.getVideoController().getUlaPlus();
+          out.write(ulaPlus.getMode());
+          out.write(ulaPlus.getRegister());
+          out.writeFully(ulaPlus.getPalette());
+          out.write(0);
+        }),
+        new SzxBlock(SzxBlock.ID_ZXSTRAMPAGE, (block, out) -> {
+          final int page = 0;
+          out.writeWord(1);
+          out.write(page);
+          out.write(compress(module.makeCopyOfHeapPage(page)));
+        }),
+        new SzxBlock(SzxBlock.ID_ZXSTRAMPAGE, (block, out) -> {
+          final int page = 1;
+          out.writeWord(1);
+          out.write(page);
+          out.write(compress(module.makeCopyOfHeapPage(page)));
+        }),
+        new SzxBlock(SzxBlock.ID_ZXSTRAMPAGE, (block, out) -> {
+          final int page = 2;
+          out.writeWord(1);
+          out.write(page);
+          out.write(compress(module.makeCopyOfHeapPage(page)));
+        }),
+        new SzxBlock(SzxBlock.ID_ZXSTRAMPAGE, (block, out) -> {
+          final int page = 3;
+          out.writeWord(1);
+          out.write(page);
+          out.write(compress(module.makeCopyOfHeapPage(page)));
+        }),
+        new SzxBlock(SzxBlock.ID_ZXSTRAMPAGE, (block, out) -> {
+          final int page = 4;
+          out.writeWord(1);
+          out.write(page);
+          out.write(compress(module.makeCopyOfHeapPage(page)));
+        }),
+        new SzxBlock(SzxBlock.ID_ZXSTRAMPAGE, (block, out) -> {
+          final int page = 5;
+          out.writeWord(1);
+          out.write(page);
+          out.write(compress(module.makeCopyOfHeapPage(page)));
+        }),
+        new SzxBlock(SzxBlock.ID_ZXSTRAMPAGE, (block, out) -> {
+          final int page = 6;
+          out.writeWord(1);
+          out.write(page);
+          out.write(compress(module.makeCopyOfHeapPage(page)));
+        }),
+        new SzxBlock(SzxBlock.ID_ZXSTRAMPAGE, (block, out) -> {
+          final int page = 7;
+          out.writeWord(1);
+          out.write(page);
+          out.write(compress(module.makeCopyOfHeapPage(page)));
+        }),
+        ayDevice == null ? FAKE : new SzxBlock(SzxBlock.ID_ZXSTAYBLOCK, ((block, out) -> {
+          out.write(0);
+          out.write(ayDevice.getAyAddress());
+          for (int i = 0; i < 16; i++) {
+            out.write(ayDevice.getAyRegister(i));
+          }
+        }))
+    ));
+
+    final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    container.write(buffer);
+    return buffer.toByteArray();
   }
 
   @Override
@@ -213,8 +350,17 @@ public class FormatSZX extends Snapshot {
     private final int machineId;
     private final int flags;
 
+    SzxContainer(final int machineId, final int flags, final List<SzxBlock> blocks) {
+      this.magic = MAGIC;
+      this.majorVersion = 1;
+      this.minorVersion = 4;
+      this.flags = flags;
+      this.machineId = machineId;
+      this.blocks = blocks.stream().filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
     SzxContainer(final InputStream inputStream) throws IOException {
-      final SzxStream in = new SzxStream(inputStream);
+      final SzxInputStream in = new SzxInputStream(inputStream);
 
       this.magic = in.readDWord();
       if (this.magic != MAGIC) {
@@ -230,6 +376,20 @@ public class FormatSZX extends Snapshot {
         foundBlocks.add(new SzxBlock(in));
       }
       this.blocks = Collections.unmodifiableList(foundBlocks);
+    }
+
+    public void write(final OutputStream os) throws IOException {
+      final SzxOutputStream outputStream = new SzxOutputStream(os);
+
+      outputStream.writeDWord(this.magic);
+      outputStream.write(this.majorVersion);
+      outputStream.write(this.minorVersion);
+      outputStream.write(this.machineId);
+      outputStream.write(this.flags);
+
+      for (final SzxBlock block : this.blocks) {
+        block.write(outputStream);
+      }
     }
 
     private static String asString(final int dword) {
@@ -325,11 +485,69 @@ public class FormatSZX extends Snapshot {
       private final int id;
       private final byte[] data;
 
-      private SzxBlock(final SzxStream in) {
+      public static final SzxBlock FAKE = new SzxBlock(0, new byte[0]);
+      private final BlockWriter bodyWriter;
+
+      SzxBlock(final int id, final BlockWriter bodyWriter) {
+        this.id = id;
+        this.data = new byte[0];
+        this.bodyWriter = bodyWriter;
+      }
+
+      SzxBlock(final int id, final byte[] data) {
+        this.id = id;
+        this.data = requireNonNull(data);
+        this.bodyWriter = null;
+      }
+
+      SzxBlock(final SzxInputStream in) {
         this.id = in.readDWord();
         final int size = in.readDWord();
         LOGGER.info("Read " + asString(this.id) + " size " + size);
         this.data = in.readFully(size);
+        this.bodyWriter = null;
+      }
+
+      public static byte[] compress(final byte[] data) {
+        try {
+          final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+          final Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION);
+          final DeflaterOutputStream deflaterOutputStream =
+              new DeflaterOutputStream(byteArrayOutputStream, deflater);
+
+          deflaterOutputStream.write(data);
+          deflaterOutputStream.flush();
+          deflaterOutputStream.close();
+
+          return byteArrayOutputStream.toByteArray();
+        } catch (IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      }
+
+      public void write(final SzxOutputStream outputStream) throws IOException {
+        if (this == FAKE) {
+          return;
+        }
+
+        outputStream.writeDWord(this.id);
+        if (this.bodyWriter == null) {
+          outputStream.writeDWord(this.data.length);
+          outputStream.writeFully(this.data);
+        } else {
+          final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+          final SzxOutputStream bufferStream = new SzxOutputStream(buffer);
+          this.bodyWriter.write(this, bufferStream);
+          bufferStream.flush();
+          bufferStream.close();
+          final byte[] saved = buffer.toByteArray();
+          outputStream.writeDWord(saved.length);
+          outputStream.writeFully(saved);
+        }
+      }
+
+      public void consume(final BiConsumer<SzxBlock, SzxInputStream> consumer) {
+        consumer.accept(this, new SzxInputStream(new ByteArrayInputStream(this.data)));
       }
 
       public static byte[] decompress(final byte[] data) {
@@ -351,8 +569,9 @@ public class FormatSZX extends Snapshot {
         return this.id;
       }
 
-      public void consume(final BiConsumer<SzxBlock, SzxStream> consumer) {
-        consumer.accept(this, new SzxStream(new ByteArrayInputStream(this.data)));
+      @FunctionalInterface
+      public interface BlockWriter {
+        void write(SzxBlock block, SzxOutputStream stream) throws IOException;
       }
 
       @Override
@@ -361,11 +580,61 @@ public class FormatSZX extends Snapshot {
       }
     }
 
-    public static class SzxStream {
+    public static class SzxOutputStream extends OutputStream {
+      private final OutputStream outputStream;
+
+      public SzxOutputStream(final OutputStream outputStream) {
+        this.outputStream = requireNonNull(outputStream);
+      }
+
+      public void writeFully(final byte[] data) throws IOException {
+        IOUtils.write(data, this);
+      }
+
+      @Override
+      public void write(final int value) throws IOException {
+        this.outputStream.write(value);
+      }
+
+      public void writeChar(final char chr) throws IOException {
+        outputStream.write(chr);
+      }
+
+      public void writeString(final String str) throws IOException {
+        for (final char c : str.toCharArray()) {
+          this.writeChar(c);
+        }
+        this.write(0);
+      }
+
+      public void writeWord(final int value) throws IOException {
+        this.write(value);
+        this.write(value >>> 8);
+      }
+
+      public void writeDWord(final int value) throws IOException {
+        this.write(value);
+        this.write(value >>> 8);
+        this.write(value >>> 16);
+        this.write(value >>> 24);
+      }
+
+      @Override
+      public void flush() throws IOException {
+        this.outputStream.flush();
+      }
+
+      @Override
+      public void close() throws IOException {
+        this.outputStream.close();
+      }
+    }
+
+    public static class SzxInputStream extends InputStream {
       private final InputStream inputStream;
 
-      public SzxStream(final InputStream inputStream) {
-        this.inputStream = Objects.requireNonNull(inputStream);
+      public SzxInputStream(final InputStream inputStream) {
+        this.inputStream = requireNonNull(inputStream);
       }
 
       public byte[] rest() {
@@ -382,6 +651,11 @@ public class FormatSZX extends Snapshot {
           throw new RuntimeException(ex);
         }
         return baos.toByteArray();
+      }
+
+      @Override
+      public int read() throws IOException {
+        return this.inputStream.read();
       }
 
       public void assertNoMoreData() {
@@ -403,10 +677,6 @@ public class FormatSZX extends Snapshot {
         return result;
       }
 
-      public int readChar() {
-        return readByte();
-      }
-
       public int readWord() {
         final int a = readByte();
         final int b = readByte();
@@ -419,6 +689,10 @@ public class FormatSZX extends Snapshot {
         final int c = readByte();
         final int d = readByte();
         return (d << 24) | (c << 16) | (b << 8) | a;
+      }
+
+      public void close() throws IOException {
+        this.inputStream.close();
       }
 
       public int available() {

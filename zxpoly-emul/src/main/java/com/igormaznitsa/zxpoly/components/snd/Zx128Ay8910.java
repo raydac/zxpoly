@@ -24,6 +24,16 @@ public final class Zx128Ay8910 implements IoDevice, AyBasedSoundDevice {
   }
 
   @Override
+  public int getAyAddress() {
+    return this.ay8910.readAddress();
+  }
+
+  @Override
+  public int getAyRegister(final int address) {
+    return this.ay8910.readData(address);
+  }
+
+  @Override
   public void setAyRegister(final int address, final int value) {
     this.ay8910.writeData(address, value);
   }

@@ -81,7 +81,11 @@ public final class Ay8910Chip {
   }
 
   public int readData() {
-    switch (this.addressLatch) {
+    return this.readData(this.addressLatch);
+  }
+
+  public int readData(final int address) {
+    switch (address & 0xF) {
       case REG_TONE_PERIOD_A_FINE: {
         return this.tonePeriodA & 0xFF;
       }
@@ -122,7 +126,11 @@ public final class Ay8910Chip {
         return (this.envelopePeriod >> 8) & 0xFF;
       }
       case REG_ENV_SHAPE: {
-        return this.envelopeMode;
+        return (this.envelopeMode & 0xF)
+            | (this.enfAlter ? ENV_FLAG_ALTR : 0)
+            | (this.enfAttack ? ENV_FLAG_ATTACK : 0)
+            | (this.enfHold ? ENV_FLAG_HOLD : 0)
+            | (this.enfCont ? ENV_FLAG_CONT : 0);
       }
       case REG_IO_A: {
         return this.ioPortA;
@@ -143,7 +151,7 @@ public final class Ay8910Chip {
   public void writeData(final int address, int value) {
     value &= REG_DATA_MASK[address & 0xF];
 
-    switch (address) {
+    switch (address & 0xF) {
       case REG_TONE_PERIOD_A_FINE: {
         this.tonePeriodA = (this.tonePeriodA & 0xF00) | value;
       }

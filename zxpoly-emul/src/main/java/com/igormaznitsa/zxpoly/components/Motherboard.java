@@ -786,10 +786,15 @@ public final class Motherboard implements ZxPolyConstants {
     return cpuTact - this.frameTiStatesCounter;
   }
 
+  public TimingProfile getTimingProfile() {
+    return this.timingProfile;
+  }
+
   int getContendedDelay(final int port7FFD, final int address) {
     int result = 0;
     if (isContended(address, port7FFD)) {
-      result = this.frameTiStatesCounter < this.timingProfile.tstatesFrame ? this.memoryTimings[this.frameTiStatesCounter].contention : 0;
+      result = this.frameTiStatesCounter < this.timingProfile.tstatesFrame ?
+          this.memoryTimings[this.frameTiStatesCounter].contention : 0;
     }
     return result;
   }

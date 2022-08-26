@@ -38,6 +38,10 @@ public final class UlaPlusContainer {
         | extendColorTo8bits(b);
   }
 
+  public int getMode() {
+    return this.mode;
+  }
+
   public boolean isEnabled() {
     return this.enabled;
   }
@@ -169,11 +173,16 @@ public final class UlaPlusContainer {
   }
 
   public void loadPalette(final byte[] palette) {
-    for (int i = 0; i < (palette.length & 63); i++) {
-      this.palette[i] = palette[i];
-      final int rgb = grbToRgb(palette[i] & 0xFF);
-      this.paletteRgb.set(i, grbToRgb(rgb));
+    for (int i = 0; i < Math.min(palette.length, 64); i++) {
+      final int item = palette[i] & 0xFF;
+      this.palette[i] = (byte) item;
+      final int rgb = grbToRgb(item);
+      this.paletteRgb.set(i, rgb);
       this.paletteColor[i] = new Color(rgb, true);
     }
+  }
+
+  public byte[] getPalette() {
+    return this.palette.clone();
   }
 }
