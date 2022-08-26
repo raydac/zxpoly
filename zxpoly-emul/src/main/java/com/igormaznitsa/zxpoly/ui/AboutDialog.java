@@ -17,16 +17,17 @@
 
 package com.igormaznitsa.zxpoly.ui;
 
-import org.apache.commons.io.IOUtils;
-
-import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import com.igormaznitsa.zxpoly.Version;
+import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import javax.swing.event.HyperlinkEvent;
+import org.apache.commons.io.IOUtils;
 
-public class AboutDialog extends javax.swing.JDialog {
+public class AboutDialog extends javax.swing.JDialog implements Version {
 
   private static final long serialVersionUID = 6729883219284422519L;
   private javax.swing.JButton buttonOk;
@@ -52,7 +53,12 @@ public class AboutDialog extends javax.swing.JDialog {
 
     this.editorPane.setContentType("text/html");
     try {
-      final String htmlText = IOUtils.toString(openAboutResource("index.html"), StandardCharsets.UTF_8);
+      String htmlText = IOUtils.toString(openAboutResource("index.html"), StandardCharsets.UTF_8);
+      htmlText = htmlText
+          .replace("${version.major}", Integer.toString(VERSION_MAJOR))
+          .replace("${version.minor}", Integer.toString(VERSION_MINOR))
+          .replace("${version.build}", Integer.toString(VERSION_BUILD));
+
       this.editorPane.setText(htmlText);
       this.editorPane.setCaretPosition(0);
     } catch (IOException ex) {

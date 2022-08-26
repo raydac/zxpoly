@@ -1,25 +1,41 @@
 package com.igormaznitsa.zxpoly.streamer;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpStatus;
-
-import java.io.*;
+import com.igormaznitsa.zxpoly.Version;
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Base64;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpStatus;
 
-public class HttpProcessor {
+public class HttpProcessor implements Version {
 
   private static final Logger LOGGER = Logger.getLogger("VideoStreamer.HttpProcessor");
 
@@ -164,6 +180,9 @@ public class HttpProcessor {
       } else {
         if (!binary) {
           final String text = new String(data, StandardCharsets.UTF_8)
+              .replace("${version.major}", Integer.toString(VERSION_MAJOR))
+              .replace("${version.minor}", Integer.toString(VERSION_MINOR))
+              .replace("${version.build}", Integer.toString(VERSION_BUILD))
                   .replace("${video.link}", linkToVideoStream)
                   .replace("${wsvideo.link}", linkToWsVideoStream)
                   .replace("${playlist.link}", linkToPlaylist)
