@@ -17,18 +17,17 @@
 
 package com.igormaznitsa.zxpoly.formats;
 
+import static com.igormaznitsa.zxpoly.components.ZxPolyConstants.PORTw_ZXPOLY_BLOCK;
+import static java.util.Arrays.stream;
+
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
-
-import javax.swing.filechooser.FileFilter;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
-
-import static com.igormaznitsa.zxpoly.components.ZxPolyConstants.PORTw_ZXPOLY_BLOCK;
-import static java.util.Arrays.stream;
+import javax.swing.filechooser.FileFilter;
 
 public abstract class Snapshot extends FileFilter {
 
@@ -48,6 +47,7 @@ public abstract class Snapshot extends FileFilter {
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
     board.setBoardMode(BoardMode.ZX128, false);
     board.getMasterCpu().doReset();
+    board.getVideoController().getUlaPlus().reset();
   }
 
   public void doModeSpec256_128(final Motherboard board) {
@@ -55,6 +55,7 @@ public abstract class Snapshot extends FileFilter {
     board.set3D00(PORTw_ZXPOLY_BLOCK, true);
     board.setBoardMode(BoardMode.SPEC256, false);
     board.getMasterCpu().doReset();
+    board.getVideoController().getUlaPlus().reset();
   }
 
   public void doMode48(final Motherboard board) {
@@ -63,6 +64,7 @@ public abstract class Snapshot extends FileFilter {
     stream(board.getModules()).forEach(ZxPolyModule::makeAndLockZx48Mode);
     board.setBoardMode(BoardMode.ZX128, false);
     board.getMasterCpu().doReset();
+    board.getVideoController().getUlaPlus().reset();
   }
 
   public void doZxPoly(final Motherboard board) {
@@ -70,6 +72,7 @@ public abstract class Snapshot extends FileFilter {
     board.set3D00(0, true);
     board.setBoardMode(BoardMode.ZXPOLY, false);
     board.getMasterCpu().doReset();
+    board.getVideoController().getUlaPlus().reset();
   }
 
   public void doModeSpec256_48(final Motherboard board) {
@@ -78,6 +81,7 @@ public abstract class Snapshot extends FileFilter {
     stream(board.getModules()).forEach(ZxPolyModule::makeAndLockZx48Mode);
     board.setBoardMode(BoardMode.SPEC256, false);
     board.getMasterCpu().doReset();
+    board.getVideoController().getUlaPlus().reset();
   }
 
   public abstract String getExtension();
