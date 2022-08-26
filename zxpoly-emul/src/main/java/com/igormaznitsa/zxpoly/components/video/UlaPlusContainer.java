@@ -8,6 +8,7 @@ public final class UlaPlusContainer {
 
   public static final int PORT_REGISTER = 0xBF3B;
   public static final int PORT_DATA = 0xFF3B;
+  public static final int PORT_TIMEX_FF = 0x00FF;
 
   private final byte[] palette = new byte[64];
   private final AtomicIntegerArray paletteRgb = new AtomicIntegerArray(64);
@@ -15,6 +16,8 @@ public final class UlaPlusContainer {
   private final boolean enabled;
   private volatile int register;
   private volatile int mode;
+
+  private volatile int portFF;
 
   public UlaPlusContainer(final boolean enabled) {
     this.enabled = enabled;
@@ -38,6 +41,14 @@ public final class UlaPlusContainer {
         | extendColorTo8bits(b);
   }
 
+  public int getPortFF() {
+    return this.portFF;
+  }
+
+  public void setPortFF(final int value) {
+    this.portFF = value & 0xFF;
+  }
+
   public int getMode() {
     return this.mode;
   }
@@ -47,6 +58,7 @@ public final class UlaPlusContainer {
   }
 
   public void reset() {
+    this.portFF = 0;
     this.mode = 0;
     this.register = 0;
 

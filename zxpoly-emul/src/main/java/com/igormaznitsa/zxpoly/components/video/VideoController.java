@@ -1660,6 +1660,8 @@ public final class VideoController extends JComponent
         } else if (port == UlaPlusContainer.PORT_REGISTER) {
           // register port
           this.ulaPlus.setRegister(value);
+        } else if ((port & 0xFF) == UlaPlusContainer.PORT_TIMEX_FF) {
+          this.ulaPlus.setPortFF(value);
         }
       }
     }

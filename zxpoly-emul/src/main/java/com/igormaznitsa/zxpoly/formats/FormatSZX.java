@@ -173,6 +173,7 @@ public class FormatSZX extends Snapshot {
           if (ulaPlusContainer.isEnabled()) {
             ulaPlusContainer.loadPalette(palette);
             ulaPlusContainer.setRegister(register);
+            ulaPlusContainer.setPortFF(portFF);
             ulaPlusContainer.setActive((flags & 1) != 0);
           }
         }));
@@ -243,7 +244,7 @@ public class FormatSZX extends Snapshot {
           out.write(ulaPlus.getMode());
           out.write(ulaPlus.getRegister());
           out.writeFully(ulaPlus.getPalette());
-          out.write(0);
+          out.write(ulaPlus.getPortFF());
         }),
         new SzxBlock(SzxBlock.ID_ZXSTRAMPAGE, (block, out) -> {
           final int page = 0;
