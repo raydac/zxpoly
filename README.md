@@ -10,7 +10,7 @@
 __2.3.1 (SNAPSHOT)__
 
 - added support for ULA Plus palette [#72](https://github.com/raydac/zxpoly/issues/72)
-- added support for SZX snapshot load
+- added support for SZX snapshot
 - fix for Virtual keyboard button [#83](https://github.com/raydac/zxpoly/issues/83)
 - added CLI support to define emulator start parameters through command line
 - added Virtual keyboard skin Spectrum+2 Style [#75](https://github.com/raydac/zxpoly/issues/75)
