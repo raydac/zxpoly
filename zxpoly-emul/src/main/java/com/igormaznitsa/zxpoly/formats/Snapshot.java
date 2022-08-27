@@ -38,7 +38,11 @@ public abstract class Snapshot extends FileFilter {
     return (port7FFD & 0b00_1_1_1_111) == 0b00_1_1_0_000;
   }
 
-  public boolean canMakeSnapshotForBoardMode(final BoardMode mode, final boolean ulaPlusActive) {
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
+    return false;
+  }
+
+  public boolean isAllowUlaPlus() {
     return false;
   }
 

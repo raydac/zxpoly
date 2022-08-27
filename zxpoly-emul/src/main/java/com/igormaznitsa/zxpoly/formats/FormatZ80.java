@@ -59,8 +59,8 @@ public class FormatZ80 extends Snapshot {
   }
 
   @Override
-  public boolean canMakeSnapshotForBoardMode(final BoardMode mode, final boolean ulaPlusActive) {
-    return !ulaPlusActive && (mode == BoardMode.ZX128 || mode == BoardMode.SPEC256);
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
+    return mode == BoardMode.ZX128 || mode == BoardMode.SPEC256;
   }
 
   @Override

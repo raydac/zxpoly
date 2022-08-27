@@ -36,7 +36,7 @@ public class FormatZXP extends Snapshot {
   }
 
   @Override
-  public boolean canMakeSnapshotForBoardMode(final BoardMode mode, final boolean ulaPlusActive) {
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
     return mode == BoardMode.ZXPOLY;
   }
 

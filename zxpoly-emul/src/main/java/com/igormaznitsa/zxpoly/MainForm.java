@@ -3139,8 +3139,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
                   SNAPSHOT_FORMAT_SNA,
                   SNAPSHOT_FORMAT_ROM,
                   SNAPSHOT_FORMAT_SZX)
-              .filter(x -> x.canMakeSnapshotForBoardMode(this.board.getBoardMode(),
-                  this.board.getVideoController().getUlaPlus().isActive()))
+              .filter(x -> !this.board.getVideoController().getUlaPlus().isActive() ||
+                  x.isAllowUlaPlus())
+              .filter(x -> x.canMakeSnapshotForBoardMode(this.board.getBoardMode()))
               .toArray(Snapshot[]::new)
       );
 
