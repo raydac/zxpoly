@@ -56,7 +56,7 @@ under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 
 # Pre-built versions
 
-![The Main Window of the Emulator](docs/screenshots/zxpoly230_heartmd.png)
+![The Main Window of the Emulator](docs/screenshots/ulaplus_emulation.png)
 
 | OS                                           | Download link                                                                                                                          | 
 | -------------------------------------------- |----------------------------------------------------------------------------------------------------------------------------------------|
@@ -70,7 +70,7 @@ Because the emulator is written in Java, its JAR file can be started just throug
 line `java -jar zxpoly-emul-2.3.1.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in __File->Options->Active
 ROM__, the ROM will be downloaded from one of remote network resources.   
-![Ula-Plus](docs/screenshots/ulaplus_emulation.png)
+![Test-ROM](docs/screenshots/testromscr1.png)
 
 # Supported snapshot formats
 
