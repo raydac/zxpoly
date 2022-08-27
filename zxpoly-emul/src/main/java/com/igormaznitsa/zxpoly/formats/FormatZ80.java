@@ -24,8 +24,11 @@ import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -56,8 +59,8 @@ public class FormatZ80 extends Snapshot {
   }
 
   @Override
-  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
-    return mode == BoardMode.ZX128 || mode == BoardMode.SPEC256;
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode, final boolean ulaPlusActive) {
+    return !ulaPlusActive && (mode == BoardMode.ZX128 || mode == BoardMode.SPEC256);
   }
 
   @Override

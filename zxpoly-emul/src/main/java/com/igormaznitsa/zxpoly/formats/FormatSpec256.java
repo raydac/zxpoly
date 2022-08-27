@@ -17,6 +17,10 @@
 
 package com.igormaznitsa.zxpoly.formats;
 
+import static com.igormaznitsa.zxpoly.formats.Spec256Arch.GFn_PATTERN;
+import static com.igormaznitsa.zxpoly.formats.Spec256Arch.readData;
+import static java.util.Objects.requireNonNull;
+
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.MainForm;
 import com.igormaznitsa.zxpoly.components.BoardMode;
@@ -24,24 +28,31 @@ import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyConstants;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
-import org.apache.commons.io.IOUtils;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static com.igormaznitsa.zxpoly.formats.Spec256Arch.GFn_PATTERN;
-import static com.igormaznitsa.zxpoly.formats.Spec256Arch.readData;
-import static java.util.Objects.requireNonNull;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
+import org.apache.commons.io.IOUtils;
 
 public class FormatSpec256 extends Snapshot {
 
@@ -354,7 +365,7 @@ public class FormatSpec256 extends Snapshot {
   }
 
   @Override
-  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode, final boolean ulaPlusActive) {
     return mode == BoardMode.SPEC256;
   }
 

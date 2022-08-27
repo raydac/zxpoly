@@ -180,7 +180,7 @@ public class FormatSZX extends Snapshot {
   }
 
   @Override
-  public boolean canMakeSnapshotForBoardMode(final BoardMode mode) {
+  public boolean canMakeSnapshotForBoardMode(final BoardMode mode, final boolean ulaPlusActive) {
     return mode == BoardMode.ZX128;
   }
 
