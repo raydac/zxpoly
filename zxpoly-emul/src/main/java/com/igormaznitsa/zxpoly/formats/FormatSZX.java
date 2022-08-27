@@ -165,7 +165,11 @@ public class FormatSZX extends Snapshot {
           final int flags = in.readByte();
           final int register = in.readByte();
           final byte[] palette = in.readFully(64);
-          final int portFF = in.readByte();
+          int portFF = 0;
+          if (in.available() > 0) {
+            // added since Ula Plus 1.1a (https://zxdesign.itch.io/ulaplus)
+            portFF = in.readByte();
+          }
 
           in.assertNoMoreData();
 
