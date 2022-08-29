@@ -437,7 +437,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       }
     }
 
-    initComponents(BASE_ROM.isTrdosPresented(), AppOptions.getInstance().isShowIndicatorPanel());
+    initComponents(BASE_ROM.isTrdosPresented(),
+        parameters.isShowIndicatorPanel() && AppOptions.getInstance().isShowIndicatorPanel());
 
     this.interlaceScan = AppOptions.getInstance().isInterlacedScan();
 
@@ -681,7 +682,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     }
 
     this.menuBar.setVisible(parameters.isShowMainMenu());
-    this.panelIndicators.setVisible(parameters.isShowIndicatorPanel());
 
     if (parameters.getBounds() != null) {
       SwingUtilities.invokeLater(() -> {
