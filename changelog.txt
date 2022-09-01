@@ -1,5 +1,6 @@
 __2.3.2 (SNAPSHOT)__
 
+- added Ula Plus palette support for animation GIF recording
 - fixed restore indicator panel view flag after restart [#86](https://github.com/raydac/zxpoly/issues/86)
 
 __2.3.1 (27-aug-2022)__
