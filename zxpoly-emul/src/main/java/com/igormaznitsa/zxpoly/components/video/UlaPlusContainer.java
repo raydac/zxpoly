@@ -197,4 +197,12 @@ public final class UlaPlusContainer {
   public byte[] getPalette() {
     return this.palette.clone();
   }
+
+  public int[] getArgbPalette() {
+    final int[] result = new int[this.paletteRgb.length()];
+    for (int i = 0; i < this.paletteRgb.length(); i++) {
+      result[i] = this.paletteRgb.get(i);
+    }
+    return result;
+  }
 }

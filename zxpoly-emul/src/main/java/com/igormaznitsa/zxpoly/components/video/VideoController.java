@@ -1528,7 +1528,11 @@ public final class VideoController extends JComponent
           return PALETTE_SPEC256;
         }
         default: {
-          return PALETTE_ZXPOLY;
+          if (this.ulaPlus.isActive()) {
+            return this.ulaPlus.getArgbPalette();
+          } else {
+            return PALETTE_ZXPOLY;
+          }
         }
       }
     } else {
