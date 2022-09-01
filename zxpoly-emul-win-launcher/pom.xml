@@ -71,7 +71,7 @@
             <id>default-build</id>
             <configuration>
               <targetOs>windows</targetOs>
-              <targetArch>386</targetArch>
+              <targetArch>amd64</targetArch>
               <ldFlags>
                 <flag>-H=windowsgui</flag>
               </ldFlags>
