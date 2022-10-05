@@ -60,7 +60,7 @@ public final class Z80 {
 
   // if the flag is true then it makes green z80bltst.tap v5.0 2022-01-11 by Ped7g
   // but in the same time FUSE Z80 tests are red for block commands
-  private static final boolean FLAG_EXPERIMENTAL_IMPROVE_BLOCK_FLAGS = false;
+  private static final boolean FLAG_EXPERIMENTAL_IMPROVE_BLOCK_FLAGS = true;
   private static final byte[] FTABLE_SZYX;
   private static final byte[] FTABLE_SZYXP;
   private static final int FLAG_S_SHIFT = 7;
