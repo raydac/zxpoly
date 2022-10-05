@@ -7,6 +7,13 @@
 
 # Changelog
 
+__2,3,2 (SNAPSHOT)__
+
+- updated embedded JDK to 19+37
+- minor improvements of Z80 emulation
+- added Ula Plus palette support for animation GIF recording
+- fixed restore indicator panel view flag after restart [#86](https://github.com/raydac/zxpoly/issues/86)
+
 __2.3.1 (27-aug-2022)__
 
 - added support for ULA Plus palette [#72](https://github.com/raydac/zxpoly/issues/72)
@@ -18,17 +25,6 @@ __2.3.1 (27-aug-2022)__
 - updated embedded JDK to 17.0.4.1+1
 - fixed keyboard layout [#66](https://github.com/raydac/zxpoly/issues/66)
 
-__2.3.0 (02-may-2022)__
-
-- improved screen render
-- added virtual keyboard skin [#66](https://github.com/raydac/zxpoly/issues/66)
-- added file menu item "Create empty disk"
-- added formatting for new created TRD disks
-- added sound WAV writer [#62](https://github.com/raydac/zxpoly/issues/62)
-- improved TAP format reader to read zero length blocks [#60](https://github.com/raydac/zxpoly/issues/60)
-- improved Z80
-  emulation, [improved undocumented flags if interruption during block operations](https://github.com/MrKWatkins/ZXSpectrumNextTests/tree/develop/Tests/ZX48_ZX128/Z80BlockInstructionFlags)
-- embedded JDK updated to Liberica OpenJDK 17.0.3+7
 
 full [change log](changelog.txt)
 
