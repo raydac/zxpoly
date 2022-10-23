@@ -9,7 +9,7 @@
 
 __2,3,2 (SNAPSHOT)__
 
-- updated embedded JDK to 19+37
+- updated embedded JDK to 19.0.1+11
 - minor improvements of Z80 emulation
 - added Ula Plus palette support for animation GIF recording
 - fixed restore indicator panel view flag after restart [#86](https://github.com/raydac/zxpoly/issues/86)
