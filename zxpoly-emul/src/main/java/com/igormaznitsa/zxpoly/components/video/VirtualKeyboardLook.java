@@ -10,7 +10,8 @@ public enum VirtualKeyboardLook {
   AMBRO_TIMEX("ambrotimex"),
   AMBRO_TIMEX2048PAL("ambrotimex2048pal"),
   AMBRO_ZX81("ambrozx81"),
-  AMBRO_PLUS_2("ambroplustwo");
+  AMBRO_PLUS_2("ambroplustwo"),
+  AMBRO_PLUS_2GREY("ambrozxplus2grey");
 
   private final String baseName;
 
