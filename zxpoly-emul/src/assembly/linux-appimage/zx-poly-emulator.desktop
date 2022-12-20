@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.1
+Type=Application
+Name=ZX-Poly emulator
+GenericName=ZX-Poly emulator
+Icon=icon
+Comment=Emulator of ZX-Poly platform
+Categories=Game;Emulator;
+Keywords=zx;spectrum;poly;emulator;game;
+Terminal=false
+StartupWMClass=zx-poly-emulator
