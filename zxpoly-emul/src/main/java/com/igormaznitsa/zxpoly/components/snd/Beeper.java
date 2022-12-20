@@ -17,12 +17,11 @@
 
 package com.igormaznitsa.zxpoly.components.snd;
 
+import static java.lang.Long.toHexString;
+import static java.lang.String.format;
+
 import com.igormaznitsa.zxpoly.components.tapereader.WriterWav;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
-
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.Line;
-import javax.sound.sampled.SourceDataLine;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -34,9 +33,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
-
-import static java.lang.Long.toHexString;
-import static java.lang.String.format;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.Line;
+import javax.sound.sampled.SourceDataLine;
 
 public final class Beeper {
 
@@ -49,7 +48,7 @@ public final class Beeper {
   public static final int CHANNEL_TS_B = 6;
   public static final int CHANNEL_TS_C = 7;
   public static final AudioFormat AUDIO_FORMAT = SndBufferContainer.AUDIO_FORMAT;
-  private static final Logger LOGGER = Logger.getLogger("Beeper");
+  private static final Logger LOGGER = Logger.getLogger(Beeper.class.getName());
 
   private static final IWavWriter NULL_WAV = new IWavWriter() {
     @Override

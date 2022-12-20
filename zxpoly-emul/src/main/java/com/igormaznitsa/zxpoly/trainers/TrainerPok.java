@@ -2,10 +2,8 @@ package com.igormaznitsa.zxpoly.trainers;
 
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
-import org.apache.commons.io.FileUtils;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -14,9 +12,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.UIManager;
+import org.apache.commons.io.FileUtils;
 
 public class TrainerPok extends AbstractTrainer {
-  public static final Logger LOGGER = Logger.getLogger("Trainer.POK");
+  public static final Logger LOGGER = Logger.getLogger(TrainerPok.class.getName());
 
   public TrainerPok() {
     super("POK file (*.pok)", "pok");

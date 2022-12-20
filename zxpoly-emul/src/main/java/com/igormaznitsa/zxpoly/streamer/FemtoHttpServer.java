@@ -1,24 +1,36 @@
 package com.igormaznitsa.zxpoly.streamer;
 
-import org.apache.commons.io.IOUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.*;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import org.apache.commons.io.IOUtils;
 
 public class FemtoHttpServer {
 
-  private static final Logger LOGGER = Logger.getLogger("FemtoHttpServer");
-  private static final byte[] EOL = new byte[]{0x0D, 0x0A};
+  private static final Logger LOGGER = Logger.getLogger(FemtoHttpServer.class.getName());
+  private static final byte[] EOL = new byte[] {0x0D, 0x0A};
   private final ExecutorService executorService;
   private final InetSocketAddress socketAddress;
   private final int backlog;

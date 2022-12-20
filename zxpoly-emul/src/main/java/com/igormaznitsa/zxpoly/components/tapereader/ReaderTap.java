@@ -17,13 +17,13 @@
 
 package com.igormaznitsa.zxpoly.components.tapereader;
 
+import static com.igormaznitsa.jbbp.io.JBBPOut.BeginBin;
+import static java.lang.Integer.toHexString;
+
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.zxpoly.utils.SpectrumUtils;
-
-import javax.swing.*;
-import javax.swing.event.ListDataListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayOutputStream;
@@ -36,13 +36,13 @@ import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static com.igormaznitsa.jbbp.io.JBBPOut.BeginBin;
-import static java.lang.Integer.toHexString;
+import javax.swing.ListModel;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ListDataListener;
 
 final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
 
-  private static final Logger LOGGER = Logger.getLogger("TAP");
+  private static final Logger LOGGER = Logger.getLogger(ReaderTap.class.getName());
 
   private static final long PULSELEN_PILOT = 2168L;
   private static final long PULSELEN_SYNC1 = 667L;

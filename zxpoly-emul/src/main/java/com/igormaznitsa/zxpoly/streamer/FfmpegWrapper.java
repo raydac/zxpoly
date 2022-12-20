@@ -1,5 +1,7 @@
 package com.igormaznitsa.zxpoly.streamer;
 
+import static com.igormaznitsa.zxpoly.components.snd.Beeper.AUDIO_FORMAT;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,11 +9,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static com.igormaznitsa.zxpoly.components.snd.Beeper.AUDIO_FORMAT;
-
 public class FfmpegWrapper {
 
-  public static final Logger LOGGER = Logger.getLogger("VideoStreamer");
+  public static final Logger LOGGER = Logger.getLogger(FfmpegWrapper.class.getName());
   private final String ffmpegPath;
   private final int frameRate;
   private final String srcVideo;

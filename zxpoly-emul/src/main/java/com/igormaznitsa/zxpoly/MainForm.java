@@ -171,7 +171,7 @@ import org.apache.commons.lang3.SystemUtils;
 
 public final class MainForm extends JFrame implements ActionListener, TapeContext {
 
-  public static final Logger LOGGER = Logger.getLogger("UI");
+  public static final Logger LOGGER = Logger.getLogger(MainForm.class.getName());
   public static final Duration TIMER_INT_DELAY_MILLISECONDS = Duration.ofMillis(20);
   private static final Icon ICO_MOUSE = new ImageIcon(Utils.loadIcon("mouse.png"));
   private static final Icon ICO_MOUSE_DIS =

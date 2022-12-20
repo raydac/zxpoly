@@ -1,11 +1,17 @@
 package com.igormaznitsa.zxpoly.streamer;
 
+import static com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter.RASTER_HEIGHT;
+import static com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter.RASTER_WIDTH_ARGB_INT;
+
 import com.igormaznitsa.zxpoly.components.snd.Beeper;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.utils.Timer;
 import com.igormaznitsa.zxpoly.utils.Utils;
-
-import java.net.*;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.URL;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -13,11 +19,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-import static com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter.RASTER_HEIGHT;
-import static com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter.RASTER_WIDTH_ARGB_INT;
-
 public final class ZxVideoStreamer {
-  public static final Logger LOGGER = Logger.getLogger("VideoStreamer");
+  public static final Logger LOGGER = Logger.getLogger(ZxVideoStreamer.class.getName());
 
   private final VideoController videoController;
 

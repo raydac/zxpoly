@@ -17,11 +17,16 @@
 
 package com.igormaznitsa.zxpoly.components;
 
-import com.igormaznitsa.z80.*;
+import static com.igormaznitsa.z80.Z80.REG_A;
+
+import com.igormaznitsa.z80.MemoryAccessProvider;
+import com.igormaznitsa.z80.Utils;
+import com.igormaznitsa.z80.Z80;
+import com.igormaznitsa.z80.Z80CPUBus;
+import com.igormaznitsa.z80.Z80Instruction;
 import com.igormaznitsa.z80.disasm.Z80Disasm;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.formats.Spec256Arch;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -30,8 +35,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
-
-import static com.igormaznitsa.z80.Z80.REG_A;
 
 @SuppressWarnings("WeakerAccess")
 public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProvider {
@@ -84,7 +87,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     this.cpu = new Z80(this);
 
-    this.logger = Logger.getLogger("ZX#" + index);
+    this.logger = Logger.getLogger(ZxPolyModule.class.getName() + "_" + index);
 
     if (index == 0) {
       this.gfxRam = new byte[128 * 8 * 1024];

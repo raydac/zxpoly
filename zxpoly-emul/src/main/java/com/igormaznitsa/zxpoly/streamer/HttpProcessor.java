@@ -37,7 +37,7 @@ import org.apache.http.HttpStatus;
 
 public class HttpProcessor implements Version {
 
-  private static final Logger LOGGER = Logger.getLogger("VideoStreamer.HttpProcessor");
+  private static final Logger LOGGER = Logger.getLogger(HttpProcessor.class.getName());
 
   private static final String STREAM_RESOURCE = "stream.ts";
   private static final String WS_STREAM_RESOURCE = "wsstream.ts";

@@ -111,7 +111,7 @@ public final class VideoController extends JComponent
       true);
   private static final int[] PALETTE_ALIGNED_ZXPOLY =
       Utils.alignPaletteColors(PALETTE_ZXPOLY, PALETTE_SPEC256);
-  private static final Logger log = Logger.getLogger("VC");
+  private static final Logger log = Logger.getLogger(VideoController.class.getName());
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
   private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];

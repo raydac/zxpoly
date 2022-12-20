@@ -56,7 +56,7 @@ public final class Motherboard implements ZxPolyConstants {
   public static final int TRIGGER_DIFF_MEM_ADDR = 2;
   public static final int TRIGGER_DIFF_EXE_CODE = 4;
   private static final int NUMBER_OF_INT_BETWEEN_STATISTIC_UPDATE = 4;
-  private static final Logger LOGGER = Logger.getLogger("MB");
+  private static final Logger LOGGER = Logger.getLogger(Motherboard.class.getName());
 
   private static final int SPEC256_GFX_CORES = 8;
   private static final int NUMBER_OF_MODULES = 4;

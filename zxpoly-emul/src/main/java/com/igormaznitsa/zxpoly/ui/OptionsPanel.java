@@ -49,7 +49,7 @@ import javax.swing.JTextField;
 
 public class OptionsPanel extends JTabbedPane {
 
-  private static final Logger LOGGER = Logger.getLogger("Options");
+  private static final Logger LOGGER = Logger.getLogger(OptionsPanel.class.getName());
 
   private JCheckBox checkCovoxFb;
   private JCheckBox checkUlaPlus;

@@ -21,7 +21,6 @@ import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
-
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.logging.Logger;
 
@@ -32,7 +31,7 @@ public class BetaDiscInterface implements IoDevice {
   public static final int DRIVE_C = 2;
   public static final int DRIVE_D = 3;
 
-  private static final Logger LOGGER = Logger.getLogger("BD");
+  private static final Logger LOGGER = Logger.getLogger(BetaDiscInterface.class.getName());
   private final Motherboard board;
   private final K1818VG93 vg93;
   private final AtomicReferenceArray<TrDosDisk> diskDrives = new AtomicReferenceArray<>(4);

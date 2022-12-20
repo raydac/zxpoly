@@ -17,6 +17,8 @@
 
 package com.igormaznitsa.zxpoly.components;
 
+import static net.java.games.input.ControllerEnvironment.getDefaultEnvironment;
+
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapter;
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterInterface2;
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterKempston;
@@ -24,11 +26,6 @@ import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterType;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
-import net.java.games.input.Controller;
-import net.java.games.input.ControllerEvent;
-import net.java.games.input.ControllerListener;
-
-import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,8 +35,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import static net.java.games.input.ControllerEnvironment.getDefaultEnvironment;
+import javax.swing.SwingUtilities;
+import net.java.games.input.Controller;
+import net.java.games.input.ControllerEvent;
+import net.java.games.input.ControllerListener;
 
 public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
@@ -124,8 +123,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   public static final long ZXKEY_B =
           0b00010000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
   public static final long ZXKEY_NONE =
-          0b00011111_00011111_00011111_00011111_00011111_00011111_00011111_00011111L;
-  private static final Logger LOGGER = Logger.getLogger("InController");
+      0b00011111_00011111_00011111_00011111_00011111_00011111_00011111_00011111L;
+  private static final Logger LOGGER = Logger.getLogger(KeyboardKempstonAndTapeIn.class.getName());
   private static final int KEMPSTON_RIGHT = 1;
   private static final int KEMPSTON_LEFT = 2;
   private static final int KEMPSTON_DOWN = 4;

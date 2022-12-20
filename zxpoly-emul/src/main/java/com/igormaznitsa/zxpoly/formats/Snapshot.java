@@ -31,7 +31,7 @@ import javax.swing.filechooser.FileFilter;
 
 public abstract class Snapshot extends FileFilter {
 
-  protected static final Logger LOGGER = Logger.getLogger("SNPSHT");
+  protected static final Logger LOGGER = Logger.getLogger(Snapshot.class.getName());
 
   static boolean isMode48(final ZxPolyModule module) {
     final int port7FFD = module.read7FFD();

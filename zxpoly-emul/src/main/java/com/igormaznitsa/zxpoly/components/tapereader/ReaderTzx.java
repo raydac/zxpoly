@@ -5,9 +5,6 @@ import com.igormaznitsa.zxpoly.components.tapereader.tzx.TzxWavRenderer;
 import com.igormaznitsa.zxpoly.components.tapereader.wave.ByteArraySeekableContainer;
 import com.igormaznitsa.zxpoly.components.tapereader.wave.InMemoryWavFile;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
-
-import javax.swing.*;
-import javax.swing.event.ListDataListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -18,10 +15,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.ListModel;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ListDataListener;
 
 public class ReaderTzx implements TapeSource, ListModel<TzxWavRenderer.RenderResult.NamedOffsets> {
 
-  private static final Logger LOGGER = Logger.getLogger("TZX");
+  private static final Logger LOGGER = Logger.getLogger(ReaderTzx.class.getName());
 
   private final List<ActionListener> actionListeners = new CopyOnWriteArrayList<>();
   private final AtomicLong tStateCounter = new AtomicLong(0L);
