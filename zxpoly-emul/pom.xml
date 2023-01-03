@@ -481,7 +481,7 @@
                                 <productVersion>2.3.2.0</productVersion>
                                 <txtFileVersion>${project.version}</txtFileVersion>
                                 <fileDescription>Emulator of ZXPoly platform</fileDescription>
-                                <copyright>2014-2022 Igor Maznitsa</copyright>
+                                <copyright>2014-2023 Igor Maznitsa</copyright>
                                 <txtProductVersion>${project.version}</txtProductVersion>
                                 <productName>${project.name}</productName>
                                 <companyName>igormaznitsa.com</companyName>
