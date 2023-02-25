@@ -271,7 +271,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
   private final Motherboard board;
   private final ZxVideoStreamer videoStreamer;
-  private final Timer wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS);
+  private final Timer wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS, Duration.ofNanos(50000L));
   private final Runnable traceWindowsUpdater = new Runnable() {
     @Override
     public void run() {
@@ -1058,13 +1058,18 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       boolean notifyRepaintScreen = false;
       boolean doBlink = false;
 
+      int frameTiStates = this.board.getFrameTiStates();
+      final boolean inTurboMode = this.turboMode;
+      final boolean tiStatesForIntExhausted = frameTiStates >= this.timingProfile.tstatesFrame;
+      boolean intTickForWallClockReached = this.wallClock.completed();
+
+      if (!inTurboMode && tiStatesForIntExhausted && !intTickForWallClockReached) {
+        this.wallClock.sleep();
+      }
+      intTickForWallClockReached = this.wallClock.completed();
+
       if (stepLocker.tryLock()) {
         try {
-          int frameTiStates = this.board.getFrameTiStates();
-          final boolean inTurboMode = this.turboMode;
-          final boolean tiStatesForIntExhausted = frameTiStates >= this.timingProfile.tstatesFrame;
-          final boolean intTickForWallClockReached = this.wallClock.completed();
-
           final boolean doCpuIntTick;
           if (intTickForWallClockReached) {
             if (tiStatesForIntExhausted) {
@@ -1158,7 +1163,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           this.repaintScreen();
         }
       } else {
-        final int frameTiStates = this.board.getFrameTiStates();
         if (this.wallClock.completed()) {
           this.wallClock.next();
           this.videoStreamer.onWallclockInt();
@@ -1176,6 +1180,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       if (this.activeTracerWindowCounter.get() > 0) {
         updateTracerWindowsForStep();
       }
+
       Thread.onSpinWait();
     }
   }
