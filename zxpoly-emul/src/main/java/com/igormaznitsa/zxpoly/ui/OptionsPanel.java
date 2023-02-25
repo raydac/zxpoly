@@ -159,6 +159,7 @@ public class OptionsPanel extends JTabbedPane {
     this.comboTimingProfile.setSelectedItem(data.timingProfile);
     this.checkEmulateFFport.setSelected(data.emulateFFport);
     this.checkInterlacedScan.setSelected(data.interlacedScan);
+    this.checkTryLessResources.setSelected(data.tryLessResources);
     this.checkSyncPaint.setSelected(data.syncPaint);
     this.checkOldTvFilter.setSelected(data.oldTvFilter);
     this.textCustomRomPath.setText(data.customRomPath);
