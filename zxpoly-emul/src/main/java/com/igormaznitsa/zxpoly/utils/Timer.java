@@ -26,9 +26,7 @@ public final class Timer {
   }
 
   public void sleep() {
-    if (this.sleepDelay < 0L) {
-      Thread.onSpinWait();
-    } else {
+    if (this.sleepDelay > 0L) {
       final long nanos = this.timeout - System.nanoTime();
       if (nanos > this.sleepDelay) {
         LockSupport.parkNanos(this.sleepDelay);

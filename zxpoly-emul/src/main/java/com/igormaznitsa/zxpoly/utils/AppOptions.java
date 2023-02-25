@@ -218,8 +218,16 @@ public final class AppOptions {
     return preferences.getBoolean(Option.INTERLACED_SCAN.name(), true);
   }
 
+  public synchronized boolean isTryLessResources() {
+    return preferences.getBoolean(Option.TRY_LESS_RESOURCES.name(), false);
+  }
+
   public synchronized void setInterlacedScan(final boolean value) {
     preferences.putBoolean(Option.INTERLACED_SCAN.name(), value);
+  }
+
+  public synchronized void setTryLessResources(final boolean value) {
+    preferences.putBoolean(Option.TRY_LESS_RESOURCES.name(), value);
   }
 
   public synchronized int getFrameRate() {
@@ -537,7 +545,8 @@ public final class AppOptions {
     PROTEK_JOYSTICK_VK_DOWN,
     PROTEK_JOYSTICK_VK_FIRE,
     ATTRIBUTE_PORT_FF,
-    ULAPLUS
+    ULAPLUS,
+    TRY_LESS_RESOURCES;
   }
 
 }

@@ -72,9 +72,11 @@ public class OptionsPanel extends JTabbedPane {
   private JLabel labelCustomRomPath;
   private JLabel labelMacroCursorKeys;
   private JLabel labelTimingProfile;
+  private JLabel labelTryLessResources;
   private JLabel labelBorderWidth;
   private JLabel labelEmulateFFport;
   private JCheckBox checkGrabSound;
+  private JCheckBox checkTryLessResources;
   private JCheckBox checkInterlacedScan;
   private JCheckBox checkSoundSchemeACB;
   private JCheckBox checkSyncPaint;
@@ -198,6 +200,7 @@ public class OptionsPanel extends JTabbedPane {
     labelInterlacedScan = new JLabel();
     labelOldTvFilter = new JLabel();
     labelTimingProfile = new JLabel();
+    labelTryLessResources = new JLabel();
     labelBorderWidth = new JLabel();
     checkInterlacedScan = new JCheckBox();
     labelFfMpegPath = new JLabel();
@@ -235,6 +238,7 @@ public class OptionsPanel extends JTabbedPane {
     checkAutoiCsForCursorKeys = new JCheckBox();
     checkSyncPaint = new JCheckBox();
     checkOldTvFilter = new JCheckBox();
+    checkTryLessResources = new JCheckBox();
     checkVkbdApart = new JCheckBox();
     comboKeyboardLook = new JComboBox<>(VirtualKeyboardLook.values());
     comboVolumeProfile = new JComboBox<>(VolumeProfile.values());
@@ -623,6 +627,20 @@ public class OptionsPanel extends JTabbedPane {
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(comboTimingProfile, gridBagConstraints);
 
+    labelTryLessResources.setHorizontalAlignment(RIGHT);
+    labelTryLessResources.setText("Try use less resources:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 12;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelGeneral.add(labelTryLessResources, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 12;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelGeneral.add(checkTryLessResources, gridBagConstraints);
+
     final JPanel panelKempston = new JPanel(new GridBagLayout());
     panelKempston.setBorder(createTitledBorder("Kempston joystick"));
 
@@ -753,6 +771,7 @@ public class OptionsPanel extends JTabbedPane {
     public final boolean vkdApart;
     public final boolean autoCsForCursorKeys;
     public final boolean interlacedScan;
+    public final boolean tryLessResources;
     public final boolean syncPaint;
     public final boolean oldTvFilter;
     public final boolean emulateFFport;
@@ -779,6 +798,7 @@ public class OptionsPanel extends JTabbedPane {
       this.timingProfile = AppOptions.getInstance().getTimingProfile();
       this.customRomPath = customRomPath == null ? "" : customRomPath;
       this.interlacedScan = AppOptions.getInstance().isInterlacedScan();
+      this.tryLessResources = AppOptions.getInstance().isTryLessResources();
       this.oldTvFilter = AppOptions.getInstance().isOldColorTvOnStart();
       this.soundSchemeAcb = AppOptions.getInstance().isSoundChannelsACB();
       this.autoCsForCursorKeys = AppOptions.getInstance().getAutoCsForCursorKeys();
@@ -820,6 +840,7 @@ public class OptionsPanel extends JTabbedPane {
       this.customRomPath = optionsPanel.textCustomRomPath.getText();
 
       this.interlacedScan = optionsPanel.checkInterlacedScan.isSelected();
+      this.tryLessResources = optionsPanel.checkTryLessResources.isSelected();
       this.oldTvFilter = optionsPanel.checkOldTvFilter.isSelected();
 
       this.syncPaint = optionsPanel.checkSyncPaint.isSelected();
@@ -860,6 +881,7 @@ public class OptionsPanel extends JTabbedPane {
       AppOptions.getInstance().setTimingProfile(this.timingProfile);
       AppOptions.getInstance().setBorderWidth(this.borderWidth);
       AppOptions.getInstance().setInterlacedScan(this.interlacedScan);
+      AppOptions.getInstance().setTryLessResources(this.tryLessResources);
       AppOptions.getInstance().setOldColorTvOnStart(this.oldTvFilter);
       AppOptions.getInstance().setAutoCsForCursorKeys(this.autoCsForCursorKeys);
       AppOptions.getInstance().setCustomRomPath(this.customRomPath);

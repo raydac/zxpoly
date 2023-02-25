@@ -271,7 +271,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private final AtomicReference<AnimationEncoder> currentAnimationEncoder = new AtomicReference<>();
   private final Motherboard board;
   private final ZxVideoStreamer videoStreamer;
-  private final Timer wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS, Duration.ofNanos(50000L));
+  private final Timer wallClock;
   private final Runnable traceWindowsUpdater = new Runnable() {
     @Override
     public void run() {
@@ -386,6 +386,14 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   public MainForm(final MainFormParameters parameters) {
     super(parameters.getTitle());
+
+    if (AppOptions.getInstance().isTryLessResources()) {
+      LOGGER.info("Less resources mode is active");
+      this.wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS, Duration.ofNanos(50000L));
+    } else {
+      this.wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS);
+    }
+
     this.setUndecorated(parameters.isUndecorated());
     Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
 
