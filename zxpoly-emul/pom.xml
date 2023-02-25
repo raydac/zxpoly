@@ -542,6 +542,11 @@
                                             </directory>
                                             <targetPath>jre</targetPath>
                                             <filtering>false</filtering>
+                                            <excludes>
+                                                <exclude>**/ASSEMBLY_EXCEPTION</exclude>
+                                                <exclude>**/ADDITIONAL_LICENSE_INFO</exclude>
+                                                <exclude>**/LICENSE</exclude>
+                                            </excludes>
                                         </resource>
                                         <resource>
                                             <directory>
