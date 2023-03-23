@@ -11,7 +11,7 @@ __2.3.2 (SNAPSHOT)__
 
 - added way to decrease CPU use in non-turbo mode with option "Try use less
   resources" [#35](https://github.com/raydac/zxpoly/issues/35)
-- updated embedded JDK to 19.0.2+9
+- updated embedded JDK to 20+37
 - minor improvements of Z80 emulation
 - added Ula Plus palette support for animation GIF recording
 - fixed restore indicator panel view flag after restart [#86](https://github.com/raydac/zxpoly/issues/86)
