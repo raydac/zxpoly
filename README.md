@@ -7,8 +7,9 @@
 
 # Changelog
 
-__2.3.2 (SNAPSHOT)__
+__2.3.2 (23-mar-2023)__
 
+- added AppImage
 - added way to decrease CPU use in non-turbo mode with option "Try use less
   resources" [#35](https://github.com/raydac/zxpoly/issues/35)
 - updated embedded JDK to 20+37
@@ -52,20 +53,22 @@ written into VRAM so that big part of games and utilities could be adapted just 
 Both the concept and emulator and all its parts are published
 under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 
+
 # Pre-built versions
 
-![The Main Window of the Emulator](docs/screenshots/ulaplus_emulation.png)
+![The Main Window of the Emulator](docs/screenshots/zxpoly232_kividemaa.png)
 
 | OS                                           | Download link                                                                                                                          | 
-| -------------------------------------------- |----------------------------------------------------------------------------------------------------------------------------------------|
-| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.1/zxpoly-emul-2.3.1-windows-amd64-jdk.zip)__ |
-| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.1/zxpoly-emul-2.3.1-macos-amd64-jdk.zip)__       |
-| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.1/zxpoly-emul-2.3.1-macos-aarch64-jdk.zip)__   |
-| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.1/zxpoly-emul-2.3.1-linux-amd64-jdk.tar.gz)__  |
-| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.3.1/zxpoly-emul-2.3.1.jar)__                          | 
+|----------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.2/zxpoly-emul-2.3.2-windows-amd64-jdk.zip)__ |
+| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.2/zxpoly-emul-2.3.2-macos-amd64-jdk.zip)__       |
+| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.2/zxpoly-emul-2.3.2-macos-aarch64-jdk.zip)__   |
+| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.2/zxpoly-emul-2.3.2-linux-amd64-jdk.tar.gz)__  |
+| ![Linux](assets/icons/appimage64x64.png)     | __[Linuc AppImage x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.2/zxpoly-emul-2.3.2-x86_64.AppImage)__    |
+| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.3.2/zxpoly-emul-2.3.2.jar)__                          | 
 
 Because the emulator is written in Java, its JAR file can be started just through command
-line `java -jar zxpoly-emul-2.3.1.jar`   
+line `java -jar zxpoly-emul-2.3.2.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in __File->Options->Active
 ROM__, the ROM will be downloaded from one of remote network resources.   
 ![Test-ROM](docs/screenshots/testromscr1.png)
@@ -96,7 +99,7 @@ components get the same input signal states in the same time.
 ZX-Poly platform adds several ports to manipulate work modes and the main port of the platform is
 #3D00. [In more details it is desribed in wiki.](https://github.com/raydac/zxpoly/wiki/Short-description-of-ZX-Poly-platform)
 
-# Supported videomodes
+# Supported video-modes
 ## Standard ZX-Spectrum 256x192 (2 colors per pixel in 8x8 block) (mode 0,1,2,3)
 It is just regular ZX-Spectrum mode 256x192 with 2 attributed colors for 8x8 pixel block.   
 ![Standard ZX screenshot](docs/screenshots/atw_standard.png)
