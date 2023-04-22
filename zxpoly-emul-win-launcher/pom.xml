@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.igormaznitsa</groupId>
     <artifactId>zxpoly</artifactId>
-    <version>2.3.2</version>
+    <version>2.3.3-SNAPSHOT</version>
   </parent>
 
   <artifactId>zxpoly-emul-win-launcher</artifactId>
@@ -14,7 +14,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <mvn.golang.go.version>1.20.2</mvn.golang.go.version>
+    <mvn.golang.go.version>1.20.3</mvn.golang.go.version>
     <mvn.golang.wrapper.version>2.3.10</mvn.golang.wrapper.version>
     <maven.test.skip>true</maven.test.skip>
     <target.name>zxpoly</target.name>
