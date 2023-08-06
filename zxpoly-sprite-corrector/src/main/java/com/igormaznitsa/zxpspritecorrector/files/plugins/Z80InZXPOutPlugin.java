@@ -396,7 +396,10 @@ public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
         } else {
           data = new byte[PAGE_SIZE * 8];
           for (final Bank b : current.banks) {
-            if (b.page >= 3 && b.page <= 10) {
+            if (b.page < 3) {
+              final int offset = b.page * PAGE_SIZE;
+              System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
+            } else if (b.page <= 10) {
               final int offset = (b.page - 3) * PAGE_SIZE;
               System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
             }
