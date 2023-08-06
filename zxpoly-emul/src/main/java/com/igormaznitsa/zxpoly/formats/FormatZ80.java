@@ -319,7 +319,7 @@ public class FormatZ80 extends Snapshot {
           } else if (b.page <= 10) {
             module.syncWriteHeapPage(b.page - 3, b.data);
           } else {
-            throw new IOException("Illegal page index (3<=x<=10):" + b.page);
+            throw new IOException("Unexpected page index (x>10):" + b.page);
           }
         }
       }
