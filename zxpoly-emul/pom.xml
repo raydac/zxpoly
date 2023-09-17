@@ -97,7 +97,7 @@
                     <plugin>
                         <groupId>com.igormaznitsa</groupId>
                         <artifactId>mvn-jlink-wrapper</artifactId>
-                        <version>1.2.0</version>
+                        <version>1.2.1</version>
                         <executions>
                             <execution>
                                 <id>cache-work-jdk</id>
@@ -784,6 +784,7 @@
                                         <exclude>META-INF/DEPENDENCIES</exclude>
                                         <exclude>META-INF/LICENSE</exclude>
                                         <exclude>META-INF/NOTICE</exclude>
+                                        <exclude>META-INF/versions/**</exclude>
                                     </excludes>
                                 </filter>
                                 <filter>
