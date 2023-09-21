@@ -7,6 +7,10 @@
 
 # Changelog
 
+__2.3.3 (SNAPSHOT)__
+
+- updated embedded JDK to 21+37
+
 __2.3.2 (23-mar-2023)__
 
 - added AppImage
