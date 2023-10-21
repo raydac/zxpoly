@@ -9,7 +9,7 @@
 
 __2.3.3 (SNAPSHOT)__
 
-- updated embedded JDK to 21+37
+- updated embedded JDK to 21.0.1+12
 
 __2.3.2 (23-mar-2023)__
 
