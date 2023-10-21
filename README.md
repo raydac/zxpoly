@@ -7,7 +7,7 @@
 
 # Changelog
 
-__2.3.3 (SNAPSHOT)__
+__2.3.3 (21-oct-2023)__
 
 - improved z80 snapshot load to process 0-2 banks among 128 ram banks
 - updated embedded JDK to 21.0.1+12
@@ -21,17 +21,6 @@ __2.3.2 (23-mar-2023)__
 - minor improvements of Z80 emulation
 - added Ula Plus palette support for animation GIF recording
 - fixed restore indicator panel view flag after restart [#86](https://github.com/raydac/zxpoly/issues/86)
-
-__2.3.1 (27-aug-2022)__
-
-- added support for ULA Plus palette [#72](https://github.com/raydac/zxpoly/issues/72)
-- added support for SZX snapshot
-- fix for Virtual keyboard button [#83](https://github.com/raydac/zxpoly/issues/83)
-- added CLI support to define emulator start parameters through command line
-- added Virtual keyboard skin Spectrum+2 Style [#75](https://github.com/raydac/zxpoly/issues/75)
-- fixed turbo menu item sync with fast button [#70](https://github.com/raydac/zxpoly/issues/70)
-- updated embedded JDK to 17.0.4.1+1
-- fixed keyboard layout [#66](https://github.com/raydac/zxpoly/issues/66)
 
 
 full [change log](changelog.txt)
@@ -61,19 +50,19 @@ under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 
 # Pre-built versions
 
-![The Main Window of the Emulator](docs/screenshots/zxpoly232_kividemaa.png)
+![The Main Window of the Emulator](docs/screenshots/zxpoly233_rawspectronica.png)
 
 | OS                                           | Download link                                                                                                                          | 
 |----------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.2/zxpoly-emul-2.3.2-windows-amd64-jdk.zip)__ |
-| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.2/zxpoly-emul-2.3.2-macos-amd64-jdk.zip)__       |
-| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.2/zxpoly-emul-2.3.2-macos-aarch64-jdk.zip)__   |
-| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.2/zxpoly-emul-2.3.2-linux-amd64-jdk.tar.gz)__  |
-| ![Linux](assets/icons/appimage64x64.png)     | __[Linuc AppImage x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.2/zxpoly-emul-2.3.2-x86_64.AppImage)__    |
-| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.3.2/zxpoly-emul-2.3.2.jar)__                          | 
+| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.3/zxpoly-emul-2.3.3-windows-amd64-jdk.zip)__ |
+| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.3/zxpoly-emul-2.3.3-macos-amd64-jdk.zip)__       |
+| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.3/zxpoly-emul-2.3.3-macos-aarch64-jdk.zip)__   |
+| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.3/zxpoly-emul-2.3.3-linux-amd64-jdk.tar.gz)__  |
+| ![Linux](assets/icons/appimage64x64.png)     | __[Linuc AppImage x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.3/zxpoly-emul-2.3.3-x86_64.AppImage)__    |
+| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.3.3/zxpoly-emul-2.3.3.jar)__                          | 
 
 Because the emulator is written in Java, its JAR file can be started just through command
-line `java -jar zxpoly-emul-2.3.2.jar`   
+line `java -jar zxpoly-emul-2.3.3.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in __File->Options->Active
 ROM__, the ROM will be downloaded from one of remote network resources.   
 ![Test-ROM](docs/screenshots/testromscr1.png)
@@ -138,7 +127,7 @@ To adapt old games, I have developed special utility called ZX-Poly Sprite corre
 is a very easy editor which shows images in data blocks and allows to redraw them. It supports import from Z80 and SNA
 snapshots and as the result it generates ZXP snapshots.   
 ![ZXPoly Sprite Corrector screenshot](docs/zxpoly_sprite_editor.png)   
-Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.3.1).
+Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.3.3).
 
 ## "Official Father Christmas" (1989)
 Original look of the game   
