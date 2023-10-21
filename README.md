@@ -9,6 +9,7 @@
 
 __2.3.3 (SNAPSHOT)__
 
+- improved z80 snapshot load to process 0-2 banks among 128 ram banks
 - updated embedded JDK to 21.0.1+12
 
 __2.3.2 (23-mar-2023)__
