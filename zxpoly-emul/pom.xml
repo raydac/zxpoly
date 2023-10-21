@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.igormaznitsa</groupId>
         <artifactId>zxpoly</artifactId>
-        <version>2.3.3</version>
+        <version>2.3.4-SNAPSHOT</version>
     </parent>
 
     <description>ZX-Poly emulator</description>
@@ -476,8 +476,8 @@
                                 <mutexName>zxpolyemul</mutexName>
                             </singleInstance>
                             <versionInfo>
-                                <fileVersion>2.3.3.0</fileVersion>
-                                <productVersion>2.3.3.0</productVersion>
+                                <fileVersion>2.3.4.0</fileVersion>
+                                <productVersion>2.3.4.0</productVersion>
                                 <txtFileVersion>${project.version}</txtFileVersion>
                                 <fileDescription>Emulator of ZXPoly platform</fileDescription>
                                 <copyright>2014-2023 Igor Maznitsa</copyright>
