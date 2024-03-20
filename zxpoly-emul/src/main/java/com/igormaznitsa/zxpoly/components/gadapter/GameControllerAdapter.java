@@ -1,10 +1,9 @@
 package com.igormaznitsa.zxpoly.components.gadapter;
 
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
+import java.util.concurrent.atomic.AtomicReference;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class GameControllerAdapter implements Runnable {
   protected final KeyboardKempstonAndTapeIn parent;
@@ -40,7 +39,8 @@ public abstract class GameControllerAdapter implements Runnable {
   }
 
   public void start() {
-    final Thread thread = new Thread(this, "zxp.gcontroller." + this.controller.getName());
+    final Thread thread =
+        Thread.ofVirtual().name("zxp.gcontroller." + this.controller.getName()).unstarted(this);
     thread.setPriority(Thread.NORM_PRIORITY);
     thread.setDaemon(true);
     if (!this.controllerThread.compareAndSet(null, thread)) {

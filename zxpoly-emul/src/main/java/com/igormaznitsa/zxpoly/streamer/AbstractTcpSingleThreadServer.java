@@ -1,5 +1,7 @@
 package com.igormaznitsa.zxpoly.streamer;
 
+import static com.igormaznitsa.zxpoly.utils.Utils.closeQuietly;
+
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,8 +11,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.igormaznitsa.zxpoly.utils.Utils.closeQuietly;
 
 @SuppressWarnings("unused")
 public abstract class AbstractTcpSingleThreadServer {
@@ -53,7 +53,8 @@ public abstract class AbstractTcpSingleThreadServer {
   }
 
   public void start() {
-    final Thread thread = new Thread(this::doWork, this.id + '-' + this.hashCode());
+    final Thread thread =
+        Thread.ofVirtual().name(this.id + '-' + this.hashCode()).unstarted(this::doWork);
     thread.setPriority(Thread.MAX_PRIORITY - 1);
     thread.setDaemon(true);
     if (this.currentThread.compareAndSet(null, thread)) {

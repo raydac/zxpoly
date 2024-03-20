@@ -395,7 +395,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     }
 
     this.setUndecorated(parameters.isUndecorated());
-    Runtime.getRuntime().addShutdownHook(new Thread(this::doOnShutdown));
+    Runtime.getRuntime().addShutdownHook(Thread.ofPlatform().unstarted(this::doOnShutdown));
 
     this.sysIcon = new ImageIcon(
         Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/sys.png")));
@@ -601,7 +601,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.setLocationRelativeTo(null);
 
-    this.mainCpuThread = new Thread(this::mainLoop, "zx-poly-main-cpu-thread");
+    this.mainCpuThread =
+        Thread.ofVirtual().name("zx-poly-main-cpu-thread").unstarted(this::mainLoop);
     this.mainCpuThread.setPriority(Thread.NORM_PRIORITY);
     this.mainCpuThread.setDaemon(true);
     this.mainCpuThread.setUncaughtExceptionHandler((t, e) -> {

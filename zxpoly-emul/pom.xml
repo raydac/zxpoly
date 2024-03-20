@@ -16,6 +16,8 @@
     <properties>
         <jinput.version>2.0.9</jinput.version>
         <openjdk.version>22+37</openjdk.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -486,7 +488,7 @@
                                 <productVersion>2.3.4.0</productVersion>
                                 <txtFileVersion>${project.version}</txtFileVersion>
                                 <fileDescription>Emulator of ZXPoly platform</fileDescription>
-                                <copyright>2014-2023 Igor Maznitsa</copyright>
+                                <copyright>2014-2024 Igor Maznitsa</copyright>
                                 <txtProductVersion>${project.version}</txtProductVersion>
                                 <productName>${project.name}</productName>
                                 <companyName>igormaznitsa.com</companyName>
@@ -505,7 +507,7 @@
                                     <outfile>${project.build.directory}${file.separator}${project.build.finalName}.exe
                                     </outfile>
                                     <jre>
-                                        <minVersion>11</minVersion>
+                                        <minVersion>21</minVersion>
                                         <path>%VAR%</path>
                                     </jre>
                                 </configuration>

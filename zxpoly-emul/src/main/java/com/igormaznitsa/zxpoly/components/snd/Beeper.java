@@ -349,7 +349,8 @@ public final class Beeper {
       final Line.Info lineInfo = this.sourceDataLine.getLineInfo();
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
-      this.thread = new Thread(this::mainLoop, "zxp-beeper-thread-" + toHexString(System.nanoTime()));
+      this.thread = Thread.ofVirtual().name("zxp-beeper-thread-" + toHexString(System.nanoTime()))
+          .unstarted(this::mainLoop);
       this.thread.setPriority(Thread.NORM_PRIORITY);
       this.thread.setDaemon(true);
     }

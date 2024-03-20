@@ -51,7 +51,9 @@ public class HttpProcessor implements Version {
   private final AtomicReference<TcpReader> tcpReaderRef = new AtomicReference<>();
   private final Consumer<HttpProcessor> stopConsumer;
   private final ExecutorService executorService = new ThreadPoolExecutor(3, 10, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<>(5), r -> {
-    final Thread thread = new Thread(r, "zxpoly-http-stream-" + System.nanoTime());
+    final Thread thread = Thread.ofVirtual()
+        .name("zxpoly-http-stream-" + System.nanoTime())
+        .unstarted(r);
     thread.setDaemon(true);
     return thread;
   });
@@ -447,7 +449,9 @@ public class HttpProcessor implements Version {
     }
 
     public void start() {
-      final Thread newThread = new Thread(this::readRun, "ws-wrapper-read-thread-" + System.nanoTime());
+      final Thread newThread =
+          Thread.ofVirtual().name("ws-wrapper-read-thread-" + System.nanoTime())
+              .unstarted(this::readRun);
       if (this.thread.compareAndSet(null, newThread)) {
         newThread.start();
       } else {
