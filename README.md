@@ -1,11 +1,16 @@
 ![ZX-Poly logo](docs/zxpoly_git_logo.png)
 
 [![License GNU GPL3](https://img.shields.io/badge/license-GNU%20GPL%203-yellow.svg)](http://www.gnu.org/licenses/gpl.html)
-[![Java 11.0+](https://img.shields.io/badge/java-11.0%2b-green.svg)](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+[![Java 21.0+](https://img.shields.io/badge/java-21.0%2b-green.svg)](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 [![PayPal donation](https://img.shields.io/badge/donation-PayPal-cyan.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AHWJHJFBAWGL2)
 [![YooMoney donation](https://img.shields.io/badge/donation-Yoo.money-blue.svg)](https://yoomoney.ru/to/41001158080699)
 
 # Changelog
+
+__2.3.4 (21-mar-2024)__
+
+- minimal JDK version lifted up to 21
+- updated embedded JDK to 22+37
 
 __2.3.3 (21-oct-2023)__
 

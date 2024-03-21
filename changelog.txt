@@ -1,3 +1,8 @@
+__2.3.4 (21-mar-2024)__
+
+- minimal JDK version lifted up to 21
+- updated embedded JDK to 22+37
+
 __2.3.3 (21-oct-2023)__
 
 - improved z80 snapshot load to process 0-2 banks among 128 ram banks
