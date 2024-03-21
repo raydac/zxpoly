@@ -7,7 +7,7 @@
 
 # Changelog
 
-__2.3.4 (21-mar-2024)__
+__2.3.4 (SNAPSHOT)__
 
 - minimal JDK version lifted up to 21
 - updated embedded JDK to 22+37
