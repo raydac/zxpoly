@@ -254,7 +254,7 @@
                                     </jdepsReportPath>
                                     <output>${project.build.directory}${file.separator}jre_linux_aarch64</output>
                                     <modulePaths>
-                                        <path>${mvnjlink.jdk.linux.path}${file.separator}jmods</path>
+                                        <path>${mvnjlink.jdk.linux.aarch64.path}${file.separator}jmods</path>
                                     </modulePaths>
                                     <options>
                                         <option>--compress=2</option>
