@@ -139,6 +139,22 @@
                                 </configuration>
                             </execution>
                             <execution>
+                                <id>cache-linux-aarch64-jdk</id>
+                                <goals>
+                                    <goal>cache-jdk</goal>
+                                </goals>
+                                <configuration>
+                                    <jdkPathProperty>mvnjlink.jdk.linux.aarch64.path</jdkPathProperty>
+                                    <provider>${openjdk.provider}</provider>
+                                    <providerConfig>
+                                        <type>${openjdk.bundled.type}</type>
+                                        <version>${openjdk.bundled}</version>
+                                        <os>linux</os>
+                                        <arch>aarch64</arch>
+                                    </providerConfig>
+                                </configuration>
+                            </execution>
+                            <execution>
                                 <id>cache-macos-jdk</id>
                                 <goals>
                                     <goal>cache-jdk</goal>
@@ -212,6 +228,31 @@
                                     <jdepsReportPath>${project.build.directory}${file.separator}jdeps.out
                                     </jdepsReportPath>
                                     <output>${project.build.directory}${file.separator}jre_linux_amd64</output>
+                                    <modulePaths>
+                                        <path>${mvnjlink.jdk.linux.path}${file.separator}jmods</path>
+                                    </modulePaths>
+                                    <options>
+                                        <option>--compress=2</option>
+                                        <option>--no-header-files</option>
+                                        <option>--no-man-pages</option>
+                                        <option>--strip-debug</option>
+                                    </options>
+                                    <addModules>
+                                        <module>jdk.management.agent</module>
+                                        <module>jdk.crypto.ec</module>
+                                    </addModules>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-jre-linux-arm</id>
+                                <goals>
+                                    <goal>jlink</goal>
+                                </goals>
+                                <configuration>
+                                    <toolJdk>${mvnjlink.jdk.work.path}</toolJdk>
+                                    <jdepsReportPath>${project.build.directory}${file.separator}jdeps.out
+                                    </jdepsReportPath>
+                                    <output>${project.build.directory}${file.separator}jre_linux_aarch64</output>
                                     <modulePaths>
                                         <path>${mvnjlink.jdk.linux.path}${file.separator}jmods</path>
                                     </modulePaths>
@@ -319,6 +360,21 @@
                                     <finalName>${project.build.finalName}-linux-amd64-jdk</finalName>
                                     <descriptors>
                                         <descriptor>src${file.separator}assembly${file.separator}linux.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-linux-aarch64</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <appendAssemblyId>false</appendAssemblyId>
+                                    <finalName>${project.build.finalName}-linux-aarch64-jdk</finalName>
+                                    <descriptors>
+                                        <descriptor>src${file.separator}assembly${file.separator}linux_aarch.xml
+                                        </descriptor>
                                     </descriptors>
                                 </configuration>
                             </execution>
