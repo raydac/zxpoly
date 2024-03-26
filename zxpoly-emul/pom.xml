@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <jinput.version>2.0.9</jinput.version>
+        <jinput.version>2.0.10</jinput.version>
         <openjdk.version>22+37</openjdk.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
