@@ -14,7 +14,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <mvn.golang.go.version>1.22.1</mvn.golang.go.version>
+    <mvn.golang.go.version>1.22.2</mvn.golang.go.version>
     <mvn.golang.wrapper.version>2.3.10</mvn.golang.wrapper.version>
     <maven.test.skip>true</maven.test.skip>
     <target.name>zxpoly</target.name>
@@ -31,7 +31,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-clean-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.3.1</version>
         <configuration>
           <followSymLinks>false</followSymLinks>
           <excludeDefaultDirectories>true</excludeDefaultDirectories>
