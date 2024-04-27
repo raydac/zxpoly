@@ -3,8 +3,6 @@ package com.igormaznitsa.zxpoly.components.tapereader;
 import com.igormaznitsa.zxpoly.components.tapereader.wave.FileSeekableContainer;
 import com.igormaznitsa.zxpoly.components.tapereader.wave.InMemoryWavFile;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
-
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -13,6 +11,8 @@ import java.io.RandomAccessFile;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.swing.ListModel;
+import javax.swing.SwingUtilities;
 
 public class ReaderWav implements TapeSource {
 
@@ -23,7 +23,7 @@ public class ReaderWav implements TapeSource {
   private final TimingProfile timingProfile;
   private final TapeContext tapeContext;
   private volatile boolean playing;
-  private volatile float bias = 0.01f;
+  private volatile float bias = 0.5f;
 
   public ReaderWav(final TapeContext tapeContext, final TimingProfile timingProfile, final String name, final File file) throws IOException {
     this.tapeContext = tapeContext;
