@@ -159,6 +159,20 @@ combination of standard ZX-Spectrum colorization (for game panels) and ZX-Poly c
 for ZX-Poly emulator can be downloaded [from here](/adapted/FlyShark/flyshark.zxp).   
 ![Flying Shark animation](adapted/FlyShark/flyshark_video.gif)
 
+## "Comando Quatro" (1989)
+
+The colorized version prepared and provided by [@jotarp](https://github.com/jotarp)
+> I'm the programmer of "Comando Quatro" (yes, 35 years ago) and I've recently discovered your emulator (TLDR; I've
+> recently rejoined my old colleagues from Gamesoft and they even invite us to give talks about those
+> years: https://www.youtube.com/watch?v=TKIFtYspv1U , in spanish).
+> I have tried to adapt my game to "mode 4", colouring the graphics. It has been fun to meet again with that game that
+> took me so many hours of sleep when I was only 20 years old.
+> I think the most appropriate place to publish the result is here.
+> I haven't added too many colour details. The main feature of the result is that... there is no more "colour clash".
+
+Snapshot for ZX-Poly emulator can be downloaded [from here](/adapted/ComandoQuatro/ComandoQuatro.zxp).   
+![Comando Quatro animation](adapted/ComandoQuatro/ComandoQuatro.gif)
+
 ## "Alien 8" (1985)
 
 In 2021, during one evening I made adaptation of "Alien 8" game for ZX-Poly 256x192. Snapshot for ZX-Poly emulator can
