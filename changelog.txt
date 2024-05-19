@@ -1,7 +1,7 @@
 __2.3.4 (SNAPSHOT)__
 
 - minimal JDK version lifted up to 21
-- updated embedded JDK to 22.0.1+10
+- updated embedded JDK to 22.0.1+12
 - updated JInput library to 2.0.10
 
 __2.3.3 (21-oct-2023)__
