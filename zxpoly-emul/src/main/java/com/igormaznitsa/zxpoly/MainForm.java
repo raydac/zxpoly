@@ -1204,6 +1204,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       SwingUtilities.invokeAndWait(this.traceWindowsUpdater);
     } catch (InterruptedException ex) {
       LOGGER.log(Level.INFO, "Interrupted trace window updater");
+      Thread.currentThread().interrupt();
     } catch (InvocationTargetException ex) {
       LOGGER.log(Level.SEVERE, "Error in trace window updater", ex);
     }
@@ -1213,7 +1214,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     final StringBuilder result = new StringBuilder();
 
     for (int i = 0; i < 4; i++) {
-      if (result.length() > 0) {
+      if (!result.isEmpty()) {
         result.append("  ");
       }
       result.append(toHexByte(this.board.getModules()[i].readAddress(address)));
