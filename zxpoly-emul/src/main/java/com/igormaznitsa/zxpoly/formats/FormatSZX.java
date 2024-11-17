@@ -11,7 +11,7 @@ import com.igormaznitsa.zxpoly.Version;
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
-import com.igormaznitsa.zxpoly.components.snd.AyBasedSoundDevice;
+import com.igormaznitsa.zxpoly.components.sound.AyBasedSoundDevice;
 import com.igormaznitsa.zxpoly.components.video.UlaPlusContainer;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;

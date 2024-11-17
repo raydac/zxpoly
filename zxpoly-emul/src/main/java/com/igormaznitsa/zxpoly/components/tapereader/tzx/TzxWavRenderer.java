@@ -5,7 +5,6 @@ import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.zxpoly.utils.SpectrumUtils;
 import com.igormaznitsa.zxpoly.utils.Utils;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -469,7 +468,7 @@ public class TzxWavRenderer {
     STD_DATA,
     STOP_TAPE,
     STOP_TAPE_IF_ZX48,
-    GENERALIZED_DATA;
+    GENERALIZED_DATA
   }
 
   public enum Freq {

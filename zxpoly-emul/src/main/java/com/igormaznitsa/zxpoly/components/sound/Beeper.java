@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.igormaznitsa.zxpoly.components.snd;
+package com.igormaznitsa.zxpoly.components.sound;
 
 import static java.lang.Long.toHexString;
 import static java.lang.String.format;
@@ -52,7 +52,8 @@ public final class Beeper {
 
   private static final IWavWriter NULL_WAV = new IWavWriter() {
     @Override
-    public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft, int levelRight) {
+    public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates,
+                            int levelLeft, int levelRight) {
 
     }
 
@@ -64,7 +65,8 @@ public final class Beeper {
 
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
-    public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft, int levelRight) {
+    public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates,
+                            int levelLeft, int levelRight) {
     }
 
     @Override
@@ -87,14 +89,17 @@ public final class Beeper {
   };
 
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
-  private final SoundChannelValueFilter[] soundChannelFilters = IntStream.range(0, 8).mapToObj(i -> new SoundChannelValueFilter()).toArray(SoundChannelValueFilter[]::new);
+  private final SoundChannelValueFilter[] soundChannelFilters =
+      IntStream.range(0, 8).mapToObj(i -> new SoundChannelValueFilter())
+          .toArray(SoundChannelValueFilter[]::new);
   private final int[] channels = new int[8];
   private final MixerFunction mixerLeft;
   private final MixerFunction mixerRight;
   private final TimingProfile timingProfile;
   private final AtomicReference<IWavWriter> activeWavWriter = new AtomicReference<>(NULL_WAV);
 
-  public Beeper(final TimingProfile timingProfile, final boolean useAcbSoundScheme, final boolean covoxPresented, final boolean turboSoundPresented) {
+  public Beeper(final TimingProfile timingProfile, final boolean useAcbSoundScheme,
+                final boolean covoxPresented, final boolean turboSoundPresented) {
     this.timingProfile = timingProfile;
     if (useAcbSoundScheme) {
       if (turboSoundPresented && covoxPresented) {
@@ -186,24 +191,26 @@ public final class Beeper {
 
   public void updateState(final boolean tstatesInt, final boolean wallclockInt,
                           final int spentTstates) {
-    final int leftChannel = this.mixerLeft.mix(this.channels, this.soundChannelFilters, spentTstates);
-    final int rightChannel = this.mixerRight.mix(this.channels, this.soundChannelFilters, spentTstates);
+    final int leftChannel =
+        this.mixerLeft.mix(this.channels, this.soundChannelFilters, spentTstates);
+    final int rightChannel =
+        this.mixerRight.mix(this.channels, this.soundChannelFilters, spentTstates);
 
     this.activeInternalBeeper.get()
-            .updateState(tstatesInt,
-                    wallclockInt,
-                    spentTstates,
-                    leftChannel,
-                    rightChannel
-            );
+        .updateState(tstatesInt,
+            wallclockInt,
+            spentTstates,
+            leftChannel,
+            rightChannel
+        );
 
     this.activeWavWriter.get()
-            .updateState(tstatesInt,
-                    wallclockInt,
-                    spentTstates,
-                    leftChannel,
-                    rightChannel
-            );
+        .updateState(tstatesInt,
+            wallclockInt,
+            spentTstates,
+            leftChannel,
+            rightChannel
+        );
   }
 
   public void reset() {
@@ -213,7 +220,9 @@ public final class Beeper {
 
   public void clearChannels() {
     Arrays.fill(this.channels, 0);
-    for (final SoundChannelValueFilter f : this.soundChannelFilters) f.reset();
+    for (final SoundChannelValueFilter f : this.soundChannelFilters) {
+      f.reset();
+    }
   }
 
   public boolean isActive() {
@@ -235,7 +244,8 @@ public final class Beeper {
   }
 
   private interface IWavWriter {
-    void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft, int levelRight);
+    void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft,
+                     int levelRight);
 
     void dispose();
   }
@@ -246,7 +256,8 @@ public final class Beeper {
 
     void start();
 
-    void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft, int levelRight);
+    void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft,
+                     int levelRight);
 
     void dispose();
 
@@ -262,14 +273,16 @@ public final class Beeper {
     private int lastRightChannel = 0;
     private double frameCounter = 0.0d;
 
-    private WavWriterImpl(final TimingProfile timingProfile, final File wavFile) throws IOException {
+    private WavWriterImpl(final TimingProfile timingProfile, final File wavFile)
+        throws IOException {
       LOGGER.info("Creating WAV file: " + wavFile);
       this.targetFile = new WriterWav.WavFile(wavFile);
 
       this.framesPerTick = 44100.0d / timingProfile.clockFreq;
 
       final int encoding;
-      if (AUDIO_FORMAT.getEncoding() == AudioFormat.Encoding.PCM_SIGNED || AUDIO_FORMAT.getEncoding() == AudioFormat.Encoding.PCM_UNSIGNED) {
+      if (AUDIO_FORMAT.getEncoding() == AudioFormat.Encoding.PCM_SIGNED ||
+          AUDIO_FORMAT.getEncoding() == AudioFormat.Encoding.PCM_UNSIGNED) {
         encoding = 1;
       } else if (AUDIO_FORMAT.getEncoding() == AudioFormat.Encoding.ALAW) {
         encoding = 6;
@@ -280,22 +293,22 @@ public final class Beeper {
       }
 
       this.targetFile.header(
-              encoding,
-              AUDIO_FORMAT.getChannels(),
-              44100,
-              176400,
-              4,
-              16
+          encoding,
+          AUDIO_FORMAT.getChannels(),
+          44100,
+          176400,
+          4,
+          16
       );
     }
 
     @Override
     public void updateState(
-            final boolean tstatesInt,
-            final boolean wallclockInt,
-            final int spentTstates,
-            final int levelLeft,
-            final int levelRight
+        final boolean tstatesInt,
+        final boolean wallclockInt,
+        final int spentTstates,
+        final int levelLeft,
+        final int levelRight
     ) {
       final double frameOffset = spentTstates * this.framesPerTick;
 
@@ -335,14 +348,15 @@ public final class Beeper {
   private static final class InternalBeeper implements IBeeper {
 
     private final BlockingQueue<byte[]> soundDataQueue =
-            new ArrayBlockingQueue<>(SndBufferContainer.BUFFERS_NUMBER);
+        new ArrayBlockingQueue<>(SndBufferContainer.BUFFERS_NUMBER);
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
     private final SndBufferContainer sndBuffer;
     private final Optional<SourceSoundPort> optionalSourceSoundPort;
     private volatile boolean working = true;
 
-    private InternalBeeper(final TimingProfile timingProfile, final SourceSoundPort optionalSourceSoundPort) {
+    private InternalBeeper(final TimingProfile timingProfile,
+                           final SourceSoundPort optionalSourceSoundPort) {
       this.sndBuffer = new SndBufferContainer(timingProfile);
       this.optionalSourceSoundPort = Optional.of(optionalSourceSoundPort);
       this.sourceDataLine = optionalSourceSoundPort.asSourceDataLine();
@@ -351,8 +365,11 @@ public final class Beeper {
 
       this.thread = Thread.ofVirtual().name("zxp-beeper-thread-" + toHexString(System.nanoTime()))
           .unstarted(this::mainLoop);
-      this.thread.setPriority(Thread.NORM_PRIORITY);
-      this.thread.setDaemon(true);
+      this.thread.setUncaughtExceptionHandler(
+          (t, e) -> {
+            LOGGER.log(Level.SEVERE, "Unexpected error: " + e.getMessage());
+            e.printStackTrace(System.err);
+          });
     }
 
     @Override
@@ -369,11 +386,11 @@ public final class Beeper {
 
     @Override
     public void updateState(
-            boolean tstatesIntReached,
-            boolean wallclockInt,
-            int spentTstates,
-            final int levelLeft,
-            final int levelRight
+        boolean tstatesIntReached,
+        boolean wallclockInt,
+        int spentTstates,
+        final int levelLeft,
+        final int levelRight
     ) {
       if (this.working) {
         if (wallclockInt) {
@@ -402,16 +419,16 @@ public final class Beeper {
       LOGGER.info("Starting thread");
       try {
         this.sourceDataLine
-                .open(SndBufferContainer.AUDIO_FORMAT,
-                        SndBufferContainer.SND_BUFFER_SIZE * SndBufferContainer.BUFFERS_NUMBER);
+            .open(SndBufferContainer.AUDIO_FORMAT,
+                SndBufferContainer.SND_BUFFER_SIZE * SndBufferContainer.BUFFERS_NUMBER);
 
         LOGGER.info(format(
-                "Sound line opened, buffer size is %d byte(s)",
-                this.sourceDataLine.getBufferSize())
+            "Sound line opened, buffer size is %d byte(s)",
+            this.sourceDataLine.getBufferSize())
         );
 
         byte[] empty =
-                new byte[SndBufferContainer.BUFFERS_NUMBER * SndBufferContainer.SND_BUFFER_SIZE];
+            new byte[SndBufferContainer.BUFFERS_NUMBER * SndBufferContainer.SND_BUFFER_SIZE];
         Arrays.fill(empty, (byte) 0xFF);
         this.sourceDataLine.write(empty, 0, empty.length);
 

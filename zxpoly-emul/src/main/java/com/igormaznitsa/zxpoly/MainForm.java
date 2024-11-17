@@ -38,9 +38,9 @@ import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.RomData;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk;
-import com.igormaznitsa.zxpoly.components.snd.Beeper;
-import com.igormaznitsa.zxpoly.components.snd.SourceSoundPort;
-import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
+import com.igormaznitsa.zxpoly.components.sound.Beeper;
+import com.igormaznitsa.zxpoly.components.sound.SourceSoundPort;
+import com.igormaznitsa.zxpoly.components.sound.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeContext;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSourceFactory;
@@ -603,8 +603,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.mainCpuThread =
         Thread.ofVirtual().name("zx-poly-main-cpu-thread").unstarted(this::mainLoop);
-    this.mainCpuThread.setPriority(Thread.NORM_PRIORITY);
-    this.mainCpuThread.setDaemon(true);
     this.mainCpuThread.setUncaughtExceptionHandler((t, e) -> {
       LOGGER.severe("Detected exception in main thread, stopping application, see logs");
       e.printStackTrace(System.err);
@@ -914,7 +912,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private void formFastButtons(final JMenuBar menuBar, final List<FastButton> fastButtons) {
     Arrays.stream(menuBar.getComponents())
         .filter(c -> FastButton.findForComponentName(c.getName()) != null)
-        .collect(Collectors.toList()).forEach(menuBar::remove);
+        .toList().forEach(menuBar::remove);
 
     final JPopupMenu popupMenu = new JPopupMenu("Fast buttons");
 

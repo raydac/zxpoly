@@ -55,8 +55,6 @@ public abstract class AbstractTcpSingleThreadServer {
   public void start() {
     final Thread thread =
         Thread.ofVirtual().name(this.id + '-' + this.hashCode()).unstarted(this::doWork);
-    thread.setPriority(Thread.MAX_PRIORITY - 1);
-    thread.setDaemon(true);
     if (this.currentThread.compareAndSet(null, thread)) {
       this.stopped = false;
       thread.start();

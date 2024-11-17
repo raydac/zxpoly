@@ -17,7 +17,7 @@
 
 package com.igormaznitsa.zxpoly.components;
 
-import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_BEEPER;
+import static com.igormaznitsa.zxpoly.components.sound.Beeper.CHANNEL_BEEPER;
 import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.UlaTact.TYPE_BORDER_FETCH_A1;
 import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.UlaTact.TYPE_BORDER_FETCH_B1;
 import static com.igormaznitsa.zxpoly.components.video.timings.TimingProfile.UlaTact.TYPE_SHIFT1_AND_FETCH_A2;
@@ -30,11 +30,11 @@ import com.igormaznitsa.z80.Utils;
 import com.igormaznitsa.z80.Z80;
 import com.igormaznitsa.zxpoly.Bounds;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
-import com.igormaznitsa.zxpoly.components.snd.Beeper;
-import com.igormaznitsa.zxpoly.components.snd.CovoxFb;
-import com.igormaznitsa.zxpoly.components.snd.TurboSoundNedoPc;
-import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
-import com.igormaznitsa.zxpoly.components.snd.Zx128Ay8910;
+import com.igormaznitsa.zxpoly.components.sound.Beeper;
+import com.igormaznitsa.zxpoly.components.sound.CovoxFb;
+import com.igormaznitsa.zxpoly.components.sound.TurboSoundNedoPc;
+import com.igormaznitsa.zxpoly.components.sound.VolumeProfile;
+import com.igormaznitsa.zxpoly.components.sound.Zx128Ay8910;
 import com.igormaznitsa.zxpoly.components.video.BorderWidth;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardDecoration;

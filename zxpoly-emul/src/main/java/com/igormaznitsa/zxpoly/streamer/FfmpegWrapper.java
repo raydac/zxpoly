@@ -1,13 +1,12 @@
 package com.igormaznitsa.zxpoly.streamer;
 
-import static com.igormaznitsa.zxpoly.components.snd.Beeper.AUDIO_FORMAT;
+import static com.igormaznitsa.zxpoly.components.sound.Beeper.AUDIO_FORMAT;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class FfmpegWrapper {
 
@@ -163,7 +162,7 @@ public class FfmpegWrapper {
     args.add("mpegts");
     args.add(this.dstResult);
 
-    LOGGER.info("Starting FFmpeg: " + args.stream().collect(Collectors.joining(" ")));
+    LOGGER.info("Starting FFmpeg: " + String.join(" ", args));
 
     final Process process = new ProcessBuilder(args)
             .redirectError(ProcessBuilder.Redirect.INHERIT)

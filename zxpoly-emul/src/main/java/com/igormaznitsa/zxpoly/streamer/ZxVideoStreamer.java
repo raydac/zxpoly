@@ -3,7 +3,7 @@ package com.igormaznitsa.zxpoly.streamer;
 import static com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter.RASTER_HEIGHT;
 import static com.igormaznitsa.zxpoly.components.video.tvfilters.TvFilter.RASTER_WIDTH_ARGB_INT;
 
-import com.igormaznitsa.zxpoly.components.snd.Beeper;
+import com.igormaznitsa.zxpoly.components.sound.Beeper;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.utils.Timer;
 import com.igormaznitsa.zxpoly.utils.Utils;

@@ -1,10 +1,10 @@
-package com.igormaznitsa.zxpoly.components.snd;
+package com.igormaznitsa.zxpoly.components.sound;
+
+import static com.igormaznitsa.zxpoly.components.sound.Beeper.CHANNEL_COVOX;
 
 import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
-
-import static com.igormaznitsa.zxpoly.components.snd.Beeper.CHANNEL_COVOX;
 
 public final class CovoxFb implements IoDevice {
 

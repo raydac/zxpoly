@@ -2,7 +2,6 @@ package com.igormaznitsa.zxpoly.components.tapereader.tzx;
 
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
-
 import java.io.IOException;
 import java.util.function.Function;
 
@@ -167,7 +166,7 @@ public class TzxBlockHardwareType extends AbstractTzxInformationBlock {
     G007,
     MEMOTECH,
     LAMBDA_COLOUR,
-    UNKNOWN;
+    UNKNOWN
   }
 
   public enum HardwareType {
@@ -555,7 +554,7 @@ public class TzxBlockHardwareType extends AbstractTzxInformationBlock {
       this.decoder = decoder;
     }
 
-    public static final HardwareType findForId(final int id) {
+    public static HardwareType findForId(final int id) {
       HardwareType result = UNKNOWN;
       for (final HardwareType t : values()) {
         if (id == t.id) {

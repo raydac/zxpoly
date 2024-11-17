@@ -1,4 +1,4 @@
-package com.igormaznitsa.zxpoly.components.snd;
+package com.igormaznitsa.zxpoly.components.sound;
 
 public interface AyBasedSoundDevice {
   void setAyAddress(int address);

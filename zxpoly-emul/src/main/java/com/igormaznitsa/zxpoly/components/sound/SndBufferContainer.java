@@ -1,11 +1,10 @@
-package com.igormaznitsa.zxpoly.components.snd;
-
-import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
-
-import javax.sound.sampled.AudioFormat;
-import java.util.Arrays;
+package com.igormaznitsa.zxpoly.components.sound;
 
 import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
+
+import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
+import java.util.Arrays;
+import javax.sound.sampled.AudioFormat;
 
 final class SndBufferContainer {
   public static final int SND_FREQ = 48000;

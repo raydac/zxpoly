@@ -1,6 +1,13 @@
-package com.igormaznitsa.zxpoly.components.snd;
+package com.igormaznitsa.zxpoly.components.sound;
 
-import static com.igormaznitsa.zxpoly.components.snd.Beeper.*;
+import static com.igormaznitsa.zxpoly.components.sound.Beeper.CHANNEL_AY_A;
+import static com.igormaznitsa.zxpoly.components.sound.Beeper.CHANNEL_AY_B;
+import static com.igormaznitsa.zxpoly.components.sound.Beeper.CHANNEL_AY_C;
+import static com.igormaznitsa.zxpoly.components.sound.Beeper.CHANNEL_BEEPER;
+import static com.igormaznitsa.zxpoly.components.sound.Beeper.CHANNEL_COVOX;
+import static com.igormaznitsa.zxpoly.components.sound.Beeper.CHANNEL_TS_A;
+import static com.igormaznitsa.zxpoly.components.sound.Beeper.CHANNEL_TS_B;
+import static com.igormaznitsa.zxpoly.components.sound.Beeper.CHANNEL_TS_C;
 
 /**
  * Mixer set AY west-Europe (A left, B center, C right)

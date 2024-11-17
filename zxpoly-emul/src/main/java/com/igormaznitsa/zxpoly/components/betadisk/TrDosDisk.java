@@ -17,14 +17,17 @@
 
 package com.igormaznitsa.zxpoly.components.betadisk;
 
-import com.igormaznitsa.jbbp.utils.JBBPUtils;
-import org.apache.commons.io.FilenameUtils;
+import static java.util.Arrays.copyOf;
 
+import com.igormaznitsa.jbbp.utils.JBBPUtils;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
-
-import static java.util.Arrays.copyOf;
+import java.util.concurrent.locks.ReentrantLock;
+import org.apache.commons.io.FilenameUtils;
 
 public class TrDosDisk {
 
@@ -34,8 +37,8 @@ public class TrDosDisk {
   public static final int SECTOR_SIZE = 256;
   private static final Random RND = new Random();
   private final byte[] data;
-  private final Sector[] sectors;
-  private volatile boolean writeProtect;
+  private final List<Sector> sectors;
+  private final boolean writeProtect;
   private volatile File srcFile;
   private volatile SourceDataType type;
 
@@ -49,14 +52,13 @@ public class TrDosDisk {
                    final boolean writeProtect) {
     this.srcFile = srcFile;
     this.type = type;
-    this.sectors = new Sector[SECTORS_PER_TRACK * MAX_TRACKS_PER_SIDE * MAX_SIDES];
     final byte[] diskData;
 
     switch (type) {
       case SCL: {
         if (srcData.length < 10 ||
-                !JBBPUtils.arrayStartsWith(srcData, "SINCLAIR".getBytes(StandardCharsets.US_ASCII)) ||
-                srcData.length < (9 + (0x100 + 14) * (srcData[8] & 0xFF))) {
+            !JBBPUtils.arrayStartsWith(srcData, "SINCLAIR".getBytes(StandardCharsets.US_ASCII)) ||
+            srcData.length < (9 + (0x100 + 14) * (srcData[8] & 0xFF))) {
           throw new RuntimeException("Not SCL file");
         }
         diskData = new byte[MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE];
@@ -103,16 +105,16 @@ public class TrDosDisk {
           }
 
           diskData[track00Pointer++] =
-                  (byte) extractLogicalSectorIndex(diskPointer); // index of the first free sector
+              (byte) extractLogicalSectorIndex(diskPointer); // index of the first free sector
           diskData[track00Pointer++] =
-                  (byte) extractLogicalTrackIndex(diskPointer); // index of the first free track
+              (byte) extractLogicalTrackIndex(diskPointer); // index of the first free track
 
           diskData[track00Pointer++] = 0x16; // disk type
           diskData[track00Pointer++] = (byte) items; // number of files
 
           final int freeSectors =
-                  (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK - SECTORS_PER_TRACK)
-                          - totallySectors;
+              (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK - SECTORS_PER_TRACK)
+                  - totallySectors;
           diskData[track00Pointer++] = (byte) (freeSectors & 0xFF); // number of free sectors
           diskData[track00Pointer++] = (byte) (freeSectors >> 8);
 
@@ -135,7 +137,7 @@ public class TrDosDisk {
 
           // name of disk
           final String imageName =
-                  srcFile == null ? "Unknown" : FilenameUtils.getBaseName(srcFile.getName());
+              srcFile == null ? "Unknown" : FilenameUtils.getBaseName(srcFile.getName());
           for (int i = 0; i < Math.min(8, imageName.length()); i++) {
             diskData[track00Pointer++] = (byte) imageName.charAt(i);
           }
@@ -154,23 +156,25 @@ public class TrDosDisk {
       break;
       case TRD: {
         diskData =
-                srcData.length >= (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE)
-                        ? srcData :
-                        copyOf(srcData, MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
+            srcData.length >= (MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE)
+                ? srcData :
+                copyOf(srcData, MAX_SIDES * MAX_TRACKS_PER_SIDE * SECTORS_PER_TRACK * SECTOR_SIZE);
       }
       break;
       default:
         throw new Error("Unexpected source [" + type + ']');
     }
-    int p = 0;
     this.writeProtect = writeProtect;
     this.data = diskData;
+
+    final List<Sector> readSectors = new ArrayList<>();
+
     for (int i = 0; i < diskData.length; i += SECTOR_SIZE) {
-      this.sectors[p++] =
-              new Sector(this, extractSideNumber(i), extractPhysicalTrackIndex(i),
-                      extractPhysicalSectorIndex(i),
-                      i, diskData);
+      readSectors.add(new Sector(this, extractSideNumber(i), extractPhysicalTrackIndex(i),
+          extractPhysicalSectorIndex(i),
+          i, diskData));
     }
+    this.sectors = Collections.unmodifiableList(readSectors);
   }
 
   private static byte[] makeEmptyTrDosDisk(final String diskName) {
@@ -268,9 +272,7 @@ public class TrDosDisk {
 
     if (resetChangeFlag) {
       for (final Sector s : this.sectors) {
-        synchronized (s) {
-          s.written = false;
-        }
+        s.written = false;
       }
     }
   }
@@ -278,20 +280,16 @@ public class TrDosDisk {
   public boolean isChanged() {
     boolean result = false;
     for (final Sector s : this.sectors) {
-      synchronized (s) {
-        if (s.written) {
-          result = true;
-          break;
-        }
+      if (s.written) {
+        result = true;
+        break;
       }
     }
     return result;
   }
 
   public byte[] getDiskData() {
-    synchronized (this.data) {
-      return this.data.clone();
-    }
+    return this.data.clone();
   }
 
   public Sector findRandomSector(final int track) {
@@ -328,8 +326,10 @@ public class TrDosDisk {
     final int sectorIndex = (sector.getPhysicalIndex() + 1) % SECTORS_PER_TRACK;
 
     for (final Sector s : this.sectors) {
-      if (s.getSide() == head && s.getTrackNumber() == track && s.getPhysicalIndex() == sectorIndex)
+      if (s.getSide() == head && s.getTrackNumber() == track &&
+          s.getPhysicalIndex() == sectorIndex) {
         return s;
+      }
     }
     return null;
   }
@@ -339,7 +339,7 @@ public class TrDosDisk {
 
     for (final Sector s : this.sectors) {
       if (s.getSide() == this.headIndex && s.getTrackNumber() == track &&
-              s.getPhysicalIndex() == physicalSectorIndex) {
+          s.getPhysicalIndex() == physicalSectorIndex) {
         result = s;
         break;
       }
@@ -379,13 +379,14 @@ public class TrDosDisk {
     private final int offset;
     private int crc;
     private boolean written;
+    private final ReentrantLock lock = new ReentrantLock();
 
     private Sector(final TrDosDisk disk, final int side, final int track, final int physicalIndex,
                    final int offset, final byte[] data) {
       this.side = side;
       this.track = track;
       this.physicalIndex = physicalIndex;
-      this.data = data;
+      this.data = data.clone();
       this.owner = disk;
       this.offset = offset;
       updateCrc();
@@ -393,7 +394,8 @@ public class TrDosDisk {
 
     @Override
     public String toString() {
-      return String.format("Sector(side=%d,track=%d,phIndex=%d", this.side, this.track, this.physicalIndex);
+      return String.format("Sector(side=%d,track=%d,phIndex=%d", this.side, this.track,
+          this.physicalIndex);
     }
 
     public boolean isWriteProtect() {
@@ -421,19 +423,22 @@ public class TrDosDisk {
     }
 
     public int readByte(final int offsetAtSector) {
-      synchronized (this.data) {
+      this.lock.lock();
+      try {
         if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
           return -1;
         } else {
           return this.data[getOffset() + offsetAtSector] & 0xFF;
         }
+      } finally {
+        this.lock.unlock();
       }
     }
 
-    public void updateCrc() {
+    private void updateCrc() {
       int lcrc = 0xcdb4;
       for (int off = 0; off < SECTOR_SIZE; off++) {
-        lcrc ^= (this.readByte(off) << 8);
+        lcrc ^= ((this.data[this.offset + off] & 0xFF) << 8);
         for (int i = 0; i < 8; i++) {
           lcrc <<= 1;
           if ((lcrc & 0x10000) != 0) {
@@ -445,18 +450,21 @@ public class TrDosDisk {
     }
 
     public boolean writeByte(final int offsetAtSector, final int value) {
-      if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
-        return false;
-      } else {
-        if (this.owner.isWriteProtect()) {
+      this.lock.lock();
+      try {
+        if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
           return false;
-        }
-        synchronized (this.data) {
+        } else {
+          if (this.owner.isWriteProtect()) {
+            return false;
+          }
           this.data[getOffset() + offsetAtSector] = (byte) value;
           this.written = true;
+          this.updateCrc();
+          return true;
         }
-        this.updateCrc();
-        return true;
+      } finally {
+        this.lock.unlock();
       }
     }
 

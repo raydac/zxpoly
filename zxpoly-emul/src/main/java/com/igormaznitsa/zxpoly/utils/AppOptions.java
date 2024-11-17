@@ -18,7 +18,7 @@
 package com.igormaznitsa.zxpoly.utils;
 
 import com.igormaznitsa.zxpoly.components.BoardMode;
-import com.igormaznitsa.zxpoly.components.snd.VolumeProfile;
+import com.igormaznitsa.zxpoly.components.sound.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.video.BorderWidth;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
@@ -173,7 +173,7 @@ public final class AppOptions {
   }
 
   public synchronized void setCustomRomPath(final String path) {
-    if (path == null || path.trim().length() == 0) {
+    if (path == null || path.trim().isEmpty()) {
       preferences.remove(Option.CUSTOM_ROM_PATH.name());
     } else {
       preferences.put(Option.CUSTOM_ROM_PATH.name(), path);
@@ -546,7 +546,7 @@ public final class AppOptions {
     PROTEK_JOYSTICK_VK_FIRE,
     ATTRIBUTE_PORT_FF,
     ULAPLUS,
-    TRY_LESS_RESOURCES;
+    TRY_LESS_RESOURCES
   }
 
 }

@@ -705,7 +705,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     for (int i = 0; i < length; i++) {
       final int b = readAddress(address + i) & 0xFF;
       final String h = Integer.toHexString(b).toUpperCase(Locale.ENGLISH);
-      if (hex.length() > 0) {
+      if (!hex.isEmpty()) {
         hex.append(' ');
       }
       if (h.length() == 1) {
