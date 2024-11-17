@@ -60,7 +60,6 @@ public final class Z80 {
 
   // if the flag is true then it makes green z80bltst.tap v5.0 2022-01-11 by Ped7g
   // but in the same time FUSE Z80 tests are red for block commands
-  private static final boolean FLAG_EXPERIMENTAL_IMPROVE_BLOCK_FLAGS = false;
   private static final byte[] FTABLE_SZYX;
   private static final byte[] FTABLE_SZYXP;
   private static final int FLAG_S_SHIFT = 7;
@@ -2614,10 +2613,6 @@ public final class Z80 {
       this.setMemPtr(address + 1);
       this.regPC = address;
       this.tiStates += 5;
-
-      if (FLAG_EXPERIMENTAL_IMPROVE_BLOCK_FLAGS) {
-        updateBlockOperationFlagXY();
-      }
     } else {
       loopNonCompleted = false;
     }
@@ -2678,12 +2673,10 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
+      this.setMemPtr((0b1_0000_0000 + this.regSet[REG_C] & 0xFF) + 1);
       this.tiStates += 5;
-
-      if (FLAG_EXPERIMENTAL_IMPROVE_BLOCK_FLAGS) {
-        updateBlockOperationFlagXY();
-        updateFlags_INxR_OTxR(data);
-      }
+      updateBlockOperationFlagXY();
+      updateFlags_INxR_OTxR(data);
     } else {
       loopNonCompleted = false;
     }
@@ -2695,12 +2688,10 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
+      this.setMemPtr((0b1_0000_0000 + this.regSet[REG_C] & 0xFF) - 1);
       this.tiStates += 5;
-
-      if (FLAG_EXPERIMENTAL_IMPROVE_BLOCK_FLAGS) {
-        updateBlockOperationFlagXY();
-        updateFlags_INxR_OTxR(data);
-      }
+      updateBlockOperationFlagXY();
+      updateFlags_INxR_OTxR(data);
     } else {
       loopNonCompleted = false;
     }
@@ -2738,11 +2729,8 @@ public final class Z80 {
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tiStates += 5;
-
-      if (FLAG_EXPERIMENTAL_IMPROVE_BLOCK_FLAGS) {
-        updateBlockOperationFlagXY();
-        updateFlags_INxR_OTxR(data);
-      }
+      updateBlockOperationFlagXY();
+      updateFlags_INxR_OTxR(data);
     } else {
       loopNonCompleted = false;
     }
@@ -2782,11 +2770,8 @@ public final class Z80 {
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
       this.tiStates += 5;
-
-      if (FLAG_EXPERIMENTAL_IMPROVE_BLOCK_FLAGS) {
-        updateBlockOperationFlagXY();
-        updateFlags_INxR_OTxR(data);
-      }
+      updateBlockOperationFlagXY();
+      updateFlags_INxR_OTxR(data);
     } else {
       loopNonCompleted = false;
     }
@@ -2849,10 +2834,6 @@ public final class Z80 {
       this.regPC = address;
       this.setMemPtr(address + 1);
       this.tiStates += 5;
-
-      if (FLAG_EXPERIMENTAL_IMPROVE_BLOCK_FLAGS) {
-        updateBlockOperationFlagXY();
-      }
     } else {
       loopNonCompleted = false;
     }
