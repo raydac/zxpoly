@@ -24,10 +24,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore("Ignored because flag FLAG_EXPERIMENTAL_IMPROVE_BLOCK_FLAGS is TRUE")
 public class Z80FuseTest {
 
   private static List<Pair<InfoIn, InfoExpected>> testList;
@@ -55,8 +53,8 @@ public class Z80FuseTest {
     final Map<String, InfoIn> result = new HashMap<>();
 
     try (final BufferedReader reader = new BufferedReader(
-        new InputStreamReader(requireNonNull(getSystemResourceAsStream("fuse-test/tests.in")),
-            UTF_8))) {
+            new InputStreamReader(requireNonNull(getSystemResourceAsStream("fuse-test/tests.in")),
+                    UTF_8))) {
 
       try {
         while (!Thread.currentThread().isInterrupted()) {
@@ -76,8 +74,8 @@ public class Z80FuseTest {
     final Map<String, InfoExpected> result = new HashMap<>();
 
     try (final BufferedReader reader = new BufferedReader(
-        new InputStreamReader(requireNonNull(getSystemResourceAsStream("fuse-test/tests.expected")),
-            UTF_8))) {
+            new InputStreamReader(requireNonNull(getSystemResourceAsStream("fuse-test/tests.expected")),
+                    UTF_8))) {
 
       try {
         while (!Thread.currentThread().isInterrupted()) {
@@ -99,23 +97,23 @@ public class Z80FuseTest {
     final List<Pair<InfoIn, InfoExpected>> failedTests = new ArrayList<>();
 
     testList
-        // .filter(x -> x.getLeft().name.equals("eda3"))
-        .forEach(test -> {
-          printTestHeader(test);
-          final boolean ok = this.doTest(test);
-          if (ok) {
-            System.out.println("OK");
-            counterOk.incrementAndGet();
-          } else {
-            failedTests.add(test);
-            System.out.println("FAIL");
-          }
-        });
+            // .filter(x -> x.getLeft().name.equals("eda3"))
+            .forEach(test -> {
+              printTestHeader(test);
+              final boolean ok = this.doTest(test);
+              if (ok) {
+                System.out.println("OK");
+                counterOk.incrementAndGet();
+              } else {
+                failedTests.add(test);
+                System.out.println("FAIL");
+              }
+            });
 
     System.out.println("-----------------------------------------------------");
     System.out.printf("Total %d tests, passed %d tests, failed %d tests%n",
-        (counterOk.get() + failedTests.size()),
-        counterOk.get(), failedTests.size());
+            (counterOk.get() + failedTests.size()),
+            counterOk.get(), failedTests.size());
 
     if (!failedTests.isEmpty()) {
 
@@ -152,8 +150,8 @@ public class Z80FuseTest {
     final byte[] areaIoWr = new byte[0xFFFF];
 
     test.getRight().actions.stream()
-        .filter(x -> x.type == InfoExpected.ActionType.PR)
-        .forEach(x -> areaIoRd[x.address] = (byte) x.data);
+            .filter(x -> x.type == InfoExpected.ActionType.PR)
+            .forEach(x -> areaIoRd[x.address] = (byte) x.data);
 
     final Z80 cpu = new Z80(new Z80CPUBus() {
       @Override
@@ -239,24 +237,24 @@ public class Z80FuseTest {
     }
 
     test.getRight().actions.stream()
-        .filter(x -> x.type == InfoExpected.ActionType.PW)
-        .forEach(x -> {
-          if (x.data != (areaIoWr[x.address] & 0xFF)) {
-            System.out.printf("%nDetected non-correct value 0x%X in port 0x%X, expected 0x%X%n",
-                (areaIoWr[x.address] & 0xFF), x.address, x.data);
-            ok.set(false);
-          }
-        });
+            .filter(x -> x.type == InfoExpected.ActionType.PW)
+            .forEach(x -> {
+              if (x.data != (areaIoWr[x.address] & 0xFF)) {
+                System.out.printf("%nDetected non-correct value 0x%X in port 0x%X, expected 0x%X%n",
+                        (areaIoWr[x.address] & 0xFF), x.address, x.data);
+                ok.set(false);
+              }
+            });
 
     test.getRight().actions.stream()
-        .filter(x -> x.type == InfoExpected.ActionType.MW)
-        .forEach(x -> {
-          if (x.data != (areaRam[x.address] & 0xFF)) {
-            System.out.printf("%nDetected non-correct value 0x%X in RAM 0x%X, expected 0x%X%n",
-                (areaRam[x.address] & 0xFF), x.address, x.data);
-            ok.set(false);
-          }
-        });
+            .filter(x -> x.type == InfoExpected.ActionType.MW)
+            .forEach(x -> {
+              if (x.data != (areaRam[x.address] & 0xFF)) {
+                System.out.printf("%nDetected non-correct value 0x%X in RAM 0x%X, expected 0x%X%n",
+                        (areaRam[x.address] & 0xFF), x.address, x.data);
+                ok.set(false);
+              }
+            });
 
     if (!checkCpuState(cpu, test.getRight(), true, true)) {
       ok.set(false);
@@ -266,10 +264,10 @@ public class Z80FuseTest {
   }
 
   private boolean checkCpuState(
-      final Z80 cpu,
-      final InfoExpected expected,
-      final boolean checkR,
-      final boolean logError
+          final Z80 cpu,
+          final InfoExpected expected,
+          final boolean checkR,
+          final boolean logError
   ) {
     boolean result = true;
 
@@ -278,14 +276,14 @@ public class Z80FuseTest {
     if (cpu.getRegister(Z80.REG_PC) != expected.pc) {
       if (logError) {
         System.out
-            .printf("%nPC expected 0x%X <> 0x%X%n", expected.pc, cpu.getRegister(Z80.REG_PC));
+                .printf("%nPC expected 0x%X <> 0x%X%n", expected.pc, cpu.getRegister(Z80.REG_PC));
       }
       result = false;
     }
     if (cpu.getRegister(Z80.REG_SP) != expected.sp) {
       if (logError) {
         System.out
-            .printf("%nSP expected 0x%X <> 0x%X%n", expected.sp, cpu.getRegister(Z80.REG_SP));
+                .printf("%nSP expected 0x%X <> 0x%X%n", expected.sp, cpu.getRegister(Z80.REG_SP));
       }
       result = false;
     }
@@ -298,28 +296,28 @@ public class Z80FuseTest {
     if (cpu.getRegister(Z80.REG_I) != expected.i) {
       if (logError) {
         System.out
-            .printf("%nI expected 0x%X <> 0x%X%n", expected.i, cpu.getRegister(Z80.REG_I));
+                .printf("%nI expected 0x%X <> 0x%X%n", expected.i, cpu.getRegister(Z80.REG_I));
       }
       result = false;
     }
     if (checkR && cpu.getRegister(Z80.REG_R) != expected.r) {
       if (logError) {
         System.out
-            .printf("%nR expected 0x%X <> 0x%X%n", expected.r, cpu.getRegister(Z80.REG_R));
+                .printf("%nR expected 0x%X <> 0x%X%n", expected.r, cpu.getRegister(Z80.REG_R));
       }
       result = false;
     }
     if (cpu.getRegister(Z80.REG_IX) != expected.ix) {
       if (logError) {
         System.out
-            .printf("%nIX expected 0x%X <> 0x%X%n", expected.ix, cpu.getRegister(Z80.REG_IX));
+                .printf("%nIX expected 0x%X <> 0x%X%n", expected.ix, cpu.getRegister(Z80.REG_IX));
       }
       result = false;
     }
     if (cpu.getRegister(Z80.REG_IY) != expected.iy) {
       if (logError) {
         System.out
-            .printf("%nIY expected 0x%X <> 0x%X%n", expected.ix, cpu.getRegister(Z80.REG_IY));
+                .printf("%nIY expected 0x%X <> 0x%X%n", expected.ix, cpu.getRegister(Z80.REG_IY));
       }
       result = false;
     }
@@ -331,66 +329,66 @@ public class Z80FuseTest {
         String badFlagsInF = "ok";
         if (xorF != 0) {
           badFlagsInF = String.valueOf((xorF & 128) == 0 ? '_' : 'S') +
-              ((xorF & 64) == 0 ? '_' : 'Z') +
-              ((xorF & 32) == 0 ? '_' : 'Y') +
-              ((xorF & 16) == 0 ? '_' : 'H') +
-              ((xorF & 8) == 0 ? '_' : 'X') +
-              ((xorF & 4) == 0 ? '_' : 'P') +
-              ((xorF & 2) == 0 ? '_' : 'N') +
-              ((xorF & 1) == 0 ? '_' : 'C');
+                  ((xorF & 64) == 0 ? '_' : 'Z') +
+                  ((xorF & 32) == 0 ? '_' : 'Y') +
+                  ((xorF & 16) == 0 ? '_' : 'H') +
+                  ((xorF & 8) == 0 ? '_' : 'X') +
+                  ((xorF & 4) == 0 ? '_' : 'P') +
+                  ((xorF & 2) == 0 ? '_' : 'N') +
+                  ((xorF & 1) == 0 ? '_' : 'C');
         }
 
         System.out.printf("%nAF expected 0x%X <> 0x%X, F is %s%n", (expected.af & afMask),
-            (cpu.getRegisterPair(Z80.REGPAIR_AF, false) & afMask), badFlagsInF);
+                (cpu.getRegisterPair(Z80.REGPAIR_AF, false) & afMask), badFlagsInF);
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_BC, false) != expected.bc) {
       if (logError) {
         System.out.printf("%nBC expected 0x%X <> 0x%X%n", expected.bc,
-            cpu.getRegisterPair(Z80.REGPAIR_BC, false));
+                cpu.getRegisterPair(Z80.REGPAIR_BC, false));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_DE, false) != expected.de) {
       if (logError) {
         System.out.printf("%nDE expected 0x%X <> 0x%X%n", expected.de,
-            cpu.getRegisterPair(Z80.REGPAIR_DE, false));
+                cpu.getRegisterPair(Z80.REGPAIR_DE, false));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_HL, false) != expected.hl) {
       if (logError) {
         System.out.printf("%nHL expected 0x%X <> 0x%X%n", expected.hl,
-            cpu.getRegisterPair(Z80.REGPAIR_HL, false));
+                cpu.getRegisterPair(Z80.REGPAIR_HL, false));
       }
       result = false;
     }
     if ((cpu.getRegisterPair(Z80.REGPAIR_AF, true) & afMask) != (expected.altAf & afMask)) {
       if (logError) {
         System.out.printf("%nAF' expected 0x%X <> 0x%X%n", (expected.altAf & afMask),
-            (cpu.getRegisterPair(Z80.REGPAIR_AF, true) & afMask));
+                (cpu.getRegisterPair(Z80.REGPAIR_AF, true) & afMask));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_BC, true) != expected.altBc) {
       if (logError) {
         System.out.printf("%nBC' expected 0x%X <> 0x%X%n", expected.altBc,
-            cpu.getRegisterPair(Z80.REGPAIR_BC, true));
+                cpu.getRegisterPair(Z80.REGPAIR_BC, true));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_DE, true) != expected.altDe) {
       if (logError) {
         System.out.printf("%nDE' expected 0x%X <> 0x%X%n", expected.altDe,
-            cpu.getRegisterPair(Z80.REGPAIR_DE, true));
+                cpu.getRegisterPair(Z80.REGPAIR_DE, true));
       }
       result = false;
     }
     if (cpu.getRegisterPair(Z80.REGPAIR_HL, true) != expected.altHl) {
       if (logError) {
         System.out.printf("%nHL' expected 0x%X <> 0x%X%n", expected.altHl,
-            cpu.getRegisterPair(Z80.REGPAIR_HL, true));
+                cpu.getRegisterPair(Z80.REGPAIR_HL, true));
       }
       result = false;
     }
