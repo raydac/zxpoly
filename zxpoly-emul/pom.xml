@@ -15,7 +15,7 @@
 
     <properties>
         <jinput.version>2.0.10</jinput.version>
-        <openjdk.version>23+38</openjdk.version>
+        <openjdk.version>23.0.1+13</openjdk.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
     </properties>
