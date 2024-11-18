@@ -45,7 +45,7 @@ changes in ROM and SOS but only total synchronization between CPUs and sharing o
 I can't say that the idea was too original one because I was inspired by the
 book ["COMPUTER IMAGES" ("Understanding computer" Time-Life books)](https://youtu.be/rCkGOmcLSa0). There I found several
 strings about the Pixar platform (developed by the Lucasfilm team) which processes each color component by dedicated
-CPU. In Zx-Poly each CPU also processes dedicated color component (R,G,B,Y). Software no so often checks information
+CPU. In ZX-Poly each CPU also processes dedicated color component (R,G,B,Y). Software no so often checks information
 written into VRAM so that big part of games and utilities could be adapted just through edition of their graphic data.
 
 # License
@@ -76,7 +76,7 @@ ROM__, the ROM will be downloaded from one of remote network resources.
 # Supported snapshot formats
 
 - Snapshots: .Z80, .SNA, .SZX, .ZXP (ZX-Poly snapshot format), ZIP (Spec256 with SNA inside), .ROM (ROM images), .PROM (
-  ZXPoly
+  ZX-Poly
   ROM images)
 - Tape: .TZX (allows export as WAV), .TAP (allows export as WAV), .WAV
 - Disks: .TRD, .SCL
@@ -90,12 +90,12 @@ library `jinput` so that it can work not for all host-platforms.
 
 # Theory and structure of the ZX-Poly platform
 
-![ZXPoly test ROM screen](docs/block_scheme.png)    
+![ZX-Poly test ROM screen](docs/block_scheme.png)    
 The base of the platform is the theory that stable synchronous systems (without any inside random processes) built on
 the same components (because different element base can be also source of random processes) by being started
 synchronously in the same time from the same state have the same state in any point of time if all synchronous system
 components get the same input signal states in the same time.   
-![Structure of ZXPoly](docs/zxpolystruct.png)
+![Structure of ZX-Poly](docs/zxpolystruct.png)
 ZX-Poly platform adds several ports to manipulate work modes and the main port of the platform is
 #3D00. [In more details it is desribed in wiki.](https://github.com/raydac/zxpoly/wiki/Short-description-of-ZX-Poly-platform)
 
@@ -111,7 +111,7 @@ It is a family of video-modes and contain three sub-mode. All modes provide way 
 
 It is just regular video mode without any masking. It just integrates pixel info from video-ram of all CPU modules and form 4 bit index in ZX-Spectrum palette.
 [TRD disk with the example can be downloaded from here, the game has been partly colorized](adapted/Atw2/target/atw2.trd)   
-![ZXPoly256x192 screenshot](docs/screenshots/atw_zxpoly.png)   
+![ZX-Poly256x192 screenshot](docs/screenshots/atw_zxpoly.png)
 
 ### ZX-Poly 256x192 EXTENSION MASK_INK+PAPER (6)
 
@@ -120,19 +120,19 @@ It works as previous one and provide way to for 4 bit index for pixel, but also 
 ### ZX-Poly 256x192 EXTENSION MASK_FLUSH+INK+PAPER (mode 7)
 
 It is the most complex from the video-mode family. It analyses FLASH bit of each attribute from CPU0 video-memory and turn on ZX-Poly mode only for blocks where FLASH bit is ON. In the same time it analyses INK and PAPER attribute values and if they the same then whole block is filled by INK else form pixel colors as in standard ZX-Poly mode. All blocks where FLASH is OFF are processed as in standard ZX-Spectrum video-mode. FLASH is not working in the mode (but it is no so often feature in games). The video-mode provides way to colorize games with color dynamic indicators and duotone game-play areas.   
-![ZXPoly256x192Mode7_screenshot](adapted/FlyShark/flyshark_zxpoly_mode7.png)
+![ZX-Poly256x192Mode7_screenshot](adapted/FlyShark/flyshark_zxpoly_mode7.png)
 
 ## ZX-Poly 512x384 (2 colors per pixel placed in chess order) (mode 5)
 The Mode uses attributes but places pixels in chess order.   
 [TRD disk with the example can be downloaded from here](adapted/ZxWord/target/zxword.trd)   
-![ZXPoly512x384 animation](adapted/ZxWord/screenshots/zxpoly_zxword_mode5.gif)
+![ZX-Poly512x384 animation](adapted/ZxWord/screenshots/zxpoly_zxword_mode5.gif)
 
 # Adaptation of games
 
 To adapt old games, I have developed special utility called ZX-Poly Sprite corrector, which can be found in releases. It
 is a very easy editor which shows images in data blocks and allows to redraw them. It supports import from Z80 and SNA
 snapshots and as the result it generates ZXP snapshots.   
-![ZXPoly Sprite Corrector screenshot](docs/zxpoly_sprite_editor.png)   
+![ZX-Poly Sprite Corrector screenshot](docs/zxpoly_sprite_editor.png)   
 Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.3.3).
 
 ## "Official Father Christmas" (1989)
