@@ -113,6 +113,8 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1688,9 +1690,18 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         }
 
         final Snapshot selectedFilter = (Snapshot) theFilter;
-        LOGGER.log(Level.INFO, "Loading snapshot " + selectedFilter.getName());
+        final Path selectedFile = selected.toPath();
+        LOGGER.log(Level.INFO, "Loading snapshot " + selectedFile.getFileName() + " for filter " +
+            selectedFilter.getName());
+        final byte[] readSnapshot = Files.readAllBytes(selected.toPath());
+        if (readSnapshot.length != Files.size(selectedFile)) {
+          throw new IOException("Detected unexpectedly wrong array length during read: " +
+              selectedFile.getFileName());
+        }
+        LOGGER.log(Level.INFO,
+            "Read " + readSnapshot.length + " byte(s) from " + selectedFilter.getName());
         selectedFilter.loadFromArray(selected, this.board, this.board.getVideoController(),
-            FileUtils.readFileToByteArray(selected));
+            readSnapshot);
         this.menuOptionsZX128Mode.setState(this.board.getBoardMode() != BoardMode.ZXPOLY);
       } catch (Exception ex) {
         ex.printStackTrace();
