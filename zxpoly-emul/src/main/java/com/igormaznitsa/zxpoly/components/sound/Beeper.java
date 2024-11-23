@@ -363,8 +363,10 @@ public final class Beeper {
       final Line.Info lineInfo = this.sourceDataLine.getLineInfo();
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
-      this.thread = Thread.ofVirtual().name("zxp-beeper-thread-" + toHexString(System.nanoTime()))
+      this.thread = Thread.ofPlatform().name("zxp-beeper-thread-" + toHexString(System.nanoTime()))
           .unstarted(this::mainLoop);
+      this.thread.setPriority(Thread.MAX_PRIORITY);
+      this.thread.setDaemon(true);
       this.thread.setUncaughtExceptionHandler(
           (t, e) -> {
             LOGGER.log(Level.SEVERE, "Unexpected error: " + e.getMessage());
