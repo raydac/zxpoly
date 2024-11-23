@@ -1,8 +1,12 @@
 package com.igormaznitsa.zxpoly.ui;
 
 import com.igormaznitsa.zxpoly.utils.Utils;
-
-import javax.swing.*;
+import java.util.Arrays;
+import java.util.List;
+import javax.swing.AbstractButton;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JToggleButton;
 
 public enum FastButton {
   RESET(true, "Reset", "Reset device", "fb_reset.png", null, JButton.class),
@@ -21,6 +25,8 @@ public enum FastButton {
   private final ImageIcon iconSelected;
   private final String toolTip;
   private final boolean optional;
+
+  public static final List<FastButton> VALUES = Arrays.asList(FastButton.values());
 
   FastButton(final boolean optional, final String title, final String toolTip, final String icon, final String iconSelected, final Class<? extends AbstractButton> buttonClass) {
     this.optional = optional;

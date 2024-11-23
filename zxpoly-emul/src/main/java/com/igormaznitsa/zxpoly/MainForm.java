@@ -726,7 +726,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private void loadFastButtons() {
     final List<FastButton> fastButtonsInOptions = AppOptions.getInstance().getFastButtons();
     formFastButtons(this.menuBar,
-        Arrays.stream(FastButton.values())
+        FastButton.VALUES.stream()
             .filter(x -> !x.isOptional() || fastButtonsInOptions.contains(x))
             .collect(Collectors.toList())
     );
@@ -918,7 +918,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     final JPopupMenu popupMenu = new JPopupMenu("Fast buttons");
 
-    for (final FastButton fb : FastButton.values()) {
+    for (final FastButton fb : FastButton.VALUES) {
       final boolean selected = fastButtons.contains(fb) || !fb.isOptional();
       final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(fb.getTitle(), selected);
       menuItem.setEnabled(fb.isOptional());
@@ -1001,7 +1001,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           abstractButton.setSelected(this.turboMode);
           abstractButton.addActionListener(e -> {
             final JToggleButton source = (JToggleButton) e.getSource();
-            this.setTurboMode(source.isSelected());
+            this.setTurboModeActive(source.isSelected());
           });
         }
         break;
@@ -2330,6 +2330,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         Objects.requireNonNull(
             getClass().getResource("/com/igormaznitsa/zxpoly/icons/file_gif.png")))); // NOI18N
     menuActionAnimatedGIF.setText(TEXT_START_ANIM_GIF);
+    menuActionAnimatedGIF.setToolTipText("Can be disabled for some video filters");
     menuActionAnimatedGIF.addActionListener(this::menuActionAnimatedGIFActionPerformed);
     menuService.add(menuActionAnimatedGIF);
 
@@ -2760,9 +2761,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.setFastButtonState(FastButton.VIRTUAL_KEYBOARD, show);
   }
 
-  private void menuOptionsTurboActionPerformed(ActionEvent evt) {
-    final boolean turboActivated = this.menuOptionsTurbo.isSelected();
-    if (turboActivated) {
+  private void setTurboModeActive(final boolean active) {
+    if (active) {
       this.preTurboSourceSoundPort = this.board.getBeeper().setSourceSoundPort(null);
       LOGGER.info("Saved sound port: " + this.preTurboSourceSoundPort);
       this.setSoundActivate(false);
@@ -2775,6 +2775,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           this.preTurboSourceSoundPort.map(SourceSoundPort::getName).orElse("NONE"));
       this.preTurboSourceSoundPort = Optional.empty();
     }
+  }
+
+  private void menuOptionsTurboActionPerformed(ActionEvent evt) {
+    this.setTurboModeActive(this.menuOptionsTurbo.isSelected());
   }
 
   private void menuFileSelectDiskCActionPerformed(ActionEvent evt) {
