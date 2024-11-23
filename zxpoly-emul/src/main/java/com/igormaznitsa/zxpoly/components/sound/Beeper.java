@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -439,7 +438,7 @@ public final class Beeper {
         LOGGER.info("Sound line started");
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
-          final byte[] dataBlock = soundDataQueue.poll(10, TimeUnit.MILLISECONDS);
+          final byte[] dataBlock = soundDataQueue.poll();
           if (dataBlock != null) {
             this.writeToLine(dataBlock);
           }

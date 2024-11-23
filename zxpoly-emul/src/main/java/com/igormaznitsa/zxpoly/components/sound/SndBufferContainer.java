@@ -28,7 +28,7 @@ final class SndBufferContainer {
   private final TimingProfile timingProfile;
   private byte[] soundBuffer;
   private int bufferIndex;
-  private int tstatesIntCounter = 0;
+  private int tiStatesIntCounter = 0;
   private int lastWrittenPosition = 0;
 
   public SndBufferContainer(final TimingProfile timingProfile) {
@@ -55,18 +55,18 @@ final class SndBufferContainer {
   }
 
   public void resetPosition() {
-    this.tstatesIntCounter = 0;
+    this.tiStatesIntCounter = 0;
     this.lastWrittenPosition = 0;
   }
 
-  public int calculatePosition(final int tstatesIntCounter) {
-    return ((tstatesIntCounter * SAMPLES_PER_INT + this.timingProfile.tstatesFrame / 2)
+  public int calculatePosition(final int tiStatesIntCounter) {
+    return ((tiStatesIntCounter * SAMPLES_PER_INT + this.timingProfile.tstatesFrame / 2)
             / this.timingProfile.tstatesFrame);
   }
 
-  public void setValue(final int deltaTstates, final int levelLeft, final int levelRight) {
-    this.tstatesIntCounter += deltaTstates;
-    int position = calculatePosition(tstatesIntCounter) * 4;
+  public void setValue(final int deltaTiStates, final int levelLeft, final int levelRight) {
+    this.tiStatesIntCounter += deltaTiStates;
+    int position = calculatePosition(tiStatesIntCounter) * 4;
 
     if (position < SND_BUFFER_SIZE) {
       fillCurrentSndBuffer(this.lastWrittenPosition, position + FRAME_SIZE, levelLeft, levelRight);
