@@ -604,7 +604,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.setLocationRelativeTo(null);
 
     this.mainCpuThread =
-        Thread.ofVirtual().name("zx-poly-main-cpu-thread").unstarted(this::mainLoop);
+        Thread.ofPlatform().name("zx-poly-main-cpu-thread").unstarted(this::mainLoop);
     this.mainCpuThread.setUncaughtExceptionHandler((t, e) -> {
       LOGGER.severe("Detected exception in main thread, stopping application, see logs");
       e.printStackTrace(System.err);

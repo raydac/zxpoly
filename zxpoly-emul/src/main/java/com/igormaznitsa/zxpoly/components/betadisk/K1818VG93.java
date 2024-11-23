@@ -19,7 +19,6 @@ package com.igormaznitsa.zxpoly.components.betadisk;
 
 import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk.Sector;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -73,6 +72,8 @@ public final class K1818VG93 {
   private Object tempAuxiliaryObject;
 
   private long timeIndexMarkChange = -1L;
+
+  private static final Level LOG_LEVEL = Level.FINE;
 
   public K1818VG93(final TimingProfile profile, final Logger logger) {
     this.logger = logger;
@@ -229,7 +230,7 @@ public final class K1818VG93 {
         }
 
         if (this.firstCommandStep) {
-          logger.log(Level.INFO,
+          logger.log(LOG_LEVEL,
                   "FDD cmd (" + toBinByte(normValue) + "): " + commandAsText(normValue));
         }
       }
@@ -416,7 +417,7 @@ public final class K1818VG93 {
 
   private void cmdForceInterrupt(final long tstatesCounter, final int command,
                                  final boolean start) {
-    logger.info("INTERRUPT (counter=" + this.counter + ')');
+    logger.log(LOG_LEVEL, "INTERRUPT (counter=" + this.counter + ')');
     this.operationTimeOutCycles = -1L;
     resetInternalFlag(STATUS_BUSY);
   }
@@ -490,7 +491,8 @@ public final class K1818VG93 {
           }
           this.registers[REG_SECTOR] = 1;
           loadSector(this.registers[REG_TRACK], this.registers[REG_SECTOR]);
-          logger.info("FDD head moved to track " + this.registers[REG_TRACK] + ", target track is "
+          logger.log(LOG_LEVEL,
+              "FDD head moved to track " + this.registers[REG_TRACK] + ", target track is "
                   + this.registers[REG_DATA_WR]);
           this.operationTimeOutCycles = Math.abs(tstatesCounter + tstatesPerTrackChange[command & 2]);
         }
@@ -509,7 +511,7 @@ public final class K1818VG93 {
       }
 
       if (completed) {
-        this.logger.info("SEEK completed on track=" + this.registers[REG_TRACK]);
+        this.logger.log(LOG_LEVEL, "SEEK completed on track=" + this.registers[REG_TRACK]);
       } else {
         setInternalFlag(STATUS_BUSY);
       }
@@ -618,7 +620,7 @@ public final class K1818VG93 {
                   final int track = (this.extraCounter >> 16) & 0xFF;
                   final int side = (this.extraCounter >> 8) & 0xFF;
                   final int sector = this.extraCounter & 0xFF;
-                  logger.info("FOUND.ADDR t=" + track + ";h=" + side + ":s=" + sector);
+                  logger.log(LOG_LEVEL, "FOUND.ADDR t=" + track + ";h=" + side + ":s=" + sector);
                 }
               }
             } else {
@@ -737,7 +739,8 @@ public final class K1818VG93 {
               this.sectorPositioningCycles = Math.abs(tstatesCounter + tstatesPerSector);
               if (multiSectors) {
                 if (!this.sector.isLastOnTrack()) {
-                  this.logger.info("RD.SECTOR completed, start next sector in multi-sec");
+                  this.logger.log(LOG_LEVEL,
+                      "RD.SECTOR completed, start next sector in multi-sec");
                   this.registers[REG_SECTOR] = (this.registers[REG_SECTOR] + 1) & 0xFF;
                   loadSector(this.registers[REG_TRACK], this.registers[REG_SECTOR]);
                   this.counter = 0;
@@ -745,7 +748,7 @@ public final class K1818VG93 {
                   resetInternalFlag(STATUS_INDEXMARK_DRQ);
                 }
               } else {
-                this.logger.info("RD.SECTOR completed");
+                this.logger.log(LOG_LEVEL, "RD.SECTOR completed");
               }
             } else {
               final int data = this.sector.readByte(this.counter++);
