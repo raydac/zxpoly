@@ -364,7 +364,6 @@ public class TrDosDisk {
   }
 
   public enum SourceDataType {
-
     SCL,
     TRD
   }
@@ -372,7 +371,7 @@ public class TrDosDisk {
   public static final class Sector {
 
     private final TrDosDisk owner;
-    private final byte[] data;
+    private final byte[] diskDataPtr;
     private final int side;
     private final int track;
     private final int physicalIndex;
@@ -382,11 +381,11 @@ public class TrDosDisk {
     private final ReentrantLock lock = new ReentrantLock();
 
     private Sector(final TrDosDisk disk, final int side, final int track, final int physicalIndex,
-                   final int offset, final byte[] data) {
+                   final int offset, final byte[] diskDataPtr) {
       this.side = side;
       this.track = track;
       this.physicalIndex = physicalIndex;
-      this.data = data.clone();
+      this.diskDataPtr = diskDataPtr;
       this.owner = disk;
       this.offset = offset;
       updateCrc();
@@ -428,7 +427,7 @@ public class TrDosDisk {
         if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
           return -1;
         } else {
-          return this.data[getOffset() + offsetAtSector] & 0xFF;
+          return this.diskDataPtr[getOffset() + offsetAtSector] & 0xFF;
         }
       } finally {
         this.lock.unlock();
@@ -438,7 +437,7 @@ public class TrDosDisk {
     private void updateCrc() {
       int lcrc = 0xcdb4;
       for (int off = 0; off < SECTOR_SIZE; off++) {
-        lcrc ^= ((this.data[this.offset + off] & 0xFF) << 8);
+        lcrc ^= ((this.diskDataPtr[this.offset + off] & 0xFF) << 8);
         for (int i = 0; i < 8; i++) {
           lcrc <<= 1;
           if ((lcrc & 0x10000) != 0) {
@@ -458,7 +457,7 @@ public class TrDosDisk {
           if (this.owner.isWriteProtect()) {
             return false;
           }
-          this.data[getOffset() + offsetAtSector] = (byte) value;
+          this.diskDataPtr[getOffset() + offsetAtSector] = (byte) value;
           this.written = true;
           this.updateCrc();
           return true;
