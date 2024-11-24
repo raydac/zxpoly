@@ -372,7 +372,7 @@ public final class Beeper {
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
       this.thread = tryConsumeLessSystemResources ?
-          Thread.ofVirtual().name("zxp-beeper-thread-" + toHexString(System.nanoTime()))
+          Thread.ofVirtual().name("zxp-beeper-thread-virtual-" + toHexString(System.nanoTime()))
               .unstarted(this::mainLoop) :
           Thread.ofPlatform().name("zxp-beeper-thread-" + toHexString(System.nanoTime()))
           .unstarted(this::mainLoop);

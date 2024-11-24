@@ -204,6 +204,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private static final String TEXT_STOP_WAV = "Stop WAV";
   private static final long serialVersionUID = 7309959798344327441L;
   private static final String ROM_BOOTSTRAP_FILE_NAME = "bootstrap.rom";
+  private final boolean tryConsumeLessSystemResources;
 
   private static final WavFileFilter FILTER_FORMAT_WAV = new WavFileFilter();
   private static final TzxFileFilter FILTER_FORMAT_TZX = new TzxFileFilter();
@@ -391,10 +392,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     super(parameters.getTitle(APP_TITLE + ' ' + APP_VERSION));
     AppOptions.setForceFile(parameters.getPreferencesFile(null));
 
-    final boolean tryLessResources =
+    this.tryConsumeLessSystemResources =
         parameters.isTryUseLessSystemResources(AppOptions.getInstance().isTryLessResources());
 
-    if (tryLessResources) {
+    if (this.tryConsumeLessSystemResources) {
       LOGGER.info("Attempt to consume less system resources");
       this.wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS, Duration.ofNanos(50000L));
     } else {
@@ -519,7 +520,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         parameters.isAttributePortFf(AppOptions.getInstance().isAttributePortFf()),
         vkbdContainer,
         parameters.isUlaPlus(AppOptions.getInstance().isUlaPlus()),
-        tryLessResources
+        this.tryConsumeLessSystemResources
     );
     this.board.reset();
     this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() != BoardMode.ZXPOLY);
@@ -563,8 +564,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         .setSelected(this.board.getVideoController().isMouseTrapEnabled());
 
     for (final Component item : this.menuBar.getComponents()) {
-      if (item instanceof JMenu) {
-        final JMenu menuItem = (JMenu) item;
+      if (item instanceof JMenu menuItem) {
         menuItem.addMenuListener(new MenuListener() {
           @Override
           public void menuSelected(MenuEvent e) {
@@ -615,8 +615,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.setLocationRelativeTo(null);
 
-    this.mainCpuThread = tryLessResources ?
-        Thread.ofVirtual().name("zx-poly-main-cpu-thread").unstarted(this::mainLoop) :
+    this.mainCpuThread = this.tryConsumeLessSystemResources ?
+        Thread.ofVirtual().name("zx-poly-main-cpu-thread-virtual").unstarted(this::mainLoop) :
         Thread.ofPlatform().name("zx-poly-main-cpu-thread").unstarted(this::mainLoop);
     this.mainCpuThread.setUncaughtExceptionHandler((t, e) -> {
       LOGGER.severe("Detected exception in main thread, stopping application, see logs");
@@ -634,7 +634,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       this.infoBarUpdateTimer.start();
     });
 
-    this.board.findIoDevices().forEach(io -> io.init(tryLessResources));
+    this.board.findIoDevices().forEach(io -> io.init(this.tryConsumeLessSystemResources));
 
     this.setDropTarget(new DropTarget() {
       @Override
@@ -692,15 +692,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       this.board.getVideoController().setTvFilterChain(TvFilterChain.OLDTV);
     }
 
-    this.keyboardAndTapeModule.addTapeStateChangeListener(e -> {
-      this.setFastButtonState(FastButton.TAPE_PLAY_STOP,
-          e.getTap() != null && e.getTap().isPlaying());
-    });
+    this.keyboardAndTapeModule.addTapeStateChangeListener(
+        e -> this.setFastButtonState(FastButton.TAPE_PLAY_STOP,
+            e.getTap() != null && e.getTap().isPlaying()));
 
     if (parameters.getOpenSnapshot() != null) {
-      SwingUtilities.invokeLater(() -> {
-        this.setSnapshotFile(parameters.getOpenSnapshot(), FILTER_FORMAT_ALL_SNAPSHOTS);
-      });
+      SwingUtilities.invokeLater(
+          () -> this.setSnapshotFile(parameters.getOpenSnapshot(), FILTER_FORMAT_ALL_SNAPSHOTS));
     }
 
     this.menuBar.setVisible(parameters.isShowMainMenu(true));
@@ -725,10 +723,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   private static void setMenuEnable(final JMenuItem item, final boolean enable) {
     if (item instanceof JMenu) {
-      final JMenu jm = (JMenu) item;
-      jm.setEnabled(enable);
-      for (int i = 0; i < jm.getItemCount(); i++) {
-        setMenuEnable(jm.getItem(i), enable);
+      final JMenu menuItem = (JMenu) item;
+      menuItem.setEnabled(enable);
+      for (int i = 0; i < menuItem.getItemCount(); i++) {
+        setMenuEnable(menuItem.getItem(i), enable);
       }
     } else {
       if (item != null) {
@@ -811,7 +809,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       return Optional.empty();
     } else {
       if (foundPorts.size() == 1) {
-        return Optional.of(foundPorts.get(0));
+        return Optional.of(foundPorts.getFirst());
       } else {
         final Optional<SourceSoundPort> result = this.showSelectSoundLineDialog(foundPorts,
             AppOptions.getInstance().getLastSelectedAudioDevice(), interactive);
@@ -1067,6 +1065,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   }
 
   private void mainLoop() {
+    final boolean lessResources = this.tryConsumeLessSystemResources;
+
     this.wallClock.next();
     int countdownToNotifyRepaint = this.intTicksBeforeFrameDraw;
     int countdownToAnimationSave = 0;
@@ -1173,7 +1173,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
         if (doBlink) {
           if (blinkLineY < 192) {
-            this.blinkScreen(sessionIntCounter, blinkLineY, blinkLineY + 1);
+            if (!lessResources) {
+              this.blinkScreen(sessionIntCounter, blinkLineY, blinkLineY + 1);
+            }
             blinkLineY++;
             nextBlinkLineTiStates = blinkLineY * this.timingProfile.tstatesPerLine +
                 this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
@@ -1183,6 +1185,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         }
 
         if (notifyRepaintScreen) {
+          if (lessResources) {
+            this.blinkScreen(sessionIntCounter, 0, 192);
+            this.blinkScreen(sessionIntCounter + 1, 0, 192);
+          }
           this.repaintScreen();
         }
       } else {
@@ -2682,9 +2688,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         if (e.getStateChange() == ItemEvent.SELECTED) {
           try {
             UIManager.setLookAndFeel(lf.getClassName());
-            SwingUtilities.invokeLater(() -> {
-              SwingUtilities.updateComponentTreeUI(MainForm.this);
-            });
+            SwingUtilities.invokeLater(() -> SwingUtilities.updateComponentTreeUI(MainForm.this));
             AppOptions.getInstance().setUiLfClass(lf.getClassName());
             AppOptions.getInstance().flush();
           } catch (Exception ex) {

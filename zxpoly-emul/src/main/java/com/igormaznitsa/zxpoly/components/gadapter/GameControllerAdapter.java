@@ -40,7 +40,8 @@ public abstract class GameControllerAdapter implements Runnable {
 
   public void start() {
     final Thread thread =
-        Thread.ofVirtual().name("zxp.gcontroller." + this.controller.getName()).unstarted(this);
+        Thread.ofVirtual().name("zxp-game-controller-virtual" + this.controller.getName())
+            .unstarted(this);
     if (!this.controllerThread.compareAndSet(null, thread)) {
       throw new Error("Detected attempt to restart already started controller!");
     }
