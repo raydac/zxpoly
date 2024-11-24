@@ -106,8 +106,9 @@ public final class Motherboard implements ZxPolyConstants {
       final boolean useTurboSound,
       final boolean allowKempstonMouse,
       final boolean attributePortFf,
-      final VirtualKeyboardDecoration vkbdContainer,
-      final boolean ulaPlus
+      final VirtualKeyboardDecoration virtualKeyboardDecoration,
+      final boolean ulaPlus,
+      final boolean tryConsumeLessSystemResources
   ) {
     this.attributePortFf = attributePortFf;
     this.soundLevels = soundLevels;
@@ -124,7 +125,8 @@ public final class Motherboard implements ZxPolyConstants {
     this.memoryTimings = timingProfile.makeUlaFrame();
 
     this.boardMode = boardMode;
-    this.beeper = new Beeper(timingProfile, useAcbSoundScheme, enableCovoxFb, useTurboSound);
+    this.beeper = new Beeper(timingProfile, useAcbSoundScheme, enableCovoxFb, useTurboSound,
+        tryConsumeLessSystemResources);
     if (rom.isTrdosPresented()) {
       LOGGER.info("TR-DOS presented in ROM, creating BetaDiskInterface");
       this.betaDisk = new BetaDiscInterface(this.timingProfile, this);
@@ -142,7 +144,7 @@ public final class Motherboard implements ZxPolyConstants {
             syncRepaint,
             virtualKeyboardBounds,
             this,
-            vkbdContainer,
+            virtualKeyboardDecoration,
             ulaPlus);
     ioDevices.add(video);
     ioDevices.add(new KempstonMouse(this));

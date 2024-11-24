@@ -1137,7 +1137,7 @@ public final class VideoController extends JComponent
   }
 
   @Override
-  public void init() {
+  public void init(final boolean tryLessSystemResources) {
     this.vkbdRender = new VirtualKeyboardRender(this.board, this.vkbdContainer);
   }
 

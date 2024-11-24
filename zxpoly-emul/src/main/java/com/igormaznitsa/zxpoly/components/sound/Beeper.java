@@ -48,6 +48,7 @@ public final class Beeper {
   public static final int CHANNEL_TS_C = 7;
   public static final AudioFormat AUDIO_FORMAT = SndBufferContainer.AUDIO_FORMAT;
   private static final Logger LOGGER = Logger.getLogger(Beeper.class.getName());
+  private final boolean tryConsumeLessSystemResources;
 
   private static final IWavWriter NULL_WAV = new IWavWriter() {
     @Override
@@ -97,8 +98,13 @@ public final class Beeper {
   private final TimingProfile timingProfile;
   private final AtomicReference<IWavWriter> activeWavWriter = new AtomicReference<>(NULL_WAV);
 
-  public Beeper(final TimingProfile timingProfile, final boolean useAcbSoundScheme,
-                final boolean covoxPresented, final boolean turboSoundPresented) {
+  public Beeper(
+      final TimingProfile timingProfile,
+      final boolean useAcbSoundScheme,
+      final boolean covoxPresented,
+      final boolean turboSoundPresented,
+      final boolean tryConsumeLessSystemResources) {
+    this.tryConsumeLessSystemResources = tryConsumeLessSystemResources;
     this.timingProfile = timingProfile;
     if (useAcbSoundScheme) {
       if (turboSoundPresented && covoxPresented) {
@@ -172,7 +178,8 @@ public final class Beeper {
       this.activeInternalBeeper.getAndSet(NULL_BEEPER).dispose();
     } else {
       try {
-        final IBeeper newInternalBeeper = new InternalBeeper(this.timingProfile, soundPort);
+        final IBeeper newInternalBeeper =
+            new InternalBeeper(this.timingProfile, soundPort, this.tryConsumeLessSystemResources);
         if (this.activeInternalBeeper.compareAndSet(NULL_BEEPER, newInternalBeeper)) {
           newInternalBeeper.start();
         }
@@ -354,15 +361,20 @@ public final class Beeper {
     private final Optional<SourceSoundPort> optionalSourceSoundPort;
     private volatile boolean working = true;
 
-    private InternalBeeper(final TimingProfile timingProfile,
-                           final SourceSoundPort optionalSourceSoundPort) {
+    private InternalBeeper(
+        final TimingProfile timingProfile,
+        final SourceSoundPort optionalSourceSoundPort,
+        final boolean tryConsumeLessSystemResources) {
       this.sndBuffer = new SndBufferContainer(timingProfile);
       this.optionalSourceSoundPort = Optional.of(optionalSourceSoundPort);
       this.sourceDataLine = optionalSourceSoundPort.asSourceDataLine();
       final Line.Info lineInfo = this.sourceDataLine.getLineInfo();
       LOGGER.info("Got sound data line: " + lineInfo.toString());
 
-      this.thread = Thread.ofPlatform().name("zxp-beeper-thread-" + toHexString(System.nanoTime()))
+      this.thread = tryConsumeLessSystemResources ?
+          Thread.ofVirtual().name("zxp-beeper-thread-" + toHexString(System.nanoTime()))
+              .unstarted(this::mainLoop) :
+          Thread.ofPlatform().name("zxp-beeper-thread-" + toHexString(System.nanoTime()))
           .unstarted(this::mainLoop);
       this.thread.setPriority(Thread.MAX_PRIORITY);
       this.thread.setDaemon(true);

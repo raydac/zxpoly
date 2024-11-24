@@ -19,6 +19,8 @@ package com.igormaznitsa.zxpoly;
 
 import static com.igormaznitsa.z80.Utils.toHex;
 import static com.igormaznitsa.z80.Utils.toHexByte;
+import static com.igormaznitsa.zxpoly.Version.APP_TITLE;
+import static com.igormaznitsa.zxpoly.Version.APP_VERSION;
 import static com.igormaznitsa.zxpoly.utils.Utils.assertUiThread;
 import static javax.swing.JOptionPane.CANCEL_OPTION;
 import static javax.swing.JOptionPane.showConfirmDialog;
@@ -31,7 +33,6 @@ import com.igormaznitsa.zxpoly.animeencoders.AGifEncoder;
 import com.igormaznitsa.zxpoly.animeencoders.AnimatedGifTunePanel;
 import com.igormaznitsa.zxpoly.animeencoders.AnimationEncoder;
 import com.igormaznitsa.zxpoly.components.BoardMode;
-import com.igormaznitsa.zxpoly.components.IoDevice;
 import com.igormaznitsa.zxpoly.components.KempstonMouse;
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
 import com.igormaznitsa.zxpoly.components.Motherboard;
@@ -387,22 +388,26 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private File lastWrittenWavFile = null;
 
   public MainForm(final MainFormParameters parameters) {
-    super(parameters.getTitle());
+    super(parameters.getTitle(APP_TITLE + ' ' + APP_VERSION));
+    AppOptions.setForceFile(parameters.getPreferencesFile(null));
 
-    if (AppOptions.getInstance().isTryLessResources()) {
-      LOGGER.info("Less resources mode is active");
+    final boolean tryLessResources =
+        parameters.isTryUseLessSystemResources(AppOptions.getInstance().isTryLessResources());
+
+    if (tryLessResources) {
+      LOGGER.info("Attempt to consume less system resources");
       this.wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS, Duration.ofNanos(50000L));
     } else {
       this.wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS);
     }
 
-    this.setUndecorated(parameters.isUndecorated());
+    this.setUndecorated(parameters.isUndecorated(false));
     Runtime.getRuntime().addShutdownHook(Thread.ofPlatform().unstarted(this::doOnShutdown));
 
     this.sysIcon = new ImageIcon(
         Objects.requireNonNull(getClass().getResource("/com/igormaznitsa/zxpoly/icons/sys.png")));
 
-    this.timingProfile = parameters.getTimingProfile();
+    this.timingProfile = parameters.getTimingProfile(AppOptions.getInstance().getTimingProfile());
 
     LOGGER.info("Timing profile: " + this.timingProfile.name());
 
@@ -431,9 +436,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       }
     }
 
-    final RomSource rom = RomSource.findForLink(parameters.getRomPath(), RomSource.UNKNOWN);
+    final RomSource rom = RomSource.findForLink(parameters.getRomPath(null), RomSource.UNKNOWN);
     try {
-      BASE_ROM = loadRom(parameters.getRomPath(), rom.getRom48names(), rom.getRom128names(),
+      BASE_ROM = loadRom(parameters.getRomPath(null), rom.getRom48names(), rom.getRom128names(),
           rom.getTrDosNames(), bootstrapRom);
     } catch (Exception ex) {
       showMessageDialog(this, "Can't load Spec128 ROM for error: " + ex.getMessage());
@@ -448,9 +453,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     }
 
     initComponents(BASE_ROM.isTrdosPresented(),
-        parameters.isShowIndicatorPanel() && AppOptions.getInstance().isShowIndicatorPanel());
+        parameters.isShowIndicatorPanel(AppOptions.getInstance().isShowIndicatorPanel()));
 
-    this.interlaceScan = AppOptions.getInstance().isInterlacedScan();
+    this.interlaceScan = parameters.isInterlaceScan(AppOptions.getInstance().isInterlacedScan());
 
     this.menuBar.add(Box.createHorizontalGlue());
 
@@ -462,18 +467,20 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.getInputContext().selectInputMethod(Locale.ENGLISH);
 
-    if (parameters.getAppIconPath() == null) {
+    if (parameters.getAppIconPath(null) == null) {
       this.setIconImage(Utils.loadIcon("appico.png"));
     } else {
       try {
-        this.setIconImage(ImageIO.read(new File(parameters.getAppIconPath())));
+        this.setIconImage(ImageIO.read(new File(parameters.getAppIconPath(null))));
       } catch (Exception ex) {
-        LOGGER.log(Level.SEVERE, "Can't load application icon: " + parameters.getAppIconPath(), ex);
+        LOGGER.log(Level.SEVERE, "Can't load application icon: " + parameters.getAppIconPath(null),
+            ex);
         System.exit(34);
       }
     }
 
-    final boolean allowKempstonMouse = AppOptions.getInstance().isKempstonMouseAllowed();
+    final boolean allowKempstonMouse =
+        parameters.isAllowKempstonMouse(AppOptions.getInstance().isKempstonMouseAllowed());
 
     if (!allowKempstonMouse) {
       this.menuOptionsEnableTrapMouse.setEnabled(false);
@@ -482,32 +489,37 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     final VirtualKeyboardDecoration vkbdContainer;
     try {
-      vkbdContainer = parameters.getVirtualKeyboardLook().load();
+      vkbdContainer =
+          parameters.getVirtualKeyboardLook(AppOptions.getInstance().getKeyboardLook()).load();
       LOGGER.info("Virtual keyboard profile: " + vkbdContainer.getId());
     } catch (Exception ex) {
       LOGGER.log(Level.SEVERE, "Can't load virtual keyboard: " + ex.getMessage(), ex);
       throw new Error("Can't load virtual keyboard");
     }
 
-    final VolumeProfile volumeProfile = AppOptions.getInstance().getVolumeProfile();
+    final VolumeProfile volumeProfile =
+        parameters.getVolumeProfile(AppOptions.getInstance().getVolumeProfile());
     LOGGER.info("Selected volume profile: " + volumeProfile.name());
 
+    final Bounds parameterKeyboardBounds = parameters.getKeyboardBounds(null);
+
     this.board = new Motherboard(
-        parameters.getBorderWidth(),
+        parameters.getBorderWidth(AppOptions.getInstance().getBorderWidth()),
         volumeProfile,
         this.timingProfile,
         BASE_ROM,
-        parameters.getKeyboardBounds() == null ? null :
-            parameters.getKeyboardBounds().withPositionIfNot(this.getX(), this.getY()),
-        AppOptions.getInstance().getDefaultBoardMode(),
-        AppOptions.getInstance().isSyncPaint(),
-        AppOptions.getInstance().isSoundChannelsACB() || parameters.isForceAcbChannelSound(),
-        AppOptions.getInstance().isCovoxFb(),
-        AppOptions.getInstance().isTurboSound(),
+        parameterKeyboardBounds == null ? null :
+            parameterKeyboardBounds.withPositionIfNot(this.getX(), this.getY()),
+        parameters.getBoardMode(AppOptions.getInstance().getDefaultBoardMode()),
+        parameters.isSyncRepaint(AppOptions.getInstance().isSyncPaint()),
+        parameters.isForceAcbChannelSound(AppOptions.getInstance().isSoundChannelsACB()),
+        parameters.isCovoxFb(AppOptions.getInstance().isCovoxFb()),
+        parameters.isTurboSound(AppOptions.getInstance().isTurboSound()),
         allowKempstonMouse,
-        AppOptions.getInstance().isAttributePortFf(),
+        parameters.isAttributePortFf(AppOptions.getInstance().isAttributePortFf()),
         vkbdContainer,
-        AppOptions.getInstance().isUlaPlus()
+        parameters.isUlaPlus(AppOptions.getInstance().isUlaPlus()),
+        tryLessResources
     );
     this.board.reset();
     this.menuOptionsZX128Mode.setSelected(this.board.getBoardMode() != BoardMode.ZXPOLY);
@@ -591,7 +603,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         }
     );
 
-    if (AppOptions.getInstance().isSoundTurnedOn() || parameters.isActivateSound()) {
+    if (parameters.isActivateSound(AppOptions.getInstance().isSoundTurnedOn())) {
       this.activateSoundIfPossible();
     }
 
@@ -603,7 +615,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.setLocationRelativeTo(null);
 
-    this.mainCpuThread =
+    this.mainCpuThread = tryLessResources ?
+        Thread.ofVirtual().name("zx-poly-main-cpu-thread").unstarted(this::mainLoop) :
         Thread.ofPlatform().name("zx-poly-main-cpu-thread").unstarted(this::mainLoop);
     this.mainCpuThread.setUncaughtExceptionHandler((t, e) -> {
       LOGGER.severe("Detected exception in main thread, stopping application, see logs");
@@ -621,7 +634,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       this.infoBarUpdateTimer.start();
     });
 
-    this.board.findIoDevices().forEach(IoDevice::init);
+    this.board.findIoDevices().forEach(io -> io.init(tryLessResources));
 
     this.setDropTarget(new DropTarget() {
       @Override
@@ -690,21 +703,22 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       });
     }
 
-    this.menuBar.setVisible(parameters.isShowMainMenu());
+    this.menuBar.setVisible(parameters.isShowMainMenu(true));
 
-    if (parameters.getBounds() != null) {
+    final Bounds forceBounds = parameters.getBounds(null);
+    if (forceBounds != null) {
       SwingUtilities.invokeLater(() -> {
-        var bounds = parameters.getBounds();
-        if (bounds.hasCoordinates()) {
+        if (forceBounds.hasCoordinates()) {
           this.setBounds(
-              new Rectangle(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight()));
+              new Rectangle(forceBounds.getX(), forceBounds.getY(), forceBounds.getWidth(),
+                  forceBounds.getHeight()));
         } else {
-          this.setSize(bounds.getWidth(), bounds.getHeight());
+          this.setSize(forceBounds.getWidth(), forceBounds.getHeight());
         }
       });
     }
 
-    if (parameters.getKeyboardBounds() != null) {
+    if (parameters.getKeyboardBounds(null) != null) {
       SwingUtilities.invokeLater(() -> this.showVirtualKeyboard(true));
     }
   }

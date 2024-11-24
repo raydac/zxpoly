@@ -25,7 +25,7 @@ public interface IoDevice extends ZxPolyConstants {
 
   Motherboard getMotherboard();
 
-  default void init() {
+  default void init(boolean tryLessSystemResources) {
   }
 
   /**

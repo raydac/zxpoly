@@ -15,13 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import static java.util.Objects.requireNonNullElse;
-import static java.util.Objects.requireNonNullElseGet;
-
 import com.igormaznitsa.zxpoly.Bounds;
 import com.igormaznitsa.zxpoly.MainForm;
 import com.igormaznitsa.zxpoly.MainFormParameters;
 import com.igormaznitsa.zxpoly.Version;
+import com.igormaznitsa.zxpoly.components.BoardMode;
+import com.igormaznitsa.zxpoly.components.sound.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.video.BorderWidth;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
@@ -43,43 +42,59 @@ import picocli.CommandLine;
 )
 public class ZXPoly implements Runnable, Version {
 
-  public static final String APP_TITLE = "ZX-Poly emulator";
-
-  public static final String APP_VERSION =
-      String.format("v %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_BUILD);
   @CommandLine.Option(
       names = {"-r", "--rom"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
       description = "bootstrap ROM as a single file"
   )
   private String romFile = null;
 
   @CommandLine.Option(
       names = {"--preferences-file"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
       description = "file to keep preferences"
   )
   private File preferencesFile = null;
 
   @CommandLine.Option(
       names = {"--undecorated"},
-      description = "make main window undecorated"
+      description = "make main window undecorated",
+      defaultValue = CommandLine.Option.NULL_VALUE
   )
-  private boolean undecorated = false;
+  private Boolean undecorated = null;
 
   @CommandLine.Option(
       names = {"--sound"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
       description = "activate sound"
   )
-  private boolean activateSound = false;
+  private Boolean activateSound = null;
 
   @CommandLine.Option(
       names = {"--sound-acb"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
       description = "use ACB channel order sound"
   )
-  private boolean forceAcbSound = false;
+  private Boolean forceAcbSound = null;
+
+  @CommandLine.Option(
+      names = {"--try-less-resources"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
+      description = "try use less system resources"
+  )
+  private Boolean tryLessResourcess = null;
+
+  @CommandLine.Option(
+      names = {"--sync-repaint"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
+      description = "use sync repaint mechanism, can be slow"
+  )
+  private Boolean syncRepaint = null;
 
   @CommandLine.Option(
       names = {"--bounds"},
       description = "define main frame bounds as X,Y,W,H or W,H",
+      defaultValue = CommandLine.Option.NULL_VALUE,
       converter = Bounds.class
   )
   private Bounds bounds = null;
@@ -87,6 +102,7 @@ public class ZXPoly implements Runnable, Version {
   @CommandLine.Option(
       names = {"--keyboard-bounds"},
       description = "define keyboard bounds as X,Y,W,H or W,H",
+      defaultValue = CommandLine.Option.NULL_VALUE,
       converter = Bounds.class
   )
   private Bounds keyboardBounds = null;
@@ -94,57 +110,126 @@ public class ZXPoly implements Runnable, Version {
   @CommandLine.Option(
       names = {"--indicators"},
       description = "show indicator panel",
-      defaultValue = "true",
+      defaultValue = CommandLine.Option.NULL_VALUE,
       arity = "1"
   )
-  private boolean showIndicators;
+  private Boolean showIndicators = null;
 
   @CommandLine.Option(
-      names = {"--mainmenu"},
+      names = {"--main-menu"},
       description = "show main menu",
-      defaultValue = "true",
+      defaultValue = CommandLine.Option.NULL_VALUE,
       arity = "1"
   )
-  private boolean showMainMenu;
+  private Boolean showMainMenu = null;
+
+  @CommandLine.Option(
+      names = {"--covox-fb"},
+      description = "use FB port for Covox",
+      defaultValue = CommandLine.Option.NULL_VALUE,
+      arity = "1"
+  )
+  private Boolean covoxFb = null;
+
+  @CommandLine.Option(
+      names = {"--turbo-sound"},
+      description = "turn on support of turbo sound",
+      defaultValue = CommandLine.Option.NULL_VALUE,
+      arity = "1"
+  )
+  private Boolean turboSound = null;
+
+  @CommandLine.Option(
+      names = {"--kempston-mouse"},
+      description = "allow kempston mouse",
+      defaultValue = CommandLine.Option.NULL_VALUE,
+      arity = "1"
+  )
+  private Boolean allowKempstonMouse = null;
+
+  @CommandLine.Option(
+      names = {"--attribute-port-ff"},
+      description = "turn on support for attribute port FF",
+      defaultValue = CommandLine.Option.NULL_VALUE,
+      arity = "1"
+  )
+  private Boolean attributePortFf = null;
+
+  @CommandLine.Option(
+      names = {"--ula-plus"},
+      description = "turn on support for Ula Plus",
+      defaultValue = CommandLine.Option.NULL_VALUE,
+      arity = "1"
+  )
+  private Boolean ulaPlus = null;
+
+  @CommandLine.Option(
+      names = {"--interlace-scan"},
+      description = "turn on interlacing",
+      defaultValue = CommandLine.Option.NULL_VALUE,
+      arity = "1"
+  )
+  private Boolean interlaceScan = null;
 
   @CommandLine.Option(
       names = {"-i", "--icon"},
-      description = "application icon file"
+      description = "application icon file",
+      defaultValue = CommandLine.Option.NULL_VALUE
   )
   private String applicationIconFilePath = null;
 
   @CommandLine.Option(
-      names = {"-l", "--lookandfeel"},
+      names = {"-l", "--look-and-feel"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
       description = "look and feel class canonical name"
   )
   private String lookAndFeelClass = null;
 
   @CommandLine.Option(
-      names = {"-q", "--apptitle"},
+      names = {"-q", "--app-title"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
       description = "application title"
   )
   private String title = null;
 
   @CommandLine.Option(
       names = {"-b", "--border"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
       description = "border width, Valid values: ${COMPLETION-CANDIDATES}"
   )
   private BorderWidth borderWidth = null;
 
   @CommandLine.Option(
       names = {"-t", "--timing"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
       description = "timing profile, Valid values: ${COMPLETION-CANDIDATES}"
   )
   private TimingProfile timingProfile = null;
 
   @CommandLine.Option(
       names = {"-k", "--keyboard"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
       description = "virtual keyboard look, Valid values: ${COMPLETION-CANDIDATES}"
   )
   private VirtualKeyboardLook virtualKeyboardLook = null;
 
   @CommandLine.Option(
+      names = {"--board-mode"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
+      description = "motherboard mode, Valid values: ${COMPLETION-CANDIDATES}"
+  )
+  private BoardMode boardMode = null;
+
+  @CommandLine.Option(
+      names = {"--volume-profile"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
+      description = "sound volume profile, Valid values: ${COMPLETION-CANDIDATES}"
+  )
+  private VolumeProfile volumeProfile = null;
+
+  @CommandLine.Option(
       names = {"-s", "--snapshot"},
+      defaultValue = CommandLine.Option.NULL_VALUE,
       description = "open snapshot file, type will be recognized by file extension"
   )
   private File snapshotFile = null;
@@ -225,24 +310,31 @@ public class ZXPoly implements Runnable, Version {
 
         final MainFormParameters parameters = new MainFormParameters();
 
-        parameters.setTitle(requireNonNullElse(this.title, APP_TITLE + ' ' + APP_VERSION))
+        parameters
+            .setTitle(this.title)
             .setAppIconPath(this.applicationIconFilePath)
             .setRomPath(romPath)
             .setBounds(this.bounds)
+            .setPreferencesFile(this.preferencesFile)
             .setKeyboardBounds(this.keyboardBounds)
             .setShowMainMenu(this.showMainMenu)
             .setUndecorated(this.undecorated)
+            .setSyncRepaint(this.syncRepaint)
             .setForceAcbChannelSound(this.forceAcbSound)
             .setActivateSound(this.activateSound)
+            .setTryUseLessSystemResources(this.tryLessResourcess)
             .setShowIndicatorPanel(this.showIndicators)
-            .setVirtualKeyboardLook(requireNonNullElseGet(this.virtualKeyboardLook,
-                () -> AppOptions.getInstance().getKeyboardLook()))
+            .setVirtualKeyboardLook(this.virtualKeyboardLook)
             .setOpenSnapshot(this.snapshotFile)
-            .setBorderWidth(requireNonNullElseGet(this.borderWidth,
-                () -> AppOptions.getInstance().getBorderWidth()))
-            .setTimingProfile(requireNonNullElseGet(this.timingProfile,
-                () -> AppOptions.getInstance().getTimingProfile()))
-        ;
+            .setBorderWidth(this.borderWidth)
+            .setInterlaceScan(this.interlaceScan)
+            .setCovoxFb(this.covoxFb)
+            .setAllowKempstonMouse(this.allowKempstonMouse)
+            .setAttributePortFf(this.attributePortFf)
+            .setUlaPlus(this.ulaPlus)
+            .setVolumeProfile(this.volumeProfile)
+            .setBoardMode(this.boardMode)
+            .setTimingProfile(this.timingProfile);
 
         form = new MainForm(parameters);
       } catch (Exception ex) {
