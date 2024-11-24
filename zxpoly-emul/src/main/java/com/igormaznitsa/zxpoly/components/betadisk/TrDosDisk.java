@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.locks.ReentrantLock;
 import org.apache.commons.io.FilenameUtils;
 
 public class TrDosDisk {
@@ -378,7 +377,6 @@ public class TrDosDisk {
     private final int offset;
     private int crc;
     private boolean written;
-    private final ReentrantLock lock = new ReentrantLock();
 
     private Sector(final TrDosDisk disk, final int side, final int track, final int physicalIndex,
                    final int offset, final byte[] diskDataPtr) {
@@ -422,15 +420,10 @@ public class TrDosDisk {
     }
 
     public int readByte(final int offsetAtSector) {
-      this.lock.lock();
-      try {
-        if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
-          return -1;
-        } else {
-          return this.diskDataPtr[getOffset() + offsetAtSector] & 0xFF;
-        }
-      } finally {
-        this.lock.unlock();
+      if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
+        return -1;
+      } else {
+        return this.diskDataPtr[getOffset() + offsetAtSector] & 0xFF;
       }
     }
 
@@ -449,21 +442,16 @@ public class TrDosDisk {
     }
 
     public boolean writeByte(final int offsetAtSector, final int value) {
-      this.lock.lock();
-      try {
-        if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
+      if (offsetAtSector < 0 || offsetAtSector >= SECTOR_SIZE) {
+        return false;
+      } else {
+        if (this.owner.isWriteProtect()) {
           return false;
-        } else {
-          if (this.owner.isWriteProtect()) {
-            return false;
-          }
-          this.diskDataPtr[getOffset() + offsetAtSector] = (byte) value;
-          this.written = true;
-          this.updateCrc();
-          return true;
         }
-      } finally {
-        this.lock.unlock();
+        this.diskDataPtr[getOffset() + offsetAtSector] = (byte) value;
+        this.written = true;
+        this.updateCrc();
+        return true;
       }
     }
 
