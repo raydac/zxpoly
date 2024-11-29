@@ -319,31 +319,7 @@ public final class VideoController extends JComponent
         while (x-- > 0) {
           final int color = (currentPixels & 0x80) == 0 ? argbPaperColor : argbInkColor;
           currentPixels <<= 1;
-
-          switch (renderLines) {
-            case ALL: {
-              pixelRgbBuffer[offset++] = color;
-              pixelRgbBuffer[offset] = color;
-              offset += SCREEN_WIDTH;
-
-              pixelRgbBuffer[offset--] = color;
-              pixelRgbBuffer[offset] = color;
-              offset -= SCREEN_WIDTH - 2;
-            }
-            break;
-            case EVEN: {
-              pixelRgbBuffer[offset++] = color;
-              pixelRgbBuffer[offset++] = color;
-            }
-            break;
-            case ODD: {
-              pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
-              pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
-            }
-            break;
-            default:
-              throw new Error("Unexpected mode");
-          }
+          offset = renderLines.apply(pixelRgbBuffer, offset, color);
         }
       }
     }
@@ -1846,8 +1822,40 @@ public final class VideoController extends JComponent
   }
 
   public enum LineRenderMode {
-    ALL,
-    EVEN,
-    ODD
+    ALL((pixelRgbBuffer, offset, color) -> {
+      pixelRgbBuffer[offset++] = color;
+      pixelRgbBuffer[offset] = color;
+      offset += SCREEN_WIDTH;
+
+      pixelRgbBuffer[offset--] = color;
+      pixelRgbBuffer[offset] = color;
+      offset -= SCREEN_WIDTH - 2;
+      return offset;
+    }),
+    EVEN((pixelRgbBuffer, offset, color) -> {
+      pixelRgbBuffer[offset++] = color;
+      pixelRgbBuffer[offset++] = color;
+      return offset;
+    }),
+    ODD((pixelRgbBuffer, offset, color) -> {
+      pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
+      pixelRgbBuffer[SCREEN_WIDTH + offset++] = color;
+      return offset;
+    });
+    private final LineRenderModeFunction processor;
+
+    LineRenderMode(final LineRenderModeFunction processor) {
+      this.processor = processor;
+    }
+
+    public int apply(final int[] buffer, final int offset, final int color) {
+      return this.processor.apply(buffer, offset, color);
+    }
+
+  }
+
+  @FunctionalInterface
+  public interface LineRenderModeFunction {
+    int apply(int[] buffer, int offset, int color);
   }
 }

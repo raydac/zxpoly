@@ -1186,8 +1186,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
         if (notifyRepaintScreen) {
           if (lessResources) {
-            this.blinkScreen(sessionIntCounter, 0, 192);
-            this.blinkScreen(sessionIntCounter + 1, 0, 192);
+            this.blinkWholeScreen();
           }
           this.repaintScreen();
         }
@@ -1362,7 +1361,16 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       this.board.getVideoController()
           .syncUpdateBuffer(lineFrom, lineTo, VideoController.LineRenderMode.ALL);
     }
-    this.board.getVideoController().copyWorkScreenToOutputScreen(0, lineFrom, 256, lineTo);
+    this.board.getVideoController()
+        .copyWorkScreenToOutputScreen(0, lineFrom, VideoController.ZXSCREEN_COLS, lineTo);
+  }
+
+  private void blinkWholeScreen() {
+    this.board.getVideoController()
+        .syncUpdateBuffer(0, VideoController.ZXSCREEN_ROWS, VideoController.LineRenderMode.ALL);
+    this.board.getVideoController()
+        .copyWorkScreenToOutputScreen(0, 0, VideoController.ZXSCREEN_COLS,
+            VideoController.ZXSCREEN_ROWS);
   }
 
   private void repaintScreen() {
