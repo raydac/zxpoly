@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
@@ -37,6 +39,8 @@ public final class FilePlainPreferences extends Preferences {
   private final List<NodeChangeListener> nodeChangeListeners = new CopyOnWriteArrayList<>();
 
   private volatile boolean changed;
+
+  private final Lock locker = new ReentrantLock();
 
   public FilePlainPreferences(final String name, final File file, final boolean create)
       throws IOException {
@@ -70,201 +74,296 @@ public final class FilePlainPreferences extends Preferences {
   }
 
   @Override
-  public synchronized void put(final String key, final String value) {
-    this.properties.setProperty(key, value);
-    this.changed = true;
-    this.firePreferenceChange(key, value);
-  }
-
-  @Override
-  public synchronized String get(final String key, final String def) {
-    return this.properties.getProperty(key, def);
-  }
-
-  @Override
-  public synchronized void remove(final String key) {
-    if (this.properties.remove(key) != null) {
+  public void put(final String key, final String value) {
+    this.locker.lock();
+    try {
+      this.properties.setProperty(key, value);
       this.changed = true;
-      this.firePreferenceChange(key, null);
+      this.firePreferenceChange(key, value);
+    } finally {
+      this.locker.unlock();
     }
   }
 
   @Override
-  public synchronized void clear() throws BackingStoreException {
-    var keys = this.keys();
-    this.properties.clear();
-    Stream.of(keys).forEach(k -> firePreferenceChange(k, null));
-    if (keys.length != 0) {
-      this.changed = true;
-    }
-  }
-
-  @Override
-  public synchronized void putInt(final String key, final int value) {
-    this.put(key, formatter.format(value));
-  }
-
-  @Override
-  public synchronized int getInt(final String key, final int def) {
-    var value = this.properties.getProperty(key, formatter.format(def));
+  public String get(final String key, final String def) {
+    this.locker.lock();
     try {
-      return formatter.parse(value).intValue();
-    } catch (ParseException ex) {
-      LOGGER.log(Level.SEVERE, "Parse exception " + key, ex);
-      return def;
+      return this.properties.getProperty(key, def);
+    } finally {
+      this.locker.unlock();
     }
   }
 
   @Override
-  public synchronized void putLong(final String key, final long value) {
-    this.put(key, formatter.format(value));
-  }
-
-  @Override
-  public synchronized long getLong(String key, long def) {
-    var value = this.properties.getProperty(key, formatter.format(def));
+  public void remove(final String key) {
+    this.locker.lock();
     try {
-      return formatter.parse(value).longValue();
-    } catch (ParseException ex) {
-      LOGGER.log(Level.SEVERE, "Parse exception " + key, ex);
-      return def;
+      if (this.properties.remove(key) != null) {
+        this.changed = true;
+        this.firePreferenceChange(key, null);
+      }
+    } finally {
+      this.locker.unlock();
     }
   }
 
   @Override
-  public synchronized void putBoolean(final String key, final boolean value) {
-    this.put(key, Boolean.toString(value));
-  }
-
-  @Override
-  public synchronized boolean getBoolean(final String key, final boolean def) {
-    var value = this.properties.getProperty(key, Boolean.toString(def));
-    return Boolean.parseBoolean(value.trim());
-  }
-
-  @Override
-  public synchronized void putFloat(String key, float value) {
-    this.put(key, formatter.format(value));
-  }
-
-  @Override
-  public synchronized float getFloat(final String key, final float def) {
-    var value = this.properties.getProperty(key, formatter.format(def));
+  public void clear() throws BackingStoreException {
+    this.locker.lock();
     try {
-      return formatter.parse(value).floatValue();
-    } catch (final ParseException ex) {
-      LOGGER.log(Level.SEVERE, "Parse exception " + key, ex);
-      return def;
+      var keys = this.keys();
+      this.properties.clear();
+      Stream.of(keys).forEach(k -> firePreferenceChange(k, null));
+      if (keys.length != 0) {
+        this.changed = true;
+      }
+    } finally {
+      this.locker.unlock();
     }
   }
 
   @Override
-  public synchronized void putDouble(final String key, final double value) {
-    this.put(key, formatter.format(value));
-  }
-
-  @Override
-  public synchronized double getDouble(String key, double def) {
-    var value = this.properties.getProperty(key, formatter.format(def));
+  public void putInt(final String key, final int value) {
+    this.locker.lock();
     try {
-      return formatter.parse(value).doubleValue();
-    } catch (final ParseException ex) {
-      LOGGER.log(Level.SEVERE, "Parse exception " + key, ex);
-      return def;
+      this.put(key, formatter.format(value));
+    } finally {
+      this.locker.unlock();
     }
   }
 
   @Override
-  public synchronized void putByteArray(final String key, final byte[] value) {
-    this.put(key, Base64.getEncoder().encodeToString(value));
-  }
-
-  @Override
-  public synchronized byte[] getByteArray(String key, byte[] def) {
-    var value = this.properties.getProperty(key, key);
-    if (value == null) {
-      return def;
-    }
+  public int getInt(final String key, final int def) {
+    this.locker.lock();
     try {
-      return Base64.getDecoder().decode(value);
-    } catch (Exception ex) {
-      LOGGER.log(Level.SEVERE, "Decode exception " + key, ex);
-      return def;
+      var value = this.properties.getProperty(key, formatter.format(def));
+      try {
+        return formatter.parse(value).intValue();
+      } catch (ParseException ex) {
+        LOGGER.log(Level.SEVERE, "Parse exception " + key, ex);
+        return def;
+      }
+    } finally {
+      this.locker.unlock();
     }
   }
 
   @Override
-  public synchronized String[] keys() throws BackingStoreException {
-    return this.properties.keySet().toArray(String[]::new);
+  public void putLong(final String key, final long value) {
+    this.locker.lock();
+    try {
+      this.put(key, formatter.format(value));
+    } finally {
+      this.locker.unlock();
+    }
   }
 
   @Override
-  public synchronized String[] childrenNames() throws BackingStoreException {
+  public long getLong(String key, long def) {
+    this.locker.lock();
+    try {
+      var value = this.properties.getProperty(key, formatter.format(def));
+      try {
+        return formatter.parse(value).longValue();
+      } catch (ParseException ex) {
+        LOGGER.log(Level.SEVERE, "Parse exception " + key, ex);
+        return def;
+      }
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  @Override
+  public void putBoolean(final String key, final boolean value) {
+    this.locker.lock();
+    try {
+      this.put(key, Boolean.toString(value));
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  @Override
+  public boolean getBoolean(final String key, final boolean def) {
+    this.locker.lock();
+    try {
+      var value = this.properties.getProperty(key, Boolean.toString(def));
+      return Boolean.parseBoolean(value.trim());
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  @Override
+  public void putFloat(String key, float value) {
+    this.locker.lock();
+    try {
+      this.put(key, formatter.format(value));
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  @Override
+  public float getFloat(final String key, final float def) {
+    this.locker.lock();
+    try {
+      var value = this.properties.getProperty(key, formatter.format(def));
+      try {
+        return formatter.parse(value).floatValue();
+      } catch (final ParseException ex) {
+        LOGGER.log(Level.SEVERE, "Parse exception " + key, ex);
+        return def;
+      }
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  @Override
+  public void putDouble(final String key, final double value) {
+    this.locker.lock();
+    try {
+      this.put(key, formatter.format(value));
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  @Override
+  public double getDouble(String key, double def) {
+    this.locker.lock();
+    try {
+      var value = this.properties.getProperty(key, formatter.format(def));
+      try {
+        return formatter.parse(value).doubleValue();
+      } catch (final ParseException ex) {
+        LOGGER.log(Level.SEVERE, "Parse exception " + key, ex);
+        return def;
+      }
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  @Override
+  public void putByteArray(final String key, final byte[] value) {
+    this.locker.lock();
+    try {
+      this.put(key, Base64.getEncoder().encodeToString(value));
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  @Override
+  public byte[] getByteArray(String key, byte[] def) {
+    this.locker.lock();
+    try {
+      var value = this.properties.getProperty(key, key);
+      if (value == null) {
+        return def;
+      }
+      try {
+        return Base64.getDecoder().decode(value);
+      } catch (Exception ex) {
+        LOGGER.log(Level.SEVERE, "Decode exception " + key, ex);
+        return def;
+      }
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  @Override
+  public String[] keys() {
+    this.locker.lock();
+    try {
+      return this.properties.keySet().toArray(String[]::new);
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  @Override
+  public String[] childrenNames() {
     return new String[0];
   }
 
   @Override
-  public synchronized Preferences parent() {
+  public Preferences parent() {
     return null;
   }
 
   @Override
-  public synchronized Preferences node(final String pathName) {
+  public Preferences node(final String pathName) {
     return null;
   }
 
   @Override
-  public synchronized boolean nodeExists(final String pathName) throws BackingStoreException {
+  public boolean nodeExists(final String pathName) {
     return false;
   }
 
   @Override
-  public synchronized void removeNode() throws BackingStoreException {
+  public void removeNode() throws BackingStoreException {
     throw new BackingStoreException("Can't remove the root node");
   }
 
   @Override
-  public synchronized String name() {
+  public String name() {
     return this.name;
   }
 
   @Override
-  public synchronized String absolutePath() {
+  public String absolutePath() {
     return this.name;
   }
 
   @Override
-  public synchronized boolean isUserNode() {
+  public boolean isUserNode() {
     return false;
   }
 
   @Override
-  public synchronized String toString() {
+  public String toString() {
     return null;
   }
 
   @Override
-  public synchronized void flush() throws BackingStoreException {
-    if (this.changed) {
-      try (var writer = new FileWriter(this.file, StandardCharsets.UTF_8)) {
-        this.properties.store(writer, String.format("Properties file for '%s'", this.name));
-        this.changed = false;
-      } catch (IOException ex) {
-        LOGGER.log(Level.SEVERE, "Can't save properties", ex);
-        throw new BackingStoreException(ex);
+  public void flush() throws BackingStoreException {
+    this.locker.lock();
+    try {
+      if (this.changed) {
+        try (var writer = new FileWriter(this.file, StandardCharsets.UTF_8)) {
+          this.properties.store(writer, String.format("Properties file for '%s'", this.name));
+          this.changed = false;
+        } catch (IOException ex) {
+          LOGGER.log(Level.SEVERE, "Can't save properties", ex);
+          throw new BackingStoreException(ex);
+        }
       }
+    } finally {
+      this.locker.unlock();
     }
   }
 
   @Override
   public void sync() throws BackingStoreException {
-    try (var reader = new FileReader(this.file, StandardCharsets.UTF_8)) {
-      this.properties.clear();
-      this.properties.load(reader);
-      this.changed = false;
-    } catch (IOException ex) {
-      LOGGER.log(Level.SEVERE, "Can't load properties", ex);
-      throw new BackingStoreException(ex);
+    this.locker.lock();
+    try {
+      try (var reader = new FileReader(this.file, StandardCharsets.UTF_8)) {
+        this.properties.clear();
+        this.properties.load(reader);
+        this.changed = false;
+      } catch (IOException ex) {
+        LOGGER.log(Level.SEVERE, "Can't load properties", ex);
+        throw new BackingStoreException(ex);
+      }
+    } finally {
+      this.locker.unlock();
     }
   }
 
@@ -289,13 +388,18 @@ public final class FilePlainPreferences extends Preferences {
   }
 
   @Override
-  public synchronized void exportNode(final OutputStream os)
-      throws IOException, BackingStoreException {
-    this.properties.store(os, String.format("Properties for '%s'", this.name));
+  public void exportNode(final OutputStream os)
+      throws IOException {
+    this.locker.lock();
+    try {
+      this.properties.store(os, String.format("Properties for '%s'", this.name));
+    } finally {
+      this.locker.unlock();
+    }
   }
 
   @Override
-  public void exportSubtree(final OutputStream os) throws IOException, BackingStoreException {
+  public void exportSubtree(final OutputStream os) {
 
   }
 }

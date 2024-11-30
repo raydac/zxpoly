@@ -34,13 +34,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataListener;
 
-final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
+final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource<ReaderTap.TapBlock> {
 
   private static final Logger LOGGER = Logger.getLogger(ReaderTap.class.getName());
 
@@ -58,14 +61,15 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
   private final String name;
   private final List<TapBlock> tapBlockList = new ArrayList<>();
   private final TapeContext tapeContext;
-  private volatile TapBlock current;
-  private volatile State state = State.STOPPED;
-  private volatile boolean signalInState;
+  private final AtomicBoolean signalInState = new AtomicBoolean();
+  private final Lock locker = new ReentrantLock();
+  private TapBlock current;
   private long counterMain;
   private long counterEx;
   private int mask;
   private int buffered;
   private int controlChecksum;
+  private State state = State.STOPPED;
 
   public ReaderTap(final TapeContext tapeContext, final String name, final InputStream tap) throws IOException {
     this.tapeContext = tapeContext;
@@ -127,14 +131,24 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
   }
 
   public TapBlock getCurrent() {
-    return this.current;
+    this.locker.lock();
+    try {
+      return this.current;
+    } finally {
+      this.locker.unlock();
+    }
   }
 
   public void setCurrent(int index) {
-    this.rewindToStart();
-    while (index > 0) {
-      this.rewindToNextBlock();
-      index--;
+    this.locker.lock();
+    try {
+      this.rewindToStart();
+      while (index > 0) {
+        this.rewindToNextBlock();
+        index--;
+      }
+    } finally {
+      this.locker.unlock();
     }
   }
 
@@ -144,29 +158,44 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
   }
 
   @Override
-  public synchronized boolean isPlaying() {
-    return this.state != State.STOPPED;
+  public boolean isPlaying() {
+    this.locker.lock();
+    try {
+      return this.state != State.STOPPED;
+    } finally {
+      this.locker.unlock();
+    }
   }
 
   @Override
-  public synchronized boolean startPlay() {
-    if (this.state != State.STOPPED && this.current == null) {
+  public boolean startPlay() {
+    this.locker.lock();
+    try {
+      if (this.state != State.STOPPED && this.current == null) {
+        this.state = State.STOPPED;
+        fireStop();
+        return false;
+      }
+
+      this.state = State.INBETWEEN;
+      this.counterMain = -1L;
+      firePlay();
+      return true;
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  @Override
+  public void stopPlay() {
+    this.locker.lock();
+    try {
+      this.counterMain = -1L;
       this.state = State.STOPPED;
       fireStop();
-      return false;
+    } finally {
+      this.locker.unlock();
     }
-
-    this.state = State.INBETWEEN;
-    this.counterMain = -1L;
-    firePlay();
-    return true;
-  }
-
-  @Override
-  public synchronized void stopPlay() {
-    this.counterMain = -1L;
-    this.state = State.STOPPED;
-    fireStop();
   }
 
   private void fireStop() {
@@ -177,13 +206,18 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
     fireAction(1, "play");
   }
 
-  public synchronized void rewindToStart() {
-    stopPlay();
-    if (this.current != null) {
-      while (this.current.prev != null) {
-        this.current = this.current.prev;
+  public void rewindToStart() {
+    this.locker.lock();
+    try {
+      stopPlay();
+      if (this.current != null) {
+        while (this.current.prev != null) {
+          this.current = this.current.prev;
+        }
+        LOGGER.log(Level.INFO, "Pointer to " + makeDescription(this.current));
       }
-      LOGGER.log(Level.INFO, "Pointer to " + makeDescription(this.current));
+    } finally {
+      this.locker.unlock();
     }
   }
 
@@ -202,64 +236,79 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
   }
 
   @Override
-  public synchronized boolean rewindToNextBlock() {
-    stopPlay();
-    return toNextBlock();
+  public boolean rewindToNextBlock() {
+    this.locker.lock();
+    try {
+      stopPlay();
+      return toNextBlock();
+    } finally {
+      this.locker.unlock();
+    }
   }
 
   @Override
-  public synchronized boolean rewindToPrevBlock() {
-    stopPlay();
-    if (this.current == null) {
-      return false;
-    } else {
-      if (!this.current.isFirst()) {
-        this.current = this.current.prev;
-        LOGGER.log(Level.INFO, "Pointer to " + makeDescription(this.current));
-        return true;
-      } else {
+  public boolean rewindToPrevBlock() {
+    this.locker.lock();
+    try {
+      stopPlay();
+      if (this.current == null) {
         return false;
+      } else {
+        if (!this.current.isFirst()) {
+          this.current = this.current.prev;
+          LOGGER.log(Level.INFO, "Pointer to " + makeDescription(this.current));
+          return true;
+        } else {
+          return false;
+        }
       }
+    } finally {
+      this.locker.unlock();
     }
   }
 
-  public synchronized boolean isHi() {
-    return this.signalInState;
+  public boolean isHi() {
+    return this.signalInState.get();
   }
 
-  public synchronized byte[] getAsWAV() throws IOException {
-    final int FREQ = 22050;
-    final int CYCLESPERSAMPLE = (int) ((1000000000L / (long) FREQ) / 286L);
+  public byte[] getAsWAV() throws IOException {
+    this.locker.lock();
+    try {
+      final int FREQ = 22050;
+      final int CYCLESPERSAMPLE = (int) ((1000000000L / (long) FREQ) / 286L);
 
-    final ByteArrayOutputStream data = new ByteArrayOutputStream(1024 * 1024);
+      final ByteArrayOutputStream data = new ByteArrayOutputStream(1024 * 1024);
 
-    rewindToStart();
-    this.signalInState = false;
-    this.counterMain = -1L;
-    this.state = State.INBETWEEN;
+      rewindToStart();
+      this.signalInState.set(false);
+      this.counterMain = -1L;
+      this.state = State.INBETWEEN;
 
-    while (this.state != State.STOPPED) {
-      data.write(this.signalInState ? 0xFF : 0x00);
-      updateForSpentMachineCycles(CYCLESPERSAMPLE);
+      while (this.state != State.STOPPED) {
+        data.write(this.signalInState.get() ? 0xFF : 0x00);
+        updateForSpentMachineCycles(CYCLESPERSAMPLE);
+      }
+
+      final JBBPOut out = BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
+
+      return out.
+          Byte("RIFF").
+          Int(data.size() + 40).
+          Byte("WAVE").
+          Byte("fmt ").
+          Int(16). // Size
+              Short(1). // Audio format
+              Short(1). // Num channels
+              Int(FREQ).// Sample rate
+              Int(FREQ). // Byte rate
+              Short(1). // Block align
+              Short(8). // Bits per sample
+              Byte("data").
+          Int(data.size()).
+          Byte(data.toByteArray()).End().toByteArray();
+    } finally {
+      this.locker.unlock();
     }
-
-    final JBBPOut out = BeginBin(JBBPByteOrder.LITTLE_ENDIAN);
-
-    return out.
-            Byte("RIFF").
-            Int(data.size() + 40).
-            Byte("WAVE").
-            Byte("fmt ").
-            Int(16). // Size
-                    Short(1). // Audio format
-                    Short(1). // Num channels
-                    Int(FREQ).// Sample rate
-                    Int(FREQ). // Byte rate
-                    Short(1). // Block align
-                    Short(8). // Bits per sample
-                    Byte("data").
-            Int(data.size()).
-            Byte(data.toByteArray()).End().toByteArray();
   }
 
   private String makeDescription(final TapBlock block) {
@@ -304,7 +353,7 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
     this.mask = 0x80;
     this.buffered = data;
     this.counterEx = ((data & this.mask) == 0 ? PULSELEN_ZERO : PULSELEN_ONE);
-    this.signalInState = !this.signalInState;
+    this.signalInState.set(!this.signalInState.get());
   }
 
   private boolean processDataByte(final long machineCycles) {
@@ -318,13 +367,13 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
           result = true;
         } else {
           this.counterEx = (this.buffered & this.mask) == 0 ? PULSELEN_ZERO : PULSELEN_ONE;
-          this.signalInState = !this.signalInState;
+          this.signalInState.set(!this.signalInState.get());
           counter = 0;
         }
       } else {
         this.counterEx = (this.buffered & this.mask) == 0 ? PULSELEN_ZERO : PULSELEN_ONE;
         counter = 0x8000000000000000L;
-        this.signalInState = !this.signalInState;
+        this.signalInState.set(!this.signalInState.get());
       }
     }
     this.counterEx |= counter;
@@ -337,158 +386,163 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource {
   }
 
   @Override
-  public ListModel getBlockListModel() {
+  public ListModel<ReaderTap.TapBlock> getBlockListModel() {
     return this;
   }
 
   @Override
-  public synchronized void updateForSpentMachineCycles(final long machineCycles) {
-    if (this.state != State.STOPPED) {
-      final TapBlock block = this.current;
+  public void updateForSpentMachineCycles(final long machineCycles) {
+    this.locker.lock();
+    try {
+      if (this.state != State.STOPPED) {
+        final TapBlock block = this.current;
 
-      switch (this.state) {
-        case INBETWEEN: {
-          if (counterMain < 0) {
-            LOGGER.info("PAUSE");
-            this.signalInState = false;
-            this.counterMain = PAUSE_BETWEEN;
-          } else {
-            this.counterMain -= machineCycles;
-            if (this.counterMain <= 0L) {
-              this.state = State.PILOT;
-              this.counterMain = -1L;
-            }
-          }
-        }
-        break;
-        case PILOT: {
-          if (this.counterMain < 0L) {
-            LOGGER.log(Level.INFO, "PILOT (" + (block.isHeader() ? "header" : "data") + ')');
-            this.counterMain =
-                    block.isHeader() ? IMPULSNUMBER_PILOT_HEADER : IMPULSNUMBER_PILOT_DATA;
-            this.signalInState = !this.signalInState;
-            this.counterEx = PULSELEN_PILOT;
-          } else {
-            this.counterEx -= machineCycles;
-            if (this.counterEx <= 0) {
-              this.counterMain--;
-              if (this.counterMain <= 0) {
-                this.state = State.SYNC1;
+        switch (this.state) {
+          case INBETWEEN: {
+            if (counterMain < 0) {
+              LOGGER.info("PAUSE");
+              this.signalInState.set(false);
+              this.counterMain = PAUSE_BETWEEN;
+            } else {
+              this.counterMain -= machineCycles;
+              if (this.counterMain <= 0L) {
+                this.state = State.PILOT;
                 this.counterMain = -1L;
-              } else {
-                this.signalInState = !signalInState;
-                this.counterEx = PULSELEN_PILOT;
               }
             }
           }
-        }
-        break;
-        case SYNC1: {
-          if (this.counterMain < 0L) {
-            LOGGER.info("SYNC1");
-            this.counterEx = PULSELEN_SYNC1;
-            this.signalInState = !signalInState;
-            this.counterMain = 0L;
-          } else {
-            this.counterEx -= machineCycles;
-            if (counterEx <= 0) {
-              this.counterMain = -1L;
-              this.state = State.SYNC2;
-            }
-          }
-        }
-        break;
-        case SYNC2: {
-          if (this.counterMain < 0L) {
-            LOGGER.info("SYNC2");
-            this.counterEx = PULSELEN_SYNC2;
-            this.signalInState = !signalInState;
-            this.counterMain = 0L;
-          } else {
-            this.counterEx -= machineCycles;
-            if (counterEx <= 0) {
-              this.counterMain = -1L;
-              this.state = State.FLAG;
-            }
-          }
-        }
-        break;
-        case FLAG: {
-          if (this.counterMain < 0L) {
-            LOGGER.log(Level.INFO,
-                    "FLAG (#" + toHexString(block.flag & 0xFF).toUpperCase(Locale.ENGLISH) + ')');
-            this.controlChecksum = 0;
-            this.counterMain = 0L;
-            loadDataByteToRead(block.flag & 0xFF);
-          } else {
-            if (processDataByte(machineCycles)) {
-              this.counterMain = -1L;
-              this.state = State.DATA;
-            }
-          }
-        }
-        break;
-        case DATA: {
-          if (this.counterMain < 0L) {
-            LOGGER.log(Level.INFO, "DATA (len=#"
-                    + toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH) + ')');
-            this.counterMain = 0L;
-            loadDataByteToRead(block.data[(int) this.counterMain++]);
-          } else {
-            if (processDataByte(machineCycles)) {
-              if (this.counterMain < block.data.length) {
-                loadDataByteToRead(block.data[(int) this.counterMain++]);
-              } else {
-                this.counterMain = -1;
-                this.state = State.CHECKSUM;
+          break;
+          case PILOT: {
+            if (this.counterMain < 0L) {
+              LOGGER.log(Level.INFO, "PILOT (" + (block.isHeader() ? "header" : "data") + ')');
+              this.counterMain =
+                  block.isHeader() ? IMPULSNUMBER_PILOT_HEADER : IMPULSNUMBER_PILOT_DATA;
+              this.signalInState.set(!this.signalInState.get());
+              this.counterEx = PULSELEN_PILOT;
+            } else {
+              this.counterEx -= machineCycles;
+              if (this.counterEx <= 0) {
+                this.counterMain--;
+                if (this.counterMain <= 0) {
+                  this.state = State.SYNC1;
+                  this.counterMain = -1L;
+                } else {
+                  this.signalInState.set(!this.signalInState.get());
+                  this.counterEx = PULSELEN_PILOT;
+                }
               }
             }
           }
-        }
-        break;
-        case CHECKSUM: {
-          if (this.counterMain < 0L) {
-            LOGGER.log(Level.INFO,
-                    "CHK (xor=#" + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)
-                            + ')');
-            if ((block.checksum & 0xFF) != (this.controlChecksum & 0xFF)) {
-              LOGGER.log(Level.WARNING, "Different XOR sum : at file #"
-                      + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)
-                      + ", calculated #"
-                      + toHexString(this.controlChecksum & 0xFF).toUpperCase(Locale.ENGLISH));
-            }
-            this.counterMain = 0L;
-            loadDataByteToRead(block.checksum & 0xFF);
-          } else {
-            if (processDataByte(machineCycles)) {
-              this.counterMain = -1L;
-              this.state = State.SYNC3;
-            }
-          }
-        }
-        break;
-        case SYNC3: {
-          if (this.counterMain < 0L) {
-            LOGGER.info("SYNC3");
-            this.counterEx = PULSELEN_SYNC3;
-            this.signalInState = !signalInState;
-            this.counterMain = 0L;
-          } else {
-            this.counterEx -= machineCycles;
-            if (counterEx <= 0) {
-              this.counterMain = -1L;
-              if (!this.toNextBlock()) {
-                stopPlay();
-              } else {
-                this.state = State.INBETWEEN;
+          break;
+          case SYNC1: {
+            if (this.counterMain < 0L) {
+              LOGGER.info("SYNC1");
+              this.counterEx = PULSELEN_SYNC1;
+              this.signalInState.set(!this.signalInState.get());
+              this.counterMain = 0L;
+            } else {
+              this.counterEx -= machineCycles;
+              if (counterEx <= 0) {
+                this.counterMain = -1L;
+                this.state = State.SYNC2;
               }
             }
           }
+          break;
+          case SYNC2: {
+            if (this.counterMain < 0L) {
+              LOGGER.info("SYNC2");
+              this.counterEx = PULSELEN_SYNC2;
+              this.signalInState.set(!this.signalInState.get());
+              this.counterMain = 0L;
+            } else {
+              this.counterEx -= machineCycles;
+              if (counterEx <= 0) {
+                this.counterMain = -1L;
+                this.state = State.FLAG;
+              }
+            }
+          }
+          break;
+          case FLAG: {
+            if (this.counterMain < 0L) {
+              LOGGER.log(Level.INFO,
+                  "FLAG (#" + toHexString(block.flag & 0xFF).toUpperCase(Locale.ENGLISH) + ')');
+              this.controlChecksum = 0;
+              this.counterMain = 0L;
+              loadDataByteToRead(block.flag & 0xFF);
+            } else {
+              if (processDataByte(machineCycles)) {
+                this.counterMain = -1L;
+                this.state = State.DATA;
+              }
+            }
+          }
+          break;
+          case DATA: {
+            if (this.counterMain < 0L) {
+              LOGGER.log(Level.INFO, "DATA (len=#"
+                  + toHexString(block.data.length & 0xFFFF).toUpperCase(Locale.ENGLISH) + ')');
+              this.counterMain = 0L;
+              loadDataByteToRead(block.data[(int) this.counterMain++]);
+            } else {
+              if (processDataByte(machineCycles)) {
+                if (this.counterMain < block.data.length) {
+                  loadDataByteToRead(block.data[(int) this.counterMain++]);
+                } else {
+                  this.counterMain = -1;
+                  this.state = State.CHECKSUM;
+                }
+              }
+            }
+          }
+          break;
+          case CHECKSUM: {
+            if (this.counterMain < 0L) {
+              LOGGER.log(Level.INFO,
+                  "CHK (xor=#" + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)
+                      + ')');
+              if ((block.checksum & 0xFF) != (this.controlChecksum & 0xFF)) {
+                LOGGER.log(Level.WARNING, "Different XOR sum : at file #"
+                    + toHexString(block.checksum & 0xFF).toUpperCase(Locale.ENGLISH)
+                    + ", calculated #"
+                    + toHexString(this.controlChecksum & 0xFF).toUpperCase(Locale.ENGLISH));
+              }
+              this.counterMain = 0L;
+              loadDataByteToRead(block.checksum & 0xFF);
+            } else {
+              if (processDataByte(machineCycles)) {
+                this.counterMain = -1L;
+                this.state = State.SYNC3;
+              }
+            }
+          }
+          break;
+          case SYNC3: {
+            if (this.counterMain < 0L) {
+              LOGGER.info("SYNC3");
+              this.counterEx = PULSELEN_SYNC3;
+              this.signalInState.set(!this.signalInState.get());
+              this.counterMain = 0L;
+            } else {
+              this.counterEx -= machineCycles;
+              if (counterEx <= 0) {
+                this.counterMain = -1L;
+                if (!this.toNextBlock()) {
+                  stopPlay();
+                } else {
+                  this.state = State.INBETWEEN;
+                }
+              }
+            }
+          }
+          break;
+          default:
+            throw new Error("Unexpected state [" + this.state + ']');
         }
-        break;
-        default:
-          throw new Error("Unexpected state [" + this.state + ']');
       }
+    } finally {
+      this.locker.unlock();
     }
   }
 

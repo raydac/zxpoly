@@ -154,7 +154,7 @@ public class FormatSZX extends Snapshot {
           if ((flags & 1) != 0) {
             data = SzxBlock.decompress(data);
           }
-          module.syncWriteHeapPage(pageNum, data);
+          module.writeHeapPage(pageNum, data);
 
           in.assertNoMoreData();
         }));

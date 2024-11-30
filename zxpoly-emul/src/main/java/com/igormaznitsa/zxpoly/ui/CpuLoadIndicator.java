@@ -17,11 +17,19 @@
 
 package com.igormaznitsa.zxpoly.ui;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-
 import static com.igormaznitsa.jbbp.utils.JBBPUtils.assertNotNull;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
+import java.awt.image.BufferedImage;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import javax.swing.JPanel;
 
 public final class CpuLoadIndicator extends JPanel {
 
@@ -65,13 +73,18 @@ public final class CpuLoadIndicator extends JPanel {
     clear();
   }
 
+  private final Lock lockBufgerGraphics = new ReentrantLock();
+
   @Override
   public void setBackground(final Color color) {
     super.setBackground(color);
     if (this.buffer != null) {
-      synchronized (this.bufferGraphics) {
+      this.lockBufgerGraphics.lock();
+      try {
         this.bufferGraphics.setColor(color);
         this.bufferGraphics.fillRect(0, 0, this.buffer.getWidth(), this.buffer.getHeight());
+      } finally {
+        this.lockBufgerGraphics.unlock();
       }
     }
   }
@@ -85,16 +98,20 @@ public final class CpuLoadIndicator extends JPanel {
   }
 
   public void clear() {
-    synchronized (this.bufferGraphics) {
+    this.lockBufgerGraphics.lock();
+    try {
       this.lastY = getHeight();
       this.bufferGraphics.setColor(this.getBackground());
       this.bufferGraphics.fillRect(0, 0, this.buffer.getWidth(), this.buffer.getHeight());
+    } finally {
+      this.lockBufgerGraphics.unlock();
     }
   }
 
   public void updateForState(final float loading) {
     final int step = this.gridStep >> 1;
-    synchronized (this.bufferGraphics) {
+    this.lockBufgerGraphics.lock();
+    try {
       final int w = this.buffer.getWidth();
       final int h = this.buffer.getHeight();
 
@@ -110,6 +127,8 @@ public final class CpuLoadIndicator extends JPanel {
 
       this.bufferGraphics.drawLine(startx, this.lastY, curx, level);
       this.lastY = level;
+    } finally {
+      this.lockBufgerGraphics.unlock();
     }
     repaint();
   }
@@ -150,8 +169,11 @@ public final class CpuLoadIndicator extends JPanel {
 
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    synchronized (this.buffer) {
+    this.lockBufgerGraphics.lock();
+    try {
       g2.drawImage(this.buffer, 0, 0, null);
+    } finally {
+      this.lockBufgerGraphics.unlock();
     }
 
     final int w = this.getWidth();

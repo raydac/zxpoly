@@ -18,7 +18,6 @@ public class FfmpegWrapper {
   private final String dstResult;
   private final AtomicReference<Process> process = new AtomicReference<>();
 
-
   public FfmpegWrapper(
           final String ffmpegPath,
           final int frameRate,
@@ -38,7 +37,7 @@ public class FfmpegWrapper {
     return process != null && process.isAlive();
   }
 
-  public synchronized void stop() {
+  public void stop() {
     final Process process = this.process.getAndSet(null);
     if (process != null) {
       process.destroyForcibly();
@@ -50,7 +49,7 @@ public class FfmpegWrapper {
     }
   }
 
-  public synchronized void start() throws IOException {
+  public void start() throws IOException {
     stop();
 
     final List<String> args = new ArrayList<>();
@@ -125,7 +124,8 @@ public class FfmpegWrapper {
 
     args.add("-x264opts");
     args.add(String
-            .format("keyint=%1$d:min-keyint=%1$d:no-scenecut:nal-hrd=cbr:force-cfr=1", this.frameRate));
+        .format("keyint=%1$d:min-keyint=%1$d:no-scenecut:nal-hrd=cbr:force-cfr=1",
+            this.frameRate));
 
     args.add("-vf");
     args.add("format=yuv420p,scale=pal:flags=fast_bilinear,fps=fps=30");
@@ -165,10 +165,10 @@ public class FfmpegWrapper {
     LOGGER.info("Starting FFmpeg: " + String.join(" ", args));
 
     final Process process = new ProcessBuilder(args)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectInput(ProcessBuilder.Redirect.PIPE)
-            .start();
+        .redirectError(ProcessBuilder.Redirect.INHERIT)
+        .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+        .redirectInput(ProcessBuilder.Redirect.PIPE)
+        .start();
 
     if (!this.process.compareAndSet(null, process)) {
       throw new Error("Unexpected state, detected already started process");

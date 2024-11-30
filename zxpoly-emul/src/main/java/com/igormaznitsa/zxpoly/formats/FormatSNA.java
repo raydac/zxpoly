@@ -92,9 +92,9 @@ public class FormatSNA extends Snapshot {
       bankIndex[5] = -1;
       bankIndex[parser.getEXTENDEDDATA().getPORT7FFD() & 7] = -1;
 
-      module.syncWriteHeapPage(5, Arrays.copyOfRange(parser.ramdump, 0, 0x4000));
-      module.syncWriteHeapPage(2, Arrays.copyOfRange(parser.ramdump, 0x4000, 0x8000));
-      module.syncWriteHeapPage(parser.getEXTENDEDDATA().getPORT7FFD() & 7,
+      module.writeHeapPage(5, Arrays.copyOfRange(parser.ramdump, 0, 0x4000));
+      module.writeHeapPage(2, Arrays.copyOfRange(parser.ramdump, 0x4000, 0x8000));
+      module.writeHeapPage(parser.getEXTENDEDDATA().getPORT7FFD() & 7,
               Arrays.copyOfRange(parser.ramdump, 0x8000, 0xC000));
 
       pcReg = parser.getEXTENDEDDATA().getREGPC();
@@ -110,7 +110,7 @@ public class FormatSNA extends Snapshot {
         if (bankIndex[i] < 0) {
           continue;
         }
-        module.syncWriteHeapPage(bankIndex[i],
+        module.writeHeapPage(bankIndex[i],
                 parser.getEXTENDEDDATA().getEXTRABANK()[extraBankIndex++].getDATA());
       }
 

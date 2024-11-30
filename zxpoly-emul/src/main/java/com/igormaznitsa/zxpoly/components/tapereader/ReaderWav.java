@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
@@ -22,7 +23,7 @@ public class ReaderWav implements TapeSource {
   private final List<ActionListener> actionListeners = new CopyOnWriteArrayList<>();
   private final TimingProfile timingProfile;
   private final TapeContext tapeContext;
-  private volatile boolean playing;
+  private final AtomicBoolean playing = new AtomicBoolean();
   private volatile float bias = 0.5f;
 
   public ReaderWav(final TapeContext tapeContext, final TimingProfile timingProfile, final String name, final File file) throws IOException {
@@ -48,7 +49,7 @@ public class ReaderWav implements TapeSource {
 
   @Override
   public boolean isHi() {
-    if (this.playing) {
+    if (this.playing.get()) {
       try {
         final float value = this.wavFile.readAtPosition(this.tstateCounter.get());
         return value > this.bias;
@@ -87,14 +88,14 @@ public class ReaderWav implements TapeSource {
 
   @Override
   public void updateForSpentMachineCycles(final long spentTstates) {
-    if (this.playing) {
+    if (this.playing.get()) {
       this.tstateCounter.addAndGet(spentTstates);
     }
   }
 
   @Override
   public boolean isPlaying() {
-    return this.playing;
+    return this.playing.get();
   }
 
   @Override
@@ -120,19 +121,19 @@ public class ReaderWav implements TapeSource {
 
   @Override
   public void stopPlay() {
-    this.playing = false;
+    this.playing.set(false);
     this.fireActionListeners(0, "stop");
   }
 
   @Override
   public boolean startPlay() {
-    this.playing = true;
+    this.playing.set(true);
     this.fireActionListeners(1, "play");
-    return this.playing;
+    return this.playing.get();
   }
 
   @Override
-  public byte[] getAsWAV() throws IOException {
+  public byte[] getAsWAV() {
     throw new UnsupportedOperationException();
   }
 
@@ -162,7 +163,7 @@ public class ReaderWav implements TapeSource {
   }
 
   @Override
-  public ListModel getBlockListModel() {
+  public ListModel<?> getBlockListModel() {
     throw new UnsupportedOperationException();
   }
 }

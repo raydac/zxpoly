@@ -221,7 +221,7 @@ public final class Motherboard implements ZxPolyConstants {
     return this.beeper;
   }
 
-  public synchronized void forceResetAllCpu() {
+  public void forceResetAllCpu() {
     for (final ZxPolyModule p : this.modules) {
       p.getCpu().doReset();
     }

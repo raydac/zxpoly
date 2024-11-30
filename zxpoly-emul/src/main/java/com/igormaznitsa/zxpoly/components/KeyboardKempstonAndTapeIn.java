@@ -249,9 +249,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   public List<GameControllerAdapter> getActiveGadapters() {
-    synchronized (this.activeGameControllerAdapters) {
-      return new ArrayList<>(this.activeGameControllerAdapters);
-    }
+    return new ArrayList<>(this.activeGameControllerAdapters);
   }
 
   public void setActiveGameControllerAdapters(final List<GameControllerAdapter> adapters) {

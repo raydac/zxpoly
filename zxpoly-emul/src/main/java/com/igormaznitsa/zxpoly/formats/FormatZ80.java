@@ -24,8 +24,11 @@ import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.Motherboard;
 import com.igormaznitsa.zxpoly.components.ZxPolyModule;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -315,9 +318,9 @@ public class FormatZ80 extends Snapshot {
         module.write7FFD(snapshot.getPORT7FFD(), true);
         for (final Bank b : banks) {
           if (b.page < 3) {
-            module.syncWriteHeapPage(b.page, b.data);
+            module.writeHeapPage(b.page, b.data);
           } else if (b.page <= 10) {
-            module.syncWriteHeapPage(b.page - 3, b.data);
+            module.writeHeapPage(b.page - 3, b.data);
           } else {
             throw new IOException("Unexpected page index (x>10):" + b.page);
           }

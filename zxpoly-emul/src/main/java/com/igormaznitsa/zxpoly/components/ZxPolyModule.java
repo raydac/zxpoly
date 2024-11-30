@@ -34,6 +34,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 @SuppressWarnings("WeakerAccess")
@@ -434,15 +436,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     return result;
   }
 
-  public synchronized void syncWriteHeapPage(final int heapPageIndex, final byte[] data) {
-    if (data.length != 0x4000) {
-      throw new IllegalArgumentException("Page size must be 0x4000:" + data.length);
-    }
-    final int pageOffset = heapPageIndex * 0x4000;
-    for (int i = 0; i < data.length; i++) {
-      this.board.writeRam(this, this.getHeapOffset() + pageOffset + i, data[i]);
-    }
-  }
+  private final Lock gfxRomLock = new ReentrantLock();
 
   public byte[] makeCopyOfRomPage(final int page) {
     return this.romData.get().makeCopyPage(page);
@@ -593,29 +587,49 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       }
     }
   }
+  private final Lock gfxRamLock = new ReentrantLock();
+
+  public void writeHeapPage(final int heapPageIndex, final byte[] data) {
+    if (data.length != 0x4000) {
+      throw new IllegalArgumentException("Page size must be 0x4000:" + data.length);
+    }
+    final int pageOffset = heapPageIndex * 0x4000;
+    for (int i = 0; i < data.length; i++) {
+      this.board.writeRam(this, this.getHeapOffset() + pageOffset + i, data[i]);
+    }
+  }
 
   public void writeGfxRomPage(final Spec256Arch.Spec256GfxOrigPage page) {
-    synchronized (this.gfxRom) {
+    this.gfxRomLock.lock();
+    try {
       int startOffset = page.getPageIndex() * GFX_PAGE_SIZE;
       final byte[] data = page.getGfxData();
       System.arraycopy(data, 0, this.gfxRom, startOffset, data.length);
+    } finally {
+      this.gfxRomLock.unlock();
     }
   }
 
   public Spec256Arch.Spec256GfxPage getGfxRamPage(final int page) {
-    synchronized (this.gfxRam) {
+    this.gfxRamLock.lock();
+    try {
       final byte[] data = new byte[GFX_PAGE_SIZE];
       System.arraycopy(this.gfxRam, page * GFX_PAGE_SIZE, data, 0, GFX_PAGE_SIZE);
       return new Spec256Arch.Spec256GfxPage(page, data);
+    } finally {
+      this.gfxRamLock.unlock();
     }
   }
 
   public void writeGfxRamPage(final Spec256Arch.Spec256GfxOrigPage page) {
-    synchronized (this.gfxRam) {
+    this.gfxRamLock.lock();
+    try {
       int startOffset = page.getPageIndex() * GFX_PAGE_SIZE;
       for (final byte gfxPageDatum : page.getGfxData()) {
         this.gfxRam[startOffset++] = gfxPageDatum;
       }
+    } finally {
+      this.gfxRamLock.unlock();
     }
   }
 

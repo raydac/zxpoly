@@ -1,10 +1,10 @@
 package com.igormaznitsa.zxpoly.components.tapereader;
 
-import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import javax.swing.ListModel;
 
-public interface TapeSource {
+public interface TapeSource<T> {
 
   boolean isHi();
 
@@ -48,5 +48,5 @@ public interface TapeSource {
 
   String getName();
 
-  ListModel getBlockListModel();
+  ListModel<T> getBlockListModel();
 }

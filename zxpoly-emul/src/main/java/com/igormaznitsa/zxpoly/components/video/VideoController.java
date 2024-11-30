@@ -55,6 +55,8 @@ import java.awt.image.RenderedImage;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
@@ -1338,10 +1340,15 @@ public final class VideoController extends JComponent
     this.getParent().repaint();
   }
 
+  private final Lock lockWorkImage = new ReentrantLock();
+  private final Lock lockOutputImage = new ReentrantLock();
+
   public void copyWorkScreenToOutputScreen(final int x, final int y, final int width,
                                            final int height) {
-    synchronized (this.workZxScreenImage) {
-      synchronized (this.outputZxScreenImage) {
+    this.lockWorkImage.lock();
+    try {
+      this.lockOutputImage.lock();
+      try {
         final Graphics2D g = this.outputZxScreenImage.createGraphics();
         try {
           g.setClip(x << 1, y << 1, width << 1, height << 1);
@@ -1349,7 +1356,11 @@ public final class VideoController extends JComponent
         } finally {
           g.dispose();
         }
+      } finally {
+        this.lockOutputImage.unlock();
       }
+    } finally {
+      this.lockWorkImage.unlock();
     }
   }
 
@@ -1400,7 +1411,8 @@ public final class VideoController extends JComponent
 
   public byte[] grabRgb(final byte[] array) {
     byte[] result;
-    synchronized (this.workZxScreenImage) {
+    this.lockWorkImage.lock();
+    try {
       final int[] buffer = this.workZxScreenImageRgbData;
       final int bufferLen = buffer.length;
       result = array == null ? new byte[bufferLen * 3] : array;
@@ -1410,6 +1422,8 @@ public final class VideoController extends JComponent
         result[outIndex++] = (byte) (argb >> 8);
         result[outIndex++] = (byte) argb;
       }
+    } finally {
+      this.lockWorkImage.unlock();
     }
     if (this.tvFilterChain != null) {
       final int argbBorderColor = PALETTE_ZXPOLY[this.portFEw & 7];
@@ -1521,12 +1535,15 @@ public final class VideoController extends JComponent
   }
 
   public void setVideoMode(final int newVideoMode) {
-    synchronized (this.workZxScreenImage) {
+    this.lockWorkImage.lock();
+    try {
       if (this.currentVideoMode != newVideoMode) {
         this.currentVideoMode = newVideoMode;
         log.log(Level.INFO, "mode set: " + decodeVideoModeCode(newVideoMode));
         refreshBufferData(LineRenderMode.ALL, 0, ZXSCREEN_ROWS, this.currentVideoMode);
       }
+    } finally {
+      this.lockWorkImage.unlock();
     }
   }
 
@@ -1536,17 +1553,23 @@ public final class VideoController extends JComponent
 
   public void syncUpdateBuffer(final int lineFrom, final int lineTo,
                                final LineRenderMode renderLines) {
-    synchronized (this.workZxScreenImage) {
+    this.lockWorkImage.lock();
+    try {
       this.refreshBufferData(renderLines, lineFrom, lineTo, this.currentVideoMode);
+    } finally {
+      this.lockWorkImage.unlock();
     }
   }
 
   public int[] makeCopyOfVideoBuffer(final boolean applyFilters) {
     int[] cloneOfBuffer;
     Color borderColor;
-    synchronized (this.workZxScreenImage) {
+    this.lockWorkImage.lock();
+    try {
       cloneOfBuffer = this.workZxScreenImageRgbData.clone();
       borderColor = PALETTE_ZXPOLY_COLORS[this.portFEw & 7];
+    } finally {
+      this.lockWorkImage.unlock();
     }
 
     if (applyFilters) {
@@ -1660,7 +1683,8 @@ public final class VideoController extends JComponent
       final TvFilterChain filterChain
   ) {
     if (filterChain.isEmpty()) {
-      synchronized (this.outputZxScreenImage) {
+      this.lockOutputImage.lock();
+      try {
         final float normalZoom = Math.max(1.0f, zoom);
         if (normalZoom == 1.0f) {
           gfx.drawImage(this.outputZxScreenImage, null, x, y);
@@ -1671,16 +1695,23 @@ public final class VideoController extends JComponent
           gfx.drawImage(this.outputZxScreenImage, x, y, Math.round(SCREEN_WIDTH * normalZoom),
               Math.round(SCREEN_HEIGHT * normalZoom), null);
         }
+      } finally {
+        this.lockOutputImage.unlock();
       }
     } else {
       final int borderArgbColor = this.borderImageRgbData[this.borderImageRgbData.length / 2];
       final Rectangle area;
       final TvFilter[] tvFilters = filterChain.getFilterChain();
       BufferedImage postProcessedImage;
-      synchronized (this.outputZxScreenImage) {
+
+      this.lockOutputImage.lock();
+      try {
         postProcessedImage =
             tvFilters[0].apply(this.outputZxScreenImage, zoom, borderArgbColor, true);
+      } finally {
+        this.lockOutputImage.unlock();
       }
+
       for (int i = 1; i < tvFilters.length; i++) {
         postProcessedImage = tvFilters[i].apply(postProcessedImage, zoom, borderArgbColor, false);
       }

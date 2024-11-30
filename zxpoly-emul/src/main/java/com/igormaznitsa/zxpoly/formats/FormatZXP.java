@@ -137,7 +137,7 @@ public class FormatZXP extends Snapshot {
       final ZXPParser.PAGES memory = snapshot.getPAGES()[cpu];
 
       for (final ZXPParser.PAGES.PAGE p : memory.getPAGE()) {
-        module.syncWriteHeapPage(p.getINDEX(), p.getDATA());
+        module.writeHeapPage(p.getINDEX(), p.getDATA());
       }
     }
 

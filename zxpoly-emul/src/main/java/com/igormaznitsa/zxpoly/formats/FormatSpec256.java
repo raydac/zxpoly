@@ -265,7 +265,7 @@ public class FormatSpec256 extends Snapshot {
               .findFirst()
               .ifPresent(p -> {
                 LOGGER.info("Detected RAM page: " + p.getPageIndex());
-                module.syncWriteHeapPage(p.getPageIndex(), p.getOrigData());
+                module.writeHeapPage(p.getPageIndex(), p.getOrigData());
                 module.writeGfxRamPage(decodeGfx(p));
               });
     }
