@@ -355,7 +355,7 @@ public final class AppOptions {
   public boolean isInterlacedScan() {
     this.locker.lock();
     try {
-      return preferences.getBoolean(Option.INTERLACED_SCAN.name(), true);
+      return preferences.getBoolean(Option.INTERLACED_SCAN.name(), false);
     } finally {
       this.locker.unlock();
     }
