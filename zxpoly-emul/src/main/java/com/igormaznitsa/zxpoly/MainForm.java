@@ -1209,7 +1209,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         updateTracerWindowsForStep();
       }
 
-      Thread.onSpinWait();
+      if (!lessResources) {
+        Thread.onSpinWait();
+      }
     }
   }
 

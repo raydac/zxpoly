@@ -246,9 +246,7 @@ public class HttpProcessor implements Version {
 
           while (!Thread.currentThread().isInterrupted() && wsChannelActive.get()) {
             final byte[] data = buffer.poll();
-            if (data == null) {
-              Thread.yield();
-            } else {
+            if (data != null) {
               wrapper.writeBinary(false, data);
             }
           }
@@ -303,9 +301,7 @@ public class HttpProcessor implements Version {
         try (final OutputStream responseStream = exchange.getResponseBody()) {
           while (!this.stopped && !Thread.currentThread().isInterrupted()) {
             final byte[] data = buffer.poll();
-            if (data == null) {
-              Thread.yield();
-            } else {
+            if (data != null) {
               responseStream.write(data);
             }
           }
