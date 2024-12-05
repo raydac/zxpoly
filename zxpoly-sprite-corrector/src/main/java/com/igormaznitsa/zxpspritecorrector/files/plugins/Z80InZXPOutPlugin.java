@@ -17,6 +17,9 @@
 
 package com.igormaznitsa.zxpspritecorrector.files.plugins;
 
+import static com.igormaznitsa.zxpspritecorrector.SpriteCorrectorMainFrame.EXTRA_PROPERTY_OVERRIDE_CPU_DATA;
+import static com.igormaznitsa.zxpspritecorrector.SpriteCorrectorMainFrame.deserializeProperties;
+
 import com.igormaznitsa.jbbp.JBBPParser;
 import com.igormaznitsa.jbbp.io.JBBPBitNumber;
 import com.igormaznitsa.jbbp.mapper.Bin;
@@ -26,6 +29,7 @@ import com.igormaznitsa.jbbp.mapper.JBBPMapperCustomFieldProcessor;
 import com.igormaznitsa.jbbp.model.JBBPFieldArrayByte;
 import com.igormaznitsa.jbbp.model.JBBPFieldBit;
 import com.igormaznitsa.jbbp.model.JBBPFieldStruct;
+import com.igormaznitsa.zxpspritecorrector.components.CpuRegProperties;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
@@ -33,7 +37,6 @@ import com.igormaznitsa.zxpspritecorrector.files.Z80ExportDialog;
 import com.igormaznitsa.zxpspritecorrector.files.ZXEMLSnapshotFormat;
 import com.igormaznitsa.zxpspritecorrector.files.ZXEMLSnapshotFormat.Page;
 import com.igormaznitsa.zxpspritecorrector.files.ZXEMLSnapshotFormat.Pages;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -44,16 +47,11 @@ import java.util.Locale;
 
 public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
 
-  private static final String DESCRIPTION_IN = "Z80 snapshot";
-  private static final String DESCRIPTION_OUT = "ZX-Poly snapshot";
-
   public static final int PAGE_SIZE = 0x4000;
-
   public static final int VERSION_1 = 0;
   public static final int VERSION_2 = 1;
   public static final int VERSION_3A = 2;
   public static final int VERSION_3B = 3;
-
   public static final JBBPParser Z80_MAINPART = JBBPParser.prepare(
       "byte reg_a; byte reg_f; <short reg_bc; <short reg_hl; <short reg_pc; <short reg_sp; byte reg_ir; byte reg_r; "
           +
@@ -121,6 +119,8 @@ public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
           + "byte [50] extra;" // misc non zx or not supported stuff
           + "byte [_] data;"
   );
+  private static final String DESCRIPTION_IN = "Z80 snapshot";
+  private static final String DESCRIPTION_OUT = "ZX-Poly snapshot";
 
   public static boolean is48k(final int version, final Z80Snapshot snapshot) {
     switch (version) {
@@ -223,10 +223,66 @@ public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
   }
 
   public static Page makePage(final int cpu, final int page, final ZXPolyData data,
-                              final int offset) throws IOException {
+                              final int offset) {
     final byte[] bankData = new byte[PAGE_SIZE];
     System.arraycopy(data.getDataForCPU(cpu), offset, bankData, 0, PAGE_SIZE);
     return new Page(page, bankData);
+  }
+
+  public static int getPcReg(final Z80MainHeader mainHeader, final byte[] header) {
+    final int version = getVersion(header);
+    return version == VERSION_1 ? mainHeader.reg_pc :
+        ((header[33] & 0xFF) << 8) | (header[32] & 0xFF);
+  }
+
+  public static byte[] extractHeader(final byte[] extra) {
+    final int banksInExtra;
+    if (extra[0] == 0) {
+      banksInExtra = 0;
+    } else {
+      banksInExtra = extra[0] & 0xFF;
+    }
+
+    final byte[] z80SnapshotHeader = new byte[extra.length - (banksInExtra + 1)];
+    System.arraycopy(extra, banksInExtra + 1, z80SnapshotHeader, 0, z80SnapshotHeader.length);
+
+    return z80SnapshotHeader;
+  }
+
+  public static Z80MainHeader extractZ80SnapshotHeader(final byte[] snapshotHeader)
+      throws IOException {
+    return Z80_MAINPART.parse(snapshotHeader).mapTo(new Z80MainHeader());
+  }
+
+  public static int getPort7ffd(final int version, final byte[] snapshotHeader) {
+    final int port7ffd;
+    if (version == VERSION_1) {
+      port7ffd = 0x30;
+    } else {
+      final int hwMode = snapshotHeader[34];
+      switch (version) {
+        case VERSION_2: {
+          if (hwMode == 3 || hwMode == 4) {
+            port7ffd = snapshotHeader[35] & 0xFF;
+          } else {
+            port7ffd = 0x30;
+          }
+        }
+        break;
+        case VERSION_3A:
+        case VERSION_3B: {
+          if (hwMode == 4 || hwMode == 5 || hwMode == 6) {
+            port7ffd = snapshotHeader[35] & 0xFF;
+          } else {
+            port7ffd = 0x30;
+          }
+        }
+        break;
+        default:
+          port7ffd = 0x30;
+      }
+    }
+    return port7ffd;
   }
 
   @Override
@@ -361,52 +417,47 @@ public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
     final byte[] data;
     final int startAddress;
 
-    switch (version) {
-      case VERSION_1: {
-        headerLength = 30;
-        data = current.data;
-        startAddress = current.reg_pc & 0xFFFF;
-      }
-      break;
-      default: {
-        headerLength = 30 + current.extrahdrlen;
-        startAddress = current.reg_pc2;
-        if (mode48) {
-          data = new byte[PAGE_SIZE * 3];
-          for (final Bank b : current.banks) {
-            int offset = -1;
-            switch (b.page) {
-              case 4: {
-                offset = PAGE_SIZE;
-              }
-              break;
-              case 5: {
-                offset = PAGE_SIZE * 2;
-              }
-              break;
-              case 8: {
-                offset = 0x0000;
-              }
-              break;
+    if (version == VERSION_1) {
+      headerLength = 30;
+      data = current.data;
+      startAddress = current.reg_pc & 0xFFFF;
+    } else {
+      headerLength = 30 + current.extrahdrlen;
+      startAddress = current.reg_pc2;
+      if (mode48) {
+        data = new byte[PAGE_SIZE * 3];
+        for (final Bank b : current.banks) {
+          int offset = -1;
+          switch (b.page) {
+            case 4: {
+              offset = PAGE_SIZE;
             }
-            if (offset >= 0) {
-              System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
+            break;
+            case 5: {
+              offset = PAGE_SIZE * 2;
             }
+            break;
+            case 8: {
+              offset = 0x0000;
+            }
+            break;
           }
-        } else {
-          data = new byte[PAGE_SIZE * 8];
-          for (final Bank b : current.banks) {
-            if (b.page < 3) {
-              final int offset = b.page * PAGE_SIZE;
-              System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
-            } else if (b.page <= 10) {
-              final int offset = (b.page - 3) * PAGE_SIZE;
-              System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
-            }
+          if (offset >= 0) {
+            System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
+          }
+        }
+      } else {
+        data = new byte[PAGE_SIZE * 8];
+        for (final Bank b : current.banks) {
+          if (b.page < 3) {
+            final int offset = b.page * PAGE_SIZE;
+            System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
+          } else if (b.page <= 10) {
+            final int offset = (b.page - 3) * PAGE_SIZE;
+            System.arraycopy(b.data, 0, data, offset, PAGE_SIZE);
           }
         }
       }
-      break;
     }
 
     final byte[] extra =
@@ -420,8 +471,16 @@ public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
     }
     System.arraycopy(array, 0, extra, bankIndex, headerLength);
     return new ReadResult(
-            new ZXPolyData(new Info(name, 'C', startAddress, data.length, PAGE_SIZE, true, extra),
-                    this, data), null);
+        new ZXPolyData(new Info(name, 'C', startAddress, data.length, PAGE_SIZE, true, extra),
+            this, data), null);
+  }
+
+  private CpuRegProperties findCpu(final SessionData sessionData) {
+    final String data = sessionData.getExtraProperty(EXTRA_PROPERTY_OVERRIDE_CPU_DATA);
+    if (data == null) {
+      return new CpuRegProperties();
+    }
+    return new CpuRegProperties(deserializeProperties(data));
   }
 
   @Override
@@ -434,6 +493,7 @@ public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
     if (!(data.getPlugin() instanceof Z80InZXPOutPlugin)) {
       throw new IOException("Only imported Z80 snapshot can be exported");
     }
+    final CpuRegProperties cpuRegProperties = findCpu(sessionData);
 
     final Z80ExportDialog dialog = new Z80ExportDialog(this.spriteCorrectorMainFrame);
     dialog.setVisible(true);
@@ -446,85 +506,90 @@ public final class Z80InZXPOutPlugin extends AbstractFilePlugin {
     final byte[] extra = data.getInfo().getExtra();
 
     final byte[] bankIndexes;
-
-    final int banksInExtra;
     if (extra[0] == 0) {
-      banksInExtra = 0;
       bankIndexes = new byte[] {8, 4, 5};
     } else {
       bankIndexes = new byte[extra[0] & 0xFF];
-      banksInExtra = bankIndexes.length;
-      for (int i = 0; i < bankIndexes.length; i++) {
-        bankIndexes[i] = extra[i + 1];
-      }
+      System.arraycopy(extra, 1, bankIndexes, 0, bankIndexes.length);
     }
-    final byte[] z80header = new byte[extra.length - (banksInExtra + 1)];
-    System.arraycopy(extra, banksInExtra + 1, z80header, 0, z80header.length);
-    final int version = getVersion(z80header);
-    final Z80MainHeader mheader = Z80_MAINPART.parse(z80header).mapTo(new Z80MainHeader());
-    final int regpc = version == VERSION_1 ? mheader.reg_pc :
-        ((z80header[33] & 0xFF) << 8) | (z80header[32] & 0xFF);
-
+    final byte[] snapshotHeader = extractHeader(extra);
+    final int version = getVersion(snapshotHeader);
+    final Z80MainHeader mainSnapshotHeader = extractZ80SnapshotHeader(snapshotHeader);
     final ZXEMLSnapshotFormat block = new ZXEMLSnapshotFormat();
 
-    for (int cpuIndex = 0; cpuIndex < 4; cpuIndex++) {
-      block.setAF(cpuIndex, makePair(mheader.reg_a, mheader.reg_f), false);
-      block.setAF(cpuIndex, makePair(mheader.reg_a_alt, mheader.reg_f_alt), true);
-      block.setBC(cpuIndex, mheader.reg_bc, false);
-      block.setBC(cpuIndex, mheader.reg_bc_alt, true);
-      block.setDE(cpuIndex, mheader.reg_de, false);
-      block.setDE(cpuIndex, mheader.reg_de_alt, true);
-      block.setHL(cpuIndex, mheader.reg_hl, false);
-      block.setHL(cpuIndex, mheader.reg_hl_alt, true);
-      block.setRegIX(cpuIndex, mheader.reg_ix);
-      block.setRegIY(cpuIndex, mheader.reg_iy);
-      block.setRegIR(cpuIndex, makePair(mheader.reg_ir, mheader.reg_r));
-      block.setRegIM(cpuIndex, mheader.emulFlags.interruptmode);
-      block.setRegPC(cpuIndex, regpc);
-      block.setRegSP(cpuIndex, mheader.reg_sp);
-      block.setIFF(cpuIndex, mheader.iff != 0);
-      block.setIFF2(cpuIndex, mheader.iff2 != 0);
-    }
+    final int reg_a = cpuRegProperties.extractInt(CpuRegProperties.REG_A, mainSnapshotHeader.reg_a);
+    final int reg_f = cpuRegProperties.extractInt(CpuRegProperties.REG_F, mainSnapshotHeader.reg_f);
+    final int reg_bc =
+        cpuRegProperties.extractInt(CpuRegProperties.REG_BC, mainSnapshotHeader.reg_bc);
+    final int reg_de =
+        cpuRegProperties.extractInt(CpuRegProperties.REG_DE, mainSnapshotHeader.reg_de);
+    final int reg_hl =
+        cpuRegProperties.extractInt(CpuRegProperties.REG_HL, mainSnapshotHeader.reg_hl);
 
-    final int port7ffd;
-    if (version == VERSION_1) {
-      port7ffd = 0x30;
-    } else {
-      final int hwmode = z80header[34];
-      switch (version) {
-        case VERSION_2: {
-          if (hwmode == 3 || hwmode == 4) {
-            port7ffd = z80header[35] & 0xFF;
-          } else {
-            port7ffd = 0x30;
-          }
-        }
-        break;
-        case VERSION_3A:
-        case VERSION_3B: {
-          if (hwmode == 4 || hwmode == 5 || hwmode == 6) {
-            port7ffd = z80header[35] & 0xFF;
-          } else {
-            port7ffd = 0x30;
-          }
-        }
-        break;
-        default:
-          port7ffd = 0x30;
-      }
+    final int reg_a_alt =
+        cpuRegProperties.extractInt(CpuRegProperties.REG_ALT_A, mainSnapshotHeader.reg_a_alt);
+    final int reg_f_alt =
+        cpuRegProperties.extractInt(CpuRegProperties.REG_ALT_F, mainSnapshotHeader.reg_f_alt);
+    final int reg_bc_alt =
+        cpuRegProperties.extractInt(CpuRegProperties.REG_ALT_BC, mainSnapshotHeader.reg_bc_alt);
+    final int reg_de_alt =
+        cpuRegProperties.extractInt(CpuRegProperties.REG_ALT_DE, mainSnapshotHeader.reg_de_alt);
+    final int reg_hl_alt =
+        cpuRegProperties.extractInt(CpuRegProperties.REG_ALT_HL, mainSnapshotHeader.reg_hl_alt);
+
+    final int reg_ix =
+        cpuRegProperties.extractInt(CpuRegProperties.REG_IX, mainSnapshotHeader.reg_ix);
+    final int reg_iy =
+        cpuRegProperties.extractInt(CpuRegProperties.REG_IY, mainSnapshotHeader.reg_iy);
+
+    final int reg_im = cpuRegProperties.extractInt(CpuRegProperties.REG_IM,
+        mainSnapshotHeader.emulFlags.interruptmode);
+    final int reg_ir = cpuRegProperties.extractInt(CpuRegProperties.REG_IR,
+        makePair(mainSnapshotHeader.reg_ir, mainSnapshotHeader.reg_r));
+
+    final int reg_sp =
+        cpuRegProperties.extractInt(CpuRegProperties.REG_SP, mainSnapshotHeader.reg_sp);
+    final int reg_pc = cpuRegProperties.extractInt(CpuRegProperties.REG_PC,
+        getPcReg(mainSnapshotHeader, snapshotHeader));
+
+    final boolean reg_iff =
+        cpuRegProperties.extractBoolean(CpuRegProperties.IFF1, mainSnapshotHeader.iff != 0);
+    final boolean reg_iff2 =
+        cpuRegProperties.extractBoolean(CpuRegProperties.IFF2, mainSnapshotHeader.iff2 != 0);
+
+    final int port_7FFD = cpuRegProperties.extractInt(CpuRegProperties.PORT_7FFD,
+        getPort7ffd(version, snapshotHeader));
+
+    for (int cpuIndex = 0; cpuIndex < 4; cpuIndex++) {
+      block.setAF(cpuIndex, makePair((byte) reg_a, (byte) reg_f), false);
+      block.setAF(cpuIndex, makePair((byte) reg_a_alt, (byte) reg_f_alt), true);
+      block.setBC(cpuIndex, reg_bc, false);
+      block.setBC(cpuIndex, reg_bc_alt, true);
+      block.setDE(cpuIndex, reg_de, false);
+      block.setDE(cpuIndex, reg_de_alt, true);
+      block.setHL(cpuIndex, reg_hl, false);
+      block.setHL(cpuIndex, reg_hl_alt, true);
+      block.setRegIX(cpuIndex, reg_ix);
+      block.setRegIY(cpuIndex, reg_iy);
+      block.setRegIR(cpuIndex, reg_ir);
+      block.setRegIM(cpuIndex, reg_im);
+      block.setRegPC(cpuIndex, reg_pc);
+      block.setRegSP(cpuIndex, reg_sp);
+      block.setIFF(cpuIndex, reg_iff);
+      block.setIFF2(cpuIndex, reg_iff2);
     }
 
     block.setPort3D00((videoMode << 2) | 0x80 | 1);
 
-    block.setModulePorts(0, port7ffd, 0, 0, 0, 0);
-    block.setModulePorts(1, port7ffd, 0x10 | (1 << 1), 0, 0, 0);
-    block.setModulePorts(2, port7ffd, 0x10 | (2 << 1), 0, 0, 0);
-    block.setModulePorts(3, port7ffd, 0x10 | (3 << 1), 0, 0, 0);
+    block.setModulePorts(0, port_7FFD, 0, 0, 0, 0);
+    block.setModulePorts(1, port_7FFD, 0x10 | (1 << 1), 0, 0, 0);
+    block.setModulePorts(2, port_7FFD, 0x10 | (2 << 1), 0, 0, 0);
+    block.setModulePorts(3, port_7FFD, 0x10 | (3 << 1), 0, 0, 0);
 
-    block.setPortFE(mheader.flags.bordercolor & 7);
+    block.setPortFE(mainSnapshotHeader.flags.bordercolor & 7);
 
     final byte[] pageIndexes =
-        convertZ80BankIndexesToPages(bankIndexes, is48k(version, z80header), version);
+        convertZ80BankIndexesToPages(bankIndexes, is48k(version, snapshotHeader), version);
 
     for (int cpu = 0; cpu < 4; cpu++) {
       final List<Page> pages = new ArrayList<>();

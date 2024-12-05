@@ -17,26 +17,50 @@
 
 package com.igormaznitsa.zxpspritecorrector;
 
-import com.igormaznitsa.zxpspritecorrector.components.*;
+import static java.util.Objects.requireNonNullElseGet;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static javax.swing.JOptionPane.OK_OPTION;
+import static javax.swing.JOptionPane.showConfirmDialog;
+
+import com.igormaznitsa.zxpspritecorrector.components.CpuRegProperties;
+import com.igormaznitsa.zxpspritecorrector.components.CpuSnapshotParamsEditor;
+import com.igormaznitsa.zxpspritecorrector.components.EditorComponent;
+import com.igormaznitsa.zxpspritecorrector.components.InsideFileView;
+import com.igormaznitsa.zxpspritecorrector.components.PenWidth;
+import com.igormaznitsa.zxpspritecorrector.components.SelectInsideDataDialog;
+import com.igormaznitsa.zxpspritecorrector.components.ZXColorSelector;
+import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
 import com.igormaznitsa.zxpspritecorrector.files.Spec256ConfigEditorPanel;
-import com.igormaznitsa.zxpspritecorrector.files.plugins.*;
-import com.igormaznitsa.zxpspritecorrector.tools.*;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.HOBETAPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.LegacySZEPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SCLPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SCRPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SNAPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.SZEPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.Spec256ZipPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.TAPPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.TRDPlugin;
+import com.igormaznitsa.zxpspritecorrector.files.plugins.Z80InZXPOutPlugin;
+import com.igormaznitsa.zxpspritecorrector.tools.AbstractTool;
+import com.igormaznitsa.zxpspritecorrector.tools.ToolButtonModel;
+import com.igormaznitsa.zxpspritecorrector.tools.ToolColorizer;
+import com.igormaznitsa.zxpspritecorrector.tools.ToolEraser;
+import com.igormaznitsa.zxpspritecorrector.tools.ToolPencil;
 import com.igormaznitsa.zxpspritecorrector.utils.GfxUtils;
 import com.igormaznitsa.zxpspritecorrector.utils.TransferableImage;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.PicoBuilder;
-import org.picocontainer.PicoContainer;
-import org.picocontainer.injectors.ProviderAdapter;
-
-import javax.swing.*;
-import javax.swing.Box.Filler;
-import javax.swing.JPopupMenu.Separator;
-import javax.swing.event.MenuEvent;
-import javax.swing.event.MenuListener;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GraphicsConfiguration;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -47,23 +71,56 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.List;
-import java.util.*;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
-
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static javax.swing.JOptionPane.OK_OPTION;
-import static javax.swing.JOptionPane.showConfirmDialog;
+import javax.swing.BoundedRangeModel;
+import javax.swing.Box.Filler;
+import javax.swing.ButtonGroup;
+import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu.Separator;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JScrollBar;
+import javax.swing.JSeparator;
+import javax.swing.JSlider;
+import javax.swing.JSpinner;
+import javax.swing.JToggleButton;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.PicoBuilder;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.injectors.ProviderAdapter;
 
 public final class SpriteCorrectorMainFrame extends JFrame {
 
   private static final Logger LOGGER = Logger.getLogger("Sprite-Corrector");
 
-  private static final String EXTRA_PROPERTY_DATA_ID = "spec256.config.properties";
+  public static final String EXTRA_PROPERTY_DATA_ID = "spec256.config.properties";
+  public static final String EXTRA_PROPERTY_OVERRIDE_CPU_DATA = "z80.override.cpu.properties";
   private static final long serialVersionUID = -5031012548284731523L;
   private static Properties lastSpec256Properties = new Properties();
   public final MutablePicoContainer container = new PicoBuilder()
@@ -100,6 +157,7 @@ public final class SpriteCorrectorMainFrame extends JFrame {
   private Separator jSeparator5;
   private Separator jSeparator6;
   private Separator jSeparator7;
+  private Separator jSeparator8;
   private JLabel labelAddress;
   private JLabel labelZoom;
   private EditorComponent mainEditor;
@@ -118,6 +176,7 @@ public final class SpriteCorrectorMainFrame extends JFrame {
   private JMenuItem menuEditRedo;
   private JMenuItem menuEditSelectArea;
   private JMenuItem menuEditUndo;
+  private JMenuItem menuEditEditStartParameters;
   private JMenu menuFile;
   private JMenuItem menuFileExit;
   private JMenu menuFileExportAs;
@@ -146,6 +205,7 @@ public final class SpriteCorrectorMainFrame extends JFrame {
   private PenWidth sliderPenWidth;
   private JSpinner spinnerCurrentAddress;
   private ButtonGroup toolsButtonGroup;
+  private CpuRegProperties snapshotCpuOverrideValues = new CpuRegProperties();
 
   public SpriteCorrectorMainFrame(
           final GraphicsConfiguration graphicsConfig,
@@ -270,7 +330,7 @@ public final class SpriteCorrectorMainFrame extends JFrame {
     return '#' + (h.length() < 4 ? "0000".substring(0, 4 - h.length()) + h : h);
   }
 
-  private static Properties deserializeProperties(final String data) {
+  public static Properties deserializeProperties(final String data) {
     if (data == null) {
       return null;
     }
@@ -393,14 +453,13 @@ public final class SpriteCorrectorMainFrame extends JFrame {
 
     sessionData.fill(this.mainEditor);
 
-    Properties foundSpec256Properties =
-            deserializeProperties(sessionData.getExtraProperty(EXTRA_PROPERTY_DATA_ID));
-    final Properties sessionSpec256Properties;
-    if (foundSpec256Properties == null) {
-      sessionSpec256Properties = Spec256ConfigEditorPanel.makeDefault();
-    } else {
-      sessionSpec256Properties = foundSpec256Properties;
-    }
+    this.snapshotCpuOverrideValues =
+        new CpuRegProperties(
+            deserializeProperties(sessionData.getExtraProperty(EXTRA_PROPERTY_OVERRIDE_CPU_DATA)));
+
+    final Properties sessionSpec256Properties = requireNonNullElseGet(
+        deserializeProperties(sessionData.getExtraProperty(EXTRA_PROPERTY_DATA_ID)),
+        Spec256ConfigEditorPanel::makeDefault);
 
     lastSpec256Properties.clear();
     sessionSpec256Properties.stringPropertyNames().forEach(name -> {
@@ -477,7 +536,9 @@ public final class SpriteCorrectorMainFrame extends JFrame {
     menuViewZoomOut = new JMenuItem();
     menuEditUndo = new JMenuItem();
     menuEditRedo = new JMenuItem();
+    menuEditEditStartParameters = new JMenuItem();
     jSeparator2 = new Separator();
+    jSeparator8 = new Separator();
     menuEditSelectArea = new JMenuItem();
     menuEditCopySelectedZxPolyAsImage = new JMenuItem();
     menuEditCopySelectedBaseAsImage = new JMenuItem();
@@ -729,6 +790,11 @@ public final class SpriteCorrectorMainFrame extends JFrame {
     menuEditRedo.addActionListener(this::menuEditRedoActionPerformed);
     menuEdit.add(menuEditRedo);
     menuEdit.add(jSeparator2);
+
+    menuEditEditStartParameters.setText("Change snapshot CPU values");
+    menuEditEditStartParameters.addActionListener(this::onActionMenuEditEditStartParameters);
+    menuEdit.add(menuEditEditStartParameters);
+    menuEdit.add(jSeparator8);
 
     menuEditSelectArea.setAccelerator(javax.swing.KeyStroke
             .getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.CTRL_MASK));
@@ -1354,6 +1420,8 @@ public final class SpriteCorrectorMainFrame extends JFrame {
   private SessionData makeCurrentSessionData() {
     final SessionData result = new SessionData(this.mainEditor);
     result.setExtraProperty(EXTRA_PROPERTY_DATA_ID, serializeProperties(lastSpec256Properties));
+    result.setExtraProperty(EXTRA_PROPERTY_OVERRIDE_CPU_DATA,
+        serializeProperties(this.snapshotCpuOverrideValues));
     return result;
   }
 
@@ -1448,12 +1516,29 @@ public final class SpriteCorrectorMainFrame extends JFrame {
     }
   }
 
+  private void onActionMenuEditEditStartParameters(final ActionEvent actionEvent) {
+    try {
+      final CpuSnapshotParamsEditor panel =
+          new CpuSnapshotParamsEditor(this.mainEditor.getProcessingData(),
+              this.snapshotCpuOverrideValues);
+      if (JOptionPane.showConfirmDialog(this, panel, "Edit start parameters",
+          JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == OK_OPTION) {
+        this.snapshotCpuOverrideValues = panel.asProperties();
+      }
+    } catch (IOException ex) {
+      JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error",
+          JOptionPane.ERROR_MESSAGE);
+    }
+  }
+
   private void menuEditMenuSelected(javax.swing.event.MenuEvent evt) {
     this.toolsButtonGroup.clearSelection();
     this.menuEditSelectArea.setEnabled(this.mainEditor.hasData());
     this.menuEditPasteImage.setEnabled(GfxUtils.doesClipboardHasImage());
     this.menuEditCopySelectedBaseAsImage.setEnabled(this.mainEditor.hasSelectedArea());
     this.menuEditCopySelectedZxPolyAsImage.setEnabled(this.mainEditor.hasSelectedArea());
+    this.menuEditEditStartParameters.setEnabled(this.mainEditor.getProcessingData() != null &&
+        this.mainEditor.getProcessingData().getPlugin() instanceof Z80InZXPOutPlugin);
   }
 
   private void mainEditorPanelMouseClicked(java.awt.event.MouseEvent evt) {

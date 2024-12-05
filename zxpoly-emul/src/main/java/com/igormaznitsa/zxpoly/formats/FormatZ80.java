@@ -282,6 +282,7 @@ public class FormatZ80 extends Snapshot {
     cpu.setIM(snapshot.getEMULFLAGS().getINTERRUPTMODE());
 
     final ZxPolyModule module = board.getModules()[0];
+    module.setTrdosActive(false);
 
     if (version == VERSION_1) {
       ((Z80V1Parser) snapshot).setDATA(snapshot.getFLAGS().getCOMPRESSED() == 0 ? snapshot.getDATA() : Bank.decodeRLE(snapshot.getDATA(), 0, snapshot.getDATA().length));

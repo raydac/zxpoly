@@ -21,15 +21,14 @@ import com.igormaznitsa.zxpspritecorrector.SpriteCorrectorMainFrame;
 import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.picocontainer.annotations.Inject;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.picocontainer.annotations.Inject;
 
 public abstract class AbstractFilePlugin extends FileFilter {
 
@@ -97,8 +96,11 @@ public abstract class AbstractFilePlugin extends FileFilter {
 
   public abstract ReadResult readFrom(String name, byte[] data, int index) throws IOException;
 
-  public abstract void writeTo(File file, ZXPolyData data, SessionData sessionData,
-                               Object... extraData)
+  public abstract void writeTo(
+      File file,
+      ZXPolyData data,
+      SessionData sessionData,
+      Object... extraData)
       throws IOException;
 
   protected boolean saveDataToFile(final File file, final byte[] data) throws IOException {
