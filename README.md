@@ -136,7 +136,8 @@ Adapted game version in ZX-Poly emulator format can be downloaded [from here](ad
 ## "Summer Santa Update 2022" (2022)
 
 On Christmas 2024, I made an adaptation of the
-game ["Summer Santa Update 2022" (2022)](http://www.worldofspectrum.org/infoseekid.cgi?id=0003493) originally created
+game ["Summer Santa Update 2022" (2022)](https://spectrumcomputing.co.uk/entry/39005/ZX-Spectrum/Summer_Santa_2022_Update)
+originally created
 by [Paul Jenkinson](https://www.thespectrumshow.net/). This adaptation is optimized for the ZX-Poly emulator,
 specifically leveraging its 256x192 video mode 4. However, both the adapted and original TZX versions of the game have a
 limitation where gameplay is restricted to three sessions. This may be a bug in the original code.    
