@@ -52,6 +52,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.RenderedImage;
+import java.io.Serial;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 import java.util.Optional;
@@ -114,9 +115,9 @@ public final class VideoController extends JComponent
   private static final int[] PALETTE_ALIGNED_ZXPOLY =
       Utils.alignPaletteColors(PALETTE_ZXPOLY, PALETTE_SPEC256);
   private static final Logger log = Logger.getLogger(VideoController.class.getName());
+  @Serial
   private static final long serialVersionUID = -6290427036692912036L;
   private static final Image MOUSE_TRAPPED = Utils.loadIcon("escmouse.png");
-  private static final RenderedImage[] EMPTY_ARRAY = new RenderedImage[0];
   private static final float SCALE_STEP = 0.025f;
   private static final float SCALE_MIN = 1.0f;
   private static final float SCALE_MAX = 6.0f;
@@ -952,40 +953,24 @@ public final class VideoController extends JComponent
   }
 
   public static int preciseRgbColorToIndex(final int rgbColor) {
-    switch (rgbColor | 0xFF000000) {
-      case 0xFF000000:
-        return 0;
-      case 0xFF0000BE:
-        return 1;
-      case 0xFFBE0000:
-        return 2;
-      case 0xFFBE00BE:
-        return 3;
-      case 0xFF00BE00:
-        return 4;
-      case 0xFF00BEBE:
-        return 5;
-      case 0xFFBEBE00:
-        return 6;
-      case 0xFFBEBEBE:
-        return 7;
-      case 0xFF0000FF:
-        return 9;
-      case 0xFFFF0000:
-        return 10;
-      case 0xFFFF00FF:
-        return 11;
-      case 0xFF00FF00:
-        return 12;
-      case 0xFF00FFFF:
-        return 13;
-      case 0xFFFFFF00:
-        return 14;
-      case 0xFFFFFFFF:
-        return 15;
-      default:
-        return -1;
-    }
+    return switch (rgbColor | 0xFF000000) {
+      case 0xFF000000 -> 0;
+      case 0xFF0000BE -> 1;
+      case 0xFFBE0000 -> 2;
+      case 0xFFBE00BE -> 3;
+      case 0xFF00BE00 -> 4;
+      case 0xFF00BEBE -> 5;
+      case 0xFFBEBE00 -> 6;
+      case 0xFFBEBEBE -> 7;
+      case 0xFF0000FF -> 9;
+      case 0xFFFF0000 -> 10;
+      case 0xFFFF00FF -> 11;
+      case 0xFF00FF00 -> 12;
+      case 0xFF00FFFF -> 13;
+      case 0xFFFFFF00 -> 14;
+      case 0xFFFFFFFF -> 15;
+      default -> -1;
+    };
   }
 
   public static int extractYFromAddress(final int address) {
@@ -1090,28 +1075,18 @@ public final class VideoController extends JComponent
   }
 
   private static String decodeVideoModeCode(final int code) {
-    switch (code) {
-      case 0:
-        return "ZX-Spectrum 0";
-      case 1:
-        return "ZX-Spectrum 1";
-      case 2:
-        return "ZX-Spectrum 2";
-      case 3:
-        return "ZX-Spectrum 3";
-      case 4:
-        return "ZX-Poly 256x192";
-      case 5:
-        return "ZX-Poly 512x384";
-      case 6:
-        return "ZX-Poly 256x192M0";
-      case 7:
-        return "ZX-Poly 256x192M1";
-      case VIDEOMODE_SPEC256:
-        return "SPEC256 256x192";
-      default:
-        return "Unknown [" + code + ']';
-    }
+    return switch (code) {
+      case 0 -> "ZX-Spectrum 0";
+      case 1 -> "ZX-Spectrum 1";
+      case 2 -> "ZX-Spectrum 2";
+      case 3 -> "ZX-Spectrum 3";
+      case 4 -> "ZX-Poly 256x192";
+      case 5 -> "ZX-Poly 512x384";
+      case 6 -> "ZX-Poly 256x192M0";
+      case 7 -> "ZX-Poly 256x192M1";
+      case VIDEOMODE_SPEC256 -> "SPEC256 256x192";
+      default -> "Unknown [" + code + ']';
+    };
   }
 
   @Override
@@ -1236,7 +1211,7 @@ public final class VideoController extends JComponent
 
   public Optional<Rectangle> getVirtualKeyboardWindowPosition() {
     final Window window = this.vkbdWindow;
-    Rectangle result = null;
+    final Rectangle result;
     if (window == null) {
       result = this.lastVirtualKeyboardWindowPosition;
     } else {
@@ -1264,8 +1239,7 @@ public final class VideoController extends JComponent
 
   public void setEnableTrapMouse(
       final boolean flag,
-      final boolean enableMouseTrapIndicator,
-      final boolean activateMouseTrap) {
+      final boolean enableMouseTrapIndicator) {
     this.enableMouseTrapIndicator = enableMouseTrapIndicator;
     this.mouseTrapEnabled = flag;
     this.setTrapMouseActive(flag);
@@ -1548,7 +1522,8 @@ public final class VideoController extends JComponent
   }
 
   public void setBorderColor(final int colorIndex) {
-    this.portFEw = (this.portFEw & 0xFFFFFFF8) | (colorIndex & 0x07);
+    final int old = this.portFEw & 0xFFFFFFF8;
+    this.portFEw = old | (colorIndex & 0x07);
   }
 
   public void syncUpdateBuffer(final int lineFrom, final int lineTo,
@@ -1748,26 +1723,28 @@ public final class VideoController extends JComponent
   public void preStep(
       final int frameTiStates,
       final boolean signalReset,
-      final boolean tstatesIntReached,
+      final boolean tiStatesIntReached,
       boolean wallClockInt
   ) {
-    this.stepStartTiStates = tstatesIntReached ? -1 : frameTiStates;
+    this.stepStartTiStates = tiStatesIntReached ? -1 : frameTiStates;
+    final UlaPlusContainer ulaPlusContainer = this.ulaPlus;
+
     if (signalReset) {
       this.portFEw = 0x00;
-      if (this.ulaPlus != null) {
-        this.ulaPlus.reset();
+      if (ulaPlusContainer != null) {
+        ulaPlusContainer.reset();
       }
     }
-    this.vkbdRender.preState(signalReset, tstatesIntReached, wallClockInt);
+    this.vkbdRender.preState(signalReset, tiStatesIntReached, wallClockInt);
 
-    if (this.ulaPlus.isActive()) {
+    if (ulaPlusContainer == null || !ulaPlusContainer.isActive()) {
+      this.preStepBorderColor =
+          this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
+    } else {
       this.preStepBorderColor =
           this.tvFilterChain.applyBorderColor(
                   this.ulaPlus.findColorForIndex((this.portFEw & 7) | 8))
               .getRGB();
-    } else {
-      this.preStepBorderColor =
-          this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
     }
   }
 

@@ -1839,7 +1839,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
           final boolean mouseTrapOptionActive = this.menuOptionsEnableTrapMouse.isSelected();
 
-          vc.setEnableTrapMouse(mouseTrapOptionActive, false, mouseTrapOptionActive);
+          vc.setEnableTrapMouse(mouseTrapOptionActive, false);
           vc.setFullScreenMode(true);
 
           gDevice.setFullScreenWindow(lastFullScreen);
@@ -1860,7 +1860,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           final VideoController vc = this.board.getVideoController();
 
           final boolean mouseTrapOptionActive = this.menuOptionsEnableTrapMouse.isSelected();
-          vc.setEnableTrapMouse(mouseTrapOptionActive, true, false);
+          vc.setEnableTrapMouse(mouseTrapOptionActive, true);
 
           this.scrollPanel.getViewport().setView(vc);
           this.doVcSize();
@@ -3362,7 +3362,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   private void menuOptionsEnableTrapMouseActionPerformed(ActionEvent evt) {
     this.board.getVideoController()
-        .setEnableTrapMouse(this.menuOptionsEnableTrapMouse.isSelected(), true, false);
+        .setEnableTrapMouse(this.menuOptionsEnableTrapMouse.isSelected(), true);
   }
 
   private void activateTracerForCPUModule(final int index) {
