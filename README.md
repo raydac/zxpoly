@@ -54,7 +54,7 @@ under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 | ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.4/zxpoly-emul-2.3.4-macos-amd64-jdk.zip)__       |
 | ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.4/zxpoly-emul-2.3.4-macos-aarch64-jdk.zip)__   |
 | ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.4/zxpoly-emul-2.3.4-linux-amd64-jdk.tar.gz)__  |
-| ![Linux](assets/icons/appimage64x64.png)     | __[Linuc AppImage x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.4/zxpoly-emul-2.3.4-x86_64.AppImage)__    |
+| ![Linux](assets/icons/appimage64x64.png)     | __[Linux AppImage x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.4/zxpoly-emul-2.3.4-x86_64.AppImage)__    |
 | ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.3.4/zxpoly-emul-2.3.4.jar)__                          | 
 
 Because the emulator is written in Java, its JAR file can be started just through command
