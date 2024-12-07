@@ -990,6 +990,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           abstractButton.addActionListener(e -> this.makeReset());
         }
         break;
+        case SCREENSHOT: {
+          abstractButton.addActionListener(this::menuServiceSaveScreenActionPerformed);
+        }
+        break;
         case MAGIC: {
           abstractButton.addActionListener(e -> this.makeMagic());
         }

@@ -11,6 +11,7 @@ import javax.swing.JToggleButton;
 public enum FastButton {
   RESET(true, "Reset", "Reset device", "fb_reset.png", null, JButton.class),
   MAGIC(true, "Magic button", "Force NMI signal", "fb_magic.png", null, JButton.class),
+  SCREENSHOT(true, "Screenshot", "Save screenshot", "fb_screenshot.png", null, JButton.class),
   SOUND_ON_OFF(true, "Sound On/Off", "Activate/mute sound engine", "fb_sound_off.png", "fb_sound_on.png", JToggleButton.class),
   TAPE_PLAY_STOP(true, "Tape PLAY/STOP", "Tape Play/Stop", "fb_tape.png", null, JToggleButton.class),
   WRITE_WAV(true, "Start/stop record WAV", "Start/Stop writing emulated sound as WAV file", "wav_start.png", "wav_stop.png", JToggleButton.class),
