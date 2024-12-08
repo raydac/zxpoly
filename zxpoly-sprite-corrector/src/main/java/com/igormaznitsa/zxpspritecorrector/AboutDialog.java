@@ -62,7 +62,7 @@ public final class AboutDialog extends javax.swing.JDialog {
     infoText.setLineWrap(true);
     infoText.setRows(5);
     infoText.setText(
-        "The ZX-Poly sprite corrector v. ${project.version}\n--------------------------------------\n(C) 2008-2023 Igor Maznitsa (igor.maznitsa@igormaznitsa.com)\n\n  The utility allows to load a Hobeta file and find sprites inside of opened binary block. Found sprites can be colorized with the editor and the result can be saved as separated Hobeta files.\n--------------------------------------\nSome icons from http://www.fatcow.com/free-icons");
+        "The ZX-Poly sprite corrector v. ${project.version}\n--------------------------------------\n(C) 2008-2025 Igor Maznitsa (igor.maznitsa@igormaznitsa.com)\n\n  The utility allows to load a Hobeta file and find sprites inside of opened binary block. Found sprites can be colorized with the editor and the result can be saved as separated Hobeta files.\n--------------------------------------\nSome icons from http://www.fatcow.com/free-icons");
     infoText.setWrapStyleWord(true);
     jScrollPane1.setViewportView(infoText);
 

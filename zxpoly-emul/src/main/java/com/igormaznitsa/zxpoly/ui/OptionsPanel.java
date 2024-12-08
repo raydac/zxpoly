@@ -269,11 +269,12 @@ public class OptionsPanel extends JTabbedPane {
     labelEmulateFFport = new JLabel();
     checkEmulateFFport = new JCheckBox();
     checkboxActivateLowPassFilter = new JCheckBox();
+    final double divider = Math.exp(1) - 1.0d;
     sliderLowPassFilterValue = new CustomIntSlider(0, 1000, d -> {
       if (d == 0.0d) {
         return 0.0d;
       }
-      return (Math.exp((double) d / SoundChannelLowPassFilter.COEFF) - 1) / 1.71828182846d;
+      return (Math.exp((double) d / SoundChannelLowPassFilter.COEFF) - 1) / divider;
     });
     keySelectorKempstonDown = new KeyCodeChooser();
     keySelectorKempstonLeft = new KeyCodeChooser();
