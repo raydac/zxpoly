@@ -100,6 +100,42 @@ public final class AppOptions {
     }
   }
 
+  public boolean isLpfActive() {
+    this.locker.lock();
+    try {
+      return preferences.getBoolean(Option.LPF_ACTIVE.name(), false);
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  public void setLpfActive(final boolean value) {
+    this.locker.lock();
+    try {
+      preferences.putBoolean(Option.LPF_ACTIVE.name(), value);
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  public int getLpfValue() {
+    this.locker.lock();
+    try {
+      return Math.min(100, Math.max(0, preferences.getInt(Option.LPF_VALUE.name(), 20)));
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  public void setLpfValue(final int value) {
+    this.locker.lock();
+    try {
+      preferences.putInt(Option.LPF_VALUE.name(), value);
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
   public boolean isTestRomActive() {
     this.locker.lock();
     try {
@@ -934,6 +970,8 @@ public final class AppOptions {
   }
 
   public enum Option {
+    LPF_ACTIVE,
+    LPF_VALUE,
     BORDER_WIDTH,
     TIMING_PROFILE,
     SYNC_PAINT,

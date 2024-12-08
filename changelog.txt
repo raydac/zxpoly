@@ -1,3 +1,7 @@
+__2.3.5 (SNAPSHOT)__
+
+- added Low Pass Filter for sound output
+
 __2.3.4 (07-dec-2024)__
 
 - the minimum required JDK version has been raised to 21

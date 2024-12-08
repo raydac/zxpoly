@@ -39,6 +39,7 @@ import com.igormaznitsa.zxpoly.components.video.BorderWidth;
 import com.igormaznitsa.zxpoly.components.video.VideoController;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardDecoration;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
+import com.igormaznitsa.zxpoly.utils.AppOptions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -125,7 +126,13 @@ public final class Motherboard implements ZxPolyConstants {
     this.memoryTimings = timingProfile.makeUlaFrame();
 
     this.boardMode = boardMode;
-    this.beeper = new Beeper(timingProfile, useAcbSoundScheme, enableCovoxFb, useTurboSound,
+
+    final float lowPassFilter = AppOptions.getInstance().isLpfActive() ? AppOptions.getInstance()
+        .getLpfValue() / 100.0f : -1.0f;
+    LOGGER.info("Low Pass Sound Filter is " + (lowPassFilter < 0 ? "OFF" : lowPassFilter));
+
+    this.beeper =
+        new Beeper(timingProfile, lowPassFilter, useAcbSoundScheme, enableCovoxFb, useTurboSound,
         tryConsumeLessSystemResources);
     if (rom.isTrdosPresented()) {
       LOGGER.info("TR-DOS presented in ROM, creating BetaDiskInterface");

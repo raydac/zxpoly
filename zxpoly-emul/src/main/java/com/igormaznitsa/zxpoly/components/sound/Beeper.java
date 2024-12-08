@@ -52,7 +52,7 @@ public final class Beeper {
 
   private static final IWavWriter NULL_WAV = new IWavWriter() {
     @Override
-    public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates,
+    public void updateState(boolean tiStatesInt, boolean wallClockInt, int spentTiStates,
                             int levelLeft, int levelRight) {
 
     }
@@ -65,7 +65,7 @@ public final class Beeper {
 
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
-    public void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates,
+    public void updateState(boolean tiStatesInt, boolean wallClockInt, int spentTiStates,
                             int levelLeft, int levelRight) {
     }
 
@@ -89,9 +89,7 @@ public final class Beeper {
   };
 
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
-  private final SoundChannelValueFilter[] soundChannelFilters =
-      IntStream.range(0, 8).mapToObj(i -> new SoundChannelValueFilter())
-          .toArray(SoundChannelValueFilter[]::new);
+  private final SoundChannelLowPassFilter[] soundChannelLowPassFilters;
   private final int[] channels = new int[8];
   private final MixerFunction mixerLeft;
   private final MixerFunction mixerRight;
@@ -100,10 +98,14 @@ public final class Beeper {
 
   public Beeper(
       final TimingProfile timingProfile,
+      final float lowPassFilterValue,
       final boolean useAcbSoundScheme,
       final boolean covoxPresented,
       final boolean turboSoundPresented,
       final boolean tryConsumeLessSystemResources) {
+    this.soundChannelLowPassFilters =
+        IntStream.range(0, 8).mapToObj(i -> new SoundChannelLowPassFilter(i, lowPassFilterValue))
+            .toArray(SoundChannelLowPassFilter[]::new);
     this.tryConsumeLessSystemResources = tryConsumeLessSystemResources;
     this.timingProfile = timingProfile;
     if (useAcbSoundScheme) {
@@ -195,25 +197,25 @@ public final class Beeper {
     return this.activeInternalBeeper.get() == NULL_BEEPER;
   }
 
-  public void updateState(final boolean tstatesInt, final boolean wallclockInt,
-                          final int spentTstates) {
+  public void updateState(final boolean tiStatesInt, final boolean wallClockInt,
+                          final int spentTiStates) {
     final int leftChannel =
-        this.mixerLeft.mix(this.channels, this.soundChannelFilters, spentTstates);
+        this.mixerLeft.mix(this.channels, this.soundChannelLowPassFilters, spentTiStates);
     final int rightChannel =
-        this.mixerRight.mix(this.channels, this.soundChannelFilters, spentTstates);
+        this.mixerRight.mix(this.channels, this.soundChannelLowPassFilters, spentTiStates);
 
     this.activeInternalBeeper.get()
-        .updateState(tstatesInt,
-            wallclockInt,
-            spentTstates,
+        .updateState(tiStatesInt,
+            wallClockInt,
+            spentTiStates,
             leftChannel,
             rightChannel
         );
 
     this.activeWavWriter.get()
-        .updateState(tstatesInt,
-            wallclockInt,
-            spentTstates,
+        .updateState(tiStatesInt,
+            wallClockInt,
+            spentTiStates,
             leftChannel,
             rightChannel
         );
@@ -226,7 +228,7 @@ public final class Beeper {
 
   public void clearChannels() {
     Arrays.fill(this.channels, 0);
-    for (final SoundChannelValueFilter f : this.soundChannelFilters) {
+    for (final SoundChannelLowPassFilter f : this.soundChannelLowPassFilters) {
       f.reset();
     }
   }
@@ -246,11 +248,11 @@ public final class Beeper {
 
   @FunctionalInterface
   private interface MixerFunction {
-    int mix(int[] values, SoundChannelValueFilter[] filters, int spentTstates);
+    int mix(int[] values, SoundChannelLowPassFilter[] filters, int spentTiStates);
   }
 
   private interface IWavWriter {
-    void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft,
+    void updateState(boolean tiStatesInt, boolean wallClockInt, int spentTiStates, int levelLeft,
                      int levelRight);
 
     void dispose();
@@ -262,7 +264,7 @@ public final class Beeper {
 
     void start();
 
-    void updateState(boolean tstatesInt, boolean wallclockInt, int spentTstates, int levelLeft,
+    void updateState(boolean tiStatesInt, boolean wallClockInt, int spentTiStates, int levelLeft,
                      int levelRight);
 
     void dispose();
@@ -310,13 +312,13 @@ public final class Beeper {
 
     @Override
     public void updateState(
-        final boolean tstatesInt,
-        final boolean wallclockInt,
-        final int spentTstates,
+        final boolean tiStatesInt,
+        final boolean wallClockInt,
+        final int spentTiStates,
         final int levelLeft,
         final int levelRight
     ) {
-      final double frameOffset = spentTstates * this.framesPerTick;
+      final double frameOffset = spentTiStates * this.framesPerTick;
 
       long currentFrame = (long) this.frameCounter;
       this.frameCounter += frameOffset;
@@ -399,18 +401,18 @@ public final class Beeper {
 
     @Override
     public void updateState(
-        boolean tstatesIntReached,
-        boolean wallclockInt,
-        int spentTstates,
+        boolean tiStatesInt,
+        boolean wallClockInt,
+        int spentTiStates,
         final int levelLeft,
         final int levelRight
     ) {
       if (this.working) {
-        if (wallclockInt) {
+        if (wallClockInt) {
           this.soundDataQueue.offer(sndBuffer.nextBuffer(levelLeft, levelRight));
           sndBuffer.resetPosition();
         } else {
-          sndBuffer.setValue(spentTstates, levelLeft, levelRight);
+          sndBuffer.setValue(spentTiStates, levelLeft, levelRight);
         }
       }
     }

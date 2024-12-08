@@ -27,6 +27,8 @@ import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
 import com.igormaznitsa.zxpoly.utils.RomSource;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -43,9 +45,12 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 
 public class OptionsPanel extends JTabbedPane {
 
@@ -75,6 +80,8 @@ public class OptionsPanel extends JTabbedPane {
   private JLabel labelTryLessResources;
   private JLabel labelBorderWidth;
   private JLabel labelEmulateFFport;
+  private JCheckBox checkboxActivateLowPassFilter;
+  private JSlider sliderLowPassFilterValue;
   private JCheckBox checkGrabSound;
   private JCheckBox checkTryLessResources;
   private JCheckBox checkInterlacedScan;
@@ -156,6 +163,15 @@ public class OptionsPanel extends JTabbedPane {
   }
 
   private void fillByDataContainer(final DataContainer data) {
+    this.sliderLowPassFilterValue.setValue(data.lpfValue);
+    if (data.lpfActive) {
+      this.sliderLowPassFilterValue.setEnabled(true);
+      this.checkboxActivateLowPassFilter.setSelected(true);
+    } else {
+      this.sliderLowPassFilterValue.setEnabled(false);
+      this.checkboxActivateLowPassFilter.setSelected(false);
+    }
+
     this.comboTimingProfile.setSelectedItem(data.timingProfile);
     this.checkEmulateFFport.setSelected(data.emulateFFport);
     this.checkInterlacedScan.setSelected(data.interlacedScan);
@@ -249,6 +265,12 @@ public class OptionsPanel extends JTabbedPane {
     textCustomRomPath.setToolTipText("Provided file path overrides selected ROM, if empty then inactive");
     labelEmulateFFport = new JLabel();
     checkEmulateFFport = new JCheckBox();
+    checkboxActivateLowPassFilter = new JCheckBox();
+    sliderLowPassFilterValue = new JSlider(0, 100);
+    sliderLowPassFilterValue.setMajorTickSpacing(10);
+    sliderLowPassFilterValue.setPaintLabels(true);
+    sliderLowPassFilterValue.setPaintTicks(true);
+    sliderLowPassFilterValue.setPaintTrack(true);
 
     keySelectorKempstonDown = new KeyCodeChooser();
     keySelectorKempstonLeft = new KeyCodeChooser();
@@ -262,8 +284,13 @@ public class OptionsPanel extends JTabbedPane {
     keySelectorProtekJoystickFire = new KeyCodeChooser();
     keySelectorProtekJoystickUp = new KeyCodeChooser();
 
+    checkboxActivateLowPassFilter.addChangeListener(e -> {
+      this.sliderLowPassFilterValue.setEnabled(checkboxActivateLowPassFilter.isSelected());
+    });
+
     final JPanel panelGeneral = new JPanel();
     final JPanel panelStreaming = new JPanel();
+    final JPanel panelSound = new JPanel();
     final JPanel panelScreen = new JPanel();
 
     panelScreen.setLayout(new GridBagLayout());
@@ -375,6 +402,82 @@ public class OptionsPanel extends JTabbedPane {
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelScreen.add(checkUlaPlus, gridBagConstraints);
+
+    panelSound.setLayout(new GridBagLayout());
+
+    labelTurboSound.setHorizontalAlignment(RIGHT);
+    labelTurboSound.setText("TurboSound (NedoPC):");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 0;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelSound.add(labelTurboSound, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 0;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelSound.add(checkTurboSound, gridBagConstraints);
+
+    labelCovoxFb.setHorizontalAlignment(RIGHT);
+    labelCovoxFb.setText("Covox (#FB):");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 1;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelSound.add(labelCovoxFb, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 1;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelSound.add(checkCovoxFb, gridBagConstraints);
+
+    labelSoundSchemeACB.setHorizontalAlignment(RIGHT);
+    labelSoundSchemeACB.setText("Sound channels ACB:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 2;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelSound.add(labelSoundSchemeACB, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 2;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelSound.add(checkSoundSchemeACB, gridBagConstraints);
+
+    labelVolumeProfile.setHorizontalAlignment(RIGHT);
+    labelVolumeProfile.setText("Volume profile:");
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 3;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    panelSound.add(labelVolumeProfile, gridBagConstraints);
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 1;
+    gridBagConstraints.gridy = 3;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gridBagConstraints.anchor = GridBagConstraints.WEST;
+    panelSound.add(comboVolumeProfile, gridBagConstraints);
+
+    final JPanel panelLowPassFilter = new JPanel(new BorderLayout());
+    panelLowPassFilter.setBorder(new TitledBorder("Low Pass Filter"));
+
+    panelLowPassFilter.add(sliderLowPassFilterValue, BorderLayout.CENTER);
+
+    checkboxActivateLowPassFilter.setText("Active");
+    final JPanel flow = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    flow.add(checkboxActivateLowPassFilter);
+    panelLowPassFilter.add(flow, BorderLayout.SOUTH);
+
+    gridBagConstraints = new GridBagConstraints();
+    gridBagConstraints.gridx = 0;
+    gridBagConstraints.gridy = 4;
+    gridBagConstraints.gridwidth = 2;
+    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+
+    panelSound.add(panelLowPassFilter, gridBagConstraints);
 
     panelStreaming.setLayout(new GridBagLayout());
 
@@ -488,72 +591,16 @@ public class OptionsPanel extends JTabbedPane {
     textCustomRomPath.setColumns(24);
     panelGeneral.add(textCustomRomPath, gridBagConstraints);
 
-    labelTurboSound.setHorizontalAlignment(RIGHT);
-    labelTurboSound.setText("TurboSound (NedoPC):");
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 2;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGeneral.add(labelTurboSound, gridBagConstraints);
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 2;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = GridBagConstraints.WEST;
-    panelGeneral.add(checkTurboSound, gridBagConstraints);
-
-    labelCovoxFb.setHorizontalAlignment(RIGHT);
-    labelCovoxFb.setText("Covox (#FB):");
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 3;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGeneral.add(labelCovoxFb, gridBagConstraints);
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 3;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = GridBagConstraints.WEST;
-    panelGeneral.add(checkCovoxFb, gridBagConstraints);
-
-    labelSoundSchemeACB.setHorizontalAlignment(RIGHT);
-    labelSoundSchemeACB.setText("Sound channels ACB:");
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 4;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGeneral.add(labelSoundSchemeACB, gridBagConstraints);
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 4;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = GridBagConstraints.WEST;
-    panelGeneral.add(checkSoundSchemeACB, gridBagConstraints);
-
-    labelVolumeProfile.setHorizontalAlignment(RIGHT);
-    labelVolumeProfile.setText("Volume profile:");
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 5;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    panelGeneral.add(labelVolumeProfile, gridBagConstraints);
-    gridBagConstraints = new GridBagConstraints();
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 5;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gridBagConstraints.anchor = GridBagConstraints.WEST;
-    panelGeneral.add(comboVolumeProfile, gridBagConstraints);
-
     labelZx128ByDefault.setHorizontalAlignment(RIGHT);
     labelZx128ByDefault.setText("Default ZX Mode:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 6;
+    gridBagConstraints.gridy = 2;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelZx128ByDefault, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 6;
+    gridBagConstraints.gridy = 2;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkZx128ByDefault, gridBagConstraints);
@@ -562,12 +609,12 @@ public class OptionsPanel extends JTabbedPane {
     labelKempstonMouseAllowed.setText("Kempston mouse allowed:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 7;
+    gridBagConstraints.gridy = 3;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelKempstonMouseAllowed, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 7;
+    gridBagConstraints.gridy = 3;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkKempstonMouseAllowed, gridBagConstraints);
@@ -576,12 +623,12 @@ public class OptionsPanel extends JTabbedPane {
     labelVirtualKbdApart.setText("Virtual keyboard apart:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 8;
+    gridBagConstraints.gridy = 4;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelVirtualKbdApart, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 8;
+    gridBagConstraints.gridy = 4;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkVkbdApart, gridBagConstraints);
@@ -590,12 +637,12 @@ public class OptionsPanel extends JTabbedPane {
     labelVirtualKbdLook.setText("Keyboard decoration:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 9;
+    gridBagConstraints.gridy = 5;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelVirtualKbdLook, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 9;
+    gridBagConstraints.gridy = 5;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(comboKeyboardLook, gridBagConstraints);
@@ -604,12 +651,12 @@ public class OptionsPanel extends JTabbedPane {
     labelMacroCursorKeys.setText("Auto-CS for cursor keys:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 10;
+    gridBagConstraints.gridy = 6;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelMacroCursorKeys, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 10;
+    gridBagConstraints.gridy = 6;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkAutoiCsForCursorKeys, gridBagConstraints);
@@ -618,12 +665,12 @@ public class OptionsPanel extends JTabbedPane {
     labelTimingProfile.setText("Timing:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 11;
+    gridBagConstraints.gridy = 7;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelTimingProfile, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 11;
+    gridBagConstraints.gridy = 7;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(comboTimingProfile, gridBagConstraints);
@@ -632,12 +679,12 @@ public class OptionsPanel extends JTabbedPane {
     labelTryLessResources.setText("Try use less resources:");
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 0;
-    gridBagConstraints.gridy = 12;
+    gridBagConstraints.gridy = 8;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     panelGeneral.add(labelTryLessResources, gridBagConstraints);
     gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.gridx = 1;
-    gridBagConstraints.gridy = 12;
+    gridBagConstraints.gridy = 8;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
     gridBagConstraints.anchor = GridBagConstraints.WEST;
     panelGeneral.add(checkTryLessResources, gridBagConstraints);
@@ -740,8 +787,15 @@ public class OptionsPanel extends JTabbedPane {
     joysticksPanel.add(panelKempston);
     joysticksPanel.add(panelCursor);
 
+    panelGeneral.setBorder(new EmptyBorder(8, 8, 8, 8));
+    panelScreen.setBorder(new EmptyBorder(8, 8, 8, 8));
+    panelSound.setBorder(new EmptyBorder(8, 8, 8, 8));
+    joysticksPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
+    panelStreaming.setBorder(new EmptyBorder(8, 8, 8, 8));
+
     this.addTab("General", panelGeneral);
     this.addTab("Screen", panelScreen);
+    this.addTab("Sound", panelSound);
     this.addTab("Joystick", joysticksPanel);
     this.addTab("Streaming", panelStreaming);
   }
@@ -776,6 +830,8 @@ public class OptionsPanel extends JTabbedPane {
     public final boolean syncPaint;
     public final boolean oldTvFilter;
     public final boolean emulateFFport;
+    public final boolean lpfActive;
+    public final int lpfValue;
 
     public final int kempstonKeyUp;
     public final int kempstonKeyDown;
@@ -793,6 +849,8 @@ public class OptionsPanel extends JTabbedPane {
 
     public DataContainer() {
       final String customRomPath = AppOptions.getInstance().getCustomRomPath();
+      this.lpfActive = AppOptions.getInstance().isLpfActive();
+      this.lpfValue = AppOptions.getInstance().getLpfValue();
       this.borderWidth = AppOptions.getInstance().getBorderWidth();
       this.syncPaint = AppOptions.getInstance().isSyncPaint();
       this.emulateFFport = AppOptions.getInstance().isAttributePortFf();
@@ -844,6 +902,9 @@ public class OptionsPanel extends JTabbedPane {
       this.tryLessResources = optionsPanel.checkTryLessResources.isSelected();
       this.oldTvFilter = optionsPanel.checkOldTvFilter.isSelected();
 
+      this.lpfValue = optionsPanel.sliderLowPassFilterValue.getValue();
+      this.lpfActive = optionsPanel.checkboxActivateLowPassFilter.isSelected();
+
       this.syncPaint = optionsPanel.checkSyncPaint.isSelected();
 
       this.emulateFFport = optionsPanel.checkEmulateFFport.isSelected();
@@ -878,6 +939,8 @@ public class OptionsPanel extends JTabbedPane {
     }
 
     public void store() {
+      AppOptions.getInstance().setLpfActive(this.lpfActive);
+      AppOptions.getInstance().setLpfValue(this.lpfValue);
       AppOptions.getInstance().setSyncPaint(this.syncPaint);
       AppOptions.getInstance().setTimingProfile(this.timingProfile);
       AppOptions.getInstance().setBorderWidth(this.borderWidth);
