@@ -32,6 +32,7 @@ import com.igormaznitsa.zxpoly.Bounds;
 import com.igormaznitsa.zxpoly.components.betadisk.BetaDiscInterface;
 import com.igormaznitsa.zxpoly.components.sound.Beeper;
 import com.igormaznitsa.zxpoly.components.sound.CovoxFb;
+import com.igormaznitsa.zxpoly.components.sound.SoundChannelLowPassFilter;
 import com.igormaznitsa.zxpoly.components.sound.TurboSoundNedoPc;
 import com.igormaznitsa.zxpoly.components.sound.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.sound.Zx128Ay8910;
@@ -128,7 +129,7 @@ public final class Motherboard implements ZxPolyConstants {
     this.boardMode = boardMode;
 
     final float lowPassFilter = AppOptions.getInstance().isLpfActive() ? AppOptions.getInstance()
-        .getLpfValue() / 100.0f : -1.0f;
+        .getLpfValue() / SoundChannelLowPassFilter.COEFF : SoundChannelLowPassFilter.OFF;
     LOGGER.info("Low Pass Sound Filter is " + (lowPassFilter < 0 ? "OFF" : lowPassFilter));
 
     this.beeper =

@@ -2,6 +2,9 @@ package com.igormaznitsa.zxpoly.components.sound;
 
 public final class SoundChannelLowPassFilter {
 
+  public static final float COEFF = 1000.0f;
+  public static final float OFF = -1.0f;
+
   private final float alpha1;
   private final float alpha2;
   private final int channelIndex;

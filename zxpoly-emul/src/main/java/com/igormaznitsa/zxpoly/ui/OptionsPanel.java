@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 import static javax.swing.BorderFactory.createTitledBorder;
 
 import com.igormaznitsa.zxpoly.components.BoardMode;
+import com.igormaznitsa.zxpoly.components.sound.SoundChannelLowPassFilter;
 import com.igormaznitsa.zxpoly.components.sound.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.video.BorderWidth;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
@@ -45,7 +46,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
@@ -81,7 +81,7 @@ public class OptionsPanel extends JTabbedPane {
   private JLabel labelBorderWidth;
   private JLabel labelEmulateFFport;
   private JCheckBox checkboxActivateLowPassFilter;
-  private JSlider sliderLowPassFilterValue;
+  private CustomIntSlider sliderLowPassFilterValue;
   private JCheckBox checkGrabSound;
   private JCheckBox checkTryLessResources;
   private JCheckBox checkInterlacedScan;
@@ -126,7 +126,8 @@ public class OptionsPanel extends JTabbedPane {
 
     initComponents();
     this.comboRomSource.removeAllItems();
-    Arrays.stream(RomSource.values()).filter(x -> x != RomSource.UNKNOWN).forEach(x -> this.comboRomSource.addItem(x.getTitle()));
+    Arrays.stream(RomSource.values()).filter(x -> x != RomSource.UNKNOWN)
+        .forEach(x -> this.comboRomSource.addItem(x.getTitle()));
 
     final List<String> addressList = new ArrayList<>();
 
@@ -192,7 +193,8 @@ public class OptionsPanel extends JTabbedPane {
     this.textFfmpegPath.setText(data.ffmpegPath);
     this.comboNetAdddr.setSelectedItem(data.inetAddress);
     this.spinnerFramesPerSec.setValue(data.frameRate);
-    this.comboRomSource.setSelectedItem(RomSource.findForLink(data.activeRom, RomSource.TEST).getTitle());
+    this.comboRomSource.setSelectedItem(
+        RomSource.findForLink(data.activeRom, RomSource.TEST).getTitle());
     this.comboKeyboardLook.setSelectedItem(data.keyboardLook);
     this.comboVolumeProfile.setSelectedItem(data.volumeProfile);
     this.comboBorderWidth.setSelectedItem(data.borderWidth);
@@ -262,16 +264,17 @@ public class OptionsPanel extends JTabbedPane {
     comboTimingProfile = new JComboBox<>(TimingProfile.values());
     comboBorderWidth = new JComboBox<>(BorderWidth.values());
     textCustomRomPath = new JFilePathTextField();
-    textCustomRomPath.setToolTipText("Provided file path overrides selected ROM, if empty then inactive");
+    textCustomRomPath.setToolTipText(
+        "Provided file path overrides selected ROM, if empty then inactive");
     labelEmulateFFport = new JLabel();
     checkEmulateFFport = new JCheckBox();
     checkboxActivateLowPassFilter = new JCheckBox();
-    sliderLowPassFilterValue = new JSlider(0, 100);
-    sliderLowPassFilterValue.setMajorTickSpacing(10);
-    sliderLowPassFilterValue.setPaintLabels(true);
-    sliderLowPassFilterValue.setPaintTicks(true);
-    sliderLowPassFilterValue.setPaintTrack(true);
-
+    sliderLowPassFilterValue = new CustomIntSlider(0, 1000, d -> {
+      if (d == 0.0d) {
+        return 0.0d;
+      }
+      return (Math.exp((double) d / SoundChannelLowPassFilter.COEFF) - 1) / 1.71828182846d;
+    });
     keySelectorKempstonDown = new KeyCodeChooser();
     keySelectorKempstonLeft = new KeyCodeChooser();
     keySelectorKempstonUp = new KeyCodeChooser();
@@ -891,7 +894,9 @@ public class OptionsPanel extends JTabbedPane {
 
     public DataContainer(final OptionsPanel optionsPanel) {
       final RomSource rom =
-              RomSource.findForTitle(requireNonNull(optionsPanel.comboRomSource.getSelectedItem()).toString(), RomSource.TEST);
+          RomSource.findForTitle(
+              requireNonNull(optionsPanel.comboRomSource.getSelectedItem()).toString(),
+              RomSource.TEST);
 
       this.keyboardLook = (VirtualKeyboardLook) optionsPanel.comboKeyboardLook.getSelectedItem();
       this.volumeProfile = (VolumeProfile) optionsPanel.comboVolumeProfile.getSelectedItem();
@@ -965,7 +970,7 @@ public class OptionsPanel extends JTabbedPane {
       AppOptions.getInstance().setAttributePortFf(this.emulateFFport);
       AppOptions.getInstance().setKempstonMouseAllowed(this.kempstonMouseAllowed);
       AppOptions.getInstance()
-              .setDefaultBoardMode(this.zx128byDefault ? BoardMode.ZX128 : BoardMode.ZXPOLY);
+          .setDefaultBoardMode(this.zx128byDefault ? BoardMode.ZX128 : BoardMode.ZXPOLY);
 
       AppOptions.getInstance().setKempstonVkDown(this.kempstonKeyDown);
       AppOptions.getInstance().setKempstonVkLeft(this.kempstonKeyLeft);
