@@ -435,7 +435,7 @@ public class FormatZ80 extends Snapshot {
     public abstract AbstractZ80Snapshot read(JBBPBitInputStream in) throws IOException;
 
     public void fillFromArray(final byte[] array) throws IOException {
-      this.read(new JBBPBitInputStream(new ByteArrayInputStream(array)));
+      this.read(new JBBPBitInputStream(new ByteArrayInputStream(array), false));
     }
   }
 

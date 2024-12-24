@@ -74,7 +74,8 @@ final class ReaderTap implements ListModel<ReaderTap.TapBlock>, TapeSource<Reade
   public ReaderTap(final TapeContext tapeContext, final String name, final InputStream tap) throws IOException {
     this.tapeContext = tapeContext;
     this.name = name;
-    final TapFormatParser tapParser = new TapFormatParser().read(new JBBPBitInputStream(tap));
+    final TapFormatParser tapParser =
+        new TapFormatParser().read(new JBBPBitInputStream(tap, false));
     if (tapParser.getTapBlocks().length == 0) {
       this.current = null;
       LOGGER.warning("Can't find blocks in TAP file");

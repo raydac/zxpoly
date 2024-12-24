@@ -29,7 +29,6 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -71,7 +70,7 @@ public class TRDPlugin extends AbstractFilePlugin {
 
       JBBPBitInputStream in = null;
       try {
-        in = new JBBPBitInputStream(new FileInputStream(file));
+        in = new JBBPBitInputStream(new FileInputStream(file), false);
 
         for (int i = 0; i < 128; i++) {
           final TRDosCatalogItem item = CATALOG_PARSER.parse(in).mapTo(new TRDosCatalogItem());
@@ -93,7 +92,7 @@ public class TRDPlugin extends AbstractFilePlugin {
   @Override
   public ReadResult readFrom(String name, byte[] data, int index) throws IOException {
     final JBBPBitInputStream inStream =
-            new JBBPBitInputStream(new ByteArrayInputStream(data), JBBPBitOrder.LSB0);
+        new JBBPBitInputStream(new ByteArrayInputStream(data), JBBPBitOrder.LSB0, false);
     try {
       final List<TRDosCatalogItem> list = new ArrayList<>();
       for (int i = 0; i < 128; i++) {

@@ -16,21 +16,20 @@
  */
 package com.igormaznitsa.zxpoly.formats;
 
-import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
-import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotNull;
+
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import org.junit.Test;
 
 public class ZXEMLSnapshotFormatTest {
 
   private static byte[] loadResource(final String name) throws Exception {
     final InputStream ins = ZXEMLSnapshotFormatTest.class.getResourceAsStream(name);
     assertNotNull("Can't find resource " + name, ins);
-    final JBBPBitInputStream in = new JBBPBitInputStream(ins);
+    final JBBPBitInputStream in = new JBBPBitInputStream(ins, false);
     final byte[] result = in.readByteArray(-1);
     in.close();
     return result;
@@ -41,7 +40,7 @@ public class ZXEMLSnapshotFormatTest {
     final byte[] array = loadResource("fh.zxp");
 
     final ZxEmlSnapshotFormat data = new ZxEmlSnapshotFormat();
-    data.read(new JBBPBitInputStream(new ByteArrayInputStream(array.clone())));
+    data.read(new JBBPBitInputStream(new ByteArrayInputStream(array.clone()), false));
     assertArrayEquals(array, data.save());
   }
 }

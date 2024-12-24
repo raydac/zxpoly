@@ -20,7 +20,6 @@ package com.igormaznitsa.zxpspritecorrector.files;
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPByteOrder;
 import com.igormaznitsa.jbbp.io.JBBPOut;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -47,7 +46,7 @@ public class Info {
   }
 
   public Info(final InputStream in, final boolean selectable) throws IOException {
-    final JBBPBitInputStream bitin = new JBBPBitInputStream(in);
+    final JBBPBitInputStream bitin = new JBBPBitInputStream(in, false);
     this.name = new String(bitin.readByteArray(bitin.readByte()), StandardCharsets.US_ASCII);
     this.type = (char) bitin.readUnsignedShort(JBBPByteOrder.BIG_ENDIAN);
     this.startAddress = bitin.readInt(JBBPByteOrder.BIG_ENDIAN);

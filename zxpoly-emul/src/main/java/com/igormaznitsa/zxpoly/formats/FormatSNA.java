@@ -49,7 +49,8 @@ public class FormatSNA extends Snapshot {
 
   @Override
   public void loadFromArray(final File srcFile, final Motherboard board, final VideoController vc, final byte[] array) throws IOException {
-    final SNAParser parser = new SNAParser().read(new JBBPBitInputStream(new ByteArrayInputStream(array)));
+    final SNAParser parser =
+        new SNAParser().read(new JBBPBitInputStream(new ByteArrayInputStream(array), false));
     final boolean sna128 = array.length > 49179;
 
     if (sna128) {

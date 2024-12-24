@@ -1,21 +1,25 @@
 package com.igormaznitsa.zxpoly.formats;
 
+import static java.util.Arrays.copyOf;
+import static java.util.Arrays.copyOfRange;
+import static org.apache.commons.compress.utils.IOUtils.readFully;
+
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.zxpoly.components.RomData;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static java.util.Arrays.copyOf;
-import static java.util.Arrays.copyOfRange;
-import static org.apache.commons.compress.utils.IOUtils.readFully;
 
 public class Spec256Arch {
 
@@ -230,7 +234,8 @@ public class Spec256Arch {
           return new FoundSna(
                   parsedSnaName,
                   snaFileBody,
-                  new SNAParser().read(new JBBPBitInputStream(new ByteArrayInputStream(snaFileBody)))
+              new SNAParser().read(
+                  new JBBPBitInputStream(new ByteArrayInputStream(snaFileBody), false))
           );
         }
       }

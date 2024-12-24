@@ -1,8 +1,9 @@
 package com.igormaznitsa.zxpoly.components.betadisk;
 
+import static java.util.Collections.unmodifiableList;
+
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.utils.JBBPUtils;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -10,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-
-import static java.util.Collections.unmodifiableList;
 
 public final class DskContainer {
 
@@ -48,7 +47,8 @@ public final class DskContainer {
 
     final List<Track> foundTracks = new ArrayList<>();
 
-    final JBBPBitInputStream inputStream = new JBBPBitInputStream(new ByteArrayInputStream(data));
+    final JBBPBitInputStream inputStream =
+        new JBBPBitInputStream(new ByteArrayInputStream(data), false);
     inputStream.readByteArray(0x100);
 
     for (int i = 0; i < this.tracksPerSide * this.sides && inputStream.hasAvailableData(); i++) {

@@ -1,12 +1,13 @@
 package com.igormaznitsa.zxpoly.components.tapereader.tzx;
 
-import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
-import org.junit.Test;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
+import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class TzxBlockGeneralizedDataTest extends AbstractTzxTest {
   @Test
@@ -46,7 +47,8 @@ public class TzxBlockGeneralizedDataTest extends AbstractTzxTest {
             (byte) 0x80,
             (byte) 0xC1};
 
-    final JBBPBitInputStream jbbpBitInputStream = new JBBPBitInputStream(new ByteArrayInputStream(testData));
+    final JBBPBitInputStream jbbpBitInputStream =
+        new JBBPBitInputStream(new ByteArrayInputStream(testData), false);
     final TzxBlockGeneralizedData read = new TzxBlockGeneralizedData(jbbpBitInputStream);
     assertFalse(jbbpBitInputStream.hasAvailableData());
     assertEquals(19, read.getDataStream().length);
@@ -89,7 +91,8 @@ public class TzxBlockGeneralizedDataTest extends AbstractTzxTest {
             (byte) 0xC1
     };
 
-    final JBBPBitInputStream jbbpBitInputStream = new JBBPBitInputStream(new ByteArrayInputStream(testData));
+    final JBBPBitInputStream jbbpBitInputStream =
+        new JBBPBitInputStream(new ByteArrayInputStream(testData), false);
     final TzxBlockGeneralizedData read = new TzxBlockGeneralizedData(jbbpBitInputStream);
     assertFalse(jbbpBitInputStream.hasAvailableData());
     assertEquals(19, read.getDataStream().length);

@@ -26,9 +26,6 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-import org.apache.commons.io.FilenameUtils;
-
-import javax.swing.*;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,6 +33,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import javax.swing.JOptionPane;
+import org.apache.commons.io.FilenameUtils;
 
 public class TAPPlugin extends AbstractFilePlugin {
 
@@ -95,7 +94,7 @@ public class TAPPlugin extends AbstractFilePlugin {
 
       JBBPBitInputStream in = null;
       try {
-        in = new JBBPBitInputStream(new FileInputStream(file));
+        in = new JBBPBitInputStream(new FileInputStream(file), false);
 
         while (in.hasAvailableData()) {
           final int length = in.readUnsignedShort(JBBPByteOrder.LITTLE_ENDIAN);
@@ -158,7 +157,7 @@ public class TAPPlugin extends AbstractFilePlugin {
 
   @Override
   public ReadResult readFrom(final String name, final byte[] dataArray, final int index) throws IOException {
-    JBBPBitInputStream in = new JBBPBitInputStream(new ByteArrayInputStream(dataArray));
+    JBBPBitInputStream in = new JBBPBitInputStream(new ByteArrayInputStream(dataArray), false);
     try {
       int currentIndex = 0;
 

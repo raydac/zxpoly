@@ -1,16 +1,15 @@
 package com.igormaznitsa.zxpoly.components.tapereader.tzx;
 
+import static com.igormaznitsa.jbbp.utils.JBBPUtils.reverseBitsInByte;
+import static com.igormaznitsa.zxpoly.utils.Utils.minimalRequiredBitsFor;
+
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitNumber;
 import com.igormaznitsa.jbbp.io.JBBPBitOrder;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
 import com.igormaznitsa.zxpoly.utils.Utils;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-
-import static com.igormaznitsa.jbbp.utils.JBBPUtils.reverseBitsInByte;
-import static com.igormaznitsa.zxpoly.utils.Utils.minimalRequiredBitsFor;
 
 public class TzxBlockGeneralizedData extends AbstractTzxSoundDataBlock {
 
@@ -180,7 +179,9 @@ public class TzxBlockGeneralizedData extends AbstractTzxSoundDataBlock {
 
     if (this.totalNumberOfSymbolsInDataStream > 0) {
       final JBBPBitNumber charBits = JBBPBitNumber.decode(minimalRequiredBitsFor(this.numberOfDataSymbolsInAbcTable - 1));
-      final JBBPBitInputStream inputStream = new JBBPBitInputStream(new ByteArrayInputStream(this.dataStream), JBBPBitOrder.MSB0);
+      final JBBPBitInputStream inputStream =
+          new JBBPBitInputStream(new ByteArrayInputStream(this.dataStream), JBBPBitOrder.MSB0,
+              false);
 
       for (int i = 0; i < this.totalNumberOfSymbolsInDataStream; i++) {
         final int symbolIndex = reverseBitsInByte(charBits, (byte) inputStream.readBits(charBits)) & 0xFF;

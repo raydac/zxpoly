@@ -19,7 +19,6 @@ package com.igormaznitsa.zxpoly.formats;
 
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -73,7 +72,7 @@ public class ZxEmlSnapshotFormat extends ZXPParser {
   }
 
   public ZxEmlSnapshotFormat(final byte[] data) throws IOException {
-    this.read(new JBBPBitInputStream(new ByteArrayInputStream(data)));
+    this.read(new JBBPBitInputStream(new ByteArrayInputStream(data), false));
     if (this.getMAGIC() != MAGIC) {
       throw new IOException("It is not ZXEML snapshot");
     }

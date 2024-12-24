@@ -2,7 +2,6 @@ package com.igormaznitsa.zxpoly.components.tapereader.tzx;
 
 import com.igormaznitsa.jbbp.io.JBBPBitInputStream;
 import com.igormaznitsa.jbbp.io.JBBPBitOutputStream;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,7 +23,7 @@ public class TzxFile {
   private final List<AbstractTzxBlock> blockList;
 
   public TzxFile(final InputStream inputStream) throws IOException {
-    final JBBPBitInputStream jbbpBitInputStream = new JBBPBitInputStream(inputStream);
+    final JBBPBitInputStream jbbpBitInputStream = new JBBPBitInputStream(inputStream, false);
     final String signature = new String(jbbpBitInputStream.readByteArray(7), StandardCharsets.ISO_8859_1);
     if (!signature.equals("ZXTape!")) throw new IOException("TZX signature error: " + signature);
     if (jbbpBitInputStream.readByte() != 0x1A) throw new IOException("TZX error end of text file marker");

@@ -28,7 +28,6 @@ import com.igormaznitsa.zxpspritecorrector.components.ZXPolyData;
 import com.igormaznitsa.zxpspritecorrector.files.FileNameDialog;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.SessionData;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -75,7 +74,7 @@ public class SCLPlugin extends AbstractFilePlugin {
 
       JBBPBitInputStream in = null;
       try {
-        in = new JBBPBitInputStream(new FileInputStream(file));
+        in = new JBBPBitInputStream(new FileInputStream(file), false);
         final long id = in.readLong(JBBPByteOrder.BIG_ENDIAN);
         if (id == 0x53494E434C414952L) {
           // it's scl
@@ -101,7 +100,8 @@ public class SCLPlugin extends AbstractFilePlugin {
   @Override
   public ReadResult readFrom(final String name, final byte[] dataArray, final int index) throws IOException {
     final List<SCLCatalogItem> list = new ArrayList<>();
-    final JBBPBitInputStream in = new JBBPBitInputStream(new ByteArrayInputStream(dataArray));
+    final JBBPBitInputStream in =
+        new JBBPBitInputStream(new ByteArrayInputStream(dataArray), false);
     try {
       final long id = in.readLong(JBBPByteOrder.BIG_ENDIAN);
       if (id == 0x53494E434C414952L) {

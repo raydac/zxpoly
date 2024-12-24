@@ -24,8 +24,7 @@ import com.igormaznitsa.jbbp.io.JBBPOut;
 import com.igormaznitsa.jbbp.mapper.Bin;
 import com.igormaznitsa.zxpspritecorrector.files.Info;
 import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
-
-import java.awt.*;
+import java.awt.Rectangle;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,7 +96,7 @@ public class ZXPolyData {
       byte[] zxpoly3;
     }
 
-    final JBBPBitInputStream inStream = new JBBPBitInputStream(in);
+    final JBBPBitInputStream inStream = new JBBPBitInputStream(in, false);
     if (inStream.readLong(JBBPByteOrder.BIG_ENDIAN) != 0xABBAFAFABABE0123L) {
       throw new IOException("It is not a valid data block");
     }
