@@ -23,3 +23,8 @@ bin/
 *.syso
 versioninfo.go
 /adapted/ZxWord/target/lst.lst
+/zxpoly-emul-win-launcher/.build/go.mod
+/zxpoly-emul-win-launcher/.build/go.sum
+/zxpoly-emul-win-launcher/.build/goversioninfo
+/zxpoly-emul-win-launcher/.build/main.go
+/zxpoly-emul-win-launcher/.build/versioninfo.json

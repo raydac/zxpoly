@@ -7,17 +7,17 @@
 
 # Changelog
 
+__2.3.5 (SNAPSHOT)__
+
+- the embedded JDK has been updated to 24+37
+- added Low Pass Filter for sound output
+
 __2.3.4 (07-dec-2024)__
 
 - the minimum required JDK version has been raised to 21
 - the embedded JDK has been updated to 23.0.1+13
 - upgraded the JInput library to 2.0.10
 - refactoring, fixes in Z80 CPU emulation
-
-__2.3.3 (21-oct-2023)__
-
-- improved z80 snapshot load to process 0-2 banks among 128 ram banks
-- updated embedded JDK to 21.0.1+12
 
 full [change log](changelog.txt)
 
