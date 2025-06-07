@@ -32,23 +32,10 @@ public class TrainerPok extends AbstractTrainer {
     super("POK file (*.pok)", "pok");
   }
 
-  @Override
-  public void apply(
-          final Component component,
-          final File file,
-          final Motherboard motherboard
-  ) {
-    final String body;
-    try {
-      body = FileUtils.readFileToString(file, StandardCharsets.US_ASCII);
-    } catch (IOException ex) {
-      throw new RuntimeException("Can't load file", ex);
-    }
-
+  private static List<PokeRecord> getPokeRecords(final String body) {
     final List<PokeRecord> records = new ArrayList<>();
 
     PokeRecord currentRecord = null;
-
 
     for (String s : body.split("\\r?\\n")) {
       final String line = s.trim();
@@ -79,6 +66,24 @@ public class TrainerPok extends AbstractTrainer {
     if (records.isEmpty()) {
       throw new IllegalArgumentException("Can't find records int POKE file");
     }
+    return records;
+  }
+
+  @Override
+  public void apply(
+          final Component component,
+          final File file,
+          final Motherboard motherboard
+  ) {
+    final String body;
+    try {
+      body = FileUtils.readFileToString(file, StandardCharsets.US_ASCII);
+    } catch (IOException ex) {
+      throw new RuntimeException("Can't load file", ex);
+    }
+
+    final List<PokeRecord> records =
+        getPokeRecords(body);
 
     final JList<PokeRecord> listRecordsComponent = new JList<>(records.toArray(new PokeRecord[0]));
     listRecordsComponent.setVisibleRowCount(8);
@@ -136,7 +141,7 @@ public class TrainerPok extends AbstractTrainer {
     }
   }
 
-  private final class CheckBoxListCellRenderer extends JCheckBox
+  private static final class CheckBoxListCellRenderer extends JCheckBox
           implements ListCellRenderer<PokeRecord> {
 
     public CheckBoxListCellRenderer() {
@@ -167,7 +172,7 @@ public class TrainerPok extends AbstractTrainer {
 
   }
 
-  private class PokeRecord {
+  private static class PokeRecord {
     private final String title;
     private final List<PokeItem> items = new ArrayList<>();
     private boolean selected;
@@ -185,8 +190,8 @@ public class TrainerPok extends AbstractTrainer {
     }
 
     void addPoke(final String poke) {
-      final String[] splitted = poke.split("\\s");
-      if (splitted.length != 4) {
+      final String[] split = poke.split("\\s");
+      if (split.length != 4) {
         throw new IllegalArgumentException("Illegal poke string: " + poke);
       }
       final int bank;
@@ -195,25 +200,25 @@ public class TrainerPok extends AbstractTrainer {
       final int original;
 
       try {
-        bank = Integer.parseInt(splitted[0]);
+        bank = Integer.parseInt(split[0]);
       } catch (NumberFormatException ex) {
         throw new IllegalArgumentException("Can't parse bank value: " + poke);
       }
 
       try {
-        address = Integer.parseInt(splitted[1]);
+        address = Integer.parseInt(split[1]);
       } catch (NumberFormatException ex) {
         throw new IllegalArgumentException("Can't parse address: " + poke);
       }
 
       try {
-        value = Integer.parseInt(splitted[2]);
+        value = Integer.parseInt(split[2]);
       } catch (NumberFormatException ex) {
         throw new IllegalArgumentException("Can't parse value: " + poke);
       }
 
       try {
-        original = Integer.parseInt(splitted[3]);
+        original = Integer.parseInt(split[3]);
       } catch (NumberFormatException ex) {
         throw new IllegalArgumentException("Can't parse original value: " + poke);
       }
@@ -226,15 +231,20 @@ public class TrainerPok extends AbstractTrainer {
       return this.title;
     }
 
-    private class PokeItem {
+    private static class PokeItem {
       private final PokeRecord parent;
       private final int bank;
       private final int address;
       private final int value;
       private final int original;
 
-      PokeItem(PokeRecord parent, final int bank, final int address, final int value,
-               final int orig) {
+      PokeItem(
+          final PokeRecord parent,
+          final int bank,
+          final int address,
+          final int value,
+          final int orig
+      ) {
         this.parent = parent;
         this.bank = bank;
         this.address = address;
