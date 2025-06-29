@@ -15,7 +15,7 @@
 
     <properties>
         <jinput.version>2.0.10</jinput.version>
-        <openjdk.version>24+37</openjdk.version>
+        <openjdk.version>24.0.1+11</openjdk.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
     </properties>
@@ -570,7 +570,10 @@
                                     </outfile>
                                     <jre>
                                         <minVersion>21</minVersion>
-                                        <path>%VAR%</path>
+                                        <jdkPreference>preferJdk</jdkPreference>
+                                        <opts>
+                                            <opt>-Xmx2G</opt>
+                                        </opts>
                                     </jre>
                                 </configuration>
                             </execution>
@@ -699,7 +702,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.6.1</version>
+                <version>3.8.1</version>
                 <executions>
                     <execution>
                         <id>unpack-jinput</id>
