@@ -9,7 +9,7 @@
 
 __2.3.5 (SNAPSHOT)__
 
-- the embedded JDK has been updated to 24.0.1+11
+- the embedded JDK has been updated to 24.0.2+12
 - added Low Pass Filter for sound output
 
 __2.3.4 (07-dec-2024)__
