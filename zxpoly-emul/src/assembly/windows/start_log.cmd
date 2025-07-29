@@ -7,9 +7,7 @@ rem set JAVA_EXTRA_GFX_FLAGS="-Dcom.sun.management.jmxremote=true -Dsun.java2d.o
 
 rem set JAVA_EXTRA_GFX_FLAGS="-Dcom.sun.management.jmxremote=true -Dsun.java2d.opengl=true"
 
-rem Comment line below if JAVA 1.8
-set JAVA_FLAGS="--add-opens=java.base/java.lang=ALL-UNNAMED"
-
+set JAVA_FLAGS="-XX:-DontCompileHugeMethods --add-opens=java.base/java.lang=ALL-UNNAMED"
 set JAVA_RUN="%ZXPOLY_HOME%\jre\bin\java.exe"
 
 echo %%JAVA_RUN%%="%JAVA_RUN%" > "%LOG_FILE%"

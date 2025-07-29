@@ -1,5 +1,5 @@
 #!/bin/sh
-JAVA_FLAGS="-server -Dsun.rmi.transport.tcp.maxConnectionThreads=0 -XX:+DisableAttachMechanism -Xverify:none -Xms512m -Xmx1024m --add-opens=java.base/java.util=ALL-UNNAMED"
+JAVA_FLAGS="-server -Dsun.rmi.transport.tcp.maxConnectionThreads=0 -XX:-DontCompileHugeMethods -XX:+DisableAttachMechanism -Xverify:none -Xms512m -Xmx1024m --add-opens=java.base/java.util=ALL-UNNAMED"
 JAVA_RUN=$APPDIR/jre/bin/java
 JAVA_LOG_CONFIG=$APPDIR/logger.properties
 $JAVA_RUN $JAVA_FLAGS $JAVA_EXTRA_GFX_FLAGS "-Djava.util.logging.config.file=$JAVA_LOG_CONFIG" "-Djava.library.path=$APPDIR" -jar $APPDIR/zxpoly-emul-*.jar $@
