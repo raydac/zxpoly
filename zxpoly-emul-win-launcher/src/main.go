@@ -62,6 +62,7 @@ func main() {
 			"-Xms512M",
 			"-Xmx1G",
 			"-Dsun.rmi.transport.tcp.maxConnectionThreads=0",
+			"-XX:-DontCompileHugeMethods",
 			"-XX:+DisableAttachMechanism",
 			"-Xverify:none",
 			"-Dsun.java2d.d3d=true",
