@@ -57,8 +57,11 @@ func main() {
 	path, err := os.Executable()
 	if err == nil {
 		base_folder := filepath.Dir(path)
+
 		cmd := exec.Command(base_folder+JDK_PATH,
-			"-server",
+			"-XX:+UseZGC",
+			"-XX:+TieredCompilation",
+			"-XX:MaxMetaspaceSize=128m",
 			"-Xms512M",
 			"-Xmx1G",
 			"-Dsun.rmi.transport.tcp.maxConnectionThreads=0",
