@@ -60,8 +60,8 @@ final class SndBufferContainer {
   }
 
   public int calculatePosition(final int tiStatesIntCounter) {
-    return ((tiStatesIntCounter * SAMPLES_PER_INT + this.timingProfile.tstatesFrame / 2)
-            / this.timingProfile.tstatesFrame);
+    final int frame = this.timingProfile.tstatesFrame;
+    return (tiStatesIntCounter * SAMPLES_PER_INT + frame / 2) / frame;
   }
 
   public void setValue(final int deltaTiStates, final int levelLeft, final int levelRight) {
@@ -80,14 +80,18 @@ final class SndBufferContainer {
     final byte lowR = (byte) levelRight;
     final byte highR = (byte) (levelRight >> 8);
 
+    final byte[] ptr = this.soundBuffer;
+    boolean flag = ((fromInclusive >> 1) & 1) == 0;
+
     while (fromInclusive < toExclusive) {
-      if (((fromInclusive >> 1) & 1) == 0) {
-        this.soundBuffer[fromInclusive++] = lowL;
-        this.soundBuffer[fromInclusive++] = highL;
+      if (flag) {
+        ptr[fromInclusive++] = lowL;
+        ptr[fromInclusive++] = highL;
       } else {
-        this.soundBuffer[fromInclusive++] = lowR;
-        this.soundBuffer[fromInclusive++] = highR;
+        ptr[fromInclusive++] = lowR;
+        ptr[fromInclusive++] = highR;
       }
+      flag = !flag;
     }
   }
 
