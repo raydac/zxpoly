@@ -436,8 +436,10 @@ public final class Motherboard implements ZxPolyConstants {
         }
       }
 
+      final int tiStates = this.frameTiStatesCounter;
+
       for (final IoDevice device : this.ioDevicesPreStep) {
-        device.preStep(this.frameTiStatesCounter, signalReset, tiStatesIntReached, wallClockIntReached);
+        device.preStep(tiStates, signalReset, tiStatesIntReached, wallClockIntReached);
       }
 
       final BoardMode mode = this.getBoardMode();
@@ -449,7 +451,7 @@ public final class Motherboard implements ZxPolyConstants {
           final boolean zx2halt;
           final boolean zx3halt;
 
-          switch ((int) System.nanoTime() & 0x3) {
+          switch (tiStates & 0x3) {
             case 0: {
               zx0halt = modules[0].step(currentMode, signalReset, intTriggered, commonNmi, resetStatisticsAtModules);
               if (localResetForAllModules) {
