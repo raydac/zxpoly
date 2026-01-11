@@ -9,7 +9,7 @@
 __2.3.5 (SNAPSHOT)__
 
 - improved JVM flags, switched to ZGC garbage collector
-- the embedded JDK has been updated to 25.0.1+11
+- the embedded JDK has been updated to 25.0.1+13
 - added Low Pass Filter for sound output
 
 __2.3.4 (07-dec-2024)__
