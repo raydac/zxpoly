@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.prefs.BackingStoreException;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -987,11 +986,7 @@ public class OptionsPanel extends JTabbedPane {
 
       AppOptions.getInstance().setSoundChannelsACB(this.soundSchemeAcb);
 
-      try {
-        AppOptions.getInstance().flush();
-      } catch (BackingStoreException ex) {
-        // DO NOTHING
-      }
+      AppOptions.getInstance().flush();
     }
 
   }

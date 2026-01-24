@@ -35,7 +35,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -916,6 +915,74 @@ public final class AppOptions {
     }
   }
 
+  private void _setFolder(final Option option, final File file) {
+    this.locker.lock();
+    try {
+      if (file == null) {
+        preferences.remove(option.name());
+      } else {
+        final File folder;
+        if (file.isFile()) {
+          folder = file.getParentFile();
+        } else if (file.isDirectory()) {
+          folder = file;
+        } else {
+          folder = null;
+        }
+        if (folder == null) {
+          preferences.remove(option.name());
+        } else {
+          preferences.put(option.name(), folder.getAbsolutePath());
+        }
+      }
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  private File _getFolder(final Option option) {
+    this.locker.lock();
+    try {
+      final String path = preferences.get(option.name(), null);
+      if (path == null) {
+        return null;
+      }
+      final File file = new File(path);
+      if (file.isDirectory()) {
+        return file;
+      }
+      return null;
+    } catch (Exception ex) {
+      return null;
+    } finally {
+      this.locker.unlock();
+    }
+  }
+
+  public File getLastSnapshotFolder() {
+    return this._getFolder(Option.LAST_SNAPSHOT_FOLDER);
+  }
+
+  public void setLastSnapshotFolder(final File file) {
+    this._setFolder(Option.LAST_SNAPSHOT_FOLDER, file);
+  }
+
+  public File getLastDiskFolder() {
+    return this._getFolder(Option.LAST_DISK_FOLDER);
+  }
+
+  public void setLastDiskFolder(final File file) {
+    this._setFolder(Option.LAST_DISK_FOLDER, file);
+  }
+
+  public File getLastTapFolder() {
+    return this._getFolder(Option.LAST_TAP_FOLDER);
+  }
+
+  public void setLastTapFolder(final File file) {
+    this._setFolder(Option.LAST_TAP_FOLDER, file);
+  }
+
   public int getKempstonVkFire() {
     this.locker.lock();
     try {
@@ -934,10 +1001,12 @@ public final class AppOptions {
     }
   }
 
-  public void flush() throws BackingStoreException {
+  public void flush() {
     this.locker.lock();
     try {
       preferences.flush();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     } finally {
       this.locker.unlock();
     }
@@ -1012,7 +1081,10 @@ public final class AppOptions {
     PROTEK_JOYSTICK_VK_FIRE,
     ATTRIBUTE_PORT_FF,
     ULAPLUS,
-    TRY_LESS_RESOURCES
+    TRY_LESS_RESOURCES,
+    LAST_SNAPSHOT_FOLDER,
+    LAST_DISK_FOLDER,
+    LAST_TAP_FOLDER
   }
 
 }

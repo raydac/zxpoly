@@ -304,9 +304,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private volatile boolean zxKeyboardProcessingAllowed = true;
   private AnimatedGifTunePanel.AnimGifOptions lastAnimGifOptions =
       new AnimatedGifTunePanel.AnimGifOptions("./zxpoly.gif", 10, false);
-  private File lastTapFolder;
-  private File lastFloppyFolder;
-  private File lastSnapshotFolder;
   private File lastScreenshotFolder;
   private Filler filler1;
   private Separator jSeparator1;
@@ -1538,7 +1535,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private void setDisk(final int drive, File selectedFile, FileFilter filter) {
     this.stepLocker.lock();
     try {
-      this.lastFloppyFolder = selectedFile.getParentFile();
+      AppOptions.getInstance().setLastDiskFolder(selectedFile.getParentFile());
       final char diskName;
       switch (drive) {
         case BetaDiscInterface.DRIVE_A:
@@ -1623,7 +1620,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       final AtomicReference<FileFilter> filter = new AtomicReference<>();
 
       File selectedFile =
-          chooseFileForOpen("Select Disk " + diskName, this.lastFloppyFolder, filter,
+          chooseFileForOpen("Select Disk " + diskName, AppOptions.getInstance().getLastDiskFolder(),
+              filter,
               FILTER_FORMAT_ALL_DISK, FILTER_FORMAT_SCL, FILTER_FORMAT_TRD);
 
       if (selectedFile != null) {
@@ -1676,7 +1674,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
       final File selected =
-          chooseFileForOpen("Select snapshot", this.lastSnapshotFolder, theFilter,
+          chooseFileForOpen("Select snapshot", AppOptions.getInstance().getLastSnapshotFolder(),
+              theFilter,
               FILTER_FORMAT_ALL_SNAPSHOTS,
               SNAPSHOT_FORMAT_Z80,
               SNAPSHOT_FORMAT_SPEC256,
@@ -1701,7 +1700,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       this.board.forceResetAllCpu();
       this.board.resetIoDevices();
 
-      this.lastSnapshotFolder = selected.getParentFile();
+      AppOptions.getInstance().setLastSnapshotFolder(selected.getParentFile());
       try {
         if (theFilter == FILTER_FORMAT_ALL_SNAPSHOTS) {
           if (SNAPSHOT_FORMAT_PROM.accept(selected)) {
@@ -2635,13 +2634,14 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   }
 
   private void menuFileCreateEmptyDiskFileActionPerformed(final ActionEvent actionEvent) {
-    File file = chooseFileForSave("Create empty TRD disk file", this.lastFloppyFolder, null, false,
+    File file = chooseFileForSave("Create empty TRD disk file",
+        AppOptions.getInstance().getLastDiskFolder(), null, false,
         FILTER_FORMAT_TRD);
     if (file != null) {
       if (!file.getName().contains(".")) {
         file = new File(file.getParentFile(), file.getName() + ".trd");
       }
-      this.lastFloppyFolder = file.getParentFile();
+      AppOptions.getInstance().setLastDiskFolder(file.getParentFile());
       if (file.isFile()
           && JOptionPane.showConfirmDialog(this,
           "File " + file.getName() + " exists! Do you want overwrite it?", "File exists",
@@ -2702,7 +2702,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             UIManager.setLookAndFeel(lf.getClassName());
             SwingUtilities.invokeLater(() -> SwingUtilities.updateComponentTreeUI(MainForm.this));
             AppOptions.getInstance().setUiLfClass(lf.getClassName());
-            AppOptions.getInstance().flush();
           } catch (Exception ex) {
             LOGGER.warning("Can't change L&F: " + ex.getMessage());
           }
@@ -2842,9 +2841,10 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   }
 
   private void setTapFile(final File tapFile) {
-    this.lastTapFolder = tapFile.getParentFile();
     this.stepLocker.lock();
     try {
+      AppOptions.getInstance().setLastTapFolder(tapFile.getParentFile());
+
       if (this.keyboardAndTapeModule.getTap() != null) {
         this.keyboardAndTapeModule.getTap().removeActionListener(this);
       }
@@ -2868,7 +2868,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.suspendSteps();
     try {
       final File selectedTapFile =
-          chooseFileForOpen("Load Tape", this.lastTapFolder, null,
+          chooseFileForOpen("Load Tape", AppOptions.getInstance().getLastTapFolder(), null,
               FILTER_FORMAT_ALL_TAPE,
               FILTER_FORMAT_TZX,
               FILTER_FORMAT_TAP,
@@ -3192,7 +3192,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.suspendSteps();
     try {
       final AtomicReference<FileFilter> theFilter = new AtomicReference<>();
-      File selected = chooseFileForSave("Save snapshot", this.lastSnapshotFolder, theFilter, false,
+      File selected = chooseFileForSave("Save snapshot", AppOptions.getInstance()
+              .getLastSnapshotFolder(), theFilter, false,
           Stream.of(SNAPSHOT_FORMAT_SPEC256,
                   SNAPSHOT_FORMAT_ZXP,
                   SNAPSHOT_FORMAT_Z80,
@@ -3206,7 +3207,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       );
 
       if (selected != null) {
-        this.lastSnapshotFolder = selected.getParentFile();
+        AppOptions.getInstance().setLastSnapshotFolder(selected.getParentFile());
         try {
           final Snapshot selectedFilter = (Snapshot) theFilter.get();
           if (!selectedFilter.getExtension()

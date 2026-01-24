@@ -13,39 +13,26 @@ public final class MainFormParameters {
   private String romPath;
 
   private File openSnapshot;
-
   private File preferencesFile;
-
   private TimingProfile timingProfile;
 
   private VirtualKeyboardLook virtualKeyboardLook;
-
   private BorderWidth borderWidth;
-
   private Boolean showMainMenu;
-
   private Boolean undecorated;
-
   private Boolean showIndicatorPanel;
-
   private Bounds bounds;
-
   private Bounds keyboardBounds;
-
   private Boolean activateSound;
   private Boolean syncRepaint;
-
   private Boolean forceAcbChannelSound;
-
   private Boolean tryUseLessSystemResources;
-
   private Boolean turboSound;
   private Boolean covoxFb;
   private Boolean allowKempstonMouse;
   private Boolean attributePortFf;
   private Boolean ulaPlus;
   private Boolean interlaceScan;
-
   private BoardMode boardMode;
   private VolumeProfile volumeProfile;
 
