@@ -204,8 +204,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private static final String TEXT_STOP_WAV = "Stop WAV";
   private static final long serialVersionUID = 7309959798344327441L;
   private static final String ROM_BOOTSTRAP_FILE_NAME = "bootstrap.rom";
-  private final boolean tryConsumeLessSystemResources;
-
   private static final WavFileFilter FILTER_FORMAT_WAV = new WavFileFilter();
   private static final TzxFileFilter FILTER_FORMAT_TZX = new TzxFileFilter();
   private static final TapFileFilter FILTER_FORMAT_TAP = new TapFileFilter();
@@ -221,7 +219,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       return "All supported tape snapshots (*.wav,*.tzx,*.tap)";
     }
   };
-
   private static final SclFileFilter FILTER_FORMAT_SCL = new SclFileFilter();
   private static final TrdFileFilter FILTER_FORMAT_TRD = new TrdFileFilter();
   private static final FileFilter FILTER_FORMAT_ALL_DISK = new FileFilter() {
@@ -260,6 +257,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     }
   };
   public static RomData BASE_ROM;
+  private final boolean tryConsumeLessSystemResources;
   private final AtomicReference<JFrame> currentFullScreen = new AtomicReference<>();
   private final int intTicksBeforeFrameDraw;
   private final CpuLoadIndicator indicatorCpu0 =
@@ -2592,9 +2590,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   private void setWavRecordForSound(final boolean enable) {
     this.suspendSteps();
-
     try {
-      this.board.getBeeper().setSilentlyTargetWav(null);
       if (enable) {
         final JFileChooser selectFileDialog = new JFileChooser(lastWrittenWavFile);
         selectFileDialog.setDialogTitle("Record beeper as WAV");
@@ -2618,7 +2614,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           }
 
           try {
-            this.board.getBeeper().setTargetWav(selectedWavFile);
+            final Beeper.IWavWriter wavWriter =
+                this.board.getBeeper().makeTargetWavWriter(selectedWavFile);
+            this.board.getBeeper().replaceSuspendedWriter(wavWriter);
           } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Can't start WAV recording", ex);
             JOptionPane.showMessageDialog(this, "Can't start write WAV file", "Error",
@@ -3181,10 +3179,12 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private void suspendSteps() {
     this.turnZxKeyboardOff();
     this.stepLocker.lock();
+    this.board.getBeeper().suspendWavWriter();
   }
 
   private void resumeSteps() {
     this.turnZxKeyboardOn();
+    this.board.getBeeper().resumeWavWriter();
     this.stepLocker.unlock();
   }
 

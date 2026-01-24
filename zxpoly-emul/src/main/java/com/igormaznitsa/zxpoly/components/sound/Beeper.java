@@ -19,6 +19,7 @@ package com.igormaznitsa.zxpoly.components.sound;
 
 import static java.lang.Long.toHexString;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 
 import com.igormaznitsa.zxpoly.components.tapereader.WriterWav;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
@@ -48,8 +49,6 @@ public final class Beeper {
   public static final int CHANNEL_TS_C = 7;
   public static final AudioFormat AUDIO_FORMAT = SndBufferContainer.AUDIO_FORMAT;
   private static final Logger LOGGER = Logger.getLogger(Beeper.class.getName());
-  private final boolean tryConsumeLessSystemResources;
-
   private static final IWavWriter NULL_WAV = new IWavWriter() {
     @Override
     public void updateState(boolean tiStatesInt, boolean wallClockInt, int spentTiStates,
@@ -62,7 +61,6 @@ public final class Beeper {
 
     }
   };
-
   private static final IBeeper NULL_BEEPER = new IBeeper() {
     @Override
     public void updateState(boolean tiStatesInt, boolean wallClockInt, int spentTiStates,
@@ -87,7 +85,7 @@ public final class Beeper {
 
     }
   };
-
+  private final boolean tryConsumeLessSystemResources;
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
   private final SoundChannelLowPassFilter[] soundChannelLowPassFilters;
   private final int[] channels = new int[8];
@@ -95,6 +93,7 @@ public final class Beeper {
   private final MixerFunction mixerRight;
   private final TimingProfile timingProfile;
   private final AtomicReference<IWavWriter> activeWavWriter = new AtomicReference<>(NULL_WAV);
+  private final AtomicReference<IWavWriter> suspendedWavWriter = new AtomicReference<>();
 
   public Beeper(
       final TimingProfile timingProfile,
@@ -147,15 +146,30 @@ public final class Beeper {
     return this.activeWavWriter.get() != NULL_WAV;
   }
 
-  public void setSilentlyTargetWav(final File file) {
-    try {
-      this.setTargetWav(file);
-    } catch (IOException ex) {
-      LOGGER.log(Level.SEVERE, "Error during set WAV file", ex);
+  public void replaceSuspendedWriter(final IWavWriter replacement) {
+    if (this.suspendedWavWriter.get() == null) {
+      throw new IllegalStateException("There is no any suspended writer to replace");
+    }
+    final IWavWriter wavWriter = this.suspendedWavWriter.getAndSet(requireNonNull(replacement));
+    if (wavWriter != replacement) {
+      wavWriter.dispose();
     }
   }
 
-  public void setTargetWav(final File file) throws IOException {
+  public void suspendWavWriter() {
+    this.suspendedWavWriter.set(this.activeWavWriter.getAndSet(NULL_WAV));
+  }
+
+  public void resumeWavWriter() {
+    final IWavWriter suspendedWriter = this.suspendedWavWriter.getAndSet(null);
+    if (suspendedWriter == null) {
+      throw new IllegalStateException("Suspended writer is null");
+    } else {
+      this.activeWavWriter.set(suspendedWriter);
+    }
+  }
+
+  public IWavWriter makeTargetWavWriter(final File file) throws IOException {
     final IWavWriter prev = this.activeWavWriter.getAndSet(NULL_WAV);
     if (prev != null) {
       prev.dispose();
@@ -168,10 +182,7 @@ public final class Beeper {
       newWavWriter = new WavWriterImpl(this.timingProfile, file);
     }
 
-    if (!this.activeWavWriter.compareAndSet(NULL_WAV, newWavWriter)) {
-      newWavWriter.dispose();
-      LOGGER.warning("Detected concurrent change of WAV file writer!");
-    }
+    return newWavWriter;
   }
 
   public Optional<SourceSoundPort> setSourceSoundPort(final SourceSoundPort soundPort) {
@@ -251,7 +262,7 @@ public final class Beeper {
     int mix(int[] values, SoundChannelLowPassFilter[] filters, int spentTiStates);
   }
 
-  private interface IWavWriter {
+  public interface IWavWriter {
     void updateState(boolean tiStatesInt, boolean wallClockInt, int spentTiStates, int levelLeft,
                      int levelRight);
 
@@ -377,7 +388,7 @@ public final class Beeper {
           Thread.ofVirtual().name("zxp-beeper-thread-virtual-" + toHexString(System.nanoTime()))
               .unstarted(this::mainLoop) :
           Thread.ofPlatform().name("zxp-beeper-thread-" + toHexString(System.nanoTime()))
-          .unstarted(this::mainLoop);
+              .unstarted(this::mainLoop);
       this.thread.setPriority(Thread.MAX_PRIORITY);
       this.thread.setDaemon(true);
       this.thread.setUncaughtExceptionHandler(
