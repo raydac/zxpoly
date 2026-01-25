@@ -8,8 +8,9 @@
 
 __2.3.5 (SNAPSHOT)__
 
+- added save of last TAP, SNAPSHOT, FLOPPY folders between restart
 - improved JVM flags, switched to ZGC garbage collector
-- the embedded JDK has been updated to 25.0.1+13
+- the embedded JDK has been updated to 25.0.2+12
 - added Low Pass Filter for sound output
 
 __2.3.4 (07-dec-2024)__
