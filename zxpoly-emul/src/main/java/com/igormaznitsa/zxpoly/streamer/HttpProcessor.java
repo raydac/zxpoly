@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 
-public class HttpProcessor implements Version {
+public class HttpProcessor {
 
   private static final Logger LOGGER = Logger.getLogger(HttpProcessor.class.getName());
 
@@ -182,9 +182,10 @@ public class HttpProcessor implements Version {
       } else {
         if (!binary) {
           final String text = new String(data, StandardCharsets.UTF_8)
-              .replace("${version.major}", Integer.toString(VERSION_MAJOR))
-              .replace("${version.minor}", Integer.toString(VERSION_MINOR))
-              .replace("${version.build}", Integer.toString(VERSION_BUILD))
+              .replace("${application.version}", Version.APPLICATION_VERSION)
+              .replace("${version.major}", Integer.toString(Version.VERSION_MAJOR))
+              .replace("${version.minor}", Integer.toString(Version.VERSION_MINOR))
+              .replace("${version.build}", Integer.toString(Version.VERSION_BUILD))
                   .replace("${video.link}", linkToVideoStream)
                   .replace("${wsvideo.link}", linkToWsVideoStream)
                   .replace("${playlist.link}", linkToPlaylist)

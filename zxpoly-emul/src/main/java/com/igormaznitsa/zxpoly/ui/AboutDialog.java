@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
 import javax.swing.event.HyperlinkEvent;
 import org.apache.commons.io.IOUtils;
 
-public class AboutDialog extends javax.swing.JDialog implements Version {
+public class AboutDialog extends javax.swing.JDialog {
 
   private static final long serialVersionUID = 6729883219284422519L;
   private javax.swing.JButton buttonOk;
@@ -55,9 +55,10 @@ public class AboutDialog extends javax.swing.JDialog implements Version {
     try {
       String htmlText = IOUtils.toString(openAboutResource("index.html"), StandardCharsets.UTF_8);
       htmlText = htmlText
-          .replace("${version.major}", Integer.toString(VERSION_MAJOR))
-          .replace("${version.minor}", Integer.toString(VERSION_MINOR))
-          .replace("${version.build}", Integer.toString(VERSION_BUILD));
+          .replace("${application.version}", Version.APPLICATION_VERSION)
+          .replace("${version.major}", Integer.toString(Version.VERSION_MAJOR))
+          .replace("${version.minor}", Integer.toString(Version.VERSION_MINOR))
+          .replace("${version.build}", Integer.toString(Version.VERSION_BUILD));
 
       this.editorPane.setText(htmlText);
       this.editorPane.setCaretPosition(0);

@@ -565,7 +565,7 @@ public final class SpriteCorrectorMainFrame extends JFrame {
     menuHelpAbout = new JMenuItem();
 
     setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
-    setTitle("ZX-Poly Sprite Corrector");
+    setTitle("ZX-Poly Sprite Corrector (" + Version.APPLICATION_VERSION + ')');
     addWindowListener(new java.awt.event.WindowAdapter() {
       public void windowClosing(java.awt.event.WindowEvent evt) {
         applicationClosing(evt);

@@ -688,6 +688,22 @@
     </profiles>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>com/igormaznitsa/zxpoly/build.properties</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>com/igormaznitsa/zxpoly/build.properties</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>com.igormaznitsa</groupId>
@@ -773,6 +789,7 @@
                         </manifest>
                         <manifestEntries>
                             <Application-Name>ZX-Poly emulator</Application-Name>
+                            <Implementation-Version>${project.version}</Implementation-Version>
                             <mode>development</mode>
                             <url>https://github.com/raydac/zxpoly</url>
                             <license>https://www.gnu.org/licenses/gpl.html</license>
@@ -837,6 +854,7 @@
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
                                         <Main-Class>ZXPoly</Main-Class>
+                                        <Implementation-Version>${project.version}</Implementation-Version>
                                         <Url>https://github.com/raydac/zxpoly</Url>
                                     </manifestEntries>
                                 </transformer>

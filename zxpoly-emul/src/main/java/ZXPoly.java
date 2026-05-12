@@ -36,11 +36,18 @@ import javax.swing.UIManager;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "zxpoly-emulator", mixinStandardHelpOptions = true,
-    version = Version.VERSION_MAJOR + "." + Version.VERSION_MINOR + "." + Version.VERSION_BUILD,
+    versionProvider = ZXPoly.PicoCliVersion.class,
     description = "Emulator of ZXPoly platform (a multi-CPU ZX-Spectrum 128 clone)",
     showAtFileInUsageHelp = true
 )
-public class ZXPoly implements Runnable, Version {
+public class ZXPoly implements Runnable {
+
+  public static final class PicoCliVersion implements CommandLine.IVersionProvider {
+    @Override
+    public String[] getVersion() {
+      return new String[] {Version.APPLICATION_VERSION};
+    }
+  }
 
   @CommandLine.Option(
       names = {"-r", "--rom"},
