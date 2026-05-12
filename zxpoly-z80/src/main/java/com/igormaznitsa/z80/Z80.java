@@ -155,6 +155,7 @@ public final class Z80 {
    * @param cpu source CPU which state should be copied, must not be null
    */
   public Z80(final Z80 cpu) {
+    this.memptr = cpu.memptr;
     this.prefix = cpu.prefix;
     this.internalRegQ = cpu.internalRegQ;
     this.internalRegLastQ = cpu.internalRegLastQ;
@@ -244,6 +245,7 @@ public final class Z80 {
   }
 
   public Z80 fillByState(final Z80 sourceCpu) {
+    this.memptr = sourceCpu.memptr;
     this.prefix = sourceCpu.prefix;
     this.resetCycle = sourceCpu.resetCycle;
     this.iff1 = sourceCpu.iff1;
@@ -2673,7 +2675,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.setMemPtr((0b1_0000_0000 + this.regSet[REG_C] & 0xFF) + 1);
+      this.setMemPtr((0x100 + (this.regSet[REG_C] & 0xFF) + 1) & 0xFFFF);
       this.tiStates += 5;
       updateBlockOperationFlagXY();
       updateFlags_INxR_OTxR(data);
@@ -2688,7 +2690,7 @@ public final class Z80 {
     boolean loopNonCompleted = true;
     if ((this.regSet[REG_F] & FLAG_Z) == 0) {
       this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.setMemPtr((0b1_0000_0000 + this.regSet[REG_C] & 0xFF) - 1);
+      this.setMemPtr((0x100 + (this.regSet[REG_C] & 0xFF) - 1) & 0xFFFF);
       this.tiStates += 5;
       updateBlockOperationFlagXY();
       updateFlags_INxR_OTxR(data);
