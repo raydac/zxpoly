@@ -10,7 +10,7 @@ rem set "JAVA_EXTRA_GFX_FLAGS=-Dcom.sun.management.jmxremote=true -Dsun.java2d.o
 
 if not defined JAVA_EXTRA_GFX_FLAGS set "JAVA_EXTRA_GFX_FLAGS="
 
-set "JAVA_FLAGS=-XX:-DontCompileHugeMethods --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED"
+set "JAVA_FLAGS=-XX:-DontCompileHugeMethods --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED  --enable-native-access=ALL-UNNAMED"
 set "JAVA_RUN=%ZXPOLY_HOME%\jre\bin\java.exe"
 
 echo JAVA_RUN="%JAVA_RUN%" > "%LOG_FILE%"

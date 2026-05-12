@@ -71,6 +71,8 @@ func main() {
 			"-Dsun.java2d.ddforcevram=true",
 			"-Dsun.java2d.ddscale=true",
 			"-Dsun.java2d.accthreshold=0",
+			"--add-opens=java.base/java.util=ALL-UNNAMED",
+			"--enable-native-access=ALL-UNNAMED",
 			"-jar", base_folder+JAR_FILE)
 		fmt.Printf("Application starting...\n")
 

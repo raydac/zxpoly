@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -189,13 +190,32 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   }
 
   /**
+   * input4j chooses {@link InputLibrary#WIN_XINPUT} as {@link InputLibrary#PLATFORM_DEFAULT} on Windows. XInput only
+   * exposes Xbox-class controllers (four slots). Generic joysticks and many USB gamepads are listed in Windows but
+   * only appear through DirectInput, so we prefer DirectInput on Windows and fall back to XInput if DI init fails.
+   */
+  private static InputDevicePlugin createInput4jPlugin(final Frame ownerWindow) {
+    final String osName = System.getProperty("os.name", "");
+    if (osName.toLowerCase(Locale.ROOT).contains("windows")) {
+      final InputDevicePlugin directInput =
+          InputDevices.init(ownerWindow, InputLibrary.WIN_DIRECTINPUT);
+      if (directInput != null) {
+        return directInput;
+      }
+      LOGGER.warning("Windows DirectInput failed to initialize, trying XInput");
+      return InputDevices.init(ownerWindow, InputLibrary.WIN_XINPUT);
+    }
+    return InputDevices.init(ownerWindow, InputLibrary.PLATFORM_DEFAULT);
+  }
+
+  /**
    * Initializes host gamepad support (input4j). Call once from the main UI window after the motherboard exists.
    */
   public synchronized void attachHostWindow(final Frame ownerWindow) {
     if (this.inputHost != null) {
       return;
     }
-    final InputDevicePlugin plugin = InputDevices.init(ownerWindow, InputLibrary.PLATFORM_DEFAULT);
+    final InputDevicePlugin plugin = createInput4jPlugin(ownerWindow);
     if (plugin == null) {
       LOGGER.warning("Game controller backend failed to initialize (input4j)");
       return;
