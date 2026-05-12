@@ -60,20 +60,17 @@ func main() {
 
 		cmd := exec.Command(base_folder+JDK_PATH,
 			"-XX:+UseZGC",
-			"-XX:+TieredCompilation",
 			"-XX:MaxMetaspaceSize=128m",
 			"-Xms512M",
 			"-Xmx1G",
 			"-Dsun.rmi.transport.tcp.maxConnectionThreads=0",
 			"-XX:-DontCompileHugeMethods",
 			"-XX:+DisableAttachMechanism",
-			"-Xverify:none",
 			"-Dsun.java2d.d3d=true",
 			"-Dsun.java2d.ddoffscreen=true",
 			"-Dsun.java2d.ddforcevram=true",
 			"-Dsun.java2d.ddscale=true",
 			"-Dsun.java2d.accthreshold=0",
-			"-Djava.library.path="+base_folder,
 			"-jar", base_folder+JAR_FILE)
 		fmt.Printf("Application starting...\n")
 
