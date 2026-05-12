@@ -1,51 +1,50 @@
 package com.igormaznitsa.zxpoly.components.gadapter;
 
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
+import de.gurkenlabs.input4j.InputComponent;
+import de.gurkenlabs.input4j.InputDevice;
+import de.gurkenlabs.input4j.components.Axis;
+import de.gurkenlabs.input4j.components.XInput;
 import java.util.concurrent.atomic.AtomicReference;
-import net.java.games.input.Component;
-import net.java.games.input.Controller;
 
 public abstract class GameControllerAdapter implements Runnable {
+
+  private static final float STICK_THRESHOLD = 0.4f;
+  private static final float DPAD_THRESHOLD = 0.5f;
+
   protected final KeyboardKempstonAndTapeIn parent;
-  private final Controller controller;
+  private final InputDevice inputDevice;
   private final GameControllerAdapterType destination;
   private final AtomicReference<Thread> controllerThread = new AtomicReference<>();
 
-  GameControllerAdapter(final KeyboardKempstonAndTapeIn keyboardModule, final Controller controller,
+  GameControllerAdapter(final KeyboardKempstonAndTapeIn keyboardModule,
+                        final InputDevice inputDevice,
                         final GameControllerAdapterType destination) {
     this.parent = keyboardModule;
-    this.controller = controller;
+    this.inputDevice = inputDevice;
     this.destination = destination;
   }
 
-  public Controller getController() {
-    return this.controller;
+  private static float readPrimaryX(final InputDevice device) {
+    return device.getComponent(Axis.AXIS_X)
+        .map(InputComponent::getData)
+        .orElseGet(
+            () -> device.getComponent(XInput.LEFT_THUMB_X).map(InputComponent::getData).orElse(0f));
   }
 
-  public GameControllerAdapterType getType() {
+  private static float readPrimaryY(final InputDevice device) {
+    return device.getComponent(Axis.AXIS_Y)
+        .map(InputComponent::getData)
+        .orElseGet(
+            () -> device.getComponent(XInput.LEFT_THUMB_Y).map(InputComponent::getData).orElse(0f));
+  }
+
+  public final InputDevice getInputDevice() {
+    return this.inputDevice;
+  }
+
+  public final GameControllerAdapterType getType() {
     return this.destination;
-  }
-
-  public void dispose() {
-    final Thread thread = this.controllerThread.getAndSet(null);
-    if (thread != null) {
-      thread.interrupt();
-      try {
-        thread.join();
-      } catch (InterruptedException ex) {
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
-  public void start() {
-    final Thread thread =
-        Thread.ofVirtual().name("zxp-game-controller-virtual" + this.controller.getName())
-            .unstarted(this);
-    if (!this.controllerThread.compareAndSet(null, thread)) {
-      throw new Error("Detected attempt to restart already started controller!");
-    }
-    thread.start();
   }
 
   protected abstract void doLeft();
@@ -62,50 +61,103 @@ public abstract class GameControllerAdapter implements Runnable {
 
   protected abstract void doFire(boolean pressed);
 
+  public final void dispose() {
+    final Thread thread = this.controllerThread.getAndSet(null);
+    if (thread != null) {
+      thread.interrupt();
+      try {
+        thread.join();
+      } catch (final InterruptedException ex) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  public final void start() {
+    final Thread thread =
+        Thread.ofVirtual()
+            .name("zxp-gamepad-" + Integer.toHexString(System.identityHashCode(this.inputDevice)))
+            .unstarted(this);
+    if (!this.controllerThread.compareAndSet(null, thread)) {
+      throw new Error("Detected attempt to restart already started controller!");
+    }
+    thread.start();
+  }
+
+  private void applyStickXY(float x, float y) {
+    if (x < -STICK_THRESHOLD) {
+      this.doLeft();
+    } else if (x > STICK_THRESHOLD) {
+      this.doRight();
+    } else {
+      this.doCenterX();
+    }
+    if (y < -STICK_THRESHOLD) {
+      this.doUp();
+    } else if (y > STICK_THRESHOLD) {
+      this.doDown();
+    } else {
+      this.doCenterY();
+    }
+  }
+
+  private void applyDpad(final InputDevice device) {
+    final boolean up =
+        device.getComponent(XInput.DPAD_UP).map(c -> c.getData() > DPAD_THRESHOLD).orElse(false);
+    final boolean down =
+        device.getComponent(XInput.DPAD_DOWN).map(c -> c.getData() > DPAD_THRESHOLD).orElse(false);
+    final boolean left =
+        device.getComponent(XInput.DPAD_LEFT).map(c -> c.getData() > DPAD_THRESHOLD).orElse(false);
+    final boolean right =
+        device.getComponent(XInput.DPAD_RIGHT).map(c -> c.getData() > DPAD_THRESHOLD).orElse(false);
+    if (left) {
+      this.doLeft();
+    } else if (right) {
+      this.doRight();
+    } else {
+      this.doCenterX();
+    }
+    if (up) {
+      this.doUp();
+    } else if (down) {
+      this.doDown();
+    } else {
+      this.doCenterY();
+    }
+  }
+
   @Override
-  public void run() {
+  public final void run() {
     try {
       while (!Thread.currentThread().isInterrupted() && this.controllerThread.get() != null) {
-        if (!this.controller.poll()) {
+        try {
+          this.inputDevice.poll();
+        } catch (final RuntimeException ex) {
           break;
+        }
+        final float x = readPrimaryX(this.inputDevice);
+        final float y = readPrimaryY(this.inputDevice);
+        if (Math.abs(x) < STICK_THRESHOLD && Math.abs(y) < STICK_THRESHOLD) {
+          this.applyDpad(this.inputDevice);
+        } else {
+          this.applyStickXY(x, y);
         }
         float buttonAccum = 0.0f;
         boolean buttonDetected = false;
-        for (final Component c : this.controller.getComponents()) {
-          final Component.Identifier identifier = c.getIdentifier();
-          final float pollData = c.getPollData();
-
-          final boolean minusOne = Float.compare(pollData, -1.0f) == 0;
-          final boolean plusOne = Float.compare(pollData, 1.0f) == 0;
-
-          if (identifier == Component.Identifier.Axis.X) {
-            if (minusOne) {
-              doLeft();
-            } else if (plusOne) {
-              doRight();
-            } else {
-              doCenterX();
-            }
-          } else if (identifier == Component.Identifier.Axis.Y) {
-            if (minusOne) {
-              this.doUp();
-            } else if (plusOne) {
-              this.doDown();
-            } else {
-              this.doCenterY();
-            }
-          } else if (identifier instanceof Component.Identifier.Button) {
-            buttonAccum += Math.abs(pollData);
+        for (final InputComponent c : this.inputDevice.getComponents()) {
+          if (c.isButton()) {
+            buttonAccum += Math.abs(c.getData());
             buttonDetected = true;
           }
         }
         if (buttonDetected) {
           this.doFire(buttonAccum != 0.0f);
+        } else {
+          this.doFire(false);
         }
-
         try {
           Thread.sleep(10);
-        } catch (InterruptedException ex) {
+        } catch (final InterruptedException ex) {
           Thread.currentThread().interrupt();
         }
       }
@@ -116,6 +168,6 @@ public abstract class GameControllerAdapter implements Runnable {
 
   @Override
   public String toString() {
-    return this.controller.getName();
+    return this.inputDevice.getDisplayName();
   }
 }

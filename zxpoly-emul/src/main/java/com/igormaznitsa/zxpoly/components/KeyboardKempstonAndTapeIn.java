@@ -17,8 +17,6 @@
 
 package com.igormaznitsa.zxpoly.components;
 
-import static net.java.games.input.ControllerEnvironment.getDefaultEnvironment;
-
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapter;
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterInterface2;
 import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterKempston;
@@ -26,19 +24,22 @@ import com.igormaznitsa.zxpoly.components.gadapter.GameControllerAdapterType;
 import com.igormaznitsa.zxpoly.components.tapereader.TapeSource;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
+import de.gurkenlabs.input4j.InputComponent;
+import de.gurkenlabs.input4j.InputDevice;
+import de.gurkenlabs.input4j.InputDevicePlugin;
+import de.gurkenlabs.input4j.InputDevices;
+import de.gurkenlabs.input4j.InputDevices.InputLibrary;
+import java.awt.Frame;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import javax.swing.SwingUtilities;
-import net.java.games.input.Controller;
-import net.java.games.input.ControllerEvent;
-import net.java.games.input.ControllerListener;
 
 public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
@@ -135,7 +136,9 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
 
   private final Motherboard board;
   private final AtomicReference<TapeSource> tap = new AtomicReference<>();
-  private final List<Controller> detectedControllers;
+  private final CopyOnWriteArrayList<InputDevice> detectedControllers =
+      new CopyOnWriteArrayList<>();
+  private volatile InputDevicePlugin inputHost;
   private final List<GameControllerAdapter> activeGameControllerAdapters =
           new CopyOnWriteArrayList<>();
   private final int cursorJoystickVkLeft;
@@ -176,30 +179,62 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     this.cursorJoystickVkRight = AppOptions.getInstance().getProtekJoystickRight();
     this.cursorJoystickVkUp = AppOptions.getInstance().getProtekJoystickUp();
 
-    if (getDefaultEnvironment().isSupported()) {
-      this.detectedControllers =
-              Arrays.stream(getDefaultEnvironment().getControllers())
-                      .filter(x -> isControllerTypeAllowed(x.getType())).collect(Collectors.toCollection(CopyOnWriteArrayList::new));
-      getDefaultEnvironment().addControllerListener(new ControllerListener() {
-        @Override
-        public void controllerRemoved(ControllerEvent controllerEvent) {
-          if (isControllerTypeAllowed(controllerEvent.getController().getType())) {
-            LOGGER.info("Removed controller: " + controllerEvent.getController().getName());
-            detectedControllers.remove(controllerEvent.getController());
-          }
-        }
+  }
 
-        @Override
-        public void controllerAdded(ControllerEvent controllerEvent) {
-          if (isControllerTypeAllowed(controllerEvent.getController().getType())) {
-            LOGGER.info("Added controller: " + controllerEvent.getController().getName());
-            detectedControllers.add(controllerEvent.getController());
-          }
-        }
-      });
-    } else {
-      this.detectedControllers = null;
+  private static boolean isLikelyGameController(final InputDevice device) {
+    final List<InputComponent> components = device.getComponents();
+    final long axes = components.stream().filter(c -> c.isAxis() && !c.isRelative()).count();
+    final long buttons = components.stream().filter(InputComponent::isButton).count();
+    return axes >= 2 || (axes >= 1 && buttons >= 1);
+  }
+
+  /**
+   * Initializes host gamepad support (input4j). Call once from the main UI window after the motherboard exists.
+   */
+  public synchronized void attachHostWindow(final Frame ownerWindow) {
+    if (this.inputHost != null) {
+      return;
     }
+    final InputDevicePlugin plugin = InputDevices.init(ownerWindow, InputLibrary.PLATFORM_DEFAULT);
+    if (plugin == null) {
+      LOGGER.warning("Game controller backend failed to initialize (input4j)");
+      return;
+    }
+    this.inputHost = plugin;
+    plugin.getAll().stream()
+        .filter(KeyboardKempstonAndTapeIn::isLikelyGameController)
+        .forEach(device -> {
+          if (!this.detectedControllers.contains(device)) {
+            this.detectedControllers.add(device);
+          }
+        });
+    plugin.onDeviceConnected(device -> {
+      if (!isLikelyGameController(device)) {
+        return;
+      }
+      if (!this.detectedControllers.contains(device)) {
+        LOGGER.info("Added controller: " + device.getDisplayName());
+        this.detectedControllers.add(device);
+      }
+    });
+    plugin.onDeviceDisconnected(device -> {
+      LOGGER.info("Removed controller: " + device.getDisplayName());
+      this.detectedControllers.remove(device);
+    });
+  }
+
+  public synchronized void disposeGameInputHost() {
+    this.disposeAllActiveGameControllerAdapters();
+    final InputDevicePlugin host = this.inputHost;
+    if (host != null) {
+      try {
+        host.close();
+      } catch (final IOException ex) {
+        LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+      }
+      this.inputHost = null;
+    }
+    this.detectedControllers.clear();
   }
 
   public void addTapeStateChangeListener(final TapeStateChangeListener listener) {
@@ -234,15 +269,17 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     this.activeGameControllerAdapters.clear();
   }
 
-  public GameControllerAdapter makeGameControllerAdapter(final Controller controller,
+  public GameControllerAdapter makeGameControllerAdapter(final InputDevice inputDevice,
                                                          final GameControllerAdapterType type) {
     switch (type) {
       case KEMPSTON:
-        return new GameControllerAdapterKempston(this, controller);
+        return new GameControllerAdapterKempston(this, inputDevice);
       case INTERFACEII_PLAYER1:
-        return new GameControllerAdapterInterface2(0, this, controller);
+        return new GameControllerAdapterInterface2(this, inputDevice,
+            GameControllerAdapterType.INTERFACEII_PLAYER1);
       case INTERFACEII_PLAYER2:
-        return new GameControllerAdapterInterface2(1, this, controller);
+        return new GameControllerAdapterInterface2(this, inputDevice,
+            GameControllerAdapterType.INTERFACEII_PLAYER2);
       default:
         throw new Error("Unexpected destination: " + type);
     }
@@ -257,26 +294,19 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     if (!this.activeGameControllerAdapters.isEmpty()) {
       throw new Error("Detected non-disposed controller");
     }
-    adapters.forEach(x -> {
-      LOGGER.info("Registering adapter: " + x);
-      this.activeGameControllerAdapters.addAll(adapters);
-    });
+    for (final GameControllerAdapter adapter : adapters) {
+      LOGGER.info("Registering adapter: " + adapter);
+      this.activeGameControllerAdapters.add(adapter);
+    }
     this.activeGameControllerAdapters.forEach(GameControllerAdapter::start);
   }
 
-  private boolean isControllerTypeAllowed(final Controller.Type type) {
-    return type == Controller.Type.FINGERSTICK
-            || type == Controller.Type.STICK
-            || type == Controller.Type.RUDDER
-            || type == Controller.Type.GAMEPAD;
-  }
-
-  public List<Controller> getDetectedControllers() {
-    return this.detectedControllers == null ? Collections.emptyList() : this.detectedControllers;
+  public List<InputDevice> getDetectedControllers() {
+    return Collections.unmodifiableList(this.detectedControllers);
   }
 
   public boolean isControllerEngineAllowed() {
-    return this.detectedControllers != null;
+    return this.inputHost != null;
   }
 
   private int getKbdValueForLines(int scanLinePort) {

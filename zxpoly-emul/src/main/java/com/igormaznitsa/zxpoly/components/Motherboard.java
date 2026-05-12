@@ -818,6 +818,7 @@ public final class Motherboard implements ZxPolyConstants {
   }
 
   public void dispose() {
+    this.keyboard.disposeGameInputHost();
     this.beeper.dispose();
   }
 

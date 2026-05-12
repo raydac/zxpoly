@@ -1,16 +1,18 @@
 ![ZX-Poly logo](docs/zxpoly_git_logo.png)
 
 [![License GNU GPL3](https://img.shields.io/badge/license-GNU%20GPL%203-yellow.svg)](http://www.gnu.org/licenses/gpl.html)
-[![Java 21.0+](https://img.shields.io/badge/java-21.0%2b-green.svg)](http://www.oracle.com/technetwork/java/javase/downloads/index.html)   
+[![Java 22.0+](https://img.shields.io/badge/java-22.0%2b-green.svg)](http://www.oracle.com/technetwork/java/javase/downloads/index.html)   
 [![Arthur's acres sanctuary donation](assets/arthur_sanctuary_banner.png)](https://www.arthursacresanimalsanctuary.org/donate)
 
 # Changelog
 
-__2.3.5 (SNAPSHOT)__
+__2.4.0 (SNAPSHOT)__
 
+- __minimal JDK version lifted up to 22__
+- __replaced JInput with input4j for game controllers__
 - added save of last TAP, SNAPSHOT, FLOPPY folders between restart
 - improved JVM flags, switched to ZGC garbage collector
-- the embedded JDK has been updated to 26+37
+- the embedded JDK has been updated to 26+37\\\
 - added Low Pass Filter for sound output
 
 __2.3.4 (07-dec-2024)__
@@ -75,9 +77,10 @@ ROM__, the ROM will be downloaded from one of remote network resources.
 # Support of game controllers
 
 Since 2.0.5 the emulator supports game-pads and joysticks. It uses X,Y position and recognizing all buttons as Fire.
-Mapping of game controller can be turned on through **Service->Game controllers**. I recommend restart emulator after
-new controller connect because JInput works not well for such situation. For work with joystick, the emulator uses
-library `jinput` so that it can work not for all host-platforms.
+Mapping of game controller can be turned on through **Service->Game controllers**. The emulator uses the
+[input4j](https://github.com/gurkenlabs/input4j) library (Java FFM) for cross-platform gamepads and joysticks; the
+**zxpoly-emul** module is built for **Java 22+**. On Linux, access to `/dev/input/event*` may require the `input` group
+or udev rules (see input4j documentation).
 
 # Theory and structure of the ZX-Poly platform
 

@@ -1,13 +1,13 @@
 package com.igormaznitsa.zxpoly.components.gadapter;
 
 import com.igormaznitsa.zxpoly.components.KeyboardKempstonAndTapeIn;
-import net.java.games.input.Controller;
+import de.gurkenlabs.input4j.InputDevice;
 
 public class GameControllerAdapterKempston extends GameControllerAdapter {
 
-  public GameControllerAdapterKempston(KeyboardKempstonAndTapeIn keyboardModule,
-                                       Controller controller) {
-    super(keyboardModule, controller, GameControllerAdapterType.KEMPSTON);
+  public GameControllerAdapterKempston(final KeyboardKempstonAndTapeIn keyboardModule,
+                                       final InputDevice inputDevice) {
+    super(keyboardModule, inputDevice, GameControllerAdapterType.KEMPSTON);
   }
 
   @Override
@@ -26,11 +26,6 @@ public class GameControllerAdapterKempston extends GameControllerAdapter {
   }
 
   @Override
-  protected void doCenterY() {
-    this.parent.doKempstonCenterY();
-  }
-
-  @Override
   protected void doUp() {
     this.parent.doKempstonUp();
   }
@@ -38,6 +33,11 @@ public class GameControllerAdapterKempston extends GameControllerAdapter {
   @Override
   protected void doDown() {
     this.parent.doKempstonDown();
+  }
+
+  @Override
+  protected void doCenterY() {
+    this.parent.doKempstonCenterY();
   }
 
   @Override

@@ -18,13 +18,6 @@
   </files>
   <fileSets>
     <fileSet>
-      <directory>${project.build.directory}${file.separator}jinput-natives-all</directory>
-      <outputDirectory>${project.build.finalName}</outputDirectory>
-      <includes>
-        <include>*.so</include>
-      </includes>
-    </fileSet>
-    <fileSet>
       <directory>${project.basedir}${file.separator}src${file.separator}assembly${file.separator}linux</directory>
       <outputDirectory>${project.build.finalName}</outputDirectory>
       <includes>

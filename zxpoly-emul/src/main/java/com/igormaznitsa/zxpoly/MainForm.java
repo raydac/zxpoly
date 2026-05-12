@@ -526,6 +526,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.scrollPanel.getViewport().add(this.board.getVideoController());
     this.keyboardAndTapeModule = this.board.findIoDevice(KeyboardKempstonAndTapeIn.class);
+    this.keyboardAndTapeModule.attachHostWindow(this);
     this.kempstonMouse = this.board.findIoDevice(KempstonMouse.class);
 
     this.menuOptionsOnlyJoystickEvents.setSelected(
