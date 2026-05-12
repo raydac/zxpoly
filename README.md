@@ -12,7 +12,7 @@ __2.4.0 (SNAPSHOT)__
 - __replaced JInput with input4j for game controllers__
 - added save of last TAP, SNAPSHOT, FLOPPY folders between restart
 - improved JVM flags, switched to ZGC garbage collector
-- the embedded JDK has been updated to 26+37\\\
+- the embedded JDK has been updated to 26.0.1+10
 - added Low Pass Filter for sound output
 
 __2.3.4 (07-dec-2024)__
