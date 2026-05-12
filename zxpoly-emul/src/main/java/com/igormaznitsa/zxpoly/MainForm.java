@@ -2550,7 +2550,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
         try {
           Desktop.getDesktop().browse(new URI(
-              "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AHWJHJFBAWGL2"));
+              "https://www.arthursacresanimalsanctuary.org/donate"));
         } catch (Exception ex) {
           LOGGER.warning("Can't open link: " + ex.getMessage());
         }
