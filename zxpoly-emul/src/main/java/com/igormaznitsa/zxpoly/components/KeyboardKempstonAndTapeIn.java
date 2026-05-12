@@ -140,6 +140,11 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private final CopyOnWriteArrayList<InputDevice> detectedControllers =
       new CopyOnWriteArrayList<>();
   private volatile InputDevicePlugin inputHost;
+  /**
+   * Used to rebuild input4j after Linux evdev hot-plug (same path, new kernel fd).
+   */
+  private volatile Frame gameControllerHostFrame;
+  private volatile long lastLinuxInputHotplugRecycleMs;
   private final List<GameControllerAdapter> activeGameControllerAdapters =
           new CopyOnWriteArrayList<>();
   private final int cursorJoystickVkLeft;
@@ -189,16 +194,30 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     return axes >= 2 || (axes >= 1 && buttons >= 1);
   }
 
+  private static boolean isLinuxOs() {
+    return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("linux");
+  }
+
+  /**
+   * Linux evdev device ids are stable paths; the kernel recycles {@code /dev/input/eventN} after replug.
+   */
+  private static boolean isLinuxEvdevHotplugPath(final String deviceId) {
+    return deviceId != null && deviceId.startsWith("/dev/input/event");
+  }
+
   /**
    * input4j chooses {@link InputLibrary#WIN_XINPUT} as {@link InputLibrary#PLATFORM_DEFAULT} on Windows. XInput only
    * exposes Xbox-class controllers (four slots). Generic joysticks and many USB gamepads are listed in Windows but
    * only appear through DirectInput, so we prefer DirectInput on Windows and fall back to XInput if DI init fails.
+   * <p>
+   * DirectInput is initialized with a {@code null} owner: input4j then uses background + non-exclusive cooperative
+   * level, which lets {@code Acquire} succeed for typical HID devices. Passing the main {@link Frame} forces
+   * foreground + exclusive mode and often produces "could not acquire direct input device" for generic gamepads.
    */
   private static InputDevicePlugin createInput4jPlugin(final Frame ownerWindow) {
     final String osName = System.getProperty("os.name", "");
     if (osName.toLowerCase(Locale.ROOT).contains("windows")) {
-      final InputDevicePlugin directInput =
-          InputDevices.init(ownerWindow, InputLibrary.WIN_DIRECTINPUT);
+      final InputDevicePlugin directInput = InputDevices.init(null, InputLibrary.WIN_DIRECTINPUT);
       if (directInput != null) {
         return directInput;
       }
@@ -215,7 +234,11 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     if (this.inputHost != null) {
       return;
     }
-    final InputDevicePlugin plugin = createInput4jPlugin(ownerWindow);
+    this.gameControllerHostFrame = ownerWindow;
+    this.installInputPlugin(createInput4jPlugin(ownerWindow));
+  }
+
+  private synchronized void installInputPlugin(final InputDevicePlugin plugin) {
     if (plugin == null) {
       LOGGER.warning("Game controller backend failed to initialize (input4j)");
       return;
@@ -236,11 +259,69 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
         LOGGER.info("Added controller: " + device.getDisplayName());
         this.detectedControllers.add(device);
       }
+      if (KeyboardKempstonAndTapeIn.isLinuxOs()
+          && KeyboardKempstonAndTapeIn.isLinuxEvdevHotplugPath(device.getID())) {
+        SwingUtilities.invokeLater(this::recycleLinuxInputEngineAfterEvdevHotplug);
+      }
     });
     plugin.onDeviceDisconnected(device -> {
       LOGGER.info("Removed controller: " + device.getDisplayName());
       this.detectedControllers.remove(device);
+      this.disposeAdaptersForDisconnectedDevice(device);
+      if (KeyboardKempstonAndTapeIn.isLinuxOs()
+          && KeyboardKempstonAndTapeIn.isLinuxEvdevHotplugPath(device.getID())) {
+        SwingUtilities.invokeLater(this::recycleLinuxInputEngineAfterEvdevHotplug);
+      }
     });
+  }
+
+  /**
+   * input4j's Linux plugin opens evdev fds only at init; after USB replug the same {@code /dev/input/eventN} path can
+   * refer to a new device while the plugin still polls a dead fd (SEVERE read errors). Re-init closes old fds and
+   * rescans nodes. Must not run inside input4j connect/disconnect callbacks — use {@link SwingUtilities#invokeLater}.
+   */
+  private void performLinuxInputPluginRecycle() {
+    final Frame owner = this.gameControllerHostFrame;
+    if (owner == null) {
+      return;
+    }
+    this.disposeAllActiveGameControllerAdapters();
+    final InputDevicePlugin old = this.inputHost;
+    if (old != null) {
+      try {
+        old.close();
+      } catch (final IOException ex) {
+        LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+      }
+      this.inputHost = null;
+    }
+    this.detectedControllers.clear();
+    this.installInputPlugin(createInput4jPlugin(owner));
+  }
+
+  /**
+   * Reopens evdev nodes before binding so {@link GameControllerPanel#getSelected()} resolves fresh
+   * {@link InputDevice} instances (same path after USB replug).
+   */
+  public synchronized void recycleLinuxInputEngineBeforeBindingGameControllers() {
+    if (!KeyboardKempstonAndTapeIn.isLinuxOs() || this.gameControllerHostFrame == null) {
+      return;
+    }
+    LOGGER.info("Linux evdev: refreshing game input backend before binding controllers");
+    this.performLinuxInputPluginRecycle();
+  }
+
+  private synchronized void recycleLinuxInputEngineAfterEvdevHotplug() {
+    if (!KeyboardKempstonAndTapeIn.isLinuxOs() || this.gameControllerHostFrame == null) {
+      return;
+    }
+    final long now = System.currentTimeMillis();
+    if (now - this.lastLinuxInputHotplugRecycleMs < 400L) {
+      return;
+    }
+    this.lastLinuxInputHotplugRecycleMs = now;
+    LOGGER.info("Linux evdev: reinitializing game input backend after device change");
+    this.performLinuxInputPluginRecycle();
   }
 
   public synchronized void disposeGameInputHost() {
@@ -254,6 +335,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
       }
       this.inputHost = null;
     }
+    this.gameControllerHostFrame = null;
     this.detectedControllers.clear();
   }
 
@@ -287,6 +369,18 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   public void disposeAllActiveGameControllerAdapters() {
     this.activeGameControllerAdapters.forEach(GameControllerAdapter::dispose);
     this.activeGameControllerAdapters.clear();
+  }
+
+  /**
+   * Stops polling threads for adapters bound to a device that was unplugged or removed by the input backend.
+   */
+  private void disposeAdaptersForDisconnectedDevice(final InputDevice device) {
+    final String id = device.getID();
+    for (final GameControllerAdapter adapter : new ArrayList<>(this.activeGameControllerAdapters)) {
+      if (adapter.getInputDevice() == device || adapter.getInputDevice().getID().equals(id)) {
+        adapter.dispose();
+      }
+    }
   }
 
   public GameControllerAdapter makeGameControllerAdapter(final InputDevice inputDevice,

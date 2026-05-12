@@ -5,6 +5,8 @@ import de.gurkenlabs.input4j.InputComponent;
 import de.gurkenlabs.input4j.InputDevice;
 import de.gurkenlabs.input4j.components.Axis;
 import de.gurkenlabs.input4j.components.XInput;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class GameControllerAdapter implements Runnable {
@@ -84,6 +86,20 @@ public abstract class GameControllerAdapter implements Runnable {
     thread.start();
   }
 
+  /**
+   * Linux evdev device ids are paths such as {@code /dev/input/eventN}. input4j's Linux plugin does not yet refresh
+   * on hot-unplug, so polling keeps hitting a dead fd and logs SEVERE on every {@code read} until this thread stops.
+   */
+  private static boolean isLinuxEvdevDevicePath(final String deviceId) {
+    return deviceId != null && deviceId.startsWith("/dev/input/event");
+  }
+
+  private void clearEmulatedOutputs() {
+    this.doCenterX();
+    this.doCenterY();
+    this.doFire(false);
+  }
+
   private void applyStickXY(float x, float y) {
     if (x < -STICK_THRESHOLD) {
       this.doLeft();
@@ -130,9 +146,15 @@ public abstract class GameControllerAdapter implements Runnable {
   public final void run() {
     try {
       while (!Thread.currentThread().isInterrupted() && this.controllerThread.get() != null) {
+        if (isLinuxEvdevDevicePath(this.inputDevice.getID())
+            && !Files.exists(Path.of(this.inputDevice.getID()))) {
+          this.clearEmulatedOutputs();
+          break;
+        }
         try {
           this.inputDevice.poll();
         } catch (final RuntimeException ex) {
+          this.clearEmulatedOutputs();
           break;
         }
         final float x = readPrimaryX(this.inputDevice);

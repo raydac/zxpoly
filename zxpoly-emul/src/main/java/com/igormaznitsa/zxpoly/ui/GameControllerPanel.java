@@ -14,6 +14,7 @@ import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.swing.JCheckBox;
@@ -50,7 +51,8 @@ public final class GameControllerPanel extends JPanel {
         0);
 
     for (final InputDevice c : controllers) {
-      final GadapterRecord newRecord = new GadapterRecord(c, activeGameControllerAdapters);
+      final GadapterRecord newRecord = new GadapterRecord(c.getID(), c.getDisplayName(),
+          activeGameControllerAdapters);
       this.add(newRecord, constraints);
     }
   }
@@ -68,9 +70,14 @@ public final class GameControllerPanel extends JPanel {
         if (record.selected.isSelected()
             && gameControllerAdapterType != GameControllerAdapterType.NONE
             && !alreadySelected.contains(gameControllerAdapterType)) {
-          result.add(
-              this.module.makeGameControllerAdapter(record.inputDevice, gameControllerAdapterType));
-          alreadySelected.add(gameControllerAdapterType);
+          final InputDevice device = this.module.getDetectedControllers().stream()
+              .filter(d -> Objects.equals(d.getID(), record.deviceId))
+              .findFirst()
+              .orElse(null);
+          if (device != null) {
+            result.add(this.module.makeGameControllerAdapter(device, gameControllerAdapterType));
+            alreadySelected.add(gameControllerAdapterType);
+          }
         }
       }
     }
@@ -78,22 +85,23 @@ public final class GameControllerPanel extends JPanel {
   }
 
   private static final class GadapterRecord extends JPanel {
+    private final String deviceId;
     private final JCheckBox selected;
     private final JLabel name;
     private final JComboBox<GameControllerAdapterType> type;
-    private final InputDevice inputDevice;
 
-    GadapterRecord(final InputDevice inputDevice,
+    GadapterRecord(final String deviceId,
+                   final String displayName,
                    final List<GameControllerAdapter> activeGameControllerAdapters) {
       super(new GridBagLayout());
-      this.inputDevice = inputDevice;
+      this.deviceId = deviceId;
       this.selected = new JCheckBox();
-      this.name = new JLabel(inputDevice.getDisplayName());
+      this.name = new JLabel(displayName);
       this.type = new JComboBox<>(GameControllerAdapterType.values());
 
       final Optional<GameControllerAdapter> activeForController =
           activeGameControllerAdapters.stream()
-              .filter(x -> x.getInputDevice() == inputDevice)
+              .filter(x -> Objects.equals(x.getInputDevice().getID(), deviceId))
               .findFirst();
 
       if (activeForController.isPresent()) {

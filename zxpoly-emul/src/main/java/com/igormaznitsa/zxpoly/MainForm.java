@@ -1492,6 +1492,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             JOptionPane.OK_CANCEL_OPTION,
             JOptionPane.PLAIN_MESSAGE
         ) == JOptionPane.OK_OPTION) {
+          this.keyboardAndTapeModule.recycleLinuxInputEngineBeforeBindingGameControllers();
           this.keyboardAndTapeModule.setActiveGameControllerAdapters(
               gameControllerPanel.getSelected());
         }
