@@ -142,7 +142,7 @@ public final class Beeper {
     this.channels[channel] = level256 & 0xFF;
   }
 
-  public boolean hasActiveWaFile() {
+  public boolean hasActiveWavFile() {
     return this.activeWavWriter.get() != NULL_WAV;
   }
 
@@ -157,7 +157,14 @@ public final class Beeper {
   }
 
   public void suspendWavWriter() {
-    this.suspendedWavWriter.set(this.activeWavWriter.getAndSet(NULL_WAV));
+    final IWavWriter takenFromActive = this.activeWavWriter.getAndSet(NULL_WAV);
+    if (takenFromActive == NULL_WAV && this.suspendedWavWriter.get() != null) {
+      return;
+    }
+    final IWavWriter replacedSuspended = this.suspendedWavWriter.getAndSet(takenFromActive);
+    if (replacedSuspended != null && replacedSuspended != NULL_WAV) {
+      replacedSuspended.dispose();
+    }
   }
 
   public void resumeWavWriter() {
@@ -193,12 +200,11 @@ public final class Beeper {
       try {
         final IBeeper newInternalBeeper =
             new InternalBeeper(this.timingProfile, soundPort, this.tryConsumeLessSystemResources);
-        if (this.activeInternalBeeper.compareAndSet(NULL_BEEPER, newInternalBeeper)) {
-          newInternalBeeper.start();
-        }
+        final IBeeper oldBeeper = this.activeInternalBeeper.getAndSet(newInternalBeeper);
+        oldBeeper.dispose();
+        newInternalBeeper.start();
       } catch (IllegalArgumentException ex) {
         LOGGER.severe("Can't create beeper: " + ex.getMessage());
-        this.activeInternalBeeper.getAndSet(NULL_BEEPER).dispose();
       }
     }
     return prevBeeper.getSoundPort();
@@ -346,7 +352,7 @@ public final class Beeper {
           this.targetFile.data(leftLow, leftHigh, rightLow, rightHigh);
         }
       } catch (final IOException ex) {
-        LOGGER.log(Level.SEVERE, "Can;t write WAV data into file", ex);
+        LOGGER.log(Level.SEVERE, "Can't write WAV data into file", ex);
       } finally {
         this.lastRightChannel = levelRight;
         this.lastLeftChannel = levelLeft;

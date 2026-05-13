@@ -1038,7 +1038,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         }
         break;
         case WRITE_WAV: {
-          abstractButton.setSelected(this.board.getBeeper().hasActiveWaFile());
+          abstractButton.setSelected(this.board.getBeeper().hasActiveWavFile());
           abstractButton.addActionListener(e -> {
             final JToggleButton source = (JToggleButton) e.getSource();
             this.setWavRecordForSound(source.isSelected());
@@ -2569,7 +2569,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   }
 
   private void refreshServiceMenuState() {
-    if (this.board.getBeeper().hasActiveWaFile()) {
+    if (this.board.getBeeper().hasActiveWavFile()) {
       this.menuActionRecordWav.setIcon(ICO_WAV_STOP);
       this.menuActionRecordWav.setText(TEXT_STOP_WAV);
       this.setFastButtonState(FastButton.WRITE_WAV, true);
@@ -2632,7 +2632,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   }
 
   private void menuActionRecordWavActionPerformed(final ActionEvent actionEvent) {
-    this.setWavRecordForSound(!this.board.getBeeper().hasActiveWaFile());
+    this.setWavRecordForSound(!this.board.getBeeper().hasActiveWavFile());
   }
 
   private void menuFileCreateEmptyDiskFileActionPerformed(final ActionEvent actionEvent) {
