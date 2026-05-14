@@ -3,13 +3,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>com.igormaznitsa</groupId>
-    <artifactId>zxpoly</artifactId>
-      <version>2.4.0</version>
-  </parent>
+    <parent>
+        <groupId>com.igormaznitsa</groupId>
+        <artifactId>zxpoly</artifactId>
+        <version>2.4.1-SNAPSHOT</version>
+    </parent>
 
-  <artifactId>zxpoly-emul-win-launcher</artifactId>
+    <artifactId>zxpoly-emul-win-launcher</artifactId>
     <packaging>pom</packaging>
 
     <properties>
