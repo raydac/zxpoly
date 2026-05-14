@@ -1480,7 +1480,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             JOptionPane.ERROR_MESSAGE);
       } else if (this.keyboardAndTapeModule.getDetectedControllers().isEmpty()) {
         showMessageDialog(this,
-            "Can't find any game controller. Try restart the emulator if controller already connected.",
+            "No game controller detected.\nRestart the emulator if the controller is already connected.",
             "Can't find game controllers", JOptionPane.WARNING_MESSAGE);
       } else {
         final GameControllerPanel gameControllerPanel =
