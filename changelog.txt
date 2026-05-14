@@ -1,4 +1,4 @@
-__2.4.0 (SNAPSHOT)__
+__2.4.0 (14-may-2026)__
 
 - __minimal JDK version lifted up to 22__
 - __replaced JInput with input4j for game controllers__

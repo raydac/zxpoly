@@ -6,7 +6,7 @@
 
 # Changelog
 
-__2.4.0 (SNAPSHOT)__
+__2.4.0 (14-may-2026)__
 
 - __minimal JDK version lifted up to 22__
 - __replaced JInput with input4j for game controllers__
@@ -49,19 +49,19 @@ under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 
 # Pre-built versions
 
-![The Main Window of the Emulator](docs/screenshots/zxpoly234_summersanta2022.png)
+![The Main Window of the Emulator](docs/screenshots/zxpoly240_vida.png)
 
 | OS                                           | Download link                                                                                                                          | 
 |----------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.4/zxpoly-emul-2.3.4-windows-amd64-jdk.zip)__ |
-| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.4/zxpoly-emul-2.3.4-macos-amd64-jdk.zip)__       |
-| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.4/zxpoly-emul-2.3.4-macos-aarch64-jdk.zip)__   |
-| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.4/zxpoly-emul-2.3.4-linux-amd64-jdk.tar.gz)__  |
-| ![Linux](assets/icons/appimage64x64.png)     | __[Linux AppImage x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.3.4/zxpoly-emul-2.3.4-x86_64.AppImage)__    |
-| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.3.4/zxpoly-emul-2.3.4.jar)__                          | 
+| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.0/zxpoly-emul-2.4.0-windows-amd64-jdk.zip)__ |
+| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.0/zxpoly-emul-2.4.0-macos-amd64-jdk.zip)__       |
+| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.0/zxpoly-emul-2.4.0-macos-aarch64-jdk.zip)__   |
+| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.0/zxpoly-emul-2.4.0-linux-amd64-jdk.tar.gz)__  |
+| ![Linux](assets/icons/appimage64x64.png)     | __[Linux AppImage x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.0/zxpoly-emul-2.4.0-x86_64.AppImage)__    |
+| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.4.0/zxpoly-emul-2.4.0.jar)__                          | 
 
 Because the emulator is written in Java, its JAR file can be started just through command
-line `java -jar zxpoly-emul-2.3.4.jar`   
+line `java -jar zxpoly-emul-2.4.0.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in __File->Options->Active
 ROM__, the ROM will be downloaded from one of remote network resources.   
 ![Test-ROM](docs/screenshots/testromscr1.png)
@@ -127,7 +127,7 @@ To adapt old games, I have developed special utility called ZX-Poly Sprite corre
 is a very easy editor which shows images in data blocks and allows to redraw them. It supports import from Z80 and SNA
 snapshots and as the result it generates ZXP snapshots.   
 ![ZX-Poly Sprite Corrector screenshot](docs/zxpoly_sprite_editor.png)   
-Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.3.4).
+Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.4.0).
 
 ## "Official Father Christmas" (1989)
 Original look of the game   
