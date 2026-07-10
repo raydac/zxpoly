@@ -10,7 +10,7 @@ import (
 	"unsafe"
 )
 
-//go:generate goversioninfo -gofile=versioninfo.go -64
+//go:generate goversioninfo -gofile=versioninfo.go
 
 const (
 	ERROR_ALREADY_EXISTS = 183

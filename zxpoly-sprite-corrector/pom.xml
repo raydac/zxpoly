@@ -128,7 +128,7 @@
               <Implementation-Version>${project.version}</Implementation-Version>
               <mode>development</mode>
               <url>https://github.com/raydac/zxpoly</url>
-              <license>http://www.gnu.org/licenses/gpl.html</license>
+              <license>https://www.gnu.org/licenses/gpl.html</license>
               <X-Project-Version>${project.version}</X-Project-Version>
             </manifestEntries>  
           </archive>
