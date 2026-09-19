@@ -3,8 +3,8 @@ package com.igormaznitsa.zxpoly.components.video.timings;
 public enum TimingProfile {
   SPECTRUM48(
           3_500_000,
-          16,
-          36,
+      14_336,
+      32,
           16,
           8,
           56,
@@ -18,7 +18,7 @@ public enum TimingProfile {
   ),
   SPECTRUM128(
           3_546_900,
-          16,
+      14_361,
           36,
           16,
           8,
@@ -33,7 +33,7 @@ public enum TimingProfile {
   ),
   PENTAGON128(
           3_500_000,
-          0,
+      17_988,
           36,
           16,
           16,
@@ -48,7 +48,7 @@ public enum TimingProfile {
   );
 
   private static final int ZX_SCREEN_LINES = 192;
-  public final int tstatesIntStart;
+  public final int tstatesUlaPhase;
   public final int tstatesInt;
   public final int tstatesNmi;
   public final int clockFreq;
@@ -72,7 +72,7 @@ public enum TimingProfile {
 
   TimingProfile(
           final int clockFreq,
-          final int tstatesIntStart,
+          final int tstatesIntToPaper,
           final int tstatesInt,
           final int tstatesNmi,
           final int linesVsync,
@@ -85,7 +85,6 @@ public enum TimingProfile {
           final int tstatesPerBorderRight,
           final int[] contention
   ) {
-    this.tstatesIntStart = tstatesIntStart;
     this.tstatesNmi = tstatesNmi;
     this.tstatesInt = tstatesInt;
     this.clockFreq = clockFreq;
@@ -109,7 +108,10 @@ public enum TimingProfile {
     this.tstatesFirstPaperTact = this.tstatesPerHBlank + this.tstatesPerHSync + this.tstatesPerBorderLeft;
     this.tstatesFirstPaperLine = this.linesPerVSync + this.linesBorderTop;
 
-    this.tstatesStartScreen = this.tstatesPerLine * (linesVsync + linesBorderTop) + this.tstatesFirstPaperTact;
+    final int ulaFirstPaper =
+        this.tstatesPerLine * this.tstatesFirstPaperLine + this.tstatesFirstPaperTact;
+    this.tstatesStartScreen = tstatesIntToPaper;
+    this.tstatesUlaPhase = Math.floorMod(ulaFirstPaper - tstatesIntToPaper, this.tstatesFrame);
   }
 
   private static int calcAddressAttribute(int sx, int sy) {
@@ -124,40 +126,65 @@ public enum TimingProfile {
     return (vp & 0x181F) | ((vp & 0x0700) >> 3) | ((vp & 0x00E0) << 3);
   }
 
+  public int toRasterTstate(final int cpuTstate) {
+    return Math.floorMod(cpuTstate + this.tstatesUlaPhase, this.tstatesFrame);
+  }
+
   public UlaTact[] makeUlaFrame() {
     final UlaTact[] result = new UlaTact[this.tstatesFrame];
 
-    for (int t = 0; t < this.tstatesFrame; t++) {
-      final int frameLine = t / this.tstatesPerLine;
-      final int framePixel = t % this.tstatesPerLine;
-
-      result[t] = makeTact(t, frameLine, framePixel);
+    for (int cpuT = 0; cpuT < this.tstatesFrame; cpuT++) {
+      final int rasterT = this.toRasterTstate(cpuT);
+      result[cpuT] = this.makeTact(
+          cpuT,
+          rasterT / this.tstatesPerLine,
+          rasterT % this.tstatesPerLine);
     }
 
     return result;
   }
 
-  private int makeContention(final int t) {
-    int shifted = (t + 1) + this.tstatesIntStart;
-    // check overflow
-    if (shifted < 0) {
-      shifted += this.tstatesFrame;
-    }
-    shifted %= this.tstatesFrame;
+  private int makeContention(final int cpuT) {
+    final int shifted = Math.floorMod(cpuT + 1 + this.tstatesUlaPhase, this.tstatesFrame);
+    final int line = shifted / this.tstatesPerLine;
+    final int pix = shifted % this.tstatesPerLine;
 
-    int line = shifted / this.tstatesPerLine;
-    int pix = shifted % this.tstatesPerLine;
     if (line < this.tstatesFirstPaperLine || line >= (this.tstatesFirstPaperLine + ZX_SCREEN_LINES)) {
       return 0;
     }
-    int scrPix = pix - this.tstatesFirstPaperTact;
+
+    final int scrPix = pix - this.tstatesFirstPaperTact;
     if (scrPix < 0 || scrPix >= this.tstatesPerVideo) {
       return 0;
     }
+
     return this.contention[scrPix % 8];
   }
 
-  private UlaTact makeTact(int item, int line, int pix) {
+  public BorderBlit alignBorderToPaper(
+      final int paperX,
+      final int paperY,
+      final int paperWidth,
+      final int paperHeight
+  ) {
+    final double tactWidth = (double) paperWidth / this.tstatesPerVideo;
+    final double lineHeight = (double) paperHeight / ZX_SCREEN_LINES;
+
+    return new BorderBlit(
+        paperX - (int) Math.round(this.tstatesFirstPaperTact * tactWidth),
+        paperY - (int) Math.round(this.tstatesFirstPaperLine * lineHeight),
+        (int) Math.round(this.tstatesPerLine * tactWidth),
+        (int) Math.round(this.scanLines * lineHeight),
+        paperX - (int) Math.round(this.tstatesPerBorderLeft * tactWidth),
+        paperY - (int) Math.round(this.linesBorderTop * lineHeight),
+        (int) Math.round(
+            (this.tstatesPerBorderLeft + this.tstatesPerVideo + this.tstatesPerBorderRight) *
+                tactWidth),
+        (int) Math.round(
+            (this.linesBorderTop + ZX_SCREEN_LINES + this.linesBorderBottom) * lineHeight));
+  }
+
+  private UlaTact makeTact(final int item, final int line, final int pix) {
     int pitchWidth = this.doubleTstatesScreenWidth;
 
     int scrPix = pix - this.tstatesFirstPaperTact;
@@ -242,7 +269,7 @@ public enum TimingProfile {
             resultLineOffset,
             resultUlaAddressPixel,
             resultUlaAddressAttribute,
-            makeContention(item));
+        this.makeContention(item));
   }
 
   public static class UlaTact {
@@ -275,5 +302,17 @@ public enum TimingProfile {
       this.addressAttribute = addressAttribute;
       this.contention = contention;
     }
+  }
+
+  public record BorderBlit(
+      int imageX,
+      int imageY,
+      int imageWidth,
+      int imageHeight,
+      int visibleX,
+      int visibleY,
+      int visibleWidth,
+      int visibleHeight
+  ) {
   }
 }

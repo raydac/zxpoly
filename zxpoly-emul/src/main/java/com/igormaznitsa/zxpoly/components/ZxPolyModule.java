@@ -168,8 +168,6 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   @Override
   public int readIo(final ZxPolyModule module, final int port) {
-    this.cpu.addTstates(this.board.contendPort(this.port7FFD.get(), port));
-
     final int result;
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       final int mappedModuleIndex = this.board.getMappedCpuIndex();
@@ -217,8 +215,6 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
   @Override
   public void writeIo(final ZxPolyModule module, final int port, final int value) {
-    this.cpu.addTstates(this.board.contendPort(this.port7FFD.get(), port));
-
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {
       if (this.board.isNotLockedPort3D00()
               && module.moduleIndex <= this.moduleIndex
@@ -863,7 +859,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   @Override
   public byte readPort(final Z80 cpu, final int ctx, final int port) {
     final int value7ffd = this.port7FFD.get();
-    cpu.addTstates(this.board.getContendedDelay(port, value7ffd));
+    cpu.addTstates(this.board.contendPort(value7ffd, port));
 
     byte result = 0;
     boolean readFromBus = true;
@@ -945,7 +941,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   @Override
   public void writePort(final Z80 cpu, final int ctx, final int port, final byte data) {
     final int value7ffd = this.port7FFD.get();
-    cpu.addTstates(this.board.getContendedDelay(port, value7ffd));
+    cpu.addTstates(this.board.contendPort(value7ffd, port));
 
     final int val = data & 0xFF;
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {

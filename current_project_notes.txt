@@ -2,9 +2,13 @@
 
 - Fixed packaged start scripts and assembly descriptors for `zxpoly-emul` and `zxpoly-sprite-corrector`.
 - Hardened Java Sound playback: do not close mixers during device scan, write full PCM frames, feed silence on underrun, flush/close instead of drain.
+- Aligned 48K/128K ULA raster with INT: first paper at 14336/14361, border paint uses raster phase, IN/OUT contention applied on the executing CPU. Border bitmap is scaled to the paper rectangle (2px/line). FULL layout uses left/top insets so Pentagon's uneven borders do not show black strips.
 
 ## 2. Architecture & Technical Discoveries
 
+- 48K/128K INT is aligned with the paper column, not HBlank. `tstatesUlaPhase` rotates CPU T=0 onto that ULA t-state; Pentagon phase stays 0. Border pixels are written at `toRasterTstate(cpuT)`.
+- Full-border preferred height is `displayRows*2`. Stretching the raster to the window (`sy≈1.63`) put top-border bars under the 2x paper blit. `alignBorderToPaper` pins the ULA paper rectangle to the screen blit. FULL layout places paper at left/top insets so Pentagon's 36/28 and 64/48 borders do not leave black strips.
+- ULA IN/OUT contention belongs on `readPort`/`writePort` of the executing CPU. `ZxPolyModule.readIo`/`writeIo` must not add t-states (that delayed slave CPUs and double-contended the master).
 - Emulator bundles a JRE per platform (`jre/` next to the jar). Sprite corrector zip uses the system JRE (`JAVA_HOME` / `java` on PATH).
 - Linux Pulse/ALSA Java Sound: `Mixer.close()` closes every line; `SourceDataLine.write` may return 0/partial; underrun (XRUN) can emit persistent noise until the line is reopened. Windows DirectSound recovers more cleanly.
 - Emulator Linux/mac/AppImage launchers share the ZGC flag set from 2.4.0. Windows `zxpoly.exe` (Go launcher) is the primary Windows entry; `start.cmd` / `start_log.cmd` are fallbacks.
@@ -25,6 +29,8 @@
 
 ## 5. Known Issues & Limitations
 
+- Default timing profile is still PENTAGON128. 48K-timed demos need the SPECTRUM48 profile (Preferences → Timing).
+- Border color still changes on the OUT I/O cycle, not on the ULA's 4 T-state latch grid.
 - macOS `CFBundleVersion` is filtered from `${project.version}` (includes `-SNAPSHOT` on snapshot builds).
 - Single-instance lock uses `kill -0` on the saved PID (works on Linux and macOS; a reused PID can still false-positive).
 - Linux audio still depends on the selected mixer (Pulse/PipeWire/ALSA). If a device itself is broken, toggling speaker still recreates the line.

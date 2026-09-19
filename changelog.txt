@@ -5,6 +5,7 @@ __2.4.1 (SNAPSHOT)__
 - updated dependencies
 - fixed packaged start scripts (Linux single-instance lock, Windows JVM flags and working directory, macOS CLI arguments, AppImage desktop entry)
 - fixed Linux speaker noise that stayed until the sound device was restarted
+- fixed video timing so INT-synced border effects match real machines and stay aligned with the paper
 
 __2.4.0 (14-may-2026)__
 

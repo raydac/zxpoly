@@ -41,6 +41,7 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.MouseAdapter;
@@ -157,6 +158,8 @@ public final class VideoController extends JComponent
   private VirtualKeyboardRender vkbdRender;
   private int stepStartTiStates = 0;
   private int preStepBorderColor;
+  private int ioBorderColor;
+  private int borderChangeCpuTstate = -1;
   private Rectangle lastVirtualKeyboardWindowPosition = null;
 
   private final UlaPlusContainer ulaPlus;
@@ -186,8 +189,8 @@ public final class VideoController extends JComponent
         this.baseComponentSize = new Dimension(
             SCREEN_WIDTH + (this.timingProfile.tstatesPerBorderLeft << 2)
                 + (this.timingProfile.tstatesPerBorderRight << 2),
-            SCREEN_HEIGHT + (this.timingProfile.linesBorderTop)
-                + (this.timingProfile.linesBorderBottom));
+            SCREEN_HEIGHT + (this.timingProfile.linesBorderTop << 1)
+                + (this.timingProfile.linesBorderBottom << 1));
       }
       break;
       case SHORT: {
@@ -1408,25 +1411,21 @@ public final class VideoController extends JComponent
     return result;
   }
 
-  private void drawBorder(final Graphics2D g2, final int visibleWidth, final int visibleHeight) {
-    final int invisibleWidth =
-        this.timingProfile.tstatesPerHBlank + this.timingProfile.tstatesPerHSync;
-    final int invisibleHeight = this.timingProfile.linesPerVSync;
-    final int visibleBorderAreaWidth = this.borderImage.getWidth() - invisibleWidth;
-    final int visibleBorderAreaHeight = this.borderImage.getHeight() - invisibleHeight;
+  private PaperLocation locatePaper(final int visibleWidth, final int visibleHeight) {
+    if (this.borderWidth != BorderWidth.FULL) {
+      return new PaperLocation(
+          (visibleWidth - this.size.width) / 2,
+          (visibleHeight - this.size.height) / 2);
+    }
 
-    final double sx = (double) visibleWidth / visibleBorderAreaWidth;
-    final double sy = (double) visibleHeight / visibleBorderAreaHeight;
-
-    final int offsetX = (int) (-invisibleWidth * sx);
-    final int offsetY = (int) (-invisibleHeight * sy);
-
-    g2.drawImage(this.borderImage,
-        offsetX,
-        offsetY,
-        (int) (sx * this.borderImage.getWidth()),
-        (int) (sy * this.borderImage.getHeight()),
-        null);
+    final TimingProfile.BorderBlit crt = this.timingProfile.alignBorderToPaper(
+        0,
+        0,
+        this.size.width,
+        this.size.height);
+    return new PaperLocation(
+        (visibleWidth - crt.visibleWidth()) / 2 - crt.visibleX(),
+        (visibleHeight - crt.visibleHeight()) / 2 - crt.visibleY());
   }
 
   @Override
@@ -1438,13 +1437,12 @@ public final class VideoController extends JComponent
     final int visibleWidth = bounds.width;
     final int visibleHeight = bounds.height;
 
-    final int screenOffsetX = (visibleWidth - this.size.width) / 2;
-    final int screenOffsetY = (visibleHeight - this.size.height) / 2;
+    final PaperLocation paper = this.locatePaper(visibleWidth, visibleHeight);
 
-    if (screenOffsetX > 0 || screenOffsetY > 0) {
-      this.drawBorder(g2, visibleWidth, visibleHeight);
+    if (paper.x() > 0 || paper.y() > 0) {
+      this.drawBorder(g2, paper.x(), paper.y());
     }
-    this.drawBuffer(g2, screenOffsetX, screenOffsetY, this.zoom, this.tvFilterChain);
+    this.drawBuffer(g2, paper.x(), paper.y(), this.zoom, this.tvFilterChain);
 
     if (this.mouseTrapActive && this.enableMouseTrapIndicator) {
       g2.drawImage(MOUSE_TRAPPED, 2, 2, null);
@@ -1482,6 +1480,31 @@ public final class VideoController extends JComponent
         this.vkbdWindow.repaint();
       }
     }
+  }
+
+  private void drawBorder(final Graphics2D g2, final int screenOffsetX, final int screenOffsetY) {
+    final TimingProfile.BorderBlit blit = this.timingProfile.alignBorderToPaper(
+        screenOffsetX,
+        screenOffsetY,
+        this.size.width,
+        this.size.height);
+
+    g2.setColor(Color.BLACK);
+    g2.fillRect(0, 0, this.getWidth(), this.getHeight());
+
+    final Shape previousClip = g2.getClip();
+    g2.clipRect(blit.visibleX(), blit.visibleY(), blit.visibleWidth(), blit.visibleHeight());
+    g2.drawImage(
+        this.borderImage,
+        blit.imageX(),
+        blit.imageY(),
+        blit.imageWidth(),
+        blit.imageHeight(),
+        null);
+    g2.setClip(previousClip);
+  }
+
+  private record PaperLocation(int x, int y) {
   }
 
   public int[] findCurrentPalette() {
@@ -1623,11 +1646,11 @@ public final class VideoController extends JComponent
       final boolean zxPolyMode = module.getMotherboard().getBoardMode() == BoardMode.ZXPOLY;
       if (zxPolyMode) {
         if ((port & 0xFF) == 0xFE) {
-          this.portFEw = value & 0xFF;
+          this.latchBorderIo(module, value);
         }
       } else {
         if ((port & 1) == 0) {
-          this.portFEw = value & 0xFF;
+          this.latchBorderIo(module, value);
         }
       }
 
@@ -1724,9 +1747,11 @@ public final class VideoController extends JComponent
       final int frameTiStates,
       final boolean signalReset,
       final boolean tiStatesIntReached,
-      boolean wallClockInt
+      final boolean wallClockInt
   ) {
-    this.stepStartTiStates = tiStatesIntReached ? -1 : frameTiStates;
+    this.stepStartTiStates =
+        frameTiStates < this.timingProfile.tstatesFrame ? frameTiStates : -1;
+    this.borderChangeCpuTstate = -1;
     final UlaPlusContainer ulaPlusContainer = this.ulaPlus;
 
     if (signalReset) {
@@ -1736,16 +1761,23 @@ public final class VideoController extends JComponent
       }
     }
     this.vkbdRender.preState(signalReset, tiStatesIntReached, wallClockInt);
+    this.preStepBorderColor = this.resolveBorderRgb();
+  }
 
-    if (ulaPlusContainer == null || !ulaPlusContainer.isActive()) {
-      this.preStepBorderColor =
-          this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
-    } else {
-      this.preStepBorderColor =
-          this.tvFilterChain.applyBorderColor(
-                  this.ulaPlus.findColorForIndex((this.portFEw & 7) | 8))
-              .getRGB();
+  private void latchBorderIo(final ZxPolyModule module, final int value) {
+    this.portFEw = value & 0xFF;
+    this.borderChangeCpuTstate =
+        this.board.getFrameTiStates() + module.getCpu().getStepTstates();
+    this.ioBorderColor = this.resolveBorderRgb();
+  }
+
+  private int resolveBorderRgb() {
+    if (this.ulaPlus == null || !this.ulaPlus.isActive()) {
+      return this.tvFilterChain.applyBorderColor(PALETTE_ZXPOLY_COLORS[this.portFEw & 7]).getRGB();
     }
+    return this.tvFilterChain.applyBorderColor(
+            this.ulaPlus.findColorForIndex((this.portFEw & 7) | 8))
+        .getRGB();
   }
 
   @Override
@@ -1754,15 +1786,23 @@ public final class VideoController extends JComponent
   }
 
   @Override
-  public void postStep(int spentTiStates) {
-    final int borderColor = this.preStepBorderColor;
+  public void postStep(final int spentTiStates) {
+    int cpuT = this.stepStartTiStates;
+    if (cpuT < 0) {
+      return;
+    }
 
-    int offset = this.stepStartTiStates;
-    if (offset >= 0) {
-      while (spentTiStates > 0 && offset < this.timingProfile.tstatesFrame) {
-        this.borderImageRgbData[offset++] = borderColor;
-        spentTiStates--;
-      }
+    final int frame = this.timingProfile.tstatesFrame;
+    final int changeAt = this.borderChangeCpuTstate;
+    int remaining = spentTiStates;
+
+    while (remaining > 0 && cpuT < frame) {
+      final int color = changeAt >= 0 && cpuT >= changeAt
+          ? this.ioBorderColor
+          : this.preStepBorderColor;
+      this.borderImageRgbData[this.timingProfile.toRasterTstate(cpuT)] = color;
+      cpuT++;
+      remaining--;
     }
   }
 
