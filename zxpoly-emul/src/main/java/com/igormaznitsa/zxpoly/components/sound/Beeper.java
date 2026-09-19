@@ -29,6 +29,8 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -374,10 +376,12 @@ public final class Beeper {
 
     private final BlockingQueue<byte[]> soundDataQueue =
         new ArrayBlockingQueue<>(SndBufferContainer.BUFFERS_NUMBER);
+    private final byte[] silenceFrame = new byte[SndBufferContainer.SND_BUFFER_SIZE];
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
     private final SndBufferContainer sndBuffer;
     private final Optional<SourceSoundPort> optionalSourceSoundPort;
+    private final AtomicBoolean playbackClosed = new AtomicBoolean(false);
     private volatile boolean working = true;
 
     private InternalBeeper(
@@ -395,7 +399,9 @@ public final class Beeper {
               .unstarted(this::mainLoop) :
           Thread.ofPlatform().name("zxp-beeper-thread-" + toHexString(System.nanoTime()))
               .unstarted(this::mainLoop);
-      this.thread.setPriority(Thread.MAX_PRIORITY);
+      if (!this.thread.isVirtual()) {
+        this.thread.setPriority(Thread.MAX_PRIORITY);
+      }
       this.thread.setDaemon(true);
       this.thread.setUncaughtExceptionHandler(
           (t, e) -> {
@@ -418,24 +424,54 @@ public final class Beeper {
 
     @Override
     public void updateState(
-        boolean tiStatesInt,
-        boolean wallClockInt,
-        int spentTiStates,
+        final boolean tiStatesInt,
+        final boolean wallClockInt,
+        final int spentTiStates,
         final int levelLeft,
         final int levelRight
     ) {
       if (this.working) {
         if (wallClockInt) {
-          this.soundDataQueue.offer(sndBuffer.nextBuffer(levelLeft, levelRight));
-          sndBuffer.resetPosition();
+          this.enqueueFrame(this.sndBuffer.nextBuffer(levelLeft, levelRight));
+          this.sndBuffer.resetPosition();
         } else {
-          sndBuffer.setValue(spentTiStates, levelLeft, levelRight);
+          this.sndBuffer.setValue(spentTiStates, levelLeft, levelRight);
         }
       }
     }
 
-    private void writeToLine(final byte[] data) {
-      this.sourceDataLine.write(data, 0, Math.min(this.sourceDataLine.available(), data.length));
+    private void enqueueFrame(final byte[] frame) {
+      final byte[] packet = frame.clone();
+      if (!this.soundDataQueue.offer(packet)) {
+        this.soundDataQueue.poll();
+        this.soundDataQueue.offer(packet);
+      }
+    }
+
+    private void writeFully(final byte[] data) {
+      if (!this.sourceDataLine.isRunning()) {
+        this.sourceDataLine.start();
+      }
+
+      int offset = 0;
+      while (offset < data.length && this.working) {
+        final int written = this.sourceDataLine.write(data, offset, data.length - offset);
+        if (written > 0) {
+          offset += written;
+          continue;
+        }
+        try {
+          Thread.sleep(1L);
+        } catch (final InterruptedException ex) {
+          Thread.currentThread().interrupt();
+          return;
+        }
+      }
+    }
+
+    private boolean isLineStarving() {
+      final int bufferSize = this.sourceDataLine.getBufferSize();
+      return bufferSize > 0 && this.sourceDataLine.available() >= bufferSize / 2;
     }
 
     @Override
@@ -459,43 +495,50 @@ public final class Beeper {
             this.sourceDataLine.getBufferSize())
         );
 
-        byte[] empty =
-            new byte[SndBufferContainer.BUFFERS_NUMBER * SndBufferContainer.SND_BUFFER_SIZE];
-        Arrays.fill(empty, (byte) 0xFF);
-        this.sourceDataLine.write(empty, 0, empty.length);
-
         this.sourceDataLine.start();
+        this.writeFully(this.silenceFrame);
 
         LOGGER.info("Sound line started");
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
-          final byte[] dataBlock = soundDataQueue.poll();
-          if (dataBlock != null) {
-            this.writeToLine(dataBlock);
+          byte[] dataBlock = this.soundDataQueue.poll(5L, TimeUnit.MILLISECONDS);
+          if (!this.working) {
+            break;
           }
-        }
-        LOGGER.info("Main loop completed");
-      } catch (Exception ex) {
-        LOGGER.log(Level.WARNING, "Error in sound line work: " + ex);
-      } finally {
-        try {
-          this.sourceDataLine.drain();
-        } finally {
-          try {
-            this.sourceDataLine.stop();
-            LOGGER.info("Line stopped");
-          } catch (Exception ex) {
-            LOGGER.warning("Exception in source line stop: " + ex.getMessage());
-          } finally {
-            try {
-              this.sourceDataLine.close();
-              LOGGER.info("Line closed");
-            } catch (Exception ex) {
-              LOGGER.warning("Exception in source line close: " + ex.getMessage());
+          if (dataBlock == null) {
+            if (this.isLineStarving()) {
+              dataBlock = this.silenceFrame;
+            } else {
+              continue;
             }
           }
+          this.writeFully(dataBlock);
         }
+        LOGGER.info("Main loop completed");
+      } catch (final InterruptedException ex) {
+        Thread.currentThread().interrupt();
+        LOGGER.info("Sound thread interrupted");
+      } catch (final Exception ex) {
+        LOGGER.log(Level.WARNING, "Error in sound line work: " + ex);
+      } finally {
+        this.closePlayback();
         LOGGER.info("Thread stopped");
+      }
+    }
+
+    private void closePlayback() {
+      if (!this.playbackClosed.compareAndSet(false, true)) {
+        return;
+      }
+      try {
+        if (this.sourceDataLine.isOpen()) {
+          this.sourceDataLine.stop();
+          this.sourceDataLine.flush();
+          this.sourceDataLine.close();
+          LOGGER.info("Line closed");
+        }
+      } catch (final Exception ex) {
+        LOGGER.warning("Exception in source line close: " + ex.getMessage());
       }
     }
 
@@ -505,9 +548,10 @@ public final class Beeper {
         this.working = false;
         LOGGER.info("Disposing");
         this.thread.interrupt();
+        this.closePlayback();
         try {
           this.thread.join();
-        } catch (InterruptedException ex) {
+        } catch (final InterruptedException ex) {
           Thread.currentThread().interrupt();
         }
       }

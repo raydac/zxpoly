@@ -3,7 +3,6 @@ package com.igormaznitsa.zxpoly.components.sound;
 import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
 
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
-import java.util.Arrays;
 import javax.sound.sampled.AudioFormat;
 
 final class SndBufferContainer {
@@ -36,7 +35,6 @@ final class SndBufferContainer {
     this.allSndBuffers = new byte[BUFFERS_NUMBER][];
     for (int i = 0; i < BUFFERS_NUMBER; i++) {
       this.allSndBuffers[i] = new byte[SND_BUFFER_SIZE];
-      Arrays.fill(this.allSndBuffers[i], (byte) 0xFF);
     }
     this.soundBuffer = this.allSndBuffers[this.bufferIndex];
   }
