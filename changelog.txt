@@ -3,6 +3,8 @@ __2.4.1 (SNAPSHOT)__
 - the embedded JDK has been updated to 27+36
 - updated input4j to 1.4.0
 - updated dependencies
+- fixed packaged start scripts (Linux single-instance lock, Windows JVM flags and working directory, macOS CLI arguments, AppImage desktop entry)
+- fixed Linux speaker noise that stayed until the sound device was restarted
 
 __2.4.0 (14-may-2026)__
 

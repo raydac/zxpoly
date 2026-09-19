@@ -1,6 +1,7 @@
 @echo off
 setlocal EnableExtensions
 
+cd /d "%~dp0"
 set "ZXPOLY_HOME=%cd%"
 
 rem Uncomment one line below if graphics is slow or you need JMX.

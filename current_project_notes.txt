@@ -1,0 +1,46 @@
+## 1. Implementation Progress
+
+- Fixed packaged start scripts and assembly descriptors for `zxpoly-emul` and `zxpoly-sprite-corrector`.
+- Hardened Java Sound playback: do not close mixers during device scan, write full PCM frames, feed silence on underrun, flush/close instead of drain.
+
+## 2. Architecture & Technical Discoveries
+
+- Emulator bundles a JRE per platform (`jre/` next to the jar). Sprite corrector zip uses the system JRE (`JAVA_HOME` / `java` on PATH).
+- Linux Pulse/ALSA Java Sound: `Mixer.close()` closes every line; `SourceDataLine.write` may return 0/partial; underrun (XRUN) can emit persistent noise until the line is reopened. Windows DirectSound recovers more cleanly.
+- Emulator Linux/mac/AppImage launchers share the ZGC flag set from 2.4.0. Windows `zxpoly.exe` (Go launcher) is the primary Windows entry; `start.cmd` / `start_log.cmd` are fallbacks.
+- Assembly plugin uses `appendAssemblyId=false` and per-execution `finalName`, so descriptor `<id>` does not affect artifact file names.
+- AppImage copies `${project.build.finalName}.jar` (versioned); Linux tar.gz destName is `zxpoly-emul.jar`.
+- Mac Resources already contain `appico.png` / `appico.icns` (binary files hidden from some workspace searches). Sprite zip already contains `icon.png`.
+- Windows start scripts now `cd /d "%~dp0"` then use `%cd%` as the install directory.
+
+## 3. Technical Debt & Refactoring
+
+- Sprite-corrector still uses `-client` and a system JRE (no bundled JRE). Left as a separate policy from the emulator.
+- Launch4j `versionInfo` file/product version is still hardcoded `2.4.0.0`.
+- `dependency-reduced-pom.xml` files are shade-generated and will refresh on the next package.
+
+## 4. Current Work In Progress
+
+- None.
+
+## 5. Known Issues & Limitations
+
+- macOS `CFBundleVersion` is filtered from `${project.version}` (includes `-SNAPSHOT` on snapshot builds).
+- Single-instance lock uses `kill -0` on the saved PID (works on Linux and macOS; a reused PID can still false-positive).
+- Linux audio still depends on the selected mixer (Pulse/PipeWire/ALSA). If a device itself is broken, toggling speaker still recreates the line.
+
+## 6. Open Questions & Pending Decisions
+
+- Whether sprite-corrector should keep `-client` / system JRE flags or align with emulator ZGC flags.
+
+## 7. Useful References
+
+- Emulator assemblies: `zxpoly-emul/src/assembly/{linux,linux_aarch,windows,mac,mac_aarch}.xml` plus `linux-appimage/`.
+- Sprite zip: `zxpoly-sprite-corrector/src/assemble/zip.xml`; publish zip name is `zxpoly-corrector` via `app.name`.
+- Publish emulator: Maven `install` with JRE profiles; AppImage extra profile `appimage`.
+- Publish sprite corrector: profile `publish`.
+- Maven on this machine: `mvn22`.
+
+## 8. User Advice and Recommendations
+
+- None recorded yet.

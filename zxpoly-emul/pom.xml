@@ -531,7 +531,7 @@
                         <artifactId>launch4j-maven-plugin</artifactId>
                         <configuration>
                             <headerType>gui</headerType>
-                            <outfile>${project.build.directory}/${app.name}.exe</outfile>
+                            <outfile>${project.build.directory}/${project.build.finalName}.exe</outfile>
                             <downloadUrl>https://bell-sw.com/pages/downloads/#/java-26-current</downloadUrl>
                             <classPath>
                                 <mainClass>ZXPoly</mainClass>

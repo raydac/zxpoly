@@ -1,7 +1,7 @@
 <assembly xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
-  <id>withjre_windows</id>
+    <id>withjre_linux_amd64</id>
 
   <includeBaseDirectory>false</includeBaseDirectory>
   <includeSiteDirectory>false</includeSiteDirectory>
@@ -20,9 +20,17 @@
     <fileSet>
       <directory>${project.basedir}${file.separator}src${file.separator}assembly${file.separator}linux</directory>
       <outputDirectory>${project.build.finalName}</outputDirectory>
+        <excludes>
+            <exclude>*.sh</exclude>
+        </excludes>
+    </fileSet>
+      <fileSet>
+          <directory>${project.basedir}${file.separator}src${file.separator}assembly${file.separator}linux</directory>
+          <outputDirectory>${project.build.finalName}</outputDirectory>
       <includes>
-        <include>*/**</include>
+          <include>*.sh</include>
       </includes>
+          <fileMode>0755</fileMode>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}${file.separator}jre_linux_amd64</directory>

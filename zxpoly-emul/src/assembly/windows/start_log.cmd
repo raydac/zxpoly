@@ -1,6 +1,7 @@
 @echo off
 setlocal EnableExtensions
 
+cd /d "%~dp0"
 set "ZXPOLY_HOME=%cd%"
 set "LOG_FILE=%ZXPOLY_HOME%\console.log"
 
@@ -10,7 +11,7 @@ rem set "JAVA_EXTRA_GFX_FLAGS=-Dcom.sun.management.jmxremote=true -Dsun.java2d.o
 
 if not defined JAVA_EXTRA_GFX_FLAGS set "JAVA_EXTRA_GFX_FLAGS="
 
-set "JAVA_FLAGS=-XX:-DontCompileHugeMethods --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED  --enable-native-access=ALL-UNNAMED"
+set "JAVA_FLAGS=-XX:+UseZGC -XX:MaxMetaspaceSize=128m -Dsun.rmi.transport.tcp.maxConnectionThreads=0 -XX:-DontCompileHugeMethods -XX:+DisableAttachMechanism -Xms512m -Xmx1024m --add-opens=java.base/java.util=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
 set "JAVA_RUN=%ZXPOLY_HOME%\jre\bin\java.exe"
 
 echo JAVA_RUN="%JAVA_RUN%" > "%LOG_FILE%"
