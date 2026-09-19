@@ -13,7 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>22</maven.compiler.release>
         <netbeans.hint.license>gpl30</netbeans.hint.license>
-        <jbbp.version>3.0.2</jbbp.version>
+        <jbbp.version>3.0.3</jbbp.version>
     </properties>
 
     <issueManagement>

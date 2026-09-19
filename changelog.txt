@@ -1,6 +1,7 @@
 __2.4.1 (SNAPSHOT)__
 
-- updated input4j to 1.3.1
+- the embedded JDK has been updated to 27+36
+- updated input4j to 1.4.0
 - updated dependencies
 
 __2.4.0 (14-may-2026)__
