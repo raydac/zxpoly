@@ -2,17 +2,18 @@
 
 - Flattened Z80 opcode decode to four 256-way switches (unprefixed, CB, ED, DDCB/FDCB) and stored 8-bit registers as `int` fields instead of `byte[8]`.
 - Fixed packaged start scripts and assembly descriptors for `zxpoly-emul` and `zxpoly-sprite-corrector`.
-- Hardened Java Sound playback: do not close mixers during device scan, write full PCM frames, feed silence on underrun, flush/close instead of drain.
+- Hardened Java Sound playback: do not close mixers during device scan, write full PCM frames, flush/close instead of drain. Playback stays low-latency: 3-frame (~60 ms) line, 1-frame prefill, 2-frame queue, and ~5 ms pads only when fewer than ~10 ms remain.
 - Aligned 48K/128K ULA raster with INT: first paper at 14336/14361, border paint uses raster phase, IN/OUT contention applied on the executing CPU. Border bitmap is scaled to the paper rectangle (2px/line). FULL layout uses left/top insets so Pentagon's uneven borders do not show black strips.
+- Window padding outside the CRT rectangle is filled with the current ULA border color (TV-filter/ULA+ aware) instead of black.
 
 ## 2. Architecture & Technical Discoveries
 
 - 48K/128K INT is aligned with the paper column, not HBlank. `tstatesUlaPhase` rotates CPU T=0 onto that ULA t-state; Pentagon phase stays 0. Border pixels are written at `toRasterTstate(cpuT)`.
-- Full-border preferred height is `displayRows*2`. Stretching the raster to the window (`sy≈1.63`) put top-border bars under the 2x paper blit. `alignBorderToPaper` pins the ULA paper rectangle to the screen blit. FULL layout places paper at left/top insets so Pentagon's 36/28 and 64/48 borders do not leave black strips.
+- Full-border preferred height is `displayRows*2`. Stretching the raster to the window (`sy≈1.63`) put top-border bars under the 2x paper blit. `alignBorderToPaper` pins the ULA paper rectangle to the screen blit. FULL layout places paper at left/top insets so Pentagon's 36/28 and 64/48 borders do not leave black strips. Extra window space outside that CRT rectangle is filled from `resolveBorderRgb()`.
 - ULA IN/OUT contention belongs on `readPort`/`writePort` of the executing CPU. `ZxPolyModule.readIo`/`writeIo` must not add t-states (that delayed slave CPUs and double-contended the master).
 - Z80 `step()` now dispatches via dense opcode `tableswitch`es; GP registers are `int` 0–255. Public `getRegister`/`setRegister` IDs are unchanged.
 - Emulator bundles a JRE per platform (`jre/` next to the jar). Sprite corrector zip uses the system JRE (`JAVA_HOME` / `java` on PATH).
-- Linux Pulse/ALSA Java Sound: `Mixer.close()` closes every line; `SourceDataLine.write` may return 0/partial; underrun (XRUN) can emit persistent noise until the line is reopened. Windows DirectSound recovers more cleanly.
+- Linux Pulse/ALSA Java Sound: `Mixer.close()` closes every line; `SourceDataLine.write` may return 0/partial; underrun (XRUN) can emit persistent noise until the line is reopened. Windows DirectSound recovers more cleanly. Java Sound buffer size is latency; keep it small and pad only when fewer than ~10 ms remain.
 - Emulator Linux/mac/AppImage launchers share the ZGC flag set from 2.4.0. Windows `zxpoly.exe` (Go launcher) is the primary Windows entry; `start.cmd` / `start_log.cmd` are fallbacks.
 - Assembly plugin uses `appendAssemblyId=false` and per-execution `finalName`, so descriptor `<id>` does not affect artifact file names.
 - AppImage copies `${project.build.finalName}.jar` (versioned); Linux tar.gz destName is `zxpoly-emul.jar`.

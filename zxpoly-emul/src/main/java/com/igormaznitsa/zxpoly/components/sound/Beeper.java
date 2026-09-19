@@ -374,9 +374,16 @@ public final class Beeper {
 
   private static final class InternalBeeper implements IBeeper {
 
+    private static final int PLAYBACK_QUEUE_FRAMES = 2;
+    private static final int LINE_BUFFER_FRAMES = 3;
+    private static final int LINE_PREFILL_FRAMES = 1;
+    private static final int STARVING_REMAINING_BYTES = SndBufferContainer.SND_BUFFER_SIZE / 2;
+    private static final int UNDERRUN_PAD_SIZE = SndBufferContainer.SND_BUFFER_SIZE / 4;
+
     private final BlockingQueue<byte[]> soundDataQueue =
-        new ArrayBlockingQueue<>(SndBufferContainer.BUFFERS_NUMBER);
+        new ArrayBlockingQueue<>(PLAYBACK_QUEUE_FRAMES);
     private final byte[] silenceFrame = new byte[SndBufferContainer.SND_BUFFER_SIZE];
+    private final byte[] underrunPad = new byte[UNDERRUN_PAD_SIZE];
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
     private final SndBufferContainer sndBuffer;
@@ -469,9 +476,26 @@ public final class Beeper {
       }
     }
 
-    private boolean isLineStarving() {
+    private int queuedBytes() {
       final int bufferSize = this.sourceDataLine.getBufferSize();
-      return bufferSize > 0 && this.sourceDataLine.available() >= bufferSize / 2;
+      if (bufferSize <= 0) {
+        return 0;
+      }
+      final int available = this.sourceDataLine.available();
+      if (available < 0 || available > bufferSize) {
+        return 0;
+      }
+      return bufferSize - available;
+    }
+
+    private boolean isLineStarving() {
+      return this.queuedBytes() < STARVING_REMAINING_BYTES;
+    }
+
+    private void prefillPlaybackLine() {
+      for (int i = 0; i < LINE_PREFILL_FRAMES; i++) {
+        this.writeFully(this.silenceFrame);
+      }
     }
 
     @Override
@@ -486,9 +510,9 @@ public final class Beeper {
     private void mainLoop() {
       LOGGER.info("Starting thread");
       try {
-        this.sourceDataLine
-            .open(SndBufferContainer.AUDIO_FORMAT,
-                SndBufferContainer.SND_BUFFER_SIZE * SndBufferContainer.BUFFERS_NUMBER);
+        this.sourceDataLine.open(
+            SndBufferContainer.AUDIO_FORMAT,
+            SndBufferContainer.SND_BUFFER_SIZE * LINE_BUFFER_FRAMES);
 
         LOGGER.info(format(
             "Sound line opened, buffer size is %d byte(s)",
@@ -496,7 +520,7 @@ public final class Beeper {
         );
 
         this.sourceDataLine.start();
-        this.writeFully(this.silenceFrame);
+        this.prefillPlaybackLine();
 
         LOGGER.info("Sound line started");
 
@@ -507,7 +531,7 @@ public final class Beeper {
           }
           if (dataBlock == null) {
             if (this.isLineStarving()) {
-              dataBlock = this.silenceFrame;
+              dataBlock = this.underrunPad;
             } else {
               continue;
             }

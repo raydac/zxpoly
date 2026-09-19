@@ -1439,6 +1439,7 @@ public final class VideoController extends JComponent
 
     final PaperLocation paper = this.locatePaper(visibleWidth, visibleHeight);
 
+    this.fillWindowWithBorderColor(g2);
     if (paper.x() > 0 || paper.y() > 0) {
       this.drawBorder(g2, paper.x(), paper.y());
     }
@@ -1482,15 +1483,17 @@ public final class VideoController extends JComponent
     }
   }
 
+  private void fillWindowWithBorderColor(final Graphics2D g2) {
+    g2.setColor(new Color(this.resolveBorderRgb()));
+    g2.fillRect(0, 0, this.getWidth(), this.getHeight());
+  }
+
   private void drawBorder(final Graphics2D g2, final int screenOffsetX, final int screenOffsetY) {
     final TimingProfile.BorderBlit blit = this.timingProfile.alignBorderToPaper(
         screenOffsetX,
         screenOffsetY,
         this.size.width,
         this.size.height);
-
-    g2.setColor(Color.BLACK);
-    g2.fillRect(0, 0, this.getWidth(), this.getHeight());
 
     final Shape previousClip = g2.getClip();
     g2.clipRect(blit.visibleX(), blit.visibleY(), blit.visibleWidth(), blit.visibleHeight());
