@@ -135,6 +135,7 @@ public final class VideoController extends JComponent
   private final BufferedImage workZxScreenImage;
   private final BufferedImage outputZxScreenImage;
   private final int[] workZxScreenImageRgbData;
+  private final int[] outputZxScreenImageRgbData;
   private final ZxPolyModule[] modules;
   private final boolean showVkbdApart;
   private final TimingProfile timingProfile;
@@ -160,6 +161,8 @@ public final class VideoController extends JComponent
   private int preStepBorderColor;
   private int ioBorderColor;
   private int borderChangeCpuTstate = -1;
+  private int cachedWindowBorderRgb = Integer.MIN_VALUE;
+  private Color cachedWindowBorderColor = Color.BLACK;
   private Rectangle lastVirtualKeyboardWindowPosition = null;
 
   private final UlaPlusContainer ulaPlus;
@@ -229,6 +232,8 @@ public final class VideoController extends JComponent
     this.workZxScreenImage.setAccelerationPriority(1.0f);
     this.workZxScreenImageRgbData =
         ((DataBufferInt) this.workZxScreenImage.getRaster().getDataBuffer()).getData();
+    this.outputZxScreenImageRgbData =
+        ((DataBufferInt) this.outputZxScreenImage.getRaster().getDataBuffer()).getData();
 
     this.borderImage = new BufferedImage(
         this.timingProfile.tstatesPerLine,
@@ -1326,12 +1331,22 @@ public final class VideoController extends JComponent
     try {
       this.lockOutputImage.lock();
       try {
-        final Graphics2D g = this.outputZxScreenImage.createGraphics();
-        try {
-          g.setClip(x << 1, y << 1, width << 1, height << 1);
-          g.drawImage(this.workZxScreenImage, 0, 0, null);
-        } finally {
-          g.dispose();
+        final int srcX = x << 1;
+        final int srcY = y << 1;
+        final int copyWidth = Math.min(width << 1, SCREEN_WIDTH - srcX);
+        final int copyHeight = Math.min(height << 1, SCREEN_HEIGHT - srcY);
+        if (srcX < 0 || srcY < 0 || copyWidth <= 0 || copyHeight <= 0) {
+          return;
+        }
+
+        for (int row = 0; row < copyHeight; row++) {
+          final int offset = (srcY + row) * SCREEN_WIDTH + srcX;
+          System.arraycopy(
+              this.workZxScreenImageRgbData,
+              offset,
+              this.outputZxScreenImageRgbData,
+              offset,
+              copyWidth);
         }
       } finally {
         this.lockOutputImage.unlock();
@@ -1440,9 +1455,7 @@ public final class VideoController extends JComponent
     final PaperLocation paper = this.locatePaper(visibleWidth, visibleHeight);
 
     this.fillWindowWithBorderColor(g2);
-    if (paper.x() > 0 || paper.y() > 0) {
-      this.drawBorder(g2, paper.x(), paper.y());
-    }
+    this.drawBorder(g2, paper.x(), paper.y());
     this.drawBuffer(g2, paper.x(), paper.y(), this.zoom, this.tvFilterChain);
 
     if (this.mouseTrapActive && this.enableMouseTrapIndicator) {
@@ -1484,8 +1497,17 @@ public final class VideoController extends JComponent
   }
 
   private void fillWindowWithBorderColor(final Graphics2D g2) {
-    g2.setColor(new Color(this.resolveBorderRgb()));
+    g2.setColor(this.windowBorderColor());
     g2.fillRect(0, 0, this.getWidth(), this.getHeight());
+  }
+
+  private Color windowBorderColor() {
+    final int rgb = this.resolveBorderRgb();
+    if (rgb != this.cachedWindowBorderRgb) {
+      this.cachedWindowBorderRgb = rgb;
+      this.cachedWindowBorderColor = new Color(rgb);
+    }
+    return this.cachedWindowBorderColor;
   }
 
   private void drawBorder(final Graphics2D g2, final int screenOffsetX, final int screenOffsetY) {
@@ -1496,6 +1518,10 @@ public final class VideoController extends JComponent
         this.size.height);
 
     final Shape previousClip = g2.getClip();
+    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
     g2.clipRect(blit.visibleX(), blit.visibleY(), blit.visibleWidth(), blit.visibleHeight());
     g2.drawImage(
         this.borderImage,
@@ -1803,7 +1829,7 @@ public final class VideoController extends JComponent
       final int color = changeAt >= 0 && cpuT >= changeAt
           ? this.ioBorderColor
           : this.preStepBorderColor;
-      this.borderImageRgbData[this.timingProfile.toRasterTstate(cpuT)] = color;
+      this.borderImageRgbData[this.timingProfile.toBorderRasterTstate(cpuT)] = color;
       cpuT++;
       remaining--;
     }

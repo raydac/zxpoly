@@ -483,6 +483,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
 
     if (m1) {
       this.lastM1Address = address;
+      this.alignM1ToEvenTstate(cpu);
       final int address_h = address >>> 8;
 
       if (this.trdosEnabled) {
@@ -537,7 +538,10 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
         throw new Error("Unexpected mode");
     }
 
-    this.cpu.addTstates(this.board.getContendedDelay(this.port7FFD.get(), address));
+    this.cpu.addTstates(this.board.getContendedDelay(
+        valueAt7ffd,
+        address,
+        this.accessCpuTstate()));
 
     return result;
   }
@@ -750,6 +754,24 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
     this.board.writeRam(this, addr, value);
   }
 
+  private int accessCpuTstate() {
+    return this.accessCpuTstate(this.cpu);
+  }
+
+  private int accessCpuTstate(final Z80 cpu) {
+    return this.board.getFrameTiStates() + cpu.getStepTstates();
+  }
+
+  private void alignM1ToEvenTstate(final Z80 cpu) {
+    if (!this.timingProfile.evenM1) {
+      return;
+    }
+
+    if ((this.accessCpuTstate(cpu) & 1) != 0) {
+      cpu.addTstates(1);
+    }
+  }
+
   @Override
   public void writeMemory(final Z80 cpu, final int ctx, final int address, final byte data) {
     final int val = data & 0xFF;
@@ -763,7 +785,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
           final int ramOffsetInHeap = ramOffset2HeapAddress(value7FFD, address);
 
           if (address < 0x4000) {
-            if (this.board.isNotLockedPort3D00() && (this.port7FFD.get() & PORTw_ZX128_ROMRAM) != 0) {
+            if (this.board.isNotLockedPort3D00() && (value7FFD & PORTw_ZX128_ROMRAM) != 0) {
               //RAM0
               this.board.writeRam(this, ramOffsetInHeap, val);
             }
@@ -787,7 +809,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
             final int ramOffsetInHeap = ramOffset2HeapAddress(value7FFD, address);
             this.board.writeRam(this, ramOffsetInHeap, val);
           } else {
-            this.writeGfxMemory(ctx - 1, this.port7FFD.get(), address, val);
+            this.writeGfxMemory(ctx - 1, value7FFD, address, val);
           }
         }
       }
@@ -795,7 +817,10 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
       default:
         throw new Error("Unexpected mode");
     }
-    this.cpu.addTstates(this.board.getContendedDelay(this.port7FFD.get(), address));
+    this.cpu.addTstates(this.board.getContendedDelay(
+        value7FFD,
+        address,
+        this.accessCpuTstate()));
   }
 
   @Override
@@ -859,7 +884,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   @Override
   public byte readPort(final Z80 cpu, final int ctx, final int port) {
     final int value7ffd = this.port7FFD.get();
-    cpu.addTstates(this.board.contendPort(value7ffd, port));
+    cpu.addTstates(this.board.contendPort(value7ffd, port, this.accessCpuTstate(cpu)));
 
     byte result = 0;
     boolean readFromBus = true;
@@ -941,7 +966,7 @@ public final class ZxPolyModule implements IoDevice, Z80CPUBus, MemoryAccessProv
   @Override
   public void writePort(final Z80 cpu, final int ctx, final int port, final byte data) {
     final int value7ffd = this.port7FFD.get();
-    cpu.addTstates(this.board.contendPort(value7ffd, port));
+    cpu.addTstates(this.board.contendPort(value7ffd, port, this.accessCpuTstate(cpu)));
 
     final int val = data & 0xFF;
     if (this.board.getBoardMode() == BoardMode.ZXPOLY) {

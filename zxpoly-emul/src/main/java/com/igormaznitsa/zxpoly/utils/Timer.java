@@ -20,6 +20,16 @@ public final class Timer {
     this.sleepDelay = sleepDelay == null ? -1L : sleepDelay.toNanos();
   }
 
+  static long nextTimeout(final long now, final long currentTimeout, final long delay) {
+    if (currentTimeout > 0L) {
+      final long overdue = now - currentTimeout;
+      if (overdue >= 0L && overdue < delay) {
+        return currentTimeout + delay;
+      }
+    }
+    return now + delay;
+  }
+
   public void next(final Duration delay) {
     this.start = System.nanoTime();
     this.timeout = this.start + delay.toNanos();
@@ -35,8 +45,10 @@ public final class Timer {
   }
 
   public void next() {
-    this.start = System.nanoTime();
-    this.timeout = this.start + this.delay;
+    final long now = System.nanoTime();
+    final long armedTimeout = nextTimeout(now, this.timeout, this.delay);
+    this.start = armedTimeout - this.delay;
+    this.timeout = armedTimeout;
   }
 
   public boolean completed() {

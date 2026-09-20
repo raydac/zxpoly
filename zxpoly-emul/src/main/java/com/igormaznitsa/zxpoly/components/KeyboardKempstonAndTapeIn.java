@@ -32,6 +32,7 @@ import de.gurkenlabs.input4j.InputDevices.InputLibrary;
 import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -134,6 +135,8 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
   private static final int KEMPSTON_FIRE = 16;
 
   private static final int MIC_BIT = 0b0100_0000;
+  private static final long LINUX_INPUT_HOTPLUG_RECYCLE_COOLDOWN_NS =
+      Duration.ofMillis(400L).toNanos();
 
   private final Motherboard board;
   private final AtomicReference<TapeSource> tap = new AtomicReference<>();
@@ -144,7 +147,7 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
    * Used to rebuild input4j after Linux evdev hot-plug (same path, new kernel fd).
    */
   private volatile Frame gameControllerHostFrame;
-  private volatile long lastLinuxInputHotplugRecycleMs;
+  private volatile long nextLinuxInputHotplugRecycleNano = Long.MIN_VALUE;
   private final List<GameControllerAdapter> activeGameControllerAdapters =
           new CopyOnWriteArrayList<>();
   private final int cursorJoystickVkLeft;
@@ -315,11 +318,11 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
     if (!KeyboardKempstonAndTapeIn.isLinuxOs() || this.gameControllerHostFrame == null) {
       return;
     }
-    final long now = System.currentTimeMillis();
-    if (now - this.lastLinuxInputHotplugRecycleMs < 400L) {
+    final long now = System.nanoTime();
+    if (now < this.nextLinuxInputHotplugRecycleNano) {
       return;
     }
-    this.lastLinuxInputHotplugRecycleMs = now;
+    this.nextLinuxInputHotplugRecycleNano = now + LINUX_INPUT_HOTPLUG_RECYCLE_COOLDOWN_NS;
     LOGGER.info("Linux evdev: reinitializing game input backend after device change");
     this.performLinuxInputPluginRecycle();
   }

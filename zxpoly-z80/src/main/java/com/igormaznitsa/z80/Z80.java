@@ -674,8 +674,9 @@ public final class Z80 {
   }
 
   private int _readport(final int ctx, final int port) {
+    final int result = this.bus.readPort(this, ctx, port & 0xFFFF) & 0xFF;
     this.tiStates += 4;
-    return this.bus.readPort(this, ctx, port & 0xFFFF) & 0xFF;
+    return result;
   }
 
   private void _writeport(final int ctx, final int port, final int value) {
@@ -684,8 +685,9 @@ public final class Z80 {
   }
 
   private int _readmem8(final int ctx, final int address) {
+    final int result = this.bus.readMemory(this, ctx, address & 0xFFFF, false, false) & 0xFF;
     this.tiStates += 3;
-    return this.bus.readMemory(this, ctx, address & 0xFFFF, false, false) & 0xFF;
+    return result;
   }
 
   private int _readmem16(final int ctx, final int address) {

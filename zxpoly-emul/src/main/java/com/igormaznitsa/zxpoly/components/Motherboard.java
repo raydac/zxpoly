@@ -178,9 +178,8 @@ public final class Motherboard implements ZxPolyConstants {
             .filter(x -> (x.getNotificationFlags() & IoDevice.NOTIFICATION_POSTSTEP) != 0)
             .toArray(IoDevice[]::new);
 
-    // simulation of garbage in memory after power on
+    final Random rnd = new Random();
     for (int i = 0; i < this.ram.length; i++) {
-      Random rnd = new Random();
       this._writeRam(i, rnd.nextInt());
     }
 
@@ -188,15 +187,6 @@ public final class Motherboard implements ZxPolyConstants {
     for (int i = 0; i < SPEC256_GFX_CORES; i++) {
       this.spec256GfxCores[i] = new Z80(this.modules[0].getCpu());
     }
-  }
-
-  private static boolean isContended(final int address, final int port7FFD) {
-    final int pageStart = address & 0xC000;
-    return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
-  }
-
-  private static boolean isUlaPort(final int port) {
-    return (port & 1) == 0;
   }
 
   public boolean isBetaDiskPresented() {
@@ -363,6 +353,7 @@ public final class Motherboard implements ZxPolyConstants {
   public void dryIntTickOnWallClockTime(final boolean tstatesIntReached, final boolean wallclockInt,
                                         final int tstates) {
     this.beeper.clearChannels();
+    this.beeper.dropQueuedFrames();
     this.beeper.updateState(tstatesIntReached, wallclockInt, tstates);
   }
 
@@ -398,7 +389,7 @@ public final class Motherboard implements ZxPolyConstants {
     if (this.frameIntTriggered) {
       intTriggered = false;
     } else {
-      intTriggered = tiStatesIntReached && wallClockIntReached;
+      intTriggered = startNewFrame;
       this.frameIntTriggered = intTriggered;
     }
 
@@ -442,8 +433,6 @@ public final class Motherboard implements ZxPolyConstants {
       for (final IoDevice device : this.ioDevicesPreStep) {
         device.preStep(tiStates, signalReset, tiStatesIntReached, wallClockIntReached);
       }
-
-      final BoardMode mode = this.getBoardMode();
 
       switch (this.boardMode) {
         case ZXPOLY: {
@@ -585,6 +574,8 @@ public final class Motherboard implements ZxPolyConstants {
           }
         }
       }
+    } else if (wallClockIntReached) {
+      this.beeper.updateState(tiStatesIntReached, true, 0);
     }
     return result;
   }
@@ -773,43 +764,16 @@ public final class Motherboard implements ZxPolyConstants {
     return result;
   }
 
-  int contendPort(final int port7FFD, final int port) {
-    int cpuTact = this.frameTiStatesCounter;
-    int result = 0;
-    if (isContended(port, port7FFD)) {
-      cpuTact += this.frameTiStatesCounter < this.timingProfile.tstatesFrame ? this.memoryTimings[this.frameTiStatesCounter].contention : 0;
-    }
-
-    int shift = 1;
-    int ft = (cpuTact + shift) % this.timingProfile.tstatesFrame;
-
-    if (isUlaPort(port)) {
-      cpuTact += this.memoryTimings[ft].contention;
-    } else if (isContended(port, port7FFD)) {
-      cpuTact += this.memoryTimings[ft].contention;
-      ft += this.memoryTimings[ft].contention;
-      ft++;
-      ft %= this.timingProfile.tstatesFrame;
-      cpuTact += this.memoryTimings[ft].contention;
-      ft += this.memoryTimings[ft].contention;
-      ft++;
-      ft %= this.timingProfile.tstatesFrame;
-      cpuTact += this.memoryTimings[ft].contention;
-    }
-    return cpuTact - this.frameTiStatesCounter;
+  int contendPort(final int port7FFD, final int port, final int accessTstate) {
+    return this.timingProfile.contendPort(port7FFD, port, accessTstate);
   }
 
   public TimingProfile getTimingProfile() {
     return this.timingProfile;
   }
 
-  int getContendedDelay(final int port7FFD, final int address) {
-    int result = 0;
-    if (isContended(address, port7FFD)) {
-      result = this.frameTiStatesCounter < this.timingProfile.tstatesFrame ?
-          this.memoryTimings[this.frameTiStatesCounter].contention : 0;
-    }
-    return result;
+  int getContendedDelay(final int port7FFD, final int address, final int accessTstate) {
+    return this.timingProfile.memoryContentionDelay(port7FFD, address, accessTstate);
   }
 
   public void resetIoDevices() {

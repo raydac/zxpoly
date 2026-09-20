@@ -86,6 +86,10 @@ public final class Beeper {
     public void start() {
 
     }
+
+    @Override
+    public void dropQueuedFrames() {
+    }
   };
   private final boolean tryConsumeLessSystemResources;
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
@@ -224,20 +228,9 @@ public final class Beeper {
     final int rightChannel = this.mixerRight.mix(mixedChannels);
 
     this.activeInternalBeeper.get()
-        .updateState(tiStatesInt,
-            wallClockInt,
-            spentTiStates,
-            leftChannel,
-            rightChannel
-        );
-
+        .updateState(tiStatesInt, wallClockInt, spentTiStates, leftChannel, rightChannel);
     this.activeWavWriter.get()
-        .updateState(tiStatesInt,
-            wallClockInt,
-            spentTiStates,
-            leftChannel,
-            rightChannel
-        );
+        .updateState(tiStatesInt, wallClockInt, spentTiStates, leftChannel, rightChannel);
   }
 
   private int[] filterChannels(final int spentTiStates) {
@@ -262,6 +255,10 @@ public final class Beeper {
     for (final SoundChannelLowPassFilter f : this.soundChannelLowPassFilters) {
       f.reset();
     }
+  }
+
+  public void dropQueuedFrames() {
+    this.activeInternalBeeper.get().dropQueuedFrames();
   }
 
   public boolean isActive() {
@@ -301,6 +298,8 @@ public final class Beeper {
     void dispose();
 
     void reset();
+
+    void dropQueuedFrames();
   }
 
   private static final class WavWriterImpl implements IWavWriter {
@@ -386,16 +385,13 @@ public final class Beeper {
 
   private static final class InternalBeeper implements IBeeper {
 
-    private static final int PLAYBACK_QUEUE_FRAMES = 2;
-    private static final int LINE_BUFFER_FRAMES = 3;
-    private static final int LINE_PREFILL_FRAMES = 1;
-    private static final int STARVING_REMAINING_BYTES = SndBufferContainer.SND_BUFFER_SIZE / 2;
-    private static final int UNDERRUN_PAD_SIZE = SndBufferContainer.SND_BUFFER_SIZE / 4;
+    private static final int PLAYBACK_QUEUE_FRAMES = 4;
+    private static final int LINE_BUFFER_FRAMES = 6;
+    private static final int LINE_PREFILL_FRAMES = 3;
 
     private final BlockingQueue<byte[]> soundDataQueue =
         new ArrayBlockingQueue<>(PLAYBACK_QUEUE_FRAMES);
     private final byte[] silenceFrame = new byte[SndBufferContainer.SND_BUFFER_SIZE];
-    private final byte[] underrunPad = new byte[UNDERRUN_PAD_SIZE];
     private final SourceDataLine sourceDataLine;
     private final Thread thread;
     private final SndBufferContainer sndBuffer;
@@ -450,11 +446,12 @@ public final class Beeper {
         final int levelRight
     ) {
       if (this.working) {
+        if (spentTiStates > 0) {
+          this.sndBuffer.setValue(spentTiStates, levelLeft, levelRight);
+        }
         if (wallClockInt) {
           this.enqueueFrame(this.sndBuffer.nextBuffer(levelLeft, levelRight));
           this.sndBuffer.resetPosition();
-        } else {
-          this.sndBuffer.setValue(spentTiStates, levelLeft, levelRight);
         }
       }
     }
@@ -488,22 +485,6 @@ public final class Beeper {
       }
     }
 
-    private int queuedBytes() {
-      final int bufferSize = this.sourceDataLine.getBufferSize();
-      if (bufferSize <= 0) {
-        return 0;
-      }
-      final int available = this.sourceDataLine.available();
-      if (available < 0 || available > bufferSize) {
-        return 0;
-      }
-      return bufferSize - available;
-    }
-
-    private boolean isLineStarving() {
-      return this.queuedBytes() < STARVING_REMAINING_BYTES;
-    }
-
     private void prefillPlaybackLine() {
       for (int i = 0; i < LINE_PREFILL_FRAMES; i++) {
         this.writeFully(this.silenceFrame);
@@ -514,9 +495,14 @@ public final class Beeper {
     public void reset() {
       if (this.working) {
         LOGGER.info("Reset");
-        this.soundDataQueue.clear();
-        this.sndBuffer.reset();
+        this.dropQueuedFrames();
       }
+    }
+
+    @Override
+    public void dropQueuedFrames() {
+      this.soundDataQueue.clear();
+      this.sndBuffer.reset();
     }
 
     private void mainLoop() {
@@ -537,18 +523,13 @@ public final class Beeper {
         LOGGER.info("Sound line started");
 
         while (this.working && !Thread.currentThread().isInterrupted()) {
-          byte[] dataBlock = this.soundDataQueue.poll(5L, TimeUnit.MILLISECONDS);
+          final byte[] dataBlock = this.soundDataQueue.poll(20L, TimeUnit.MILLISECONDS);
           if (!this.working) {
             break;
           }
-          if (dataBlock == null) {
-            if (this.isLineStarving()) {
-              dataBlock = this.underrunPad;
-            } else {
-              continue;
-            }
+          if (dataBlock != null) {
+            this.writeFully(dataBlock);
           }
-          this.writeFully(dataBlock);
         }
         LOGGER.info("Main loop completed");
       } catch (final InterruptedException ex) {

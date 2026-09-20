@@ -21,6 +21,7 @@ import com.igormaznitsa.zxpoly.components.betadisk.TrDosDisk.Sector;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -40,7 +41,7 @@ public final class K1818VG93 {
   static final int ADDR_TRACK = 1;
   static final int ADDR_SECTOR = 2;
   static final int ADDR_DATA = 3;
-  private static final long DELAY_FDD_MOTOR_ON_MS = 2000L;
+  private static final long DELAY_FDD_MOTOR_ON_NS = Duration.ofSeconds(2L).toNanos();
   private static final int REG_COMMAND = 0x00;
   private static final int REG_STATUS = 0x01;
   private static final int REG_TRACK = 0x02;
@@ -68,7 +69,7 @@ public final class K1818VG93 {
   private boolean mfmModulation;
   private long sectorPositioningCycles;
   private long operationTimeOutCycles;
-  private volatile long lastBusyOnTime;
+  private volatile long motorOffDeadlineNano = Long.MIN_VALUE;
   private Object tempAuxiliaryObject;
 
   private long timeIndexMarkChange = -1L;
@@ -124,7 +125,7 @@ public final class K1818VG93 {
 
   private void setInternalFlag(final int flags) {
     if ((flags & STATUS_BUSY) != 0) {
-      this.lastBusyOnTime = System.currentTimeMillis();
+      this.motorOffDeadlineNano = System.nanoTime() + DELAY_FDD_MOTOR_ON_NS;
     }
     registers[REG_STATUS] |= flags;
   }
@@ -930,7 +931,7 @@ public final class K1818VG93 {
   }
 
   public boolean isMotorOn() {
-    return (System.currentTimeMillis() - this.lastBusyOnTime) < DELAY_FDD_MOTOR_ON_MS;
+    return System.nanoTime() < this.motorOffDeadlineNano;
   }
 
   private static abstract class TrackHelper {

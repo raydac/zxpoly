@@ -14,7 +14,10 @@ public enum TimingProfile {
           24,
           24,
           24,
-          new int[]{6, 5, 4, 3, 2, 1, 0, 0}
+      new int[] {6, 5, 4, 3, 2, 1, 0, 0},
+      4,
+      0,
+      false
   ),
   SPECTRUM128(
           3_546_900,
@@ -29,7 +32,10 @@ public enum TimingProfile {
           24,
       28,
       24,
-          new int[]{6, 5, 4, 3, 2, 1, 0, 0}
+      new int[] {6, 5, 4, 3, 2, 1, 0, 0},
+      0,
+      -2,
+      true
   ),
   PENTAGON128(
           3_500_000,
@@ -44,7 +50,10 @@ public enum TimingProfile {
           16,
           16,
           28,
-          new int[]{0, 0, 0, 0, 0, 0, 0, 0}
+      new int[] {0, 0, 0, 0, 0, 0, 0, 0},
+      0,
+      0,
+      false
   );
 
   private static final int ZX_SCREEN_LINES = 192;
@@ -68,7 +77,12 @@ public enum TimingProfile {
   public final int tstatesFirstPaperTact;
   public final int tstatesFirstPaperLine;
   public final int displayRows;
+  public final int linesBorderPaintDelay;
+  public final int tstatesBorderRasterShift;
+  public final boolean evenM1;
   private final int[] contention;
+  private final int[] contentionByCpuT;
+  private final int[] borderRasterByCpuT;
 
   TimingProfile(
           final int clockFreq,
@@ -83,12 +97,18 @@ public enum TimingProfile {
           final int tstatesPerHSync,
           final int tstatesPerHBlank,
           final int tstatesPerBorderRight,
-          final int[] contention
+          final int[] contention,
+          final int linesBorderPaintDelay,
+          final int tstatesBorderRasterShift,
+          final boolean evenM1
   ) {
     this.tstatesNmi = tstatesNmi;
     this.tstatesInt = tstatesInt;
     this.clockFreq = clockFreq;
     this.contention = contention;
+    this.linesBorderPaintDelay = linesBorderPaintDelay;
+    this.tstatesBorderRasterShift = tstatesBorderRasterShift;
+    this.evenM1 = evenM1;
 
     this.linesPerVSync = linesVsync;
     this.scanLines = linesVsync + linesBorderTop + ZX_SCREEN_LINES + linesBorderBottom;
@@ -112,6 +132,18 @@ public enum TimingProfile {
         this.tstatesPerLine * this.tstatesFirstPaperLine + this.tstatesFirstPaperTact;
     this.tstatesStartScreen = tstatesIntToPaper;
     this.tstatesUlaPhase = Math.floorMod(ulaFirstPaper - tstatesIntToPaper, this.tstatesFrame);
+
+    this.contentionByCpuT = new int[this.tstatesFrame];
+    this.borderRasterByCpuT = new int[this.tstatesFrame];
+    for (int cpuT = 0; cpuT < this.tstatesFrame; cpuT++) {
+      this.contentionByCpuT[cpuT] = this.makeContention(cpuT);
+      this.borderRasterByCpuT[cpuT] = Math.floorMod(
+          cpuT
+              + this.tstatesUlaPhase
+              + this.linesBorderPaintDelay * this.tstatesPerLine
+              + this.tstatesBorderRasterShift,
+          this.tstatesFrame);
+    }
   }
 
   private static int calcAddressAttribute(int sx, int sy) {
@@ -128,6 +160,17 @@ public enum TimingProfile {
 
   public int toRasterTstate(final int cpuTstate) {
     return Math.floorMod(cpuTstate + this.tstatesUlaPhase, this.tstatesFrame);
+  }
+
+  public int toBorderRasterTstate(final int cpuTstate) {
+    return cpuTstate >= 0 && cpuTstate < this.tstatesFrame
+        ? this.borderRasterByCpuT[cpuTstate]
+        : Math.floorMod(
+        cpuTstate
+            + this.tstatesUlaPhase
+            + this.linesBorderPaintDelay * this.tstatesPerLine
+            + this.tstatesBorderRasterShift,
+        this.tstatesFrame);
   }
 
   public UlaTact[] makeUlaFrame() {
@@ -159,6 +202,46 @@ public enum TimingProfile {
     }
 
     return this.contention[scrPix % 8];
+  }
+
+  public static boolean isContendedAddress(final int address, final int port7FFD) {
+    final int pageStart = address & 0xC000;
+    return pageStart == 0x4000 || (pageStart == 0xC000 && (port7FFD & 1) != 0);
+  }
+
+  public static boolean isUlaPort(final int port) {
+    return (port & 1) == 0;
+  }
+
+  public int contentionAt(final int cpuTstate) {
+    return cpuTstate >= 0 && cpuTstate < this.tstatesFrame ? this.contentionByCpuT[cpuTstate] : 0;
+  }
+
+  public int memoryContentionDelay(final int port7FFD, final int address, final int accessTstate) {
+    return isContendedAddress(address, port7FFD) ? this.contentionAt(accessTstate) : 0;
+  }
+
+  public int contendPort(final int port7FFD, final int port, final int accessTstate) {
+    int cpuTact = accessTstate;
+    final int frame = this.tstatesFrame;
+
+    if (isContendedAddress(port, port7FFD)) {
+      cpuTact += this.contentionAt(accessTstate);
+    }
+
+    int ft = Math.floorMod(cpuTact + 1, frame);
+
+    if (isUlaPort(port)) {
+      cpuTact += this.contentionAt(ft);
+    } else if (isContendedAddress(port, port7FFD)) {
+      cpuTact += this.contentionAt(ft);
+      ft = Math.floorMod(ft + this.contentionAt(ft) + 1, frame);
+      cpuTact += this.contentionAt(ft);
+      ft = Math.floorMod(ft + this.contentionAt(ft) + 1, frame);
+      cpuTact += this.contentionAt(ft);
+    }
+
+    return cpuTact - accessTstate;
   }
 
   public BorderBlit alignBorderToPaper(
@@ -269,7 +352,7 @@ public enum TimingProfile {
             resultLineOffset,
             resultUlaAddressPixel,
             resultUlaAddressAttribute,
-        this.makeContention(item));
+        this.contentionByCpuT[item]);
   }
 
   public static class UlaTact {

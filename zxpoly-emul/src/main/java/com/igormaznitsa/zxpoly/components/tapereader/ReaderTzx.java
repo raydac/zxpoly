@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -50,10 +51,12 @@ public class ReaderTzx implements TapeSource<TzxWavRenderer.RenderResult.NamedOf
     this.tzxFile.getBlockList()
             .forEach(x -> LOGGER.info("Found block: " + x.getClass().getSimpleName()));
 
-    final long startTime = System.currentTimeMillis();
+    final long startTime = System.nanoTime();
     this.renderedWav = this.renderAsWav();
 
-    LOGGER.info(String.format("TZX to WAV conversion took %d ms, size %d bytes", (System.currentTimeMillis() - startTime), this.renderedWav.getWavData().length));
+    LOGGER.info(String.format("TZX to WAV conversion took %d ms, size %d bytes",
+        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime),
+        this.renderedWav.getWavData().length));
     this.inMemoryWavFile = new InMemoryWavFile(new ByteArraySeekableContainer(this.renderedWav.getWavData()), timingProfile.tstatesFrame * 50L);
   }
 

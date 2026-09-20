@@ -176,6 +176,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   public static final Logger LOGGER = Logger.getLogger(MainForm.class.getName());
   public static final Duration TIMER_INT_DELAY_MILLISECONDS = Duration.ofMillis(20);
+  private static final long FULLSCREEN_DEBOUNCE_NS = Duration.ofSeconds(1L).toNanos();
   private static final Icon ICO_MOUSE = new ImageIcon(Utils.loadIcon("mouse.png"));
   private static final Icon ICO_MOUSE_DIS =
       UIManager.getLookAndFeel().getDisabledIcon(null, ICO_MOUSE);
@@ -299,7 +300,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
   private final ImageIcon sysIcon;
   private final TimingProfile timingProfile;
   private final AtomicBoolean magicButtonTrigger = new AtomicBoolean();
-  private volatile long lastFullScreenEventTime = 0L;
+  private volatile long lastFullScreenEventNano = Long.MIN_VALUE;
   private volatile boolean turboMode = false;
   private volatile boolean zxKeyboardProcessingAllowed = true;
   private AnimatedGifTunePanel.AnimGifOptions lastAnimGifOptions =
@@ -1072,6 +1073,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     int countdownToAnimationSave = 0;
 
     long sessionIntCounter = 0;
+    boolean intSlotReady = false;
+    boolean slownessLoggedForFrame = false;
 
     int nextBlinkLineTiStates =
         this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
@@ -1084,38 +1087,44 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       int frameTiStates = this.board.getFrameTiStates();
       final boolean inTurboMode = this.turboMode;
       final boolean tiStatesForIntExhausted = frameTiStates >= this.timingProfile.tstatesFrame;
-      boolean intTickForWallClockReached = this.wallClock.completed();
 
-      if (!inTurboMode && tiStatesForIntExhausted && !intTickForWallClockReached) {
-        this.wallClock.sleep();
+      boolean wallClockPulse = false;
+      if (this.wallClock.completed()) {
+        wallClockPulse = true;
+        intSlotReady = true;
+        this.wallClock.next();
       }
-      intTickForWallClockReached = this.wallClock.completed();
+
+      if (!inTurboMode && tiStatesForIntExhausted && !intSlotReady) {
+        this.wallClock.sleep();
+        if (this.wallClock.completed()) {
+          wallClockPulse = true;
+          intSlotReady = true;
+          this.wallClock.next();
+        }
+      }
 
       if (stepLocker.tryLock()) {
         try {
-          final boolean doCpuIntTick;
-          if (intTickForWallClockReached) {
-            if (tiStatesForIntExhausted) {
-              sessionIntCounter++;
-              doCpuIntTick = true;
-              countdownToNotifyRepaint--;
-              if (countdownToNotifyRepaint <= 0) {
-                countdownToNotifyRepaint = this.intTicksBeforeFrameDraw;
-                notifyRepaintScreen = true;
-              }
-              countdownToAnimationSave--;
-              nextBlinkLineTiStates =
-                  this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
-              blinkLineY = 0;
-            } else {
-              doCpuIntTick = false;
+          final boolean doCpuIntTick =
+              this.isCpuIntTickDue(inTurboMode, tiStatesForIntExhausted, intSlotReady);
+
+          if (doCpuIntTick) {
+            sessionIntCounter++;
+            countdownToNotifyRepaint--;
+            if (countdownToNotifyRepaint <= 0) {
+              countdownToNotifyRepaint = this.intTicksBeforeFrameDraw;
+              notifyRepaintScreen = true;
             }
-            this.wallClock.next();
-            if (!tiStatesForIntExhausted) {
-              this.onSlownessDetected(this.timingProfile.tstatesFrame - frameTiStates);
-            }
-          } else {
-            doCpuIntTick = false;
+            countdownToAnimationSave--;
+            nextBlinkLineTiStates =
+                this.timingProfile.tstatesStartScreen + this.timingProfile.tstatesPerVideo;
+            blinkLineY = 0;
+            slownessLoggedForFrame = false;
+            intSlotReady = false;
+          } else if (wallClockPulse && !tiStatesForIntExhausted && !slownessLoggedForFrame) {
+            slownessLoggedForFrame = true;
+            this.onSlownessDetected(this.timingProfile.tstatesFrame - frameTiStates);
           }
 
           final boolean executionEnabled = inTurboMode || !tiStatesForIntExhausted || doCpuIntTick;
@@ -1129,7 +1138,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
           final int detectedTriggers = this.board.step(
               tiStatesForIntExhausted,
-              intTickForWallClockReached,
+              wallClockPulse,
               triggeredNmi,
               doCpuIntTick,
               executionEnabled);
@@ -1140,7 +1149,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             doBlink = true;
           }
 
-          if (intTickForWallClockReached) {
+          if (wallClockPulse) {
             this.videoStreamer.onWallclockInt();
           }
 
@@ -1191,18 +1200,15 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           this.repaintScreen();
         }
       } else {
-        if (this.wallClock.completed()) {
-          this.wallClock.next();
+        if (wallClockPulse) {
           this.videoStreamer.onWallclockInt();
-          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.tstatesFrame,
-              true, frameTiStates);
+          this.board.dryIntTickOnWallClockTime(tiStatesForIntExhausted, true, 0);
+        }
+        if (this.isCpuIntTickDue(inTurboMode, tiStatesForIntExhausted, intSlotReady)) {
+          intSlotReady = false;
           this.board.startNewFrame();
-        } else {
-          if (frameTiStates < this.timingProfile.tstatesFrame) {
-            this.board.doNop();
-          }
-          this.board.dryIntTickOnWallClockTime(frameTiStates >= this.timingProfile.tstatesFrame,
-              true, frameTiStates);
+        } else if (!tiStatesForIntExhausted) {
+          this.board.doNop();
         }
       }
       if (this.activeTracerWindowCounter.get() > 0) {
@@ -1213,6 +1219,13 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         Thread.onSpinWait();
       }
     }
+  }
+
+  private boolean isCpuIntTickDue(
+      final boolean turboMode,
+      final boolean tstatesExhausted,
+      final boolean intSlotReady) {
+    return tstatesExhausted && (turboMode || intSlotReady);
   }
 
   private void onSlownessDetected(final long remainTstates) {
@@ -1795,7 +1808,8 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
   private void doFullScreen() {
     try {
-      if (System.currentTimeMillis() - this.lastFullScreenEventTime > 1000L) {
+      if (this.lastFullScreenEventNano == Long.MIN_VALUE
+          || System.nanoTime() - this.lastFullScreenEventNano > FULLSCREEN_DEBOUNCE_NS) {
         final GraphicsDevice gDevice = this.getGraphicsConfiguration().getDevice();
         LOGGER.info("FULL SCREEN called, device=" + gDevice.getIDstring() + " displayMode="
             + gDevice.getDisplayMode());
@@ -1885,7 +1899,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
         LOGGER.info("Ignoring FULL SCREEN because too often");
       }
     } finally {
-      this.lastFullScreenEventTime = System.currentTimeMillis();
+      this.lastFullScreenEventNano = System.nanoTime();
     }
   }
 

@@ -4,27 +4,35 @@
 - Collapsed undocumented ED opcodes onto `decodeED` `default` → `doNONI()`, and clear the ED prefix once on entry.
 - Repeating block ops share the extra 5 T-state cycle: rewind PC, WZ=PC+1, XF/YF from PCh, latch Q. INxR/OTxR still apply the Ped7g/Banks P/H tweak on that cycle.
 - Fixed packaged start scripts and assembly descriptors for `zxpoly-emul` and `zxpoly-sprite-corrector`. Sprite publish zip is `${project.build.finalName}.zip` (versioned).
-- Hardened Java Sound playback: do not close mixers during device scan, write full PCM frames, flush/close instead of drain. Playback stays low-latency: 3-frame (~60 ms) line, 1-frame prefill, 2-frame queue, and ~5 ms pads only when fewer than ~10 ms remain.
-- Aligned 48K/128K ULA raster with INT: first paper at 14336/14362, border paint uses raster phase, IN/OUT contention applied on the executing CPU. Border bitmap is scaled to the paper rectangle (2px/line). FULL layout uses left/top insets so Pentagon's uneven borders do not show black strips.
+- Hardened Java Sound playback: do not close mixers during device scan, write full PCM frames, flush/close instead of drain. The line is ~120 ms with 60 ms prefill so Pulse/PipeWire does not insert silence between frames.
+- Aligned 48K/128K ULA raster with INT: first paper at 14336/14362, border paint uses raster phase, IN/OUT contention applied on the executing CPU. Border bitmap is scaled to the paper rectangle (2px/line). FULL layout uses left/top insets so Pentagon's uneven borders do not show black strips. 48K games that race the beam (Aquaplane) keep the border horizon on the same scanline as the paper.
 - Window padding outside the CRT rectangle is filled with the current ULA border color (TV-filter/ULA+ aware) instead of black.
 - Sound LPF is a per-channel one-pole IIR applied once before stereo mix. Preferences store 0–100% strength (Mild→Strong); `alphaFromLevel` log-maps that onto a usable α band (~0.25…0.012). Left is no longer near-mute.
 - Start scripts and `zxpoly.exe` pin host scheduling so an unfocused window keeps full emulation speed.
+- Remaining `zxpoly-emul` wall-clock elapsed timeouts now use `System.nanoTime()` (FDD motor 2s, Linux evdev recycle 400 ms, fullscreen debounce 1 s, TZX conversion log). Frame INT pacing was already `nanoTime` via `Timer`.
+- INT is issued when the frame’s T-states finish if the 20 ms slot is already due (or in turbo). The 20 ms wall clock still ticks for AY so a late frame does not starve the sound line.
+- Hot-path housekeeping: contention and border-raster T are tables on `TimingProfile`; blink blit is `arraycopy`; 7FFD is not re-read for contention; RAM garbage uses one `Random`.
 
 ## 2. Architecture & Technical Discoveries
 
 - 48K/128K INT is aligned with the paper column, not HBlank. `tstatesUlaPhase` rotates CPU T=0 onto that ULA t-state; Pentagon phase stays 0. Border pixels are written at `toRasterTstate(cpuT)`.
 - 128K first paper is 14362 (libspectrum/Fuse `top_left_pixel`); FAQ 14361 is the first contended cycle / screen-byte fetch, one T before the pixel. Extra 4 T-states per 128K line sit in horizontal retrace (24+24+52), not in the visible borders.
 - Full-border preferred height is `displayRows*2`. Stretching the raster to the window (`sy≈1.63`) put top-border bars under the 2x paper blit. `alignBorderToPaper` pins the ULA paper rectangle to the screen blit. FULL layout places paper at left/top insets so Pentagon's 36/28 and 64/48 borders do not leave black strips. Extra window space outside that CRT rectangle is filled from `resolveBorderRgb()`.
-- ULA IN/OUT contention belongs on `readPort`/`writePort` of the executing CPU. `ZxPolyModule.readIo`/`writeIo` must not add t-states (that delayed slave CPUs and double-contended the master).
+- ULA IN/OUT contention belongs on `readPort`/`writePort` of the executing CPU. `ZxPolyModule.readIo`/`writeIo` must not add t-states (that delayed slave CPUs and double-contended the master). Memory and I/O contention are looked up at the access T-state (`frame + step`), not the instruction start. Border colour changes when the OUT write occurs (after WAIT). SPECTRUM48 paints that colour 4 scanlines later than the CPU raster so Aquaplane's side sea meets the paper (Fuse stays within 1 px; ZX-Poly was 8 px / 4 ZX lines early).
+- 128K/+2 ULA refuses to start an M1 on an odd T-state (Fuse `LIBSPECTRUM_MACHINE_CAPABILITY_EVEN_M1`). SPECTRUM128 inserts 1 T before every M1 when `frame+step` is odd; 48K and Pentagon do not. Without this, a tight OUT-to-border loop drifts 1 T per odd-length instruction and FPGA-style border pictures look ragged. Wall-clock Java timer jitter cannot scramble T-positions inside a completed frame. SPECTRUM128 also paints the border 2 T earlier than the paper raster so paper-straddling markers (FPGA_BORDER 16×12 paper + 4 border lines) meet.
+- Contended memory (Fuse/FAQ check): 48K/128K delay `{6,5,4,3,2,1,0,0}` starts one T before first paper (14335/14361), paper 128 T only, 224/228 line period. `0x4000–0x7FFF` always; `0xC000` if 7FFD LSB odd (pages 1,3,5,7). Pentagon delays are 0. WAIT is inserted in `readMemory`/`writeMemory`/`readPort`/`writePort` at access T (`frame+step`) before Z80 adds 3T/4T. I/O is Fuse early/late: ULA `(port&1)==0` one late wait after +1T; contended high-byte non-ULA ports get three further wait points. `readIo`/`writeIo` do not add T. Missing vs Fuse: no-MREQ waits (JR/INC (HL)/CALL extra cycles) — those extra waits are skipped, so ZX-Poly is slightly *faster* than Fuse when code runs in contended RAM, not slower.
 - Z80 `step()` now dispatches via dense opcode `tableswitch`es; GP registers are `int` 0–255. Public `getRegister`/`setRegister` IDs are unchanged.
 - Live M1 opcode fetch is `readInstrOrPrefix(ctx, true)` from `step()` (4 T, nM1, R++, `cmdOrPrefix=true`). IM2 vector fetch is ordinary `_readmem16`.
 - `decodeED` clears `prefix` once on entry (helpers use `normalizedPrefix()`), then tableswitches real ED ops. Undocumented opcodes including former `ED CB` go through `default` → `doNONI()`.
 - Repeating LDIR/CPIR/INIR and companions: extra 5 T-states set WZ to the second opcode byte (PC of ED + 1) and copy XF/YF from that PCh. SCF/CCF Q is the flags after that patch. FUSE `edb2_1`/`edb3_1`/`edb9_2`/`edba_1`/`edbb_1` still use older extra-cycle expectations.
 - UnrealSpeccyP Z80 (`djdron/UnrealSpeccyP/z80`) matches our ALU/BIT/MEMPTR for ordinary ops, but has no Q latch, uses DEC B flags for INIR/OTIR, does not copy XF/YF from PCh on LDIR extra cycle, and maps undocumented `ED 4E`/`ED 6E` to IM 1 (FUSE expects IM 0).
 - Emulator bundles a JRE per platform (`jre/` next to the jar). Sprite corrector zip uses the system JRE (`JAVA_HOME` / `java` on PATH).
-- Linux Pulse/ALSA Java Sound: `Mixer.close()` closes every line; `SourceDataLine.write` may return 0/partial; underrun (XRUN) can emit persistent noise until the line is reopened. Windows DirectSound recovers more cleanly. Java Sound buffer size is latency; keep it small and pad only when fewer than ~10 ms remain.
+- Linux Pulse/ALSA Java Sound: `Mixer.close()` closes every line; `SourceDataLine.write` may return 0/partial; underrun (XRUN) can emit persistent noise until the line is reopened. `available()` is not a trustworthy fill level on Pulse — do not inject silence pads from it. Windows DirectSound recovers more cleanly.
 - Emulator Linux/mac/AppImage launchers share the ZGC flag set from 2.4.0. Windows `zxpoly.exe` (Go launcher) is the primary Windows entry; `start.cmd` / `start_log.cmd` are fallbacks.
 - Host-OS unfocused throttling: Windows `SetProcessInformation` opts out of EcoQoS and timer-ignore, plus in-process `timeBeginPeriod(1)`; Linux sets `vblank_mode=0` / `__GL_SYNC_TO_VBLANK=0`; macOS uses `NSAppSleepDisabled` and `caffeinate -i`. Do not use `-XX:+ForceTimeHighResolution`.
+- `System.nanoTime()` is monotonic and high-resolution but its origin is arbitrary (can be negative). Do not subtract from a zero default; use a deadline or `Long.MIN_VALUE` sentinel. Do not mix with `currentTimeMillis()`. Frame rate stays on `Timer` (`nanoTime` + optional `LockSupport.parkNanos` when “less resources”).
+- 20 ms wall clock and CPU INT are separate. The timer always `next()`s on the heartbeat (AY flush). `intSlotReady` stays set until the frame’s T-states finish, so a late 128K frame INTs immediately instead of waiting for the *next* 20 ms slot. Flushing PCM only on INT starved the line (~40 ms gaps).
+- `dryIntTickOnWallClockTime` is a lock-miss placeholder, not a CPU step. Never pass `frameTiStates` into `SndBufferContainer.setValue` — that delta is per-instruction. `setValue` uses long sample-index math and ignores non-positive / out-of-frame deltas. Menu/pause hold `stepLocker`; the miss path must mute (`clearChannels` + drop queued PCM) then flush silence so Pulse does not XRUN. Do not mute in `Motherboard.step` when the CPU is only waiting for the next 20 ms INT.
 - Swing BufferStrategy vsync is off (`swing.bufferPerWindow=false`). Windows keeps D3D but disables on-screen Present waits (`sun.java2d.d3d.onscreen=false`). Obsolete DirectDraw flags were removed from the Go launcher.
 - Assembly plugin uses `appendAssemblyId=false` and per-execution `finalName`, so descriptor `<id>` does not affect artifact file names.
 - AppImage copies `${project.build.finalName}.jar` (versioned); Linux tar.gz destName is `zxpoly-emul.jar`.
@@ -40,17 +48,18 @@
 
 ## 4. Current Work In Progress
 
-- None.
+- Aquaplane 48K vs Fuse: Fuse window in the comparison shot was labelled Spectrum 128K; ZX-Poly SPECTRUM48 side borders went blue 4 ZX lines before the paper sea. Border raster for 48K now lags the CPU raster by those 4 lines; contention/paper are unchanged. Needs a retest on SPECTRUM48.
+- FPGA_BORDER.z80 (`/home/igorm/Misc/SpecGames/Temp/FPGA_BORDER.z80`) on SPECTRUM128: Fuse shows solid 16×16 green corner squares. ZX-Poly after even-M1 has well-formed FPGA letters (paper bitmaps) but L-shaped greens: 16×12 paper ink plus 4 border lines, border piece ~2 T to the right of paper. SPECTRUM128 border raster now leads paper by 2 T. Needs a retest with full border.
 
 ## 5. Known Issues & Limitations
 
 - Default timing profile is still PENTAGON128. 48K-timed demos need the SPECTRUM48 profile (Preferences → Timing).
-- Border color still changes on the OUT I/O cycle, not on the ULA's 4 T-state latch grid.
 - macOS `CFBundleVersion` is filtered from `${project.version}` (includes `-SNAPSHOT` on snapshot builds).
 - Single-instance lock uses `kill -0` on the saved PID (works on Linux and macOS; a reused PID can still false-positive).
 - Linux audio still depends on the selected mixer (Pulse/PipeWire/ALSA). If a device itself is broken, toggling speaker still recreates the line.
 - Sound LPF still advances once per CPU step, not per T-state, so cutoff follows instruction density. Strength 0% is a light soften, 100% is muffled but not mute.
 - FUSE `edb2_1`/`edb3_1`/`edb9_2`/`edba_1`/`edbb_1` still disagree with Ped7g extra-cycle block flags; `Z80FuseTest` skips those five.
+- 48K/128K do not apply Fuse `contend_read_no_mreq` on internal cycles (JR, INC/DEC (HL), CALL/PUSH extra T). Opcode/operand/data/I/O bus cycles are contended.
 
 ## 6. Open Questions & Pending Decisions
 

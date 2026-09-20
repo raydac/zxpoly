@@ -1,6 +1,9 @@
 __2.4.1 (SNAPSHOT)__
 
 - keep full emulation speed when the window is not focused
+- demos no longer drop to half speed when a frame misses the 20 ms budget
+- Java Sound no longer inserts silence gaps between AY frames
+- opening the menu or pausing emulation silences the speaker again
 - the embedded JDK has been updated to 27+36
 - updated input4j to 1.4.0
 - updated dependencies

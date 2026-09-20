@@ -57,22 +57,38 @@ final class SndBufferContainer {
     this.lastWrittenPosition = 0;
   }
 
-  public int calculatePosition(final int tiStatesIntCounter) {
-    final int frame = this.timingProfile.tstatesFrame;
-    return (tiStatesIntCounter * SAMPLES_PER_INT + frame / 2) / frame;
+  private int bytePositionForTstates(final int tstates) {
+    final long frame = this.timingProfile.tstatesFrame;
+    if (frame <= 0L) {
+      return -1;
+    }
+    final long sampleIndex = (tstates * (long) SAMPLES_PER_INT + frame / 2L) / frame;
+    if (sampleIndex < 0L || sampleIndex > SAMPLES_PER_INT) {
+      return -1;
+    }
+    return (int) (sampleIndex * FRAME_SIZE);
   }
 
   public void setValue(final int deltaTiStates, final int levelLeft, final int levelRight) {
-    this.tiStatesIntCounter += deltaTiStates;
-    int position = calculatePosition(tiStatesIntCounter) * 4;
-
-    if (position < SND_BUFFER_SIZE) {
-      fillCurrentSndBuffer(this.lastWrittenPosition, position + FRAME_SIZE, levelLeft, levelRight);
-      this.lastWrittenPosition = position;
+    if (deltaTiStates <= 0) {
+      return;
     }
+
+    this.tiStatesIntCounter += deltaTiStates;
+    final int position = this.bytePositionForTstates(this.tiStatesIntCounter);
+    if (position < 0 || position >= SND_BUFFER_SIZE || this.lastWrittenPosition < 0) {
+      return;
+    }
+
+    this.fillCurrentSndBuffer(this.lastWrittenPosition, position + FRAME_SIZE, levelLeft,
+        levelRight);
+    this.lastWrittenPosition = position;
   }
 
   private void fillCurrentSndBuffer(int fromInclusive, final int toExclusive, final int levelLeft, final int levelRight) {
+    fromInclusive = Math.clamp(fromInclusive, 0, SND_BUFFER_SIZE);
+    final int end = Math.clamp(toExclusive, fromInclusive, SND_BUFFER_SIZE);
+
     final byte lowL = (byte) levelLeft;
     final byte highL = (byte) (levelLeft >> 8);
     final byte lowR = (byte) levelRight;
@@ -81,7 +97,7 @@ final class SndBufferContainer {
     final byte[] ptr = this.soundBuffer;
     boolean flag = ((fromInclusive >> 1) & 1) == 0;
 
-    while (fromInclusive < toExclusive) {
+    while (fromInclusive < end) {
       if (flag) {
         ptr[fromInclusive++] = lowL;
         ptr[fromInclusive++] = highL;
