@@ -28,12 +28,21 @@ public class TimingProfileTest extends TestCase {
   }
 
   @Test
-  public void testSpectrum128IntToPaper() {
+  public void testSpectrum128IntToPaperAndContention() {
     final TimingProfile profile = TimingProfile.SPECTRUM128;
     assertEquals(70908, profile.tstatesFrame);
     assertEquals(228, profile.tstatesPerLine);
-    assertEquals(14361, profile.tstatesStartScreen);
-    assertEquals(TYPE_SHIFT1_AND_FETCH_B2, profile.makeUlaFrame()[14361].type);
+    assertEquals(24, profile.tstatesPerBorderLeft);
+    assertEquals(24, profile.tstatesPerBorderRight);
+    assertEquals(14362, profile.tstatesStartScreen);
+    assertEquals(36, profile.tstatesInt);
+
+    final TimingProfile.UlaTact[] frame = profile.makeUlaFrame();
+    assertEquals(6, frame[14361].contention);
+    assertEquals(5, frame[14362].contention);
+    assertEquals(TYPE_BORDER_FETCH_B1, frame[14360].type);
+    assertEquals(TYPE_BORDER_FETCH_A1, frame[14361].type);
+    assertEquals(TYPE_SHIFT1_AND_FETCH_B2, frame[14362].type);
     assertEquals(profile.tstatesStartScreen,
         this.cpuTstateOfRaster(profile, this.ulaFirstPaper(profile)));
   }
@@ -58,6 +67,19 @@ public class TimingProfileTest extends TestCase {
     assertEquals(608, blit.visibleHeight());
     assertEquals(96, blit.imageX() + profile.tstatesFirstPaperTact * 4);
     assertEquals(112, blit.imageY() + profile.tstatesFirstPaperLine * 2);
+  }
+
+  @Test
+  public void testSpectrum128BorderMatches48KVisibleWidth() {
+    final TimingProfile profile = TimingProfile.SPECTRUM128;
+    final TimingProfile.BorderBlit blit = profile.alignBorderToPaper(96, 110, 512, 384);
+
+    assertEquals(0, blit.visibleX());
+    assertEquals(0, blit.visibleY());
+    assertEquals(704, blit.visibleWidth());
+    assertEquals(606, blit.visibleHeight());
+    assertEquals(96, blit.imageX() + profile.tstatesFirstPaperTact * 4);
+    assertEquals(110, blit.imageY() + profile.tstatesFirstPaperLine * 2);
   }
 
   @Test

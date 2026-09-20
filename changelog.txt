@@ -6,7 +6,7 @@ __2.4.1 (SNAPSHOT)__
 - updated dependencies
 - fixed packaged start scripts (Linux single-instance lock, Windows JVM flags and working directory, macOS CLI arguments, AppImage desktop entry)
 - fixed Linux speaker noise that stayed until the sound device was restarted, without adding delay between sound and action
-- fixed video timing so INT-synced border effects match real machines and stay aligned with the paper
+- fixed video timing so INT-synced border effects match real 48K, 128K and Pentagon machines and stay aligned with the paper
 - unused window space around the screen is filled with the current border color
 - fixed Low Pass Filter stereo balance and made the strength slider Mild–Strong
 - fixed undocumented XF/YF and WZ of repeating Z80 block instructions on the extra 5 T-states

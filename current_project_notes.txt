@@ -5,7 +5,7 @@
 - Repeating block ops share the extra 5 T-state cycle: rewind PC, WZ=PC+1, XF/YF from PCh, latch Q. INxR/OTxR still apply the Ped7g/Banks P/H tweak on that cycle.
 - Fixed packaged start scripts and assembly descriptors for `zxpoly-emul` and `zxpoly-sprite-corrector`. Sprite publish zip is `${project.build.finalName}.zip` (versioned).
 - Hardened Java Sound playback: do not close mixers during device scan, write full PCM frames, flush/close instead of drain. Playback stays low-latency: 3-frame (~60 ms) line, 1-frame prefill, 2-frame queue, and ~5 ms pads only when fewer than ~10 ms remain.
-- Aligned 48K/128K ULA raster with INT: first paper at 14336/14361, border paint uses raster phase, IN/OUT contention applied on the executing CPU. Border bitmap is scaled to the paper rectangle (2px/line). FULL layout uses left/top insets so Pentagon's uneven borders do not show black strips.
+- Aligned 48K/128K ULA raster with INT: first paper at 14336/14362, border paint uses raster phase, IN/OUT contention applied on the executing CPU. Border bitmap is scaled to the paper rectangle (2px/line). FULL layout uses left/top insets so Pentagon's uneven borders do not show black strips.
 - Window padding outside the CRT rectangle is filled with the current ULA border color (TV-filter/ULA+ aware) instead of black.
 - Sound LPF is a per-channel one-pole IIR applied once before stereo mix. Preferences store 0–100% strength (Mild→Strong); `alphaFromLevel` log-maps that onto a usable α band (~0.25…0.012). Left is no longer near-mute.
 - Start scripts and `zxpoly.exe` pin host scheduling so an unfocused window keeps full emulation speed.
@@ -13,6 +13,7 @@
 ## 2. Architecture & Technical Discoveries
 
 - 48K/128K INT is aligned with the paper column, not HBlank. `tstatesUlaPhase` rotates CPU T=0 onto that ULA t-state; Pentagon phase stays 0. Border pixels are written at `toRasterTstate(cpuT)`.
+- 128K first paper is 14362 (libspectrum/Fuse `top_left_pixel`); FAQ 14361 is the first contended cycle / screen-byte fetch, one T before the pixel. Extra 4 T-states per 128K line sit in horizontal retrace (24+24+52), not in the visible borders.
 - Full-border preferred height is `displayRows*2`. Stretching the raster to the window (`sy≈1.63`) put top-border bars under the 2x paper blit. `alignBorderToPaper` pins the ULA paper rectangle to the screen blit. FULL layout places paper at left/top insets so Pentagon's 36/28 and 64/48 borders do not leave black strips. Extra window space outside that CRT rectangle is filled from `resolveBorderRgb()`.
 - ULA IN/OUT contention belongs on `readPort`/`writePort` of the executing CPU. `ZxPolyModule.readIo`/`writeIo` must not add t-states (that delayed slave CPUs and double-contended the master).
 - Z80 `step()` now dispatches via dense opcode `tableswitch`es; GP registers are `int` 0–255. Public `getRegister`/`setRegister` IDs are unchanged.
