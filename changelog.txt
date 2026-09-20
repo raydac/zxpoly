@@ -5,6 +5,7 @@ __2.4.1 (SNAPSHOT)__
 - Java Sound no longer inserts silence gaps between AY frames
 - opening the menu or pausing emulation silences the speaker again
 - the embedded JDK has been updated to 27+36
+- fixed the main menu not appearing on Linux with JDK 27, and changing Look & Feel no longer hides menu titles or crashes
 - updated input4j to 1.4.0
 - updated dependencies
 - fixed packaged start scripts (Linux single-instance lock, Windows JVM flags and working directory, macOS CLI arguments, AppImage desktop entry)
@@ -13,6 +14,7 @@ __2.4.1 (SNAPSHOT)__
 - unused window space around the screen is filled with the current border color
 - fixed Low Pass Filter stereo balance and made the strength slider Mild–Strong
 - fixed undocumented XF/YF and WZ of repeating Z80 block instructions on the extra 5 T-states
+- WAV recording stays on after choosing a file until it is stopped manually
 
 __2.4.0 (14-may-2026)__
 

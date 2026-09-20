@@ -149,9 +149,15 @@ public final class Beeper {
     this.channels[channel] = level256 & 0xFF;
   }
 
-  public boolean hasActiveWavFile() {
-    return this.activeWavWriter.get() != NULL_WAV;
+  private static boolean isAssignedWavWriter(final IWavWriter writer) {
+    return writer != null && writer != NULL_WAV;
   }
+
+  public boolean hasActiveWavFile() {
+    return isAssignedWavWriter(this.activeWavWriter.get())
+        || isAssignedWavWriter(this.suspendedWavWriter.get());
+  }
+
 
   public void replaceSuspendedWriter(final IWavWriter replacement) {
     if (this.suspendedWavWriter.get() == null) {
@@ -161,6 +167,10 @@ public final class Beeper {
     if (wavWriter != replacement) {
       wavWriter.dispose();
     }
+  }
+
+  public void stopSuspendedWavWriter() {
+    this.replaceSuspendedWriter(NULL_WAV);
   }
 
   public void suspendWavWriter() {
@@ -184,19 +194,7 @@ public final class Beeper {
   }
 
   public IWavWriter makeTargetWavWriter(final File file) throws IOException {
-    final IWavWriter prev = this.activeWavWriter.getAndSet(NULL_WAV);
-    if (prev != null) {
-      prev.dispose();
-    }
-
-    final IWavWriter newWavWriter;
-    if (file == null) {
-      newWavWriter = NULL_WAV;
-    } else {
-      newWavWriter = new WavWriterImpl(this.timingProfile, file);
-    }
-
-    return newWavWriter;
+    return file == null ? NULL_WAV : new WavWriterImpl(this.timingProfile, file);
   }
 
   public Optional<SourceSoundPort> setSourceSoundPort(final SourceSoundPort soundPort) {
@@ -268,6 +266,10 @@ public final class Beeper {
   public void dispose() {
     this.activeInternalBeeper.getAndSet(NULL_BEEPER).dispose();
     this.activeWavWriter.getAndSet(NULL_WAV).dispose();
+    final IWavWriter suspended = this.suspendedWavWriter.getAndSet(null);
+    if (suspended != null) {
+      suspended.dispose();
+    }
   }
 
   public AudioFormat getAudioFormat() {

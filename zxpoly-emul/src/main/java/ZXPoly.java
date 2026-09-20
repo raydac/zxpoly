@@ -32,6 +32,9 @@ import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import picocli.CommandLine;
@@ -293,18 +296,41 @@ public class ZXPoly implements Runnable {
     }
   }
 
+  private static boolean tryLookAndFeel(final String className) {
+    try {
+      UIManager.setLookAndFeel(className);
+      return true;
+    } catch (final Exception ex) {
+      System.err.println("Can't select L&F: " + className);
+      return false;
+    }
+  }
+
+  private static void installLookAndFeel(final String requestedClass) {
+    JFrame.setDefaultLookAndFeelDecorated(false);
+    JDialog.setDefaultLookAndFeelDecorated(false);
+
+    for (final String className : Stream.of(
+            requestedClass,
+            UIManager.getSystemLookAndFeelClassName(),
+            UIManager.getCrossPlatformLookAndFeelClassName())
+        .filter(Objects::nonNull)
+        .distinct()
+        .toList()) {
+      if (tryLookAndFeel(className)) {
+        System.out.println("Look & Feel: " + className);
+        return;
+      }
+    }
+  }
+
   @Override
   public void run() {
     SwingUtilities.invokeLater(() -> {
       final MainForm form;
 
-      final String uiLfClass = Objects.requireNonNullElse(this.lookAndFeelClass,
-          AppOptions.getInstance().getUiLfClass());
-      try {
-        UIManager.setLookAndFeel(uiLfClass);
-      } catch (Exception ex) {
-        System.err.println("Can't select L&F: " + uiLfClass);
-      }
+      installLookAndFeel(Objects.requireNonNullElse(this.lookAndFeelClass,
+          AppOptions.getInstance().getUiLfClass()));
 
       try {
         String romPath = this.romFile;

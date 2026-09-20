@@ -1,5 +1,7 @@
 ## 1. Implementation Progress
 
+- Linux Mint + JDK 27: GTK chrome colors follow GNOME dark/light, and packing `MainForm` before the menu bar was finished could hide the JMenuBar. L&F is installed with fallback; the frame packs once after the bar is complete; Metal is used if the bar still has no height. Changing L&F hides the bar, updates UIs without `updateComponentTreeUI` (that repaint NPEs), then sets a concrete non-UIResource menu font so Synth uses it instead of a null GTK style font. A failed switch restores Metal so titles do not stay blank.
+- WAV capture toggle stayed off after choosing a file because the writer was parked for the save dialog and the menu/button were refreshed before it was restored. Recording now stays assigned through suspend/resume, stop actually closes the file, and the UI is refreshed after resume.
 - Flattened Z80 opcode decode to four 256-way switches (unprefixed, CB, ED, DDCB/FDCB) and stored 8-bit registers as `int` fields instead of `byte[8]`.
 - Collapsed undocumented ED opcodes onto `decodeED` `default` → `doNONI()`, and clear the ED prefix once on entry.
 - Repeating block ops share the extra 5 T-state cycle: rewind PC, WZ=PC+1, XF/YF from PCh, latch Q. INxR/OTxR still apply the Ped7g/Banks P/H tweak on that cycle.
@@ -15,6 +17,8 @@
 
 ## 2. Architecture & Technical Discoveries
 
+- Do not `pack()` / realize `MainForm` until `setJMenuBar`, glue, fast buttons, and menu visibility are done. A second pack after that is wasted; `menuBar.setVisible` after the peer exists is what JDK 27 GTK mishandles. Keep `JFrame.setDefaultLookAndFeelDecorated(false)` so GTK client-side decorations do not swallow the bar. Do not `setLookAndFeel` while a menu is posted. Synth `style.getFont()` is null for GTK UIResource fonts — set a plain `java.awt.Font` on menus after `updateUI`, and do not call `SwingUtilities.updateComponentTreeUI` (it repaints mid-switch).
+- JDK 27 GTK L&F (JDK-8365313) applies GNOME `prefer-dark` on gnome desktops with shell ≥ 47. Cinnamon often reports `sun.desktop=gnome`, which changes form colors vs JDK 26.
 - 48K/128K INT is aligned with the paper column, not HBlank. `tstatesUlaPhase` rotates CPU T=0 onto that ULA t-state; Pentagon phase stays 0. Border pixels are written at `toRasterTstate(cpuT)`.
 - 128K first paper is 14362 (libspectrum/Fuse `top_left_pixel`); FAQ 14361 is the first contended cycle / screen-byte fetch, one T before the pixel. Extra 4 T-states per 128K line sit in horizontal retrace (24+24+52), not in the visible borders.
 - Full-border preferred height is `displayRows*2`. Stretching the raster to the window (`sy≈1.63`) put top-border bars under the 2x paper blit. `alignBorderToPaper` pins the ULA paper rectangle to the screen blit. FULL layout places paper at left/top insets so Pentagon's 36/28 and 64/48 borders do not leave black strips. Extra window space outside that CRT rectangle is filled from `resolveBorderRgb()`.
@@ -60,6 +64,7 @@
 - Sound LPF still advances once per CPU step, not per T-state, so cutoff follows instruction density. Strength 0% is a light soften, 100% is muffled but not mute.
 - FUSE `edb2_1`/`edb3_1`/`edb9_2`/`edba_1`/`edbb_1` still disagree with Ped7g extra-cycle block flags; `Z80FuseTest` skips those five.
 - 48K/128K do not apply Fuse `contend_read_no_mreq` on internal cycles (JR, INC/DEC (HL), CALL/PUSH extra T). Opcode/operand/data/I/O bus cycles are contended.
+- Linux GTK L&F under JDK 27 can paint different window chrome (GNOME dark/light). If the menu bar is still missing, the window falls back to Metal automatically.
 
 ## 6. Open Questions & Pending Decisions
 
@@ -76,4 +81,6 @@
 
 ## 8. User Advice and Recommendations
 
-- None recorded yet.
+- Russian 1990s megademos (Insult, Anamnesis, Satisfaction, etc.) want Pentagon 128 + TR-DOS, not ZX-Poly mode. Use Options → ZX-128, Preferences → Timing = PENTAGON128, a 128+TR-DOS ROM (not the test ROM), turbo off, disk in drive A.
+- `ANAMNESI.TRD` is the CC’99 General Sound party build. TR-DOS `RUN` starts `boot.B` (RM 1996 GS/Scorpion menu), which waits forever on `IN A,(#BB)`. Demo start is `RUN "ANAMNESI"`; still needs the AY disk because ZX-Poly has no GS.
+- `insult.scl` is a mispacked disk: `boot.B` is a ProTracker 2.1 / Golden Disk intro, not Insult. TR-DOS `RUN` starts that intro (press a key → garbage). The megademo is `RUN "INSULT"`. If later parts fail, try `insultplus.scl` with `RUN "INSULT+"`.

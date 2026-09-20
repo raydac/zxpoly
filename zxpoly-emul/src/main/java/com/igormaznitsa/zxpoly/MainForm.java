@@ -80,9 +80,11 @@ import com.igormaznitsa.zxpspritecorrector.files.plugins.AbstractFilePlugin;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -147,6 +149,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -163,6 +166,7 @@ import javax.swing.JSeparator;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
+import javax.swing.MenuSelectionManager;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.MenuEvent;
@@ -398,7 +402,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
       this.wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS);
     }
 
-    this.setUndecorated(parameters.isUndecorated(false));
+    if (parameters.isUndecorated(false)) {
+      this.setUndecorated(true);
+    }
     Runtime.getRuntime().addShutdownHook(Thread.ofPlatform().unstarted(this::doOnShutdown));
 
     this.sysIcon = new ImageIcon(
@@ -606,9 +612,12 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.loadFastButtons();
 
-    updateTapeMenu();
+    this.updateTapeMenu();
 
-    pack();
+    this.menuBar.setVisible(parameters.isShowMainMenu(true));
+
+    this.pack();
+    this.ensureMenuBarPresented();
 
     this.setLocationRelativeTo(null);
 
@@ -698,8 +707,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           () -> this.setSnapshotFile(parameters.getOpenSnapshot(), FILTER_FORMAT_ALL_SNAPSHOTS));
     }
 
-    this.menuBar.setVisible(parameters.isShowMainMenu(true));
-
     final Bounds forceBounds = parameters.getBounds(null);
     if (forceBounds != null) {
       SwingUtilities.invokeLater(() -> {
@@ -739,6 +746,38 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
             .filter(x -> !x.isOptional() || fastButtonsInOptions.contains(x))
             .collect(Collectors.toList())
     );
+  }
+
+  private void ensureMenuBarPresented() {
+    if (this.menuBar == null || !this.menuBar.isVisible()) {
+      return;
+    }
+
+    try {
+      this.menuBar.revalidate();
+      this.menuBar.repaint();
+      this.getRootPane().revalidate();
+      this.getRootPane().repaint();
+
+      if (this.menuBar.getPreferredSize().height > 1) {
+        return;
+      }
+    } catch (final RuntimeException ex) {
+      LOGGER.warning("Menu bar layout failed: " + ex.getMessage());
+    }
+
+    final String fallback = UIManager.getCrossPlatformLookAndFeelClassName();
+    if (fallback.equals(UIManager.getLookAndFeel().getClass().getName())) {
+      return;
+    }
+
+    try {
+      this.applyLookAndFeelToWindows(fallback);
+      this.pack();
+      LOGGER.warning("Look & Feel hid the menu bar, switched to " + fallback);
+    } catch (final Exception ex) {
+      LOGGER.warning("Can't fall back Look & Feel: " + ex.getMessage());
+    }
   }
 
   private void doOnShutdown() {
@@ -1994,8 +2033,16 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     this.addComponentListener(new ComponentAdapter() {
       @Override
-      public void componentResized(ComponentEvent e) {
-        menuBar.repaint();
+      public void componentResized(final ComponentEvent e) {
+        MainForm.this.menuBar.revalidate();
+        MainForm.this.menuBar.repaint();
+      }
+    });
+
+    this.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowOpened(final WindowEvent e) {
+        SwingUtilities.invokeLater(MainForm.this::ensureMenuBarPresented);
       }
     });
 
@@ -2578,8 +2625,6 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     menuHelp.add(menuHelpDonation);
     menuBar.add(menuHelp);
     setJMenuBar(menuBar);
-
-    pack();
   }
 
   private void refreshServiceMenuState() {
@@ -2607,41 +2652,48 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
     this.suspendSteps();
     try {
       if (enable) {
-        final JFileChooser selectFileDialog = new JFileChooser(lastWrittenWavFile);
-        selectFileDialog.setDialogTitle("Record beeper as WAV");
-        selectFileDialog.addChoosableFileFilter(FILTER_FORMAT_WAV);
-        selectFileDialog.setMultiSelectionEnabled(false);
-        selectFileDialog.setFileSelectionMode(JFileChooser.FILES_ONLY);
-
-        if (selectFileDialog.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-          File selectedWavFile = selectFileDialog.getSelectedFile();
-          if (!selectedWavFile.getName().contains(".")) {
-            selectedWavFile =
-                new File(selectedWavFile.getParentFile(), selectedWavFile.getName() + ".wav");
-          }
-
-          this.lastWrittenWavFile = selectedWavFile;
-
-          if (selectedWavFile.isFile() && JOptionPane.showConfirmDialog(this,
-              "Do you want override file " + selectedWavFile.getName() + "?", "File exists",
-              JOptionPane.OK_CANCEL_OPTION) == CANCEL_OPTION) {
-            return;
-          }
-
-          try {
-            final Beeper.IWavWriter wavWriter =
-                this.board.getBeeper().makeTargetWavWriter(selectedWavFile);
-            this.board.getBeeper().replaceSuspendedWriter(wavWriter);
-          } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "Can't start WAV recording", ex);
-            JOptionPane.showMessageDialog(this, "Can't start write WAV file", "Error",
-                JOptionPane.ERROR_MESSAGE);
-          }
-        }
+        this.startWavRecordingFromFileDialog();
+      } else {
+        this.board.getBeeper().stopSuspendedWavWriter();
       }
     } finally {
-      this.refreshServiceMenuState();
       this.resumeSteps();
+      this.refreshServiceMenuState();
+    }
+  }
+
+  private void startWavRecordingFromFileDialog() {
+    final JFileChooser selectFileDialog = new JFileChooser(this.lastWrittenWavFile);
+    selectFileDialog.setDialogTitle("Record beeper as WAV");
+    selectFileDialog.addChoosableFileFilter(FILTER_FORMAT_WAV);
+    selectFileDialog.setMultiSelectionEnabled(false);
+    selectFileDialog.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+    if (selectFileDialog.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+      return;
+    }
+
+    File selectedWavFile = selectFileDialog.getSelectedFile();
+    if (!selectedWavFile.getName().contains(".")) {
+      selectedWavFile =
+          new File(selectedWavFile.getParentFile(), selectedWavFile.getName() + ".wav");
+    }
+
+    this.lastWrittenWavFile = selectedWavFile;
+
+    if (selectedWavFile.isFile() && JOptionPane.showConfirmDialog(this,
+        "Do you want override file " + selectedWavFile.getName() + "?", "File exists",
+        JOptionPane.OK_CANCEL_OPTION) == CANCEL_OPTION) {
+      return;
+    }
+
+    try {
+      this.board.getBeeper().replaceSuspendedWriter(
+          this.board.getBeeper().makeTargetWavWriter(selectedWavFile));
+    } catch (IOException ex) {
+      LOGGER.log(Level.SEVERE, "Can't start WAV recording", ex);
+      JOptionPane.showMessageDialog(this, "Can't start write WAV file", "Error",
+          JOptionPane.ERROR_MESSAGE);
     }
   }
 
@@ -2714,18 +2766,138 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           new JRadioButtonMenuItem(lf.getName(), lf.getClassName().equals(selectedClass));
       menuItem.addItemListener(e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          try {
-            UIManager.setLookAndFeel(lf.getClassName());
-            SwingUtilities.invokeLater(() -> SwingUtilities.updateComponentTreeUI(MainForm.this));
-            AppOptions.getInstance().setUiLfClass(lf.getClassName());
-          } catch (Exception ex) {
-            LOGGER.warning("Can't change L&F: " + ex.getMessage());
-          }
+          MenuSelectionManager.defaultManager().clearSelectedPath();
+          SwingUtilities.invokeLater(() -> this.applyLookAndFeel(lf.getClassName()));
         }
       });
       buttonGroup.add(menuItem);
       menu.add(menuItem);
     });
+  }
+
+  private void applyLookAndFeel(final String className) {
+    MenuSelectionManager.defaultManager().clearSelectedPath();
+
+    try {
+      this.applyLookAndFeelToWindows(className);
+    } catch (final Exception ex) {
+      LOGGER.warning("Can't change L&F: " + ex.getMessage());
+      this.restoreCrossPlatformLookAndFeel();
+      return;
+    }
+
+    this.ensureMenuBarPresented();
+    AppOptions.getInstance().setUiLfClass(className);
+  }
+
+  private void restoreCrossPlatformLookAndFeel() {
+    final String fallback = UIManager.getCrossPlatformLookAndFeelClassName();
+    try {
+      this.applyLookAndFeelToWindows(fallback);
+      this.ensureMenuBarPresented();
+    } catch (final Exception ex) {
+      LOGGER.warning("Can't restore Look & Feel: " + ex.getMessage());
+    }
+  }
+
+  private void applyLookAndFeelToWindows(final String className) throws Exception {
+    UIManager.setLookAndFeel(className);
+
+    final Font uiFont = this.concreteFont(this.resolveUiFont());
+    this.ensureMenuFontsInDefaults(uiFont);
+
+    final boolean menuBarVisible = this.menuBar != null && this.menuBar.isVisible();
+    if (this.menuBar != null) {
+      this.menuBar.setVisible(false);
+    }
+
+    try {
+      for (final Window window : Window.getWindows()) {
+        window.setFont(uiFont);
+        this.updateComponentTreeUi(window, uiFont);
+        window.invalidate();
+        window.validate();
+      }
+    } finally {
+      if (this.menuBar != null) {
+        this.menuBar.setVisible(menuBarVisible);
+      }
+    }
+
+    this.repaint();
+  }
+
+  private void updateComponentTreeUi(final Component component, final Font font) {
+    if (component instanceof JComponent jComponent) {
+      try {
+        jComponent.updateUI();
+      } catch (final RuntimeException ex) {
+        LOGGER.warning("Can't update UI for " + jComponent.getClass().getName() + ": "
+            + ex.getMessage());
+      }
+      this.applyMenuFont(jComponent, font);
+
+      final JPopupMenu popup = jComponent.getComponentPopupMenu();
+      if (popup != null) {
+        this.updateComponentTreeUi(popup, font);
+      }
+    }
+
+    final Component[] children;
+    if (component instanceof JMenu menu) {
+      children = menu.getMenuComponents();
+    } else if (component instanceof Container container) {
+      children = container.getComponents();
+    } else {
+      children = null;
+    }
+
+    if (children != null) {
+      for (final Component child : children) {
+        this.updateComponentTreeUi(child, font);
+      }
+    }
+  }
+
+  private Font resolveUiFont() {
+    for (final String key : List.of("Menu.font", "MenuItem.font", "Label.font")) {
+      try {
+        final Font font = UIManager.getFont(key);
+        if (font != null) {
+          return font;
+        }
+      } catch (final RuntimeException ex) {
+        LOGGER.warning("Can't read " + key + ": " + ex.getMessage());
+      }
+    }
+
+    final Font frameFont = this.getFont();
+    return frameFont == null ? new Font(Font.DIALOG, Font.PLAIN, 12) : frameFont;
+  }
+
+  private Font concreteFont(final Font font) {
+    return new Font(font.getName(), font.getStyle(), font.getSize());
+  }
+
+  private void ensureMenuFontsInDefaults(final Font font) {
+    for (final String key : List.of(
+        "Menu.font",
+        "MenuItem.font",
+        "MenuBar.font",
+        "RadioButtonMenuItem.font",
+        "CheckBoxMenuItem.font",
+        "PopupMenu.font")) {
+      UIManager.getLookAndFeelDefaults().put(key, font);
+      UIManager.put(key, font);
+    }
+  }
+
+  private void applyMenuFont(final Component component, final Font font) {
+    if (component instanceof JMenuBar
+        || component instanceof JMenuItem
+        || component instanceof JPopupMenu) {
+      component.setFont(font);
+    }
   }
 
   private void setDisableZxKeyboardEvents(final boolean disable) {
