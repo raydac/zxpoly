@@ -128,8 +128,9 @@ public final class Motherboard implements ZxPolyConstants {
 
     this.boardMode = boardMode;
 
-    final float lowPassFilter = AppOptions.getInstance().isLpfActive() ? AppOptions.getInstance()
-        .getLpfValue() / SoundChannelLowPassFilter.COEFF : SoundChannelLowPassFilter.OFF;
+    final float lowPassFilter = AppOptions.getInstance().isLpfActive()
+        ? SoundChannelLowPassFilter.alphaFromLevel(AppOptions.getInstance().getLpfValue())
+        : SoundChannelLowPassFilter.OFF;
     LOGGER.info("Low Pass Sound Filter is " + (lowPassFilter < 0 ? "OFF" : lowPassFilter));
 
     this.beeper =

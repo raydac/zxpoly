@@ -268,13 +268,12 @@ public class OptionsPanel extends JTabbedPane {
     labelEmulateFFport = new JLabel();
     checkEmulateFFport = new JCheckBox();
     checkboxActivateLowPassFilter = new JCheckBox();
-    final double divider = Math.exp(1) - 1.0d;
-    sliderLowPassFilterValue = new CustomIntSlider(0, 1000, d -> {
-      if (d == 0.0d) {
-        return 0.0d;
-      }
-      return (Math.exp((double) d / SoundChannelLowPassFilter.COEFF) - 1) / divider;
-    });
+    sliderLowPassFilterValue = new CustomIntSlider(
+        0,
+        SoundChannelLowPassFilter.LEVEL_MAX,
+        "Mild",
+        "Strong",
+        value -> value + "%");
     keySelectorKempstonDown = new KeyCodeChooser();
     keySelectorKempstonLeft = new KeyCodeChooser();
     keySelectorKempstonUp = new KeyCodeChooser();
@@ -466,10 +465,15 @@ public class OptionsPanel extends JTabbedPane {
 
     final JPanel panelLowPassFilter = new JPanel(new BorderLayout());
     panelLowPassFilter.setBorder(new TitledBorder("Low Pass Filter"));
+    panelLowPassFilter.setToolTipText(
+        "Softens beeper and AY treble. Right is more muffled, like a small TV speaker.");
+    sliderLowPassFilterValue.setToolTipText(panelLowPassFilter.getToolTipText());
 
     panelLowPassFilter.add(sliderLowPassFilterValue, BorderLayout.CENTER);
 
     checkboxActivateLowPassFilter.setText("Active");
+    checkboxActivateLowPassFilter.setToolTipText(
+        "Turn the filter on. The chosen strength is applied after restart.");
     final JPanel flow = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     flow.add(checkboxActivateLowPassFilter);
     panelLowPassFilter.add(flow, BorderLayout.SOUTH);

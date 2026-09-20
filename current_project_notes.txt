@@ -7,6 +7,7 @@
 - Hardened Java Sound playback: do not close mixers during device scan, write full PCM frames, flush/close instead of drain. Playback stays low-latency: 3-frame (~60 ms) line, 1-frame prefill, 2-frame queue, and ~5 ms pads only when fewer than ~10 ms remain.
 - Aligned 48K/128K ULA raster with INT: first paper at 14336/14361, border paint uses raster phase, IN/OUT contention applied on the executing CPU. Border bitmap is scaled to the paper rectangle (2px/line). FULL layout uses left/top insets so Pentagon's uneven borders do not show black strips.
 - Window padding outside the CRT rectangle is filled with the current ULA border color (TV-filter/ULA+ aware) instead of black.
+- Sound LPF is a per-channel one-pole IIR applied once before stereo mix. Preferences store 0–100% strength (Mild→Strong); `alphaFromLevel` log-maps that onto a usable α band (~0.25…0.012). Left is no longer near-mute.
 
 ## 2. Architecture & Technical Discoveries
 
@@ -25,6 +26,7 @@
 - AppImage copies `${project.build.finalName}.jar` (versioned); Linux tar.gz destName is `zxpoly-emul.jar`.
 - Mac Resources already contain `appico.png` / `appico.icns` (binary files hidden from some workspace searches). Sprite zip already contains `icon.png`.
 - Windows start scripts now `cd /d "%~dp0"` then use `%cd%` as the install directory.
+- Beeper LPF must run once per channel before left/right mix. Calling `SoundChannelLowPassFilter.update` from both mixers double-stepped the IIR on beeper/AY/TS center channels and made L≠R. Slider is 0–100% Mild→Strong; values stored as 0–1000 pass-through α are inverted back on load.
 
 ## 3. Technical Debt & Refactoring
 
@@ -43,6 +45,7 @@
 - macOS `CFBundleVersion` is filtered from `${project.version}` (includes `-SNAPSHOT` on snapshot builds).
 - Single-instance lock uses `kill -0` on the saved PID (works on Linux and macOS; a reused PID can still false-positive).
 - Linux audio still depends on the selected mixer (Pulse/PipeWire/ALSA). If a device itself is broken, toggling speaker still recreates the line.
+- Sound LPF still advances once per CPU step, not per T-state, so cutoff follows instruction density. Strength 0% is a light soften, 100% is muffled but not mute.
 - FUSE `edb2_1`/`edb3_1`/`edb9_2`/`edba_1`/`edbb_1` still disagree with Ped7g extra-cycle block flags; `Z80FuseTest` skips those five.
 
 ## 6. Open Questions & Pending Decisions

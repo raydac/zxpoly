@@ -14,23 +14,32 @@ public class CustomIntSlider extends JPanel {
   private final JLabel labelMinIndicator;
   private final JLabel labelMaxIndicator;
   private final JLabel labelIndicator;
-  private final IntFunction<Double> convertingFunction;
-  private double value;
+  private final IntFunction<String> valueLabel;
 
   public CustomIntSlider(
       final int min,
       final int max,
-      final IntFunction<Double> convertingFunction) {
+      final String minLabel,
+      final String maxLabel,
+      final IntFunction<String> valueLabel) {
     super(new GridBagLayout());
 
-    this.convertingFunction = requireNonNull(convertingFunction);
+    this.valueLabel = requireNonNull(valueLabel);
 
     this.slider = new JSlider(JSlider.HORIZONTAL, min, max, min);
     this.slider.setPaintTrack(true);
     this.slider.setPaintLabels(false);
-    this.slider.setPaintTicks(false);
+    this.slider.setMajorTickSpacing(Math.max(1, (max - min) / 4));
+    this.slider.setPaintTicks(true);
 
-    this.labelIndicator = new JLabel(this.valueAsText(min));
+    this.labelMinIndicator = new JLabel(requireNonNull(minLabel));
+    this.labelMinIndicator.setHorizontalAlignment(JLabel.LEFT);
+
+    this.labelIndicator = new JLabel(this.valueLabel.apply(min));
+    this.labelIndicator.setHorizontalAlignment(JLabel.CENTER);
+
+    this.labelMaxIndicator = new JLabel(requireNonNull(maxLabel));
+    this.labelMaxIndicator.setHorizontalAlignment(JLabel.RIGHT);
 
     final GridBagConstraints gridBagConstraints = new GridBagConstraints();
     gridBagConstraints.anchor = GridBagConstraints.WEST;
@@ -38,26 +47,16 @@ public class CustomIntSlider extends JPanel {
     gridBagConstraints.gridx = 0;
     gridBagConstraints.weightx = 1;
     gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-
-    this.labelMinIndicator = new JLabel(valueAsText(min));
-    this.labelMinIndicator.setHorizontalAlignment(JLabel.LEFT);
     this.add(this.labelMinIndicator, gridBagConstraints);
 
     gridBagConstraints.anchor = GridBagConstraints.CENTER;
-    gridBagConstraints.gridy = 0;
     gridBagConstraints.gridx = 1;
     gridBagConstraints.weightx = 1000;
-
-    this.labelIndicator.setHorizontalAlignment(JLabel.CENTER);
     this.add(this.labelIndicator, gridBagConstraints);
 
     gridBagConstraints.anchor = GridBagConstraints.EAST;
-    gridBagConstraints.gridy = 0;
     gridBagConstraints.gridx = 2;
     gridBagConstraints.weightx = 1;
-
-    this.labelMaxIndicator = new JLabel(valueAsText(max));
-    this.labelMinIndicator.setHorizontalAlignment(JLabel.RIGHT);
     this.add(this.labelMaxIndicator, gridBagConstraints);
 
     gridBagConstraints.anchor = GridBagConstraints.CENTER;
@@ -65,13 +64,10 @@ public class CustomIntSlider extends JPanel {
     gridBagConstraints.gridx = 0;
     gridBagConstraints.gridwidth = 3;
     gridBagConstraints.weightx = 1000;
-
     this.add(this.slider, gridBagConstraints);
 
-    this.slider.addChangeListener(e -> {
-      this.labelIndicator.setText(
-          "<html><b>" + this.valueAsText(this.slider.getValue()) + "</b></html>");
-    });
+    this.slider.addChangeListener(e -> this.labelIndicator.setText(
+        "<html><b>" + this.valueLabel.apply(this.slider.getValue()) + "</b></html>"));
   }
 
   @Override
@@ -84,17 +80,21 @@ public class CustomIntSlider extends JPanel {
     this.slider.setEnabled(value);
   }
 
+  @Override
+  public void setToolTipText(final String text) {
+    super.setToolTipText(text);
+    this.slider.setToolTipText(text);
+    this.labelMinIndicator.setToolTipText(text);
+    this.labelMaxIndicator.setToolTipText(text);
+    this.labelIndicator.setToolTipText(text);
+  }
+
   public int getValue() {
     return this.slider.getValue();
   }
 
   public void setValue(final int value) {
     this.slider.setValue(value);
-  }
-
-  private String valueAsText(final int value) {
-    final double doubleValue = this.convertingFunction.apply(value);
-    return String.format("%.3f", doubleValue);
   }
 
 }

@@ -17,6 +17,9 @@
 
 package com.igormaznitsa.zxpoly.utils;
 
+import static com.igormaznitsa.zxpoly.components.sound.SoundChannelLowPassFilter.LEVEL_DEFAULT;
+import static com.igormaznitsa.zxpoly.components.sound.SoundChannelLowPassFilter.LEVEL_MAX;
+
 import com.igormaznitsa.zxpoly.components.BoardMode;
 import com.igormaznitsa.zxpoly.components.sound.VolumeProfile;
 import com.igormaznitsa.zxpoly.components.video.BorderWidth;
@@ -120,7 +123,11 @@ public final class AppOptions {
   public int getLpfValue() {
     this.locker.lock();
     try {
-      return Math.min(100, Math.max(0, preferences.getInt(Option.LPF_VALUE.name(), 20)));
+      final int stored = preferences.getInt(Option.LPF_VALUE.name(), LEVEL_DEFAULT);
+      if (stored > LEVEL_MAX) {
+        return Math.clamp(LEVEL_MAX - Math.round(stored / 10.0f), 0, LEVEL_MAX);
+      }
+      return Math.clamp(stored, 0, LEVEL_MAX);
     } finally {
       this.locker.unlock();
     }
@@ -129,7 +136,7 @@ public final class AppOptions {
   public void setLpfValue(final int value) {
     this.locker.lock();
     try {
-      preferences.putInt(Option.LPF_VALUE.name(), value);
+      preferences.putInt(Option.LPF_VALUE.name(), Math.clamp(value, 0, LEVEL_MAX));
     } finally {
       this.locker.unlock();
     }

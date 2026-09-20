@@ -91,6 +91,7 @@ public final class Beeper {
   private final AtomicReference<IBeeper> activeInternalBeeper = new AtomicReference<>(NULL_BEEPER);
   private final SoundChannelLowPassFilter[] soundChannelLowPassFilters;
   private final int[] channels = new int[8];
+  private final int[] filteredChannels = new int[8];
   private final MixerFunction mixerLeft;
   private final MixerFunction mixerRight;
   private final TimingProfile timingProfile;
@@ -218,10 +219,9 @@ public final class Beeper {
 
   public void updateState(final boolean tiStatesInt, final boolean wallClockInt,
                           final int spentTiStates) {
-    final int leftChannel =
-        this.mixerLeft.mix(this.channels, this.soundChannelLowPassFilters, spentTiStates);
-    final int rightChannel =
-        this.mixerRight.mix(this.channels, this.soundChannelLowPassFilters, spentTiStates);
+    final int[] mixedChannels = this.filterChannels(spentTiStates);
+    final int leftChannel = this.mixerLeft.mix(mixedChannels);
+    final int rightChannel = this.mixerRight.mix(mixedChannels);
 
     this.activeInternalBeeper.get()
         .updateState(tiStatesInt,
@@ -238,6 +238,18 @@ public final class Beeper {
             leftChannel,
             rightChannel
         );
+  }
+
+  private int[] filterChannels(final int spentTiStates) {
+    if (!this.soundChannelLowPassFilters[0].isActive()) {
+      return this.channels;
+    }
+
+    for (int i = 0; i < this.channels.length; i++) {
+      this.filteredChannels[i] =
+          this.soundChannelLowPassFilters[i].update(spentTiStates, this.channels[i]);
+    }
+    return this.filteredChannels;
   }
 
   public void reset() {
@@ -267,7 +279,7 @@ public final class Beeper {
 
   @FunctionalInterface
   private interface MixerFunction {
-    int mix(int[] values, SoundChannelLowPassFilter[] filters, int spentTiStates);
+    int mix(int[] values);
   }
 
   public interface IWavWriter {
