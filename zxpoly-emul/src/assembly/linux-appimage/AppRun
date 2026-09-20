@@ -1,7 +1,11 @@
 #!/bin/sh
-JAVA_FLAGS="-XX:+UseZGC -XX:+TieredCompilation -XX:MaxMetaspaceSize=128m -Dsun.rmi.transport.tcp.maxConnectionThreads=0 -XX:-DontCompileHugeMethods -XX:+DisableAttachMechanism -Xms512m -Xmx1024m --add-opens=java.base/java.util=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
+JAVA_FLAGS="-XX:+UseZGC -XX:+TieredCompilation -XX:MaxMetaspaceSize=128m -Dsun.rmi.transport.tcp.maxConnectionThreads=0 -XX:-DontCompileHugeMethods -XX:+DisableAttachMechanism -Dswing.bufferPerWindow=false -Xms512m -Xmx1024m --add-opens=java.base/java.util=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
 JAVA_RUN="$APPDIR/jre/bin/java"
 JAVA_LOG_CONFIG="$APPDIR/logger.properties"
+
+export vblank_mode="${vblank_mode:-0}"
+export __GL_SYNC_TO_VBLANK="${__GL_SYNC_TO_VBLANK:-0}"
+renice -n -5 $$ >/dev/null 2>&1 || true
 
 for jar in "$APPDIR"/zxpoly-emul-*.jar; do
   if [ -f "$jar" ]; then

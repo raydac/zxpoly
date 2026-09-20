@@ -25,6 +25,7 @@ import com.igormaznitsa.zxpoly.components.video.BorderWidth;
 import com.igormaznitsa.zxpoly.components.video.VirtualKeyboardLook;
 import com.igormaznitsa.zxpoly.components.video.timings.TimingProfile;
 import com.igormaznitsa.zxpoly.utils.AppOptions;
+import com.igormaznitsa.zxpoly.utils.HostOsPerformance;
 import java.io.File;
 import java.util.Objects;
 import java.util.logging.Formatter;
@@ -256,6 +257,8 @@ public class ZXPoly implements Runnable {
   }
 
   public static void main(final String... args) {
+    HostOsPerformance.apply();
+
     // find it before parse cli because we must get some properties just on start
     AppOptions.setForceFile(findPropertiesFileAmongArgs(args));
 

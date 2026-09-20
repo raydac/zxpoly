@@ -57,8 +57,9 @@ func main() {
 	path, err := os.Executable()
 	if err == nil {
 		base_folder := filepath.Dir(path)
+		jarPath := base_folder + JAR_FILE
 
-		cmd := exec.Command(base_folder+JDK_PATH,
+		args := []string{
 			"-XX:+UseZGC",
 			"-XX:MaxMetaspaceSize=128m",
 			"-Xms512M",
@@ -67,21 +68,32 @@ func main() {
 			"-XX:-DontCompileHugeMethods",
 			"-XX:+DisableAttachMechanism",
 			"-Dsun.java2d.d3d=true",
-			"-Dsun.java2d.ddoffscreen=true",
-			"-Dsun.java2d.ddforcevram=true",
-			"-Dsun.java2d.ddscale=true",
-			"-Dsun.java2d.accthreshold=0",
+			"-Dsun.java2d.d3d.onscreen=false",
+			"-Dswing.bufferPerWindow=false",
 			"--add-opens=java.base/java.util=ALL-UNNAMED",
 			"--enable-native-access=ALL-UNNAMED",
-			"-jar", base_folder+JAR_FILE)
-		fmt.Printf("Application starting...\n")
+			"-jar", jarPath,
+		}
+		args = append(args, os.Args[1:]...)
 
+		cmd := exec.Command(base_folder+JDK_PATH, args...)
+		cmd.Dir = base_folder
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			HideWindow:    true,
+			CreationFlags: aboveNormalPriorityClass,
+		}
+
+		fmt.Printf("Application starting...\n")
 
 		err = cmd.Start()
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		if cmd.Process != nil {
+			pinChildToForegroundSpeed(cmd.Process.Pid)
 		}
 
 		fmt.Printf("Waiting application completion...\n")

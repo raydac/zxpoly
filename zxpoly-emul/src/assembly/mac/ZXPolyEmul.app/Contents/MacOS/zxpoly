@@ -1,10 +1,17 @@
 #!/bin/sh
 BASEDIR="$(dirname "$0")"
-JAVA_FLAGS="-XX:+UseZGC -XX:+TieredCompilation -XX:MaxMetaspaceSize=128m -Dsun.rmi.transport.tcp.maxConnectionThreads=0 -XX:-DontCompileHugeMethods -XX:+DisableAttachMechanism -Xms512m -Xmx1024m --add-opens=java.base/java.util=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
+JAVA_FLAGS="-XX:+UseZGC -XX:+TieredCompilation -XX:MaxMetaspaceSize=128m -Dsun.rmi.transport.tcp.maxConnectionThreads=0 -XX:-DontCompileHugeMethods -XX:+DisableAttachMechanism -Dswing.bufferPerWindow=false -Xms512m -Xmx1024m --add-opens=java.base/java.util=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
+
+renice -n -5 $$ >/dev/null 2>&1 || true
+
+JAVA_BIN="$BASEDIR"/jre/bin/java
 
 for jar in "$BASEDIR"/zxpoly-emul*.jar; do
   if [ -f "$jar" ]; then
-    exec "$BASEDIR"/jre/bin/java $JAVA_FLAGS -Xdock:icon="$BASEDIR"/../Resources/appico.png -jar "$jar" "$@"
+    if command -v caffeinate >/dev/null 2>&1; then
+      exec caffeinate -i "$JAVA_BIN" $JAVA_FLAGS -Xdock:icon="$BASEDIR"/../Resources/appico.png -jar "$jar" "$@"
+    fi
+    exec "$JAVA_BIN" $JAVA_FLAGS -Xdock:icon="$BASEDIR"/../Resources/appico.png -jar "$jar" "$@"
   fi
 done
 

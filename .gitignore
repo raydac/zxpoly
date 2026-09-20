@@ -28,3 +28,4 @@ versioninfo.go
 /zxpoly-emul-win-launcher/.build/goversioninfo
 /zxpoly-emul-win-launcher/.build/main.go
 /zxpoly-emul-win-launcher/.build/versioninfo.json
+/zxpoly-emul-win-launcher/.build/hostspeed.go

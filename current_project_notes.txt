@@ -8,6 +8,7 @@
 - Aligned 48K/128K ULA raster with INT: first paper at 14336/14361, border paint uses raster phase, IN/OUT contention applied on the executing CPU. Border bitmap is scaled to the paper rectangle (2px/line). FULL layout uses left/top insets so Pentagon's uneven borders do not show black strips.
 - Window padding outside the CRT rectangle is filled with the current ULA border color (TV-filter/ULA+ aware) instead of black.
 - Sound LPF is a per-channel one-pole IIR applied once before stereo mix. Preferences store 0–100% strength (Mild→Strong); `alphaFromLevel` log-maps that onto a usable α band (~0.25…0.012). Left is no longer near-mute.
+- Start scripts and `zxpoly.exe` pin host scheduling so an unfocused window keeps full emulation speed.
 
 ## 2. Architecture & Technical Discoveries
 
@@ -22,6 +23,8 @@
 - Emulator bundles a JRE per platform (`jre/` next to the jar). Sprite corrector zip uses the system JRE (`JAVA_HOME` / `java` on PATH).
 - Linux Pulse/ALSA Java Sound: `Mixer.close()` closes every line; `SourceDataLine.write` may return 0/partial; underrun (XRUN) can emit persistent noise until the line is reopened. Windows DirectSound recovers more cleanly. Java Sound buffer size is latency; keep it small and pad only when fewer than ~10 ms remain.
 - Emulator Linux/mac/AppImage launchers share the ZGC flag set from 2.4.0. Windows `zxpoly.exe` (Go launcher) is the primary Windows entry; `start.cmd` / `start_log.cmd` are fallbacks.
+- Host-OS unfocused throttling: Windows `SetProcessInformation` opts out of EcoQoS and timer-ignore, plus in-process `timeBeginPeriod(1)`; Linux sets `vblank_mode=0` / `__GL_SYNC_TO_VBLANK=0`; macOS uses `NSAppSleepDisabled` and `caffeinate -i`. Do not use `-XX:+ForceTimeHighResolution`.
+- Swing BufferStrategy vsync is off (`swing.bufferPerWindow=false`). Windows keeps D3D but disables on-screen Present waits (`sun.java2d.d3d.onscreen=false`). Obsolete DirectDraw flags were removed from the Go launcher.
 - Assembly plugin uses `appendAssemblyId=false` and per-execution `finalName`, so descriptor `<id>` does not affect artifact file names.
 - AppImage copies `${project.build.finalName}.jar` (versioned); Linux tar.gz destName is `zxpoly-emul.jar`.
 - Mac Resources already contain `appico.png` / `appico.icns` (binary files hidden from some workspace searches). Sprite zip already contains `icon.png`.

@@ -6,9 +6,12 @@ JAVA_HOME="$ZXPOLY_HOME/jre"
 #JAVA_EXTRA_GFX_FLAGS="-Dcom.sun.management.jmxremote=true -Dsun.java2d.opengl=true"
 #JAVA_EXTRA_GFX_FLAGS="-Dsun.java2d.opengl=true"
 
-JAVA_FLAGS="-XX:+UseZGC -XX:+TieredCompilation -XX:MaxMetaspaceSize=128m -Dsun.rmi.transport.tcp.maxConnectionThreads=0 -XX:-DontCompileHugeMethods -XX:+DisableAttachMechanism -Xms512m -Xmx1024m --add-opens=java.base/java.util=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
+JAVA_FLAGS="-XX:+UseZGC -XX:+TieredCompilation -XX:MaxMetaspaceSize=128m -Dsun.rmi.transport.tcp.maxConnectionThreads=0 -XX:-DontCompileHugeMethods -XX:+DisableAttachMechanism -Dswing.bufferPerWindow=false -Xms512m -Xmx1024m --add-opens=java.base/java.util=ALL-UNNAMED --enable-native-access=ALL-UNNAMED"
 
 JAVA_RUN="$JAVA_HOME/bin/java"
+
+export vblank_mode="${vblank_mode:-0}"
+export __GL_SYNC_TO_VBLANK="${__GL_SYNC_TO_VBLANK:-0}"
 
 if [ -f "$ZXPOLY_HOME/.pid" ]; then
     SAVED_PID="$(cat "$ZXPOLY_HOME/.pid")"
@@ -20,6 +23,7 @@ fi
 
 "$JAVA_RUN" $JAVA_FLAGS $JAVA_EXTRA_GFX_FLAGS -jar "$ZXPOLY_HOME/zxpoly-emul.jar" "$@" &
 THE_PID=$!
+renice -n -5 "$THE_PID" >/dev/null 2>&1 || true
 echo "$THE_PID" > "$ZXPOLY_HOME/.pid"
 wait "$THE_PID"
 rm -f "$ZXPOLY_HOME/.pid"

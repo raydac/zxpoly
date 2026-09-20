@@ -26,5 +26,9 @@
     <string>NSApplication</string>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSAppSleepDisabled</key>
+    <true/>
+    <key>NSSupportsAutomaticTermination</key>
+    <false/>
   </dict>
 </plist>
