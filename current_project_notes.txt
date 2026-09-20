@@ -3,7 +3,7 @@
 - Flattened Z80 opcode decode to four 256-way switches (unprefixed, CB, ED, DDCB/FDCB) and stored 8-bit registers as `int` fields instead of `byte[8]`.
 - Collapsed undocumented ED opcodes onto `decodeED` `default` → `doNONI()`, and clear the ED prefix once on entry.
 - Repeating block ops share the extra 5 T-state cycle: rewind PC, WZ=PC+1, XF/YF from PCh, latch Q. INxR/OTxR still apply the Ped7g/Banks P/H tweak on that cycle.
-- Fixed packaged start scripts and assembly descriptors for `zxpoly-emul` and `zxpoly-sprite-corrector`.
+- Fixed packaged start scripts and assembly descriptors for `zxpoly-emul` and `zxpoly-sprite-corrector`. Sprite publish zip is `${project.build.finalName}.zip` (versioned).
 - Hardened Java Sound playback: do not close mixers during device scan, write full PCM frames, flush/close instead of drain. Playback stays low-latency: 3-frame (~60 ms) line, 1-frame prefill, 2-frame queue, and ~5 ms pads only when fewer than ~10 ms remain.
 - Aligned 48K/128K ULA raster with INT: first paper at 14336/14361, border paint uses raster phase, IN/OUT contention applied on the executing CPU. Border bitmap is scaled to the paper rectangle (2px/line). FULL layout uses left/top insets so Pentagon's uneven borders do not show black strips.
 - Window padding outside the CRT rectangle is filled with the current ULA border color (TV-filter/ULA+ aware) instead of black.
@@ -58,7 +58,7 @@
 ## 7. Useful References
 
 - Emulator assemblies: `zxpoly-emul/src/assembly/{linux,linux_aarch,windows,mac,mac_aarch}.xml` plus `linux-appimage/`.
-- Sprite zip: `zxpoly-sprite-corrector/src/assemble/zip.xml`; publish zip name is `zxpoly-corrector` via `app.name`.
+- Sprite zip: `zxpoly-sprite-corrector/src/assemble/zip.xml`; publish zip name is `${project.build.finalName}` (versioned, same as emulator).
 - Publish emulator: Maven `install` with JRE profiles; AppImage extra profile `appimage`.
 - Publish sprite corrector: profile `publish`.
 - Maven on this machine: `mvn22`.
