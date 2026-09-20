@@ -55,8 +55,6 @@ public final class Z80 {
   public static final int SIGNAL_OUT_nHALT = 2;
   public static final int SIGNAL_OUT_ALL_INACTIVE = SIGNAL_OUT_nHALT | SIGNAL_OUT_nM1;
 
-  // if the flag is true then it makes green z80bltst.tap v5.0 2022-01-11 by Ped7g
-  // but in the same time FUSE Z80 tests are red for block commands
   private static final byte[] FTABLE_SZYX;
   private static final byte[] FTABLE_SZYXP;
   private static final int FLAG_S_SHIFT = 7;
@@ -222,11 +220,6 @@ public final class Z80 {
       }
     }
     return result;
-  }
-
-  private static boolean isLoHiFront(final int oldValue, final int newValue, final int mask) {
-    final int xored = oldValue ^ newValue;
-    return (xored & mask) == mask && (newValue & mask) == mask;
   }
 
   private static boolean isHiLoFront(final int oldValue, final int newValue, final int mask) {
@@ -693,11 +686,6 @@ public final class Z80 {
   private int _readmem8(final int ctx, final int address) {
     this.tiStates += 3;
     return this.bus.readMemory(this, ctx, address & 0xFFFF, false, false) & 0xFF;
-  }
-
-  private int _readmem8withM1(final int ctx, final int address) {
-    this.tiStates += 3;
-    return this.bus.readMemory(this, ctx, address & 0xFFFF, true, false) & 0xFF;
   }
 
   private int _readmem16(final int ctx, final int address) {
@@ -2792,1032 +2780,252 @@ public final class Z80 {
   }
 
   private boolean decodeED(final int ctx, final int op, final boolean incomingInterrupt) {
+    this.prefix = 0;
+
     switch (op) {
-      case 0xCB:
-        this.prefix = 0xEDCB;
-        return true;
-      case 0x00:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x01:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x02:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x03:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x04:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x05:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x06:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x07:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x08:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x09:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x0A:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x0B:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x0C:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x0D:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x0E:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x0F:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x10:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x11:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x12:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x13:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x14:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x15:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x16:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x17:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x18:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x19:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x1A:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x1B:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x1C:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x1D:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x1E:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x1F:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x20:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x21:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x22:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x23:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x24:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x25:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x26:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x27:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x28:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x29:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x2A:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x2B:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x2C:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x2D:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x2E:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x2F:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x30:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x31:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x32:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x33:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x34:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x35:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x36:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x37:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x38:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x39:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x3A:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x3B:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x3C:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x3D:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x3E:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x3F:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
       case 0x40:
-        this.prefix = 0;
         this.doIN_C(ctx, 0);
         return true;
       case 0x41:
-        this.prefix = 0;
         this.doOUT_C(ctx, 0);
         return true;
       case 0x42:
-        this.prefix = 0;
         this.doSBC_HL_RegPair(0);
         return true;
       case 0x43:
-        this.prefix = 0;
         this.doLD_mNN_RegP(ctx, 0);
         return true;
       case 0x44:
-        this.prefix = 0;
         this.doNEG();
         return true;
       case 0x45:
-        this.prefix = 0;
         this.doRETN(ctx);
         return true;
       case 0x46:
-        this.prefix = 0;
         this.doIM(0);
         return true;
       case 0x47:
-        this.prefix = 0;
         this.doLD_I_A();
         return true;
       case 0x48:
-        this.prefix = 0;
         this.doIN_C(ctx, 1);
         return true;
       case 0x49:
-        this.prefix = 0;
         this.doOUT_C(ctx, 1);
         return true;
       case 0x4A:
-        this.prefix = 0;
         this.doADC_HL_RegPair(0);
         return true;
       case 0x4B:
-        this.prefix = 0;
         this.doLD_RegP_mNN(ctx, 0);
         return true;
       case 0x4C:
-        this.prefix = 0;
         this.doNEG();
         return true;
       case 0x4D:
-        this.prefix = 0;
         this.doRETI(ctx);
         return true;
       case 0x4E:
-        this.prefix = 0;
         this.doIM(1);
         return true;
       case 0x4F:
-        this.prefix = 0;
         this.doLD_R_A();
         return true;
       case 0x50:
-        this.prefix = 0;
         this.doIN_C(ctx, 2);
         return true;
       case 0x51:
-        this.prefix = 0;
         this.doOUT_C(ctx, 2);
         return true;
       case 0x52:
-        this.prefix = 0;
         this.doSBC_HL_RegPair(1);
         return true;
       case 0x53:
-        this.prefix = 0;
         this.doLD_mNN_RegP(ctx, 1);
         return true;
       case 0x54:
-        this.prefix = 0;
         this.doNEG();
         return true;
       case 0x55:
-        this.prefix = 0;
         this.doRETN(ctx);
         return true;
       case 0x56:
-        this.prefix = 0;
         this.doIM(2);
         return true;
       case 0x57:
-        this.prefix = 0;
         this.doLD_A_I(incomingInterrupt);
         return true;
       case 0x58:
-        this.prefix = 0;
         this.doIN_C(ctx, 3);
         return true;
       case 0x59:
-        this.prefix = 0;
         this.doOUT_C(ctx, 3);
         return true;
       case 0x5A:
-        this.prefix = 0;
         this.doADC_HL_RegPair(1);
         return true;
       case 0x5B:
-        this.prefix = 0;
         this.doLD_RegP_mNN(ctx, 1);
         return true;
       case 0x5C:
-        this.prefix = 0;
         this.doNEG();
         return true;
       case 0x5D:
-        this.prefix = 0;
         this.doRETN(ctx);
         return true;
       case 0x5E:
-        this.prefix = 0;
         this.doIM(3);
         return true;
       case 0x5F:
-        this.prefix = 0;
         this.doLD_A_R(incomingInterrupt);
         return true;
       case 0x60:
-        this.prefix = 0;
         this.doIN_C(ctx, 4);
         return true;
       case 0x61:
-        this.prefix = 0;
         this.doOUT_C(ctx, 4);
         return true;
       case 0x62:
-        this.prefix = 0;
         this.doSBC_HL_RegPair(2);
         return true;
       case 0x63:
-        this.prefix = 0;
         this.doLD_mNN_RegP(ctx, 2);
         return true;
       case 0x64:
-        this.prefix = 0;
         this.doNEG();
         return true;
       case 0x65:
-        this.prefix = 0;
         this.doRETN(ctx);
         return true;
       case 0x66:
-        this.prefix = 0;
         this.doIM(4);
         return true;
       case 0x67:
-        this.prefix = 0;
         this.doRRD(ctx);
         return true;
       case 0x68:
-        this.prefix = 0;
         this.doIN_C(ctx, 5);
         return true;
       case 0x69:
-        this.prefix = 0;
         this.doOUT_C(ctx, 5);
         return true;
       case 0x6A:
-        this.prefix = 0;
         this.doADC_HL_RegPair(2);
         return true;
       case 0x6B:
-        this.prefix = 0;
         this.doLD_RegP_mNN(ctx, 2);
         return true;
       case 0x6C:
-        this.prefix = 0;
         this.doNEG();
         return true;
       case 0x6D:
-        this.prefix = 0;
         this.doRETN(ctx);
         return true;
       case 0x6E:
-        this.prefix = 0;
         this.doIM(5);
         return true;
       case 0x6F:
-        this.prefix = 0;
         this.doRLD(ctx);
         return true;
       case 0x70:
-        this.prefix = 0;
         this.doIN_C(ctx);
         return true;
       case 0x71:
-        this.prefix = 0;
         this.doOUT_C(ctx);
         return true;
       case 0x72:
-        this.prefix = 0;
         this.doSBC_HL_RegPair(3);
         return true;
       case 0x73:
-        this.prefix = 0;
         this.doLD_mNN_RegP(ctx, 3);
         return true;
       case 0x74:
-        this.prefix = 0;
         this.doNEG();
         return true;
       case 0x75:
-        this.prefix = 0;
         this.doRETN(ctx);
         return true;
       case 0x76:
-        this.prefix = 0;
         this.doIM(6);
         return true;
       case 0x77:
-        this.prefix = 0;
         this.doNOP();
         return true;
       case 0x78:
-        this.prefix = 0;
         this.doIN_C(ctx, 7);
         return true;
       case 0x79:
-        this.prefix = 0;
         this.doOUT_C(ctx, 7);
         return true;
       case 0x7A:
-        this.prefix = 0;
         this.doADC_HL_RegPair(3);
         return true;
       case 0x7B:
-        this.prefix = 0;
         this.doLD_RegP_mNN(ctx, 3);
         return true;
       case 0x7C:
-        this.prefix = 0;
         this.doNEG();
         return true;
       case 0x7D:
-        this.prefix = 0;
         this.doRETN(ctx);
         return true;
       case 0x7E:
-        this.prefix = 0;
         this.doIM(7);
         return true;
       case 0x7F:
-        this.prefix = 0;
         this.doNOP();
         return true;
-      case 0x80:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x81:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x82:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x83:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x84:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x85:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x86:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x87:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x88:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x89:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x8A:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x8B:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x8C:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x8D:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x8E:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x8F:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x90:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x91:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x92:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x93:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x94:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x95:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x96:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x97:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x98:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x99:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x9A:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x9B:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x9C:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x9D:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x9E:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0x9F:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
       case 0xA0:
-        this.prefix = 0;
         this.doBLI(ctx, 4, 0, incomingInterrupt);
         return true;
       case 0xA1:
-        this.prefix = 0;
         this.doBLI(ctx, 4, 1, incomingInterrupt);
         return true;
       case 0xA2:
-        this.prefix = 0;
         this.doBLI(ctx, 4, 2, incomingInterrupt);
         return true;
       case 0xA3:
-        this.prefix = 0;
         this.doBLI(ctx, 4, 3, incomingInterrupt);
         return true;
-      case 0xA4:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xA5:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xA6:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xA7:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
       case 0xA8:
-        this.prefix = 0;
         this.doBLI(ctx, 5, 0, incomingInterrupt);
         return true;
       case 0xA9:
-        this.prefix = 0;
         this.doBLI(ctx, 5, 1, incomingInterrupt);
         return true;
       case 0xAA:
-        this.prefix = 0;
         this.doBLI(ctx, 5, 2, incomingInterrupt);
         return true;
       case 0xAB:
-        this.prefix = 0;
         this.doBLI(ctx, 5, 3, incomingInterrupt);
         return true;
-      case 0xAC:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xAD:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xAE:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xAF:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
       case 0xB0:
-        this.prefix = 0;
         this.doBLI(ctx, 6, 0, incomingInterrupt);
         return true;
       case 0xB1:
-        this.prefix = 0;
         this.doBLI(ctx, 6, 1, incomingInterrupt);
         return true;
       case 0xB2:
-        this.prefix = 0;
         this.doBLI(ctx, 6, 2, incomingInterrupt);
         return true;
       case 0xB3:
-        this.prefix = 0;
         this.doBLI(ctx, 6, 3, incomingInterrupt);
         return true;
-      case 0xB4:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xB5:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xB6:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xB7:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
       case 0xB8:
-        this.prefix = 0;
         this.doBLI(ctx, 7, 0, incomingInterrupt);
         return true;
       case 0xB9:
-        this.prefix = 0;
         this.doBLI(ctx, 7, 1, incomingInterrupt);
         return true;
       case 0xBA:
-        this.prefix = 0;
         this.doBLI(ctx, 7, 2, incomingInterrupt);
         return true;
       case 0xBB:
-        this.prefix = 0;
         this.doBLI(ctx, 7, 3, incomingInterrupt);
         return true;
-      case 0xBC:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xBD:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xBE:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xBF:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xC0:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xC1:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xC2:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xC3:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xC4:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xC5:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xC6:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xC7:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xC8:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xC9:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xCA:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xCC:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xCD:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xCE:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xCF:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xD0:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xD1:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xD2:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xD3:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xD4:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xD5:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xD6:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xD7:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xD8:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xD9:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xDA:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xDB:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xDC:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xDD:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xDE:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xDF:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xE0:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xE1:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xE2:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xE3:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xE4:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xE5:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xE6:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xE7:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xE8:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xE9:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xEA:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xEB:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xEC:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xED:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xEE:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xEF:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xF0:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xF1:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xF2:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xF3:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xF4:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xF5:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xF6:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xF7:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xF8:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xF9:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xFA:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xFB:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xFC:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xFD:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xFE:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
-      case 0xFF:
-        this.prefix = 0;
-        this.doNONI();
-        return true;
       default:
-        throw new Error("Unexpected ED opcode");
+        this.doNONI();
+        return true;
     }
   }
 
@@ -5680,23 +4888,26 @@ public final class Z80 {
   }
 
   private boolean doLDIR(final int ctx) {
-    doLDI(ctx);
-    boolean loopNonCompleted = true;
-    if ((this.regF & FLAG_PV) != 0) {
-      final int address = (this.regPC - 2) & 0xFFFF;
-      this.setMemPtr(address + 1);
-      this.regPC = address;
-      this.tiStates += 5;
-
-      updateBlockOperationFlagXY();
-    } else {
-      loopNonCompleted = false;
+    this.doLDI(ctx);
+    final boolean continueRepeat = (this.regF & FLAG_PV) != 0;
+    if (continueRepeat) {
+      this.applyBlockRepeatExtraCycle();
     }
-    return loopNonCompleted;
+    return continueRepeat;
+  }
+
+  private void applyBlockRepeatExtraCycle() {
+    final int instructionAddress = (this.regPC - 2) & 0xFFFF;
+    this.regPC = instructionAddress;
+    this.setMemPtr(instructionAddress + 1);
+    this.tiStates += 5;
+    this.updateBlockOperationFlagXY();
   }
 
   private void updateBlockOperationFlagXY() {
-    this.regF = ((this.regF & ~FLAG_XY) | ((this.regPC >> 8) & FLAG_XY)) & 0xFF;
+    final int f = ((this.regF & ~FLAG_XY) | ((this.regPC >> 8) & FLAG_XY)) & 0xFF;
+    this.regF = f;
+    this.internalRegQ = f;
   }
 
   private void doLD_A_mDE(final int ctx) {
@@ -5707,21 +4918,12 @@ public final class Z80 {
   }
 
   private boolean doCPIR(final int ctx) {
-    doCPI(ctx);
-    boolean loopNonCompleted = true;
-    final int flags = this.regF;
-
-    this.internalRegQ = flags;
-
-    if ((flags & (FLAG_Z | FLAG_PV)) == FLAG_PV) {
-      final int address = (this.regPC - 2) & 0xFFFF;
-      this.setMemPtr(address + 1);
-      this.regPC = address;
-      this.tiStates += 5;
-    } else {
-      loopNonCompleted = false;
+    this.doCPI(ctx);
+    final boolean continueRepeat = (this.regF & (FLAG_Z | FLAG_PV)) == FLAG_PV;
+    if (continueRepeat) {
+      this.applyBlockRepeatExtraCycle();
     }
-    return loopNonCompleted;
+    return continueRepeat;
   }
 
   private int doINI_IND(final int ctx, final boolean ini) {
@@ -5770,37 +4972,29 @@ public final class Z80 {
       }
     }
 
-    this.regF = ((regF & ~(FLAG_PV | FLAG_H)) | flagP | flagH) & 0xFF;
+    final int f = ((regF & ~(FLAG_PV | FLAG_H)) | flagP | flagH) & 0xFF;
+    this.regF = f;
+    this.internalRegQ = f;
   }
 
   private boolean doINIR(final int ctx) {
-    final int data = doINI_IND(ctx, true);
-    boolean loopNonCompleted = true;
-    if ((this.regF & FLAG_Z) == 0) {
-      this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.setMemPtr((0x100 + (this.regC & 0xFF) + 1) & 0xFFFF);
-      this.tiStates += 5;
-      updateBlockOperationFlagXY();
-      updateFlags_INxR_OTxR(data);
-    } else {
-      loopNonCompleted = false;
+    final int data = this.doINI_IND(ctx, true);
+    final boolean continueRepeat = (this.regF & FLAG_Z) == 0;
+    if (continueRepeat) {
+      this.applyBlockRepeatExtraCycle();
+      this.updateFlags_INxR_OTxR(data);
     }
-    return loopNonCompleted;
+    return continueRepeat;
   }
 
   private boolean doINDR(final int ctx) {
-    final int data = doINI_IND(ctx, false);
-    boolean loopNonCompleted = true;
-    if ((this.regF & FLAG_Z) == 0) {
-      this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.setMemPtr((0x100 + (this.regC & 0xFF) - 1) & 0xFFFF);
-      this.tiStates += 5;
-      updateBlockOperationFlagXY();
-      updateFlags_INxR_OTxR(data);
-    } else {
-      loopNonCompleted = false;
+    final int data = this.doINI_IND(ctx, false);
+    final boolean continueRepeat = (this.regF & FLAG_Z) == 0;
+    if (continueRepeat) {
+      this.applyBlockRepeatExtraCycle();
+      this.updateFlags_INxR_OTxR(data);
     }
-    return loopNonCompleted;
+    return continueRepeat;
   }
 
   private void doLDI(final int ctx) {
@@ -5829,17 +5023,13 @@ public final class Z80 {
   }
 
   private boolean doOTIR(final int ctx) {
-    final int data = doOUTI_OUTD(ctx, true);
-    boolean loopNonCompleted = true;
-    if ((this.regF & FLAG_Z) == 0) {
-      this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tiStates += 5;
-      updateBlockOperationFlagXY();
-      updateFlags_INxR_OTxR(data);
-    } else {
-      loopNonCompleted = false;
+    final int data = this.doOUTI_OUTD(ctx, true);
+    final boolean continueRepeat = (this.regF & FLAG_Z) == 0;
+    if (continueRepeat) {
+      this.applyBlockRepeatExtraCycle();
+      this.updateFlags_INxR_OTxR(data);
     }
-    return loopNonCompleted;
+    return continueRepeat;
   }
 
   private void doCPI(final int ctx) {
@@ -5869,34 +5059,22 @@ public final class Z80 {
   }
 
   private boolean doOTDR(final int ctx) {
-    final int data = doOUTI_OUTD(ctx, false);
-
-    boolean loopNonCompleted = true;
-    if ((this.regF & FLAG_Z) == 0) {
-      this.regPC = (this.regPC - 2) & 0xFFFF;
-      this.tiStates += 5;
-      updateBlockOperationFlagXY();
-      updateFlags_INxR_OTxR(data);
-    } else {
-      loopNonCompleted = false;
+    final int data = this.doOUTI_OUTD(ctx, false);
+    final boolean continueRepeat = (this.regF & FLAG_Z) == 0;
+    if (continueRepeat) {
+      this.applyBlockRepeatExtraCycle();
+      this.updateFlags_INxR_OTxR(data);
     }
-    return loopNonCompleted;
+    return continueRepeat;
   }
 
   private boolean doLDDR(final int ctx) {
-    doLDD(ctx);
-    boolean loopNonCompleted = true;
-    if (this.getRegisterPair(REGPAIR_BC) != 0) {
-      final int address = (this.regPC - 2) & 0xFFFF;
-      this.regPC = address;
-      this.setMemPtr(address + 1);
-      this.tiStates += 5;
-
-      updateBlockOperationFlagXY();
-    } else {
-      loopNonCompleted = false;
+    this.doLDD(ctx);
+    final boolean continueRepeat = this.getRegisterPair(REGPAIR_BC) != 0;
+    if (continueRepeat) {
+      this.applyBlockRepeatExtraCycle();
     }
-    return loopNonCompleted;
+    return continueRepeat;
   }
 
   private int doOUTI_OUTD(final int ctx, final boolean inc) {
@@ -5928,21 +5106,12 @@ public final class Z80 {
   }
 
   private boolean doCPDR(final int ctx) {
-    doCPD(ctx);
-    boolean loopNonCompleted = true;
-    final int flags = this.regF;
-
-    this.internalRegQ = flags;
-
-    if ((flags & (FLAG_Z | FLAG_PV)) == FLAG_PV) {
-      final int address = (this.regPC - 2) & 0xFFFF;
-      this.regPC = address;
-      this.setMemPtr(address + 1);
-      this.tiStates += 5;
-    } else {
-      loopNonCompleted = false;
+    this.doCPD(ctx);
+    final boolean continueRepeat = (this.regF & (FLAG_Z | FLAG_PV)) == FLAG_PV;
+    if (continueRepeat) {
+      this.applyBlockRepeatExtraCycle();
     }
-    return loopNonCompleted;
+    return continueRepeat;
   }
 
   public String getStateAsString() {

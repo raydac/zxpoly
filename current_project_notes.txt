@@ -1,6 +1,8 @@
 ## 1. Implementation Progress
 
 - Flattened Z80 opcode decode to four 256-way switches (unprefixed, CB, ED, DDCB/FDCB) and stored 8-bit registers as `int` fields instead of `byte[8]`.
+- Collapsed undocumented ED opcodes onto `decodeED` `default` → `doNONI()`, and clear the ED prefix once on entry.
+- Repeating block ops share the extra 5 T-state cycle: rewind PC, WZ=PC+1, XF/YF from PCh, latch Q. INxR/OTxR still apply the Ped7g/Banks P/H tweak on that cycle.
 - Fixed packaged start scripts and assembly descriptors for `zxpoly-emul` and `zxpoly-sprite-corrector`.
 - Hardened Java Sound playback: do not close mixers during device scan, write full PCM frames, flush/close instead of drain. Playback stays low-latency: 3-frame (~60 ms) line, 1-frame prefill, 2-frame queue, and ~5 ms pads only when fewer than ~10 ms remain.
 - Aligned 48K/128K ULA raster with INT: first paper at 14336/14361, border paint uses raster phase, IN/OUT contention applied on the executing CPU. Border bitmap is scaled to the paper rectangle (2px/line). FULL layout uses left/top insets so Pentagon's uneven borders do not show black strips.
@@ -12,6 +14,10 @@
 - Full-border preferred height is `displayRows*2`. Stretching the raster to the window (`sy≈1.63`) put top-border bars under the 2x paper blit. `alignBorderToPaper` pins the ULA paper rectangle to the screen blit. FULL layout places paper at left/top insets so Pentagon's 36/28 and 64/48 borders do not leave black strips. Extra window space outside that CRT rectangle is filled from `resolveBorderRgb()`.
 - ULA IN/OUT contention belongs on `readPort`/`writePort` of the executing CPU. `ZxPolyModule.readIo`/`writeIo` must not add t-states (that delayed slave CPUs and double-contended the master).
 - Z80 `step()` now dispatches via dense opcode `tableswitch`es; GP registers are `int` 0–255. Public `getRegister`/`setRegister` IDs are unchanged.
+- Live M1 opcode fetch is `readInstrOrPrefix(ctx, true)` from `step()` (4 T, nM1, R++, `cmdOrPrefix=true`). IM2 vector fetch is ordinary `_readmem16`.
+- `decodeED` clears `prefix` once on entry (helpers use `normalizedPrefix()`), then tableswitches real ED ops. Undocumented opcodes including former `ED CB` go through `default` → `doNONI()`.
+- Repeating LDIR/CPIR/INIR and companions: extra 5 T-states set WZ to the second opcode byte (PC of ED + 1) and copy XF/YF from that PCh. SCF/CCF Q is the flags after that patch. FUSE `edb2_1`/`edb3_1`/`edb9_2`/`edba_1`/`edbb_1` still use older extra-cycle expectations.
+- UnrealSpeccyP Z80 (`djdron/UnrealSpeccyP/z80`) matches our ALU/BIT/MEMPTR for ordinary ops, but has no Q latch, uses DEC B flags for INIR/OTIR, does not copy XF/YF from PCh on LDIR extra cycle, and maps undocumented `ED 4E`/`ED 6E` to IM 1 (FUSE expects IM 0).
 - Emulator bundles a JRE per platform (`jre/` next to the jar). Sprite corrector zip uses the system JRE (`JAVA_HOME` / `java` on PATH).
 - Linux Pulse/ALSA Java Sound: `Mixer.close()` closes every line; `SourceDataLine.write` may return 0/partial; underrun (XRUN) can emit persistent noise until the line is reopened. Windows DirectSound recovers more cleanly. Java Sound buffer size is latency; keep it small and pad only when fewer than ~10 ms remain.
 - Emulator Linux/mac/AppImage launchers share the ZGC flag set from 2.4.0. Windows `zxpoly.exe` (Go launcher) is the primary Windows entry; `start.cmd` / `start_log.cmd` are fallbacks.
@@ -37,6 +43,7 @@
 - macOS `CFBundleVersion` is filtered from `${project.version}` (includes `-SNAPSHOT` on snapshot builds).
 - Single-instance lock uses `kill -0` on the saved PID (works on Linux and macOS; a reused PID can still false-positive).
 - Linux audio still depends on the selected mixer (Pulse/PipeWire/ALSA). If a device itself is broken, toggling speaker still recreates the line.
+- FUSE `edb2_1`/`edb3_1`/`edb9_2`/`edba_1`/`edbb_1` still disagree with Ped7g extra-cycle block flags; `Z80FuseTest` skips those five.
 
 ## 6. Open Questions & Pending Decisions
 
@@ -49,6 +56,7 @@
 - Publish emulator: Maven `install` with JRE profiles; AppImage extra profile `appimage`.
 - Publish sprite corrector: profile `publish`.
 - Maven on this machine: `mvn22`.
+- UnrealSpeccyP Z80 core: https://github.com/djdron/UnrealSpeccyP/tree/master/z80
 
 ## 8. User Advice and Recommendations
 

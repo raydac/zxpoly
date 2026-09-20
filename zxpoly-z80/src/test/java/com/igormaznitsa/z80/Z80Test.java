@@ -17,11 +17,13 @@
 
 package com.igormaznitsa.z80;
 
-import org.junit.Test;
-
 import static com.igormaznitsa.z80.Z80.FLAG_H;
 import static com.igormaznitsa.z80.Z80.FLAG_N;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 
 public class Z80Test extends AbstractZ80Test {
 
@@ -1286,6 +1288,27 @@ public class Z80Test extends AbstractZ80Test {
             cpu.getLeft().getRegister(Z80.REG_F));
 
     assertEquals(142, cpu.getRight().intValue());
+  }
+
+  @Test
+  public void testCommand_CPIR_repeatCopiesXYFromPCh() {
+    final TestBus testBus = new TestBus(0, 0x2828, 0xED, 0xB1);
+    testBus.writeMemory(null, 111, 0x1111, (byte) 0x00);
+
+    final Z80 cpu = new Z80(testBus);
+    cpu.setRegister(Z80.REG_PC, 0x2828);
+    cpu.setRegister(Z80.REG_A, 0x01);
+    cpu.setRegister(Z80.REG_H, 0x11);
+    cpu.setRegister(Z80.REG_L, 0x11);
+    cpu.setRegister(Z80.REG_B, 0x00);
+    cpu.setRegister(Z80.REG_C, 0x02);
+    cpu.setRegister(Z80.REG_F, 0x00);
+
+    assertEquals(21, cpu.nextInstruction(111, false, false, false));
+    assertEquals(0x2828, cpu.getRegister(Z80.REG_PC));
+    assertEquals(0x2829, cpu.getMemPtr());
+    assertEquals(Z80.FLAG_X | Z80.FLAG_Y | Z80.FLAG_PV | FLAG_N,
+        cpu.getRegister(Z80.REG_F));
   }
 
   @Test
@@ -4946,6 +4969,24 @@ public class Z80Test extends AbstractZ80Test {
     assertFlagsExcludeReserved(Z80.FLAG_Z | Z80.FLAG_PV, cpu.getLeft().getRegister(Z80.REG_F));
 
     assertEquals(58, cpu.getRight().intValue());
+  }
+
+  @Test
+  public void testCommand_INIR_repeatSetsMemPtrFromInstructionAddress() {
+    final TestBus testBus = new TestBus(0, 0x2828, 0xED, 0xB2);
+    testBus.writePort(null, 111, 0x0207, (byte) 0x51);
+
+    final Z80 cpu = new Z80(testBus);
+    cpu.setRegister(Z80.REG_PC, 0x2828);
+    cpu.setRegister(Z80.REG_C, 0x07);
+    cpu.setRegister(Z80.REG_B, 0x02);
+    cpu.setRegister(Z80.REG_H, 0x10);
+    cpu.setRegister(Z80.REG_L, 0x00);
+    cpu.setRegister(Z80.REG_F, 0x00);
+
+    assertEquals(21, cpu.nextInstruction(111, false, false, false));
+    assertEquals(0x2828, cpu.getRegister(Z80.REG_PC));
+    assertEquals(0x2829, cpu.getMemPtr());
   }
 
   @Test

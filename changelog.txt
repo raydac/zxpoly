@@ -7,6 +7,7 @@ __2.4.1 (SNAPSHOT)__
 - fixed Linux speaker noise that stayed until the sound device was restarted, without adding delay between sound and action
 - fixed video timing so INT-synced border effects match real machines and stay aligned with the paper
 - unused window space around the screen is filled with the current border color
+- fixed undocumented XF/YF and WZ of repeating Z80 block instructions on the extra 5 T-states
 
 __2.4.0 (14-may-2026)__
 
