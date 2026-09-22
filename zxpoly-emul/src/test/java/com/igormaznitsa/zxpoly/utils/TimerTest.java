@@ -37,4 +37,22 @@ public class TimerTest {
 
     assertEquals(now + DELAY, Timer.nextTimeout(now, -1L, DELAY));
   }
+
+  @Test
+  public void testNanosToParkLeavesTheLeadUnparked() {
+    assertEquals(14_000_000L, Timer.nanosToPark(15_000_000L, 1_000_000L));
+  }
+
+  @Test
+  public void testNanosToParkStaysAwakeInsideTheLead() {
+    assertEquals(0L, Timer.nanosToPark(500_000L, 1_000_000L));
+    assertEquals(0L, Timer.nanosToPark(1_000_000L, 1_000_000L));
+  }
+
+  @Test
+  public void testNanosToParkIsDisabledWithoutLead() {
+    assertEquals(0L, Timer.nanosToPark(15_000_000L, -1L));
+    assertEquals(0L, Timer.nanosToPark(15_000_000L, 0L));
+    assertEquals(0L, Timer.nanosToPark(-1L, 1_000_000L));
+  }
 }

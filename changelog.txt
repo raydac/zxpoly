@@ -1,5 +1,6 @@
 __2.4.1 (SNAPSHOT)__
 
+- "Try use less resources" sleeps until the next frame instead of waking continuously, and steady borders use less CPU
 - keep full emulation speed when the window is not focused
 - demos no longer drop to half speed when a frame misses the 20 ms budget
 - Java Sound no longer inserts silence gaps between AY frames

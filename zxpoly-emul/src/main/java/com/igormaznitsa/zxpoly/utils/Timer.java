@@ -9,15 +9,22 @@ public final class Timer {
   private long start = 0L;
   private long timeout = -1L;
 
-  private final long sleepDelay;
+  private final long leadNanos;
 
   public Timer(final Duration delay) {
     this(delay, null);
   }
 
-  public Timer(final Duration delay, final Duration sleepDelay) {
+  public Timer(final Duration delay, final Duration lead) {
     this.delay = delay.toNanos();
-    this.sleepDelay = sleepDelay == null ? -1L : sleepDelay.toNanos();
+    this.leadNanos = lead == null ? -1L : lead.toNanos();
+  }
+
+  static long nanosToPark(final long remainingNanos, final long leadNanos) {
+    if (leadNanos <= 0L || remainingNanos <= leadNanos) {
+      return 0L;
+    }
+    return remainingNanos - leadNanos;
   }
 
   static long nextTimeout(final long now, final long currentTimeout, final long delay) {
@@ -36,11 +43,9 @@ public final class Timer {
   }
 
   public void sleep() {
-    if (this.sleepDelay > 0L) {
-      final long nanos = this.timeout - System.nanoTime();
-      if (nanos > this.sleepDelay) {
-        LockSupport.parkNanos(this.sleepDelay);
-      }
+    final long parkNanos = nanosToPark(this.timeout - System.nanoTime(), this.leadNanos);
+    if (parkNanos > 0L) {
+      LockSupport.parkNanos(parkNanos);
     }
   }
 

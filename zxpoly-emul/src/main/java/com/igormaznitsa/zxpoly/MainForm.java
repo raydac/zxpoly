@@ -397,7 +397,7 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
 
     if (this.tryConsumeLessSystemResources) {
       LOGGER.info("Attempt to consume less system resources");
-      this.wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS, Duration.ofNanos(50000L));
+      this.wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS, Duration.ofMillis(1L));
     } else {
       this.wallClock = new Timer(TIMER_INT_DELAY_MILLISECONDS);
     }
@@ -1140,6 +1140,9 @@ public final class MainForm extends JFrame implements ActionListener, TapeContex
           wallClockPulse = true;
           intSlotReady = true;
           this.wallClock.next();
+        } else if (lessResources) {
+          Thread.onSpinWait();
+          continue;
         }
       }
 

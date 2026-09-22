@@ -55,6 +55,7 @@ import java.awt.image.DataBufferInt;
 import java.awt.image.RenderedImage;
 import java.io.Serial;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
@@ -161,6 +162,10 @@ public final class VideoController extends JComponent
   private int preStepBorderColor;
   private int ioBorderColor;
   private int borderChangeCpuTstate = -1;
+  private boolean batchBorderPaint;
+  private int pendingBorderFrom = -1;
+  private int pendingBorderTo;
+  private int pendingBorderColor;
   private int cachedWindowBorderRgb = Integer.MIN_VALUE;
   private Color cachedWindowBorderColor = Color.BLACK;
   private Rectangle lastVirtualKeyboardWindowPosition = null;
@@ -1097,9 +1102,24 @@ public final class VideoController extends JComponent
     };
   }
 
-  @Override
-  public void init(final boolean tryLessSystemResources) {
-    this.vkbdRender = new VirtualKeyboardRender(this.board, this.vkbdContainer);
+  static void fillRotatedBorder(
+      final int[] data,
+      final int frame,
+      final int dest,
+      final int length,
+      final int color) {
+    if (length <= 0 || frame <= 0) {
+      return;
+    }
+
+    final int clamped = Math.min(length, frame);
+    if (dest + clamped <= frame) {
+      Arrays.fill(data, dest, dest + clamped, color);
+      return;
+    }
+
+    Arrays.fill(data, dest, frame, color);
+    Arrays.fill(data, 0, dest + clamped - frame, color);
   }
 
   public TvFilterChain getTvFilterChain() {
@@ -1772,25 +1792,9 @@ public final class VideoController extends JComponent
   }
 
   @Override
-  public void preStep(
-      final int frameTiStates,
-      final boolean signalReset,
-      final boolean tiStatesIntReached,
-      final boolean wallClockInt
-  ) {
-    this.stepStartTiStates =
-        frameTiStates < this.timingProfile.tstatesFrame ? frameTiStates : -1;
-    this.borderChangeCpuTstate = -1;
-    final UlaPlusContainer ulaPlusContainer = this.ulaPlus;
-
-    if (signalReset) {
-      this.portFEw = 0x00;
-      if (ulaPlusContainer != null) {
-        ulaPlusContainer.reset();
-      }
-    }
-    this.vkbdRender.preState(signalReset, tiStatesIntReached, wallClockInt);
-    this.preStepBorderColor = this.resolveBorderRgb();
+  public void init(final boolean tryLessSystemResources) {
+    this.batchBorderPaint = tryLessSystemResources;
+    this.vkbdRender = new VirtualKeyboardRender(this.board, this.vkbdContainer);
   }
 
   private void latchBorderIo(final ZxPolyModule module, final int value) {
@@ -1810,29 +1814,130 @@ public final class VideoController extends JComponent
   }
 
   @Override
+  public void preStep(
+      final int frameTiStates,
+      final boolean signalReset,
+      final boolean tiStatesIntReached,
+      final boolean wallClockInt
+  ) {
+    if (signalReset) {
+      this.flushPendingBorder();
+    }
+
+    this.stepStartTiStates =
+        frameTiStates < this.timingProfile.tstatesFrame ? frameTiStates : -1;
+    this.borderChangeCpuTstate = -1;
+    final UlaPlusContainer ulaPlusContainer = this.ulaPlus;
+
+    if (signalReset) {
+      this.portFEw = 0x00;
+      if (ulaPlusContainer != null) {
+        ulaPlusContainer.reset();
+      }
+    }
+    this.vkbdRender.preState(signalReset, tiStatesIntReached, wallClockInt);
+    this.preStepBorderColor = this.resolveBorderRgb();
+  }
+
+  @Override
   public void doReset() {
+    this.flushPendingBorder();
     this.vkbdRender.doReset();
   }
 
   @Override
   public void postStep(final int spentTiStates) {
-    int cpuT = this.stepStartTiStates;
-    if (cpuT < 0) {
+    final int cpuT = this.stepStartTiStates;
+    if (cpuT < 0 || spentTiStates <= 0) {
       return;
     }
 
     final int frame = this.timingProfile.tstatesFrame;
-    final int changeAt = this.borderChangeCpuTstate;
-    int remaining = spentTiStates;
-
-    while (remaining > 0 && cpuT < frame) {
-      final int color = changeAt >= 0 && cpuT >= changeAt
-          ? this.ioBorderColor
-          : this.preStepBorderColor;
-      this.borderImageRgbData[this.timingProfile.toBorderRasterTstate(cpuT)] = color;
-      cpuT++;
-      remaining--;
+    final int end = (int) Math.min(frame, (long) cpuT + spentTiStates);
+    if (end <= cpuT) {
+      return;
     }
+
+    if (this.batchBorderPaint) {
+      this.queueBorderTstates(cpuT, end, this.borderChangeCpuTstate);
+      return;
+    }
+
+    this.paintBorderTstates(cpuT, end, this.borderChangeCpuTstate);
+  }
+
+  private void paintBorderTstates(final int from, final int end, final int changeAt) {
+    final int preColor = this.preStepBorderColor;
+    final int ioColor = this.ioBorderColor;
+    final TimingProfile profile = this.timingProfile;
+    final int[] data = this.borderImageRgbData;
+
+    for (int cpuT = from; cpuT < end; cpuT++) {
+      final int color = changeAt >= 0 && cpuT >= changeAt ? ioColor : preColor;
+      data[profile.toBorderRasterTstate(cpuT)] = color;
+    }
+  }
+
+  private void queueBorderTstates(final int from, final int end, final int changeAt) {
+    if (changeAt > from && changeAt < end) {
+      this.queueBorderSpan(from, changeAt, this.preStepBorderColor);
+      this.queueBorderSpan(changeAt, end, this.ioBorderColor);
+    } else {
+      final int color =
+          changeAt >= 0 && from >= changeAt ? this.ioBorderColor : this.preStepBorderColor;
+      this.queueBorderSpan(from, end, color);
+    }
+
+    if (end == this.timingProfile.tstatesFrame) {
+      this.flushPendingBorder();
+    }
+  }
+
+  private void queueBorderSpan(final int from, final int to, final int color) {
+    if (from >= to) {
+      return;
+    }
+
+    if (this.pendingBorderFrom >= 0
+        && color == this.pendingBorderColor
+        && from == this.pendingBorderTo) {
+      this.pendingBorderTo = to;
+    } else {
+      this.flushPendingBorder();
+      this.pendingBorderFrom = from;
+      this.pendingBorderTo = to;
+      this.pendingBorderColor = color;
+    }
+
+    if (this.pendingBorderTo - this.pendingBorderFrom >= this.timingProfile.tstatesPerLine) {
+      this.flushPendingBorder();
+    }
+  }
+
+  private void flushPendingBorder() {
+    final int from = this.pendingBorderFrom;
+    if (from < 0) {
+      return;
+    }
+
+    final int to = this.pendingBorderTo;
+    final int color = this.pendingBorderColor;
+    this.pendingBorderFrom = -1;
+    this.paintBorderRange(from, to, color);
+  }
+
+  private void paintBorderRange(final int from, final int to, final int color) {
+    final int length = to - from;
+    if (length <= 0) {
+      return;
+    }
+
+    fillRotatedBorder(
+        this.borderImageRgbData,
+        this.timingProfile.tstatesFrame,
+        this.timingProfile.toBorderRasterTstate(from),
+        length,
+        color);
   }
 
   public float getZoom() {
