@@ -9,7 +9,7 @@ __2.4.1 (SNAPSHOT)__
 - fixed the main menu not appearing on Linux with JDK 27, and changing Look & Feel no longer hides menu titles or crashes
 - updated input4j to 1.4.0
 - updated dependencies
-- fixed packaged start scripts (Linux single-instance lock, Windows JVM flags and working directory, macOS CLI arguments, AppImage desktop entry)
+- fixed packaged start scripts (Linux single-instance lock, Windows JVM flags and working directory, macOS CLI arguments and numeric Info.plist version for SNAPSHOT zips, AppImage desktop entry)
 - fixed Linux speaker noise that stayed until the sound device was restarted, without adding delay between sound and action
 - fixed video timing so INT-synced border effects match real 48K, 128K and Pentagon machines and stay aligned with the paper
 - unused window space around the screen is filled with the current border color

@@ -17,11 +17,11 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>${project.version}</string>
+    <string>${project.version.raw}</string>
     <key>CFBundleSignature</key>
     <string>?????</string>
     <key>CFBundleVersion</key>
-    <string>${project.version}</string>
+    <string>${project.version.raw}</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <key>NSHighResolutionCapable</key>

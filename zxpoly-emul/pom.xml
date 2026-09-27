@@ -544,8 +544,8 @@
                                 <mutexName>zxpolyemul</mutexName>
                             </singleInstance>
                             <versionInfo>
-                                <fileVersion>2.4.0.0</fileVersion>
-                                <productVersion>2.4.0.0</productVersion>
+                                <fileVersion>${project.version.raw}.0</fileVersion>
+                                <productVersion>${project.version.raw}.0</productVersion>
                                 <txtFileVersion>${project.version}</txtFileVersion>
                                 <fileDescription>Emulator of ZXPoly platform</fileDescription>
                                 <copyright>2014-2026 Igor Maznitsa</copyright>

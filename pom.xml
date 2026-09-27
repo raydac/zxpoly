@@ -14,6 +14,7 @@
         <maven.compiler.release>22</maven.compiler.release>
         <netbeans.hint.license>gpl30</netbeans.hint.license>
         <jbbp.version>3.0.3</jbbp.version>
+        <project.version.raw>2.4.1</project.version.raw>
     </properties>
 
     <issueManagement>
