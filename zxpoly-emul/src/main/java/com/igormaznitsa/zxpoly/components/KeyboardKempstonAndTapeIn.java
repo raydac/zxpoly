@@ -34,6 +34,7 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -247,13 +248,24 @@ public final class KeyboardKempstonAndTapeIn implements IoDevice {
       return;
     }
     this.inputHost = plugin;
-    plugin.getAll().stream()
+
+    final Collection<InputDevice> devices;
+    try {
+      devices = plugin.getAll();
+    } catch (Exception e) {
+      LOGGER.severe("Failed to get devices from InputDevicePlugin plugin: %s (%s)".formatted(
+          e.getClass().getName(), e.getMessage()));
+      return;
+    }
+
+    devices.stream()
         .filter(KeyboardKempstonAndTapeIn::isLikelyGameController)
         .forEach(device -> {
           if (!this.detectedControllers.contains(device)) {
             this.detectedControllers.add(device);
           }
         });
+
     plugin.onDeviceConnected(device -> {
       if (!isLikelyGameController(device)) {
         return;
