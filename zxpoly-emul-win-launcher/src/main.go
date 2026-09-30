@@ -60,8 +60,6 @@ func main() {
 		jarPath := base_folder + JAR_FILE
 
 		args := []string{
-			"-XX:+UseZGC",
-			"-XX:MaxMetaspaceSize=128m",
 			"-Xms512M",
 			"-Xmx1G",
 			"-Dsun.rmi.transport.tcp.maxConnectionThreads=0",
