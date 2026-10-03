@@ -1,2 +1,4 @@
-JAVA_FLAGS="-Dsun.rmi.transport.tcp.maxConnectionThreads=0 -XX:-DontCompileHugeMethods -XX:+DisableAttachMechanism -Xms512m -Xmx1024m --add-opens=java.base/java.util=ALL-UNNAMED  --enable-native-access=ALL-UNNAMED"
-exec "$BASEDIR"/jre/bin/java $JAVA_FLAGS -Xdock:icon="$BASEDIR"/../Resources/appico.png  -jar "$BASEDIR"/zxpoly-emul*.jar
+#!/bin/sh
+BASEDIR=`dirname "$0"`
+
+exec "$BASEDIR"/jre/bin/java -Dsun.rmi.transport.tcp.maxConnectionThreads=0 -XX:+DisableAttachMechanism -Djava.library.path="$BASEDIR" -Xdock:icon="$BASEDIR"/../Resources/appico.png  -jar "$BASEDIR"/zxpoly-emul*.jar
