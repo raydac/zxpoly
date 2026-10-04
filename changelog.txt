@@ -1,4 +1,4 @@
-__2.4.1 (SNAPSHOT)__
+__2.4.1 (04-oct-2026)__
 
 - "Try use less resources" sleeps until the next frame instead of waking continuously, and steady borders use less CPU
 - keep full emulation speed when the window is not focused

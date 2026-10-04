@@ -6,6 +6,29 @@
 
 # Changelog
 
+__2.4.1 (04-oct-2026)__
+
+- "Try use less resources" sleeps until the next frame instead of waking continuously, and steady borders use less CPU
+- keep full emulation speed when the window is not focused
+- demos no longer drop to half speed when a frame misses the 20 ms budget
+- Java Sound no longer inserts silence gaps between AY frames
+- opening the menu or pausing emulation silences the speaker again
+- the embedded JDK has been updated to 27+36
+- fixed the main menu not appearing on Linux with JDK 27, and changing Look & Feel no longer hides menu titles or
+  crashes
+- updated input4j to 1.4.0
+- updated dependencies
+- fixed packaged start scripts (Linux single-instance lock, Windows JVM flags and working directory, macOS CLI arguments
+  and numeric Info.plist version for SNAPSHOT zips, AppImage desktop entry)
+- fixed Linux speaker noise that stayed until the sound device was restarted, without adding delay between sound and
+  action
+- fixed video timing so INT-synced border effects match real 48K, 128K and Pentagon machines and stay aligned with the
+  paper
+- unused window space around the screen is filled with the current border color
+- fixed Low Pass Filter stereo balance and made the strength slider Mild–Strong
+- fixed undocumented XF/YF and WZ of repeating Z80 block instructions on the extra 5 T-states
+- WAV recording stays on after choosing a file until it is stopped manually
+
 __2.4.0 (14-may-2026)__
 
 - __minimal JDK version lifted up to 22__
@@ -14,13 +37,6 @@ __2.4.0 (14-may-2026)__
 - improved JVM flags, switched to ZGC garbage collector
 - the embedded JDK has been updated to 26.0.1+10
 - added Low Pass Filter for sound output
-
-__2.3.4 (07-dec-2024)__
-
-- the minimum required JDK version has been raised to 21
-- the embedded JDK has been updated to 23.0.1+13
-- upgraded the JInput library to 2.0.10
-- refactoring, fixes in Z80 CPU emulation
 
 full [change log](changelog.txt)
 
@@ -49,19 +65,19 @@ under [GNU GPL3 license](https://www.gnu.org/licenses/gpl-3.0.html).
 
 # Pre-built versions
 
-![The Main Window of the Emulator](docs/screenshots/zxpoly240_vida.png)
+![The Main Window of the Emulator](docs/screenshots/zxpoly241_j2z80.png)
 
 | OS                                           | Download link                                                                                                                          | 
 |----------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.0/zxpoly-emul-2.4.0-windows-amd64-jdk.zip)__ |
-| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.0/zxpoly-emul-2.4.0-macos-amd64-jdk.zip)__       |
-| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.0/zxpoly-emul-2.4.0-macos-aarch64-jdk.zip)__   |
-| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.0/zxpoly-emul-2.4.0-linux-amd64-jdk.tar.gz)__  |
-| ![Linux](assets/icons/appimage64x64.png)     | __[Linux AppImage x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.0/zxpoly-emul-2.4.0-x86_64.AppImage)__    |
-| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.4.0/zxpoly-emul-2.4.0.jar)__                          | 
+| ![Windows](assets/icons/win64x64.png)        | __[for Windows x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.1/zxpoly-emul-2.4.1-windows-amd64-jdk.zip)__ |
+| ![OSX](assets/icons/macos64x64.png)          | __[for OSX x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.1/zxpoly-emul-2.4.1-macos-amd64-jdk.zip)__       |
+| ![OSX Arm64](assets/icons/macosarm64x64.png) | __[for OSX Arm64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.1/zxpoly-emul-2.4.1-macos-aarch64-jdk.zip)__   |
+| ![Linux](assets/icons/linux64x64.png)        | __[for Linux x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.1/zxpoly-emul-2.4.1-linux-amd64-jdk.tar.gz)__  |
+| ![Linux](assets/icons/appimage64x64.png)     | __[Linux AppImage x64 (JRE included)](https://github.com/raydac/zxpoly/releases/download/2.4.1/zxpoly-emul-2.4.1-x86_64.AppImage)__    |
+| ![Java](assets/icons/java64x64.png)          | __[cross-platform JAR file](https://github.com/raydac/zxpoly/releases/download/2.4.1/zxpoly-emul-2.4.1.jar)__                          | 
 
 Because the emulator is written in Java, its JAR file can be started just through command
-line `java -jar zxpoly-emul-2.4.0.jar`   
+line `java -jar zxpoly-emul-2.4.1.jar`   
 By default it starts embedded ZX-Poly Test ROM image, but it can be replaced by ZX-128 SOS in __File->Options->Active
 ROM__, the ROM will be downloaded from one of remote network resources.   
 ![Test-ROM](docs/screenshots/testromscr1.png)
@@ -127,7 +143,7 @@ To adapt old games, I have developed special utility called ZX-Poly Sprite corre
 is a very easy editor which shows images in data blocks and allows to redraw them. It supports import from Z80 and SNA
 snapshots and as the result it generates ZXP snapshots.   
 ![ZX-Poly Sprite Corrector screenshot](docs/zxpoly_sprite_editor.png)   
-Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.4.0).
+Its pre-built versions can be found on [the latest release page](https://github.com/raydac/zxpoly/releases/tag/2.4.1).
 
 ## "Official Father Christmas" (1989)
 Original look of the game   
