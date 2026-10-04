@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.igormaznitsa</groupId>
     <artifactId>zxpoly</artifactId>
-    <version>2.4.1</version>
+    <version>2.4.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <url>https://github.com/raydac/zxpoly</url>
@@ -14,7 +14,7 @@
         <maven.compiler.release>22</maven.compiler.release>
         <netbeans.hint.license>gpl30</netbeans.hint.license>
         <jbbp.version>3.0.3</jbbp.version>
-        <project.version.raw>2.4.1</project.version.raw>
+        <project.version.raw>2.4.2</project.version.raw>
     </properties>
 
     <issueManagement>
